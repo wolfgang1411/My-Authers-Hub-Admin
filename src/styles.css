@@ -1,0 +1,123 @@
+/* You can add global styles to this file, and also import other style files */
+@import "tailwindcss";
+
+:root {
+ 
+  --primary: #00397e;
+  --primary-light: #004b9a;
+  --primary-dark: #002d72;
+
+  --accent: #e53935;
+  --accent-light: #ff5252;
+
+  --secondary: #2b2b7b;
+
+  --background: #ffffff;
+  --surface: #f5f7fa;
+
+  --text-primary: #1c1c1c;
+  --text-secondary: #4a4a4a;
+
+
+  --breakpoint-mobile: 1024px;
+}
+
+[data-theme="dark"] {
+
+  --primary: #4a90e2;
+  --primary-dark: #00397e;
+  --primary-contrast: #ffffff;
+
+  --accent: #ff5252;
+  --accent-contrast: #ffffff;
+
+  --secondary: #7a6ff0;
+  --secondary-dark: #2b2b7b;
+
+  --background: #121212;
+  --surface: #1e1e1e;
+  --surface-alt: #2a2a2a;
+
+  --text-primary: #e0e0e0;
+  --text-secondary: #aaaaaa;
+  --text-disabled: #666666;
+
+  --breakpoint-mobile: 1024px;
+}
+
+@theme {
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-text: var(--text-color);
+  --color-accent: var(--accent);
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-disabled: var(--text-disabled);
+  --color-paragraph: var(--paragraph-color);
+  --breakpoint-mobile: 1024px;
+ --color-primary-light: var(--primary-light);
+ --color-primary-dark: var(--primary-dark);
+ --color-accent-light: var(--accent-light);
+ --color-secondary-dark: var(--secondary-dark);
+ --color-primary-contrast: var(--primary-contrast);
+}
+
+
+* {
+  box-sizing: border-box;
+}
+
+ button {
+  cursor: pointer;
+}
+html, body {
+  @apply h-full w-full;
+} 
+body {
+  color: var(--text-color);
+}
+.input-field {
+  @apply w-full h-[38px] px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
+}
+
+input::placeholder {
+  @apply text-gray-500;
+}
+select::placeholder{
+  @apply text-gray-500;
+}
+
+/* input:focus {
+  @apply ring-2 ring-primary;
+} */
+.icon {
+  @apply w-full h-full block fill-inherit;
+}
+
+.border-bottom {
+  @apply border-b border-gray-200;
+}
+
+.border-top {
+  @apply border-t border-gray-200;
+}
+.border-left {
+  @apply border-l border-gray-200;
+}
+.border-right {
+  @apply border-r border-gray-200;
+}
+
+.border {
+  @apply border border-gray-200;
+}
+
+.btn{
+  @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md shadow-sm;
+}
+.heading {
+  @apply text-lg font-semibold text-gray-800;
+}

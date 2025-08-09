@@ -1,0 +1,8 @@
+{
+  "/api": {
+    "target": "https://adequate-mustang-usefully.ngrok-free.app",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  }
+}

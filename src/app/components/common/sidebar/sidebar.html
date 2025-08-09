@@ -1,0 +1,47 @@
+<div
+  class="w-0 mobile:w-[300px] overflow-hidden h-full transition-all"
+  [ngClass]="{
+    'w-[300px]': isSidemenuOpen()
+  }"
+>
+  <div
+    class="relative z-20 bg-white h-full border flex flex-col mobile:w-[300px] mobile:h-screen"
+  >
+    <div class="h-[84px] flex items-center justify-center border-bottom">
+      <img class="h-[60px]"
+        src="images/book-club.png"
+        alt=""
+      />
+    </div>
+
+    <ul class="not-last:border-bottom">
+      @for (item of sidebarMenu(); track $index + item.name) {
+      <li>
+        <button
+          [routerLink]="item.url"
+          class="w-full text-primary fill-primary px-4 py-2 flex items-center gap-2 border-bottom"
+          routerLinkActive="bg-primary fill-white text-white"
+          [routerLinkActiveOptions]="{
+            exact: true
+          }"
+        >
+          <svg-icon
+            class="fill-inherit w-6 h-6 block"
+            [src]="item.icon"
+          ></svg-icon>
+          <span class="text-inherit block mt-1">{{
+            item.name | translate
+          }}</span>
+        </button>
+      </li>
+      }
+    </ul>
+  </div>
+@if(isSidemenuOpen())
+{
+  <button
+  class="fixed top-0 left-0 z-10 w-screen h-screen mobile:hidden"
+  (click)="onToggleSidebar()"
+  ></button>
+}
+</div>

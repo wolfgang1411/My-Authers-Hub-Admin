@@ -1,0 +1,20 @@
+<main
+  class="grid grid-cols-1 mobile:grid-cols-[300px_1fr] mobile:grid-rows-[84px_1fr] min-h-screen"
+  [ngClass]="{
+    'mobile:!flex flex-col':
+      (!showSidebar() && showHeader()) || (!showSidebar() && !showHeader())
+  }"
+>
+@if(showSidebar())
+{
+
+  <app-sidebar
+  
+  class="fixed mobile:sticky top-0 max-h-[100vh]"
+  ></app-sidebar>
+}
+  <app-header *ngIf="showHeader()"></app-header>
+  <div class="m-8 h-full grow flex flex-col">
+    <ng-content></ng-content>
+  </div>
+</main>

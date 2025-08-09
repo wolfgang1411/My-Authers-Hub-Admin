@@ -1,0 +1,47 @@
+<section class="flex items-center justify-center w-full h-full bg- grow">
+  <div class="shadow-md grid grid-cols-2 gap-4 max-w-[70vW] border rounded-lg bg-white h-[600px] " >
+  <div>
+
+ 
+    <div class="w-full flex justify-center pt-6">
+    <img class="h-[60px]" src="images/Logo-final.png" alt="Logo" />
+  </div>
+   <form
+   [formGroup]="loginForm"
+   class="flex flex-col items-center justify-center gap-4 p-8"
+   (ngSubmit)="onFormSubmit()"
+    >
+    <label class="text-lg font-semibold text-primary-dark">
+      {{"welcometomyauthorshub" | translate}} !
+    </label>
+    <label class="text-sm font-medium">     
+      {{"login_to_your_account" | translate}}
+    </label>
+  
+    <label class="self-start">
+      {{"username" | translate}} /      
+      {{"email" | translate}}
+    </label>
+    <input
+    formControlName="username"
+    class="input-field "
+    type="text"
+    placeholder="username"
+    />
+    <label class="self-start">
+      {{"password" | translate}}  
+    </label>
+    <input
+    formControlName="password"
+    class="input-field "
+    type="password"
+    placeholder="password"
+    />
+    <button class="btn mt-6 px-8" type="submit">{{"login" | translate}}</button>
+  </form>
+</div>
+  <div  class="rounded-br-lg rounded-tr-lg flex">
+    <img class="object-fill rounded-br-lg rounded-tr-lg" src="images/My Authors Hub Illustration.png"/>
+  </div>
+</div>
+</section>

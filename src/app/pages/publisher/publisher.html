@@ -1,0 +1,92 @@
+<div class="flex flex-col flex-grow gap-4">
+   
+  <h3 class="heading ">
+    {{ "publishers" | translate }}
+  </h3>
+  
+    
+  <div class="flex justify-between w-full gap-4 ">
+    <div class="flex input-field !h-full items-center justify-center max-w-[600px]">
+      <input
+    class="outline-none border-none focus:outline-none w-full"
+    #input
+    (input)="searchStr.next(input.value)"
+    [placeholder]="'search' | translate"
+    />
+    <button class="btn flex items-center self-end justify-center gap-2" (click)="searchStr.next(input.value)">
+      <svg-icon
+      src="images/magnifying-glass-solid-full.svg"
+      class="w-4 fill-white flex"
+      ></svg-icon>
+      {{ "search" | translate }}
+    </button>
+  </div>
+
+ <div class="flex  gap-2 ">
+    <button class="btn flex items-center gap-2">
+      <svg-icon src="images/filter-solid-full.svg" class="w-4 fill-white flex">
+        
+      </svg-icon>
+      {{'filter' | translate}}
+    </button>
+     <button class="btn flex items-center gap-2" >
+      <svg-icon src="images/plus-solid-full.svg" class="w-6 fill-white flex">
+        
+      </svg-icon>
+      {{"addpublisher" | translate}}
+    </button>
+   </div>
+</div>
+<div class="flex gap-2 ">
+  <button class="btn">{{"all" | translate}}</button>
+  <button class="btn">{{"active" | translate}}</button>
+  <button class="btn">{{"inactive" | translate}}</button>
+  <button class="btn">{{"dormant" | translate}}</button>
+</div>
+
+<div class="bg-[var(--surface)] rounded-md shadow border pt-6
+">
+  <!-- Header Row -->
+  <div class="grid grid-cols-[0.8fr_120px_150px_1fr_1fr_2fr] px-4 py-3 text-sm font-medium text-[var(--text-primary)] bg-[var(--surface-alt)] border-bottom ">
+    <div>{{"name" | translate}}</div>
+    <div>{{"numberoftitles" | translate}}</div>
+    <div>{{"numberofauthors" | translate}}</div>
+    <div>{{"emailid" | translate}}</div>
+    <div>{{"phonenumber" | translate}}</div>
+    <div>{{"actions" | translate}}</div>
+  </div>
+
+  <!-- List -->
+    @if (publishers() && publishers().length 
+   ){
+  <ul class="divide-y">
+    @for (publisher of publishers(); track publisher; let i = $index) {
+    <li
+      class="grid grid-cols-[0.8fr_120px_150px_1fr_1fr_2fr] items-center px-4 py-3 text-sm text-[var(--text-secondary)] border-bottom hover:bg-gray-50 dark:hover:bg-[var(--surface-alt)] transition"
+    >
+      <div>{{ publisher.name }}</div>
+      <div>{{ publisher.noOftitles || 2 }}</div>
+      <div>{{publisher.noOfauthors || 2}}</div>
+      <div>{{ publisher.email }}</div>
+      <div>{{ publisher.phoneNumber }}</div>
+      <div class="flex gap-2 text-blue-600 text-sm items-center">
+        <a [routerLink]="['/publisher', publisher.id]" routerLinkActive="router-link-active"  class="hover:underline">{{"view" |translate}}</a>
+        <a [routerLink]="['/publisher', publisher.id]" class="hover:underline">{{"edit" |translate}}</a>
+        <button [routerLink]="" class="btn">{{"resetpassword"| translate}}</button>
+        <button class="btn !bg-accent">{{"deactivate"| translate}}</button>
+      </div>
+    </li>
+  }
+  </ul>
+}
+
+  <!-- Pagination -->
+  <!-- <div class="flex justify-between items-center p-4 text-sm text-[var(--text-secondary)] border-top">
+    <span>Previous</span>
+    <span class="px-3 py-1 border rounded">1</span>
+    <span>Next</span>
+  </div> -->
+</div>
+
+
+</div>
