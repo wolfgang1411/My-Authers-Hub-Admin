@@ -25,7 +25,8 @@ import { Address, createBankDetails, Publishers } from '../../interfaces';
 import { AddressService } from '../../services/address-service';
 import { BankDetailService } from '../../services/bank-detail-service';
 import Swal from 'sweetalert2';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { InviteService } from '../../services/invite';
 @Component({
   selector: 'app-add-publisher',
   imports: [
@@ -49,7 +50,9 @@ export class AddPublisher {
     private publisherService: PublisherService,
     private addressService: AddressService,
     private bankDetailService: BankDetailService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router,
+    private inviteService: InviteService
   ) {
     const breakpointObserver = inject(BreakpointObserver);
     this.stepperOrientation = breakpointObserver
@@ -65,20 +68,29 @@ export class AddPublisher {
   publisherId!: number;
   publisherDetails?: Publishers;
   async ngOnInit() {
-    this.publisherFormGroup.valueChanges.subscribe((v) => {
-      console.log({ v });
-    });
     if (this.publisherId) {
       const response = await this.publisherService.getPublisherById(
         this.publisherId
       );
       this.publisherDetails = response;
       this.prefillForm(response);
-      this.publisherFormGroup.controls.signupCode.patchValue(this.signupCode || null);
-      this.publisherAddressDetails.controls.signupCode.patchValue(this.signupCode || null)
-      this.publisherBankDetails.controls.signupCode.patchValue(this.signupCode || null)
+    }
 
-    } 
+    this.publisherFormGroup.controls.signupCode.patchValue(
+      this.signupCode || null
+    );
+    this.publisherAddressDetails.controls.signupCode.patchValue(
+      this.signupCode || null
+    );
+    this.publisherBankDetails.controls.signupCode.patchValue(
+      this.signupCode || null
+    );
+
+    if (this.signupCode) {
+      const invite = await this.inviteService.findOne(this.signupCode);
+      this.publisherFormGroup.controls.pocEmail.patchValue(invite.email);
+      this.publisherFormGroup.controls.pocEmail.disable();
+    }
   }
   private _formBuilder = inject(FormBuilder);
   stepperOrientation: Observable<StepperOrientation>;
@@ -125,7 +137,6 @@ export class AddPublisher {
       email: publisherDetails.email,
       name: publisherDetails.name,
       designation: publisherDetails.designation,
-      
     });
     this.publisherAddressDetails.patchValue({
       id: publisherDetails.address[0]?.id,
@@ -169,14 +180,24 @@ export class AddPublisher {
           publisherBankData as createBankDetails
         );
       }
-      Swal.fire({
+      let html = 'You have successfully created the publisher.';
+      if (response.id) {
+        html = 'You have successfully updated the publisher.';
+      }
+
+      if (this.signupCode) {
+        html = `You have successfully registerd as publisher please login to continue`;
+      }
+
+      await Swal.fire({
         title: 'success',
         icon: 'success',
-        text: response.id
-          ? 'You have successfully updated the publisher.'
-          : 'You have successfully created the publisher.',
+        html,
         heightAuto: false,
       });
+      if (this.signupCode) {
+        this.router.navigate(['/login']);
+      }
     } catch (error: any) {
       Swal.fire({
         title: 'error',

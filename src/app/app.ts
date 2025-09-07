@@ -1,5 +1,10 @@
-import { Component, signal } from '@angular/core';
-import { NavigationEnd, Router, RouterModule } from '@angular/router';
+import { Component, effect, signal } from '@angular/core';
+import {
+  ActivatedRoute,
+  NavigationEnd,
+  Router,
+  RouterModule,
+} from '@angular/router';
 import { AuthService } from './services/auth';
 import { UserService } from './services/user';
 import { Layout } from './components/common/layout/layout';
@@ -18,7 +23,8 @@ export class App {
     private authService: AuthService,
     private userService: UserService,
     private layoutService: LayoutService,
-    router: Router
+    router: Router,
+    private route: ActivatedRoute
   ) {
     this.hydrateToken();
     router.events.subscribe((ev) => {
@@ -31,6 +37,20 @@ export class App {
   }
 
   ngOnInit(): void {}
+
+  authEffect = effect(
+    () => {
+      console.log('rinnnnn');
+      if (this.authService.isUserAuthenticated$()) {
+        this.setSidebarVisibility(window.location.pathname);
+        this.setHeaderVisibility(window.location.pathname);
+      } else {
+        this.layoutService.changeHeaderVisibility(false);
+        this.layoutService.changeSidebarVisibility(false);
+      }
+    },
+    { allowSignalWrites: true }
+  );
 
   async hydrateToken() {
     try {
@@ -66,7 +86,7 @@ export class App {
   }
 
   setSidebarVisibility(url: string) {
-    const isShowSidebar = !url.includes('login');
+    const isShowSidebar = !url.includes('login') && !url.includes('invite');
     this.layoutService.changeSidebarVisibility(isShowSidebar);
   }
 }

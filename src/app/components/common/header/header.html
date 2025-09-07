@@ -2,17 +2,19 @@
   class="flex justify-between items-center bg-primary-superlight px-8 shadow h-[84px]"
 >
   <button (click)="onSidebarToggle()" class="w-8 h-8 mobile:hidden">
-    <img class="icon" src="images/MY AUthors Hub.svg"/>
+    <img class="icon" src="images/MY AUthors Hub.svg" />
   </button>
   <span class="max-mobile:hidden"></span>
   <nav class="flex items-center justify-between w-full">
     <span class="flex flex-col">
-      <h3 class="font-medium text-text-heading">{{"hi"| translate}},</h3>
-      <b class="text-text-heading">{{userService.loggedInUser$()?.firstName + " " + userService.loggedInUser$()?.lastName }}</b>
+      <h3 class="font-medium text-text-heading">{{ "hi" | translate }},</h3>
+      <b class="text-text-heading">{{ fullName() }}</b>
     </span>
+    @if (!!userService.loggedInUser$()) {
     <button class="w-8 h-8">
       <svg-icon class="icon" src="images/user-solid-full.svg"></svg-icon>
     </button>
+    }
   </nav>
 </header>
 
