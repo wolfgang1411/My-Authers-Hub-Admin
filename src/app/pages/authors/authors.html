@@ -1,92 +1,84 @@
 <div class="flex flex-col flex-grow gap-4">
-   
-  <h3 class="heading ">
+  <h3 class="heading">
     {{ "authors" | translate }}
   </h3>
-  
-    
-  <div class="flex justify-between w-full gap-4 ">
-    <div class="flex input-field !h-[40px] items-center justify-center max-w-[600px]">
-      <input
-    class="outline-none border-none focus:outline-none w-full"
-    #input
-    (input)="searchStr.next(input.value)"
-    [placeholder]="'search' | translate"
-    />
-    <button class="btn flex items-center self-end justify-center gap-2" (click)="searchStr.next(input.value)">
-      <svg-icon
-      src="images/magnifying-glass-solid-full.svg"
-      class="w-4 fill-white flex"
-      ></svg-icon>
-      {{ "search" | translate }}
-    </button>
-  </div>
 
- <div class="flex  gap-2 ">
-    <button class="btn flex items-center gap-2">
-      <svg-icon src="images/filter-solid-full.svg" class="w-4 fill-white flex">
-        
-      </svg-icon>
-      {{'filter' | translate}}
-    </button>
-     <button class="btn flex items-center gap-2" >
-      <svg-icon src="images/plus-solid-full.svg" class="w-6 fill-white flex">
-        
-      </svg-icon>
-      {{"addauthor" | translate}}
-    </button>
-   </div>
-</div>
-<div class="flex gap-2 ">
-  <button class="btn">{{"all" | translate}}</button>
-  <button class="btn">{{"active" | translate}}</button>
-  <button class="btn">{{"inactive" | translate}}</button>
-  <button class="btn">{{"dormant" | translate}}</button>
-</div>
-
-<div class="bg-[var(--surface)] rounded-md shadow border pt-6
-">
-  <!-- Header Row -->
-  <div class="grid grid-cols-[0.8fr_120px_150px_1fr_1fr_2fr] px-4 py-3 text-sm font-medium text-[var(--text-primary)] bg-[var(--surface-alt)] border-bottom ">
-    <div>{{"name" | translate}}</div>
-    <div>{{"emailid" | translate}}</div>
-    <div>{{"phonenumber" | translate}}</div>
-    <div>{{"numberoftitles" | translate}}</div>
-    <div>{{"royaltiesearned" | translate}}</div>
-    <div>{{"actions" | translate}}</div>
-  </div>
-
-  <!-- List -->
-   @if (authors() && authors().length) {
-
-     <ul class="divide-y">
-       @for (author of authors(); track author; let i = $index) {
-       <li
-       class="grid grid-cols-[0.8fr_120px_150px_1fr_1fr_2fr] items-center px-4 py-3 text-sm text-[var(--text-secondary)] border-bottom hover:bg-gray-50 dark:hover:bg-[var(--surface-alt)] transition"
+  <div class="flex justify-between w-full gap-4">
+    <div
+      class="flex h-[38px] items-center justify-center md:min-w-[480px] min-w-full gap-2"
     >
-      <div>{{ author.name }}</div>
-      <div>{{ author.email}}</div>
-      <div>{{ author.phoneNumber }}</div>
-      <div>{{ author.titles }}</div>
-      <div>{{ author.royalty }}</div>
-      <div class="flex gap-2 text-blue-600 text-sm items-center">
-        <a [routerLink]="['/author', author.id]" routerLinkActive="router-link-active"  class="hover:underline">{{"view" |translate}}</a>
-        <a [routerLink]="['/author', author.id]" class="hover:underline">{{"edit" |translate}}</a>
-        <button [routerLink]="" class="btn">{{"resetpassword"| translate}}</button>
-        <button class="btn !bg-accent">{{"deactivate"| translate}}</button>
-      </div>
-    </li>
-  }
-  </ul>
-}
+      <input
+        class="input-field outline-none w-full"
+        #input
+        (input)="searchStr.next(input.value)"
+        [placeholder]="'search' | translate"
+      />
+      <button
+        class="btn h-[38px] flex items-center self-end justify-center gap-2"
+        (click)="searchStr.next(input.value)"
+      >
+        <svg-icon
+          src="images/magnifying-glass-solid-full.svg"
+          class="w-4 fill-white flex"
+        ></svg-icon>
+        {{ "search" | translate }}
+      </button>
+    </div>
 
-  <!-- Pagination -->
-  <!-- <div class="flex justify-between items-center p-4 text-sm text-[var(--text-secondary)] border-top">
-    <span>Previous</span>
-    <span class="px-3 py-1 border rounded">1</span>
-    <span>Next</span>
-  </div> -->
-</div>
+    <div class="flex gap-2">
+      <button matButton="filled" class="!bg-primary flex items-center gap-2 text-white rounded-md p-2">
+               <mat-icon class="material-icons">filter_list</mat-icon>
 
-
+        {{ "filter" | translate }}
+      </button>
+          <button
+        matButton
+        matButton="filled"
+        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        [routerLink]="['/author',0
+        ]" routerLinkActive="router-link-active" 
+      >
+        <mat-icon class="material-icons">add_circle_outline</mat-icon>
+        {{ "addauthor" | translate }}
+      </button>
+      <button
+        matButton
+        matButton="filled"
+        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        (click)="inviteAuthor()"
+      >
+        <mat-icon class="material-icons">person_add</mat-icon>
+        {{ "inviteauthor" | translate }}
+      </button>
+    </div>
+  </div>
+  <div class="flex gap-2">
+    <button class="!bg-primary" matButton="filled">{{ "all" | translate }}</button>
+    <button class="!bg-primary" matButton="filled">{{ "active" | translate }}</button>
+    <button class="!bg-primary" matButton="filled">{{ "inactive" | translate }}</button>
+    <button class="!bg-primary" matButton="filled">{{ "dormant" | translate }}</button>
+  </div>
+    <app-list-table
+    class="pt-6"
+    [dataSource]="dataSource"
+    [displayedColumns]="displayedColumns"
+    [actionTemplate]="actionButtons"
+  >
+  </app-list-table>
+  <ng-template #actionButtons let-element>
+  <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
+    <button class="!bg-primary" mat-icon-button [routerLink]="['/title',1]">
+      <mat-icon class="!text-white">visibility</mat-icon>
+    </button>
+    <button class="!bg-primary" mat-icon-button [routerLink]="['/title',1]">
+      <mat-icon class="!text-white">edit</mat-icon>
+    </button>
+    <button class="!bg-primary" mat-icon-button>
+      <mat-icon class="!text-white">lock_reset</mat-icon>
+    </button>
+    <button class="!bg-accent" mat-icon-button>
+      <mat-icon class="!text-white">block</mat-icon>
+    </button>
+  </div>
+</ng-template>
 </div>

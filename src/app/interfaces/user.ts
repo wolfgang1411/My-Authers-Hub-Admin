@@ -4,7 +4,7 @@ export interface User {
   accessLevel: AccessLevel;
   firstName: string;
   lastName: string;
-  phone: string;
+  phoneNumber: string;
   userAddress?: UserAddress;
 }
 

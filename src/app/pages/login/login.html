@@ -1,47 +1,49 @@
 <section class="flex items-center justify-center w-full h-full bg- grow">
   <div class="shadow-md grid grid-cols-2 gap-4 max-w-[70vW] border rounded-lg bg-white h-[600px] " >
-  <div>
-
- 
+  <div> 
     <div class="w-full flex justify-center pt-6">
-    <img class="h-[60px]" src="images/Logo-final.png" alt="Logo" />
+    <img class="aspect-square object-contain  h-[80px]" src="images/My Authors Hub-Teal.png" alt="Logo" />
   </div>
    <form
    [formGroup]="loginForm"
-   class="flex flex-col items-center justify-center gap-4 p-8"
+   class="flex flex-col items-center justify-center gap-6 p-8"
    (ngSubmit)="onFormSubmit()"
     >
-    <label class="text-lg font-semibold text-primary-dark">
+    <label class="text-lg font-semibold text-text-heading">
       {{"welcometomyauthorshub" | translate}} !
     </label>
-    <label class="text-sm font-medium">     
+    <label class="text-sm font-medium text-text-heading">     
       {{"login_to_your_account" | translate}}
     </label>
-  
-    <label class="self-start">
-      {{"username" | translate}} /      
-      {{"email" | translate}}
-    </label>
-    <input
-    formControlName="username"
-    class="input-field "
-    type="text"
-    placeholder="username"
-    />
-    <label class="self-start">
-      {{"password" | translate}}  
-    </label>
-    <input
-    formControlName="password"
-    class="input-field "
-    type="password"
-    placeholder="password"
-    />
-    <button class="btn mt-6 px-8" type="submit">{{"login" | translate}}</button>
+   <div class="flex flex-col gap-4 w-full">
+     <label class="self-start text-text-primary">
+       {{"username" | translate}} /      
+       {{"email" | translate}}
+      </label>
+      <input
+      formControlName="username"
+      class="input-field "
+      type="text"
+      placeholder="username"
+      />
+    </div>
+    <div class="flex flex-col gap-4 w-full">
+      <label class="self-start text-text-primary">
+        {{"password" | translate}}  
+      </label>
+      <input
+      formControlName="password"
+      class="input-field "
+      type="password"
+      placeholder="password"
+      />
+    </div>
+    <button matButton="elevated"
+    matButton="filled" class="!bg-primary">{{"login"| translate}}</button>
   </form>
 </div>
   <div  class="rounded-br-lg rounded-tr-lg flex">
-    <img class="object-fill rounded-br-lg rounded-tr-lg" src="images/My Authors Hub Illustration.png"/>
+    <img class="object-fill rounded-br-lg rounded-tr-lg max-h-[600px]" src="images/my.gif"/>
   </div>
 </div>
 </section>

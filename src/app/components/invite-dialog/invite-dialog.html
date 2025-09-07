@@ -1,0 +1,21 @@
+<div class="flex flex-col gap-4 w-[480px] max-w-[90vw] p-3">
+
+  @if (data && data.heading) {
+    <h2 mat-dialog-title class="text-xl">Hi {{data.heading}} !!</h2>
+  }
+  <mat-dialog-content>
+    @if(data.label)
+    {
+      <p>{{data.label || 'addtext'| translate}}</p>
+    }
+    <mat-form-field class="w-full">
+      <input matInput [formControl]="text"
+    [placeholder]="data.placeholder || ''"
+    />
+  </mat-form-field>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button matButton="filled" class="!bg-accent" (click)="data.onClose()">{{data.cancelButtonLabel || 'close' | translate}}</button>
+  <button mat-button matButton="filled" class="!bg-primary" (click)="data.onSave(text.value || '')">{{data.saveButtonLabel || 'confirm' | translate}}</button>
+</mat-dialog-actions>
+</div>

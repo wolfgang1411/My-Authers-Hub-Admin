@@ -1,4 +1,4 @@
-<div
+<!-- <div
   class="w-0 mobile:w-[300px] overflow-hidden h-full transition-all"
   [ngClass]="{
     'w-[300px]': isSidemenuOpen()
@@ -7,9 +7,9 @@
   <div
     class="relative z-20 bg-white h-full border flex flex-col mobile:w-[300px] mobile:h-screen"
   >
-    <div class="h-[84px] flex items-center justify-center border-bottom">
-      <img class="h-[60px]"
-        src="images/book-club.png"
+    <div class="h-[84px]  bg-primary flex items-center justify-center border-bottom">
+      <img class="h-full"
+        src="images/My Authors Hub-Teal.png"
         alt=""
       />
     </div>
@@ -44,4 +44,64 @@
   (click)="onToggleSidebar()"
   ></button>
 }
-</div>
+</div> -->
+<mat-sidenav-container class="h-screen w-screen">
+  <mat-sidenav
+    #sidenav="matSidenav"
+    [mode]="mode"
+    [opened]="mode === 'side'"
+    class="mobile:w-[300px] w-full max-w-[300px] !bg-primary-superlight "
+  >
+    <div class="h-[84px] bg-primary flex items-center justify-center border-b">
+      <img src="images/My Authors Hub-Teal.png" class="h-full" alt="Logo" />
+      @if(mode==='over') {
+      <button
+        mat-icon-button
+        class="absolute top-2 right-2"
+        (click)="onToggleSidebar()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+      }
+    </div>
+
+    <mat-nav-list class="!px-4 !py-2">
+      @for (item of sidebarMenu(); track $index + item.name) {
+      <mat-list-item class="flex justify-center !p-0">
+        <button
+          [routerLink]="item.url"
+          class="group !w-full rounded-4xl justify-start text-primary fill-primary px-4 py-2 flex items-center gap-2 router-link"
+          routerLinkActive="bg-primary fill-white text-white"
+          [routerLinkActiveOptions]="{ exact: true }"
+          (click)="mode === 'over' && onToggleSidebar()"
+        >
+          <svg-icon
+            class="w-8  transition-colors group-[.bg-primary]:fill-white"
+            [src]="item.icon"
+          ></svg-icon>
+          <span class="mt-1  transition-colors group-[.bg-primary]:text-white">{{ item.name | translate }}</span>
+        </button>
+      </mat-list-item>
+      }
+    </mat-nav-list>
+  </mat-sidenav>
+
+ <mat-sidenav-content>
+    @if(mode==='over') {
+    <button
+      mat-icon-button
+      class="fixed top-4 left-4 z-50 mobile:block hidden"
+      (click)="onToggleSidebar()"
+      aria-label="Toggle sidebar"
+    >
+      <mat-icon>menu</mat-icon>
+    </button>
+    }
+      @if (showHeader()) {
+    <app-header></app-header>
+  }
+  <div class="!p-7">
+    <router-outlet></router-outlet>
+  </div>
+  </mat-sidenav-content> 
+</mat-sidenav-container>

@@ -13,7 +13,9 @@
   class="fixed mobile:sticky top-0 max-h-[100vh]"
   ></app-sidebar>
 }
-  <app-header *ngIf="showHeader()"></app-header>
+ @if (showHeader()) {
+  <app-header ></app-header>
+} 
   <div class="m-8 h-full grow flex flex-col">
     <ng-content></ng-content>
   </div>

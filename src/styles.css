@@ -3,32 +3,34 @@
 
 :root {
  
-  --primary: #00397e;
-  --primary-light: #004b9a;
-  --primary-dark: #002d72;
+  --primary:  #2F6F82;
+  --primary-light: #c3e8f6 ;
+  --primary-superlight:#ebf3f7;
+  /* --primary-dark: ; */
 
-  --accent: #e53935;
+  --accent: #FF6B6B ;
   --accent-light: #ff5252;
 
   --secondary: #2b2b7b;
 
-  --background: #ffffff;
-  --surface: #f5f7fa;
+  --background: #FCFCFA ;
+  --surface: #F6F5F3 ;
 
-  --text-primary: #1c1c1c;
-  --text-secondary: #4a4a4a;
-
+  --text-primary: #4B5563 ;
+  --text-secondary: #2F4F4F ;
+--text-heading: #2F6F82;
+  --text-placeholder:#9CA3AF;
 
   --breakpoint-mobile: 1024px;
 }
 
 [data-theme="dark"] {
 
-  --primary: #4a90e2;
+  --primary: #89C2D9;
   --primary-dark: #00397e;
   --primary-contrast: #ffffff;
 
-  --accent: #ff5252;
+  --accent: #FFB5A7;
   --accent-contrast: #ffffff;
 
   --secondary: #7a6ff0;
@@ -41,6 +43,7 @@
   --text-primary: #e0e0e0;
   --text-secondary: #aaaaaa;
   --text-disabled: #666666;
+  --text-placeholder:#9CA3AF;
 
   --breakpoint-mobile: 1024px;
 }
@@ -59,10 +62,13 @@
   --color-paragraph: var(--paragraph-color);
   --breakpoint-mobile: 1024px;
  --color-primary-light: var(--primary-light);
- --color-primary-dark: var(--primary-dark);
+ --color-primary-superlight: var(--primary-superlight);
+ /* --color-primary-dark: var(--primary-dark); */
  --color-accent-light: var(--accent-light);
  --color-secondary-dark: var(--secondary-dark);
  --color-primary-contrast: var(--primary-contrast);
+ --color-text-placeholder: var(--text-placeholder);
+ --color-text-heading: var(--text-heading);
 }
 
 
@@ -77,17 +83,32 @@ html, body {
   @apply h-full w-full;
 } 
 body {
-  color: var(--text-color);
+  color: var(--text-primary);
+
 }
 .input-field {
   @apply w-full h-[38px] px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
 }
+/* ✅ Only target your custom .input-field, not Material */
+.input-field {
+  @apply text-text-secondary text-sm bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
+}
+
+/* ✅ Restore Material input defaults */
+.mat-input-element {
+  color: var(--text-primary) !important;
+  background: transparent !important;
+  font-size: 14px;
+  opacity: 100%;
+  z-index: inherit;
+}
+
 
 input::placeholder {
-  @apply text-gray-500;
+  @apply text-text-placeholder;
 }
 select::placeholder{
-  @apply text-gray-500;
+  @apply text-text-placeholder;
 }
 
 /* input:focus {
@@ -119,5 +140,29 @@ select::placeholder{
   @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md shadow-sm;
 }
 .heading {
-  @apply text-lg font-semibold text-gray-800;
+  @apply text-lg font-semibold text-text-heading;
+}
+.mat-horizontal-content-container{
+  @apply !p-0;
+}
+.mat-step-header {
+  @apply !p-0;
+}
+
+.mat-stepper-horizontal-line{
+@apply !m-0;
+}
+ input:focus-visible {
+  outline: none;
+  box-shadow: none;
+  font-size: 14px !important;
+} 
+mat-label{
+  font-size: 14px;
+}
+.mat-step-icon-selected{
+  background-color: var(--primary) !important;
+}
+.mat-mdc-card-header{
+  padding: 16px !important
 }

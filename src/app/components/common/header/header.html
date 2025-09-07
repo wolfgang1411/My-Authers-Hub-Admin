@@ -1,11 +1,15 @@
 <header
-  class="flex justify-between items-center min-h-full bg-white px-8 shadow h-[84px]"
+  class="flex justify-between items-center bg-primary-superlight px-8 shadow h-[84px]"
 >
   <button (click)="onSidebarToggle()" class="w-8 h-8 mobile:hidden">
-    <svg-icon class="icon" src="images/bars-solid-full.svg"></svg-icon>
+    <img class="icon" src="images/MY AUthors Hub.svg"/>
   </button>
   <span class="max-mobile:hidden"></span>
-  <nav>
+  <nav class="flex items-center justify-between w-full">
+    <span class="flex flex-col">
+      <h3 class="font-medium text-text-heading">{{"hi"| translate}},</h3>
+      <b class="text-text-heading">{{userService.loggedInUser$()?.firstName + " " + userService.loggedInUser$()?.lastName }}</b>
+    </span>
     <button class="w-8 h-8">
       <svg-icon class="icon" src="images/user-solid-full.svg"></svg-icon>
     </button>

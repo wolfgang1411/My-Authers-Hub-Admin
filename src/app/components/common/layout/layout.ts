@@ -6,7 +6,7 @@ import { LayoutService } from '../../../services/layout';
 
 @Component({
   selector: 'app-layout',
-  imports: [CommonModule, Header, Sidebar],
+  imports: [CommonModule, Sidebar ,Header],
   templateUrl: './layout.html',
   styleUrl: './layout.css',
 })

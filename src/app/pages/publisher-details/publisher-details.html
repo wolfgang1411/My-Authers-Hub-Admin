@@ -1,182 +1,502 @@
 <div class="flex flex-col flex-grow gap-4">
-   
-
-
-<div class="flex justify-between items-center ">
-    <h3 class="heading">{{"publisherdetails" | translate}}</h3>
-    <app-back></app-back>
-</div>
-    <div>
-    
-    <nav class="sticky top-0 bg-[var(--surface)] z-10 shadow-sm py-4">
-      <ul class="flex flex-wrap gap-4">
-        <li><a href="#publisher-details" class="btn">{{"publisherdetails" |translate}}</a></li>
-        <li><a href="#books-published" class="btn">{{"bookspublished" | translate}}</a></li>
-        <li><a href="#authors" class="btn">{{"authors"| translate}}</a></li>
-        <li><a href="#sub-publishers" class="btn">{{"subpublishers" | translate}}</a></li>
-        <li><a href="#royalties" class="btn">{{"royalties&wallet"|translate}}</a></li>
-        <li><a href="#published-links" class="btn">{{"publishedlinks" | translate}}</a></li>
-        <li><a href="#attachments" class="btn">{{"attachments" | translate}}</a></li>
-      </ul>
-    </nav>
-
-    
-    <section id="publisher-details" class="mt-10 bg-white p-6 rounded-xl shadow">
-      <h2 class="heading mb-4">{{"publisherdetails" | translate}}</h2>
-      <ul class="space-y-2 grid grid-cols-3 gap-4">
-        <li class="text-text"><strong>{{"companyname"| translate}} :</strong> {{publisherDetails()?.companyName}}</li>
-        <li class="text-text"><strong>{{"emailidofficial" | translate}} :</strong> {{publisherDetails()?.companyEmailId}}</li>
-        <li class="text-text"><strong>{{"publishername"| translate}} :</strong> {{publisherDetails()?.name}}</li>
-        <li class="text-text"><strong>{{"publishercontactnumber" | translate}} :</strong>{{publisherDetails()?.phoneNumber}}</li>
-        <li class="text-text"><strong>{{"publisheremailid" | translate}} :</strong> {{publisherDetails()?.email}}</li>
-        <li class="text-text"><strong>{{"publisherdesignation" | translate}} :</strong> {{publisherDetails()?.publisherDesignation}}</li>
-             <li class="text-text"><strong>{{"address" | translate}} :</strong> {{publisherDetails()?.address}}</li>
-
-      </ul>
-    </section>
-
+  <nav class="flex flex-col gap-6 sticky top-[84px] z-10 py-4">
+    <div class="flex justify-between items-center">
+      <h3 class="heading">{{ "publisherdetails" | translate }}</h3>
+      <app-back></app-back>
+    </div>
+  </nav>
+  <mat-tab-group dynamicHeight>
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <span class="text-text-heading font-medium">
+          {{ "publisherdetails" | translate }}
+        </span>
+      </ng-template>
+      <section
+        id="publisher-details"
+        class="mt-10 bg-white p-6 rounded-xl shadow mat-elevation-z4"
+      >
+        <h2 class="heading mb-4">{{ "publisherdetails" | translate }}</h2>
+        <ul class="space-y-2 grid grid-cols-3 gap-4">
+          <li class="text-text">
+            <label class="font-medium">{{ "companyname" | translate }} :</label>
+            {{ publisherDetails()?.name }}
+          </li>
+          <li class="text-text">
+            <label class="font-medium" class="font-medium"
+              >{{ "emailidofficial" | translate }} :</label
+            >
+            {{ publisherDetails()?.email || "xyzpublication@gmail.com" }}
+          </li>
+          <li class="text-text">
+            <label class="font-medium"
+              >{{ "publishername" | translate }} :</label
+            >
+            {{
+              publisherDetails()?.user?.firstName +
+                " " +
+                publisherDetails()?.user?.lastName
+            }}
+          </li>
+          <li class="text-text">
+            <label class="font-medium"
+              >{{ "publishercontactnumber" | translate }} :</label
+            >{{ publisherDetails()?.user?.phoneNumber }} ,
+            {{ publisherDetails()?.phoneNumber }}
+          </li>
+          <li class="text-text">
+            <label class="font-medium"
+              >{{ "publisheremailid" | translate }} :</label
+            >
+            {{ publisherDetails()?.user?.email }}
+          </li>
+          <li class="text-text">
+            <label class="font-medium"
+              >{{ "publisherdesignation" | translate }} :</label
+            >
+            {{ publisherDetails()?.designation }}
+          </li>
+          <li class="text-text">
+            <label class="font-medium">{{ "address" | translate }} :</label>
+            {{ completeAddress() }}
+          </li>
+        </ul>
+        <h2 class="heading my-4 !mt-6">{{ "bankdetails" | translate }}</h2>
+        <ul class="space-y-2 grid grid-cols-3 gap-4">
+          <li class="text-text">
+            <label class="font-medium">{{ "bankname" | translate }} :</label>
+            {{ publisherDetails()?.bankDetails?.[0]?.name || "Not Provided"   }}
+          </li>
+          <li class="text-text">
+            <label class="font-medium"
+              >{{ "accountnumber" | translate }} :</label
+            >
+            {{ publisherDetails()?.bankDetails?.[0]?.accountNo }}
+          </li>
+          <li class="text-text">
+            <label class="font-medium">{{ "ifsccode" | translate }} :</label>
+            {{ publisherDetails()?.bankDetails?.[0]?.ifsc }}
+          </li>
+          <li class="text-text">
+            <label class="font-medium">{{ "accounttype" | translate }} :</label>
+            {{ publisherDetails()?.bankDetails?.[0]?.accountType }}
+          </li>
+          <li class="text-text">
+            <label class="font-medium"
+              >{{ "pancardnumber" | translate }} :</label
+            >
+            {{ publisherDetails()?.bankDetails?.[0]?.panCardNo }}
+          </li>
+        </ul>
+      </section>
+    </mat-tab>
     <!-- Books Published -->
-    <section id="books-published" class="mt-10 bg-white p-6 rounded-xl shadow">
-      <h2 class="heading mb-4">{{"bookspublished" | translate}}</h2>
-      <ul class="space-y-4">
-        <li  class="grid grid-cols-6 px-4 py-3 text-sm font-medium text-[var(--text-primary)] bg-[var(--surface-alt)] border-bottom ">
-          <div>{{"bookname" | translate}}</div>
-          <div>{{"ISBN" | translate}} </div>
-          <div>{{"title" | translate}}</div>
-          <div>{{"royaltiesearned" | translate}}</div>
-          <div>{{"authorid" | translate}}</div>
-          <div>{{"links" | translate}}</div>
-        </li>
-      </ul>
-      <ul ngif="booksPublished && booksPublished.length > 0" class="divide-y">
-    <li
-      *ngFor="let book of booksPublished();let i = index"
-      class="grid grid-cols-6 px-4 py-3 text-sm text-[var(--text-secondary)] border-bottom hover:bg-gray-50 dark:hover:bg-[var(--surface-alt)] transition"
-    >
-      <div>{{ book.bookName}}</div>
-      <div>{{ book.ISBN }}</div>
-      <div>{{ book.title}}</div>
-      <div>{{ book.royaltiesEarned }}</div>
-      <div>{{ book.authorId }}</div>
-  <div>
-    {{ book.links && book.links.length > 0 ? book.links.join(', ') : 'No links available'     }}
-  </div>
-    </li>
-  </ul>
-    </section>
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <span class="text-text-heading font-medium">
+          {{ "bookspublished" | translate }}
+        </span>
+      </ng-template>
+      <section
+        id="books-published"
+        class="mt-10 bg-white p-6 rounded-xl shadow"
+      >
+        <h2 class="heading mb-4">{{ "bookspublished" | translate }}</h2>
+        <mat-form-field>
+          <mat-label>{{ "filter" | translate }}</mat-label>
+          <input
+            matInput
+            (keyup)="applyFilter($event)"
+            placeholder="Ex. ium"
+            #input
+          />
+        </mat-form-field>
 
+        <table
+          mat-table
+          [dataSource]="bookPublishData"
+          class="mat-elevation-z8 !rounded-2xl overflow-hidden"
+        >
+          <ng-container matColumnDef="serial">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "serialno" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element; let i = index">
+              {{ i + 1 }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="bookname">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "bookname" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element">{{ element.name }}</td>
+          </ng-container>
+          <ng-container matColumnDef="ISBN">
+            <th mat-header-cell *matHeaderCellDef>{{ "ISBN" | translate }}</th>
+            <td mat-cell *matCellDef="let element">
+              @if (element.isbn) {
+              {{ element.isbn.isbnNumber }}
+              } @else {
+              {{ "N/A" | translate }}
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="Pages">
+            <th mat-header-cell *matHeaderCellDef>{{ "pages" | translate }}</th>
+            <td mat-cell *matCellDef="let element">{{ element.pages }}</td>
+          </ng-container>
+          <ng-container matColumnDef="royaltiesearned">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "royaltiesearned" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element">{{ 0 }}</td>
+          </ng-container>
+          <ng-container matColumnDef="authorname">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "authorname" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element">
+              @if (element.author) {
+              {{ element.author.name }}
+              } @else {
+              {{ "No author" | translate }}
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="links">
+            <th mat-header-cell *matHeaderCellDef>{{ "links" | translate }}</th>
+            <td mat-cell *matCellDef="let element">
+              {{
+                element.links && element.links.length > 0
+                  ? element.links.join(", ")
+                  : "No links available"
+              }}
+            </td>
+          </ng-container>
+
+          <tr class="!bg-primary-light" mat-header-row  *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+          
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" colspan="4">
+              No data matching the filter "{{ input.value }}"
+            </td>
+          </tr>
+        </table> 
+      </section>
+    </mat-tab>
     <!-- Authors -->
-    <section id="authors" class="mt-10 bg-white p-6 rounded-xl shadow">
-      <h2 class="heading mb-4">{{"authors" | translate}}</h2>
-      <ul class="space-y-4">
-        <li  class="grid grid-cols-6 px-4 py-3 text-sm font-medium text-[var(--text-primary)] bg-[var(--surface-alt)] border-bottom ">
-          <div>{{"name" | translate}}</div>
-          <div>{{"email" | translate}}</div>
-          <div>{{"phonenumber" | translate}}</div>
-          <div>{{"titles"| translate}}</div>
-          <div>{{"royaltyearned" | translate}}</div>
-          <div>{{"links"| translate}}</div>
-        </li>
-      </ul>
-       <ul ngif="authors && authors.length > 0" class="divide-y">
-    <li
-      *ngFor="let author of authors();let i = index"
-      class="grid grid-cols-6 px-4 py-3 text-sm text-[var(--text-secondary)] border-bottom hover:bg-gray-50 dark:hover:bg-[var(--surface-alt)] transition"
-    >
-      <div>{{ author.name}}</div>
-      <div>{{author.email }}</div>
-      <div>{{ author.phoneNumber}}</div>
-      <div>{{ author.titles }}</div>
-      <div>{{ author.royalty }}</div>
-      <div>
-        {{author.links}}
-      </div>
-  <div>
-    {{ author.links && author.links.length > 0 ? author.links.join(', ') : 'No links available'     }}
-  </div>
-    </li>
-  </ul>
-    </section>
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <span class="text-text-heading font-medium">
+          {{ "authors" | translate }}
+        </span>
+      </ng-template>
+      <section id="authors" class="mt-10 bg-white p-6 rounded-xl shadow">
+        <h2 class="heading mb-4">{{ "authors" | translate }}</h2>
+        <mat-form-field>
+          <mat-label>{{ "filter" | translate }}</mat-label>
+          <input
+            matInput
+            (keyup)="applyAuhtorFilter($event)"
+            placeholder="Ex. ium"
+            #input
+          />
+        </mat-form-field>
+        <table mat-table [dataSource]="authorData" class="mat-elevation-z8 !rounded-2xl overflow-hidden">
+          <ng-container matColumnDef="serial">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "serialno" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element; let i = index">
+              {{ i + 1 }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>{{ "name" | translate }}</th>
+            <td mat-cell *matCellDef="let element">{{ element.username }}</td>
+          </ng-container>
+          <ng-container matColumnDef="email">
+            <th mat-header-cell *matHeaderCellDef>{{ "email" | translate }}</th>
+            <td mat-cell *matCellDef="let element">
+              {{ element.email }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="phonenumber">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "phonenumber" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element">
+              {{ element.phoneNumber }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="titles">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "titles" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element">{{ 0 }}</td>
+          </ng-container>
+          <ng-container matColumnDef="royaltyearned">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "royaltyearned" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element">
+              {{ element.royalty }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="links">
+            <th mat-header-cell *matHeaderCellDef>{{ "links" | translate }}</th>
+            <td mat-cell *matCellDef="let element">
+              {{
+                element.links && element.links.length > 0
+                  ? element.links.join(", ")
+                  : "No links available"
+              }}
+            </td>
+          </ng-container>
 
+          <tr class="!bg-primary-light" mat-header-row *matHeaderRowDef="displayedAuthorColumns"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedAuthorColumns"
+          ></tr>
+
+          <!-- Row shown when there is no matching data. -->
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" colspan="4">
+              No data matching the filter "{{ input.value }}"
+            </td>
+          </tr>
+        </table>
+      </section>
+    </mat-tab>
     <!-- Sub-Publishers -->
-    <section id="sub-publishers" class="mt-10 bg-white p-6 rounded-xl shadow">
-      <h2 class="heading mb-4">{{"subpublishers" | translate}}</h2>
-      <ul class="space-y-4">
-        <li  class="grid grid-cols-6 px-4 py-3 text-sm font-medium text-[var(--text-primary)] bg-[var(--surface-alt)] border-bottom ">
-          <div>{{"name"| translate}}</div>
-          <div>{{"emailid"| translate}}</div>
-          <div>{{"phonenumber" | translate}}</div>
-          <div>{{"nooftitles" | translate}}</div>
-          <div>{{"noofauthors"| translate}}</div>
-          <div>{{"companyname" | translate}}</div>
-        </li>
-      </ul>
-      <ul ngif="authors && authors.length > 0" class="divide-y">
-    <li
-      *ngFor="let subPublisher of subPublishers();let i = index"
-      class="grid grid-cols-6 px-4 py-3 text-sm text-[var(--text-secondary)] border-bottom hover:bg-gray-50 dark:hover:bg-[var(--surface-alt)] transition"
-    >
-      <div>{{ subPublisher.name}}</div>
-      <div>{{subPublisher.email }}</div>
-      <div>{{ subPublisher.phoneNumber}}</div>
-      <div>{{ subPublisher.noOftitles }}</div>
-      <div>{{ subPublisher.noOfauthors }}</div>
-      <div>
-        {{subPublisher.companyName}}
-      </div>
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <span class="text-text-heading font-medium">
+          {{ "subpublishers" | translate }}
+        </span>
+      </ng-template>
+      <section id="sub-publishers" class="mt-10 bg-white p-6 rounded-xl shadow">
+        <h2 class="heading mb-4">{{ "subpublishers" | translate }}</h2>
+        <mat-form-field>
+          <mat-label>{{ "filter" | translate }}</mat-label>
+          <input
+            matInput
+            (keyup)="applySubPublisherFilter($event)"
+            placeholder="Ex. ium"
+            #input
+          />
+        </mat-form-field>
+        <table
+          mat-table
+          [dataSource]="subPublisherData"
+          class="mat-elevation-z8 !rounded-2xl overflow-hidden"
+        >
+          <ng-container matColumnDef="serial">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "serialno" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element; let i = index">
+              {{ i + 1 }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>{{ "name" | translate }}</th>
+            <td mat-cell *matCellDef="let element">
+              {{ element?.user?.firstName + " " + element?.user?.lastName }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="email">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "email" | translate }} / {{ "comapnyemailId" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element">
+              {{ element.user.email || "N/A" }} / {{ element.email || "N/A" }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="phonenumber">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "phonenumber" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element">
+              {{ element?.user?.phone || "N/A" }} /
+              {{ element.phoneNumber || "N/A" }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="titles">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "nooftitles" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element">{{ 0 }}</td>
+          </ng-container>
+          <ng-container matColumnDef="authors">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "noofauthors" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element">
+              {{ 0 }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="companyname">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "companyname" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element">{{ element.name }}</td>
+          </ng-container>
 
-    </li>
-  </ul>
+          <tr class="!bg-primary-light"
+            mat-header-row
+            *matHeaderRowDef="displayedSubPublisherColumns"
+          ></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedSubPublisherColumns"
+          ></tr>
 
-    </section>
+          <!-- Row shown when there is no matching data. -->
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" colspan="4">
+              No data matching the filter "{{ input.value }}"
+            </td>
+          </tr>
+        </table>
+      </section>
+    </mat-tab>
 
     <!-- Royalties -->
-    <section id="royalties" class="mt-10 bg-white p-6 rounded-xl shadow">
-      <h2 class="heading mb-4">{{"Royalties&Wallet" | translate}}</h2>
-      <ul class="space-y-2 ">
-        <li>🪙 {{"walletbalance" | translate}}: {{wallet()?.balance}}</li>
-        <li>⏳{{"onhold" | translate}}:{{wallet()?.onHold}}</li>
-      </ul>
-      <ul class="space-y-4">
-        <li class="grid grid-cols-7 px-4 py-3 text-sm font-medium text-[var(--text-primary)] bg-[var(--surface-alt)] border-bottom ">
-          <div>{{"date" | translate}}</div>
-          <div>{{"authorname" | translate}}</div>
-          <div>{{"booktitle" | translate}}</div>
-          <div>{{"sales" | translate}}</div>
-          <div>{{"royaltyfromsales" | translate}}</div>
-          <div>{{"publisherearnings" | translate}}</div>
-          <div>{{"royaltyamount" | translate}}</div>
-        </li>
-     
-        <li *ngFor=" let royalty of royalties()" class="grid grid-cols-7 px-4 py-3 text-sm text-[var(--text-secondary)] border-bottom hover:bg-gray-50 dark:hover:bg-[var(--surface-alt)] transition">
-          <div>{{royalty.date}}</div>
-          <div>{{royalty.authorName}}</div>
-          <div>{{royalty.bookTitle}}</div>
-          <div>{{royalty.sales}}</div>
-          <div>{{royalty.royaltyFromSales}}</div>
-          <div>{{royalty.publisherEarnings}}</div>
-          <div>{{royalty.royaltyAmount}}</div>  
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <span class="text-text-heading font-medium">
+          {{ "royalties&wallet" | translate }}
+        </span>
+      </ng-template>
+      <section
+        id="royalties"
+        class="mt-10 bg-white p-6 rounded-xl shadow flex flex-col gap-6"
+      >
+        <h2 class="heading">{{ "Royalties&Wallet" | translate }}</h2>
+        <ul class="space-y-2">
+          <li>
+            🪙 {{ "walletbalance" | translate }} :
+            <label class="font-medium">{{
+              wallet()?.balance || 22000 | currency : "INR"
+            }}</label>
           </li>
-      </ul>
-    </section>
+          <li>
+            ⏳{{ "onhold" | translate }} :
+            <label class="font-medium">{{
+              wallet()?.onHold || 1500 | currency : "INR"
+            }}</label>
+          </li>
+        </ul>
 
+        <table mat-table [dataSource]="royaltyData" class="mat-elevation-z8 !rounded-2xl overflow-hidden">
+          <ng-container matColumnDef="serial">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "serialno" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element; let i = index">
+              {{ i + 1 }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef>{{ "date" | translate }}</th>
+            <td mat-cell *matCellDef="let element">{{ element.date }}</td>
+          </ng-container>
+          <ng-container matColumnDef="authorname">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "authorname" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element">
+              {{ element?.username }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="booktitle">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "booktitle" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element">
+              {{ element.user.email || "N/A" }} /
+              {{ element.bookTitle || "N/A" }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="sales">
+            <th mat-header-cell *matHeaderCellDef>{{ "sales" | translate }}</th>
+            <td mat-cell *matCellDef="let element">{{ element?.sales }}</td>
+          </ng-container>
+          <ng-container matColumnDef="royaltyfromsales">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "royaltyfromsales" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element">
+              {{ element.royaltyFromSales }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="publisherearnings">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "publisherearnings" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element">
+              {{ element.publisherEarnings }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="royaltyamount">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ "royaltyamount" | translate }}
+            </th>
+            <td mat-cell *matCellDef="let element">
+              {{ element.royaltyAmount }}
+            </td>
+          </ng-container>
+
+          <tr class="!bg-primary-light"  mat-header-row *matHeaderRowDef="displayedRoyaltyColumns"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedRoyaltyColumns"
+          ></tr>
+
+          <!-- Row shown when there is no matching data. -->
+        </table>
+      </section>
+    </mat-tab>
 
     <!-- Published Links -->
-    <section id="published-links" class="mt-10 bg-white p-6 rounded-xl shadow">
-      <h2 class="heading mb-4">Published Links</h2>
-      <ul class="list-disc pl-6">
-        <li><a href="#" class="text-blue-600">The Lost City – Amazon</a></li>
-        <li><a href="#" class="text-blue-600">Science Experiments – Website</a></li>
-      </ul>
-    </section>
-
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <span class="text-text-heading font-medium">
+          {{ "publishedlinks" | translate }}
+        </span>
+      </ng-template>
+      <section
+        id="published-links"
+        class="mt-10 bg-white p-6 rounded-xl shadow"
+      >
+        <h2 class="heading mb-4">Published Links</h2>
+        <ul class="list-disc pl-6">
+          <li><a href="#" class="text-blue-600">The Lost City – Amazon</a></li>
+          <li>
+            <a href="#" class="text-blue-600">Science Experiments – Website</a>
+          </li>
+        </ul>
+      </section>
+    </mat-tab>
     <!-- Attachments -->
-    <section id="attachments" class="mt-10 bg-white p-6 rounded-xl shadow">
-      <h2 class="heading mb-4">Attachments</h2>
-      <ul class="list-disc pl-6">
-        <li><a href="#" class="text-blue-600">PAN Document</a></li>
-        <li><a href="#" class="text-blue-600">Publisher Agreement</a></li>
-      </ul>
-    </section>
-</div>
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <span class="text-text-heading font-medium">
+          {{ "attachments" | translate }}
+        </span>
+      </ng-template>
+      <section id="attachments" class="mt-10 bg-white p-6 rounded-xl shadow">
+        <h2 class="heading mb-4">Attachments</h2>
+        <ul class="list-disc pl-6">
+          <li><a href="#" class="text-blue-600">PAN Document</a></li>
+          <li><a href="#" class="text-blue-600">Publisher Agreement</a></li>
+        </ul>
+      </section>
+    </mat-tab>
+  </mat-tab-group>
 </div>

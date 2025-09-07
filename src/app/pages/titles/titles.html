@@ -1,0 +1,120 @@
+<div class="flex flex-col flex-grow gap-4">
+  <h3 class="heading">
+    {{ "titles" | translate }}
+  </h3>
+
+  <div class="flex md:flex-row flex-col justify-between w-full gap-4">
+    <div
+      class="flex h-[38px] items-center justify-center md:min-w-[480px] min-w-full gap-2"
+    >
+      <input
+        class="input-field  outline-none w-full"
+        #input
+        (input)="searchStr.next(input.value)"
+        [placeholder]="'search' | translate"
+      />
+      <button
+      class="btn h-[38px] flex items-center self-end justify-center gap-2"
+      (click)="searchStr.next(input.value)"
+    >
+      <svg-icon
+        src="images/magnifying-glass-solid-full.svg"
+        class="w-4 fill-white flex"
+        ></svg-icon>
+        {{ "search" | translate }}
+      </button>
+    </div>
+
+    <div class="flex gap-2">
+      <button matButton="filled" class=" !bg-primary text-white flex items-center gap-2 rounded-md p-2">
+               <mat-icon class="material-icons">filter_list</mat-icon>
+        {{ "filter" | translate }}
+      </button>
+      <button
+        matButton
+        matButton="filled"
+        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        [routerLink]="['/title',0]" routerLinkActive="router-link-active" 
+      >
+        <mat-icon class="material-icons">add_circle_outline</mat-icon>
+        {{ "addtitle" | translate }}
+      </button>
+    </div>
+  </div>
+  <div class="flex gap-2">
+    <button class="!bg-primary" matButton="filled" >{{ "all" | translate }}</button>
+    <button class="!bg-primary" matButton="filled">{{ "active" | translate }}</button>
+    <button class="!bg-primary" matButton="filled">{{ "inactive" | translate }}</button>
+    <button class="!bg-primary" matButton="filled">{{ "dormant" | translate }}</button>
+  </div>
+
+  <app-list-table
+    class="pt-6"
+    [dataSource]="dataSource"
+    [displayedColumns]="displayedColumns"
+    [actionTemplate]="actionButtons"
+  >
+    
+  </app-list-table>
+  <ng-template #actionButtons let-element>
+  <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
+    <button class="!bg-primary" mat-icon-button [routerLink]="['/title',1]">
+      <mat-icon class="!text-white">visibility</mat-icon>
+    </button>
+    <button class="!bg-primary" mat-icon-button [routerLink]="['/title',1]">
+      <mat-icon class="!text-white">edit</mat-icon>
+    </button>
+    <button class="!bg-primary" mat-icon-button>
+      <mat-icon class="!text-white">lock_reset</mat-icon>
+    </button>
+    <button class="!bg-accent" mat-icon-button>
+      <mat-icon class="!text-white">block</mat-icon>
+    </button>
+  </div>
+</ng-template>
+
+  <!-- <div class="bg-[var(--surface)] rounded-md shadow border pt-6">
+    <div
+      class="grid grid-cols-[1fr_150px_150px_150px_1fr_1fr_1fr] px-4 py-3 text-sm font-medium text-[var(--text-primary)] bg-[var(--surface-alt)] border-bottom"
+    >
+      <div>{{ "title" | translate }}</div>
+      <div>{{ "ISBN" | translate }}</div>
+      <div>{{"pages" |translate}}</div>
+      <div>{{ "royaltiesEarned" | translate }}</div>
+      <div>{{ "authorname" | translate }}</div>
+      <div>{{ "links" | translate }}</div>
+      <div>{{ "actions" | translate }}</div>
+    </div>
+
+    @if (titles() && titles().length ){
+    <ul class="divide-y">
+      @for (title of titles(); track title; let i = $index) {
+      <li
+        class="grid grid-cols-[1fr_150px_150px_150px_1fr_1fr_1fr] items-center px-4 py-3 text-sm text-[var(--text-secondary)] border-bottom hover:bg-gray-50 dark:hover:bg-[var(--surface-alt)] transition"
+      >
+        <div>{{ title.name}}</div>
+        <div>{{  title.isbn.isbnNumber }}</div>
+        <div>{{title.pages}}</div>
+        <div>{{0  }}</div>
+        <div>{{ title.author.name }}</div>
+        <div>{{ title.links && title.links.length > 0 ? title.links.join(", ") : "No Links Available"}}</div>
+        <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
+          <button 
+            [routerLink]="['/title', title.id]"
+            routerLinkActive="router-link-active"
+            class="btn h-[38px] w-[38px] !p-0"
+            ><svg-icon class="flex fill-white w-6" src="images/eye-solid-full.svg"></svg-icon></button>
+          <button
+            [routerLink]="['/title', title.id]"
+            class="btn h-[38px] w-[38px] !p-0"
+            ><svg-icon class="flex fill-white w-6" src="images/pen-to-square-regular-full.svg"></svg-icon></button
+          >
+        
+          <button class="btn h-[38px] w-[38px] !p-0 border-accent !bg-red-200"><svg-icon class="flex fill-accent w-6" src="images/trash-can-solid-full.svg"></svg-icon></button>
+        </div>
+      </li>
+      }
+    </ul>
+    }
+  </div> -->
+</div>

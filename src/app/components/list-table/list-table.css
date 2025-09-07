@@ -1,0 +1,12 @@
+table {
+@apply w-full border rounded-lg bg-primary-light
+}
+
+
+.mat-mdc-form-field {
+@apply text-sm text-text-primary bg-primary-light
+}
+.mat-mdc-header-row{
+    @apply !bg-primary-light text-text-primary
+}
+

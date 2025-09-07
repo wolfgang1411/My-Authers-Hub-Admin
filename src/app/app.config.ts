@@ -9,12 +9,15 @@ import { routes } from './app.routes';
 import {
   provideClientHydration,
   withEventReplay,
+
 } from '@angular/platform-browser';
 import {
   provideHttpClient,
   withFetch,
   withInterceptors,
 } from '@angular/common/http';
+import {provideAnimations} from "@angular/platform-browser/animations"
+
 
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -37,5 +40,6 @@ export const appConfig: ApplicationConfig = {
       lang: 'en',
     }),
     provideAngularSvgIcon(),
+    provideAnimations()
   ],
 };

@@ -3,3 +3,23 @@
   z-index: 10;
   height: 100%;
 }
+/* ::ng-deep.mdc-button__label{
+ display: grid !important;
+ grid-template-columns: 40px 1fr;
+ align-items: center;
+ justify-content: center;
+ text-align: center;
+ grid-gap: 0.5rem;
+}
+::ng-deep.mdc-button__ripple{
+  display: none;
+} */
+
+
+
+::ng-deep.mdc-list-item__content {
+  @apply w-full ;
+}
+::ng-deep.mat-mdc-list-item-unscoped-content{
+@apply w-full;
+}

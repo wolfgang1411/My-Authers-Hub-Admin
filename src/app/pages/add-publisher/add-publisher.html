@@ -1,0 +1,205 @@
+@switch (stepperOrientation | async) { @case ('horizontal') { } @case
+('vertical') { } }
+
+<h3 class="heading">
+  {{ "publisherdetails" | translate }}
+</h3>
+<mat-stepper
+  class="example-stepper !my-4"
+  [orientation]="(stepperOrientation | async)!"
+  [linear]="true"
+  [animationDuration]="'500'"
+>
+  <mat-step
+    [stepControl]="publisherFormGroup"
+    class="!text-accent !p-0"
+    label="Fill out your basic details"
+  >
+    <form [formGroup]="publisherFormGroup">
+      <div class="grid-cols-4 grid gap-4 my-4">
+        <mat-form-field>
+          <mat-label>{{ "companyname" | translate }}</mat-label>
+          <input
+            matInput
+            placeholder="companyname pvt ltd"
+            formControlName="name"
+            required
+          />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "emailidofficial" | translate }}</mat-label>
+          <input
+            matInput
+            placeholder="abc@gmail.com"
+            formControlName="email"
+            required
+          />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "pocname" | translate }}</mat-label>
+          <input
+            matInput
+            placeholder="First name Last Name"
+            formControlName="pocName"
+            required
+          />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "poccontactnumber" | translate }}</mat-label>
+          <input
+            matInput
+            placeholder="+91-########33"
+            formControlName="pocPhoneNumber"
+            required
+          />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "pocemailid" | translate }}</mat-label>
+          <input
+            matInput
+            placeholder="xyz@gmail.com"
+            formControlName="pocEmail"
+            required
+          />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "pocdesignation" | translate }}</mat-label>
+          <input
+            matInput
+            placeholder="xyz"
+            formControlName="designation"
+            required
+          />
+        </mat-form-field>
+      </div>
+
+      <mat-card class="example-card !gap-4" appearance="outlined">
+        <mat-card-header class="flex flex-col gap-2">
+          <mat-card-title class="!text-primary text-left !font-medium">{{
+            "uploadlogo" | translate
+          }}</mat-card-title>
+          <mat-card-subtitle class="text-"
+            >{{
+              "imagesizeshouldbelessthan2MB" | translate
+            }}.</mat-card-subtitle
+          >
+        </mat-card-header>
+        <app-upload-file></app-upload-file>
+      </mat-card>
+    </form>
+    <button matButton="filled" class="!bg-primary mt-8" matStepperNext>
+      Next
+    </button>
+  </mat-step>
+  <mat-step
+    [stepControl]="publisherAddressDetails"
+    class="!text-accent !p-0"
+    label="Fill out your address"
+  >
+    <form [formGroup]="publisherAddressDetails">
+      <div class="grid-cols-4 grid gap-4 my-4">
+        <mat-form-field>
+          <mat-label>{{ "address" | translate }}</mat-label>
+          <input
+            matInput
+            formControlName="address"
+            placeholder="Ex. 1 Main St, New York, NY"
+            required
+          />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "city" | translate }}</mat-label>
+          <input
+            matInput
+            formControlName="city"
+            placeholder="Ex. 1 Main St, New York, NY"
+            required
+          />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "state" | translate }}</mat-label>
+          <input
+            matInput
+            formControlName="state"
+            placeholder="Ex. 1 Main St, New York, NY"
+            required
+          />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "country" | translate }}</mat-label>
+          <input matInput formControlName="country" placeholder="" required />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "pincode" | translate }}</mat-label>
+          <input matInput formControlName="pincode" placeholder="" required />
+        </mat-form-field>
+      </div>
+    </form>
+    <div class="flex flex-row gap-2">
+      <button class="!bg-primary mt-8 !text-white" matButton matStepperPrevious>
+        Back
+      </button>
+      <button class="!bg-primary mt-8 !text-white" matButton matStepperNext>
+        Next
+      </button>
+    </div>
+  </mat-step>
+  <mat-step
+    [stepControl]="publisherBankDetails"
+    class="!text-accent !p-0"
+    label="Fill out your Bank Details"
+  >
+    <form [formGroup]="publisherBankDetails">
+      <div class="grid-cols-4 grid gap-4 my-4">
+        <mat-form-field>
+          <mat-label>{{ "nameonaccount" | translate }}</mat-label>
+          <input
+            matInput
+            formControlName="name"
+            placeholder="M Singh"
+            required
+          />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "bankaccnumber" | translate }}</mat-label>
+          <input
+            matInput
+            formControlName="accountNo"
+            placeholder="78************56"
+            required
+          />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "ifsccode" | translate }}</mat-label>
+          <input
+            matInput
+            formControlName="ifsc"
+            placeholder="IFSC7877776"
+            required
+          />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "panCardNo" | translate }}</mat-label>
+          <input matInput formControlName="panCardNo" placeholder="" required />
+          </mat-form-field>
+        <mat-form-field>
+  <mat-label>{{ "accountType" | translate }}</mat-label>
+          <mat-select formControlName="accountType" placeholder="" required>
+    <mat-option value="SAVING">SAVING</mat-option>
+            <mat-option value="CURRENT">CURRENT</mat-option>
+  </mat-select>
+</mat-form-field>
+        
+      </div>
+    </form>
+    <div class="flex flex-row gap-2">
+      <button class="!bg-primary mt-8 !text-white" matButton matStepperPrevious>
+        Back
+      </button>
+      <button class="!bg-primary mt-8 !text-white" matButton  (click)="onSubmit()">
+        Submit
+      </button>
+    </div>
+  </mat-step>
+
+</mat-stepper>
