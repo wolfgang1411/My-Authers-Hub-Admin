@@ -3,12 +3,13 @@ import { Server } from '../../services/server';
 import { PublisherFilter, Publishers } from '../../interfaces/Publishers';
 import { Pagination } from '../../interfaces';
 import { Invite } from '../../interfaces/Invite';
+import { Logger } from '../../services/logger';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PublisherService {
-  constructor(private server: Server) {}
+  constructor(private server: Server, private logger: Logger) {}
 
   async getPublishers(filter?: PublisherFilter) {
     try {
@@ -17,7 +18,7 @@ export class PublisherService {
         filter
       );
     } catch (error) {
-      console.error('Error fetching publishers:', error);
+      this.logger.logError(error);
       throw error;
     }
   }
@@ -26,29 +27,28 @@ export class PublisherService {
     try {
       return await this.server.get<Publishers>(`publishers/${id}`);
     } catch (error) {
-      console.error(`Error fetching publisher with id ${id}:`, error);
+      this.logger.logError(error);
       throw error;
     }
   }
 
   async createPublisher(publisherData: Publishers): Promise<Publishers> {
     try {
-    return await this.server[publisherData.id ? 'patch' : 'post'](
+      return await this.server[publisherData.id ? 'patch' : 'post'](
         publisherData.id ? `publishers/${publisherData.id}` : 'publishers',
         { ...publisherData }
       );
     } catch (error) {
+      this.logger.logError(error);
       throw error;
     }
   }
-  async sendInviteLink(invite: Invite){
+  async sendInviteLink(invite: Invite) {
     try {
-     return await this.server.post('invite', invite)
+      return await this.server.post('invite', invite);
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
     }
-    catch(error)
-    {
-  throw error
-    }
-
   }
 }

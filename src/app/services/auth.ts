@@ -4,12 +4,13 @@ import { AuthResponse, LoginWithEmail, TokeInfo, User } from '../interfaces';
 import storage from '../common/util.ts/storage';
 import { jwtDecode } from 'jwt-decode';
 import md5 from 'md5';
+import { Logger } from './logger';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  constructor(private server: Server) {}
+  constructor(private server: Server, private logger: Logger) {}
 
   isUserAuthenticated = signal<boolean | null>(null);
   isUserAuthenticated$ = this.isUserAuthenticated.asReadonly();
@@ -52,6 +53,7 @@ export class AuthService {
       });
       return response;
     } catch (error) {
+      this.logger.logError(error);
       throw error;
     }
   }

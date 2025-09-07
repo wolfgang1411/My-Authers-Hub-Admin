@@ -1,12 +1,13 @@
 import { Injectable, signal } from '@angular/core';
 import { Server } from './server';
 import { UpdateUser, User } from '../interfaces';
+import { Logger } from './logger';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UserService {
-  constructor(private server: Server) {}
+  constructor(private server: Server, private logger: Logger) {}
 
   private loggedInUser = signal<User | null>(null);
   loggedInUser$ = this.loggedInUser.asReadonly();
@@ -25,6 +26,7 @@ export class UserService {
       const method = data.id ? 'patch' : 'post';
       return await this.server[method]<User>(url, data);
     } catch (error) {
+      this.logger.logError(error);
       throw error;
     }
   }
