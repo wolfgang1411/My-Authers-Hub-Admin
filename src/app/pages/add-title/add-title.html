@@ -96,10 +96,10 @@
               </button>
             </mat-form-field>
           </div>
-          <div class="text-sm ">
-            @if (isbnVerified() === true) { 
+          <div class="text-sm">
+            @if (isbnVerified() === true) {
             <span class="text-green-600">✔ ISBN Verified</span>
-           } @else if (isbnVerified() === false) {
+            } @else if (isbnVerified() === false) {
             <span class="text-red-600">✘ Invalid ISBN</span>
             }
           </div>
@@ -122,72 +122,76 @@
             required
           />
         </mat-form-field>
+        <mat-form-field>
+          <mat-label>
+            {{ "shortdescription" | translate }}
+          </mat-label>
+          <textarea
+            matInput
+            placeholder="Short Description"
+            formControlName="shortDescription"
+          ></textarea>
+        </mat-form-field>
       </div>
-      <mat-form-field>
-        <mat-label>
-          {{ "shortdescription" | translate }}
-        </mat-label>
-        <textarea
-          matInput
-          placeholder="Short Description"
-          formControlName="shortDescription"
-        ></textarea>
-      </mat-form-field>
-      <div class="grid grid-cols-2 gap-4">
-        <div formGroupName="publisher" class="grid grid-cols-2 gap-4">
-          <mat-form-field>
-            <mat-label>Publisher</mat-label>
-            <mat-select
-              formControlName="id"
-              (selectionChange)="onPublisherChange($event.value)"
-            >
-              @for (item of publishers(); track $index) {
-              <mat-option [value]="item.id">
-                {{ item.name }}
-              </mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field>
-            <mat-label>Publisher Name</mat-label>
-            <input matInput formControlName="name" readonly />
-          </mat-form-field>
-        </div>
-        <div formArrayName="authors">
-          @for(item of authors.controls ; track $index){
-          <div [formGroupName]="$index" class="flex items-center gap-2">
+      <div class="grid grid-cols-[1fr_2fr] gap-4 items-start">
+        <mat-form-field formGroupName="publisher">
+          <mat-label>Select Publisher</mat-label>
+          <mat-select
+            formControlName="id"
+            (selectionChange)="onPublisherChange($event.value)"
+          >
+            @for (item of publishers(); track $index) {
+            <mat-option [value]="item.id">
+              {{ item.name }}
+            </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <!--   
             <mat-form-field>
-              <mat-label>Author</mat-label>
-              <mat-select formControlName="id">
-                @for(author of authorsList() ; track $index) {
-                <mat-option [value]="author.id">
-                  {{ author.name }}
-                </mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            <button mat-icon-button color="warn" (click)="removeAuthor($index)">
-              <mat-icon>delete</mat-icon>
-            </button>
+              <mat-label>Publisher Name</mat-label>
+              <input matInput formControlName="name" readonly />
+            </mat-form-field> -->
+        <div class="flex items-start">
+          <div formArrayName="authors" class="grid grid-cols-2 gap-4">
+            @for(item of authors.controls ; track $index){
+            <div [formGroupName]="$index" class="flex items-center gap-2">
+              <mat-form-field>
+                <mat-label>Author</mat-label>
+                <mat-select formControlName="id">
+                  @for(author of authorsList() ; track $index) {
+                  <mat-option [value]="author.id">
+                    {{ author.name }}
+                  </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="removeAuthor($index)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+            }
           </div>
-          }
-        </div>
-        <button
-          mat-stroked-button
-          color="primary"
-          type="button"
-          (click)="addAuthor()"
-        >
-          <mat-icon>add</mat-icon> Add Author
-        </button>
-        <div class="mt-4 text-sm text-gray-600">
-          @for(author of authors.controls; track $index){
-          <span>
-            {{ authors.at($index).value.name
-            }}{{ $index < authors.length - 1 ? ", " : "" }}
-          </span>
-          }
+          <button
+            mat-stroked-button
+            color="primary"
+            type="button"
+            (click)="addAuthor()"
+          >
+            <mat-icon>add</mat-icon> Add Author
+          </button>
+          <!-- <div class="mt-4 text-sm text-gray-600">
+            @for(author of authors.controls; track $index){
+            <span>
+              {{ authors.at($index).value.name
+              }}{{ $index < authors.length - 1 ? ", " : "" }}
+            </span>
+            }
+          </div> -->
         </div>
       </div>
 
