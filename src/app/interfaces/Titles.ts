@@ -1,6 +1,7 @@
 import { Publisher } from '../pages/publisher/publisher';
 import { Author } from './Authors';
 import { ISBN } from './Isbn';
+import { Media } from './Media';
 import { Publishers } from './Publishers';
 import { User } from './user';
 
@@ -25,6 +26,7 @@ export interface Title {
   printing: TitlePrinting[];
   Booking: Booking[];
   Royalty: Royalty[];
+  documentMedia : Media[]
 }
 export interface TitleResponse {
   title:string;

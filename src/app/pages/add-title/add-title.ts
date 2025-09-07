@@ -1,4 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  inject,
+  QueryList,
+  signal,
+  ViewChildren,
+} from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { map, Observable } from 'rxjs';
 import { StepperOrientation } from '@angular/cdk/stepper';
@@ -19,6 +26,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatRadioModule } from '@angular/material/radio';
 import {
   Author,
+  Media,
+  MediaType,
   PaperType,
   Publishers,
   TitleCategory,
@@ -31,8 +40,10 @@ import { PublisherService } from '../publisher/publisher-service';
 import { AuthorsService } from '../authors/authors-service';
 import { MatIconModule } from '@angular/material/icon';
 import { IsbnService } from '../../services/isbn-service';
-import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterModule } from '@angular/router';
+import {  MatCardModule } from "@angular/material/card";
+import { subscribe } from 'diagnostics_channel';
 
 @Component({
   selector: 'app-add-title',
@@ -49,7 +60,8 @@ import { RouterModule } from '@angular/router';
     MatSelectModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    RouterModule
+    RouterModule,
+    MatCardModule
 ],
   templateUrl: './add-title.html',
   styleUrl: './add-title.css',
@@ -58,21 +70,61 @@ export class AddTitle {
   constructor(
     private publisherService: PublisherService,
     private authorService: AuthorsService,
-    private isbnService : IsbnService
+    private isbnService: IsbnService
   ) {
     const breakpointObserver = inject(BreakpointObserver);
     this.stepperOrientation = breakpointObserver
       .observe('(min-width: 800px)')
       .pipe(map(({ matches }) => (matches ? 'horizontal' : 'vertical')));
   }
+  @ViewChildren('fileInput') fileInputs!: QueryList<
+    ElementRef<HTMLInputElement>
+  >;
+
   stepperOrientation: Observable<StepperOrientation>;
 
   private _formBuilder = inject(FormBuilder);
   titleForm!: FormGroup;
   publishers = signal<Publishers[]>([]);
   authorsList = signal<Author[]>([]);
-  isbnVerified=signal<boolean | null>(null);
-isVerifying =signal<boolean>(false);
+  isbnVerified = signal<boolean | null>(null);
+  isVerifying = signal<boolean>(false);
+
+  getDocumentLabel(mediaType: MediaType): string {
+    switch (mediaType) {
+      case 'FullCover':
+        return 'Upload Full Cover (PDF)';
+      case 'PrintInterior':
+        return 'Upload Print Interior (PDF)';
+      case 'FrontCover':
+        return 'Upload Front Cover (JPG/PNG)';
+      case 'BackCover':
+        return 'Upload Back Cover (Optional)';
+      default:
+        return 'Upload File';
+    }
+  }
+
+  getHelperText(mediaType: MediaType): string {
+    switch (mediaType) {
+      case 'FullCover':
+        return 'PDF, max 20MB';
+      case 'PrintInterior':
+        return 'PDF, max 10MB';
+      case 'FrontCover':
+        return 'JPG or PNG, max 2MB';
+      case 'BackCover':
+        return 'Optional: JPG or PNG, max 2MB';
+      default:
+        return '';
+    }
+  }
+
+  getAcceptedTypes(mediaType: MediaType): string {
+    if (mediaType === 'PrintInterior' || mediaType === 'FullCover') return '.pdf';
+    return 'image/*';
+  }
+
   ngOnInit(): void {
     this.publisherService.getPublishers().then(({ items }) => {
       this.publishers.set(items);
@@ -82,15 +134,15 @@ isVerifying =signal<boolean>(false);
     });
     this.titleForm = this._formBuilder.group({
       format: [null, Validators.required],
-      hasFiles:[null,Validators.required],
-      publishingType:[null,Validators.required],
+      hasFiles: [null, Validators.required],
+      publishingType: [null, Validators.required],
       titleDetails: this._formBuilder.group({
         name: ['', Validators.required],
-        subTitle: [''],
-        longDescription: ['', Validators.required],
-        shortDescription: [''],
+        subTitle: ['', Validators.required],
+        longDescription: [''],
+        shortDescription: ['', Validators.required],
         edition: [null],
-        language: ['', Validators.required],
+        language: [''],
         subject: [''],
         status: [TitleStatus.Active],
         category: [null as TitleCategory | null],
@@ -109,18 +161,17 @@ isVerifying =signal<boolean>(false);
           format: ['ISBN-13'],
         }),
       }),
-      documents: this._formBuilder.group({
-        fullCover: [null],
-        printInterior: [null],
-        frontCover: [null, Validators.required],
-        backCover: [null],
-      }),
+      documentMedia: this._formBuilder.array<Media>([]),
       printing: this._formBuilder.array([this.createPrintingGroup()]),
       royalties: this._formBuilder.array([]),
       distribution: this._formBuilder.group({
         type: ['', Validators.required],
       }),
     });
+   this.titleForm.get('format')?.valueChanges.subscribe((format) => {
+    this.buildMediaArray(format);
+  });
+
   }
 
   createPrintingGroup(): FormGroup {
@@ -176,8 +227,8 @@ isVerifying =signal<boolean>(false);
   get titleDetailsCtrl() {
     return this.titleForm.get('titleDetails') as FormGroup;
   }
-  get documentCtrl() {
-    return this.titleForm.get('documents') as FormGroup;
+  get documentMedia() {
+    return this.titleForm.get('documentMedia') as FormArray;
   }
 
   get printCtrl() {
@@ -213,37 +264,114 @@ isVerifying =signal<boolean>(false);
     );
   }
 
+  async verifyIsbn(): Promise<void> {
+    const isbnNumber = this.titleDetailsCtrl.get('isbn.isbnNumber')?.value;
+    if (!isbnNumber) return;
 
-async verifyIsbn(): Promise<void> {
-  const isbnNumber = this.titleDetailsCtrl.get('isbn.isbnNumber')?.value;
-  if (!isbnNumber) return;
+    this.isVerifying.set(true);
+    this.isbnVerified.set(null);
 
-  this.isVerifying.set(true);
-  this.isbnVerified.set(null); 
-
-  try {
-    const result = await this.isbnService.verifyIsbn(isbnNumber);
-    if (result.verified) {
-      this.isbnVerified.set(true);
-      this.titleDetailsCtrl.get('isbn.isbnNumber')?.setErrors(null);
-    } else {
+    try {
+      const result = await this.isbnService.verifyIsbn(isbnNumber);
+      if (result.verified) {
+        this.isbnVerified.set(true);
+        this.titleDetailsCtrl.get('isbn.isbnNumber')?.setErrors(null);
+      } else {
+        this.isbnVerified.set(false);
+        this.titleDetailsCtrl
+          .get('isbn.isbnNumber')
+          ?.setErrors({ invalidIsbn: true });
+      }
+    } catch (err) {
+      console.error('ISBN verification failed', err);
       this.isbnVerified.set(false);
-      this.titleDetailsCtrl.get('isbn.isbnNumber')?.setErrors({ invalidIsbn: true });
+      this.titleDetailsCtrl
+        .get('isbn.isbnNumber')
+        ?.setErrors({ invalidIsbn: true });
+    } finally {
+      this.isVerifying.set(false);
     }
-  } catch (err) {
-    console.error('ISBN verification failed', err);
-    this.isbnVerified.set(false); 
-    this.titleDetailsCtrl.get('isbn.isbnNumber')?.setErrors({ invalidIsbn: true });
-  } finally {
-    this.isVerifying.set(false);
+  }
+  addDefaultMedia() {
+    this.documentMedia.clear();
+    this.documentMedia.push(this.createMedia('FullCover', true));
+    this.documentMedia.push(this.createMedia('FrontCover', true));
+    this.documentMedia.push(this.createMedia('BackCover', false));
+    this.documentMedia.push(this.createMedia('PrintInterior', true));
+  }
+
+  createMedia(mediaType: MediaType, required= true): FormGroup {
+    return this._formBuilder.group({
+      id: [0],
+      url: [''],
+      type: [mediaType],
+      file: [null, required ? Validators.required : []],
+      mediaType: [mediaType],
+    });
+  }
+   buildMediaArray(format: string) {
+  this.documentMedia.clear();
+  switch (format) {
+    case 'ebookOnly':
+      this.documentMedia.push(this.createMedia('FullCover', true));
+      this.documentMedia.push(this.createMedia('FrontCover', true));
+      break;
+
+    case 'printOnly':
+      this.documentMedia.push(this.createMedia('FullCover', true));
+      this.documentMedia.push(this.createMedia('FrontCover', true));
+      this.documentMedia.push(this.createMedia('BackCover', false));
+      this.documentMedia.push(this.createMedia('PrintInterior', true));
+      break;
+
+    case 'printAndEbook':
+      this.documentMedia.push(this.createMedia('FullCover', true));
+      this.documentMedia.push(this.createMedia('FrontCover', true));
+      this.documentMedia.push(this.createMedia('BackCover', false));
+      this.documentMedia.push(this.createMedia('PrintInterior', true));
+      break;
+
+    default:
+      // no format selected → leave empty
+      break;
   }
 }
+  isRequired(control: AbstractControl | null): boolean {
+    if (!control?.validator) return false;
+    const validator = control.validator({} as any);
+    return !!(validator && validator['required']);
+  }
+ 
 
+  onFileSelected(event: Event, index: number) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      const mediaType = this.documentMedia.at(index).get('mediaType')
+        ?.value as MediaType;
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.documentMedia.at(index).patchValue({
+          file: file,
+          url: mediaType === 'PrintInterior' || mediaType === 'FullCover' ? null : (reader.result as string),
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+removeFile(index: number) {
+  this.documentMedia.at(index).patchValue({
+    file: null,
+    url: null
+  });
+}
   onSubmit() {
     if (this.titleForm.valid) {
       const payload: Title = this.titleForm.value as Title;
       console.log('Submitting:', payload);
       // TODO: call API
+    } else {
+      this.titleForm.markAllAsTouched();
     }
   }
 }

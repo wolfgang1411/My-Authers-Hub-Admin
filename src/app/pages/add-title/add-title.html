@@ -76,7 +76,7 @@
           <button
             type="button"
             class="btn border-2 !border-primary flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
-             [ngClass]="{
+            [ngClass]="{
               '!bg-primary !text-white !fill-white shadow-lg':
                 titleForm.get('hasFiles')?.value === true,
               '!bg-white !text-primary fill-primary !border-primary':
@@ -99,14 +99,15 @@
           <button
             type="button"
             class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
-             [ngClass]="{
+            [ngClass]="{
               '!bg-primary !text-white !fill-white shadow-lg':
                 titleForm.get('hasFiles')?.value === false,
               '!bg-white !text-primary fill-primary !border-primary':
                 titleForm.get('hasFiles')?.value !== false
             }"
             (click)="titleForm.get('hasFiles')?.setValue(false)"
-            [routerLink]="['/titles']" routerLinkActive="router-link-active" 
+            [routerLink]="['/titles']"
+            routerLinkActive="router-link-active"
           >
             <svg-icon
               class="fill-primary flex w-20"
@@ -115,8 +116,7 @@
             {{ "noidonthavefilesready" | translate }}
           </button>
         </div>
-        }
-  @if(titleForm.get('hasFiles')?.value === true) {
+        } @if(titleForm.get('hasFiles')?.value === true) {
 
         <h3 class="heading self-center !text-[1.6rem] !font-medium">
           {{ "choosepublishingtype" | translate }}??
@@ -125,23 +125,22 @@
           <button
             type="button"
             class="btn border-2 !border-primary flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
-             [ngClass]="{
+            [ngClass]="{
               '!bg-primary !text-white !fill-white shadow-lg':
                 titleForm.get('publishingType')?.value === 'publish&print',
               '!bg-white !text-primary fill-primary !border-primary':
-                titleForm.get('publishingType')?.value !== 
-                'publish&print'
+                titleForm.get('publishingType')?.value !== 'publish&print'
             }"
             (click)="titleForm.get('publishingType')?.setValue('publish&print')"
             matStepperNext
           >
             <div class="flex justify-center">
               <svg-icon
-                class="fill-primary flex w-20 "
+                class="fill-primary flex w-20"
                 src="images/book-solid-full.svg"
               ></svg-icon>
               <svg-icon
-                class="fill-primary flex w-20 "
+                class="fill-primary flex w-20"
                 src="images/print-solid-full.svg"
               ></svg-icon>
             </div>
@@ -150,7 +149,7 @@
           <button
             type="button"
             class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
-             [ngClass]="{
+            [ngClass]="{
               '!bg-primary !text-white !fill-white shadow-lg':
                 titleForm.get('publishingType')?.value === 'printOnly',
               '!bg-white !text-primary fill-primary !border-primary':
@@ -167,13 +166,12 @@
           </button>
         </div>
         }
-
       </div>
     </form>
   </mat-step>
-  <mat-step [stepControl]="titleDetailsCtrl" label="Fill the Title Details">
+  <!-- <mat-step [stepControl]="titleDetailsCtrl" label="Fill the Title Details">
     <form [formGroup]="titleDetailsCtrl">
-      <div class="grid-cols-3 grid gap-4 my-4">
+      <div class="grid-cols-3 grid gap-4 my-4 items-start">
         <div class="grid">
           <div formGroupName="isbn" class="w-full">
             <mat-form-field class="!w-full flex">
@@ -299,12 +297,104 @@
         Next
       </button>
     </form>
-  </mat-step>
+  </mat-step> -->
 
-  <mat-step [stepControl]="documentCtrl" label="Upload Documents">
-    <form [formGroup]="documentCtrl">
-      <input type="file" formControlName="frontCover" />
-      <button matStepperNext>Next</button>
+  <mat-step [stepControl]="documentMedia" label="Upload Documents">
+    <form [formGroup]="titleForm">
+      <div formArrayName="documentMedia" class="grid gap-6">
+        @for(media of documentMedia.controls; track $index) {
+        <div
+          [formGroupName]="$index"
+          class="p-4 border rounded-lg shadow-md bg-gray-50 flex justify-between"
+        >
+          <div >
+            <div class="flex flex-col gap-4 items-start">
+              <!-- Document label -->
+              <label class="block font-semibold">
+                {{ getDocumentLabel(media.value.mediaType) }}
+                @if(isRequired(media.get('file'))) {
+                <span class="text-red-500">*</span>
+                }
+              </label>
+              <input
+                #fileInput
+                type="file"
+                class="block w-full text-sm text-gray-600"
+                (change)="onFileSelected($event, $index)"
+                [accept]="getAcceptedTypes(media.value.mediaType)"
+              />
+              <button
+                matButton="filled"
+                class="px-4 py-2 !bg-primary text-white rounded-lg shadow hover:bg-primary/90 transition"
+                type="button"
+                (click)="fileInputs.get($index)?.nativeElement?.click()"
+              >
+                <mat-icon>upload</mat-icon>
+                Upload
+              </button>
+            </div>
+
+            <p class="text-xs text-gray-500 mt-4">
+              {{ getHelperText(media.value.mediaType) }}
+            </p>
+          </div>
+
+          <div class="self-center flex">
+            <!-- Image Preview -->
+            @if(media.value.url && media.value.mediaType !== 'PrintInterior' &&
+            media.value.mediaType !== 'FullCover' ) {
+            <div class="border rounded p-2 inline-block bg-white shadow-sm">
+              <img
+                [src]="media.value.url"
+                alt="preview"
+                class="h-32 object-contain rounded"
+              />
+            </div>
+            }
+
+            <!-- PDF Preview -->
+            @if(media.get('file')?.value && (media.get('mediaType')?.value ===
+            'PrintInterior' || media.value.mediaType === 'FullCover')) {
+            <mat-card
+              class="flex !flex-row !items-center !gap-4 p-3 bg-gray-50 shadow-sm rounded-md"
+            >
+              <mat-icon color="warn">picture_as_pdf</mat-icon>
+              <div>
+                <p class="text-sm font-medium text-gray-800">
+                  {{ media.get("file")?.value?.name }}
+                </p>
+                <p class="text-xs text-gray-500">
+                  {{
+                    media.get("file")?.value?.size / 1024 / 1024
+                      | number : "1.1-1"
+                  }}
+                  MB
+                </p>
+              </div>
+              <button
+                mat-icon-button
+                color="warn"
+                class="!bg-accent"
+                (click)="removeFile($index)"
+                aria-label="Remove PDF"
+              >
+                <mat-icon class="!fill-red">delete</mat-icon>
+              </button>
+            </mat-card>
+            }
+          </div>
+        </div>
+        }
+      </div>
+      <div class="mt-6 flex justify-end">
+        <button
+        matButton="filled"
+          matStepperNext
+          class="px-6 py-2 !bg-primary text-white rounded-lg shadow"
+        >
+          Next
+        </button>
+      </div>
     </form>
   </mat-step>
 

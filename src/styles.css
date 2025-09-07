@@ -145,9 +145,9 @@ select::placeholder{
 .mat-horizontal-content-container{
   @apply !p-0;
 }
-.mat-step-header {
+/* .mat-step-header {
   @apply !p-0;
-}
+} */
 
 .mat-stepper-horizontal-line{
 @apply !m-0;
