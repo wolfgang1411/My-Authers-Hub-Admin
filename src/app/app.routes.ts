@@ -26,20 +26,21 @@ export const routes: Routes = [
     canActivate: [privateRouteGuard],
   },
   {
-  path :'author/:id',
-  loadComponent:()=>
-    import('./pages/add-author/add-author').then((c)=>c.AddAuthor),
-  canActivate:[privateRouteGuard]
-  },
-    {
-  path :'author/:signupCode',
-  loadComponent:()=>
-    import('./pages/add-author/add-author').then((c)=>c.AddAuthor),
+    path: 'author/:id',
+    loadComponent: () =>
+      import('./pages/add-author/add-author').then((c) => c.AddAuthor),
+    canActivate: [privateRouteGuard],
   },
   {
- path: 'title/:id',
- loadComponent:()=>import('./pages/add-title/add-title').then((c)=>c.AddTitle),
- canActivate:[privateRouteGuard]
+    path: 'author/:signupCode',
+    loadComponent: () =>
+      import('./pages/add-author/add-author').then((c) => c.AddAuthor),
+  },
+  {
+    path: 'title/:id',
+    loadComponent: () =>
+      import('./pages/add-title/add-title').then((c) => c.AddTitle),
+    canActivate: [privateRouteGuard],
   },
   {
     path: 'titles',
@@ -60,13 +61,11 @@ export const routes: Routes = [
       import('./pages/add-publisher/add-publisher').then((C) => C.AddPublisher),
     canActivate: [privateRouteGuard],
   },
-    {
-    path: 'publisher/:signupCode',
+  {
+    path: 'publisher/invite/:signupCode',
     loadComponent: () =>
       import('./pages/add-publisher/add-publisher').then((C) => C.AddPublisher),
   },
-
-
   {
     path: '',
     redirectTo: '/dashboard',
