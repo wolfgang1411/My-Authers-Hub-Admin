@@ -157,10 +157,13 @@ export class AddPublisher {
   }
 
   async onSubmit() {
-    const publisherData = this.publisherFormGroup.value;
+    const publisherData = {
+      ...this.publisherFormGroup.value,
+      pocEmail: this.publisherFormGroup.controls.pocEmail.value,
+    } as any;
     try {
       const response = (await this.publisherService.createPublisher(
-        publisherData as Publishers
+        publisherData
       )) as Publishers;
       if (response && response.id) {
         const publisherAddressData = {

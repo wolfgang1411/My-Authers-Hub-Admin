@@ -32,7 +32,7 @@ export const routes: Routes = [
     canActivate: [privateRouteGuard],
   },
   {
-    path: 'author/:signupCode',
+    path: 'author/invite/:signupCode',
     loadComponent: () =>
       import('./pages/add-author/add-author').then((c) => c.AddAuthor),
   },
