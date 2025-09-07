@@ -61,11 +61,11 @@ export class AddAuthor {
       .observe('(min-width: 800px)')
       .pipe(map(({ matches }) => (matches ? 'horizontal' : 'vertical')));
     this.route.params.subscribe(({ id, signupCode }) => {
-      this.authorId = id;
+      this.authorId = Number(id) || undefined;
       this.signupCode = signupCode;
     });
   }
-  authorId!: number;
+  authorId?: number;
   signupCode?: string;
   authorDetails?: Author;
   async ngOnInit() {

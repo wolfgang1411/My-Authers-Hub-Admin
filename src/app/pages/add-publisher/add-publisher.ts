@@ -59,13 +59,13 @@ export class AddPublisher {
       .observe('(min-width: 800px)')
       .pipe(map(({ matches }) => (matches ? 'horizontal' : 'vertical')));
     this.route.params.subscribe(({ id, signupCode }) => {
-      this.publisherId = id;
+      this.publisherId = Number(id) || undefined;
       this.signupCode = signupCode;
     });
   }
 
   signupCode?: string;
-  publisherId!: number;
+  publisherId?: number;
   publisherDetails?: Publishers;
   async ngOnInit() {
     if (this.publisherId) {
