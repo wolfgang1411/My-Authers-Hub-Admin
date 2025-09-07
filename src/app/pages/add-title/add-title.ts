@@ -32,6 +32,7 @@ import { AuthorsService } from '../authors/authors-service';
 import { MatIconModule } from '@angular/material/icon';
 import { IsbnService } from '../../services/isbn-service';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-add-title',
@@ -47,8 +48,9 @@ import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
     SharedModule,
     MatSelectModule,
     MatIconModule,
-    MatProgressSpinnerModule
-  ],
+    MatProgressSpinnerModule,
+    RouterModule
+],
   templateUrl: './add-title.html',
   styleUrl: './add-title.css',
 })
@@ -80,6 +82,8 @@ isVerifying =signal<boolean>(false);
     });
     this.titleForm = this._formBuilder.group({
       format: [null, Validators.required],
+      hasFiles:[null,Validators.required],
+      publishingType:[null,Validators.required],
       titleDetails: this._formBuilder.group({
         name: ['', Validators.required],
         subTitle: [''],

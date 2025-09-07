@@ -24,8 +24,13 @@
           <button
             type="button"
             class="btn border-2 !border-primary flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+            [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                titleForm.get('format')?.value === 'printAndEbook',
+              '!bg-white !text-primary fill-primary !border-primary':
+                titleForm.get('format')?.value !== 'printAndEbook'
+            }"
             (click)="titleForm.get('format')?.setValue('printAndEbook')"
-            matStepperNext
           >
             <svg-icon
               class="fill-primary"
@@ -36,8 +41,13 @@
           <button
             type="button"
             class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+            [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                titleForm.get('format')?.value === 'printOnly',
+              '!bg-white !text-primary fill-primary !border-primary':
+                titleForm.get('format')?.value !== 'printOnly'
+            }"
             (click)="titleForm.get('format')?.setValue('printOnly')"
-            matStepperNext
           >
             <svg-icon class="fill-primary" src="images/print.svg"></svg-icon>
             {{ "printbookonly" | translate }}
@@ -45,13 +55,119 @@
           <button
             type="button"
             class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+            [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                titleForm.get('format')?.value === 'ebookOnly',
+              '!bg-white !text-primary fill-primary !border-primary':
+                titleForm.get('format')?.value !== 'ebookOnly'
+            }"
             (click)="titleForm.get('format')?.setValue('ebookOnly')"
-            matStepperNext
           >
             <svg-icon class="fill-primary" src="images/ebook.svg"></svg-icon>
             {{ "ebookonly" | translate }}
           </button>
         </div>
+        @if(titleForm.get('format')?.value) {
+
+        <h3 class="heading self-center !text-[1.6rem] !font-medium">
+          {{ "doyouhaveallfilesreadytoupload" | translate }}??
+        </h3>
+        <div class="grid grid-cols-2 gap-8">
+          <button
+            type="button"
+            class="btn border-2 !border-primary flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+             [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                titleForm.get('hasFiles')?.value === true,
+              '!bg-white !text-primary fill-primary !border-primary':
+                titleForm.get('hasFiles')?.value !== true
+            }"
+            (click)="titleForm.get('hasFiles')?.setValue(true)"
+          >
+            <div class="flex justify-center">
+              <svg-icon
+                class="fill-primary flex w-20 self-end"
+                src="images/file-regular-full.svg"
+              ></svg-icon>
+              <svg-icon
+                class="fill-primary flex w-8 self-end mb-2"
+                src="images/circle-check-solid-full.svg"
+              ></svg-icon>
+            </div>
+            {{ "yesalldocumentsareready" | translate }}
+          </button>
+          <button
+            type="button"
+            class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+             [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                titleForm.get('hasFiles')?.value === false,
+              '!bg-white !text-primary fill-primary !border-primary':
+                titleForm.get('hasFiles')?.value !== false
+            }"
+            (click)="titleForm.get('hasFiles')?.setValue(false)"
+            [routerLink]="['/titles']" routerLinkActive="router-link-active" 
+          >
+            <svg-icon
+              class="fill-primary flex w-20"
+              src="images/file-excel-regular-full.svg"
+            ></svg-icon>
+            {{ "noidonthavefilesready" | translate }}
+          </button>
+        </div>
+        }
+  @if(titleForm.get('hasFiles')?.value === true) {
+
+        <h3 class="heading self-center !text-[1.6rem] !font-medium">
+          {{ "choosepublishingtype" | translate }}??
+        </h3>
+        <div class="grid grid-cols-2 gap-8">
+          <button
+            type="button"
+            class="btn border-2 !border-primary flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+             [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                titleForm.get('publishingType')?.value === 'publish&print',
+              '!bg-white !text-primary fill-primary !border-primary':
+                titleForm.get('publishingType')?.value !== 
+                'publish&print'
+            }"
+            (click)="titleForm.get('publishingType')?.setValue('publish&print')"
+            matStepperNext
+          >
+            <div class="flex justify-center">
+              <svg-icon
+                class="fill-primary flex w-20 "
+                src="images/book-solid-full.svg"
+              ></svg-icon>
+              <svg-icon
+                class="fill-primary flex w-20 "
+                src="images/print-solid-full.svg"
+              ></svg-icon>
+            </div>
+            {{ "publishprintdistributeandsellrecommended" | translate }}
+          </button>
+          <button
+            type="button"
+            class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+             [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                titleForm.get('publishingType')?.value === 'printOnly',
+              '!bg-white !text-primary fill-primary !border-primary':
+                titleForm.get('publishingType')?.value !== 'printOnly'
+            }"
+            (click)="titleForm.get('publishingType')?.setValue('printOnly')"
+            matStepperNext
+          >
+            <svg-icon
+              class="fill-primary flex w-20"
+              src="images/print-solid-full.svg"
+            ></svg-icon>
+            {{ "onlyprinting" | translate }}
+          </button>
+        </div>
+        }
+
       </div>
     </form>
   </mat-step>
@@ -147,55 +263,41 @@
             }
           </mat-select>
         </mat-form-field>
-        <!--   
+        <div formArrayName="authors" class="grid grid-cols-3 gap-4">
+          @for(item of authors.controls ; track $index){
+          <div [formGroupName]="$index" class="flex items-center gap-2">
             <mat-form-field>
-              <mat-label>Publisher Name</mat-label>
-              <input matInput formControlName="name" readonly />
-            </mat-form-field> -->
-        <!-- <div class="flex items-start"> -->
-          <div formArrayName="authors" class="grid grid-cols-3 gap-4">
-            @for(item of authors.controls ; track $index){
-            <div [formGroupName]="$index" class="flex items-center gap-2">
-              <mat-form-field>
-                <mat-label>Author</mat-label>
-                <mat-select formControlName="id">
-                  @for(author of authorsList() ; track $index) {
-                  <mat-option [value]="author.id">
-                    {{ author.user.firstName + ' '+ author.user.lastName}} ({{author.username}})
-                  </mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-              <button
-                mat-icon-button
-                color="warn"
-                (click)="removeAuthor($index)"
-              >
-                <mat-icon>delete</mat-icon>
-              </button>
-            </div>
-            }
-            <button class="flex"
-              mat-stroked-button
-              color="primary"
-              type="button"
-              (click)="addAuthor()"
-            >
-              <mat-icon>add</mat-icon> Add Author
+              <mat-label>Author</mat-label>
+              <mat-select formControlName="id">
+                @for(author of authorsList() ; track $index) {
+                <mat-option [value]="author.id">
+                  {{ author.user.firstName + " " + author.user.lastName }} ({{
+                    author.username
+                  }})
+                </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <button mat-icon-button color="warn" (click)="removeAuthor($index)">
+              <mat-icon>delete</mat-icon>
             </button>
           </div>
-          <!-- <div class="mt-4 text-sm text-gray-600">
-            @for(author of authors.controls; track $index){
-            <span>
-              {{ authors.at($index).value.name
-              }}{{ $index < authors.length - 1 ? ", " : "" }}
-            </span>
-            }
-          </div> -->
-        <!-- </div> -->
+          }
+          <button
+            class="flex"
+            mat-stroked-button
+            color="primary"
+            type="button"
+            (click)="addAuthor()"
+          >
+            <mat-icon>add</mat-icon> Add Author
+          </button>
+        </div>
       </div>
 
-      <button matStepperNext matButton="filled" class="!bg-primary mt-8">Next</button>
+      <button matStepperNext matButton="filled" class="!bg-primary mt-8">
+        Next
+      </button>
     </form>
   </mat-step>
 

@@ -129,4 +129,10 @@
 "shortdescription":"Short Description",
 "subtitle":"Sub Title",
 "titlename":"Title Name",
-"verify":"Verify"}
+"verify":"Verify",
+"doyouhaveallfilesreadytoupload" :"Do you have all files ready to upload",
+"yesalldocumentsareready":"Yes, All documents are ready",
+"noidonthavefilesready":"No, I don't have files ready",
+"choosepublishingtype":"Choose Publishing Type",
+"publishprintdistributeandsellrecommended" :"Publish, Print, Distribute and Sell (Recommended)",
+"onlyprinting":"Only Printing (Only use this when you don't want to publish or sell books via My Authors Hub and Just wish to use it for Printing POD)" }
