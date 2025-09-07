@@ -4,6 +4,7 @@ import { BankDetails } from "./BankDetails";
 import { Media } from "./Media";
 import { Royalty } from "./Royalty";
 import { Title} from "./Titles";
+import { User } from "./user";
 
 export interface Author {
   id: number;
@@ -22,6 +23,7 @@ export interface Author {
  publishers: Publisher[];
  Royalty: Royalty[];
  signupCode?:string;
+ user : User
 }
 
 export interface AuthorResponse{

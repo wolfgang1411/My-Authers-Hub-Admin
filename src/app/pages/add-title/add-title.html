@@ -152,8 +152,8 @@
               <mat-label>Publisher Name</mat-label>
               <input matInput formControlName="name" readonly />
             </mat-form-field> -->
-        <div class="flex items-start">
-          <div formArrayName="authors" class="grid grid-cols-2 gap-4">
+        <!-- <div class="flex items-start"> -->
+          <div formArrayName="authors" class="grid grid-cols-3 gap-4">
             @for(item of authors.controls ; track $index){
             <div [formGroupName]="$index" class="flex items-center gap-2">
               <mat-form-field>
@@ -161,7 +161,7 @@
                 <mat-select formControlName="id">
                   @for(author of authorsList() ; track $index) {
                   <mat-option [value]="author.id">
-                    {{ author.name }}
+                    {{ author.user.firstName + ' '+ author.user.lastName}} ({{author.username}})
                   </mat-option>
                   }
                 </mat-select>
@@ -175,15 +175,15 @@
               </button>
             </div>
             }
+            <button class="flex"
+              mat-stroked-button
+              color="primary"
+              type="button"
+              (click)="addAuthor()"
+            >
+              <mat-icon>add</mat-icon> Add Author
+            </button>
           </div>
-          <button
-            mat-stroked-button
-            color="primary"
-            type="button"
-            (click)="addAuthor()"
-          >
-            <mat-icon>add</mat-icon> Add Author
-          </button>
           <!-- <div class="mt-4 text-sm text-gray-600">
             @for(author of authors.controls; track $index){
             <span>
@@ -192,10 +192,10 @@
             </span>
             }
           </div> -->
-        </div>
+        <!-- </div> -->
       </div>
 
-      <button matStepperNext matButton="filled">Next</button>
+      <button matStepperNext matButton="filled" class="!bg-primary mt-8">Next</button>
     </form>
   </mat-step>
 
