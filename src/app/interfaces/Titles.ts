@@ -20,21 +20,27 @@ export interface Title {
   tradeCategory: TitleCategory;
   genre: TitleGenre;
   keywords: string;
+  publisherDisplayNames: {
+    [id: number]: string;
+  };
+  authorDisplayNames: {
+    [id: number]: string;
+  };
   publisher: Publishers;
   authors: Author[];
   isbn: ISBN;
   printing: TitlePrinting[];
   Booking: Booking[];
   Royalty: Royalty[];
-  documentMedia : Media[]
+  documentMedia: Media[];
 }
 export interface TitleResponse {
-  title:string;
-  isbn:string;
-  pages:number | string;
-  royaltiesearned:number;
-  authors:string;
-publishedby:string;
+  title: string;
+  isbn: string;
+  pages: number | string;
+  royaltiesearned: number;
+  authors: string;
+  publishedby: string;
 }
 
 export interface TitleCategory {

@@ -1,4 +1,5 @@
 import {
+  Binding,
   Component,
   ElementRef,
   inject,
@@ -26,6 +27,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatRadioModule } from '@angular/material/radio';
 import {
   Author,
+  BookBindings,
+  LaminationType,
   Media,
   MediaType,
   PaperType,
@@ -42,8 +45,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { IsbnService } from '../../services/isbn-service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterModule } from '@angular/router';
-import {  MatCardModule } from "@angular/material/card";
-import { subscribe } from 'diagnostics_channel';
+import { MatCardModule } from '@angular/material/card';
+import { PrintingService } from '../../services/printing-service';
+import * as pdfjsLib from 'pdfjs-dist';
+import { TitlePrinting } from '../../components/title-printing/title-printing';
 
 @Component({
   selector: 'app-add-title',
@@ -61,8 +66,9 @@ import { subscribe } from 'diagnostics_channel';
     MatIconModule,
     MatProgressSpinnerModule,
     RouterModule,
-    MatCardModule
-],
+    MatCardModule,
+    TitlePrinting,
+  ],
   templateUrl: './add-title.html',
   styleUrl: './add-title.css',
 })
@@ -70,7 +76,8 @@ export class AddTitle {
   constructor(
     private publisherService: PublisherService,
     private authorService: AuthorsService,
-    private isbnService: IsbnService
+    private isbnService: IsbnService,
+    private printingService: PrintingService
   ) {
     const breakpointObserver = inject(BreakpointObserver);
     this.stepperOrientation = breakpointObserver
@@ -82,8 +89,9 @@ export class AddTitle {
   >;
 
   stepperOrientation: Observable<StepperOrientation>;
-
-  private _formBuilder = inject(FormBuilder);
+  bindingType!: BookBindings[];
+  laminationTypes!: LaminationType[];
+  _formBuilder = inject(FormBuilder);
   titleForm!: FormGroup;
   publishers = signal<Publishers[]>([]);
   authorsList = signal<Author[]>([]);
@@ -121,11 +129,18 @@ export class AddTitle {
   }
 
   getAcceptedTypes(mediaType: MediaType): string {
-    if (mediaType === 'PrintInterior' || mediaType === 'FullCover') return '.pdf';
+    if (mediaType === 'PrintInterior' || mediaType === 'FullCover')
+      return '.pdf';
     return 'image/*';
   }
 
   ngOnInit(): void {
+    this.printingService.getBindingType().then(({ items }) => {
+      this.bindingType = items;
+    });
+    this.printingService.getLaminationType().then(({ items }) => {
+      this.laminationTypes = items;
+    });
     this.publisherService.getPublishers().then(({ items }) => {
       this.publishers.set(items);
     });
@@ -138,7 +153,7 @@ export class AddTitle {
       publishingType: [null, Validators.required],
       titleDetails: this._formBuilder.group({
         name: ['', Validators.required],
-        subTitle: ['', Validators.required],
+        subTitle: [''],
         longDescription: [''],
         shortDescription: ['', Validators.required],
         edition: [null],
@@ -153,8 +168,17 @@ export class AddTitle {
         publisher: this._formBuilder.group({
           id: [null],
           name: [''],
+          keepSame: [true],
+          displayName: [''],
         }),
-        authors: this._formBuilder.array([]),
+        authors: this._formBuilder.array([
+          this._formBuilder.group({
+            id: [null],
+            name: [''],
+            keepSame: [true],
+            displayName: [''],
+          }),
+        ]),
         isbn: this._formBuilder.group({
           id: [null],
           isbnNumber: ['', [Validators.pattern(/^(97(8|9))?\d{9}(\d|X)$/)]],
@@ -168,10 +192,9 @@ export class AddTitle {
         type: ['', Validators.required],
       }),
     });
-   this.titleForm.get('format')?.valueChanges.subscribe((format) => {
-    this.buildMediaArray(format);
-  });
-
+    this.titleForm.get('format')?.valueChanges.subscribe((format) => {
+      this.buildMediaArray(format);
+    });
   }
 
   createPrintingGroup(): FormGroup {
@@ -199,25 +222,89 @@ export class AddTitle {
   get authors(): FormArray {
     return this.titleForm.get('titleDetails.authors') as FormArray;
   }
-  onPublisherChange(selectedId: number) {
-    const pub = this.publishers().find((p) => p.id === selectedId);
-    this.titleDetailsCtrl
-      .get('publisher')
-      ?.patchValue(pub ?? { id: null, name: '' });
-  }
+  onPublisherChange(publisherId: number) {
+    const selected = this.publishers().find((p) => p.id === publisherId);
+    const pubGroup = this.titleForm.get('titleDetails.publisher') as FormGroup;
 
+    if (!pubGroup) {
+      console.error('Publisher group not found in form');
+      return;
+    }
+
+    const keepSame = pubGroup.get('keepSame')?.value;
+
+    if (keepSame && selected) {
+      pubGroup.get('displayName')?.setValue(selected.name);
+      pubGroup.get('displayName')?.disable();
+    } else {
+      pubGroup.get('displayName')?.enable();
+    }
+  }
+  onPublisherKeepSameChange(event: Event) {
+    const checked = (event.target as HTMLInputElement).checked;
+    const pubGroup = this.titleForm.get('titleDetails.publisher') as FormGroup;
+    const publisherId = pubGroup.get('id')?.value;
+    const selected = this.publishers().find((p) => p.id === publisherId);
+
+    if (checked && selected) {
+      pubGroup.get('displayName')?.setValue(selected.name);
+      pubGroup.get('displayName')?.disable();
+    } else {
+      pubGroup.get('displayName')?.enable();
+    }
+  }
+  onAuthorKeepSameChange(index: number, event: Event) {
+    const checked = (event.target as HTMLInputElement).checked;
+    const authorCtrl = this.authors.at(index) as FormGroup;
+    const authorId = authorCtrl.get('id')?.value;
+    const selected = this.authorsList().find((a) => a.id === authorId);
+
+    if (checked && selected) {
+      authorCtrl
+        .get('displayName')
+        ?.setValue(
+          selected.user?.firstName +
+            ' ' +
+            selected.user?.lastName +
+            `(${selected.username})`
+        );
+      authorCtrl.get('displayName')?.disable();
+    } else {
+      authorCtrl.get('displayName')?.enable();
+    }
+  }
+  onAuthorChange(index: number, authorId: number) {
+    const selected = this.authorsList().find((p) => p.id === authorId);
+    const authorCtrl = this.authors.at(index) as FormGroup;
+    const keepSame = authorCtrl.get('keepSame')?.value;
+    if (keepSame && selected) {
+      console.log(selected, authorCtrl, 'authoorr');
+      authorCtrl
+        .get('displayName')
+        ?.setValue(
+          selected.user?.firstName +
+            ' ' +
+            selected.user?.lastName +
+            `(${selected.username})`
+        );
+      authorCtrl.get('displayName')?.disable();
+    } else {
+      authorCtrl.get('displayName')?.enable();
+    }
+  }
   addAuthor(): void {
     this.authors.push(
       this._formBuilder.group({
         id: [null],
         name: ['', Validators.required],
+        keepSame: [true],
+        displayName: [''],
       })
     );
   }
   removeAuthor(index: number): void {
     this.authors.removeAt(index);
   }
-
   get printing(): FormArray {
     return this.titleForm.get('printing') as FormArray;
   }
@@ -300,7 +387,7 @@ export class AddTitle {
     this.documentMedia.push(this.createMedia('PrintInterior', true));
   }
 
-  createMedia(mediaType: MediaType, required= true): FormGroup {
+  createMedia(mediaType: MediaType, required = true): FormGroup {
     return this._formBuilder.group({
       id: [0],
       url: [''],
@@ -309,39 +396,38 @@ export class AddTitle {
       mediaType: [mediaType],
     });
   }
-   buildMediaArray(format: string) {
-  this.documentMedia.clear();
-  switch (format) {
-    case 'ebookOnly':
-      this.documentMedia.push(this.createMedia('FullCover', true));
-      this.documentMedia.push(this.createMedia('FrontCover', true));
-      break;
+  buildMediaArray(format: string) {
+    this.documentMedia.clear();
+    switch (format) {
+      case 'ebookOnly':
+        this.documentMedia.push(this.createMedia('FullCover', true));
+        this.documentMedia.push(this.createMedia('FrontCover', true));
+        break;
 
-    case 'printOnly':
-      this.documentMedia.push(this.createMedia('FullCover', true));
-      this.documentMedia.push(this.createMedia('FrontCover', true));
-      this.documentMedia.push(this.createMedia('BackCover', false));
-      this.documentMedia.push(this.createMedia('PrintInterior', true));
-      break;
+      case 'printOnly':
+        this.documentMedia.push(this.createMedia('FullCover', true));
+        this.documentMedia.push(this.createMedia('FrontCover', true));
+        this.documentMedia.push(this.createMedia('BackCover', false));
+        this.documentMedia.push(this.createMedia('PrintInterior', true));
+        break;
 
-    case 'printAndEbook':
-      this.documentMedia.push(this.createMedia('FullCover', true));
-      this.documentMedia.push(this.createMedia('FrontCover', true));
-      this.documentMedia.push(this.createMedia('BackCover', false));
-      this.documentMedia.push(this.createMedia('PrintInterior', true));
-      break;
+      case 'printAndEbook':
+        this.documentMedia.push(this.createMedia('FullCover', true));
+        this.documentMedia.push(this.createMedia('FrontCover', true));
+        this.documentMedia.push(this.createMedia('BackCover', false));
+        this.documentMedia.push(this.createMedia('PrintInterior', true));
+        break;
 
-    default:
-      // no format selected → leave empty
-      break;
+      default:
+        // no format selected → leave empty
+        break;
+    }
   }
-}
   isRequired(control: AbstractControl | null): boolean {
     if (!control?.validator) return false;
     const validator = control.validator({} as any);
     return !!(validator && validator['required']);
   }
- 
 
   onFileSelected(event: Event, index: number) {
     const input = event.target as HTMLInputElement;
@@ -350,21 +436,33 @@ export class AddTitle {
       const mediaType = this.documentMedia.at(index).get('mediaType')
         ?.value as MediaType;
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
+        const fileResult = reader.result as string;
         this.documentMedia.at(index).patchValue({
           file: file,
-          url: mediaType === 'PrintInterior' || mediaType === 'FullCover' ? null : (reader.result as string),
+          url:
+            mediaType === 'PrintInterior' || mediaType === 'FullCover'
+              ? null
+              : fileResult,
         });
+        if (mediaType === 'FullCover' && file.type === 'application/pdf') {
+          const typedArray = new Uint8Array(await file.arrayBuffer());
+          const pdf = await pdfjsLib.getDocument(typedArray).promise;
+          const totalPages = pdf.numPages;
+          this.printing.at(0).patchValue({ totalPages: totalPages });
+          console.log(`FullCover PDF has ${totalPages} pages`);
+        }
       };
       reader.readAsDataURL(file);
     }
   }
-removeFile(index: number) {
-  this.documentMedia.at(index).patchValue({
-    file: null,
-    url: null
-  });
-}
+
+  removeFile(index: number) {
+    this.documentMedia.at(index).patchValue({
+      file: null,
+      url: null,
+    });
+  }
   onSubmit() {
     if (this.titleForm.valid) {
       const payload: Title = this.titleForm.value as Title;

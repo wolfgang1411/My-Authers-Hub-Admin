@@ -45,7 +45,8 @@ export class PublisherService {
   }
   async sendInviteLink(invite: Invite) {
     try {
-      return await this.server.post('invite', invite);
+      
+      return await this.server.post('publishers/invite', invite);
     } catch (error) {
       this.logger.logError(error);
       throw error;

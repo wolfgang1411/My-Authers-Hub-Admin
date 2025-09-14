@@ -85,7 +85,7 @@ ngOnInit(): void {
           dialogRef.close();
           Swal.fire({
             title:'success',
-            text : `You have successfully sent the invite to ${email}`,
+            text : (response as any).message,
             icon : 'success',
             heightAuto:false
           })

@@ -229,12 +229,7 @@
         </mat-form-field>
         <mat-form-field>
           <mat-label>{{ "subtitle" | translate }}</mat-label>
-          <input
-            matInput
-            placeholder="Sub Title"
-            formControlName="subTitle"
-            required
-          />
+          <input matInput placeholder="Sub Title" formControlName="subTitle" />
         </mat-form-field>
         <mat-form-field>
           <mat-label>
@@ -247,8 +242,11 @@
           ></textarea>
         </mat-form-field>
       </div>
-      <div class="grid grid-cols-[1fr_2fr] gap-4 items-start">
-        <mat-form-field formGroupName="publisher">
+      <div
+        class="grid grid-cols-2 gap-4 items-start my-4"
+        formGroupName="publisher"
+      >
+        <mat-form-field>
           <mat-label>Select Publisher</mat-label>
           <mat-select
             formControlName="id"
@@ -261,12 +259,35 @@
             }
           </mat-select>
         </mat-form-field>
-        <div formArrayName="authors" class="grid grid-cols-3 gap-4">
-          @for(item of authors.controls ; track $index){
-          <div [formGroupName]="$index" class="flex items-center gap-2">
-            <mat-form-field>
+        <div class="flex flex-col">
+          <mat-form-field>
+            <mat-label>{{ "displaynameforpublisher" | translate }}</mat-label>
+            <input matInput formControlName="displayName" />
+          </mat-form-field>
+          <div class="flex gap-2 self-start">
+            <input
+              type="checkbox"
+              class="w-4"
+              formControlName="keepSame"
+              (change)="onPublisherKeepSameChange($event)"
+              checked
+            />
+            <label>{{
+              "keepdisplaynamesameaspublishername" | translate
+            }}</label>
+          </div>
+        </div>
+      </div>
+      <div formArrayName="authors" class="grid grid-cols-2 gap-4 my-4">
+        @for(item of authors.controls ; track $index){
+        <div [formGroupName]="$index" class="flex flex-col">
+          <div class="grid grid-cols-[0.8fr_0.8fr_0.2fr] items-start gap-2">
+            <mat-form-field class="w-full">
               <mat-label>Author</mat-label>
-              <mat-select formControlName="id">
+              <mat-select
+                formControlName="id"
+                (selectionChange)="onAuthorChange($index, $event.value)"
+              >
                 @for(author of authorsList() ; track $index) {
                 <mat-option [value]="author.id">
                   {{ author.user.firstName + " " + author.user.lastName }} ({{
@@ -276,29 +297,50 @@
                 }
               </mat-select>
             </mat-form-field>
-            <button mat-icon-button color="warn" (click)="removeAuthor($index)">
-              <mat-icon>delete</mat-icon>
+            <mat-form-field>
+              <mat-label>{{ "displaynameforauthor" | translate }}</mat-label>
+              <input matInput formControlName="displayName" />
+            </mat-form-field>
+
+            <button
+              class="self-center !bg-accent"
+              mat-icon-button
+              color="warn"
+              (click)="removeAuthor($index)"
+            >
+              <mat-icon class="!fill-white">delete</mat-icon>
             </button>
           </div>
-          }
-          <button
-            class="flex"
-            mat-stroked-button
-            color="primary"
-            type="button"
-            (click)="addAuthor()"
-          >
-            <mat-icon>add</mat-icon> Add Author
-          </button>
+
+          <div class="flex gap-2 self-start">
+            <input
+              type="checkbox"
+              class="w-4"
+              formControlName="keepSame"
+              (change)="onAuthorKeepSameChange($index, $event)"
+              checked
+            />
+            <label>{{ "keepdisplaynamesameasauthorname" | translate }}</label>
+          </div>
         </div>
+
+        }
+        <button
+          class="w-max self-start mt-2"
+          mat-stroked-button
+          color="primary"
+          type="button"
+          (click)="addAuthor()"
+        >
+          <mat-icon>add</mat-icon> Add Author
+        </button>
       </div>
 
       <button matStepperNext matButton="filled" class="!bg-primary mt-8">
         Next
       </button>
     </form>
-  </mat-step> 
-
+  </mat-step>
   <mat-step [stepControl]="documentMedia" label="Upload Documents">
     <form [formGroup]="titleForm">
       <div formArrayName="documentMedia" class="grid gap-6">
@@ -307,9 +349,8 @@
           [formGroupName]="$index"
           class="p-4 border rounded-lg shadow-md bg-gray-50 flex justify-between"
         >
-          <div >
+          <div>
             <div class="flex flex-col gap-4 items-start">
-              <!-- Document label -->
               <label class="block font-semibold">
                 {{ getDocumentLabel(media.value.mediaType) }}
                 @if(isRequired(media.get('file'))) {
@@ -340,7 +381,6 @@
           </div>
 
           <div class="self-center flex">
-            <!-- Image Preview -->
             @if(media.value.url && media.value.mediaType !== 'PrintInterior' &&
             media.value.mediaType !== 'FullCover' ) {
             <div class="border rounded p-2 inline-block bg-white shadow-sm">
@@ -350,10 +390,7 @@
                 class="h-32 object-contain rounded"
               />
             </div>
-            }
-
-            <!-- PDF Preview -->
-            @if(media.get('file')?.value && (media.get('mediaType')?.value ===
+            } @if(media.get('file')?.value && (media.get('mediaType')?.value ===
             'PrintInterior' || media.value.mediaType === 'FullCover')) {
             <mat-card
               class="flex !flex-row !items-center !gap-4 p-3 bg-gray-50 shadow-sm rounded-md"
@@ -388,7 +425,7 @@
       </div>
       <div class="mt-6 flex justify-end">
         <button
-        matButton="filled"
+          matButton="filled"
           matStepperNext
           class="px-6 py-2 !bg-primary text-white rounded-lg shadow"
         >
@@ -400,26 +437,19 @@
 
   @if(titleForm.get('format')?.value !== 'ebookOnly') {
   <mat-step [stepControl]="printing" label="Print Details">
-    <form [formGroup]="titleForm">
-      <div formArrayName="printing">
-        @for ( printGroup of printing.controls ; track $index) {
-        <div [formGroupName]="$index">
-          <mat-form-field>
-            <mat-label>Binding</mat-label>
-            <mat-select formControlName="bindingType">
-              <mat-option value="paperback">Paperback</mat-option>
-              <mat-option value="hardbound">Hardbound</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-        }
-      </div>
-      <button matStepperNext>Next</button>
-    </form>
+    <app-title-printing
+      [titleForm]="titleForm"
+      [printing]="printing"
+      [documentMedia]="documentMedia"
+      [laminationTypes]="laminationTypes"
+      [bindingType]="bindingType"
+      [_formBuilder]="_formBuilder"
+    ></app-title-printing>
+    <button matStepperNext>Next</button>
   </mat-step>
   }
 
-  <mat-step [stepControl]="distributionCtrl" label="Distribution">
+  <!-- <mat-step [stepControl]="distributionCtrl" label="Distribution">
     <form [formGroup]="distributionCtrl">
       <mat-select formControlName="type">
         <mat-option value="national">National</mat-option>
@@ -428,5 +458,5 @@
       </mat-select>
       <button mat-button (click)="onSubmit()">Submit</button>
     </form>
-  </mat-step>
+  </mat-step> -->
 </mat-stepper>

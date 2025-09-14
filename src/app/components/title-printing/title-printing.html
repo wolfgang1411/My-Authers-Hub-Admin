@@ -1,0 +1,169 @@
+<form [formGroup]="titleForm">
+  @if (printing.controls.length>0) {
+
+  <div formArrayName="printing" class="mt-4">
+    @for ( printGroup of printing.controls ; track $index) {
+    <div [formGroupName]="$index">
+      <div class="grid grid-cols-4 gap-4 items-start">
+        @if(bindingType.length>0){
+        <mat-form-field>
+          <mat-label>{{ "bindingtype" | translate }}</mat-label>
+          <mat-select formControlName="bookBindingsId">
+            @for(item of bindingType ; track $index){
+            <mat-option [value]="item.id">{{ item.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        }
+        <mat-form-field>
+          <mat-label> {{ "totalpages" | translate }} </mat-label>
+          <input matInput formControlName="totalPages" readonly />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>
+            {{ "colourpages" | translate }}
+          </mat-label>
+          <input formControlName="colorPages" matInput />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label> {{ "selectcolorpage" | translate }} </mat-label>
+          <mat-select formControlName="isColorPagesRandom">
+            <mat-option [value]="false">{{
+              "continuous" | translate
+            }}</mat-option>
+            <mat-option [value]="true">
+              {{ "random" | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>B/W Pages</mat-label>
+          <input matInput formControlName="bwPages" readonly />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Inside Cover / Duplex Cover</mat-label>
+          <mat-select formControlName="insideCover">
+            <mat-option [value]="true">Yes</mat-option>
+            <mat-option [value]="false">No</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      @if(printGroup.get('insideCover')?.value === true) {
+      <div class="flex justify-between">
+        <div>
+          <input
+            #fileInput
+            type="file"
+            (change)="onInsideCoverUpload($event)"
+            accept="image/*,application/pdf"
+          />
+          <button
+            type="button"
+            mat-stroked-button
+            color="primary"
+            class="mt-2 flex items-center gap-2"
+            (click)="openFileDialog()"
+          >
+            <mat-icon>upload</mat-icon>
+            Upload Inside Cover
+          </button>
+
+          <p class="text-xs text-gray-500 mt-1">
+            Note - Cost for Inside Cover/Duplex Cover Rs. 10
+          </p>
+        </div>
+        <div>
+          @for(media of documentMedia.controls; track $index) {
+          @if(media.get('mediaType')?.value === 'InsideCover') {
+          @if(media.get('file')?.value?.type === 'application/pdf') {
+          <mat-card
+            class="flex !flex-row !items-center !gap-4 p-3 bg-gray-50 shadow-sm rounded-md"
+          >
+            <mat-icon color="warn">picture_as_pdf</mat-icon>
+            <div>
+              <p class="text-sm font-medium text-gray-800">
+                {{ media.get("file")?.value?.name }}
+              </p>
+              <p class="text-xs text-gray-500">
+                {{
+                  media.get("file")?.value?.size / 1024 / 1024
+                    | number : "1.1-1"
+                }}
+                MB
+              </p>
+            </div>
+            <button
+              mat-icon-button
+              color="warn"
+              class="!bg-accent"
+              (click)="removeInsideCover($index)"
+              aria-label="Remove PDF"
+            >
+              <mat-icon class="!fill-red">delete</mat-icon>
+            </button>
+          </mat-card>
+          } @else {
+          <div
+            class="w-full bg-white border rounded shadow-sm flex items-center justify-between gap-2 p-3"
+          >
+            <img
+              [src]="
+                media.value.url ||
+                (media.get('file')?.value
+                  ? urlFromFile(media.get('file')?.value)
+                  : null)
+              "
+              alt="Inside Cover Preview"
+              class="object-contain rounded h-[40px]"
+            />
+            <button
+              mat-icon-button
+              color="warn"
+              class="!bg-accent mt-2 rounded-full items-center p-1.5 flex justify-center"
+              (click)="removeInsideCover($index)"
+              aria-label="Remove Image"
+            >
+              <mat-icon class="!fill-red">delete</mat-icon>
+            </button>
+          </div>
+          } } }
+        </div>
+      </div>
+      }
+
+      <!-- Cover Lamination -->
+      <div class="grid grid-cols-4 gap-4 items-start mt-4">
+        <mat-form-field>
+          <mat-label>{{ "laminationtype" | translate }}</mat-label>
+          <mat-select [formControl]="getLaminationControl(printGroup)">
+            @for (item of getFilteredLaminationTypes(printGroup); track $index)
+            {
+            <mat-option [value]="item.id">{{ item.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Paper Type -->
+        <mat-form-field>
+          <mat-label>{{ "papertype" | translate }}</mat-label>
+          <mat-select formControlName="paperType">
+            <mat-option [value]="'WHITE'">{{
+              "whitepaper" | translate
+            }}</mat-option>
+            <mat-option [value]="'OFF_WHITE'">{{
+              "offwhitecremepaper" | translate
+            }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- GSM -->
+        <mat-form-field>
+          <mat-label>Paper GSM</mat-label>
+          <input matInput type="number" formControlName="gsm" />
+        </mat-form-field>
+      </div>
+    </div>
+    }
+  </div>
+  }
+</form>

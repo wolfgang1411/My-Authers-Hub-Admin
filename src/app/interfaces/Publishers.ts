@@ -8,12 +8,13 @@ export interface Publishers {
   id: number;
   name: string;
   email: string;
+  username: string;
   phoneNumber: string;
-  designation: string; 
+  designation: string;
   address: Address[];
   bankDetails?: BankDetails[]; // Optional attachments related to the publisher
-  user:User;
-  titles : Title[];
+  user: User;
+  titles: Title[];
   authors: Author[];
 }
 
@@ -21,22 +22,22 @@ export interface CreatePublisher {
   pocName: string;
   pocEmail: string;
   pocPhoneNumber: string;
- designation: string;
- userPassword: string;
+  designation: string;
+  userPassword: string;
   name: string;
-  email: string; 
-  signupCode?:string; 
+  email: string;
+  signupCode?: string;
 }
 
 export interface PublisherFilter {
   parentPublisherId?: number;
 }
 
-export interface PublisherResponse{
-  name : string;
-  email:string;
-  phonenumber : string;
-  titles:number;
-  authors:number;
-  companyname :string;
+export interface PublisherResponse {
+  name: string;
+  email: string;
+  phonenumber: string;
+  titles: number;
+  authors: number;
+  companyname: string;
 }
