@@ -100,6 +100,14 @@ export const routes: Routes = [
     canActivate: [privateRouteGuard],
   },
   {
+    path: 'payouts/:id',
+    loadComponent: () =>
+      import('./pages/payout-details/payout-details').then(
+        (c) => c.PayoutDetails
+      ),
+    canActivate: [privateRouteGuard],
+  },
+  {
     path: '',
     redirectTo: '/dashboard',
     pathMatch: 'full',

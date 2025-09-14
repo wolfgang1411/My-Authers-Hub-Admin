@@ -1,11 +1,18 @@
+import { Author } from './Authors';
+import { Publishers } from './Publishers';
+import { Wallet } from './Wallet';
+
 export interface User {
   id: number;
   email: string;
   accessLevel: AccessLevel;
+  wallet?: Wallet;
   firstName: string;
   lastName: string;
   phoneNumber: string;
   userAddress?: UserAddress;
+  publisher?: Publishers;
+  auther?: Author;
 }
 
 export interface CreateUser {
@@ -23,4 +30,4 @@ export type UserAddress = {
   postalCode: { pincode: string };
 };
 
-export type AccessLevel = 'SUPER_ADMIN' | 'ADMIN' | 'USER';
+export type AccessLevel = 'SUPER_ADMIN' | 'ADMIN' | 'USER' | 'SUPERADMIN';

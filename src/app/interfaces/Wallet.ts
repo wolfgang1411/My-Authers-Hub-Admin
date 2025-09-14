@@ -1,8 +1,7 @@
-export interface Wallet{
-    balance:number;
-    onHold:number;
-    withdrawAmount: number;
-    pendingwithdrawals: number;
-    paidwithdrawals: number;
-    
+export interface Wallet {
+  id: number;
+  totalAmount: number;
+  holdAmount: number;
+  createdAt: string;
+  updatedAt: string;
 }

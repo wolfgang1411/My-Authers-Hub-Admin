@@ -183,5 +183,6 @@
   "printtype": "Print Type",
   "ebooktype": "E-Book Type",
   "price": "Price",
-  "txnid": "Txn Id"
+  "txnid": "Txn Id",
+  "requestpayout": "Request payout"
 }

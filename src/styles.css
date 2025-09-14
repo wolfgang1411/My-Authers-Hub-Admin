@@ -43,6 +43,8 @@
   --text-disabled: #666666;
   --text-placeholder: #9ca3af;
 
+  --text-danger: #fb2c36;
+
   --breakpoint-mobile: 1024px;
 }
 
@@ -67,6 +69,7 @@
   --color-primary-contrast: var(--primary-contrast);
   --color-text-placeholder: var(--text-placeholder);
   --color-text-heading: var(--text-heading);
+  --color-danger: var(--text-danger);
 }
 
 * {
