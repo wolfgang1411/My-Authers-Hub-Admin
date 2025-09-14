@@ -49,6 +49,7 @@ import { MatCardModule } from '@angular/material/card';
 import { PrintingService } from '../../services/printing-service';
 import * as pdfjsLib from 'pdfjs-dist';
 import { TitlePrinting } from '../../components/title-printing/title-printing';
+import { Royalties } from '../../components/royalties/royalties';
 
 @Component({
   selector: 'app-add-title',
@@ -67,6 +68,7 @@ import { TitlePrinting } from '../../components/title-printing/title-printing';
     MatProgressSpinnerModule,
     RouterModule,
     MatCardModule,
+    Royalties,
     TitlePrinting,
   ],
   templateUrl: './add-title.html',
@@ -94,10 +96,27 @@ export class AddTitle {
   _formBuilder = inject(FormBuilder);
   titleForm!: FormGroup;
   publishers = signal<Publishers[]>([]);
+  authorsSignal = signal<Author[]>([]);
+  publisherSignal = signal<Publishers | null>(null);
   authorsList = signal<Author[]>([]);
   isbnVerified = signal<boolean | null>(null);
   isVerifying = signal<boolean>(false);
 
+  onAuthorChangeChild(authorId: number) {
+    const author = this.authorsList().find((a) => a.id === authorId);
+    if (!author) return;
+
+    const current = this.authorsSignal();
+    if (!current.some((a) => a.id === author.id)) {
+      this.authorsSignal.set([...current, author]);
+    }
+  }
+
+  onPublisherChangeChild(publisherid: number) {
+    const publisher = this.publishers().find((a) => a.id === publisherid);
+    if (!publisher) return;
+    this.publisherSignal.set(publisher);
+  }
   getDocumentLabel(mediaType: MediaType): string {
     switch (mediaType) {
       case 'FullCover':
@@ -137,9 +156,6 @@ export class AddTitle {
   ngOnInit(): void {
     this.printingService.getBindingType().then(({ items }) => {
       this.bindingType = items;
-    });
-    this.printingService.getLaminationType().then(({ items }) => {
-      this.laminationTypes = items;
     });
     this.publisherService.getPublishers().then(({ items }) => {
       this.publishers.set(items);
@@ -200,20 +216,21 @@ export class AddTitle {
   createPrintingGroup(): FormGroup {
     return this._formBuilder.group({
       id: [null],
-      bindingType: [null, Validators.required],
-      bookBindingsId: [null],
-      totalPages: [0],
-      colorPages: [0],
+      bindingType: [null],
+      bookBindingsId: [null, Validators.required],
+      totalPages: [null, [Validators.required, Validators.min(1)]],
+      colorPages: [null, [Validators.required, Validators.min(0)]],
       isColorPagesRandom: [false],
       bwPages: [0],
-      insideCover: [false],
+      insideCover: [false, Validators.required],
       deliveryCharge: [0],
       laminationType: [null],
-      laminationTypeId: [null],
-      paperType: [PaperType.WHITE],
+      laminationTypeId: [null, Validators.required],
+      paperType: [PaperType.WHITE, Validators.required],
       gsm: [null],
-      paperQuailtyId: [null],
+      paperQuailtyId: [null, Validators.required],
       bookSize: [null],
+      sizeCategoryId: [null, Validators.required],
       printCost: [0],
       customPrintCost: [0],
     });
@@ -225,14 +242,11 @@ export class AddTitle {
   onPublisherChange(publisherId: number) {
     const selected = this.publishers().find((p) => p.id === publisherId);
     const pubGroup = this.titleForm.get('titleDetails.publisher') as FormGroup;
-
     if (!pubGroup) {
       console.error('Publisher group not found in form');
       return;
     }
-
     const keepSame = pubGroup.get('keepSame')?.value;
-
     if (keepSame && selected) {
       pubGroup.get('displayName')?.setValue(selected.name);
       pubGroup.get('displayName')?.disable();

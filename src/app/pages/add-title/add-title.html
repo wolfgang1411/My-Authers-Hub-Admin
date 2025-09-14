@@ -250,7 +250,10 @@
           <mat-label>Select Publisher</mat-label>
           <mat-select
             formControlName="id"
-            (selectionChange)="onPublisherChange($event.value)"
+            (selectionChange)="
+              onPublisherChange($event.value);
+              onPublisherChangeChild($event.value)
+            "
           >
             @for (item of publishers(); track $index) {
             <mat-option [value]="item.id">
@@ -286,7 +289,10 @@
               <mat-label>Author</mat-label>
               <mat-select
                 formControlName="id"
-                (selectionChange)="onAuthorChange($index, $event.value)"
+                (selectionChange)="
+                  onAuthorChange($index, $event.value);
+                  onAuthorChangeChild($event.value)
+                "
               >
                 @for(author of authorsList() ; track $index) {
                 <mat-option [value]="author.id">
@@ -335,7 +341,6 @@
           <mat-icon>add</mat-icon> Add Author
         </button>
       </div>
-
       <button matStepperNext matButton="filled" class="!bg-primary mt-8">
         Next
       </button>
@@ -441,13 +446,25 @@
       [titleForm]="titleForm"
       [printing]="printing"
       [documentMedia]="documentMedia"
-      [laminationTypes]="laminationTypes"
-      [bindingType]="bindingType"
       [_formBuilder]="_formBuilder"
     ></app-title-printing>
-    <button matStepperNext>Next</button>
+    <button matStepperNext class="!bg-primary" matButton="filled">Next</button>
   </mat-step>
   }
+  <mat-step [stepControl]="royalties" label="Royalty">
+    <app-royalties
+      [titleForm]="titleForm"
+      [royalties]="royalties"
+      [_formBuilder]="_formBuilder"
+      [authors]="authorsSignal"
+      [publisher]="publisherSignal"
+    >
+      >
+    </app-royalties>
+    <button matStepperNext class="!bg-primary mt-2" matButton="filled">
+      Next
+    </button>
+  </mat-step>
 
   <!-- <mat-step [stepControl]="distributionCtrl" label="Distribution">
     <form [formGroup]="distributionCtrl">

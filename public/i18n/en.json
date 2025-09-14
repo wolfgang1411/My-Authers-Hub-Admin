@@ -154,4 +154,9 @@
 "papertype":"Paper Type",
 "whitepaper":"White Paper",
 "offwhitecremepaper":"Off-White / Creme Paper",
-"laminationtype":"Lamination Type"}
+"laminationtype":"Lamination Type",
+"papergsm" :"Paper GSM",
+"quality":"Quality",
+"selectsize" :"Select Size",
+"printingcost":"Printing Cost (INR)",
+"royalties":"Royalties"}

@@ -81,6 +81,18 @@ export interface TitlePrinting {
   printCost: number;
   customPrintCost: number;
 }
+export interface TitlePrintingPayload {
+  colorPages: number;
+  bwPages: number;
+  paperQuailtyId: number;
+  sizeCategoryId: number;
+  totalPages: number;
+  laminationTypeId: number;
+  isColorPagesRandom: boolean;
+  bookBindingsId: boolean;
+  insideCover: boolean;
+  deliveryCharge: number;
+}
 export interface Booking {
   id: number;
   user: User;

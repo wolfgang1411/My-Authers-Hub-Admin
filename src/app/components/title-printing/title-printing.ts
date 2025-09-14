@@ -1,4 +1,10 @@
-import { Component, ElementRef, Input, ViewChild } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Input,
+  ViewChild,
+} from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { SharedModule } from '../../modules/shared/shared-module';
@@ -10,11 +16,21 @@ import {
   FormGroup,
   ReactiveFormsModule,
 } from '@angular/forms';
-import { BookBindings, LaminationType } from '../../interfaces';
+import {
+  BookBindings,
+  LaminationType,
+  PaperQuailty,
+  SizeCategory,
+  TitlePrinting as titlepr,
+  TitlePrintingPayload,
+} from '../../interfaces';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
-
+import { PrintingService } from '../../services/printing-service';
+import { MatButton } from '@angular/material/button';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { Logger } from '../../services/logger';
 @Component({
   selector: 'app-title-printing',
   imports: [
@@ -25,25 +41,53 @@ import { MatCardModule } from '@angular/material/card';
     MatInputModule,
     MatIconModule,
     MatCardModule,
+    MatButton,
+    MatProgressSpinner,
   ],
   templateUrl: './title-printing.html',
   styleUrl: './title-printing.css',
 })
 export class TitlePrinting {
-  @Input() bindingType!: BookBindings[];
-  @Input() laminationTypes!: LaminationType[];
+  constructor(
+    private printingService: PrintingService,
+    private logger: Logger
+  ) {}
+  bindingType: BookBindings[] = [];
+  laminationTypes: LaminationType[] = [];
+  paperQuality: PaperQuailty[] = [];
+  sizeCategory: SizeCategory[] = [];
+  loadingPrice: boolean = false;
   @Input() titleForm!: FormGroup;
   @Input() printing!: FormArray;
   @Input() documentMedia!: FormArray;
   @Input() _formBuilder!: FormBuilder;
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
-  ngOnInit() {
+  async ngOnInit() {
+    const { items: laminations } =
+      await this.printingService.getLaminationType();
+    this.laminationTypes = laminations;
+    const { items: binding } = await this.printingService.getBindingType();
+    this.bindingType = binding;
+    const { items: quality } = await this.printingService.getAllPaperTypes();
+    this.paperQuality = quality;
+    const { items: sizes } = await this.printingService.getSizeCategory();
+    this.sizeCategory = sizes.sort((a, b) => a.id - b.id);
     this.printing.controls.forEach((group, index) => {
       this.setupAutoCalculations(group as FormGroup, index);
+      // if (!group.valid) {
+      //   return;
+      // } else {
+      //   this.calculatePrintingCost(group);
+      // }
     });
     this.printing.valueChanges.subscribe(() => {
       this.printing.controls.forEach((group, index) => {
         this.setupAutoCalculations(group as FormGroup, index);
+        // if (!group.valid) {
+        //   return;
+        // } else {
+        //   this.calculatePrintingCost(group);
+        // }
       });
     });
   }
@@ -63,11 +107,9 @@ export class TitlePrinting {
     group.get('isColorPagesRandom')?.valueChanges.subscribe((isRandom) => {
       const color = group.get('colorPages')?.value || 0;
       let finalColorPages = color;
-
       if (isRandom) {
         finalColorPages = color * 2;
       }
-
       const total = group.get('totalPages')?.value || 0;
       group
         .get('bwPages')
@@ -107,22 +149,21 @@ export class TitlePrinting {
     input.value = '';
   }
   getFilteredLaminationTypes(print: AbstractControl): any[] {
-    const bindingTypeId = print.get('bindingTypeId')?.value;
+    const bindingTypeId = print.get('bookBindingsId')?.value;
+    console.log(print, 'printgroup');
     if (!this.laminationTypes?.length) return [];
-
-    // find bindingTypeName by id if needed (depends on how your API gives data)
     const bindingTypeName = this.getBindingTypeNameById(bindingTypeId);
-
-    if (bindingTypeName === 'Paperback') {
+    if (bindingTypeName?.toLowerCase() === 'paperback') {
       return this.laminationTypes; // allow all
     }
-
-    return this.laminationTypes.filter((t) => t.name !== 'Velvet');
+    return this.laminationTypes.filter(
+      (t) => t.name.toLowerCase() !== 'velvet'
+    );
   }
   getLaminationControl(printGroup: AbstractControl): FormControl {
     return printGroup.get('laminationTypeId') as FormControl;
   }
-  private getBindingTypeNameById(id: number | null): string | null {
+  private getBindingTypeNameById(id: number): string | null {
     if (!id) return null;
     const binding = this.bindingType?.find((b) => b.id === id);
     return binding ? binding.name : null;
@@ -135,17 +176,36 @@ export class TitlePrinting {
   urlFromFile(file: File): string {
     return URL.createObjectURL(file);
   }
-  filteredLaminationTypes(): LaminationType[] {
-    const bindingType = this.printing.at(0).get('bindingTypeId')?.value;
-    if (!bindingType || !this.laminationTypes) {
-      return this.laminationTypes ?? [];
-    }
-    // Velvet allowed only for Paperback
-    if (bindingType === 'Paperback') {
-      return this.laminationTypes.filter((t) => t.name === 'Velvet');
-    }
 
-    // All others
-    return this.laminationTypes;
+  calculatePrintingCost(printGroup: AbstractControl): void {
+    if (!printGroup.valid) {
+      return;
+    }
+    this.loadingPrice = true;
+    const payload: TitlePrintingPayload = {
+      colorPages: +printGroup.get('colorPages')?.value || 10,
+      bwPages: +printGroup.get('bwPages')?.value || 10,
+      paperQuailtyId: printGroup.get('paperQuailtyId')?.value,
+      sizeCategoryId: printGroup.get('sizeCategoryId')?.value,
+      totalPages: +printGroup.get('totalPages')?.value || 20,
+      laminationTypeId: printGroup.get('laminationTypeId')?.value,
+      isColorPagesRandom: printGroup.get('isColorPagesRandom')?.value,
+      bookBindingsId: printGroup.get('bookBindingsId')?.value,
+      insideCover: printGroup.get('insideCover')?.value,
+      deliveryCharge: 0,
+    };
+    this.printingService
+      .getPrintingPrice(payload)
+      .then((amount) => {
+        setTimeout(() => {
+          printGroup.get('printCost')?.setValue(amount);
+          this.loadingPrice = false;
+        }, 600);
+      })
+      .catch((error) => {
+        this.loadingPrice = false;
+        this.logger.logError(error);
+        console.error('Error calculating price:', error);
+      });
   }
 }
