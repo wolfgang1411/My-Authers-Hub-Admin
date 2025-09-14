@@ -1,5 +1,6 @@
 import { Publisher } from '../pages/publisher/publisher';
 import { Author } from './Authors';
+import { Booking } from './Booking';
 import { ISBN } from './Isbn';
 import { Media } from './Media';
 import { Publishers } from './Publishers';
@@ -81,23 +82,7 @@ export interface TitlePrinting {
   printCost: number;
   customPrintCost: number;
 }
-export interface Booking {
-  id: number;
-  user: User;
-  userId: number;
-  title: Title;
-  totalAmount: number;
-  status: BookingStatus;
-  bookingDate: string;
-  transactions: Transaction[];
-}
-export enum BookingStatus {
-  PENDING = 'PENDING',
-  CONFIRMED = 'CONFIRMED',
-  CANCELLED = 'CANCELLED',
-  COMPLETED = 'COMPLETED',
-  FAILED = 'FAILED',
-}
+
 export interface Royalty {
   id: number;
   percentage: number;
@@ -123,31 +108,11 @@ export enum ChannalType {
   PUBLISHER = 'PUBLISHER',
 }
 
-export interface Transaction {
-  id: number;
-  booking: Booking;
-  user: User;
-  amount: number;
-  currency: string;
-  status: TransactionStatus;
-  paymentMethod: string;
-  paymentGateway: string;
-  paymentGatewayTxnId: string;
-  merchantTxnId: string;
-  paymentGatewayRef: string;
-  userId: number;
-}
 export enum TitleStatus {
   Active = 'Active',
   Deactivated = 'Deactivated',
 }
-export enum TransactionStatus {
-  PENDING = 'PENDING',
-  SUCCESS = 'SUCCESS',
-  FAILED = 'FAILED',
-  REFUNDED = 'REFUNDED',
-  CANCELLED = 'CANCELLED',
-}
+
 export enum TitleCategoryType {
   CATEGORY = 'CATEGORY',
   SUBCATEGORY = 'SUBCATEGORY',

@@ -50,6 +50,9 @@ export class Authors {
   ];
   dataSource = new MatTableDataSource<AuthorResponse>();
 
+  temp(d: any) {
+    console.log(d);
+  }
   ngOnInit(): void {
     this.searchStr.pipe(debounceTime(400)).subscribe((value) => {
       console.log('Search string:', value);
@@ -60,6 +63,7 @@ export class Authors {
       .then(({ items }) => {
         this.authors.set(items);
         const mapped = items.map((author, idx) => ({
+          id: author.id,
           serial: idx + 1,
           name: author.username,
           emailid: author.email,

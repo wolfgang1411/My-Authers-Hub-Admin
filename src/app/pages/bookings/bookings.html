@@ -1,6 +1,6 @@
 <div class="flex flex-col flex-grow gap-4">
   <h3 class="heading">
-    {{ "authors" | translate }}
+    {{ "bookings" | translate }}
   </h3>
 
   <div class="flex justify-between w-full gap-4">
@@ -22,36 +22,6 @@
           class="w-4 fill-white flex"
         ></svg-icon>
         {{ "search" | translate }}
-      </button>
-    </div>
-
-    <div class="flex gap-2">
-      <button
-        matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
-      >
-        <mat-icon class="material-icons">filter_list</mat-icon>
-
-        {{ "filter" | translate }}
-      </button>
-      <button
-        matButton
-        matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
-        [routerLink]="['/author', 0]"
-        routerLinkActive="router-link-active"
-      >
-        <mat-icon class="material-icons">add_circle_outline</mat-icon>
-        {{ "addauthor" | translate }}
-      </button>
-      <button
-        matButton
-        matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
-        (click)="inviteAuthor()"
-      >
-        <mat-icon class="material-icons">person_add</mat-icon>
-        {{ "inviteauthor" | translate }}
       </button>
     </div>
   </div>
@@ -79,24 +49,11 @@
   <ng-template #actionButtons let-element>
     <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
       <button
+        [routerLink]="['/bookings', element.id]"
         class="!bg-primary"
         mat-icon-button
-        [routerLink]="['/author', element.id]"
       >
         <mat-icon class="!text-white">visibility</mat-icon>
-      </button>
-      <button
-        class="!bg-primary"
-        mat-icon-button
-        [routerLink]="['/author', element.id]"
-      >
-        <mat-icon class="!text-white">edit</mat-icon>
-      </button>
-      <button class="!bg-primary" mat-icon-button>
-        <mat-icon class="!text-white">lock_reset</mat-icon>
-      </button>
-      <button class="!bg-accent" mat-icon-button>
-        <mat-icon class="!text-white">block</mat-icon>
       </button>
     </div>
   </ng-template>
