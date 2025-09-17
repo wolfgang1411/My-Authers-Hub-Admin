@@ -5,17 +5,12 @@
       (!showSidebar() && showHeader()) || (!showSidebar() && !showHeader())
   }"
 >
-@if(showSidebar())
-{
+  @if(showSidebar()) {
 
-  <app-sidebar
-  
-  class="fixed mobile:sticky top-0 max-h-[100vh]"
-  ></app-sidebar>
-}
- @if (showHeader()) {
-  <app-header ></app-header>
-} 
+  <app-sidebar class="fixed mobile:sticky top-0 max-h-[100vh]"></app-sidebar>
+  } @if (showHeader()) {
+  <app-header></app-header>
+  }
   <div class="m-8 h-full grow flex flex-col">
     <ng-content></ng-content>
   </div>

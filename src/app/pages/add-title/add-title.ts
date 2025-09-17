@@ -47,7 +47,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { PrintingService } from '../../services/printing-service';
-import * as pdfjsLib from 'pdfjs-dist';
+// import * as pdfjsLib from 'pdfjs-dist';
 import { TitlePrinting } from '../../components/title-printing/title-printing';
 import { Royalties } from '../../components/royalties/royalties';
 import { BookDetails } from '../../components/book-details/book-details';
@@ -464,10 +464,10 @@ export class AddTitle {
         });
         if (mediaType === 'FullCover' && file.type === 'application/pdf') {
           const typedArray = new Uint8Array(await file.arrayBuffer());
-          const pdf = await pdfjsLib.getDocument(typedArray).promise;
-          const totalPages = pdf.numPages;
-          this.printing.at(0).patchValue({ totalPages: totalPages });
-          console.log(`FullCover PDF has ${totalPages} pages`);
+          // const pdf = await pdfjsLib.getDocument(typedArray).promise;
+          // const totalPages = pdf.numPages;
+          // this.printing.at(0).patchValue({ totalPages: totalPages });
+          // console.log(`FullCover PDF has ${totalPages} pages`);
         }
       };
       reader.readAsDataURL(file);

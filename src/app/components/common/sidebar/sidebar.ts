@@ -11,20 +11,23 @@ import { MatButtonModule } from '@angular/material/button';
 import { Header } from '../header/header';
 @Component({
   selector: 'app-sidebar',
-  imports: [SharedModule, RouterModule,
+  imports: [
+    SharedModule,
+    RouterModule,
     MatSidenavModule,
     MatIconModule,
     MatListModule,
     LayoutModule,
     MatButtonModule,
-    Header
+    Header,
   ],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.css',
 })
 export class Sidebar implements OnInit {
-  constructor(private layoutService: LayoutService,
-    private observer : BreakpointObserver
+  constructor(
+    private layoutService: LayoutService,
+    private observer: BreakpointObserver
   ) {
     this.isSidemenuOpen = layoutService.isSidemenuOpen$;
     this.showHeader = layoutService.showHeader$;
@@ -32,9 +35,9 @@ export class Sidebar implements OnInit {
   @ViewChild('sidenav') sidenav!: MatSidenav;
   sidebarMenu = signal<SideMenu[]>([]);
   isSidemenuOpen!: Signal<boolean>;
-    showHeader!: Signal<boolean>;
+  showHeader!: Signal<boolean>;
 
-    mode: 'side' | 'over' = 'side';
+  mode: 'side' | 'over' = 'side';
 
   ngOnInit(): void {
     this.sidebarMenu.set([
@@ -54,10 +57,25 @@ export class Sidebar implements OnInit {
         icon: 'images/house-solid-full.svg',
       },
       {
-        name :'titles',
-        url:'/titles',
-        icon:'images/house-solid-full.svg'
-      }
+        name: 'titles',
+        url: '/titles',
+        icon: 'images/house-solid-full.svg',
+      },
+      {
+        name: 'bookings',
+        url: '/bookings',
+        icon: 'images/house-solid-full.svg',
+      },
+      {
+        name: 'transactions',
+        url: '/transactions',
+        icon: 'images/house-solid-full.svg',
+      },
+      {
+        name: 'payouts',
+        url: '/payouts',
+        icon: 'images/house-solid-full.svg',
+      },
     ]);
     this.observer.observe(['(max-width: 800px)']).subscribe((res) => {
       if (res.matches) {
@@ -72,9 +90,9 @@ export class Sidebar implements OnInit {
 
   onToggleSidebar() {
     this.layoutService.toggleSidemenu();
-    this.sidenav.toggle()
+    this.sidenav.toggle();
   }
-   onMenuItemClick(): void {
+  onMenuItemClick(): void {
     if (window.innerWidth < 768) {
       this.layoutService.toggleSidemenu(); // auto-close on mobile
     }

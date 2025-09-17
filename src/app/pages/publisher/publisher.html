@@ -39,7 +39,8 @@
         matButton
         matButton="filled"
         class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
-        [routerLink]="['/publisher',0]" routerLinkActive="router-link-active" 
+        [routerLink]="['/publisher', 0]"
+        routerLinkActive="router-link-active"
       >
         <mat-icon class="material-icons">add_circle_outline</mat-icon>
         {{ "addpublisher" | translate }}
@@ -76,22 +77,29 @@
     [displayedColumns]="displayedColumns"
     [actionTemplate]="actionButtons"
   >
-    
   </app-list-table>
   <ng-template #actionButtons let-element>
-  <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
-    <button class="!bg-primary" mat-icon-button [routerLink]="['/publisherDetails',1]">
-      <mat-icon class="!text-white">visibility</mat-icon>
-    </button>
-    <button class="!bg-primary" mat-icon-button [routerLink]="['/publisher',1]">
-      <mat-icon class="!text-white">edit</mat-icon>
-    </button>
-    <button class="!bg-primary" mat-icon-button>
-      <mat-icon class="!text-white">lock_reset</mat-icon>
-    </button>
-    <button class="!bg-accent" mat-icon-button>
-      <mat-icon class="!text-white">block</mat-icon>
-    </button>
-  </div>
-</ng-template>
+    <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
+      <button
+        class="!bg-primary"
+        mat-icon-button
+        [routerLink]="['/publisherDetails', element.id]"
+      >
+        <mat-icon class="!text-white">visibility</mat-icon>
+      </button>
+      <button
+        class="!bg-primary"
+        mat-icon-button
+        [routerLink]="['/publisher', element.id]"
+      >
+        <mat-icon class="!text-white">edit</mat-icon>
+      </button>
+      <button class="!bg-primary" mat-icon-button>
+        <mat-icon class="!text-white">lock_reset</mat-icon>
+      </button>
+      <button class="!bg-accent" mat-icon-button>
+        <mat-icon class="!text-white">block</mat-icon>
+      </button>
+    </div>
+  </ng-template>
 </div>

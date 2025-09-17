@@ -1,0 +1,116 @@
+<div class="flex flex-col flex-grow gap-4">
+  <h3 class="heading">
+    {{ "authors" | translate }}
+  </h3>
+
+  <div class="flex justify-between w-full gap-4">
+    <div
+      class="flex h-[38px] items-center justify-center md:min-w-[480px] min-w-full gap-2"
+    >
+      <input
+        class="input-field outline-none w-full"
+        #input
+        (input)="searchStr.next(input.value)"
+        [placeholder]="'search' | translate"
+      />
+      <button
+        class="btn h-[38px] flex items-center self-end justify-center gap-2"
+        (click)="searchStr.next(input.value)"
+      >
+        <svg-icon
+          src="images/magnifying-glass-solid-full.svg"
+          class="w-4 fill-white flex"
+        ></svg-icon>
+        {{ "search" | translate }}
+      </button>
+    </div>
+
+    <div class="flex gap-2">
+      <button
+        matButton="filled"
+        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+      >
+        <mat-icon class="material-icons">filter_list</mat-icon>
+
+        {{ "filter" | translate }}
+      </button>
+
+      @if (loggedInUser()?.accessLevel !== "SUPERADMIN" || true) {
+      <button
+        matButton="filled"
+        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        (click)="onClickRequestPayout()"
+      >
+        <mat-icon class="material-icons">add</mat-icon>
+
+        {{ "requestpayout" | translate }}
+      </button>
+      }
+    </div>
+  </div>
+  <div class="flex gap-2">
+    <button class="!bg-primary" matButton="filled">
+      {{ "all" | translate }}
+    </button>
+    <button class="!bg-primary" matButton="filled">
+      {{ "active" | translate }}
+    </button>
+    <button class="!bg-primary" matButton="filled">
+      {{ "inactive" | translate }}
+    </button>
+    <button class="!bg-primary" matButton="filled">
+      {{ "dormant" | translate }}
+    </button>
+  </div>
+  <app-list-table
+    class="pt-6"
+    [dataSource]="dataSource"
+    [displayedColumns]="displayedColumns"
+    [actionTemplate]="actionButtons"
+  >
+  </app-list-table>
+  <ng-template #actionButtons let-element>
+    <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
+      <button
+        class="!bg-primary"
+        mat-icon-button
+        [routerLink]="['/payouts', element.id]"
+      >
+        <mat-icon class="!text-white">visibility</mat-icon>
+      </button>
+      @if (element.status === 'PENDING' && loggedInUser()?.accessLevel ===
+      'SUPERADMIN') {
+      <ng-container>
+        <button
+          (click)="onUpdatePayout(element.id, 'APPROVED')"
+          title="Approve Payout"
+          class="!bg-primary"
+          mat-icon-button
+        >
+          <mat-icon class="!text-white">thumb_up</mat-icon>
+        </button>
+        <button
+          (click)="onUpdatePayout(element.id, 'REJECTED')"
+          title="Reject Payout"
+          class="bg-red-500"
+          mat-icon-button
+        >
+          <mat-icon class="!text-white">thumb_down</mat-icon>
+        </button>
+      </ng-container>
+      } @else if(element.status === 'REJECTED') {
+      <button class="!bg-red-500" mat-icon-button disabled>
+        <mat-icon title="Rejected" class="!text-white"> close </mat-icon>
+      </button>
+      }@else if(element.status === 'PAID') {
+      <button class="!bg-primary" mat-icon-button disabled>
+        <mat-icon title="Paid" class="!text-white"> check </mat-icon>
+      </button>
+      } @else if(element.status === 'PENDING'){
+      <button class="!bg-yellow-500" mat-icon-button disabled>
+        <mat-icon title="Paid" class="!text-white"> hourglass_empty </mat-icon>
+      </button>
+      }
+    </div>
+  </ng-template>
+</div>

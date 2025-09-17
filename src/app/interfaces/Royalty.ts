@@ -1,7 +1,3 @@
-import { Publisher } from '../pages/publisher/publisher';
-import { Author } from './Authors';
-import { ChannalType, Title } from './Titles';
-
 export interface Royalty {
   id: number;
   titleId: number;

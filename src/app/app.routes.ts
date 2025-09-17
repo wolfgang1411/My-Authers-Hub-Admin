@@ -67,6 +67,47 @@ export const routes: Routes = [
       import('./pages/add-publisher/add-publisher').then((C) => C.AddPublisher),
   },
   {
+    path: 'bookings',
+    loadComponent: () =>
+      import('./pages/bookings/bookings').then((c) => c.Bookings),
+    canActivate: [privateRouteGuard],
+  },
+  {
+    path: 'bookings/:id',
+    loadComponent: () =>
+      import('./pages/booking-details/booking-details').then(
+        (c) => c.BookingDetails
+      ),
+    canActivate: [privateRouteGuard],
+  },
+  {
+    path: 'transactions',
+    loadComponent: () =>
+      import('./pages/transactions/transactions').then((c) => c.Transactions),
+    canActivate: [privateRouteGuard],
+  },
+  {
+    path: 'transactions/:id',
+    loadComponent: () =>
+      import('./pages/transaction-details/transaction-details').then(
+        (c) => c.TransactionDetails
+      ),
+  },
+  {
+    path: 'payouts',
+    loadComponent: () =>
+      import('./pages/payouts/payouts').then((c) => c.Payouts),
+    canActivate: [privateRouteGuard],
+  },
+  {
+    path: 'payouts/:id',
+    loadComponent: () =>
+      import('./pages/payout-details/payout-details').then(
+        (c) => c.PayoutDetails
+      ),
+    canActivate: [privateRouteGuard],
+  },
+  {
     path: '',
     redirectTo: '/dashboard',
     pathMatch: 'full',

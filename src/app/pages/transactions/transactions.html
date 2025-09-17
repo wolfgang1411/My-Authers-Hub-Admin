@@ -1,0 +1,45 @@
+<div class="flex flex-col flex-grow gap-4">
+  <h3 class="heading">
+    {{ "transactions" | translate }}
+  </h3>
+
+  <div class="flex justify-between w-full gap-4">
+    <div
+      class="flex h-[38px] items-center justify-center md:min-w-[480px] min-w-full gap-2"
+    >
+      <input
+        class="input-field outline-none w-full"
+        #input
+        (input)="searchStr.next(input.value)"
+        [placeholder]="'search' | translate"
+      />
+      <button
+        class="btn h-[38px] flex items-center self-end justify-center gap-2"
+        (click)="searchStr.next(input.value)"
+      >
+        <svg-icon
+          src="images/magnifying-glass-solid-full.svg"
+          class="w-4 fill-white flex"
+        ></svg-icon>
+        {{ "search" | translate }}
+      </button>
+    </div>
+  </div>
+  <div class="flex gap-2">
+    <button class="!bg-primary" matButton="filled">
+      {{ "all" | translate }}
+    </button>
+    <button class="!bg-primary" matButton="filled">
+      {{ "active" | translate }}
+    </button>
+    <button class="!bg-primary" matButton="filled">
+      {{ "inactive" | translate }}
+    </button>
+    <button class="!bg-primary" matButton="filled">
+      {{ "dormant" | translate }}
+    </button>
+  </div>
+  <app-transaction-table
+    [transactions]="transactions()"
+  ></app-transaction-table>
+</div>
