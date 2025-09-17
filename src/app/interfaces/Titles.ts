@@ -3,6 +3,7 @@ import { Author } from './Authors';
 import { ISBN } from './Isbn';
 import { Media } from './Media';
 import { Publishers } from './Publishers';
+import { Royalty } from './Royalty';
 import { User } from './user';
 
 export interface Title {
@@ -110,15 +111,7 @@ export enum BookingStatus {
   COMPLETED = 'COMPLETED',
   FAILED = 'FAILED',
 }
-export interface Royalty {
-  id: number;
-  percentage: number;
-  channal: ChannalType;
-  title: Title;
-  author: Author;
-  publisher: Publisher;
-  status: RoyaltyStatus;
-}
+
 export enum RoyaltyStatus {
   ACTIVE = 'ACTIVE',
   DEACTIVE = 'DEACTIVE',

@@ -3,6 +3,7 @@ import {
   Component,
   ElementRef,
   Input,
+  signal,
   ViewChild,
 } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -50,7 +51,8 @@ import { Logger } from '../../services/logger';
 export class TitlePrinting {
   constructor(
     private printingService: PrintingService,
-    private logger: Logger
+    private logger: Logger,
+    private cd: ChangeDetectorRef
   ) {}
   bindingType: BookBindings[] = [];
   laminationTypes: LaminationType[] = [];
@@ -61,6 +63,7 @@ export class TitlePrinting {
   @Input() printing!: FormArray;
   @Input() documentMedia!: FormArray;
   @Input() _formBuilder!: FormBuilder;
+  printCost = signal<number>(0);
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   async ngOnInit() {
     const { items: laminations } =
@@ -197,10 +200,8 @@ export class TitlePrinting {
     this.printingService
       .getPrintingPrice(payload)
       .then((amount) => {
-        setTimeout(() => {
-          printGroup.get('printCost')?.setValue(amount);
-          this.loadingPrice = false;
-        }, 600);
+        this.printCost.set(amount);
+        this.loadingPrice = false;
       })
       .catch((error) => {
         this.loadingPrice = false;

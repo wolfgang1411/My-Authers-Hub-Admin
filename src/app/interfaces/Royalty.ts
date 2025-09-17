@@ -1,20 +1,23 @@
-import { Publisher } from "../pages/publisher/publisher";
-import { Author } from "./Authors";
-import { ChannalType, Title } from "./Titles";
+import { Publisher } from '../pages/publisher/publisher';
+import { Author } from './Authors';
+import { ChannalType, Title } from './Titles';
 
 export interface Royalty {
-id          :number;
-  percentage  :number;
-  channal     :ChannalType;
-  title      : Title;         
-  author    :  Author  ;
-  publisher   : Publisher;
-  status     : RoyaltyStatus
+  id: number;
+  titleId: number;
+  publisherId: number | null;
+  authorId: number | null;
+  print_mah: number;
+  name: string;
+  print_third_party: number;
+  prime: number;
+  ebook_mah: number;
+  ebook_third_party: number;
 }
-export enum RoyaltyStatus{
-      ACTIVE='ACTIVE',
-  DEACTIVE='DEACTIVE',
-  DELETED='DELETED'
+export enum RoyaltyStatus {
+  ACTIVE = 'ACTIVE',
+  DEACTIVE = 'DEACTIVE',
+  DELETED = 'DELETED',
 }
 export interface RoyaltyFilter {
   publisherId?: number;

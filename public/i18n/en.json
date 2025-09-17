@@ -159,4 +159,16 @@
 "quality":"Quality",
 "selectsize" :"Select Size",
 "printingcost":"Printing Cost (INR)",
-"royalties":"Royalties"}
+"royalties":"Royalties",
+"themeofbooksubject":"Theme of Book / Subject",
+"language":"Language",
+"bookedition":"Book Edition",
+"subcategory":"Sub Category",
+"tradecategory":"Trade Category",
+"genre":"Genre",
+"category":"Category",
+"keywords":"Keywords",
+"generatekeywordsAutomatically":"Generate Keywords Automatically",
+"updatekeywordsManually":"Update Keywords Manually",
+"enterKeywords":"Enter Keywords"
+}

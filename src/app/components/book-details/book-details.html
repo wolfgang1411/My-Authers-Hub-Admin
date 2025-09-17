@@ -1,0 +1,120 @@
+<form [formGroup]="titleForm">
+  <div class="mt-4">
+    <div formGroupName="titleDetails">
+      <div class="grid grid-cols-2 gap-4 items-start">
+        <mat-form-field>
+          <mat-label>{{ "themeofbooksubject" | translate }}</mat-label>
+          <input matInput formControlName="subject" />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label> {{ "language" | translate }} </mat-label>
+          <mat-select formControlName="language" required>
+            <mat-option value="en">English</mat-option>
+            <mat-option value="fr">French</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>
+            {{ "longdescription" | translate }}
+          </mat-label>
+          <textarea
+            matInput
+            formControlName="longDescription"
+            rows="4"
+            required
+          ></textarea>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label> {{ "shortdescription" | translate }} </mat-label>
+          <textarea
+            matInput
+            formControlName="shortDescription"
+            rows="4"
+          ></textarea>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "bookedition" | translate }}</mat-label>
+          <input matInput formControlName="edition" type="number" required />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "category" | translate }}</mat-label>
+          <mat-select
+            formControlName="category"
+            required
+            (selectionChange)="getSubcategory($event.value)"
+          >
+            @for (item of TitleCategory(); track $index) {
+            <mat-option [value]="item.id">{{ item.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>
+            {{ "subcategory" | translate }}
+          </mat-label>
+          <mat-select
+            formControlName="subCategory"
+            required
+            [disabled]="!titleForm.get('titleDetails.category')?.value"
+          >
+            @for (item of subCategory(); track $index) {
+            <mat-option [value]="item.id">{{ item.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>
+            {{ "genre" | translate }}
+          </mat-label>
+          <mat-select formControlName="genre" required>
+            @for (item of TitleGenre(); track $index) {
+            <mat-option [value]="item.id">{{ item.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>
+            {{ "tradecategory" | translate }}
+          </mat-label>
+          <mat-select formControlName="tradeCategory" required>
+            @for (item of tradeCategory(); track $index) {
+            <mat-option [value]="item.id">{{ item.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-radio-group
+          formControlName="keywordOption"
+          aria-label="Select keyword option"
+        >
+          <mat-radio-button value="auto">
+            {{ "generatekeywordsAutomatically" | translate }}
+          </mat-radio-button>
+          <mat-radio-button value="manual">
+            {{ "updatekeywordsManually" | translate }}
+          </mat-radio-button>
+        </mat-radio-group>
+        @if(titleForm.get('titleDetails.keywordOption')?.value === 'manual'){
+
+        <mat-form-field class="col-span-2">
+          <mat-label>{{ "enterKeywords" | translate }} ({{ ";" }})</mat-label>
+          <textarea
+            matInput
+            formControlName="manualKeywords"
+            placeholder="keyword1; keyword2; keyword3"
+          ></textarea>
+        </mat-form-field>
+        } @if(titleForm.get('titleDetails.keywordOption')?.value === 'auto'){
+        <mat-form-field class="col-span-2">
+          <textarea
+            matInput
+            formControlName="autoKeywords"
+            readonly
+            placeholder="Automatically generated keywords"
+          ></textarea>
+        </mat-form-field>
+        }
+      </div>
+    </div>
+  </div>
+</form>

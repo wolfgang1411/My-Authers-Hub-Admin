@@ -9,51 +9,100 @@
     <td mat-cell *matCellDef="let row">{{ row.name }}</td>
   </ng-container>
 
-  <!-- Dynamic channel columns -->
-  @for (channel of channelOptions; track $index) {
-  <ng-container [matColumnDef]="channel.value">
-    <th mat-header-cell *matHeaderCellDef>{{ channel.label }}</th>
+  <!-- Dynamic royalty percentage columns -->
+  <ng-container matColumnDef="print_mah">
+    <th mat-header-cell *matHeaderCellDef>Print (MAH)</th>
     <td mat-cell *matCellDef="let row">
       <input
         matInput
         type="number"
-        [(ngModel)]="row[channel.value]"
+        min="0"
+        max="100"
+        [(ngModel)]="row.print_mah"
         placeholder="%"
         class="!w-20 !rounded-md !border !border-gray-300 !px-2 !py-1 text-sm focus:!border-primary focus:!ring-1 focus:!ring-primary"
       />
     </td>
   </ng-container>
-  }
+
+  <ng-container matColumnDef="print_third_party">
+    <th mat-header-cell *matHeaderCellDef>Print (3rd Party)</th>
+    <td mat-cell *matCellDef="let row">
+      <input
+        matInput
+        type="number"
+        min="0"
+        max="100"
+        [(ngModel)]="row.print_third_party"
+        placeholder="%"
+        class="!w-20 !rounded-md !border !border-gray-300 !px-2 !py-1 text-sm focus:!border-primary focus:!ring-1 focus:!ring-primary"
+      />
+    </td>
+  </ng-container>
+
+  <ng-container matColumnDef="prime">
+    <th mat-header-cell *matHeaderCellDef>Prime</th>
+    <td mat-cell *matCellDef="let row">
+      <input
+        matInput
+        type="number"
+        min="0"
+        max="100"
+        [(ngModel)]="row.prime"
+        placeholder="%"
+        class="!w-20 !rounded-md !border !border-gray-300 !px-2 !py-1 text-sm focus:!border-primary focus:!ring-1 focus:!ring-primary"
+      />
+    </td>
+  </ng-container>
+
+  <ng-container matColumnDef="ebook_mah">
+    <th mat-header-cell *matHeaderCellDef>E-Book (MAH)</th>
+    <td mat-cell *matCellDef="let row">
+      <input
+        matInput
+        type="number"
+        min="0"
+        max="100"
+        [(ngModel)]="row.ebook_mah"
+        placeholder="%"
+        class="!w-20 !rounded-md !border !border-gray-300 !px-2 !py-1 text-sm focus:!border-primary focus:!ring-1 focus:!ring-primary"
+      />
+    </td>
+  </ng-container>
+
+  <ng-container matColumnDef="ebook_third_party">
+    <th mat-header-cell *matHeaderCellDef>E-Book (3rd Party)</th>
+    <td mat-cell *matCellDef="let row">
+      <input
+        matInput
+        type="number"
+        min="0"
+        max="100"
+        [(ngModel)]="row.ebook_third_party"
+        placeholder="%"
+        class="!w-20 !rounded-md !border !border-gray-300 !px-2 !py-1 text-sm focus:!border-primary focus:!ring-1 focus:!ring-primary"
+      />
+    </td>
+  </ng-container>
 
   <!-- Header row -->
   <tr
-    class="!bg-primary-light text-white font-medium"
     mat-header-row
     *matHeaderRowDef="displayedColumns"
+    class="!bg-primary-light text-white font-medium"
   ></tr>
 
   <!-- Data row -->
   <tr
-    class="!bg-white hover:!bg-gray-50 transition"
     mat-row
     *matRowDef="let row; columns: displayedColumns"
+    class="!bg-white hover:!bg-gray-50 transition"
   ></tr>
 
   <!-- No data row -->
   <tr class="mat-row text-center text-gray-500" *matNoDataRow>
-    <td class="p-4" [attr.colspan]="displayedColumns.length">
+    <td [attr.colspan]="displayedColumns.length" class="p-4">
       No royalties defined
     </td>
   </tr>
 </table>
-
-<div class="mt-4 flex justify-end">
-  <!-- <button
-    mat-raised-button
-    color="primary"
-    class="!rounded-xl !px-6 !py-2 !font-semibold"
-    (click)="submitRoyalties()"
-  >
-    Submit
-  </button> -->
-</div>

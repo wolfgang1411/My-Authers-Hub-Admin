@@ -50,6 +50,7 @@ import { PrintingService } from '../../services/printing-service';
 import * as pdfjsLib from 'pdfjs-dist';
 import { TitlePrinting } from '../../components/title-printing/title-printing';
 import { Royalties } from '../../components/royalties/royalties';
+import { BookDetails } from '../../components/book-details/book-details';
 
 @Component({
   selector: 'app-add-title',
@@ -68,8 +69,7 @@ import { Royalties } from '../../components/royalties/royalties';
     MatProgressSpinnerModule,
     RouterModule,
     MatCardModule,
-    Royalties,
-    TitlePrinting,
+    BookDetails,
   ],
   templateUrl: './add-title.html',
   styleUrl: './add-title.css',
@@ -181,6 +181,9 @@ export class AddTitle {
         tradeCategory: [null as TitleCategory | null],
         genre: [null as TitleGenre | null],
         keywords: [''],
+        keywordOption: ['auto'],
+        manualKeywords: [''],
+        autoKeywords: [{ value: '', disabled: true }],
         publisher: this._formBuilder.group({
           id: [null],
           name: [''],
