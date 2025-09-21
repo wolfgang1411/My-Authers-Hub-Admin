@@ -32,7 +32,7 @@
     <button
       type="button"
       class="btn text-nowrap"
-      (click)="updateRate('binding')"
+      (click)="updateRate('bidingType')"
     >
       Update Rate
     </button>
@@ -48,7 +48,11 @@
         }
       </mat-select>
     </mat-form-field>
-    <button type="button" class="btn text-nowrap" (click)="updateRate('paper')">
+    <button
+      type="button"
+      class="btn text-nowrap"
+      (click)="updateRate('paperQualityType')"
+    >
       Update Rate
     </button>
   </div>
@@ -63,7 +67,11 @@
         }
       </mat-select>
     </mat-form-field>
-    <button type="button" class="btn text-nowrap" (click)="updateRate('size')">
+    <button
+      type="button"
+      class="btn text-nowrap"
+      (click)="updateRate('sizeType')"
+    >
       Update Rate
     </button>
   </div>
@@ -81,7 +89,7 @@
     <button
       type="button"
       class="btn text-nowrap"
-      (click)="updateRate('lamination')"
+      (click)="updateRate('laminationType')"
     >
       {{ "updaterate" | translate }}
     </button>
@@ -123,12 +131,21 @@
 
   <div class="flex flex-col items-end">
     <!-- Inside Cover -->
-    <mat-checkbox
-      formControlName="insideCover"
-      class="col-span-1 md:col-span-2"
-    >
-      {{ "isinsidecover" | translate }}
-    </mat-checkbox>
+    <div class="flex gap-4">
+      <mat-checkbox
+        formControlName="insideCover"
+        class="col-span-1 md:col-span-2"
+      >
+        {{ "isinsidecover" | translate }}
+      </mat-checkbox>
+      <button
+        type="button"
+        class="btn text-nowrap"
+        (click)="updateRate('insideCover')"
+      >
+        {{ "updaterate" | translate }}
+      </button>
+    </div>
 
     <!-- Random Color Pages -->
     <mat-checkbox

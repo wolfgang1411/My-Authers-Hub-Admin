@@ -141,6 +141,8 @@ export interface SizeCategory {
   length: number;
   price: number;
   type: SizeCategoryType;
+  packetPrice: number;
+  weightMultiplayer: number;
   TitlePrinting: TitlePrinting[];
 }
 
@@ -171,7 +173,10 @@ export interface TitlePrintingCostResponse {
   printPerItem: number;
 }
 
-export interface CreateBindingType {}
+export interface CreateBindingType {
+  name: string;
+  price: number;
+}
 export interface UpdateBindingType extends CreateBindingType {
   id?: number | null;
 }
@@ -181,12 +186,24 @@ export interface UpdateLaminationType extends CreateBindingType {
   id?: number | null;
 }
 
-export interface CreatePaperQualityType {}
+export interface CreatePaperQualityType {
+  name: string;
+  colorPrice: number;
+  blackAndWhitePrice: number;
+}
 export interface UpdatePaperQualityType extends CreatePaperQualityType {
   id?: number | null;
 }
 
-export interface CreateSizeType {}
+export interface CreateSizeType {
+  width: number;
+  length: number;
+  price: number;
+  weightMultiplayer: number;
+  packetPrice: number;
+  type: string;
+}
+
 export interface UpdateSizeType extends CreateSizeType {
   id?: number | null;
 }

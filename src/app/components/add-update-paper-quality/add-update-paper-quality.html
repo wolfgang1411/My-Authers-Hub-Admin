@@ -1,0 +1,55 @@
+<div class="flex flex-col gap-4 w-[480px] max-w-[90vw] p-3">
+  <h2 mat-dialog-title class="text-xl heading !text-primary">
+    Manage Paper Quality
+  </h2>
+
+  <mat-dialog-content>
+    <form [formGroup]="form" class="flex flex-col gap-4">
+      <mat-form-field class="flex-1">
+        <mat-label>{{ "papertype" | translate }}</mat-label>
+        <mat-select formControlName="id">
+          <mat-option [value]="0">{{ "new" | translate }}</mat-option>
+          @for (type of data.paperQualityTypes; track type.id) {
+          <mat-option [value]="type.id">{{ type.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Name -->
+      <mat-form-field class="w-full">
+        <mat-label>{{ "name" | translate }}</mat-label>
+        <input matInput type="text" formControlName="name" />
+      </mat-form-field>
+
+      <!-- Color Price -->
+      <mat-form-field class="w-full">
+        <mat-label>{{ "colourprice" | translate }}</mat-label>
+        <input matInput type="number" formControlName="colorPrice" />
+      </mat-form-field>
+
+      <!-- Black & White Price -->
+      <mat-form-field class="w-full">
+        <mat-label>{{ "blackandwhiteprice" | translate }}</mat-label>
+        <input matInput type="number" formControlName="blackAndWhitePrice" />
+      </mat-form-field>
+    </form>
+  </mat-dialog-content>
+  <mat-dialog-actions>
+    <button
+      (click)="data.onClose()"
+      mat-button
+      matButton="filled"
+      class="!bg-accent"
+    >
+      {{ "close" | translate }}
+    </button>
+    <button
+      (click)="onSubmit()"
+      mat-button
+      matButton="filled"
+      class="!bg-primary"
+    >
+      {{ "confirm" | translate }}
+    </button>
+  </mat-dialog-actions>
+</div>

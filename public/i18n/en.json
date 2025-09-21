@@ -192,5 +192,13 @@
   "sizecategory": "Size category",
   "updaterate": "Update rate",
   "isinsidecover": "Is Inside cover",
-  "iscolorpagesrandom": "Is color pages random"
+  "iscolorpagesrandom": "Is color pages random",
+  "colourprice": "Colour price",
+  "blackandwhiteprice": "Black and white price",
+  "new": "New",
+  "length": "Length",
+  "width": "Width",
+  "weightmultiplayer": "Weight multiplayer",
+  "packetPrice": "Packet price",
+  "enteramount": "Enter amount"
 }

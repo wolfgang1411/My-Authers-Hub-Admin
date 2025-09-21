@@ -7,6 +7,11 @@
       [sizeTypes]="sizeTypes()"
       [paperQualityTypes]="paperQualityTypes()"
       [insideCoverPrice]="insideCover()"
+      (onPaperQualityTypesUpdate)="onPaperQualityTypesUpdae($event)"
+      (onBindingTypesUpdate)="onBindingTypesUpdate($event)"
+      (onLaminationTypesUpdate)="onLaminationTypesUpdate($event)"
+      (onSizeTypesUpdate)="onSizeTypesUpdate($event)"
+      (onInsideCoverPriceUpdate)="onInsideCoverPriceUpdate($event)"
     ></app-printing-calculator>
   </div>
 </div>

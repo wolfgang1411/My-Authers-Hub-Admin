@@ -39,6 +39,7 @@ export class SettingsService {
 
   async createOrUpdateBindingType(data: UpdateBindingType) {
     try {
+      data = { ...data };
       const url = data.id ? `book-bindings/${data.id}` : 'book-bindings';
       const method = data.id ? 'patch' : 'post';
       delete data.id;
@@ -54,6 +55,7 @@ export class SettingsService {
 
   async createOrUpdateLaminationType(data: UpdateLaminationType) {
     try {
+      data = { ...data };
       const url = data.id ? `lamination/${data.id}` : 'lamination';
       const method = data.id ? 'patch' : 'post';
       delete data.id;
@@ -69,6 +71,7 @@ export class SettingsService {
 
   async createOrUpdateSizeType(data: UpdateSizeType) {
     try {
+      data = { ...data };
       const url = data.id ? `size/${data.id}` : 'size';
       const method = data.id ? 'patch' : 'post';
       delete data.id;
@@ -84,7 +87,8 @@ export class SettingsService {
 
   async createOrPaperQualityType(data: UpdatePaperQualityType) {
     try {
-      const url = data.id ? `size/${data.id}` : 'size';
+      data = { ...data };
+      const url = data.id ? `paper-quality/${data.id}` : 'paper-quality';
       const method = data.id ? 'patch' : 'post';
       delete data.id;
       return await this.loaderService.loadPromise<PaperQuailty>(

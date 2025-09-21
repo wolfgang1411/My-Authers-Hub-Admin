@@ -45,6 +45,10 @@ export class InviteDialog {
     if (this.data && this.data.validators) {
       this.text.setValidators(this.data.validators);
     }
+
+    if (this.data && this.data.defaultValue) {
+      this.text.patchValue(this.data.defaultValue);
+    }
   }
 }
 

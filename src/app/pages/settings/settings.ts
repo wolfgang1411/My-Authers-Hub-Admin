@@ -5,6 +5,7 @@ import {
   LaminationType,
   PaperQuailty,
   SizeCategory,
+  SizeCategoryType,
   User,
 } from '../../interfaces';
 import { Router } from '@angular/router';
@@ -67,5 +68,74 @@ export class Settings implements OnInit {
     this.sizeTypes.set(sizes);
     this.laminationTypes.set(laminations);
     this.insideCover.set(Number(insideCover));
+  }
+
+  onPaperQualityTypesUpdae({
+    data,
+    isNew,
+  }: {
+    data: PaperQuailty;
+    isNew: boolean;
+  }) {
+    this.paperQualityTypes.update((d) => {
+      if (isNew) {
+        d.push(data);
+      } else {
+        d = d.map((q) => (q.id === data.id ? data : q));
+      }
+
+      return d;
+    });
+  }
+
+  onBindingTypesUpdate({
+    data,
+    isNew,
+  }: {
+    data: BookBindings;
+    isNew: boolean;
+  }) {
+    this.bindingTypes.update((d) => {
+      if (isNew) {
+        d.push(data);
+      } else {
+        d = d.map((q) => (q.id === data.id ? data : q));
+      }
+
+      return d;
+    });
+  }
+
+  onLaminationTypesUpdate({
+    data,
+    isNew,
+  }: {
+    data: LaminationType;
+    isNew: boolean;
+  }) {
+    this.laminationTypes.update((d) => {
+      if (isNew) {
+        d.push(data);
+      } else {
+        d = d.map((q) => (q.id === data.id ? data : q));
+      }
+
+      return d;
+    });
+  }
+  onSizeTypesUpdate({ data, isNew }: { data: SizeCategory; isNew: boolean }) {
+    this.sizeTypes.update((d) => {
+      if (isNew) {
+        d.push(data);
+      } else {
+        d = d.map((q) => (q.id === data.id ? data : q));
+      }
+
+      return d;
+    });
+  }
+
+  onInsideCoverPriceUpdate(value: number) {
+    this.insideCover.set(value);
   }
 }
