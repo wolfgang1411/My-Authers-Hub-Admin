@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Server } from '../services/server';
-import { Pagination, Royalty } from '../interfaces';
-import { RoyaltyFilter } from '../interfaces/Royalty';
+import { Pagination } from '../interfaces';
+import { Royalty, RoyaltyFilter } from '../interfaces/Royalty';
 import { Logger } from './logger';
 @Injectable({
   providedIn: 'root',

@@ -13,3 +13,4 @@ export * from './Media';
 export * from './UploadFile';
 export * from './Booking';
 export * from './Transaction';
+export * from './Royalty';

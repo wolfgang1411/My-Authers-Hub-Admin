@@ -72,7 +72,13 @@ export class Authors {
           royaltiesearned:
             author.Royalty && author.Royalty.length
               ? author.Royalty.reduce((acc, royalty) => {
-                  return acc + royalty.percentage;
+                  const sumForOne =
+                    (royalty.print_mah || 0) +
+                    (royalty.print_third_party || 0) +
+                    (royalty.prime || 0) +
+                    (royalty.ebook_mah || 0) +
+                    (royalty.ebook_third_party || 0);
+                  return acc + sumForOne;
                 }, 0)
               : 0,
           actions: '',
