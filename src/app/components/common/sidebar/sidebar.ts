@@ -75,6 +75,11 @@ export class Sidebar implements OnInit {
         url: '/payouts',
         icon: 'images/house-solid-full.svg',
       },
+      {
+        name: 'settings',
+        url: '/settings',
+        icon: 'images/house-solid-full.svg',
+      },
     ]);
     this.observer.observe(['(max-width: 800px)']).subscribe((res) => {
       if (res.matches) {
