@@ -6,13 +6,19 @@
           <mat-label>{{ "themeofbooksubject" | translate }}</mat-label>
           <input matInput formControlName="subject" />
         </mat-form-field>
-        <mat-form-field>
-          <mat-label> {{ "language" | translate }} </mat-label>
-          <mat-select formControlName="language" required>
-            <mat-option value="en">English</mat-option>
-            <mat-option value="fr">French</mat-option>
-          </mat-select>
-        </mat-form-field>
+        <div class="grid grid-cols-2 gap-4">
+          <mat-form-field>
+            <mat-label> {{ "language" | translate }} </mat-label>
+            <mat-select formControlName="language" required>
+              <mat-option value="en">English</mat-option>
+              <mat-option value="fr">French</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>{{ "bookedition" | translate }}</mat-label>
+            <input matInput formControlName="edition" type="number" required />
+          </mat-form-field>
+        </div>
         <mat-form-field>
           <mat-label>
             {{ "longdescription" | translate }}
@@ -32,10 +38,8 @@
             rows="4"
           ></textarea>
         </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ "bookedition" | translate }}</mat-label>
-          <input matInput formControlName="edition" type="number" required />
-        </mat-form-field>
+      </div>
+      <div class="grid grid-cols-4 gap-4 items-start">
         <mat-form-field>
           <mat-label>{{ "category" | translate }}</mat-label>
           <mat-select
@@ -52,11 +56,7 @@
           <mat-label>
             {{ "subcategory" | translate }}
           </mat-label>
-          <mat-select
-            formControlName="subCategory"
-            required
-            [disabled]="!titleForm.get('titleDetails.category')?.value"
-          >
+          <mat-select formControlName="subCategory" required>
             @for (item of subCategory(); track $index) {
             <mat-option [value]="item.id">{{ item.name }}</mat-option>
             }
@@ -82,7 +82,8 @@
             }
           </mat-select>
         </mat-form-field>
-
+      </div>
+      <div class="flex flex-col gap-4">
         <mat-radio-group
           formControlName="keywordOption"
           aria-label="Select keyword option"

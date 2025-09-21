@@ -84,8 +84,12 @@ export class Authors {
           actions: '',
         }));
         this.dataSource.data = mapped;
-        this.displayedColumns = Object.keys(mapped[0]);
 
+        if (mapped.length > 0) {
+          this.displayedColumns = Object.keys(mapped[0]);
+        } else {
+          this.displayedColumns = [];
+        }
         console.log('Fetched publishers:', this.authors());
       })
       .catch((error) => {

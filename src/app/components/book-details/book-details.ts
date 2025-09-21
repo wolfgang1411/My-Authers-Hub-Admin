@@ -13,6 +13,7 @@ import { TitleService } from '../../pages/titles/title-service';
 import { TitleCategory, TitleGenre } from '../../interfaces';
 import { sign } from 'crypto';
 import { MatRadioModule } from '@angular/material/radio';
+import { debounceTime } from 'rxjs';
 
 @Component({
   selector: 'app-book-details',
@@ -42,20 +43,30 @@ export class BookDetails {
     this.TitleGenre.set(genre);
     const { items: trade } = await this.titleService.getTradeCategory();
     this.tradeCategory.set(trade);
-    this.titleDetailsCtrl.get('category')?.valueChanges.subscribe((val) => {
-      if (!val) {
-        this.titleDetailsCtrl.get('subCategory')?.reset();
-      }
-      if (!val) {
-        this.titleDetailsCtrl.get('tradeCategory')?.reset();
-      }
-    });
+    this.titleForm
+      .get('titleDetails.category')
+      ?.valueChanges.subscribe((value) => {
+        const subCategoryControl = this.titleForm.get(
+          'titleDetails.subCategory'
+        );
+        if (value) {
+          subCategoryControl?.enable();
+        } else {
+          subCategoryControl?.disable();
+          subCategoryControl?.reset();
+        }
+      });
 
-    this.titleForm.get('titleDetails')?.valueChanges.subscribe(() => {
-      if (this.titleForm.get('titleDetails.keywordOption')?.value === 'auto') {
-        this.generateKeywordsAutomatically();
-      }
-    });
+    this.titleForm
+      .get('titleDetails')
+      ?.valueChanges.pipe(debounceTime(300))
+      .subscribe(() => {
+        if (
+          this.titleForm.get('titleDetails.keywordOption')?.value === 'auto'
+        ) {
+          this.generateKeywordsAutomatically();
+        }
+      });
   }
   get titleDetailsCtrl() {
     return this.titleForm.get('titleDetails') as FormGroup;
