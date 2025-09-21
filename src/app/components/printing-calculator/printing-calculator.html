@@ -1,0 +1,141 @@
+<form [formGroup]="form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div class="flex gap-4 col-span-2">
+    <!-- Total Pages -->
+    <mat-form-field class="w-full">
+      <mat-label>{{ "totalpages" | translate }}</mat-label>
+      <input matInput type="number" formControlName="totalPages" />
+    </mat-form-field>
+
+    <!-- Color Pages -->
+    <mat-form-field class="w-full">
+      <mat-label>{{ "colourpages" | translate }}</mat-label>
+      <input matInput type="number" formControlName="colorPages" />
+    </mat-form-field>
+
+    <!-- Color Pages -->
+    <mat-form-field class="w-full">
+      <mat-label>{{ "quantity" | translate }}</mat-label>
+      <input matInput type="number" formControlName="quantity" />
+    </mat-form-field>
+  </div>
+
+  <!-- Binding Type + Button -->
+  <div class="flex gap-2 w-full">
+    <mat-form-field class="flex-1">
+      <mat-label>{{ "bindingtype" | translate }}</mat-label>
+      <mat-select formControlName="bindingTypeId">
+        @for (type of bindingTypes(); track type.id) {
+        <mat-option [value]="type.id">{{ type.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <button
+      type="button"
+      class="btn text-nowrap"
+      (click)="updateRate('binding')"
+    >
+      Update Rate
+    </button>
+  </div>
+
+  <!-- Paper Quality + Button -->
+  <div class="flex gap-2 w-full">
+    <mat-form-field class="flex-1">
+      <mat-label>{{ "papertype" | translate }}</mat-label>
+      <mat-select formControlName="paperQuailtyId">
+        @for (paper of paperQualityTypes(); track paper.id) {
+        <mat-option [value]="paper.id">{{ paper.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <button type="button" class="btn text-nowrap" (click)="updateRate('paper')">
+      Update Rate
+    </button>
+  </div>
+
+  <!-- Size Category + Button -->
+  <div class="flex gap-2 w-full">
+    <mat-form-field class="flex-1">
+      <mat-label>{{ "sizecategory" | translate }}</mat-label>
+      <mat-select formControlName="sizeCategoryId">
+        @for (size of sizeTypes(); track size.id) {
+        <mat-option [value]="size.id">{{ size.size }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <button type="button" class="btn text-nowrap" (click)="updateRate('size')">
+      Update Rate
+    </button>
+  </div>
+
+  <!-- Lamination Type + Button -->
+  <div class="flex gap-2 w-full">
+    <mat-form-field class="flex-1">
+      <mat-label>{{ "laminationtype" | translate }}</mat-label>
+      <mat-select formControlName="laminationTypeId">
+        @for (lamination of laminationTypes(); track lamination.id) {
+        <mat-option [value]="lamination.id">{{ lamination.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <button
+      type="button"
+      class="btn text-nowrap"
+      (click)="updateRate('lamination')"
+    >
+      {{ "updaterate" | translate }}
+    </button>
+  </div>
+
+  <div class="flex flex-col gap-4">
+    <h1 class="heading">Costs</h1>
+    @if ((calculation())) {
+    <div class="flex flex-col gap-2">
+      <div class="flex gap-4">
+        <span>Printing</span>
+        <strong>
+          : {{ (calculation()?.printPerItem | currency) || "N/A" }}
+        </strong>
+      </div>
+      <div class="flex gap-4">
+        <span>Weight</span>
+        <strong> : {{ calculation()?.deliveryWeightPerItem || "N/A" }} </strong>
+      </div>
+      <div class="flex gap-4">
+        <span>Delivery</span>
+        <strong>
+          : {{ (calculation()?.deliveryCost | currency) || "N/A" }}
+        </strong>
+      </div>
+      <div class="flex gap-4">
+        <span>Total Weight</span>
+        <strong> : {{ calculation()?.deliveryWeight || "N/A" }} </strong>
+      </div>
+      <div class="flex gap-4">
+        <span>Total Printing</span>
+        <strong>
+          : {{ (calculation()?.printCost | currency) || "N/A" }}
+        </strong>
+      </div>
+    </div>
+    }
+  </div>
+
+  <div class="flex flex-col items-end">
+    <!-- Inside Cover -->
+    <mat-checkbox
+      formControlName="insideCover"
+      class="col-span-1 md:col-span-2"
+    >
+      {{ "isinsidecover" | translate }}
+    </mat-checkbox>
+
+    <!-- Random Color Pages -->
+    <mat-checkbox
+      formControlName="isColorPagesRandom"
+      class="col-span-1 md:col-span-2"
+    >
+      {{ "iscolorpagesrandom" | translate }}
+    </mat-checkbox>
+  </div>
+</form>
