@@ -50,10 +50,6 @@ export class Titles {
       .then(({ items }) => {
         this.titles.set(items);
         const mapped = items.map((title, idx) => ({
-<<<<<<< HEAD
-=======
-          id: title.id,
->>>>>>> 96459fd956b5a614b92771a3f157aa7941d236b5
           serial: idx + 1,
           title: title.name,
           isbn:
@@ -64,7 +60,6 @@ export class Titles {
               : 'N/A',
           royaltiesearned:
             title.Royalty && title.Royalty.length
-<<<<<<< HEAD
               ? title.Royalty.reduce((acc, royalty) => {
                   const sumForOne =
                     (royalty.print_mah || 0) +
@@ -74,12 +69,6 @@ export class Titles {
                     (royalty.ebook_third_party || 0);
                   return acc + sumForOne;
                 }, 0)
-=======
-              ? title.Royalty.reduce(
-                  (acc, royalty) => acc + royalty.percentage,
-                  0
-                )
->>>>>>> 96459fd956b5a614b92771a3f157aa7941d236b5
               : 0,
           authors:
             title.authors && title.authors.length

@@ -23,7 +23,7 @@ import {
   PaperQuailty,
   SizeCategory,
   TitlePrinting as titlepr,
-  TitlePrintingPayload,
+  TitlePrintingCostPayload,
 } from '../../interfaces';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
@@ -185,7 +185,7 @@ export class TitlePrinting {
       return;
     }
     this.loadingPrice = true;
-    const payload: TitlePrintingPayload = {
+    const payload: TitlePrintingCostPayload = {
       colorPages: +printGroup.get('colorPages')?.value || 10,
       bwPages: +printGroup.get('bwPages')?.value || 10,
       paperQuailtyId: printGroup.get('paperQuailtyId')?.value,
@@ -193,9 +193,8 @@ export class TitlePrinting {
       totalPages: +printGroup.get('totalPages')?.value || 20,
       laminationTypeId: printGroup.get('laminationTypeId')?.value,
       isColorPagesRandom: printGroup.get('isColorPagesRandom')?.value,
-      bookBindingsId: printGroup.get('bookBindingsId')?.value,
+      bindingTypeId: printGroup.get('bookBindingsId')?.value,
       insideCover: printGroup.get('insideCover')?.value,
-      deliveryCharge: 0,
     };
     this.printingService
       .getPrintingPrice(payload)

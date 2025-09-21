@@ -1,5 +1,7 @@
 import {
   ApplicationConfig,
+  DEFAULT_CURRENCY_CODE,
+  LOCALE_ID,
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from '@angular/core';
@@ -43,5 +45,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
     LoaderService,
     Logger,
+    { provide: LOCALE_ID, useValue: 'en-IN' }, // ← Set default locale to India
+    { provide: DEFAULT_CURRENCY_CODE, useValue: 'INR' }, // ← Default currency
   ],
 };

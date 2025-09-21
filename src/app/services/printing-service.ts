@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { Server } from './server';
 import {
+  BasicFilter,
   BookBindings,
   LaminationType,
   Pagination,
   PaperQuailty,
   SizeCategory,
-  TitlePrintingPayload,
+  TitlePrintingCostPayload,
 } from '../interfaces';
 import { TitlePrinting } from '../components/title-printing/title-printing';
 import { Logger } from './logger';
@@ -17,45 +18,51 @@ import path from 'path';
 })
 export class PrintingService {
   constructor(private serverService: Server, private logger: Logger) {}
-  async getBindingType() {
+  async getBindingType(filter?: BasicFilter) {
     try {
       return await this.serverService.get<Pagination<BookBindings>>(
-        'book-bindings'
+        'book-bindings',
+        filter
       );
     } catch (error) {
       console.error('Error fetching publishers:', error);
       throw error;
     }
   }
-  async getLaminationType() {
+  async getLaminationType(filter?: BasicFilter) {
     try {
       return await this.serverService.get<Pagination<LaminationType>>(
-        'lamination'
+        'lamination',
+        filter
       );
     } catch (error) {
       console.error('Error fetching publishers:', error);
       throw error;
     }
   }
-  async getAllPaperTypes() {
+  async getAllPaperTypes(filter?: BasicFilter) {
     try {
       return await this.serverService.get<Pagination<PaperQuailty>>(
-        'paper-quality'
+        'paper-quality',
+        filter
       );
     } catch (error) {
       console.error('Error fetching paper types:', error);
       throw error;
     }
   }
-  async getSizeCategory() {
+  async getSizeCategory(filter?: BasicFilter) {
     try {
-      return await this.serverService.get<Pagination<SizeCategory>>(`size`);
+      return await this.serverService.get<Pagination<SizeCategory>>(
+        `size`,
+        filter
+      );
     } catch (error) {
       console.error('Error fetching paper types by category:', error);
       throw error;
     }
   }
-  async getPrintingPrice(printingGroup: TitlePrintingPayload) {
+  async getPrintingPrice(printingGroup: TitlePrintingCostPayload) {
     try {
       const response = await this.serverService.post<{ amount: number }>(
         'title-printing/price',

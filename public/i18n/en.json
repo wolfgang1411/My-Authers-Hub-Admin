@@ -188,5 +188,9 @@
   "userdetails": "User Details",
   "payout": "Payout",
   "createdat": "Created at",
-  "approvedby": "Approved by"
+  "approvedby": "Approved by",
+  "sizecategory": "Size category",
+  "updaterate": "Update rate",
+  "isinsidecover": "Is Inside cover",
+  "iscolorpagesrandom": "Is color pages random"
 }

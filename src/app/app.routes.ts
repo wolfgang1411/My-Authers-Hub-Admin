@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { privateRouteGuard } from './guards/private-route-guard';
 import { publicRouteGuard } from './guards/public-route-guard';
+import { accessLevelGuard } from './guards/access-level-guard';
 
 export const routes: Routes = [
   {
@@ -106,6 +107,15 @@ export const routes: Routes = [
         (c) => c.PayoutDetails
       ),
     canActivate: [privateRouteGuard],
+  },
+  {
+    path: 'settings',
+    loadComponent: () =>
+      import('./pages/settings/settings').then((c) => c.Settings),
+    canActivate: [privateRouteGuard],
+    data: {
+      accessLevels: 'SUPERADMIN',
+    },
   },
   {
     path: '',

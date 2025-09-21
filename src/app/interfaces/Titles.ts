@@ -111,6 +111,7 @@ export interface BookBindings {
   description: string;
   TitlePrinting: TitlePrinting[];
 }
+
 export interface LaminationType {
   id: number;
   name: string;
@@ -147,4 +148,45 @@ export enum SizeCategoryType {
   A = 'A',
   B = 'B',
   C = 'C',
+}
+
+export interface TitlePrintingCostPayload {
+  paperQuailtyId: number;
+  totalPages: number;
+  colorPages: number;
+  laminationTypeId: number;
+  bindingTypeId: number;
+  sizeCategoryId: number;
+  isColorPagesRandom?: boolean;
+  insideCover?: boolean;
+  bwPages?: number;
+  quantity?: number;
+}
+
+export interface TitlePrintingCostResponse {
+  printCost: number;
+  deliveryCost: number;
+  deliveryWeight: number;
+  deliveryWeightPerItem: number;
+  printPerItem: number;
+}
+
+export interface CreateBindingType {}
+export interface UpdateBindingType extends CreateBindingType {
+  id?: number | null;
+}
+
+export interface CreateLaminationType {}
+export interface UpdateLaminationType extends CreateBindingType {
+  id?: number | null;
+}
+
+export interface CreatePaperQualityType {}
+export interface UpdatePaperQualityType extends CreatePaperQualityType {
+  id?: number | null;
+}
+
+export interface CreateSizeType {}
+export interface UpdateSizeType extends CreateSizeType {
+  id?: number | null;
 }

@@ -4,3 +4,8 @@ export type Pagination<T> = {
   page: number;
   totalCount: number;
 };
+
+export interface BasicFilter {
+  itemsPerPage?: number;
+  page?: number;
+}
