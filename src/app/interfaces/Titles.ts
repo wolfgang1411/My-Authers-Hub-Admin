@@ -132,6 +132,7 @@ export interface PaperQuailty {
   note: string;
   TitlePrinting: TitlePrinting[];
 }
+export interface TitlePrintingPayload {}
 
 export interface SizeCategory {
   id: number;
