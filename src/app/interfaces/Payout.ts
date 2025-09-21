@@ -8,6 +8,7 @@ export interface Payout {
   status: PayoutStatus;
   user: User;
   createdAt: string;
+  approvedBy?: User;
 }
 
 export type PayoutStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID';

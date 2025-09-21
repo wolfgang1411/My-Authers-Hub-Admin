@@ -1,1 +1,139 @@
-<p>payout-details works!</p>
+<div class="flex flex-col gap-4">
+  <div class="rounded-md overflow-hidden shadow-lg">
+    <div class="bg-primary p-4">
+      <h1 class="text-white">{{ "payout" | translate }}</h1>
+    </div>
+    <mat-list>
+      <mat-list-item class="bg-gray-50 !p-3 border-b border-gray-200">
+        <div class="flex w-full justify-between">
+          <span class="text-gray-600">{{ "createdat" | translate }}</span>
+          <span class="font-medium">{{ payout()?.createdAt | myDate }}</span>
+        </div>
+      </mat-list-item>
+
+      <mat-list-item class="bg-gray-50 !p-3">
+        <div class="flex w-full justify-between">
+          <span class="text-gray-600">{{ "amount" | translate }}</span>
+          <span class="font-medium">{{ payout()?.requestedAmount }} INR</span>
+        </div>
+      </mat-list-item>
+
+      <mat-list-item class="bg-gray-50 !p-3">
+        <div class="flex w-full justify-between">
+          <span class="text-gray-600">{{ "status" | translate }}</span>
+          <span class="font-medium">{{ payout()?.status }}</span>
+        </div>
+      </mat-list-item>
+
+      <mat-list-item class="bg-white !p-3">
+        <div class="flex w-full justify-between">
+          <span class="text-gray-600">{{ "approvedby" | translate }}</span>
+          @if (payout()?.approvedBy) {
+          <span class="font-medium">
+            {{ payout()?.approvedBy?.firstName }}
+            {{ payout()?.approvedBy?.lastName || "" }}
+          </span>
+          } @else {
+
+          <span class="font-medium">N/A</span>
+          }
+        </div>
+      </mat-list-item>
+    </mat-list>
+  </div>
+
+  <div class="grid grid-cols-3 gap-4">
+    <div class="rounded-md overflow-hidden shadow-lg">
+      <div class="bg-primary p-4">
+        <h1 class="text-white">{{ "userdetails" | translate }}</h1>
+      </div>
+      <mat-list>
+        <!-- Row 1 -->
+        <mat-list-item class="bg-gray-50 !p-3 border-b border-gray-200">
+          <div class="flex w-full justify-between">
+            <span class="text-gray-600">{{ "name" | translate }}</span>
+            <span class="font-medium">{{ userDetails()?.name }}</span>
+          </div>
+        </mat-list-item>
+
+        <!-- Row 2 -->
+        <mat-list-item class="bg-white !p-3 border-b border-gray-200">
+          <div class="flex w-full justify-between">
+            <span class="text-gray-600">{{ "email" | translate }}</span>
+            <span class="font-medium">{{ userDetails()?.email }}</span>
+          </div>
+        </mat-list-item>
+
+        <!-- Row 3 -->
+        <mat-list-item class="bg-gray-50 !p-3">
+          <div class="flex w-full justify-between">
+            <span class="text-gray-600">{{ "phone" | translate }}</span>
+            <span class="font-medium">{{ userDetails()?.phone }}</span>
+          </div>
+        </mat-list-item>
+      </mat-list>
+    </div>
+    <div class="rounded-md overflow-hidden shadow-lg">
+      <div class="bg-primary p-4">
+        <h1 class="text-white">{{ "address" | translate }}</h1>
+      </div>
+      <mat-list>
+        <!-- Row 1 -->
+        <mat-list-item class="bg-gray-50 !p-3 border-b border-gray-200">
+          <div class="flex w-full justify-between">
+            <span class="text-gray-600">{{ "address" | translate }}</span>
+            <span class="font-medium">{{ addressDetails()?.address }}</span>
+          </div>
+        </mat-list-item>
+
+        <!-- Row 2 -->
+        <mat-list-item class="bg-white !p-3 border-b border-gray-200">
+          <div class="flex w-full justify-between">
+            <span class="text-gray-600">{{ "city" | translate }}</span>
+            <span class="font-medium"
+              >{{ addressDetails()?.city }},{{ addressDetails()?.state }}</span
+            >
+          </div>
+        </mat-list-item>
+
+        <!-- Row 3 -->
+        <mat-list-item class="bg-gray-50 !p-3">
+          <div class="flex w-full justify-between">
+            <span class="text-gray-600">{{ "pincode" | translate }}</span>
+            <span class="font-medium">{{ addressDetails()?.pincode }}</span>
+          </div>
+        </mat-list-item>
+      </mat-list>
+    </div>
+    <div class="rounded-md overflow-hidden shadow-lg">
+      <div class="bg-primary p-4">
+        <h1 class="text-white">{{ "bankdetails" | translate }}</h1>
+      </div>
+      <mat-list>
+        <!-- Row 1 -->
+        <mat-list-item class="bg-gray-50 !p-3 border-b border-gray-200">
+          <div class="flex w-full justify-between">
+            <span class="text-gray-600">{{ "bankname" | translate }}</span>
+            <span class="font-medium">{{ bankDetails()?.name }}</span>
+          </div>
+        </mat-list-item>
+
+        <!-- Row 2 -->
+        <mat-list-item class="bg-white !p-3 border-b border-gray-200">
+          <div class="flex w-full justify-between">
+            <span class="text-gray-600">{{ "accountnumber" | translate }}</span>
+            <span class="font-medium">{{ bankDetails()?.accountNo }} </span>
+          </div>
+        </mat-list-item>
+
+        <!-- Row 3 -->
+        <mat-list-item class="bg-gray-50 !p-3">
+          <div class="flex w-full justify-between">
+            <span class="text-gray-600">{{ "ifsccode" | translate }}</span>
+            <span class="font-medium">{{ bankDetails()?.ifsc }}</span>
+          </div>
+        </mat-list-item>
+      </mat-list>
+    </div>
+  </div>
+</div>

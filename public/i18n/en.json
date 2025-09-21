@@ -184,5 +184,9 @@
   "ebooktype": "E-Book Type",
   "price": "Price",
   "txnid": "Txn Id",
-  "requestpayout": "Request payout"
+  "requestpayout": "Request payout",
+  "userdetails": "User Details",
+  "payout": "Payout",
+  "createdat": "Created at",
+  "approvedby": "Approved by"
 }

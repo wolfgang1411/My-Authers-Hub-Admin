@@ -5,7 +5,11 @@ import { Pipe, PipeTransform } from '@angular/core';
   name: 'myDate',
 })
 export class MyDatePipe implements PipeTransform {
-  transform(value?: string | null, format = '', defaultText?: string) {
+  transform(
+    value?: string | null,
+    format = 'dd-MM-yyyy',
+    defaultText?: string
+  ) {
     if (!value) return defaultText || '';
 
     return formatDate(value, format || 'medium', 'en-US');
