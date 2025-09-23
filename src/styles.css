@@ -2,23 +2,30 @@
 @import "tailwindcss";
 
 :root {
-  --primary: #2f6f82;
-  --primary-light: #c3e8f6;
-  --primary-superlight: #ebf3f7;
+  --primary: #3d1a5d;
+  --primary-light: #ceb8ef;
+  --primary-superlight: #e1d7f3;
   /* --primary-dark: ; */
+  --green-2: #00af57;
+  --light-green-bg: #f4faf6;
+  --light-green-2: #d5fde2;
+  --light-purple-bg: #f2f0ff;
+  --purple: #5950ac;
+  --footer-bg: #241a7b;
+  --blue-colour: #3f32b1;
+  --purple-bg: #f7f5ff;
+  --accent: #ce0000;
+  --accent-light: #e94b4b; /* Kept as-is since no replacement provided */
 
-  --accent: #ff6b6b;
-  --accent-light: #ff5252;
+  --secondary: #5950ac;
 
-  --secondary: #2b2b7b;
+  --background: #f4faf6;
+  --surface: #f2f0ff;
 
-  --background: #fcfcfa;
-  --surface: #f6f5f3;
-
-  --text-primary: #4b5563;
-  --text-secondary: #2f4f4f;
-  --text-heading: #2f6f82;
-  --text-placeholder: #9ca3af;
+  --text-primary: #4a4a4a;
+  --text-secondary: #a3a3a3;
+  --text-heading: #3d1a5d;
+  --text-placeholder: #afafaf;
 
   --breakpoint-mobile: 1024px;
 }

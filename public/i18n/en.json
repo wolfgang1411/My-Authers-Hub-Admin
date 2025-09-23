@@ -200,5 +200,9 @@
   "width": "Width",
   "weightmultiplayer": "Weight multiplayer",
   "packetPrice": "Packet price",
-  "enteramount": "Enter amount"
+  "enteramount": "Enter amount",
+  "printingcalculator" : "Printing Calculator",
+  "settings" : "Settings",
+  "generatekeywordsAutomatically" :"Generate Keywords Automatically",
+  "updatekeywordsManually" : "Update Keywords Manually"
 }

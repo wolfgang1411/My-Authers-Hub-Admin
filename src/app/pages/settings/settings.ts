@@ -5,17 +5,18 @@ import {
   LaminationType,
   PaperQuailty,
   SizeCategory,
-  SizeCategoryType,
   User,
 } from '../../interfaces';
 import { Router } from '@angular/router';
 import { SettingsService } from '../../services/settings';
 import { PrintingService } from '../../services/printing-service';
 import { PrintingCalculator } from '../../components/printing-calculator/printing-calculator';
+import { MatTabsModule } from '@angular/material/tabs';
+import { SharedModule } from '../../modules/shared/shared-module';
 
 @Component({
   selector: 'app-settings',
-  imports: [PrintingCalculator],
+  imports: [PrintingCalculator, MatTabsModule, SharedModule],
   templateUrl: './settings.html',
   styleUrl: './settings.css',
 })

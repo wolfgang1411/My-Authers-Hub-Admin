@@ -7,7 +7,9 @@
 >
   @if(showSidebar()) {
 
-  <app-sidebar class="fixed mobile:sticky top-0 max-h-[100vh]"></app-sidebar>
+  <app-sidebar
+    class="fixed mobile:sticky top-0 max-h-[100vh] !bg-primary-superlight"
+  ></app-sidebar>
   } @if (showHeader()) {
   <app-header></app-header>
   }

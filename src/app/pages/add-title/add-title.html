@@ -10,7 +10,7 @@
   [linear]="true"
   [animationDuration]="'500'"
 >
-  <!-- <mat-step
+  <mat-step
     [stepControl]="formatCtrl"
     class="!text-accent !p-0"
     label="Choose Format"
@@ -168,8 +168,8 @@
         }
       </div>
     </form>
-  </mat-step> -->
-  <!-- <mat-step [stepControl]="titleDetailsCtrl" label="Fill the Title Details">
+  </mat-step>
+  <mat-step [stepControl]="titleDetailsCtrl" label="Fill the Title Details">
     <form [formGroup]="titleDetailsCtrl">
       <div class="grid-cols-3 grid gap-4 my-4 items-start">
         <div class="grid">
@@ -345,8 +345,8 @@
         Next
       </button>
     </form>
-  </mat-step> -->
-  <!-- <mat-step [stepControl]="documentMedia" label="Upload Documents">
+  </mat-step>
+  <mat-step [stepControl]="documentMedia" label="Upload Documents">
     <form [formGroup]="titleForm">
       <div formArrayName="documentMedia" class="grid gap-6">
         @for(media of documentMedia.controls; track $index) {
@@ -438,9 +438,9 @@
         </button>
       </div>
     </form>
-  </mat-step> -->
+  </mat-step>
 
-  <!-- @if(titleForm.get('format')?.value !== 'ebookOnly') {
+  @if(titleForm.get('format')?.value !== 'ebookOnly') {
   <mat-step [stepControl]="printing" label="Print Details">
     <app-title-printing
       [titleForm]="titleForm"
@@ -450,8 +450,8 @@
     ></app-title-printing>
     <button matStepperNext class="!bg-primary" matButton="filled">Next</button>
   </mat-step>
-  } -->
-  <!-- <mat-step [stepControl]="royalties" label="Royalty">
+  }
+  <mat-step [stepControl]="royalties" label="Royalty">
     <app-royalties
       [titleForm]="titleForm"
       [royalties]="royalties"
@@ -464,14 +464,14 @@
     <button matStepperNext class="!bg-primary mt-2" matButton="filled">
       Next
     </button>
-  </mat-step> -->
+  </mat-step>
   <mat-step [stepControl]="titleDetailsCtrl" label="Book Details">
     <app-book-details [titleForm]="titleForm"> > </app-book-details>
     <button matStepperNext class="!bg-primary mt-2" matButton="filled">
       Next
     </button>
   </mat-step>
-  <!-- <mat-step [stepControl]="distributionCtrl" label="Distribution">
+  <mat-step [stepControl]="distributionCtrl" label="Distribution">
     <form [formGroup]="distributionCtrl">
       <mat-select formControlName="type">
         <mat-option value="national">National</mat-option>
@@ -480,5 +480,5 @@
       </mat-select>
       <button mat-button (click)="onSubmit()">Submit</button>
     </form>
-  </mat-step> -->
+  </mat-step>
 </mat-stepper>

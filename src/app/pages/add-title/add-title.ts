@@ -70,6 +70,8 @@ import { BookDetails } from '../../components/book-details/book-details';
     RouterModule,
     MatCardModule,
     BookDetails,
+    Royalties,
+    TitlePrinting,
   ],
   templateUrl: './add-title.html',
   styleUrl: './add-title.css',
