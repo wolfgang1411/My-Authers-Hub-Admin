@@ -7,7 +7,7 @@
 <mat-stepper
   class="example-stepper !my-4"
   [orientation]="(stepperOrientation | async)!"
-  [linear]="true"
+  [linear]="false"
   [animationDuration]="'500'"
 >
   <mat-step
@@ -173,10 +173,56 @@
     <form [formGroup]="titleDetailsCtrl">
       <div class="grid-cols-3 grid gap-4 my-4 items-start">
         <div class="grid">
-          <div formGroupName="isbn" class="w-full">
+          <div formGroupName="isbnPrint" class="w-full">
             <mat-form-field class="!w-full flex">
               <mat-label>
                 {{ "isbnnumber" | translate }}
+              </mat-label>
+              <input
+                matInput
+                placeholder=""
+                formControlName="isbnNumber"
+                [maxlength]="13"
+                [minlength]="13"
+                [required]="
+                  titleForm.get('publishingType')?.value === 'PRINT_EBOOK' ||
+                  titleForm.get('publishingType')?.value === 'ONLY_PRINT'
+                "
+              />
+              <button
+                mat-stroked-button
+                type="button"
+                matButton="filled"
+                class="!bg-green-600 !text-white !h-[28px] disabled:!bg-gray-500"
+                (click)="verifyIsbn()"
+                [disabled]="
+                  !titleDetailsCtrl.get('isbn.isbnNumber')?.valid ||
+                  isVerifying()
+                "
+              >
+                @if (!isVerifying()) { Verify } @else {
+                <mat-progress-spinner
+                  diameter="20"
+                  mode="indeterminate"
+                  class="inline-block align-middle text-white !fill-white"
+                />
+                }
+              </button>
+            </mat-form-field>
+          </div>
+          <div class="text-sm">
+            @if (isbnVerified() === true) {
+            <span class="text-green-600">✔ ISBN Verified</span>
+            } @else if (isbnVerified() === false) {
+            <span class="text-red-600">✘ Invalid ISBN</span>
+            }
+          </div>
+        </div>
+        <div class="grid">
+          <div formGroupName="isbnEbook" class="w-full">
+            <mat-form-field class="!w-full flex">
+              <mat-label>
+                {{ "isbnebook" | translate }}
               </mat-label>
               <input
                 matInput

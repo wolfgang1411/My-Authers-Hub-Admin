@@ -109,6 +109,7 @@ export class AddTitle {
   isbnVerified = signal<boolean | null>(null);
   isVerifying = signal<boolean>(false);
   titleId!: number;
+
   onAuthorChangeChild(authorId: number) {
     const author = this.authorsList().find((a) => a.id === authorId);
     if (!author) return;
@@ -124,6 +125,7 @@ export class AddTitle {
     if (!publisher) return;
     this.publisherSignal.set(publisher);
   }
+
   getDocumentLabel(mediaType: MediaType): string {
     switch (mediaType) {
       case 'FullCover':
@@ -205,7 +207,12 @@ export class AddTitle {
             displayName: [''],
           }),
         ]),
-        isbn: this._formBuilder.group({
+        isbnPrint: this._formBuilder.group({
+          id: [null],
+          isbnNumber: ['', [Validators.pattern(/^(97(8|9))?\d{9}(\d|X)$/)]],
+          format: ['ISBN-13'],
+        }),
+        isbnEbook: this._formBuilder.group({
           id: [null],
           isbnNumber: ['', [Validators.pattern(/^(97(8|9))?\d{9}(\d|X)$/)]],
           format: ['ISBN-13'],
