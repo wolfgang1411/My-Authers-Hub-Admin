@@ -497,13 +497,10 @@ export class AddTitle {
       url: null,
     });
   }
-  onStepChange(event: StepperSelectionEvent) {
+  onStepChange() {
     console.log('step change triggered');
     console.log('titleForm valid:', this.titleForm.valid);
-    console.log(
-      'Current step control valid:',
-      event.selectedStep.stepControl?.valid
-    );
+
     // if (this.titleForm.valid) {
     this.saveDraft();
     // }
