@@ -87,8 +87,6 @@ export class Authors {
 
         if (mapped.length > 0) {
           this.displayedColumns = Object.keys(mapped[0]);
-        } else {
-          this.displayedColumns = [];
         }
         console.log('Fetched publishers:', this.authors());
       })

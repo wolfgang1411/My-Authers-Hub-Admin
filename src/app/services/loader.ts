@@ -11,6 +11,7 @@ export class LoaderService {
 
   async loadPromise<T>(promise: Promise<T>, area?: string) {
     const loadingArea = area || uuidV4();
+
     try {
       this.loadingAreas.next([...this.loadingAreas.value, loadingArea]);
       const res = await promise;

@@ -4,15 +4,22 @@ import { Pagination } from '../../interfaces';
 import {
   Title,
   TitleCategory,
+  TitleCreate,
   TitleFilter,
   TitleGenre,
 } from '../../interfaces/Titles';
+import { Logger } from '../../services/logger';
+import { LoaderService } from '../../services/loader';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TitleService {
-  constructor(private server: Server) {}
+  constructor(
+    private server: Server,
+    private logger: Logger,
+    private loader: LoaderService
+  ) {}
 
   async getTitles(filter?: TitleFilter) {
     try {
@@ -63,6 +70,16 @@ export class TitleService {
         type: 'TRADE',
       });
     } catch (error) {
+      throw error;
+    }
+  }
+  async createTitle(titleDetails: TitleCreate): Promise<Title> {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post<Title>('title', titleDetails)
+      );
+    } catch (error) {
+      this.logger.logError(error);
       throw error;
     }
   }

@@ -10,10 +10,11 @@ import { UserService } from './services/user';
 import { Layout } from './components/common/layout/layout';
 import { SharedModule } from './modules/shared/shared-module';
 import { LayoutService } from './services/layout';
+import { Loader } from './components/loader/loader';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterModule, SharedModule, Layout],
+  imports: [RouterModule, SharedModule, Layout, Loader],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })

@@ -8,7 +8,7 @@
         <mat-form-field>
           <mat-label>{{ "bindingtype" | translate }}</mat-label>
           <mat-select formControlName="bookBindingsId">
-            @for(item of bindingType; track $index) {
+            @for(item of bindingType(); track $index) {
             <mat-option [value]="item.id">{{ item.name }}</mat-option>
             }
           </mat-select>
@@ -129,7 +129,6 @@
         </div>
       </div>
       }
-
       <div class="grid grid-cols-4 gap-4 items-start mt-4">
         <mat-form-field>
           <mat-label>{{ "laminationtype" | translate }}</mat-label>
@@ -154,7 +153,7 @@
         <mat-form-field>
           <mat-label>{{ "papergsm" | translate }}</mat-label>
           <mat-select formControlName="paperQuailtyId">
-            @for(item of paperQuality; track $index) {
+            @for(item of paperQuality(); track $index) {
             <mat-option [value]="item.id">{{ item.name }}</mat-option>
             }
           </mat-select>
@@ -162,7 +161,7 @@
         <mat-form-field>
           <mat-label>{{ "selectsize" | translate }}</mat-label>
           <mat-select formControlName="sizeCategoryId">
-            @for (item of sizeCategory; track $index) {
+            @for (item of sizeCategory(); track $index) {
             <mat-option [value]="item.id">{{ item.size }}</mat-option>
             }
           </mat-select>

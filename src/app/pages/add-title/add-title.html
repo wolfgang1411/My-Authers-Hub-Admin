@@ -26,11 +26,11 @@
             class="btn border-2 !border-primary flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
             [ngClass]="{
               '!bg-primary !text-white !fill-white shadow-lg':
-                titleForm.get('format')?.value === 'printAndEbook',
+                titleForm.get('publishingType')?.value === 'PRINT_EBOOK',
               '!bg-white !text-primary fill-primary !border-primary':
-                titleForm.get('format')?.value !== 'printAndEbook'
+                titleForm.get('publishingType')?.value !== 'PRINT_EBOOK'
             }"
-            (click)="titleForm.get('format')?.setValue('printAndEbook')"
+            (click)="titleForm.get('publishingType')?.setValue('PRINT_EBOOK')"
           >
             <svg-icon
               class="fill-primary"
@@ -43,11 +43,11 @@
             class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
             [ngClass]="{
               '!bg-primary !text-white !fill-white shadow-lg':
-                titleForm.get('format')?.value === 'printOnly',
+                titleForm.get('publishingType')?.value === 'ONLY_PRINT',
               '!bg-white !text-primary fill-primary !border-primary':
-                titleForm.get('format')?.value !== 'printOnly'
+                titleForm.get('publishingType')?.value !== 'ONLY_PRINT'
             }"
-            (click)="titleForm.get('format')?.setValue('printOnly')"
+            (click)="titleForm.get('publishingType')?.setValue('ONLY_PRINT')"
           >
             <svg-icon class="fill-primary" src="images/print.svg"></svg-icon>
             {{ "printbookonly" | translate }}
@@ -57,17 +57,17 @@
             class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
             [ngClass]="{
               '!bg-primary !text-white !fill-white shadow-lg':
-                titleForm.get('format')?.value === 'ebookOnly',
+                titleForm.get('publishingType')?.value === 'ONLY_EBOOK',
               '!bg-white !text-primary fill-primary !border-primary':
-                titleForm.get('format')?.value !== 'ebookOnly'
+                titleForm.get('publishingType')?.value !== 'ONLY_EBOOK'
             }"
-            (click)="titleForm.get('format')?.setValue('ebookOnly')"
+            (click)="titleForm.get('publishingType')?.setValue('ONLY_EBOOK')"
           >
             <svg-icon class="fill-primary" src="images/ebook.svg"></svg-icon>
             {{ "ebookonly" | translate }}
           </button>
         </div>
-        @if(titleForm.get('format')?.value) {
+        @if(titleForm.get('publishingType')?.value) {
 
         <h3 class="heading self-center !text-[1.6rem] !font-medium">
           {{ "doyouhaveallfilesreadytoupload" | translate }}??
@@ -127,11 +127,11 @@
             class="btn border-2 !border-primary flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
             [ngClass]="{
               '!bg-primary !text-white !fill-white shadow-lg':
-                titleForm.get('publishingType')?.value === 'publish&print',
+                titleForm.get('printingFormat')?.value === 'publish&print',
               '!bg-white !text-primary fill-primary !border-primary':
-                titleForm.get('publishingType')?.value !== 'publish&print'
+                titleForm.get('printingFormat')?.value !== 'publish&print'
             }"
-            (click)="titleForm.get('publishingType')?.setValue('publish&print')"
+            (click)="titleForm.get('printingFormat')?.setValue('publish&print')"
             matStepperNext
           >
             <div class="flex justify-center">
@@ -151,11 +151,11 @@
             class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
             [ngClass]="{
               '!bg-primary !text-white !fill-white shadow-lg':
-                titleForm.get('publishingType')?.value === 'printOnly',
+                titleForm.get('printingFormat')?.value === 'printOnly',
               '!bg-white !text-primary fill-primary !border-primary':
-                titleForm.get('publishingType')?.value !== 'printOnly'
+                titleForm.get('printingFormat')?.value !== 'printOnly'
             }"
-            (click)="titleForm.get('publishingType')?.setValue('printOnly')"
+            (click)="titleForm.get('printingFormat')?.setValue('printOnly')"
             matStepperNext
           >
             <svg-icon
@@ -185,8 +185,8 @@
                 [maxlength]="13"
                 [minlength]="13"
                 [required]="
-                  titleForm.get('format')?.value === 'printAndEbook' ||
-                  titleForm.get('format')?.value === 'printOnly'
+                  titleForm.get('publishingType')?.value === 'PRINT_EBOOK' ||
+                  titleForm.get('publishingType')?.value === 'ONLY_PRINT'
                 "
               />
               <button
@@ -239,6 +239,7 @@
             matInput
             placeholder="Short Description"
             formControlName="shortDescription"
+            required
           ></textarea>
         </mat-form-field>
       </div>
@@ -341,7 +342,12 @@
           <mat-icon>add</mat-icon> Add Author
         </button>
       </div>
-      <button matStepperNext matButton="filled" class="!bg-primary mt-8">
+      <button
+        matButton="filled"
+        matStepperNext
+        class="!bg-primary mt-8"
+        (click)="formSubmit()"
+      >
         Next
       </button>
     </form>

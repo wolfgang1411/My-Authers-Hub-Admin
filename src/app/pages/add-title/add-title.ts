@@ -9,7 +9,10 @@ import {
 } from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { map, Observable } from 'rxjs';
-import { StepperOrientation } from '@angular/cdk/stepper';
+import {
+  StepperOrientation,
+  StepperSelectionEvent,
+} from '@angular/cdk/stepper';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import {
   FormBuilder,
@@ -51,6 +54,7 @@ import { PrintingService } from '../../services/printing-service';
 import { TitlePrinting } from '../../components/title-printing/title-printing';
 import { Royalties } from '../../components/royalties/royalties';
 import { BookDetails } from '../../components/book-details/book-details';
+import { TitleService } from '../titles/title-service';
 
 @Component({
   selector: 'app-add-title',
@@ -81,7 +85,8 @@ export class AddTitle {
     private publisherService: PublisherService,
     private authorService: AuthorsService,
     private isbnService: IsbnService,
-    private printingService: PrintingService
+    private printingService: PrintingService,
+    private titleService: TitleService
   ) {
     const breakpointObserver = inject(BreakpointObserver);
     this.stepperOrientation = breakpointObserver
@@ -103,7 +108,7 @@ export class AddTitle {
   authorsList = signal<Author[]>([]);
   isbnVerified = signal<boolean | null>(null);
   isVerifying = signal<boolean>(false);
-
+  titleId!: number;
   onAuthorChangeChild(authorId: number) {
     const author = this.authorsList().find((a) => a.id === authorId);
     if (!author) return;
@@ -166,7 +171,7 @@ export class AddTitle {
       this.authorsList.set(items);
     });
     this.titleForm = this._formBuilder.group({
-      format: [null, Validators.required],
+      printingformat: [null, Validators.required],
       hasFiles: [null, Validators.required],
       publishingType: [null, Validators.required],
       titleDetails: this._formBuilder.group({
@@ -213,7 +218,7 @@ export class AddTitle {
         type: ['', Validators.required],
       }),
     });
-    this.titleForm.get('format')?.valueChanges.subscribe((format) => {
+    this.titleForm.get('publishingType')?.valueChanges.subscribe((format) => {
       this.buildMediaArray(format);
     });
   }
@@ -241,6 +246,14 @@ export class AddTitle {
     });
   }
 
+  formSubmit() {
+    console.log(
+      this.titleDetailsCtrl.value,
+      'titleformmmm',
+      this.titleForm.value,
+      'title valueeee'
+    );
+  }
   get authors(): FormArray {
     return this.titleForm.get('titleDetails.authors') as FormArray;
   }
@@ -258,6 +271,7 @@ export class AddTitle {
     } else {
       pubGroup.get('displayName')?.enable();
     }
+    console.log(pubGroup, 'publisherrr');
   }
   onPublisherKeepSameChange(event: Event) {
     const checked = (event.target as HTMLInputElement).checked;
@@ -271,6 +285,7 @@ export class AddTitle {
     } else {
       pubGroup.get('displayName')?.enable();
     }
+    console.log(pubGroup, 'publisherrr');
   }
   onAuthorKeepSameChange(index: number, event: Event) {
     const checked = (event.target as HTMLInputElement).checked;
@@ -328,7 +343,7 @@ export class AddTitle {
     return this.titleForm.get('printing') as FormArray;
   }
   get formatCtrl() {
-    return this.titleForm.get('format') as FormGroup;
+    return this.titleForm.get('publishingType') as FormGroup;
   }
   get titleDetailsCtrl() {
     return this.titleForm.get('titleDetails') as FormGroup;
@@ -418,19 +433,19 @@ export class AddTitle {
   buildMediaArray(format: string) {
     this.documentMedia.clear();
     switch (format) {
-      case 'ebookOnly':
+      case 'ONLY_EBOOK':
         this.documentMedia.push(this.createMedia('FullCover', true));
         this.documentMedia.push(this.createMedia('FrontCover', true));
         break;
 
-      case 'printOnly':
+      case 'ONLY_PRINT':
         this.documentMedia.push(this.createMedia('FullCover', true));
         this.documentMedia.push(this.createMedia('FrontCover', true));
         this.documentMedia.push(this.createMedia('BackCover', false));
         this.documentMedia.push(this.createMedia('PrintInterior', true));
         break;
 
-      case 'printAndEbook':
+      case 'PRINT_EBOOK':
         this.documentMedia.push(this.createMedia('FullCover', true));
         this.documentMedia.push(this.createMedia('FrontCover', true));
         this.documentMedia.push(this.createMedia('BackCover', false));
@@ -482,13 +497,43 @@ export class AddTitle {
       url: null,
     });
   }
-  onSubmit() {
-    if (this.titleForm.valid) {
-      const payload: Title = this.titleForm.value as Title;
-      console.log('Submitting:', payload);
-      // TODO: call API
+  onStepChange(event: StepperSelectionEvent) {
+    console.log('step change triggered');
+    console.log('titleForm valid:', this.titleForm.valid);
+    console.log(
+      'Current step control valid:',
+      event.selectedStep.stepControl?.valid
+    );
+    // if (this.titleForm.valid) {
+    this.saveDraft();
+    // }
+  }
+
+  buildRequestBody(status: 'DRAFT' | 'ACTIVE') {
+    return {
+      ...this.titleForm.value,
+      status,
+    };
+  }
+  saveDraft() {
+    const body = this.buildRequestBody('DRAFT');
+    if (!this.titleId) {
+      this.titleService.createTitle(body).then((res: { id: number }) => {
+        this.titleId = res.id;
+      });
     } else {
-      this.titleForm.markAllAsTouched();
+      // update existing draft
+      // this.titleService.updateTitle(this.titleId, body).subscribe();
+    }
+  }
+
+  // final submit
+  onSubmit() {
+    const body = this.buildRequestBody('ACTIVE');
+    if (this.titleId) {
+      // this.titleService.updateTitle(this.titleId, body).subscribe(() => {
+      alert('Title created successfully!');
+      // });
     }
   }
 }

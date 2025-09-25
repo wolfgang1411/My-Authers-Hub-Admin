@@ -8,6 +8,7 @@ import {
   PaperQuailty,
   SizeCategory,
   TitlePrintingCostPayload,
+  TitlePrintingCostResponse,
 } from '../interfaces';
 import { TitlePrinting } from '../components/title-printing/title-printing';
 import { Logger } from './logger';
@@ -62,13 +63,15 @@ export class PrintingService {
       throw error;
     }
   }
-  async getPrintingPrice(printingGroup: TitlePrintingCostPayload) {
+  async getPrintingPrice(
+    printingGroup: TitlePrintingCostPayload
+  ): Promise<TitlePrintingCostResponse> {
     try {
-      const response = await this.serverService.post<{ amount: number }>(
+      const response = await this.serverService.post<TitlePrintingCostResponse>(
         'title-printing/price',
         printingGroup
       );
-      return response.amount;
+      return response;
     } catch (error) {
       console.error('Error fetching printing price:', error);
       this.logger.logError(error);

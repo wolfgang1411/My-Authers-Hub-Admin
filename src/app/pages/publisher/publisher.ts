@@ -91,8 +91,6 @@ export class Publisher implements OnInit {
         this.dataSource.data = mapped;
         if (mapped.length > 0) {
           this.displayedColumns = Object.keys(mapped[0]);
-        } else {
-          this.displayedColumns = []; // or set default columns if needed
         }
 
         console.log('Mapped publishers:', mapped);

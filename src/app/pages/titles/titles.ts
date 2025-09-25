@@ -79,7 +79,10 @@ export class Titles {
         }));
 
         this.dataSource.data = mapped;
-        this.displayedColumns = Object.keys(mapped[0]);
+        if (mapped.length > 0) {
+          this.displayedColumns = Object.keys(mapped[0]);
+        }
+
         console.log('Fetched titles:', this.titles());
       })
       .catch((error) => {

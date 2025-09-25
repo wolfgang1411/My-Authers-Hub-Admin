@@ -54,10 +54,10 @@ export class TitlePrinting {
     private logger: Logger,
     private cd: ChangeDetectorRef
   ) {}
-  bindingType: BookBindings[] = [];
-  laminationTypes: LaminationType[] = [];
-  paperQuality: PaperQuailty[] = [];
-  sizeCategory: SizeCategory[] = [];
+  bindingType = signal<BookBindings[]>([]);
+  laminationTypes = signal<LaminationType[]>([]);
+  paperQuality = signal<PaperQuailty[]>([]);
+  sizeCategory = signal<SizeCategory[]>([]);
   loadingPrice: boolean = false;
   @Input() titleForm!: FormGroup;
   @Input() printing!: FormArray;
@@ -68,29 +68,19 @@ export class TitlePrinting {
   async ngOnInit() {
     const { items: laminations } =
       await this.printingService.getLaminationType();
-    this.laminationTypes = laminations;
+    this.laminationTypes.set(laminations);
     const { items: binding } = await this.printingService.getBindingType();
-    this.bindingType = binding;
+    this.bindingType.set(binding);
     const { items: quality } = await this.printingService.getAllPaperTypes();
-    this.paperQuality = quality;
+    this.paperQuality.set(quality);
     const { items: sizes } = await this.printingService.getSizeCategory();
-    this.sizeCategory = sizes.sort((a, b) => a.id - b.id);
+    this.sizeCategory.set(sizes.sort((a, b) => a.id - b.id));
     this.printing.controls.forEach((group, index) => {
       this.setupAutoCalculations(group as FormGroup, index);
-      // if (!group.valid) {
-      //   return;
-      // } else {
-      //   this.calculatePrintingCost(group);
-      // }
     });
     this.printing.valueChanges.subscribe(() => {
       this.printing.controls.forEach((group, index) => {
         this.setupAutoCalculations(group as FormGroup, index);
-        // if (!group.valid) {
-        //   return;
-        // } else {
-        //   this.calculatePrintingCost(group);
-        // }
       });
     });
   }
@@ -153,13 +143,12 @@ export class TitlePrinting {
   }
   getFilteredLaminationTypes(print: AbstractControl): any[] {
     const bindingTypeId = print.get('bookBindingsId')?.value;
-    console.log(print, 'printgroup');
     if (!this.laminationTypes?.length) return [];
     const bindingTypeName = this.getBindingTypeNameById(bindingTypeId);
     if (bindingTypeName?.toLowerCase() === 'paperback') {
-      return this.laminationTypes; // allow all
+      return this.laminationTypes(); // allow all
     }
-    return this.laminationTypes.filter(
+    return this.laminationTypes().filter(
       (t) => t.name.toLowerCase() !== 'velvet'
     );
   }
@@ -168,7 +157,7 @@ export class TitlePrinting {
   }
   private getBindingTypeNameById(id: number): string | null {
     if (!id) return null;
-    const binding = this.bindingType?.find((b) => b.id === id);
+    const binding = this.bindingType()?.find((b) => b.id === id);
     return binding ? binding.name : null;
   }
 
@@ -198,8 +187,8 @@ export class TitlePrinting {
     };
     this.printingService
       .getPrintingPrice(payload)
-      .then((amount) => {
-        this.printCost.set(amount);
+      .then((response) => {
+        this.printCost.set(response.printCost);
         this.loadingPrice = false;
       })
       .catch((error) => {

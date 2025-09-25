@@ -36,6 +36,37 @@ export interface Title {
   Royalty: Royalty[];
   documentMedia: Media[];
 }
+export interface TitleCreate {
+  name: string;
+  subTitle: string;
+  publisherId: 1;
+  publisherDisplay: string;
+  publishingType: PublishingType;
+  subject: string;
+  language: string;
+  longDescription: string;
+  shortDescription: string;
+  edition: number;
+  isbnPrint: string;
+  isbnEbook: string;
+  categoryId: number;
+  subCategoryId: number;
+  tradeCategoryId: number;
+  genreId: number;
+  keywords: string;
+  isUniqueIdentifier: false;
+  authorIds: [
+    {
+      id: number;
+      displayName: string;
+    }
+  ];
+}
+export enum PublishingType {
+  'PRINT_EBOOK' = 'PRINT_EBOOK',
+  'ONLY_PRINT' = 'ONLY_PRINT',
+  'ONLY_EBOOK' = 'ONLY_EBOOK',
+}
 export interface TitleResponse {
   title: string;
   isbn: string;
