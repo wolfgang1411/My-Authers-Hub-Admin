@@ -204,5 +204,13 @@
   "printingcalculator" : "Printing Calculator",
   "settings" : "Settings",
   "generatekeywordsAutomatically" :"Generate Keywords Automatically",
-  "updatekeywordsManually" : "Update Keywords Manually"
+  "updatekeywordsManually" : "Update Keywords Manually",
+  "isbnebook" :"ISBN E-Book",
+  "themeofbooksubject" : "Theme of Book / Subject",
+  "language":"Language",
+  "bookedition":"Book Edition",
+  "category":"Category",
+  "subcategory":"Subcategory",
+  "genre": "Genre",
+  "tradecategory":"Trade Category"
 }

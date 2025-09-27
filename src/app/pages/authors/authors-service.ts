@@ -3,16 +3,23 @@ import { Server } from '../../services/server';
 import { Pagination } from '../../interfaces';
 import { Author, AuthorFilter } from '../../interfaces/Authors';
 import { Logger } from '../../services/logger';
+import { LoaderService } from '../../services/loader';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthorsService {
-  constructor(private server: Server, private logger: Logger) {}
+  constructor(
+    private server: Server,
+    private logger: Logger,
+    private loader: LoaderService
+  ) {}
 
   async getAuthors(filter?: AuthorFilter) {
     try {
-      return await this.server.get<Pagination<Author>>('authors', filter);
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<Author>>('authors', filter)
+      );
     } catch (error) {
       this.logger.logError(error);
       throw error;
@@ -20,7 +27,9 @@ export class AuthorsService {
   }
   async getAuthorrById(id: number) {
     try {
-      return await this.server.get<Author>(`authors/${id}`);
+      return await this.loader.loadPromise(
+        this.server.get<Author>(`authors/${id}`)
+      );
     } catch (error) {
       this.logger.logError(error);
       throw error;
@@ -29,9 +38,11 @@ export class AuthorsService {
 
   async createAuthor(authorData: Author): Promise<Author> {
     try {
-      return await this.server[authorData.id ? 'patch' : 'post'](
-        authorData.id ? `authors/${authorData.id}` : 'authors',
-        { ...authorData }
+      return await this.loader.loadPromise(
+        this.server[authorData.id ? 'patch' : 'post'](
+          authorData.id ? `authors/${authorData.id}` : 'authors',
+          { ...authorData }
+        )
       );
     } catch (error) {
       this.logger.logError(error);

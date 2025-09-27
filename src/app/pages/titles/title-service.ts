@@ -23,7 +23,9 @@ export class TitleService {
 
   async getTitles(filter?: TitleFilter) {
     try {
-      return await this.server.get<Pagination<Title>>('titles', filter);
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<Title>>('titles', filter)
+      );
     } catch (error) {
       console.error('Error fetching publishers:', error);
       throw error;
@@ -32,7 +34,9 @@ export class TitleService {
   // Initialization logic can gp here if needed
   async getTitleById(id: number) {
     try {
-      return await this.server.get<Title>(`titles/${id}`);
+      return await this.loader.loadPromise(
+        this.server.get<Title>(`titles/${id}`)
+      );
     } catch (error) {
       console.error(`Error fetching title with id ${id}:`, error);
       throw error;
@@ -40,7 +44,9 @@ export class TitleService {
   }
   async getTitleCategory() {
     try {
-      return await this.server.get<Pagination<TitleCategory>>('category');
+      return await this.server.get<Pagination<TitleCategory>>('category', {
+        type: 'CATEGORY',
+      });
     } catch (error) {
       console.error('Error fetching:', error);
       throw error;
@@ -57,7 +63,8 @@ export class TitleService {
   async getSubcategory(categoryId: number) {
     try {
       return await this.server.get<Pagination<TitleCategory>>('category', {
-        parentId: categoryId,
+        parentIds: categoryId,
+        type: 'SUBCATEGORY',
       });
     } catch (error) {
       console.error('Error fetching:', error);
@@ -76,7 +83,7 @@ export class TitleService {
   async createTitle(titleDetails: TitleCreate): Promise<Title> {
     try {
       return await this.loader.loadPromise(
-        this.server.post<Title>('title', titleDetails)
+        this.server.post<Title>('titles', titleDetails)
       );
     } catch (error) {
       this.logger.logError(error);

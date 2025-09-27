@@ -7,7 +7,7 @@
 <mat-stepper
   class="example-stepper !my-4"
   [orientation]="(stepperOrientation | async)!"
-  [linear]="false"
+  [linear]="true"
   [animationDuration]="'500'"
 >
   <mat-step
@@ -170,233 +170,25 @@
     </form>
   </mat-step>
   <mat-step [stepControl]="titleDetailsCtrl" label="Fill the Title Details">
-    <form [formGroup]="titleDetailsCtrl">
-      <div class="grid-cols-3 grid gap-4 my-4 items-start">
-        <div class="grid">
-          <div formGroupName="isbnPrint" class="w-full">
-            <mat-form-field class="!w-full flex">
-              <mat-label>
-                {{ "isbnnumber" | translate }}
-              </mat-label>
-              <input
-                matInput
-                placeholder=""
-                formControlName="isbnNumber"
-                [maxlength]="13"
-                [minlength]="13"
-                [required]="
-                  titleForm.get('publishingType')?.value === 'PRINT_EBOOK' ||
-                  titleForm.get('publishingType')?.value === 'ONLY_PRINT'
-                "
-              />
-              <button
-                mat-stroked-button
-                type="button"
-                matButton="filled"
-                class="!bg-green-600 !text-white !h-[28px] disabled:!bg-gray-500"
-                (click)="verifyIsbn()"
-                [disabled]="
-                  !titleDetailsCtrl.get('isbn.isbnNumber')?.valid ||
-                  isVerifying()
-                "
-              >
-                @if (!isVerifying()) { Verify } @else {
-                <mat-progress-spinner
-                  diameter="20"
-                  mode="indeterminate"
-                  class="inline-block align-middle text-white !fill-white"
-                />
-                }
-              </button>
-            </mat-form-field>
-          </div>
-          <div class="text-sm">
-            @if (isbnVerified() === true) {
-            <span class="text-green-600">✔ ISBN Verified</span>
-            } @else if (isbnVerified() === false) {
-            <span class="text-red-600">✘ Invalid ISBN</span>
-            }
-          </div>
-        </div>
-        <div class="grid">
-          <div formGroupName="isbnEbook" class="w-full">
-            <mat-form-field class="!w-full flex">
-              <mat-label>
-                {{ "isbnebook" | translate }}
-              </mat-label>
-              <input
-                matInput
-                placeholder=""
-                formControlName="isbnNumber"
-                [maxlength]="13"
-                [minlength]="13"
-                [required]="
-                  titleForm.get('publishingType')?.value === 'PRINT_EBOOK' ||
-                  titleForm.get('publishingType')?.value === 'ONLY_PRINT'
-                "
-              />
-              <button
-                mat-stroked-button
-                type="button"
-                matButton="filled"
-                class="!bg-green-600 !text-white !h-[28px] disabled:!bg-gray-500"
-                (click)="verifyIsbn()"
-                [disabled]="
-                  !titleDetailsCtrl.get('isbn.isbnNumber')?.valid ||
-                  isVerifying()
-                "
-              >
-                @if (!isVerifying()) { Verify } @else {
-                <mat-progress-spinner
-                  diameter="20"
-                  mode="indeterminate"
-                  class="inline-block align-middle text-white !fill-white"
-                />
-                }
-              </button>
-            </mat-form-field>
-          </div>
-          <div class="text-sm">
-            @if (isbnVerified() === true) {
-            <span class="text-green-600">✔ ISBN Verified</span>
-            } @else if (isbnVerified() === false) {
-            <span class="text-red-600">✘ Invalid ISBN</span>
-            }
-          </div>
-        </div>
-        <mat-form-field>
-          <mat-label>{{ "titlename" | translate }}</mat-label>
-          <input
-            matInput
-            placeholder="Book Title"
-            formControlName="name"
-            required
-          />
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ "subtitle" | translate }}</mat-label>
-          <input matInput placeholder="Sub Title" formControlName="subTitle" />
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>
-            {{ "shortdescription" | translate }}
-          </mat-label>
-          <textarea
-            matInput
-            placeholder="Short Description"
-            formControlName="shortDescription"
-            required
-          ></textarea>
-        </mat-form-field>
-      </div>
-      <div
-        class="grid grid-cols-2 gap-4 items-start my-4"
-        formGroupName="publisher"
-      >
-        <mat-form-field>
-          <mat-label>Select Publisher</mat-label>
-          <mat-select
-            formControlName="id"
-            (selectionChange)="
-              onPublisherChange($event.value);
-              onPublisherChangeChild($event.value)
-            "
-          >
-            @for (item of publishers(); track $index) {
-            <mat-option [value]="item.id">
-              {{ item.name }}
-            </mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <div class="flex flex-col">
-          <mat-form-field>
-            <mat-label>{{ "displaynameforpublisher" | translate }}</mat-label>
-            <input matInput formControlName="displayName" />
-          </mat-form-field>
-          <div class="flex gap-2 self-start">
-            <input
-              type="checkbox"
-              class="w-4"
-              formControlName="keepSame"
-              (change)="onPublisherKeepSameChange($event)"
-              checked
-            />
-            <label>{{
-              "keepdisplaynamesameaspublishername" | translate
-            }}</label>
-          </div>
-        </div>
-      </div>
-      <div formArrayName="authors" class="grid grid-cols-2 gap-4 my-4">
-        @for(item of authors.controls ; track $index){
-        <div [formGroupName]="$index" class="flex flex-col">
-          <div class="grid grid-cols-[0.8fr_0.8fr_0.2fr] items-start gap-2">
-            <mat-form-field class="w-full">
-              <mat-label>Author</mat-label>
-              <mat-select
-                formControlName="id"
-                (selectionChange)="
-                  onAuthorChange($index, $event.value);
-                  onAuthorChangeChild($event.value)
-                "
-              >
-                @for(author of authorsList() ; track $index) {
-                <mat-option [value]="author.id">
-                  {{ author.user.firstName + " " + author.user.lastName }} ({{
-                    author.username
-                  }})
-                </mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field>
-              <mat-label>{{ "displaynameforauthor" | translate }}</mat-label>
-              <input matInput formControlName="displayName" />
-            </mat-form-field>
+    <app-book-details
+      [titleForm]="titleForm"
+      [authorsList]="authorsList"
+      [publishers]="publishers"
+      [isVerifying]="isVerifying"
+      [isISBNEbookErifying]="isISBNEbookErifying"
+      (onPublisherChangeChild)="onPublisherChangeChild($event)"
+      (onAuthorChangeChild)="onAuthorChangeChild($event)"
+    >
+    </app-book-details>
 
-            <button
-              class="self-center !bg-accent"
-              mat-icon-button
-              color="warn"
-              (click)="removeAuthor($index)"
-            >
-              <mat-icon class="!fill-white">delete</mat-icon>
-            </button>
-          </div>
-
-          <div class="flex gap-2 self-start">
-            <input
-              type="checkbox"
-              class="w-4"
-              formControlName="keepSame"
-              (change)="onAuthorKeepSameChange($index, $event)"
-              checked
-            />
-            <label>{{ "keepdisplaynamesameasauthorname" | translate }}</label>
-          </div>
-        </div>
-
-        }
-        <button
-          class="w-max self-start mt-2"
-          mat-stroked-button
-          color="primary"
-          type="button"
-          (click)="addAuthor()"
-        >
-          <mat-icon>add</mat-icon> Add Author
-        </button>
-      </div>
-      <button
-        matButton="filled"
-        matStepperNext
-        class="!bg-primary mt-8"
-        (click)="onStepChange()"
-      >
-        Next
-      </button>
-    </form>
+    <button
+      matButton="filled"
+      matStepperNext
+      class="!bg-primary mt-8"
+      (click)="onStepChange()"
+    >
+      Next
+    </button>
   </mat-step>
   <mat-step [stepControl]="documentMedia" label="Upload Documents">
     <form [formGroup]="titleForm">
@@ -517,12 +309,7 @@
       Next
     </button>
   </mat-step>
-  <mat-step [stepControl]="titleDetailsCtrl" label="Book Details">
-    <app-book-details [titleForm]="titleForm"> > </app-book-details>
-    <button matStepperNext class="!bg-primary mt-2" matButton="filled">
-      Next
-    </button>
-  </mat-step>
+
   <mat-step [stepControl]="distributionCtrl" label="Distribution">
     <form [formGroup]="distributionCtrl">
       <mat-select formControlName="type">

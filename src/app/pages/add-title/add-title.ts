@@ -22,6 +22,8 @@ import {
   FormGroup,
   FormArray,
   AbstractControl,
+  ValidatorFn,
+  ValidationErrors,
 } from '@angular/forms';
 import { MatStepperIntl, MatStepperModule } from '@angular/material/stepper';
 import { MatButtonModule } from '@angular/material/button';
@@ -36,16 +38,16 @@ import {
   MediaType,
   PaperType,
   Publishers,
+  Title,
   TitleCategory,
+  TitleCreate,
   TitleGenre,
   TitleStatus,
 } from '../../interfaces';
-import { Title } from '../../interfaces/Books';
 import { MatSelectModule } from '@angular/material/select';
 import { PublisherService } from '../publisher/publisher-service';
 import { AuthorsService } from '../authors/authors-service';
 import { MatIconModule } from '@angular/material/icon';
-import { IsbnService } from '../../services/isbn-service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -53,8 +55,9 @@ import { PrintingService } from '../../services/printing-service';
 // import * as pdfjsLib from 'pdfjs-dist';
 import { TitlePrinting } from '../../components/title-printing/title-printing';
 import { Royalties } from '../../components/royalties/royalties';
-import { BookDetails } from '../../components/book-details/book-details';
 import { TitleService } from '../titles/title-service';
+import { BookingDetails } from '../booking-details/booking-details';
+import { BookDetails } from '../../components/book-details/book-details';
 
 @Component({
   selector: 'app-add-title',
@@ -73,20 +76,19 @@ import { TitleService } from '../titles/title-service';
     MatProgressSpinnerModule,
     RouterModule,
     MatCardModule,
-    BookDetails,
     Royalties,
     TitlePrinting,
+    BookDetails,
   ],
   templateUrl: './add-title.html',
   styleUrl: './add-title.css',
 })
 export class AddTitle {
   constructor(
-    private publisherService: PublisherService,
-    private authorService: AuthorsService,
-    private isbnService: IsbnService,
     private printingService: PrintingService,
-    private titleService: TitleService
+    private titleService: TitleService,
+    private publisherService: PublisherService,
+    private authorService: AuthorsService
   ) {
     const breakpointObserver = inject(BreakpointObserver);
     this.stepperOrientation = breakpointObserver
@@ -102,13 +104,13 @@ export class AddTitle {
   laminationTypes!: LaminationType[];
   _formBuilder = inject(FormBuilder);
   titleForm!: FormGroup;
-  publishers = signal<Publishers[]>([]);
   authorsSignal = signal<Author[]>([]);
   publisherSignal = signal<Publishers | null>(null);
-  authorsList = signal<Author[]>([]);
-  isbnVerified = signal<boolean | null>(null);
-  isVerifying = signal<boolean>(false);
   titleId!: number;
+  publishers = signal<Publishers[]>([]);
+  authorsList = signal<Author[]>([]);
+  isVerifying = signal<boolean>(false);
+  isISBNEbookErifying = signal<boolean>(false);
 
   onAuthorChangeChild(authorId: number) {
     const author = this.authorsList().find((a) => a.id === authorId);
@@ -179,17 +181,21 @@ export class AddTitle {
       titleDetails: this._formBuilder.group({
         name: ['', Validators.required],
         subTitle: [''],
-        longDescription: [''],
+        longDescription: [
+          '',
+          [Validators.required, this.minWordsValidator(20)],
+        ],
         shortDescription: ['', Validators.required],
         edition: [null],
         language: [''],
-        subject: [''],
+        subject: ['', [Validators.required, this.minWordsValidator(5)]],
         status: [TitleStatus.Active],
         category: [null as TitleCategory | null],
         subCategory: [null as TitleCategory | null],
         tradeCategory: [null as TitleCategory | null],
         genre: [null as TitleGenre | null],
         keywords: [''],
+        isUniqueIdentifier: [false],
         keywordOption: ['auto'],
         manualKeywords: [''],
         autoKeywords: [{ value: '', disabled: true }],
@@ -199,7 +205,8 @@ export class AddTitle {
           keepSame: [true],
           displayName: [''],
         }),
-        authors: this._formBuilder.array([
+        publisherDisplay: ['', Validators.required],
+        authorIds: this._formBuilder.array([
           this._formBuilder.group({
             id: [null],
             name: [''],
@@ -230,6 +237,16 @@ export class AddTitle {
     });
   }
 
+  minWordsValidator(minWords: number): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = (control.value || '').trim();
+      const wordCount = value.split(/\s+/).filter(Boolean).length;
+
+      return wordCount < minWords
+        ? { minWords: { required: minWords, actual: wordCount } }
+        : null;
+    };
+  }
   createPrintingGroup(): FormGroup {
     return this._formBuilder.group({
       id: [null],
@@ -261,91 +278,7 @@ export class AddTitle {
       'title valueeee'
     );
   }
-  get authors(): FormArray {
-    return this.titleForm.get('titleDetails.authors') as FormArray;
-  }
-  onPublisherChange(publisherId: number) {
-    const selected = this.publishers().find((p) => p.id === publisherId);
-    const pubGroup = this.titleForm.get('titleDetails.publisher') as FormGroup;
-    if (!pubGroup) {
-      console.error('Publisher group not found in form');
-      return;
-    }
-    const keepSame = pubGroup.get('keepSame')?.value;
-    if (keepSame && selected) {
-      pubGroup.get('displayName')?.setValue(selected.name);
-      pubGroup.get('displayName')?.disable();
-    } else {
-      pubGroup.get('displayName')?.enable();
-    }
-    console.log(pubGroup, 'publisherrr');
-  }
-  onPublisherKeepSameChange(event: Event) {
-    const checked = (event.target as HTMLInputElement).checked;
-    const pubGroup = this.titleForm.get('titleDetails.publisher') as FormGroup;
-    const publisherId = pubGroup.get('id')?.value;
-    const selected = this.publishers().find((p) => p.id === publisherId);
 
-    if (checked && selected) {
-      pubGroup.get('displayName')?.setValue(selected.name);
-      pubGroup.get('displayName')?.disable();
-    } else {
-      pubGroup.get('displayName')?.enable();
-    }
-    console.log(pubGroup, 'publisherrr');
-  }
-  onAuthorKeepSameChange(index: number, event: Event) {
-    const checked = (event.target as HTMLInputElement).checked;
-    const authorCtrl = this.authors.at(index) as FormGroup;
-    const authorId = authorCtrl.get('id')?.value;
-    const selected = this.authorsList().find((a) => a.id === authorId);
-
-    if (checked && selected) {
-      authorCtrl
-        .get('displayName')
-        ?.setValue(
-          selected.user?.firstName +
-            ' ' +
-            selected.user?.lastName +
-            `(${selected.username})`
-        );
-      authorCtrl.get('displayName')?.disable();
-    } else {
-      authorCtrl.get('displayName')?.enable();
-    }
-  }
-  onAuthorChange(index: number, authorId: number) {
-    const selected = this.authorsList().find((p) => p.id === authorId);
-    const authorCtrl = this.authors.at(index) as FormGroup;
-    const keepSame = authorCtrl.get('keepSame')?.value;
-    if (keepSame && selected) {
-      console.log(selected, authorCtrl, 'authoorr');
-      authorCtrl
-        .get('displayName')
-        ?.setValue(
-          selected.user?.firstName +
-            ' ' +
-            selected.user?.lastName +
-            `(${selected.username})`
-        );
-      authorCtrl.get('displayName')?.disable();
-    } else {
-      authorCtrl.get('displayName')?.enable();
-    }
-  }
-  addAuthor(): void {
-    this.authors.push(
-      this._formBuilder.group({
-        id: [null],
-        name: ['', Validators.required],
-        keepSame: [true],
-        displayName: [''],
-      })
-    );
-  }
-  removeAuthor(index: number): void {
-    this.authors.removeAt(index);
-  }
   get printing(): FormArray {
     return this.titleForm.get('printing') as FormArray;
   }
@@ -392,34 +325,6 @@ export class AddTitle {
     );
   }
 
-  async verifyIsbn(): Promise<void> {
-    const isbnNumber = this.titleDetailsCtrl.get('isbn.isbnNumber')?.value;
-    if (!isbnNumber) return;
-
-    this.isVerifying.set(true);
-    this.isbnVerified.set(null);
-
-    try {
-      const result = await this.isbnService.verifyIsbn(isbnNumber);
-      if (result.verified) {
-        this.isbnVerified.set(true);
-        this.titleDetailsCtrl.get('isbn.isbnNumber')?.setErrors(null);
-      } else {
-        this.isbnVerified.set(false);
-        this.titleDetailsCtrl
-          .get('isbn.isbnNumber')
-          ?.setErrors({ invalidIsbn: true });
-      }
-    } catch (err) {
-      console.error('ISBN verification failed', err);
-      this.isbnVerified.set(false);
-      this.titleDetailsCtrl
-        .get('isbn.isbnNumber')
-        ?.setErrors({ invalidIsbn: true });
-    } finally {
-      this.isVerifying.set(false);
-    }
-  }
   addDefaultMedia() {
     this.documentMedia.clear();
     this.documentMedia.push(this.createMedia('FullCover', true));
@@ -513,16 +418,51 @@ export class AddTitle {
     // }
   }
 
-  buildRequestBody(status: 'DRAFT' | 'ACTIVE') {
+  buildRequestBody() {
+    const basicData = {
+      printingformat: this.titleForm.get('printingformat')?.value,
+      hasFiles: this.titleForm.get('hasFiles')?.value,
+      publishingType: this.titleForm.get('publishingType')?.value,
+      titleDetails: this.titleForm.get('titleDetails')?.value,
+    };
     return {
-      ...this.titleForm.value,
-      status,
+      ...basicData,
     };
   }
+
   saveDraft() {
-    const body = this.buildRequestBody('DRAFT');
-    if (!this.titleId) {
-      this.titleService.createTitle(body).then((res: { id: number }) => {
+    const titleDetails = this.titleForm.get('titleDetails')?.value;
+    const basicData: TitleCreate = {
+      publishingType: this.titleForm.get('publishingType')?.value,
+      isbnPrint: titleDetails.isbnPrint?.isbnNumber ?? '',
+      isbnEbook: titleDetails.isbnEbook?.isbnNumber ?? '',
+      categoryId: titleDetails.category,
+      subCategoryId: titleDetails.subCategory,
+      tradeCategoryId: titleDetails.tradeCategory,
+      genreId: titleDetails.genre,
+      publisherDisplay: titleDetails.publisher.displayName,
+      publisherId: titleDetails.publisher.id,
+      name: titleDetails.name,
+      subTitle: titleDetails.subTitle,
+      subject: titleDetails.subject,
+      language: titleDetails.language,
+      longDescription: titleDetails.longDescription,
+      shortDescription: titleDetails.shortDescription,
+      edition: titleDetails.edition,
+      keywords: titleDetails.keywords,
+      isUniqueIdentifier: false,
+      authorIds:
+        titleDetails.authorIds && titleDetails.authorIds.length > 0
+          ? titleDetails.authorIds.map((author: any) => ({
+              id: author.id,
+              displayName: author.displayName || '',
+            }))
+          : [],
+    };
+    console.log(titleDetails, 'valuee title');
+    console.log(basicData, 'basicccccc');
+    if (this.titleForm.get('titleDetails')?.valid) {
+      this.titleService.createTitle(basicData).then((res: { id: number }) => {
         this.titleId = res.id;
       });
     } else {
@@ -533,7 +473,7 @@ export class AddTitle {
 
   // final submit
   onSubmit() {
-    const body = this.buildRequestBody('ACTIVE');
+    const body = this.buildRequestBody();
     if (this.titleId) {
       // this.titleService.updateTitle(this.titleId, body).subscribe(() => {
       alert('Title created successfully!');

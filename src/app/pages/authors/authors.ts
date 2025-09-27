@@ -42,6 +42,7 @@ export class Authors {
   displayedColumns: string[] = [
     'serial',
     'name',
+    'username',
     'emailid',
     'phonenumber',
     'numberoftitles',
@@ -65,9 +66,10 @@ export class Authors {
         const mapped = items.map((author, idx) => ({
           id: author.id,
           serial: idx + 1,
-          name: author.username,
-          emailid: author.email,
-          phonenumber: author.phoneNumber,
+          name: author.user.firstName + ' ' + author.user.lastName,
+          username: author.username,
+          emailid: author.user.email,
+          phonenumber: author.user.phoneNumber,
           numberoftitles: author.titles ? author.titles.length : 0,
           royaltiesearned:
             author.Royalty && author.Royalty.length

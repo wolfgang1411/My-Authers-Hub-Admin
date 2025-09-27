@@ -4,18 +4,22 @@ import { PublisherFilter, Publishers } from '../../interfaces/Publishers';
 import { Pagination } from '../../interfaces';
 import { Invite } from '../../interfaces/Invite';
 import { Logger } from '../../services/logger';
+import { LoaderService } from '../../services/loader';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PublisherService {
-  constructor(private server: Server, private logger: Logger) {}
+  constructor(
+    private server: Server,
+    private logger: Logger,
+    private loader: LoaderService
+  ) {}
 
   async getPublishers(filter?: PublisherFilter) {
     try {
-      return await this.server.get<Pagination<Publishers>>(
-        'publishers',
-        filter
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<Publishers>>('publishers', filter)
       );
     } catch (error) {
       this.logger.logError(error);
@@ -25,7 +29,9 @@ export class PublisherService {
   // Initialization logic can gp here if needed
   async getPublisherById(id: number) {
     try {
-      return await this.server.get<Publishers>(`publishers/${id}`);
+      return await this.loader.loadPromise(
+        this.server.get<Publishers>(`publishers/${id}`)
+      );
     } catch (error) {
       this.logger.logError(error);
       throw error;
@@ -34,9 +40,11 @@ export class PublisherService {
 
   async createPublisher(publisherData: Publishers): Promise<Publishers> {
     try {
-      return await this.server[publisherData.id ? 'patch' : 'post'](
-        publisherData.id ? `publishers/${publisherData.id}` : 'publishers',
-        { ...publisherData }
+      return await this.loader.loadPromise(
+        this.server[publisherData.id ? 'patch' : 'post'](
+          publisherData.id ? `publishers/${publisherData.id}` : 'publishers',
+          { ...publisherData }
+        )
       );
     } catch (error) {
       this.logger.logError(error);
@@ -45,8 +53,9 @@ export class PublisherService {
   }
   async sendInviteLink(invite: Invite) {
     try {
-      
-      return await this.server.post('publishers/invite', invite);
+      return await this.loader.loadPromise(
+        this.server.post('publishers/invite', invite)
+      );
     } catch (error) {
       this.logger.logError(error);
       throw error;

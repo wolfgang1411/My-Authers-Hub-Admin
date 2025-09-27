@@ -10,6 +10,7 @@ import { User } from './user';
 export interface Title {
   id: number;
   name: string;
+
   subTitle: string;
   longDescription: string;
   shortDescription: string;

@@ -5,12 +5,17 @@ import storage from '../common/util.ts/storage';
 import { jwtDecode } from 'jwt-decode';
 import md5 from 'md5';
 import { Logger } from './logger';
+import { LoaderService } from './loader';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  constructor(private server: Server, private logger: Logger) {}
+  constructor(
+    private server: Server,
+    private logger: Logger,
+    private loader: LoaderService
+  ) {}
 
   isUserAuthenticated = signal<boolean | null>(null);
   isUserAuthenticated$ = this.isUserAuthenticated.asReadonly();
@@ -45,12 +50,14 @@ export class AuthService {
 
   async loginWithEmail(data: LoginWithEmail) {
     try {
-      const response = await this.server.post<AuthResponse>('auth/token', {
-        username: data.username,
-        password: md5(data.password),
-        grant_type: 'password',
-        client_id: 'web',
-      });
+      const response = await this.loader.loadPromise(
+        this.server.post<AuthResponse>('auth/token', {
+          username: data.username,
+          password: md5(data.password),
+          grant_type: 'password',
+          client_id: 'web',
+        })
+      );
       return response;
     } catch (error) {
       this.logger.logError(error);
@@ -98,11 +105,13 @@ export class AuthService {
 
       this.refreshTokenTimeout = setTimeout(async () => {
         try {
-          const response = await this.server.post<AuthResponse>('auth/token', {
-            refresh_token: refreshToken,
-            grant_type: 'refresh_token',
-            client_id: 'web',
-          });
+          const response = await this.loader.loadPromise(
+            this.server.post<AuthResponse>('auth/token', {
+              refresh_token: refreshToken,
+              grant_type: 'refresh_token',
+              client_id: 'web',
+            })
+          );
           this.setAuthToken(response);
         } catch (error) {
           this.setAuthToken();
