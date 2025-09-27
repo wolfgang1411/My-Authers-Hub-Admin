@@ -123,11 +123,12 @@ export interface TitlePrinting {
   laminationType: LaminationType;
   laminationTypeId: number;
   paperType: PaperType;
-  gsm: PaperQuailty;
+  paperQuailty: PaperQuailty;
   paperQuailtyId: number;
-  bookSize: SizeCategory;
+  sizeCategory: SizeCategory;
   printCost: number;
   customPrintCost: number;
+  customDeliveryCharges: number;
 }
 
 export enum ChannalType {
@@ -253,4 +254,21 @@ export interface CreateSizeType {
 
 export interface UpdateSizeType extends CreateSizeType {
   id?: number | null;
+}
+
+export interface PrintingCreate {
+  titleId: number;
+  bindingTypeId: number;
+  totalPages: number;
+  colorPages: number;
+  laminationTypeId: number;
+  paperType: PaperType;
+  paperQuailtyId: number;
+  sizeCategoryId: number;
+  customPrintCost: number;
+  insideCover: boolean;
+  isColorPagesRandom: boolean;
+  deliveryCharge: number;
+  mrpPrint: number;
+  mrpEbook: number;
 }

@@ -1,8 +1,8 @@
 <form [formGroup]="titleForm">
-  @if (printing && printing.controls.length>0) {
+  @if (printingArraySignal() && printingArraySignal().controls.length>0) {
 
   <div formArrayName="printing" class="mt-4">
-    @for ( printGroup of printing.controls ; track $index) {
+    @for ( printGroup of printingArraySignal().controls ; track $index) {
     <div [formGroupName]="$index">
       <div class="grid grid-cols-4 gap-4 items-start">
         <mat-form-field>

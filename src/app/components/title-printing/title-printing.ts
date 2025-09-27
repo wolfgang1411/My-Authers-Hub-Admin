@@ -1,8 +1,10 @@
 import {
   ChangeDetectorRef,
   Component,
+  effect,
   ElementRef,
   Input,
+  Signal,
   signal,
   ViewChild,
 } from '@angular/core';
@@ -51,20 +53,24 @@ import { Logger } from '../../services/logger';
 export class TitlePrinting {
   constructor(
     private printingService: PrintingService,
-    private logger: Logger,
-    private cd: ChangeDetectorRef
-  ) {}
+    private logger: Logger
+  ) {
+    effect(() => {
+      const printingFormArray = this.printingArraySignal();
+    });
+  }
   bindingType = signal<BookBindings[]>([]);
   laminationTypes = signal<LaminationType[]>([]);
   paperQuality = signal<PaperQuailty[]>([]);
   sizeCategory = signal<SizeCategory[]>([]);
   loadingPrice: boolean = false;
   @Input() titleForm!: FormGroup;
-  @Input() printing!: FormArray;
   @Input() documentMedia!: FormArray;
   @Input() _formBuilder!: FormBuilder;
   printCost = signal<number>(0);
+  @Input() printingArraySignal!: Signal<FormArray>;
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+
   async ngOnInit() {
     const { items: laminations } =
       await this.printingService.getLaminationType();
@@ -75,14 +81,15 @@ export class TitlePrinting {
     this.paperQuality.set(quality);
     const { items: sizes } = await this.printingService.getSizeCategory();
     this.sizeCategory.set(sizes.sort((a, b) => a.id - b.id));
-    this.printing.controls.forEach((group, index) => {
+    this.printingArraySignal().controls.forEach((group, index) => {
       this.setupAutoCalculations(group as FormGroup, index);
     });
-    this.printing.valueChanges.subscribe(() => {
-      this.printing.controls.forEach((group, index) => {
+    this.printingArraySignal().valueChanges.subscribe(() => {
+      this.printingArraySignal().controls.forEach((group, index) => {
         this.setupAutoCalculations(group as FormGroup, index);
       });
     });
+    console.log(this.printingArraySignal().value, 'printinngngggg');
   }
 
   setupAutoCalculations(group: FormGroup, index: number) {

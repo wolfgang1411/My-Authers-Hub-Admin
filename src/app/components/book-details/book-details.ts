@@ -74,6 +74,15 @@ export class BookDetails {
     this.TitleGenre.set(genre);
     const { items: trade } = await this.titleService.getTradeCategory();
     this.tradeCategory.set(trade);
+    const categoryId = (this.titleForm.controls['titleDetails'] as any)?.[
+      'controls'
+    ]?.['category']?.value;
+    if (categoryId) {
+      const { items: subCategory } = await this.titleService.getSubcategory(
+        Number(categoryId)
+      );
+      this.subCategory.set(subCategory);
+    }
 
     this.titleForm
       .get('titleDetails.category')

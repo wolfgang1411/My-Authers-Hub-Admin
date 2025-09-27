@@ -1,18 +1,15 @@
 import {
-  Binding,
   Component,
   ElementRef,
   inject,
   QueryList,
+  Signal,
   signal,
   ViewChildren,
 } from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { map, Observable } from 'rxjs';
-import {
-  StepperOrientation,
-  StepperSelectionEvent,
-} from '@angular/cdk/stepper';
+import { StepperOrientation } from '@angular/cdk/stepper';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import {
   FormBuilder,
@@ -37,6 +34,7 @@ import {
   Media,
   MediaType,
   PaperType,
+  PrintingCreate,
   Publishers,
   Title,
   TitleCategory,
@@ -117,7 +115,9 @@ export class AddTitle {
   isVerifying = signal<boolean>(false);
   isISBNEbookErifying = signal<boolean>(false);
   titleDetails = signal<Title | null>(null);
-
+  printingArraySignal = signal<FormArray>(
+    this._formBuilder.array([this.createPrintingGroup()])
+  );
   onAuthorChangeChild(authorId: number) {
     const author = this.authorsList().find((a) => a.id === authorId);
     if (!author) return;
@@ -247,12 +247,15 @@ export class AddTitle {
     this.titleForm.get('publishingType')?.valueChanges.subscribe((format) => {
       this.buildMediaArray(format);
     });
+    this.printingArraySignal = signal(
+      this.titleForm.get('printing') as FormArray
+    );
   }
 
   prefillFormData(data: Title): void {
     this.titleForm.patchValue({
-      printingformat: null, // Update if available in data
-      hasFiles: null, // Update if available in data
+      printingformat: null,
+      hasFiles: null,
       publishingType: data.publishingType,
       titleDetails: {
         name: data.name,
@@ -269,7 +272,7 @@ export class AddTitle {
         genre: data.genre.id || null,
         keywords: data.keywords,
         isUniqueIdentifier: data.isUniqueIdentifier,
-        keywordOption: 'auto', // default or from data
+        keywordOption: 'auto',
         manualKeywords: '',
         autoKeywords: { value: '', disabled: true },
         publisher: {
@@ -294,23 +297,32 @@ export class AddTitle {
         type: '',
       },
     });
-    const authorFGs = data.authors.map((author: any) =>
-      this._formBuilder.group({
-        id: [author.id],
-        name: [''],
+    const authorFGs = data.authors.map((authorWrapper: any) => {
+      const author = authorWrapper.author;
+      const fullName = `${author?.user?.firstName ?? ''} ${
+        author?.user?.lastName ?? ''
+      }`.trim();
+
+      return this._formBuilder.group({
+        id: [author.id ?? null],
+        name: [fullName],
         keepSame: [true],
-        displayName: [''],
-      })
-    );
-    const authorFormArray = this._formBuilder.array(authorFGs);
+        displayName: [fullName],
+      });
+    });
+
     this.titleForm
       .get('titleDetails.authorIds')
-      ?.setValue(authorFormArray.value);
-    const printingFGs = (data.printing || []).map((printingItem: any) =>
-      this.createPrintingGroup(printingItem)
-    );
-    const printingFormArray = this._formBuilder.array(printingFGs);
-    this.titleForm.setControl('printing', printingFormArray);
+      ?.setValue(authorFGs.map((fg) => fg.value));
+
+    if (data.printing && Array.isArray(data.printing)) {
+      const printingArray = this._formBuilder.array(
+        data.printing.map((item) => this.createPrintingGroup(item))
+      );
+      this.titleForm.setControl('printing', printingArray);
+      this.printingArraySignal.set(printingArray);
+    }
+
     const mediaFGs = (data.media || []).map((mediaItem: any) =>
       this._formBuilder.group(mediaItem)
     );
@@ -330,45 +342,20 @@ export class AddTitle {
   }
   createPrintingGroup(printingItem?: any): FormGroup {
     return this._formBuilder.group({
-      id: [printingItem?.id ?? null],
-      bindingType: [printingItem?.bindingType ?? null],
-      bookBindingsId: [
-        printingItem?.bookBindingsId ?? null,
-        Validators.required,
-      ],
-      totalPages: [
-        printingItem?.totalPages ?? null,
-        [Validators.required, Validators.min(1)],
-      ],
-      colorPages: [
-        printingItem?.colorPages ?? null,
-        [Validators.required, Validators.min(0)],
-      ],
+      bookBindingsId: [printingItem?.bindingType?.id ?? null],
+      totalPages: [printingItem?.totalPages ?? 0],
+      colorPages: [printingItem?.colorPages ?? 0],
       isColorPagesRandom: [printingItem?.isColorPagesRandom ?? false],
-      bwPages: [printingItem?.bwPages ?? 0],
-      insideCover: [printingItem?.insideCover ?? false, Validators.required],
-      deliveryCharge: [printingItem?.deliveryCharge ?? 0],
-      laminationType: [printingItem?.laminationType ?? null],
-      laminationTypeId: [
-        printingItem?.laminationTypeId ?? null,
-        Validators.required,
+      bwPages: [
+        printingItem?.bwPages ??
+          (printingItem?.totalPages ?? 0) - (printingItem?.colorPages ?? 0),
       ],
-      paperType: [
-        printingItem?.paperType ?? PaperType.WHITE,
-        Validators.required,
-      ],
-      gsm: [printingItem?.gsm ?? null],
-      paperQuailtyId: [
-        printingItem?.paperQuailtyId ?? null,
-        Validators.required,
-      ],
-      bookSize: [printingItem?.bookSize ?? null],
-      sizeCategoryId: [
-        printingItem?.sizeCategoryId ?? null,
-        Validators.required,
-      ],
+      insideCover: [printingItem?.insideCover ?? false],
+      laminationTypeId: [printingItem?.laminationType?.id ?? null], // ✅ crucial
+      paperType: [printingItem?.paperType ?? 'WHITE'],
+      paperQuailtyId: [printingItem?.paperQuailty?.id ?? null],
+      sizeCategoryId: [printingItem?.sizeCategory?.id ?? null],
       printCost: [printingItem?.printCost ?? 0],
-      customPrintCost: [printingItem?.customPrintCost ?? 0],
     });
   }
 
@@ -406,9 +393,9 @@ export class AddTitle {
     return this.titleForm.get('publisher') as FormGroup;
   }
 
-  addPrinting(): void {
-    this.printing.push(this.createPrintingGroup());
-  }
+  // addPrinting(): void {
+  //   this.printing.push(this.createPrintingGroup());
+  // }
 
   get royalties(): FormArray {
     return this.titleForm.get('royalties') as FormArray;
@@ -517,7 +504,9 @@ export class AddTitle {
     if (this.titleForm.get('titleDetails')?.valid) {
       this.saveDraft();
     }
-    if (this.titleForm.get('printing')?.valid && this.titleId) {
+  }
+  onPrintingStepChange() {
+    if (this.titleForm.get('titleDetails.printing')?.valid && this.titleId) {
       this.savePrintingDraft();
     }
   }
@@ -561,6 +550,23 @@ export class AddTitle {
   savePrintingDraft() {
     const printingDetails = this.titleForm.get('printing')?.value;
     console.log(printingDetails, 'printinn');
+    const createPrinting: PrintingCreate = {
+      titleId: this.titleId,
+      bindingTypeId: printingDetails[0].bindingTypeId,
+      totalPages: printingDetails[0].totalPages,
+      colorPages: printingDetails[0].colorPages,
+      laminationTypeId: printingDetails[0].laminationTypeId,
+      paperType: printingDetails[0].paperType,
+      paperQuailtyId: printingDetails[0].paperQuailtyId,
+      sizeCategoryId: printingDetails[0].sizeCategoryId,
+      customPrintCost: printingDetails[0].customPrintCost,
+      insideCover: printingDetails[0].insideCover,
+      isColorPagesRandom: printingDetails[0].isColorPagesRandom,
+      deliveryCharge: printingDetails[0].deliveryCharge,
+      mrpPrint: 0,
+      mrpEbook: 0,
+    };
+    console.log(createPrinting, 'createeeprintiingggg');
   }
 
   onSubmit() {}
