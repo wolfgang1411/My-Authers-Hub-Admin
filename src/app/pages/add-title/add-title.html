@@ -10,6 +10,7 @@
   [linear]="true"
   [animationDuration]="'500'"
 >
+  @if(!this.titleId) {
   <mat-step
     [stepControl]="formatCtrl"
     class="!text-accent !p-0"
@@ -169,6 +170,7 @@
       </div>
     </form>
   </mat-step>
+  }
   <mat-step [stepControl]="titleDetailsCtrl" label="Fill the Title Details">
     <app-book-details
       [titleForm]="titleForm"

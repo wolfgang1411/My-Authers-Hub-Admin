@@ -49,7 +49,7 @@ import { PublisherService } from '../publisher/publisher-service';
 import { AuthorsService } from '../authors/authors-service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { PrintingService } from '../../services/printing-service';
 // import * as pdfjsLib from 'pdfjs-dist';
@@ -58,6 +58,7 @@ import { Royalties } from '../../components/royalties/royalties';
 import { TitleService } from '../titles/title-service';
 import { BookingDetails } from '../booking-details/booking-details';
 import { BookDetails } from '../../components/book-details/book-details';
+import { response } from 'express';
 
 @Component({
   selector: 'app-add-title',
@@ -88,12 +89,16 @@ export class AddTitle {
     private printingService: PrintingService,
     private titleService: TitleService,
     private publisherService: PublisherService,
-    private authorService: AuthorsService
+    private authorService: AuthorsService,
+    private route: ActivatedRoute
   ) {
     const breakpointObserver = inject(BreakpointObserver);
     this.stepperOrientation = breakpointObserver
       .observe('(min-width: 800px)')
       .pipe(map(({ matches }) => (matches ? 'horizontal' : 'vertical')));
+    this.route.params.subscribe(({ titleId }) => {
+      this.titleId = titleId;
+    });
   }
   @ViewChildren('fileInput') fileInputs!: QueryList<
     ElementRef<HTMLInputElement>
@@ -111,6 +116,7 @@ export class AddTitle {
   authorsList = signal<Author[]>([]);
   isVerifying = signal<boolean>(false);
   isISBNEbookErifying = signal<boolean>(false);
+  titleDetails = signal<Title | null>(null);
 
   onAuthorChangeChild(authorId: number) {
     const author = this.authorsList().find((a) => a.id === authorId);
@@ -165,6 +171,12 @@ export class AddTitle {
   }
 
   ngOnInit(): void {
+    if (this.titleId) {
+      this.titleService.getTitleById(this.titleId).then((response) => {
+        this.titleDetails.set(response);
+        this.prefillFormData(response);
+      });
+    }
     this.printingService.getBindingType().then(({ items }) => {
       this.bindingType = items;
     });
@@ -237,6 +249,75 @@ export class AddTitle {
     });
   }
 
+  prefillFormData(data: Title): void {
+    this.titleForm.patchValue({
+      printingformat: null, // Update if available in data
+      hasFiles: null, // Update if available in data
+      publishingType: data.publishingType,
+      titleDetails: {
+        name: data.name,
+        subTitle: data.subTitle,
+        longDescription: data.longDescription,
+        shortDescription: data.shortDescription,
+        edition: data.edition,
+        language: data.language,
+        subject: data.subject,
+        status: data.status || 'Active',
+        category: data.category.id || null,
+        subCategory: data.subCategory.id || null,
+        tradeCategory: data.tradeCategory.id || null,
+        genre: data.genre.id || null,
+        keywords: data.keywords,
+        isUniqueIdentifier: data.isUniqueIdentifier,
+        keywordOption: 'auto', // default or from data
+        manualKeywords: '',
+        autoKeywords: { value: '', disabled: true },
+        publisher: {
+          id: data.publisher?.id || null,
+          name: data.publisher?.name || '',
+          keepSame: true,
+          displayName: data.publisher?.name || '',
+        },
+        publisherDisplay: data.publisherDisplay || data.publisher?.name || '',
+        isbnPrint: {
+          id: data.isbnPrint?.id || null,
+          isbnNumber: data.isbnPrint || '',
+          format: 'ISBN-13',
+        },
+        isbnEbook: {
+          id: data.isbnEbook?.id || null,
+          isbnNumber: data.isbnEbook || '',
+          format: 'ISBN-13',
+        },
+      },
+      distribution: {
+        type: '',
+      },
+    });
+    const authorFGs = data.authors.map((author: any) =>
+      this._formBuilder.group({
+        id: [author.id],
+        name: [''],
+        keepSame: [true],
+        displayName: [''],
+      })
+    );
+    const authorFormArray = this._formBuilder.array(authorFGs);
+    this.titleForm
+      .get('titleDetails.authorIds')
+      ?.setValue(authorFormArray.value);
+    const printingFGs = (data.printing || []).map((printingItem: any) =>
+      this.createPrintingGroup(printingItem)
+    );
+    const printingFormArray = this._formBuilder.array(printingFGs);
+    this.titleForm.setControl('printing', printingFormArray);
+    const mediaFGs = (data.media || []).map((mediaItem: any) =>
+      this._formBuilder.group(mediaItem)
+    );
+    const mediaFormArray = this._formBuilder.array(mediaFGs);
+    this.titleForm.setControl('documentMedia', mediaFormArray);
+  }
+
   minWordsValidator(minWords: number): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const value = (control.value || '').trim();
@@ -247,26 +328,47 @@ export class AddTitle {
         : null;
     };
   }
-  createPrintingGroup(): FormGroup {
+  createPrintingGroup(printingItem?: any): FormGroup {
     return this._formBuilder.group({
-      id: [null],
-      bindingType: [null],
-      bookBindingsId: [null, Validators.required],
-      totalPages: [null, [Validators.required, Validators.min(1)]],
-      colorPages: [null, [Validators.required, Validators.min(0)]],
-      isColorPagesRandom: [false],
-      bwPages: [0],
-      insideCover: [false, Validators.required],
-      deliveryCharge: [0],
-      laminationType: [null],
-      laminationTypeId: [null, Validators.required],
-      paperType: [PaperType.WHITE, Validators.required],
-      gsm: [null],
-      paperQuailtyId: [null, Validators.required],
-      bookSize: [null],
-      sizeCategoryId: [null, Validators.required],
-      printCost: [0],
-      customPrintCost: [0],
+      id: [printingItem?.id ?? null],
+      bindingType: [printingItem?.bindingType ?? null],
+      bookBindingsId: [
+        printingItem?.bookBindingsId ?? null,
+        Validators.required,
+      ],
+      totalPages: [
+        printingItem?.totalPages ?? null,
+        [Validators.required, Validators.min(1)],
+      ],
+      colorPages: [
+        printingItem?.colorPages ?? null,
+        [Validators.required, Validators.min(0)],
+      ],
+      isColorPagesRandom: [printingItem?.isColorPagesRandom ?? false],
+      bwPages: [printingItem?.bwPages ?? 0],
+      insideCover: [printingItem?.insideCover ?? false, Validators.required],
+      deliveryCharge: [printingItem?.deliveryCharge ?? 0],
+      laminationType: [printingItem?.laminationType ?? null],
+      laminationTypeId: [
+        printingItem?.laminationTypeId ?? null,
+        Validators.required,
+      ],
+      paperType: [
+        printingItem?.paperType ?? PaperType.WHITE,
+        Validators.required,
+      ],
+      gsm: [printingItem?.gsm ?? null],
+      paperQuailtyId: [
+        printingItem?.paperQuailtyId ?? null,
+        Validators.required,
+      ],
+      bookSize: [printingItem?.bookSize ?? null],
+      sizeCategoryId: [
+        printingItem?.sizeCategoryId ?? null,
+        Validators.required,
+      ],
+      printCost: [printingItem?.printCost ?? 0],
+      customPrintCost: [printingItem?.customPrintCost ?? 0],
     });
   }
 
@@ -412,22 +514,12 @@ export class AddTitle {
   onStepChange() {
     console.log('step change triggered');
     console.log('titleForm valid:', this.titleForm.valid);
-
-    // if (this.titleForm.valid) {
-    this.saveDraft();
-    // }
-  }
-
-  buildRequestBody() {
-    const basicData = {
-      printingformat: this.titleForm.get('printingformat')?.value,
-      hasFiles: this.titleForm.get('hasFiles')?.value,
-      publishingType: this.titleForm.get('publishingType')?.value,
-      titleDetails: this.titleForm.get('titleDetails')?.value,
-    };
-    return {
-      ...basicData,
-    };
+    if (this.titleForm.get('titleDetails')?.valid) {
+      this.saveDraft();
+    }
+    if (this.titleForm.get('printing')?.valid && this.titleId) {
+      this.savePrintingDraft();
+    }
   }
 
   saveDraft() {
@@ -458,26 +550,18 @@ export class AddTitle {
               displayName: author.displayName || '',
             }))
           : [],
+      id: this.titleId,
     };
     console.log(titleDetails, 'valuee title');
     console.log(basicData, 'basicccccc');
-    if (this.titleForm.get('titleDetails')?.valid) {
-      this.titleService.createTitle(basicData).then((res: { id: number }) => {
-        this.titleId = res.id;
-      });
-    } else {
-      // update existing draft
-      // this.titleService.updateTitle(this.titleId, body).subscribe();
-    }
+    this.titleService.createTitle(basicData).then((res: { id: number }) => {
+      this.titleId = res.id;
+    });
+  }
+  savePrintingDraft() {
+    const printingDetails = this.titleForm.get('printing')?.value;
+    console.log(printingDetails, 'printinn');
   }
 
-  // final submit
-  onSubmit() {
-    const body = this.buildRequestBody();
-    if (this.titleId) {
-      // this.titleService.updateTitle(this.titleId, body).subscribe(() => {
-      alert('Title created successfully!');
-      // });
-    }
-  }
+  onSubmit() {}
 }

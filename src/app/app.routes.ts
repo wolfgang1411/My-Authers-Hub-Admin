@@ -38,7 +38,7 @@ export const routes: Routes = [
       import('./pages/add-author/add-author').then((c) => c.AddAuthor),
   },
   {
-    path: 'title/:id',
+    path: 'title/:titleId',
     loadComponent: () =>
       import('./pages/add-title/add-title').then((c) => c.AddTitle),
     canActivate: [privateRouteGuard],

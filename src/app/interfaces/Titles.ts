@@ -10,7 +10,9 @@ import { User } from './user';
 export interface Title {
   id: number;
   name: string;
-
+  publishingType: PublishingType;
+  isUniqueIdentifier: boolean;
+  publisherDisplay: string;
   subTitle: string;
   longDescription: string;
   shortDescription: string;
@@ -31,13 +33,24 @@ export interface Title {
   };
   publisher: Publishers;
   authors: Author[];
-  isbn: ISBN;
   printing: TitlePrinting[];
   Booking: Booking[];
   Royalty: Royalty[];
   documentMedia: Media[];
+  isbnPrint: {
+    id: number;
+    isbnNumber: string;
+    format: string;
+  };
+  isbnEbook: {
+    id: number;
+    isbnNumber: string;
+    format: string;
+  };
+  media: Media[];
 }
 export interface TitleCreate {
+  id?: number;
   name: string;
   subTitle: string;
   publisherId: 1;
@@ -70,7 +83,8 @@ export enum PublishingType {
 }
 export interface TitleResponse {
   title: string;
-  isbn: string;
+  isbnPrint: string;
+  isbnEbook: string;
   pages: number | string;
   royaltiesearned: number;
   authors: string;

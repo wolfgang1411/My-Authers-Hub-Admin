@@ -31,7 +31,8 @@ export class Titles {
   displayedColumns: string[] = [
     'serial',
     'title',
-    'isbn',
+    'isbnPrint',
+    'isbnEbook',
     'pages',
     'royaltiesearned',
     'authors',
@@ -52,8 +53,14 @@ export class Titles {
         const mapped = items.map((title, idx) => ({
           serial: idx + 1,
           title: title.name,
-          isbn:
-            title.isbn && title.isbn.isbnNumber ? title.isbn.isbnNumber : 'N/A',
+          isbnPrint:
+            title.isbnPrint && title.isbnPrint.isbnNumber
+              ? title.isbnPrint.isbnNumber
+              : 'N/A',
+          isbnEbook:
+            title.isbnEbook && title.isbnEbook.isbnNumber
+              ? title.isbnEbook.isbnNumber
+              : 'N/A',
           pages:
             title.printing && title.printing.length
               ? title.printing[0].totalPages

@@ -83,7 +83,10 @@ export class TitleService {
   async createTitle(titleDetails: TitleCreate): Promise<Title> {
     try {
       return await this.loader.loadPromise(
-        this.server.post<Title>('titles', titleDetails)
+        this.server[titleDetails.id ? 'patch' : 'post']<Title>(
+          titleDetails.id ? `titles/${titleDetails.id}` : 'titles',
+          titleDetails
+        )
       );
     } catch (error) {
       this.logger.logError(error);
