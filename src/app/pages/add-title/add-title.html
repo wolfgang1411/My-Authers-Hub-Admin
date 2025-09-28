@@ -294,7 +294,14 @@
       [documentMedia]="documentMedia"
       [_formBuilder]="_formBuilder"
     ></app-title-printing>
-    <button matStepperNext class="!bg-primary" matButton="filled">Next</button>
+    <button
+      matStepperNext
+      class="!bg-primary"
+      matButton="filled"
+      (click)="onPrintingStepChange()"
+    >
+      Next
+    </button>
   </mat-step>
   }
   <mat-step [stepControl]="royalties" label="Royalty">

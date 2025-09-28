@@ -351,7 +351,7 @@ export class AddTitle {
           (printingItem?.totalPages ?? 0) - (printingItem?.colorPages ?? 0),
       ],
       insideCover: [printingItem?.insideCover ?? false],
-      laminationTypeId: [printingItem?.laminationType?.id ?? null], // ✅ crucial
+      laminationTypeId: [printingItem?.laminationType?.id ?? null],
       paperType: [printingItem?.paperType ?? 'WHITE'],
       paperQuailtyId: [printingItem?.paperQuailty?.id ?? null],
       sizeCategoryId: [printingItem?.sizeCategory?.id ?? null],
