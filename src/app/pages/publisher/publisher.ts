@@ -12,7 +12,7 @@ import { PublisherResponse, Publishers } from '../../interfaces/Publishers';
 import { PublisherService } from './publisher-service';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButton } from '@angular/material/button';
+import { MatButton, MatButtonModule } from '@angular/material/button';
 import { ListTable } from '../../components/list-table/list-table';
 import { MatTableDataSource } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
@@ -20,8 +20,11 @@ import { MatIconButton } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { InviteDialog } from '../../components/invite-dialog/invite-dialog';
 import { Validators } from '@angular/forms';
-import { Invite, InviteType } from '../../interfaces/Invite';
+import { Invite } from '../../interfaces/Invite';
 import Swal from 'sweetalert2';
+import { DistributionDialog } from '../../components/distribution-dialog/distribution-dialog';
+import { Distribution } from '../../interfaces/Distribution';
+import { PublisherStatus } from '../../interfaces/Publishers';
 
 @Component({
   selector: 'app-publisher',
@@ -33,6 +36,7 @@ import Swal from 'sweetalert2';
     ListTable,
     RouterLink,
     MatIconButton,
+    MatButtonModule,
   ],
   templateUrl: './publisher.html',
   styleUrl: './publisher.css',
@@ -44,7 +48,7 @@ export class Publisher implements OnInit {
     private dialog: MatDialog
   ) {}
   searchStr = new Subject<string>();
-
+  PublisherStatus = PublisherStatus;
   test!: Subject<string>;
   publishers = signal<Publishers[]>([]);
   dataSource = new MatTableDataSource<PublisherResponse>();
@@ -63,7 +67,6 @@ export class Publisher implements OnInit {
     this.searchStr.pipe(debounceTime(400)).subscribe((value) => {
       console.log('Search string:', value);
     });
-
     this.publisherService
       .getPublishers()
       .then(({ items }) => {
@@ -85,12 +88,15 @@ export class Publisher implements OnInit {
               ? publisher.authors.length
               : 0,
           companyname: publisher.name,
+          status: publisher.status,
           actions: '',
         }));
 
         this.dataSource.data = mapped;
         if (mapped.length > 0) {
-          this.displayedColumns = Object.keys(mapped[0]);
+          const filtrCol = { ...mapped[0] };
+          delete (filtrCol as any).id;
+          this.displayedColumns = Object.keys(filtrCol);
         }
 
         console.log('Mapped publishers:', mapped);
@@ -103,6 +109,101 @@ export class Publisher implements OnInit {
   applyFilter(event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
     this.dataSource.filter = filterValue.trim().toLowerCase();
+  }
+
+  openDistributionDialog(publisherId: number) {
+    const dialogRef = this.dialog.open(DistributionDialog, {
+      data: {
+        onSubmit: async (distributionData: Distribution[]) => {
+          console.log(distributionData, 'distrubittton dta');
+          const response = await this.publisherService.approvePublisher(
+            distributionData,
+            publisherId
+          );
+          if (response) {
+            const updatedData = this.dataSource.data.map((item) =>
+              item.id === publisherId
+                ? { ...item, status: PublisherStatus.Active }
+                : item
+            );
+            this.dataSource.data = updatedData;
+            dialogRef.close();
+            Swal.fire({
+              title: 'success',
+              text: 'The publisher has been approved successfully!',
+              icon: 'success',
+              heightAuto: false,
+            });
+          }
+        },
+        onClose: () => dialogRef.close(),
+      },
+    });
+  }
+  rejectPublisher(publisherId: number) {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'Once rejected, you will not be able to recover this account!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, reject it!',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true,
+      heightAuto: false,
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const response = await this.publisherService.rejectPublisher(
+          publisherId
+        );
+        if (response) {
+          const updatedData = this.dataSource.data.map((item) =>
+            item.id === publisherId
+              ? { ...item, status: PublisherStatus.Rejected }
+              : item
+          );
+          this.dataSource.data = updatedData;
+          Swal.fire({
+            text: 'The publisher has been rejected!',
+            icon: 'success',
+            title: 'success',
+            heightAuto: false,
+          });
+        }
+      }
+    });
+  }
+  updateStatus(publisherId: number) {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'Once Deactivated, you will not be able to recover this account!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, reject it!',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true,
+      heightAuto: false,
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const response = await this.publisherService.updatePublisherStatus(
+          PublisherStatus.Deactivated,
+          publisherId
+        );
+        if (response) {
+          const updatedData = this.dataSource.data.map((item) =>
+            item.id === publisherId
+              ? { ...item, status: PublisherStatus.Deactivated }
+              : item
+          );
+          this.dataSource.data = updatedData;
+          Swal.fire({
+            text: 'The publisher has been Deactivated!',
+            icon: 'success',
+            title: 'success',
+            heightAuto: false,
+          });
+        }
+      }
+    });
   }
   invitePublisher(): void {
     const dialogRef = this.dialog.open(InviteDialog, {

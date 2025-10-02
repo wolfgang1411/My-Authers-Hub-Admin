@@ -3,7 +3,7 @@ import { AuthorsService } from './authors-service';
 import { debounceTime, Subject } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { Author, AuthorResponse } from '../../interfaces/Authors';
+import { Author, AuthorResponse, AuthorStatus } from '../../interfaces/Authors';
 import { MatTableDataSource } from '@angular/material/table';
 import { ListTable } from '../../components/list-table/list-table';
 import { MatIcon } from '@angular/material/icon';
@@ -50,7 +50,7 @@ export class Authors {
     'actions',
   ];
   dataSource = new MatTableDataSource<AuthorResponse>();
-
+  AuthorStatus = AuthorStatus;
   temp(d: any) {
     console.log(d);
   }
@@ -124,6 +124,99 @@ export class Authors {
         placeholder: 'abc@gmail.com',
         validators: [Validators.required, Validators.email],
       },
+    });
+  }
+  approveAuthor(authorId: number) {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'Once approve, you will not be able to reject this account!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Approve it!',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true,
+      heightAuto: false,
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const response = await this.authorService.approveAuthor(authorId);
+        if (response) {
+          const updatedData = this.dataSource.data.map((item) =>
+            item.id === authorId
+              ? { ...item, status: AuthorStatus.Active }
+              : item
+          );
+          this.dataSource.data = updatedData;
+          Swal.fire({
+            text: 'The publisher has been rejected!',
+            icon: 'success',
+            title: 'success',
+            heightAuto: false,
+          });
+        }
+      }
+    });
+  }
+  rejectAuthor(authorId: number) {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'Once rejected, you will not be able to recover this account!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, reject it!',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true,
+      heightAuto: false,
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const response = await this.authorService.rejectAuthor(authorId);
+        if (response) {
+          const updatedData = this.dataSource.data.map((item) =>
+            item.id === authorId
+              ? { ...item, status: AuthorStatus.Rejected }
+              : item
+          );
+          this.dataSource.data = updatedData;
+          Swal.fire({
+            text: 'The publisher has been rejected!',
+            icon: 'success',
+            title: 'success',
+            heightAuto: false,
+          });
+        }
+      }
+    });
+  }
+  updateStatus(authorId: number) {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'Once Deactivated, you will not be able to recover this account!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, reject it!',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true,
+      heightAuto: false,
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const response = await this.authorService.updateAuthorStatus(
+          AuthorStatus.Deactivated,
+          authorId
+        );
+        if (response) {
+          const updatedData = this.dataSource.data.map((item) =>
+            item.id === authorId
+              ? { ...item, status: AuthorStatus.Deactivated }
+              : item
+          );
+          this.dataSource.data = updatedData;
+          Swal.fire({
+            text: 'The Author has been Deactivated!',
+            icon: 'success',
+            title: 'success',
+            heightAuto: false,
+          });
+        }
+      }
     });
   }
 }

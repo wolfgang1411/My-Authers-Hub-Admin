@@ -52,6 +52,7 @@ export class Titles {
         this.titles.set(items);
         const mapped = items.map((title, idx) => ({
           serial: idx + 1,
+          id: title.id,
           title: title.name,
           isbnPrint:
             title.isbnPrint && title.isbnPrint.isbnNumber

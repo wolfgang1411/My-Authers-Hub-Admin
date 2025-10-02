@@ -212,5 +212,8 @@
   "category":"Category",
   "subcategory":"Subcategory",
   "genre": "Genre",
-  "tradecategory":"Trade Category"
+  "tradecategory":"Trade Category",
+  "approve":"Approve",
+  "pendingforapproval":"Pending for Approval",
+  "reject":"Reject"
 }
