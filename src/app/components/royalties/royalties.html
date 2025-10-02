@@ -2,7 +2,7 @@
   <ul class="royalties-container">
     <li>
       <span>{{ "name" | translate }}</span>
-      <span>{{ "type" | translate }}</span>
+      <span>{{ "royaltytype" | translate }}</span>
       @for (columns of displayedColumns(); track $index) {
       <span>{{ columns | translate }}</span>
       }
@@ -19,12 +19,27 @@
       <span>
         <input
           [formControl]="royaltyGroup.controls[column]"
-          type="text"
-          [placeholder]="'salesprice' | translate"
+          type="number"
+          class="w-0 min-w-full"
         />
       </span>
       }
     </li>
     }
+    <li>
+      <span>{{ "totalroyalties" | translate }}</span>
+      <span></span>
+      @for (column of displayedColumns(); track $index) {
+      <span
+        class="font-medium"
+        [ngClass]="{
+          'bg-red-500 text-white': totalRoyaties()[column] > 100
+        }"
+        [title]="royaltiesController().getError('invalid') || ''"
+      >
+        {{ totalRoyaties()[column] }}
+      </span>
+      }
+    </li>
   </ul>
 </div>

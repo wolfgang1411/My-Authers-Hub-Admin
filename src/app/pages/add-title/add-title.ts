@@ -240,10 +240,6 @@ export class AddTitle {
     }
 
     this.calculatePrintingCost();
-
-    this.tempForm.controls.royalties.valueChanges.subscribe((v) => {
-      console.log({ v });
-    });
   }
 
   mapRoyaltiesArray(publisher: Publishers | null, authors: Author[]) {

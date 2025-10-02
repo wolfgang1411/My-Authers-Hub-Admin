@@ -25,6 +25,8 @@ import {
   Royalty,
   RoyaltyFormGroup,
 } from '../../interfaces/Royalty';
+import { debounceTime, firstValueFrom } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-royalties',
@@ -41,6 +43,8 @@ import {
   styleUrl: './royalties.css',
 })
 export class Royalties implements OnInit {
+  constructor(private translateService: TranslateService) {}
+
   royaltiesController =
     input.required<FormArray<FormGroup<RoyaltyFormGroup>>>();
   authors = input.required<Author[]>();
@@ -71,8 +75,57 @@ export class Royalties implements OnInit {
     ebook_third_party: 'E-Book (3rd Party)',
   });
 
+  totalRoyaties = signal<Record<RoyalFormGroupAmountField, number>>({
+    print_mah: 0,
+    print_third_party: 0,
+    prime: 0,
+    ebook_mah: 0,
+    ebook_third_party: 0,
+  });
+
   ngOnInit() {
     this.displayedColumns.set([...this.channelKeys()]);
+    this.calculateTotalRoyalties();
+  }
+
+  async validateTotalRoyaltyByType(
+    totalRoyaties: Record<RoyalFormGroupAmountField, number>
+  ) {
+    if (!this.translateService) return;
+
+    const overRoyalties = Object.keys(totalRoyaties)
+      .filter((key) => totalRoyaties[key as RoyalFormGroupAmountField] > 100)
+      .map((key) => this.translateService.instant(key));
+
+    if (overRoyalties.length) {
+      this.royaltiesController().setErrors({
+        invalid: `Total royalties for specific channal cannot be higer then 100. fix ${overRoyalties.join(
+          ','
+        )}`,
+      });
+    } else {
+      this.royaltiesController().setErrors(null);
+    }
+  }
+
+  calculateTotalRoyalties() {
+    this.royaltiesController()
+      .valueChanges.pipe(debounceTime(400))
+      .subscribe((data) => {
+        const totalToUpdate = this.totalRoyaties();
+        Object.keys(this.totalRoyaties()).forEach((key) => {
+          this.totalRoyaties.update((totalRoyaties) => {
+            const keyTotal = data.reduce(
+              (a, d) => a + Number(d[key as RoyalFormGroupAmountField] || 0),
+              0
+            );
+            totalRoyaties[key as RoyalFormGroupAmountField] = keyTotal;
+            return totalToUpdate;
+          });
+        });
+
+        this.validateTotalRoyaltyByType(this.totalRoyaties());
+      });
   }
 
   initEmptyRoyalties() {

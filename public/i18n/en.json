@@ -219,5 +219,12 @@
   "PRIME": "Prime",
   "EBOOK_MAH": "Ebook MAH",
   "EBOOK_THIRD_PARTY": "Ebook third party",
-  "salesprice": "Sales price"
+  "salesprice": "Sales price",
+  "royaltytype": "Type",
+  "print_mah": "Print MAH",
+  "print_third_party": "Print Third Party",
+  "prime": "Prime",
+  "ebook_mah": "Ebook MAH",
+  "ebook_third_party": "Ebook Third Party",
+  "totalroyalties": "Total royalties"
 }
