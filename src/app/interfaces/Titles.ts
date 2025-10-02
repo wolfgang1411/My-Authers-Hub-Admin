@@ -1,10 +1,11 @@
+import { FormArray, FormControl, FormGroup } from '@angular/forms';
 import { Publisher } from '../pages/publisher/publisher';
 import { Author } from './Authors';
 import { Booking } from './Booking';
 import { ISBN } from './Isbn';
-import { Media } from './Media';
+import { Media, MediaGroup } from './Media';
 import { Publishers } from './Publishers';
-import { Royalty } from './Royalty';
+import { Royalty, RoyaltyFormGroup } from './Royalty';
 import { User } from './user';
 
 export interface Title {
@@ -32,28 +33,41 @@ export interface Title {
     [id: number]: string;
   };
   publisher: Publishers;
-  authors: Author[];
+  authors: AuthorTitle[];
   printing: TitlePrinting[];
   Booking: Booking[];
-  Royalty: Royalty[];
+  royalties: Royalty[];
   documentMedia: Media[];
-  isbnPrint: {
-    id: number;
-    isbnNumber: string;
-    format: string;
-  };
-  isbnEbook: {
-    id: number;
-    isbnNumber: string;
-    format: string;
-  };
+  isbnPrint?: string;
+  isbnEbook?: string;
   media: Media[];
+  pricing: TitlePricing[];
 }
+
+export interface AuthorTitle {
+  id: number;
+  author: Author;
+  display_name: string; // Author display name from form
+  order: number;
+}
+
+export interface TitlePricing {
+  id: number;
+  channal: ChannalType;
+  salesPrice: number;
+  mrp: number;
+  msp: number;
+  deliveryWeight: number; // Computed from TitlePrinting
+  deliveryCharges: number; // Normal delivery charge based on weight
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface TitleCreate {
   id?: number;
   name: string;
   subTitle: string;
-  publisherId: 1;
+  publisherId: number;
   publisherDisplay: string;
   publishingType: PublishingType;
   subject: string;
@@ -137,8 +151,6 @@ export enum ChannalType {
   PRIME = 'PRIME',
   EBOOK_MAH = 'EBOOK_MAH',
   EBOOK_THIRD_PARTY = 'EBOOK_THIRD_PARTY',
-  AUTHOR = 'AUTHOR',
-  PUBLISHER = 'PUBLISHER',
 }
 
 export enum TitleStatus {
@@ -257,6 +269,7 @@ export interface UpdateSizeType extends CreateSizeType {
 }
 
 export interface PrintingCreate {
+  id?: number | null;
   titleId: number;
   bindingTypeId: number;
   totalPages: number;
@@ -268,7 +281,97 @@ export interface PrintingCreate {
   customPrintCost: number;
   insideCover: boolean;
   isColorPagesRandom: boolean;
-  deliveryCharge: number;
-  mrpPrint: number;
-  mrpEbook: number;
+}
+
+export interface PricingCreate {
+  id?: number | null;
+  channal: string;
+  salesPrice: number;
+  mrp: number;
+}
+
+export type PricingGroup = FormGroup<{
+  id: FormControl;
+  channal: FormControl;
+  salesPrice: FormControl;
+  mrp: FormControl;
+}>;
+
+export interface TitleFormGroup {
+  printingFormat: FormControl<string | null | undefined>;
+  hasFiles: FormControl<boolean | null | undefined>;
+  publishingType: FormControl<string | null | undefined>;
+
+  titleDetails: FormGroup<TitleDetailsFormGroup>;
+  printing: FormGroup<PrintingFormGroup>;
+  pricing: FormArray<PricingGroup>;
+
+  documentMedia: FormArray<FormGroup<MediaGroup>>;
+  royalties: FormArray<FormGroup<RoyaltyFormGroup>>;
+}
+
+// 👤 Author group
+export interface AuthorFormGroup {
+  id: FormControl<number | null | undefined>;
+  name: FormControl<string | null | undefined>;
+  keepSame: FormControl<boolean | null | undefined>;
+  displayName: FormControl<string | null | undefined>;
+}
+
+// 📖 ISBN group
+export interface IsbnFormGroup {
+  id: FormControl<number | null | undefined>;
+  isbnNumber: FormControl<string | null | undefined>;
+  format: FormControl<string | null | undefined>;
+}
+
+// 🏢 Publisher group
+export interface PublisherFormGroup {
+  id: FormControl<number | null | undefined>;
+  name: FormControl<string | null | undefined>;
+  keepSame: FormControl<boolean | null | undefined>;
+  displayName: FormControl<string | null | undefined>;
+}
+
+export interface PrintingFormGroup {
+  id: FormControl<number | null>;
+  bookBindingsId: FormControl<number | null>;
+  totalPages: FormControl<number>;
+  colorPages: FormControl<number>;
+  isColorPagesRandom: FormControl<boolean>;
+  bwPages: FormControl<number>;
+  insideCover: FormControl<boolean>;
+  laminationTypeId: FormControl<number | null>;
+  paperType: FormControl<string>;
+  paperQuailtyId: FormControl<number | null>;
+  sizeCategoryId: FormControl<number | null>;
+  msp: FormControl<number | null>;
+}
+
+// 🏷️ TitleDetails group (now using subgroups)
+export interface TitleDetailsFormGroup {
+  name: FormControl<string | null | undefined>;
+  subTitle: FormControl<string | null | undefined>;
+  longDescription: FormControl<string | null | undefined>;
+  shortDescription: FormControl<string | null | undefined>;
+  edition: FormControl<number | null | undefined>;
+  language: FormControl<string | null | undefined>;
+  subject: FormControl<string | null | undefined>;
+  status: FormControl<TitleStatus | null | undefined>;
+  category: FormControl<number | null | undefined>;
+  subCategory: FormControl<number | null | undefined>;
+  tradeCategory: FormControl<number | null | undefined>;
+  genre: FormControl<number | null | undefined>;
+  keywords: FormControl<string | null | undefined>;
+  isUniqueIdentifier: FormControl<boolean | null | undefined>;
+  keywordOption: FormControl<string | null | undefined>;
+  manualKeywords: FormControl<string | null | undefined>;
+  autoKeywords: FormControl<string | null | undefined>;
+
+  publisher: FormGroup<PublisherFormGroup>;
+  publisherDisplay: FormControl<string | null | undefined>;
+
+  authorIds: FormArray<FormGroup<AuthorFormGroup>>;
+  isbnPrint: FormControl<string | null | undefined>;
+  isbnEbook: FormControl<string | null | undefined>;
 }

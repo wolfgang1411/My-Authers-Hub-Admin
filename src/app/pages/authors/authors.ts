@@ -71,18 +71,19 @@ export class Authors {
           emailid: author.user.email,
           phonenumber: author.user.phoneNumber,
           numberoftitles: author.titles ? author.titles.length : 0,
-          royaltiesearned:
-            author.Royalty && author.Royalty.length
-              ? author.Royalty.reduce((acc, royalty) => {
-                  const sumForOne =
-                    (royalty.print_mah || 0) +
-                    (royalty.print_third_party || 0) +
-                    (royalty.prime || 0) +
-                    (royalty.ebook_mah || 0) +
-                    (royalty.ebook_third_party || 0);
-                  return acc + sumForOne;
-                }, 0)
-              : 0,
+          royaltiesearned: 0,
+          // royaltiesearned:
+          //   author.Royalty && author.Royalty.length
+          //     ? author.Royalty.reduce((acc, royalty) => {
+          //         const sumForOne =
+          //           (royalty.print_mah || 0) +
+          //           (royalty.print_third_party || 0) +
+          //           (royalty.prime || 0) +
+          //           (royalty.ebook_mah || 0) +
+          //           (royalty.ebook_third_party || 0);
+          //         return acc + sumForOne;
+          //       }, 0)
+          //     : 0,
           actions: '',
         }));
         this.dataSource.data = mapped;

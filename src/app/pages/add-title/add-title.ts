@@ -1,14 +1,17 @@
 import {
   Component,
+  effect,
   ElementRef,
   inject,
   QueryList,
   Signal,
   signal,
+  viewChild,
+  ViewChild,
   ViewChildren,
 } from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { map, Observable } from 'rxjs';
+import { combineLatest, debounceTime, map, Observable } from 'rxjs';
 import { StepperOrientation } from '@angular/cdk/stepper';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import {
@@ -21,26 +24,49 @@ import {
   AbstractControl,
   ValidatorFn,
   ValidationErrors,
+  FormControl,
 } from '@angular/forms';
-import { MatStepperIntl, MatStepperModule } from '@angular/material/stepper';
+import {
+  MatStepper,
+  MatStepperIntl,
+  MatStepperModule,
+} from '@angular/material/stepper';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatRadioModule } from '@angular/material/radio';
 import {
   Author,
+  AuthorFormGroup,
   BookBindings,
+  ChannalType,
+  CreateRoyalty,
+  IsbnFormGroup,
   LaminationType,
   Media,
+  MediaGroup,
   MediaType,
   PaperType,
+  PricingCreate,
+  PricingGroup,
   PrintingCreate,
+  PrintingFormGroup,
+  PublisherFormGroup,
   Publishers,
+  PublishingType,
+  RoyalFormGroupAmountField,
+  Royalty,
+  RoyaltyFormGroup,
   Title,
   TitleCategory,
   TitleCreate,
+  TitleDetailsFormGroup,
+  TitleFormGroup,
   TitleGenre,
+  TitlePricing,
+  TitlePrintingCostPayload,
   TitleStatus,
+  UpdateRoyalty,
 } from '../../interfaces';
 import { MatSelectModule } from '@angular/material/select';
 import { PublisherService } from '../publisher/publisher-service';
@@ -54,9 +80,10 @@ import { PrintingService } from '../../services/printing-service';
 import { TitlePrinting } from '../../components/title-printing/title-printing';
 import { Royalties } from '../../components/royalties/royalties';
 import { TitleService } from '../titles/title-service';
-import { BookingDetails } from '../booking-details/booking-details';
 import { BookDetails } from '../../components/book-details/book-details';
-import { response } from 'express';
+import { Pricing } from '../../components/pricing/pricing';
+import { Publisher } from '../publisher/publisher';
+import { pid } from 'process';
 
 @Component({
   selector: 'app-add-title',
@@ -75,9 +102,10 @@ import { response } from 'express';
     MatProgressSpinnerModule,
     RouterModule,
     MatCardModule,
-    Royalties,
     TitlePrinting,
     BookDetails,
+    Pricing,
+    Royalties,
   ],
   templateUrl: './add-title.html',
   styleUrl: './add-title.css',
@@ -95,7 +123,16 @@ export class AddTitle {
       .observe('(min-width: 800px)')
       .pipe(map(({ matches }) => (matches ? 'horizontal' : 'vertical')));
     this.route.params.subscribe(({ titleId }) => {
-      this.titleId = titleId;
+      this.titleId = Number(titleId);
+    });
+
+    effect(() => {
+      const publisher = this.publisherSignal();
+      const authors = this.authorsSignal();
+
+      this.mapRoyaltiesArray(publisher, authors);
+
+      // Put your logic here — this runs whenever either signal changes
     });
   }
   @ViewChildren('fileInput') fileInputs!: QueryList<
@@ -105,19 +142,22 @@ export class AddTitle {
   stepperOrientation: Observable<StepperOrientation>;
   bindingType!: BookBindings[];
   laminationTypes!: LaminationType[];
-  _formBuilder = inject(FormBuilder);
-  titleForm!: FormGroup;
   authorsSignal = signal<Author[]>([]);
   publisherSignal = signal<Publishers | null>(null);
   titleId!: number;
   publishers = signal<Publishers[]>([]);
   authorsList = signal<Author[]>([]);
-  isVerifying = signal<boolean>(false);
-  isISBNEbookErifying = signal<boolean>(false);
   titleDetails = signal<Title | null>(null);
-  printingArraySignal = signal<FormArray>(
-    this._formBuilder.array([this.createPrintingGroup()])
-  );
+
+  private stepper = viewChild<MatStepper>('stepperForm');
+
+  channalTypes = signal([
+    'PRINT_MAH',
+    'PRINT_THIRD_PARTY',
+    'PRIME',
+    'EBOOK_MAH',
+    'EBOOK_THIRD_PARTY',
+  ]);
   onAuthorChangeChild(authorId: number) {
     const author = this.authorsList().find((a) => a.id === authorId);
     if (!author) return;
@@ -134,7 +174,7 @@ export class AddTitle {
     this.publisherSignal.set(publisher);
   }
 
-  getDocumentLabel(mediaType: MediaType): string {
+  getDocumentLabel(mediaType: MediaType | string | null): string {
     switch (mediaType) {
       case 'FullCover':
         return 'Upload Full Cover (PDF)';
@@ -149,7 +189,7 @@ export class AddTitle {
     }
   }
 
-  getHelperText(mediaType: MediaType): string {
+  getHelperText(mediaType: MediaType | string | null): string {
     switch (mediaType) {
       case 'FullCover':
         return 'PDF, max 20MB';
@@ -164,98 +204,210 @@ export class AddTitle {
     }
   }
 
-  getAcceptedTypes(mediaType: MediaType): string {
+  getAcceptedTypes(mediaType: MediaType | string | null): string {
     if (mediaType === 'PrintInterior' || mediaType === 'FullCover')
       return '.pdf';
     return 'image/*';
   }
 
-  ngOnInit(): void {
+  tempForm = new FormGroup<TitleFormGroup>({
+    printingFormat: new FormControl<string | null>(null, Validators.required),
+    hasFiles: new FormControl<boolean | null>(null, Validators.required),
+    publishingType: new FormControl<string | null>(null, Validators.required),
+    titleDetails: this.createTitleDetailsGroup(),
+    printing: this.createPrintingGroupTemp(),
+    pricing: this.createPricingArrayTemp(),
+    documentMedia: new FormArray<FormGroup<MediaGroup>>([]),
+    royalties: new FormArray<FormGroup<RoyaltyFormGroup>>([]),
+  });
+
+  async ngOnInit() {
+    const { items: bindingTypes } = await this.printingService.getBindingType();
+    this.bindingType = bindingTypes;
+
+    const { items: publishersItem } =
+      await this.publisherService.getPublishers();
+    this.publishers.set(publishersItem);
+
+    const { items: authorItems } = await this.authorService.getAuthors();
+    this.authorsList.set(authorItems);
+
     if (this.titleId) {
       this.titleService.getTitleById(this.titleId).then((response) => {
         this.titleDetails.set(response);
         this.prefillFormData(response);
       });
     }
-    this.printingService.getBindingType().then(({ items }) => {
-      this.bindingType = items;
+
+    this.calculatePrintingCost();
+
+    this.tempForm.controls.royalties.valueChanges.subscribe((v) => {
+      console.log({ v });
     });
-    this.publisherService.getPublishers().then(({ items }) => {
-      this.publishers.set(items);
+  }
+
+  mapRoyaltiesArray(publisher: Publishers | null, authors: Author[]) {
+    if (
+      !publisher ||
+      !authors ||
+      !authors.length ||
+      !this.tempForm.controls.printing.valid ||
+      !this.tempForm.controls.pricing.valid
+    ) {
+      return;
+    }
+    const royaltyControl = this.tempForm.controls.royalties;
+
+    const pulisherId = publisher.id;
+    const authorIds = authors.map(({ id }) => id);
+
+    while (
+      royaltyControl.controls.filter(
+        ({ controls }) =>
+          controls.publisherId.value !== pulisherId &&
+          !authorIds.includes(controls.authorId.value || 0)
+      ).length
+    ) {
+      const removeIndex = royaltyControl.controls.indexOf(
+        royaltyControl.controls.filter(
+          ({ controls }) =>
+            controls.publisherId.value !== pulisherId &&
+            !authorIds.includes(controls.authorId.value || 0)
+        )[0]
+      );
+      if (removeIndex >= 0) {
+        royaltyControl.removeAt(removeIndex);
+      }
+    }
+
+    const isPublisherControlExisit = royaltyControl.controls.filter(
+      ({ controls }) => controls.publisherId.value === publisher.id
+    )[0];
+
+    if (!isPublisherControlExisit) {
+      royaltyControl.push(
+        this.createRoyaltyGroup({
+          publisherId: publisher.id,
+          titleId: this.titleId,
+          name:
+            publisher.name ||
+            publisher.user.firstName ||
+            '' + ' ' + publisher.user.lastName ||
+            '',
+        })
+      );
+    }
+
+    authors.forEach(({ id: authorId, name, user }) => {
+      const isAuthorControlExisit = royaltyControl.controls.filter(
+        ({ controls }) => controls.publisherId.value === publisher.id
+      )[0];
+      if (!isAuthorControlExisit) {
+        royaltyControl.push(
+          this.createRoyaltyGroup({
+            authorId: authorId,
+            titleId: this.titleId,
+            name: name || user.firstName || '' + ' ' + user.lastName || '',
+          })
+        );
+      }
     });
-    this.authorService.getAuthors().then(({ items }) => {
-      this.authorsList.set(items);
+  }
+
+  createRoyaltyGroup(data?: UpdateRoyalty) {
+    return new FormGroup<RoyaltyFormGroup>({
+      id: new FormControl<number | null>(null),
+      name: new FormControl<string | null>(data?.name || null),
+      authorId: new FormControl<number | null>(data?.authorId || null),
+      publisherId: new FormControl<number | null>(data?.publisherId || null),
+      ebook_mah: new FormControl<number>(data?.ebook_mah || 0),
+      ebook_third_party: new FormControl<number>(data?.ebook_third_party || 0),
+      prime: new FormControl<number>(data?.prime || 0),
+      print_mah: new FormControl<number>(data?.print_mah || 0),
+      print_third_party: new FormControl<number>(data?.print_third_party || 0),
+      titleId: new FormControl<number>(this.titleId),
     });
-    this.titleForm = this._formBuilder.group({
-      printingformat: [null, Validators.required],
-      hasFiles: [null, Validators.required],
-      publishingType: [null, Validators.required],
-      titleDetails: this._formBuilder.group({
-        name: ['', Validators.required],
-        subTitle: [''],
-        longDescription: [
-          '',
-          [Validators.required, this.minWordsValidator(20)],
-        ],
-        shortDescription: ['', Validators.required],
-        edition: [null],
-        language: [''],
-        subject: ['', [Validators.required, this.minWordsValidator(5)]],
-        status: [TitleStatus.Active],
-        category: [null as TitleCategory | null],
-        subCategory: [null as TitleCategory | null],
-        tradeCategory: [null as TitleCategory | null],
-        genre: [null as TitleGenre | null],
-        keywords: [''],
-        isUniqueIdentifier: [false],
-        keywordOption: ['auto'],
-        manualKeywords: [''],
-        autoKeywords: [{ value: '', disabled: true }],
-        publisher: this._formBuilder.group({
-          id: [null],
-          name: [''],
-          keepSame: [true],
-          displayName: [''],
-        }),
-        publisherDisplay: ['', Validators.required],
-        authorIds: this._formBuilder.array([
-          this._formBuilder.group({
-            id: [null],
-            name: [''],
-            keepSame: [true],
-            displayName: [''],
-          }),
-        ]),
-        isbnPrint: this._formBuilder.group({
-          id: [null],
-          isbnNumber: ['', [Validators.pattern(/^(97(8|9))?\d{9}(\d|X)$/)]],
-          format: ['ISBN-13'],
-        }),
-        isbnEbook: this._formBuilder.group({
-          id: [null],
-          isbnNumber: ['', [Validators.pattern(/^(97(8|9))?\d{9}(\d|X)$/)]],
-          format: ['ISBN-13'],
-        }),
-      }),
-      documentMedia: this._formBuilder.array<Media>([]),
-      printing: this._formBuilder.array([this.createPrintingGroup()]),
-      royalties: this._formBuilder.array([]),
-      distribution: this._formBuilder.group({
-        type: ['', Validators.required],
-      }),
+  }
+
+  getFieldForChannal(channal: ChannalType) {
+    const temp: Partial<Record<ChannalType, RoyalFormGroupAmountField>> = {};
+    Object.keys(ChannalType).forEach((ch) => {
+      let field: RoyalFormGroupAmountField = 'ebook_mah';
+
+      switch (channal) {
+        case ChannalType.EBOOK_MAH:
+          field = 'ebook_mah';
+          break;
+        case ChannalType.EBOOK_THIRD_PARTY:
+          field = 'ebook_third_party';
+          break;
+        case ChannalType.PRIME:
+          field = 'prime';
+          break;
+        case ChannalType.PRINT_MAH:
+          field = 'print_mah';
+          break;
+        case ChannalType.PRINT_THIRD_PARTY:
+          field = 'print_third_party';
+          break;
+      }
+
+      temp[ch as ChannalType] = field;
     });
-    this.titleForm.get('publishingType')?.valueChanges.subscribe((format) => {
-      this.buildMediaArray(format);
-    });
-    this.printingArraySignal = signal(
-      this.titleForm.get('printing') as FormArray
-    );
+
+    return temp[channal] as RoyalFormGroupAmountField;
+  }
+  async calculatePrintingCost() {
+    const printGroup = this.tempForm.controls.printing;
+
+    const {
+      bookBindingsId: { value: bookBindingsId },
+      totalPages: { value: totalPages },
+      colorPages: { value: colorPages },
+      isColorPagesRandom: { value: isColorPagesRandom },
+      bwPages: { value: bwPages },
+      insideCover: { value: insideCover },
+      laminationTypeId: { value: laminationTypeId },
+      paperQuailtyId: { value: paperQuailtyId },
+      sizeCategoryId: { value: sizeCategoryId },
+    } = printGroup.controls;
+
+    if (
+      !(
+        colorPages &&
+        totalPages &&
+        paperQuailtyId &&
+        sizeCategoryId &&
+        laminationTypeId &&
+        bookBindingsId
+      )
+    ) {
+      return;
+    }
+
+    const payload: TitlePrintingCostPayload = {
+      colorPages: +(colorPages ?? 10),
+      bwPages: +(bwPages ?? 10),
+      paperQuailtyId,
+      sizeCategoryId,
+      totalPages: +(totalPages ?? 20),
+      laminationTypeId,
+      isColorPagesRandom: !!isColorPagesRandom,
+      bindingTypeId: bookBindingsId,
+      insideCover: !!insideCover,
+    };
+
+    const mspController = this.tempForm.controls.printing.controls.msp;
+    const response = await this.printingService.getPrintingPrice(payload);
+    mspController?.patchValue(response.printPerItem);
   }
 
   prefillFormData(data: Title): void {
-    this.titleForm.patchValue({
-      printingformat: null,
-      hasFiles: null,
+    console.log('prefillll');
+
+    this.tempForm.patchValue({
+      printingFormat: data.publishingType,
+      hasFiles: true,
       publishingType: data.publishingType,
       titleDetails: {
         name: data.name,
@@ -266,15 +418,15 @@ export class AddTitle {
         language: data.language,
         subject: data.subject,
         status: data.status || 'Active',
-        category: data.category.id || null,
-        subCategory: data.subCategory.id || null,
-        tradeCategory: data.tradeCategory.id || null,
-        genre: data.genre.id || null,
+        category: data.category.id as any,
+        subCategory: data.subCategory.id as any,
+        tradeCategory: data.tradeCategory.id as any,
+        genre: (data.genre.id as any) || null,
         keywords: data.keywords,
         isUniqueIdentifier: data.isUniqueIdentifier,
         keywordOption: 'auto',
         manualKeywords: '',
-        autoKeywords: { value: '', disabled: true },
+        autoKeywords: data.keywords,
         publisher: {
           id: data.publisher?.id || null,
           name: data.publisher?.name || '',
@@ -282,52 +434,103 @@ export class AddTitle {
           displayName: data.publisher?.name || '',
         },
         publisherDisplay: data.publisherDisplay || data.publisher?.name || '',
-        isbnPrint: {
-          id: data.isbnPrint?.id || null,
-          isbnNumber: data.isbnPrint || '',
-          format: 'ISBN-13',
-        },
-        isbnEbook: {
-          id: data.isbnEbook?.id || null,
-          isbnNumber: data.isbnEbook || '',
-          format: 'ISBN-13',
-        },
+        isbnPrint: data.isbnPrint || null,
+        isbnEbook: data.isbnEbook || null,
       },
-      distribution: {
-        type: '',
+
+      printing: {
+        id: data.printing[0]?.id,
+        bookBindingsId: data.printing[0]?.bindingType.id,
+        totalPages: data.printing[0]?.totalPages || 0,
+        colorPages: data.printing[0]?.colorPages || 0,
+        isColorPagesRandom: data.printing[0]?.isColorPagesRandom,
+        bwPages: data.printing[0]?.bwPages,
+        insideCover: data.printing[0]?.insideCover,
+        laminationTypeId: data.printing[0]?.laminationType.id,
+        paperType: data.printing[0]?.paperType,
+        paperQuailtyId: data.printing[0]?.paperQuailty.id,
+        sizeCategoryId: data.printing[0]?.sizeCategory.id,
+        msp: data.printing[0]?.printCost,
       },
     });
-    const authorFGs = data.authors.map((authorWrapper: any) => {
-      const author = authorWrapper.author;
-      const fullName = `${author?.user?.firstName ?? ''} ${
-        author?.user?.lastName ?? ''
-      }`.trim();
 
-      return this._formBuilder.group({
-        id: [author.id ?? null],
-        name: [fullName],
-        keepSame: [true],
-        displayName: [fullName],
-      });
-    });
+    this.tempForm.controls.titleDetails.controls.authorIds.clear();
+    this.authorsSignal.set(data.authors.map(({ author }) => author));
+    this.publisherSignal.set(data.publisher);
 
-    this.titleForm
-      .get('titleDetails.authorIds')
-      ?.setValue(authorFGs.map((fg) => fg.value));
-
-    if (data.printing && Array.isArray(data.printing)) {
-      const printingArray = this._formBuilder.array(
-        data.printing.map((item) => this.createPrintingGroup(item))
+    data.authors.forEach(({ author, display_name }) => {
+      this.tempForm.controls.titleDetails.controls.authorIds.push(
+        new FormGroup<AuthorFormGroup>({
+          id: new FormControl<number | null>(author.id),
+          name: new FormControl<string>(author.name),
+          keepSame: new FormControl<boolean>(author.name === display_name),
+          displayName: new FormControl<string>(display_name),
+        })
       );
-      this.titleForm.setControl('printing', printingArray);
-      this.printingArraySignal.set(printingArray);
-    }
+    });
 
-    const mediaFGs = (data.media || []).map((mediaItem: any) =>
-      this._formBuilder.group(mediaItem)
+    this.buildMediaArray(data.publishingType);
+    this.updatePricingArray(data.pricing);
+
+    const royaltControlData = data.royalties.reduce(
+      (acc, { authorId, publisherId, channal, percentage }) => {
+        const isAuthorOrPubllisherPut = acc.filter(
+          (a) => a.authorId === authorId || a.publisherId === publisherId
+        )[0] as CreateRoyalty | undefined;
+
+        console.log({ isAuthorOrPubllisherPut });
+
+        let d: Partial<CreateRoyalty> = {
+          ...isAuthorOrPubllisherPut,
+        };
+
+        if (isAuthorOrPubllisherPut) {
+          d[this.getFieldForChannal(channal)] = percentage;
+          acc = acc.map(
+            (a) =>
+              (a.authorId === authorId || a.publisherId === publisherId
+                ? d
+                : a) as CreateRoyalty
+          );
+        } else {
+          d['authorId'] = authorId;
+          d['publisherId'] = publisherId;
+          d[this.getFieldForChannal(channal)] = percentage;
+          const author = this.authorsList().filter(
+            ({ id }) => id == authorId
+          )[0];
+          const publisher = this.publishers().filter(
+            ({ id }) => id == publisherId
+          )[0];
+          d['name'] =
+            publisher?.name ||
+            author?.name ||
+            author?.user?.firstName ||
+            '' + ' ' + author?.user?.lastName ||
+            '';
+          acc.push(d as CreateRoyalty);
+        }
+
+        console.log({ d });
+
+        return acc;
+      },
+      Array<CreateRoyalty>()
     );
-    const mediaFormArray = this._formBuilder.array(mediaFGs);
-    this.titleForm.setControl('documentMedia', mediaFormArray);
+
+    royaltControlData?.forEach((d) => {
+      const { authorId: aId, publisherId: pId } = d;
+      const controlExisit = this.tempForm.controls.royalties.controls.filter(
+        ({ controls: { authorId, publisherId } }) =>
+          authorId.value === aId || publisherId.value === pId
+      )[0];
+      console.log({ controlExisit, d });
+      if (controlExisit) {
+        controlExisit.patchValue(d);
+      } else {
+        this.tempForm.controls.royalties.push(this.createRoyaltyGroup(d));
+      }
+    });
   }
 
   minWordsValidator(minWords: number): ValidatorFn {
@@ -340,117 +543,256 @@ export class AddTitle {
         : null;
     };
   }
-  createPrintingGroup(printingItem?: any): FormGroup {
-    return this._formBuilder.group({
-      bookBindingsId: [printingItem?.bindingType?.id ?? null],
-      totalPages: [printingItem?.totalPages ?? 0],
-      colorPages: [printingItem?.colorPages ?? 0],
-      isColorPagesRandom: [printingItem?.isColorPagesRandom ?? false],
-      bwPages: [
-        printingItem?.bwPages ??
-          (printingItem?.totalPages ?? 0) - (printingItem?.colorPages ?? 0),
-      ],
-      insideCover: [printingItem?.insideCover ?? false],
-      laminationTypeId: [printingItem?.laminationType?.id ?? null],
-      paperType: [printingItem?.paperType ?? 'WHITE'],
-      paperQuailtyId: [printingItem?.paperQuailty?.id ?? null],
-      sizeCategoryId: [printingItem?.sizeCategory?.id ?? null],
-      printCost: [printingItem?.printCost ?? 0],
+
+  updatePricingArray(pricing?: TitlePricing[]) {
+    pricing?.forEach(({ channal, id, mrp, salesPrice }) => {
+      const pricingControl = this.tempForm.controls['pricing'].controls?.filter(
+        ({ controls }) => controls.channal.value === channal
+      )[0];
+
+      if (pricingControl) {
+        pricingControl.patchValue({
+          id,
+          channal,
+          mrp,
+          salesPrice,
+        });
+      }
     });
   }
 
-  formSubmit() {
-    console.log(
-      this.titleDetailsCtrl.value,
-      'titleformmmm',
-      this.titleForm.value,
-      'title valueeee'
+  mrpValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (!control.parent) {
+        return null; // parent not ready yet
+      }
+
+      const msp = Number(this.tempForm.controls.printing.controls.msp?.value);
+      const mrp = Number(control.value);
+
+      return msp !== null && mrp < msp
+        ? { invalid: 'MRP cannot be lower than MSP' }
+        : null;
+    };
+  }
+
+  salesPriceValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (!control.parent) {
+        return null; // parent not ready yet
+      }
+
+      const msp = Number(this.tempForm.controls.printing.controls.msp?.value);
+      const mrp = control.parent.get('mrp')?.value;
+      const salesPrice = control.value;
+
+      if (salesPrice < msp) {
+        return {
+          invalid: 'Sales price cannot be lower then MSP',
+        };
+      }
+      if (salesPrice > mrp) {
+        return {
+          invalid: 'Sales price cannot be higher then MRP',
+        };
+      }
+      return null;
+    };
+  }
+
+  createPricingArrayTemp(): FormArray<PricingGroup> {
+    return new FormArray(
+      Object.keys(ChannalType).map(
+        (channal) =>
+          new FormGroup({
+            id: new FormControl<number | null | undefined>(null),
+            channal: new FormControl<string>(channal, Validators.required),
+            salesPrice: new FormControl<number | null | undefined>(
+              null,
+              Validators.required
+            ),
+            mrp: new FormControl<number | null | undefined>(null, [
+              Validators.required,
+              this.mrpValidator() as ValidatorFn,
+            ]),
+          }) as PricingGroup
+      )
     );
   }
 
-  get printing(): FormArray {
-    return this.titleForm.get('printing') as FormArray;
-  }
-  get formatCtrl() {
-    return this.titleForm.get('publishingType') as FormGroup;
-  }
-  get titleDetailsCtrl() {
-    return this.titleForm.get('titleDetails') as FormGroup;
-  }
-  get documentMedia() {
-    return this.titleForm.get('documentMedia') as FormArray;
+  createTitleDetailsGroup(): FormGroup<TitleDetailsFormGroup> {
+    return new FormGroup<TitleDetailsFormGroup>({
+      name: new FormControl<string>('', Validators.required),
+      subTitle: new FormControl<string>(''),
+      longDescription: new FormControl<string>('', [
+        Validators.required,
+        this.minWordsValidator(20),
+      ]),
+      shortDescription: new FormControl<string>('', Validators.required),
+      edition: new FormControl<number | null>(null),
+      language: new FormControl<string>(''),
+      subject: new FormControl<string>('', [
+        Validators.required,
+        this.minWordsValidator(5),
+      ]),
+      status: new FormControl<TitleStatus>(TitleStatus.Active),
+      category: new FormControl<number | null>(null),
+      subCategory: new FormControl<number | null>(null),
+      tradeCategory: new FormControl<number | null>(null),
+      genre: new FormControl<number | null>(null),
+      keywords: new FormControl<string>(''),
+      isUniqueIdentifier: new FormControl<boolean>(false),
+      keywordOption: new FormControl<string>('auto'),
+      manualKeywords: new FormControl<string>(''),
+      autoKeywords: new FormControl<string>({ value: '', disabled: true }),
+      publisher: new FormGroup<PublisherFormGroup>({
+        id: new FormControl<number | null>(null),
+        name: new FormControl<string>(''),
+        keepSame: new FormControl<boolean>(true),
+        displayName: new FormControl<string>(''),
+      }),
+      publisherDisplay: new FormControl<string>('', Validators.required),
+      authorIds: new FormArray<FormGroup<AuthorFormGroup>>([
+        new FormGroup<AuthorFormGroup>({
+          id: new FormControl<number | null>(null),
+          name: new FormControl<string>(''),
+          keepSame: new FormControl<boolean>(true),
+          displayName: new FormControl<string>(''),
+        }),
+      ]),
+      isbnPrint: new FormControl<string | null>(null, {
+        validators: [Validators.pattern(/^(97(8|9))?\d{9}(\d|X)$/)],
+      }),
+      isbnEbook: new FormControl<string | null>(null, {
+        validators: [Validators.pattern(/^(97(8|9))?\d{9}(\d|X)$/)],
+      }),
+    });
   }
 
-  get printCtrl() {
-    return this.titleForm.get('printing') as FormGroup;
-  }
-
-  get distributionCtrl() {
-    return this.titleForm.get('distribution') as FormGroup;
-  }
-
-  get publisher() {
-    return this.titleForm.get('publisher') as FormGroup;
-  }
-
-  // addPrinting(): void {
-  //   this.printing.push(this.createPrintingGroup());
-  // }
-
-  get royalties(): FormArray {
-    return this.titleForm.get('royalties') as FormArray;
+  createPrintingGroupTemp(): FormGroup<PrintingFormGroup> {
+    return new FormGroup<PrintingFormGroup>({
+      id: new FormControl<number | null>(null),
+      bookBindingsId: new FormControl<number | null>(null, Validators.required),
+      totalPages: new FormControl<number>(0, {
+        validators: [Validators.required],
+        nonNullable: true,
+      }),
+      colorPages: new FormControl<number>(0, {
+        validators: [Validators.required],
+        nonNullable: true,
+      }),
+      isColorPagesRandom: new FormControl<boolean>(false, {
+        nonNullable: true,
+      }),
+      bwPages: new FormControl<number>(0, {
+        validators: [Validators.required],
+        nonNullable: true,
+      }),
+      insideCover: new FormControl<boolean>(false, { nonNullable: true }),
+      laminationTypeId: new FormControl<number | null>(
+        null,
+        Validators.required
+      ),
+      paperType: new FormControl<string>('WHITE', {
+        validators: [Validators.required],
+        nonNullable: true,
+      }),
+      paperQuailtyId: new FormControl<number | null>(null, Validators.required),
+      sizeCategoryId: new FormControl<number | null>(null, Validators.required),
+      msp: new FormControl<number | null>(null),
+    });
   }
 
   addRoyalty(): void {
-    this.royalties.push(
-      this._formBuilder.group({
-        id: [null],
-        percentage: [0, Validators.required],
-        channal: [''],
-        author: [null],
-        publisher: [null],
-        status: ['ACTIVE'],
-      })
-    );
+    // this.royalties.push(
+    //   this._formBuilder.group({
+    //     id: [null],
+    //     percentage: [0, Validators.required],
+    //     channal: [''],
+    //     author: [null],
+    //     publisher: [null],
+    //     status: ['ACTIVE'],
+    //   })
+    // );
   }
 
   addDefaultMedia() {
-    this.documentMedia.clear();
-    this.documentMedia.push(this.createMedia('FullCover', true));
-    this.documentMedia.push(this.createMedia('FrontCover', true));
-    this.documentMedia.push(this.createMedia('BackCover', false));
-    this.documentMedia.push(this.createMedia('PrintInterior', true));
+    this.tempForm.controls.documentMedia.clear();
+    this.tempForm.controls.documentMedia.push(
+      this.createMedia('FullCover', true)
+    );
+    this.tempForm.controls.documentMedia.push(
+      this.createMedia('FrontCover', true)
+    );
+    this.tempForm.controls.documentMedia.push(
+      this.createMedia('BackCover', false)
+    );
+    this.tempForm.controls.documentMedia.push(
+      this.createMedia('PrintInterior', true)
+    );
   }
 
-  createMedia(mediaType: MediaType, required = true): FormGroup {
-    return this._formBuilder.group({
-      id: [0],
-      url: [''],
-      type: [mediaType],
-      file: [null, required ? Validators.required : []],
-      mediaType: [mediaType],
+  createMedia(mediaType: MediaType, required = true): FormGroup<MediaGroup> {
+    const exisitingMedia = this.titleDetails()?.media.filter(
+      ({ type }) => type === mediaType
+    )[0];
+
+    console.log({
+      exisitingMedia,
+      mediaType,
+    });
+
+    return new FormGroup<MediaGroup>({
+      id: new FormControl(1 || exisitingMedia?.id || 0),
+      url: new FormControl(
+        'https://fastly.picsum.photos/id/376/536/354.jpg?hmac=FY3pGZTc81LYCnJOB0PiRX570QylTn7xchj6FZA6TeQ'
+      ),
+      type: new FormControl(mediaType),
+      file: new FormControl(new File([], 'test.png')),
+      mediaType: new FormControl(mediaType),
     });
   }
+
   buildMediaArray(format: string) {
-    this.documentMedia.clear();
+    this.tempForm.controls.documentMedia.clear();
     switch (format) {
       case 'ONLY_EBOOK':
-        this.documentMedia.push(this.createMedia('FullCover', true));
-        this.documentMedia.push(this.createMedia('FrontCover', true));
+        this.tempForm.controls.documentMedia.push(
+          this.createMedia('FullCover', true)
+        );
+        this.tempForm.controls.documentMedia.push(
+          this.createMedia('FrontCover', true)
+        );
         break;
 
       case 'ONLY_PRINT':
-        this.documentMedia.push(this.createMedia('FullCover', true));
-        this.documentMedia.push(this.createMedia('FrontCover', true));
-        this.documentMedia.push(this.createMedia('BackCover', false));
-        this.documentMedia.push(this.createMedia('PrintInterior', true));
+        this.tempForm.controls.documentMedia.push(
+          this.createMedia('FullCover', true)
+        );
+        this.tempForm.controls.documentMedia.push(
+          this.createMedia('FrontCover', true)
+        );
+        this.tempForm.controls.documentMedia.push(
+          this.createMedia('BackCover', false)
+        );
+        this.tempForm.controls.documentMedia.push(
+          this.createMedia('PrintInterior', true)
+        );
         break;
 
       case 'PRINT_EBOOK':
-        this.documentMedia.push(this.createMedia('FullCover', true));
-        this.documentMedia.push(this.createMedia('FrontCover', true));
-        this.documentMedia.push(this.createMedia('BackCover', false));
-        this.documentMedia.push(this.createMedia('PrintInterior', true));
+        this.tempForm.controls.documentMedia.push(
+          this.createMedia('FullCover', true)
+        );
+        this.tempForm.controls.documentMedia.push(
+          this.createMedia('FrontCover', true)
+        );
+        this.tempForm.controls.documentMedia.push(
+          this.createMedia('BackCover', false)
+        );
+        this.tempForm.controls.documentMedia.push(
+          this.createMedia('PrintInterior', true)
+        );
         break;
 
       default:
@@ -468,12 +810,13 @@ export class AddTitle {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
-      const mediaType = this.documentMedia.at(index).get('mediaType')
-        ?.value as MediaType;
+      const mediaType = this.tempForm.controls.documentMedia
+        .at(index)
+        .get('mediaType')?.value as MediaType;
       const reader = new FileReader();
       reader.onload = async () => {
         const fileResult = reader.result as string;
-        this.documentMedia.at(index).patchValue({
+        this.tempForm.controls.documentMedia.at(index).patchValue({
           file: file,
           url:
             mediaType === 'PrintInterior' || mediaType === 'FullCover'
@@ -493,39 +836,28 @@ export class AddTitle {
   }
 
   removeFile(index: number) {
-    this.documentMedia.at(index).patchValue({
+    this.tempForm.controls.documentMedia.at(index).patchValue({
       file: null,
       url: null,
     });
   }
-  onStepChange() {
-    console.log('step change triggered');
-    console.log('titleForm valid:', this.titleForm.valid);
-    if (this.titleForm.get('titleDetails')?.valid) {
-      this.saveDraft();
-    }
-  }
-  onPrintingStepChange() {
-    if (this.titleForm.get('titleDetails.printing')?.valid && this.titleId) {
-      this.savePrintingDraft();
-    }
-  }
 
-  saveDraft() {
-    const titleDetails = this.titleForm.get('titleDetails')?.value;
+  onTitleSubmit() {
+    const titleDetails = this.tempForm.controls.titleDetails?.value;
     const basicData: TitleCreate = {
-      publishingType: this.titleForm.get('publishingType')?.value,
-      isbnPrint: titleDetails.isbnPrint?.isbnNumber ?? '',
-      isbnEbook: titleDetails.isbnEbook?.isbnNumber ?? '',
-      categoryId: titleDetails.category,
-      subCategoryId: titleDetails.subCategory,
-      tradeCategoryId: titleDetails.tradeCategory,
-      genreId: titleDetails.genre,
-      publisherDisplay: titleDetails.publisher.displayName,
-      publisherId: titleDetails.publisher.id,
-      name: titleDetails.name,
-      subTitle: titleDetails.subTitle,
-      subject: titleDetails.subject,
+      publishingType: this.tempForm.controls.publishingType
+        .value as PublishingType,
+      isbnPrint: titleDetails?.isbnPrint ?? '',
+      isbnEbook: titleDetails.isbnEbook ?? '',
+      categoryId: titleDetails.category as number,
+      subCategoryId: titleDetails.subCategory as number,
+      tradeCategoryId: titleDetails.tradeCategory as number,
+      genreId: titleDetails.genre as number,
+      publisherDisplay: titleDetails.publisher?.displayName as string,
+      publisherId: titleDetails.publisher?.id as number,
+      name: titleDetails.name as string,
+      subTitle: titleDetails.subTitle as string,
+      subject: titleDetails.subject as string,
       language: titleDetails.language,
       longDescription: titleDetails.longDescription,
       shortDescription: titleDetails.shortDescription,
@@ -540,33 +872,104 @@ export class AddTitle {
             }))
           : [],
       id: this.titleId,
-    };
+    } as TitleCreate;
     console.log(titleDetails, 'valuee title');
     console.log(basicData, 'basicccccc');
     this.titleService.createTitle(basicData).then((res: { id: number }) => {
       this.titleId = res.id;
+      this.stepper()?.next();
     });
   }
-  savePrintingDraft() {
-    const printingDetails = this.titleForm.get('printing')?.value;
-    console.log(printingDetails, 'printinn');
-    const createPrinting: PrintingCreate = {
-      titleId: this.titleId,
-      bindingTypeId: printingDetails[0].bindingTypeId,
-      totalPages: printingDetails[0].totalPages,
-      colorPages: printingDetails[0].colorPages,
-      laminationTypeId: printingDetails[0].laminationTypeId,
-      paperType: printingDetails[0].paperType,
-      paperQuailtyId: printingDetails[0].paperQuailtyId,
-      sizeCategoryId: printingDetails[0].sizeCategoryId,
-      customPrintCost: printingDetails[0].customPrintCost,
-      insideCover: printingDetails[0].insideCover,
-      isColorPagesRandom: printingDetails[0].isColorPagesRandom,
-      deliveryCharge: printingDetails[0].deliveryCharge,
-      mrpPrint: 0,
-      mrpEbook: 0,
-    };
-    console.log(createPrinting, 'createeeprintiingggg');
+
+  async onPricingSubmit() {
+    const pricingControls = this.tempForm.controls.pricing;
+
+    console.log(pricingControls);
+
+    if (pricingControls.valid) {
+      const data: PricingCreate[] = pricingControls.controls.map(
+        ({ controls: { channal, id, mrp, salesPrice } }) => ({
+          id: id.value,
+          channal: channal.value,
+          mrp: Number(mrp.value),
+          salesPrice: Number(salesPrice.value),
+          titleId: Number(this.titleId),
+        })
+      );
+
+      await this.titleService.createManyPricing(data);
+      this.stepper()?.next();
+    }
+  }
+
+  async savePrintingDraft() {
+    const printing = this.tempForm.controls.printing;
+    const printingDetails = this.tempForm.get('printing')?.value;
+
+    if (printing?.valid) {
+      const createPrinting: PrintingCreate = {
+        id: printingDetails?.id,
+        titleId: Number(this.titleId),
+        bindingTypeId: Number(printingDetails?.bookBindingsId),
+        totalPages: Number(printingDetails?.totalPages),
+        colorPages: Number(printingDetails?.colorPages),
+        laminationTypeId: Number(printingDetails?.laminationTypeId),
+        paperType: printingDetails?.paperType as PaperType,
+        paperQuailtyId: Number(printingDetails?.paperQuailtyId),
+        sizeCategoryId: Number(printingDetails?.sizeCategoryId),
+        customPrintCost: Number(0),
+        insideCover: printingDetails?.insideCover || false,
+        isColorPagesRandom: printingDetails?.isColorPagesRandom || false,
+      };
+
+      const response = await this.titleService.createOrUpdatePrinting(
+        createPrinting
+      );
+      printing.controls.id.patchValue(response.id);
+    }
+  }
+
+  async saveRoyalties() {
+    const royaltiesControl = this.tempForm.controls.royalties;
+    console.log({ royaltiesControl });
+
+    if (royaltiesControl.valid) {
+      const data: UpdateRoyalty[] = royaltiesControl.controls.map(
+        ({
+          controls: {
+            id: { value: id },
+            authorId: { value: authorId },
+            ebook_mah: { value: ebook_mah },
+            ebook_third_party: { value: ebook_third_party },
+            name: { value: name },
+            prime: { value: prime },
+            print_mah: { value: print_mah },
+            print_third_party: { value: print_third_party },
+            publisherId: { value: publisherId },
+          },
+        }) => ({
+          id,
+          authorId,
+          ebook_mah: Number(ebook_mah),
+          ebook_third_party: Number(ebook_third_party),
+          prime: Number(prime),
+          print_mah: Number(print_mah),
+          print_third_party: Number(print_third_party),
+          name,
+          publisherId,
+          titleId: this.titleId,
+        })
+      );
+
+      const res = await Promise.all(
+        data.map(async (d) => this.titleService.createOrUpdateRoyaties(d))
+      );
+
+      console.log({ res });
+
+      this.stepper()?.next();
+    }
+    this.titleService.createManyPricing;
   }
 
   onSubmit() {}

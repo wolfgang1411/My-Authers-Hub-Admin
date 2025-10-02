@@ -9,14 +9,15 @@
   [orientation]="(stepperOrientation | async)!"
   [linear]="true"
   [animationDuration]="'500'"
+  #stepperForm
 >
   @if(!this.titleId) {
   <mat-step
-    [stepControl]="formatCtrl"
+    [stepControl]="tempForm.controls.publishingType"
     class="!text-accent !p-0"
     label="Choose Format"
   >
-    <form [formGroup]="titleForm">
+    <form [formGroup]="tempForm">
       <div class="flex flex-col gap-8">
         <h3 class="heading self-center !text-[1.6rem] !font-medium">
           {{ "inwhichformatyouwouldliketouploadthetitle" | translate }}??
@@ -27,11 +28,11 @@
             class="btn border-2 !border-primary flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
             [ngClass]="{
               '!bg-primary !text-white !fill-white shadow-lg':
-                titleForm.get('publishingType')?.value === 'PRINT_EBOOK',
+                tempForm.get('publishingType')?.value === 'PRINT_EBOOK',
               '!bg-white !text-primary fill-primary !border-primary':
-                titleForm.get('publishingType')?.value !== 'PRINT_EBOOK'
+                tempForm.get('publishingType')?.value !== 'PRINT_EBOOK'
             }"
-            (click)="titleForm.get('publishingType')?.setValue('PRINT_EBOOK')"
+            (click)="tempForm.get('publishingType')?.setValue('PRINT_EBOOK')"
           >
             <svg-icon
               class="fill-primary"
@@ -44,11 +45,11 @@
             class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
             [ngClass]="{
               '!bg-primary !text-white !fill-white shadow-lg':
-                titleForm.get('publishingType')?.value === 'ONLY_PRINT',
+                tempForm.get('publishingType')?.value === 'ONLY_PRINT',
               '!bg-white !text-primary fill-primary !border-primary':
-                titleForm.get('publishingType')?.value !== 'ONLY_PRINT'
+                tempForm.get('publishingType')?.value !== 'ONLY_PRINT'
             }"
-            (click)="titleForm.get('publishingType')?.setValue('ONLY_PRINT')"
+            (click)="tempForm.get('publishingType')?.setValue('ONLY_PRINT')"
           >
             <svg-icon class="fill-primary" src="images/print.svg"></svg-icon>
             {{ "printbookonly" | translate }}
@@ -58,17 +59,17 @@
             class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
             [ngClass]="{
               '!bg-primary !text-white !fill-white shadow-lg':
-                titleForm.get('publishingType')?.value === 'ONLY_EBOOK',
+                tempForm.get('publishingType')?.value === 'ONLY_EBOOK',
               '!bg-white !text-primary fill-primary !border-primary':
-                titleForm.get('publishingType')?.value !== 'ONLY_EBOOK'
+                tempForm.get('publishingType')?.value !== 'ONLY_EBOOK'
             }"
-            (click)="titleForm.get('publishingType')?.setValue('ONLY_EBOOK')"
+            (click)="tempForm.get('publishingType')?.setValue('ONLY_EBOOK')"
           >
             <svg-icon class="fill-primary" src="images/ebook.svg"></svg-icon>
             {{ "ebookonly" | translate }}
           </button>
         </div>
-        @if(titleForm.get('publishingType')?.value) {
+        @if(tempForm.get('publishingType')?.value) {
 
         <h3 class="heading self-center !text-[1.6rem] !font-medium">
           {{ "doyouhaveallfilesreadytoupload" | translate }}??
@@ -79,11 +80,11 @@
             class="btn border-2 !border-primary flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
             [ngClass]="{
               '!bg-primary !text-white !fill-white shadow-lg':
-                titleForm.get('hasFiles')?.value === true,
+                tempForm.get('hasFiles')?.value === true,
               '!bg-white !text-primary fill-primary !border-primary':
-                titleForm.get('hasFiles')?.value !== true
+                tempForm.get('hasFiles')?.value !== true
             }"
-            (click)="titleForm.get('hasFiles')?.setValue(true)"
+            (click)="tempForm.get('hasFiles')?.setValue(true)"
           >
             <div class="flex justify-center">
               <svg-icon
@@ -102,11 +103,11 @@
             class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
             [ngClass]="{
               '!bg-primary !text-white !fill-white shadow-lg':
-                titleForm.get('hasFiles')?.value === false,
+                tempForm.get('hasFiles')?.value === false,
               '!bg-white !text-primary fill-primary !border-primary':
-                titleForm.get('hasFiles')?.value !== false
+                tempForm.get('hasFiles')?.value !== false
             }"
-            (click)="titleForm.get('hasFiles')?.setValue(false)"
+            (click)="tempForm.get('hasFiles')?.setValue(false)"
             [routerLink]="['/titles']"
             routerLinkActive="router-link-active"
           >
@@ -117,7 +118,7 @@
             {{ "noidonthavefilesready" | translate }}
           </button>
         </div>
-        } @if(titleForm.get('hasFiles')?.value === true) {
+        } @if(tempForm.get('hasFiles')?.value === true) {
 
         <h3 class="heading self-center !text-[1.6rem] !font-medium">
           {{ "choosepublishingtype" | translate }}??
@@ -128,11 +129,13 @@
             class="btn border-2 !border-primary flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
             [ngClass]="{
               '!bg-primary !text-white !fill-white shadow-lg':
-                titleForm.get('printingFormat')?.value === 'publish&print',
+                tempForm.get('printingFormat')?.value === 'publish&print',
               '!bg-white !text-primary fill-primary !border-primary':
-                titleForm.get('printingFormat')?.value !== 'publish&print'
+                tempForm.get('printingFormat')?.value !== 'publish&print'
             }"
-            (click)="titleForm.get('printingFormat')?.setValue('publish&print')"
+            (click)="
+              tempForm.controls.printingFormat.patchValue('publish&print')
+            "
             matStepperNext
           >
             <div class="flex justify-center">
@@ -152,11 +155,11 @@
             class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
             [ngClass]="{
               '!bg-primary !text-white !fill-white shadow-lg':
-                titleForm.get('printingFormat')?.value === 'printOnly',
+                tempForm.get('printingFormat')?.value === 'printOnly',
               '!bg-white !text-primary fill-primary !border-primary':
-                titleForm.get('printingFormat')?.value !== 'printOnly'
+                tempForm.get('printingFormat')?.value !== 'printOnly'
             }"
-            (click)="titleForm.get('printingFormat')?.setValue('printOnly')"
+            (click)="tempForm.controls.printingFormat.setValue('printOnly')"
             matStepperNext
           >
             <svg-icon
@@ -171,31 +174,44 @@
     </form>
   </mat-step>
   }
-  <mat-step [stepControl]="titleDetailsCtrl" label="Fill the Title Details">
+
+  <!-- book detail step -->
+  <mat-step
+    [stepControl]="tempForm.controls.titleDetails"
+    label="Fill the Title Details"
+    [completed]="titleId"
+  >
     <app-book-details
-      [titleForm]="titleForm"
-      [authorsList]="authorsList"
-      [publishers]="publishers"
-      [isVerifying]="isVerifying"
-      [isISBNEbookErifying]="isISBNEbookErifying"
+      [titleId]="titleId"
+      [titleDetailsGroup]="tempForm.controls.titleDetails"
+      [authorsList]="authorsList()"
+      [publishers]="publishers()"
+      [publishingType]="tempForm.controls.publishingType.value || null"
       (onPublisherChangeChild)="onPublisherChangeChild($event)"
       (onAuthorChangeChild)="onAuthorChangeChild($event)"
     >
     </app-book-details>
 
-    <button
-      matButton="filled"
-      matStepperNext
-      class="!bg-primary mt-8"
-      (click)="onStepChange()"
-    >
-      Next
-    </button>
+    <div class="flex justify-end">
+      <button
+        matButton="filled"
+        class="!bg-primary mt-8"
+        (click)="onTitleSubmit()"
+      >
+        Next
+      </button>
+    </div>
   </mat-step>
-  <mat-step [stepControl]="documentMedia" label="Upload Documents">
-    <form [formGroup]="titleForm">
+
+  <!-- media details step -->
+  <mat-step
+    [stepControl]="tempForm.controls.documentMedia"
+    label="Upload Documents"
+    [completed]="tempForm.controls.documentMedia.valid"
+  >
+    <form [formGroup]="tempForm">
       <div formArrayName="documentMedia" class="grid gap-6">
-        @for(media of documentMedia.controls; track $index) {
+        @for(media of tempForm.controls.documentMedia.controls; track $index) {
         <div
           [formGroupName]="$index"
           class="p-4 border rounded-lg shadow-md bg-gray-50 flex justify-between"
@@ -203,7 +219,7 @@
           <div>
             <div class="flex flex-col gap-4 items-start">
               <label class="block font-semibold">
-                {{ getDocumentLabel(media.value.mediaType) }}
+                {{ getDocumentLabel(media.value.mediaType || "") }}
                 @if(isRequired(media.get('file'))) {
                 <span class="text-red-500">*</span>
                 }
@@ -213,7 +229,7 @@
                 type="file"
                 class="block w-full text-sm text-gray-600"
                 (change)="onFileSelected($event, $index)"
-                [accept]="getAcceptedTypes(media.value.mediaType)"
+                [accept]="getAcceptedTypes(media.value.mediaType || '')"
               />
               <button
                 matButton="filled"
@@ -227,7 +243,7 @@
             </div>
 
             <p class="text-xs text-gray-500 mt-4">
-              {{ getHelperText(media.value.mediaType) }}
+              {{ getHelperText(media.value.mediaType || "") }}
             </p>
           </div>
 
@@ -253,7 +269,7 @@
                 </p>
                 <p class="text-xs text-gray-500">
                   {{
-                    media.get("file")?.value?.size / 1024 / 1024
+                    (media.get("file")?.value?.size || 0) / 1024 / 1024
                       | number : "1.1-1"
                   }}
                   MB
@@ -276,8 +292,8 @@
       </div>
       <div class="mt-6 flex justify-end">
         <button
-          matButton="filled"
           matStepperNext
+          matButton="filled"
           class="px-6 py-2 !bg-primary text-white rounded-lg shadow"
         >
           Next
@@ -286,47 +302,84 @@
     </form>
   </mat-step>
 
-  @if(titleForm.get('format')?.value !== 'ebookOnly') {
-  <mat-step [stepControl]="printing" label="Print Details">
+  <!-- printing details step -->
+  @if(tempForm.controls.printingFormat.value !== 'ebookOnly') {
+  <mat-step
+    [stepControl]="tempForm.controls.printing"
+    label="Print Details"
+    [completed]="tempForm.controls.printing.controls.id.value"
+  >
     <app-title-printing
-      [titleForm]="titleForm"
-      [printingArraySignal]="printingArraySignal"
-      [documentMedia]="documentMedia"
-      [_formBuilder]="_formBuilder"
+      [printingGroup]="tempForm.controls.printing"
+      [documentMedia]="tempForm.controls.documentMedia"
+      [channalTypes]="channalTypes()"
     ></app-title-printing>
-    <button
-      matStepperNext
-      class="!bg-primary"
-      matButton="filled"
-      (click)="onPrintingStepChange()"
-    >
-      Next
-    </button>
+    <div class="flex justify-end">
+      <button
+        class="!bg-primary"
+        matButton="filled"
+        (click)="savePrintingDraft()"
+      >
+        Next
+      </button>
+    </div>
   </mat-step>
   }
-  <mat-step [stepControl]="royalties" label="Royalty">
+
+  <mat-step
+    [stepControl]="tempForm.controls.pricing"
+    label="Pricing"
+    [completed]="titleId && tempForm.controls.pricing.valid"
+  >
+    <app-pricing
+      [pricingControls]="tempForm.controls.pricing"
+      [msp]="tempForm.controls.printing.controls.msp.value || 0"
+    ></app-pricing>
+
+    <div class="flex justify-end">
+      <button
+        class="!bg-primary"
+        matButton="filled"
+        (click)="onPricingSubmit()"
+      >
+        Next
+      </button>
+    </div>
+  </mat-step>
+
+  <mat-step
+    [stepControl]="tempForm.controls.royalties"
+    label="Royalty"
+    [completed]="titleId && tempForm.controls.royalties.valid"
+  >
     <app-royalties
-      [titleForm]="titleForm"
-      [royalties]="royalties"
-      [_formBuilder]="_formBuilder"
-      [authors]="authorsSignal"
-      [publisher]="publisherSignal"
+      [royaltiesController]="tempForm.controls.royalties"
+      [authors]="authorsSignal()"
+      [publisher]="publisherSignal()"
     >
       >
     </app-royalties>
-    <button matStepperNext class="!bg-primary mt-2" matButton="filled">
-      Next
-    </button>
+    <div class="flex justify-end">
+      <button
+        (click)="saveRoyalties()"
+        class="!bg-primary mt-2"
+        matButton="filled"
+      >
+        Next
+      </button>
+    </div>
   </mat-step>
 
-  <mat-step [stepControl]="distributionCtrl" label="Distribution">
+  <!-- <mat-step [stepControl]="distributionCtrl" label="Distribution">
     <form [formGroup]="distributionCtrl">
       <mat-select formControlName="type">
         <mat-option value="national">National</mat-option>
         <mat-option value="prime">Prime</mat-option>
         <mat-option value="global">Global</mat-option>
       </mat-select>
-      <button mat-button (click)="onSubmit()">Submit</button>
+      <div class="flex justify-end">
+        <button mat-button (click)="onSubmit()">Submit</button>
+      </div>
     </form>
-  </mat-step>
+  </mat-step> -->
 </mat-stepper>

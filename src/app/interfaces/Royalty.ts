@@ -1,15 +1,30 @@
+import { FormControl } from '@angular/forms';
+import { ChannalType } from './Titles';
+
 export interface Royalty {
+  channal: ChannalType;
   id: number;
-  titleId: number;
-  publisherId: number | null;
-  authorId: number | null;
-  print_mah: number;
-  name: string;
-  print_third_party: number;
-  prime: number;
-  ebook_mah: number;
-  ebook_third_party: number;
+  percentage: number;
+  authorId?: number;
+  publisherId?: number;
 }
+
+export interface CreateRoyalty {
+  titleId: number;
+  authorId?: number | null;
+  publisherId?: number | null;
+  print_mah: number | null;
+  print_third_party: number | null;
+  prime: number | null;
+  ebook_mah: number | null;
+  ebook_third_party: number | null;
+  name?: string | null;
+}
+
+export interface UpdateRoyalty extends Partial<CreateRoyalty> {
+  id?: number | null;
+}
+
 export enum RoyaltyStatus {
   ACTIVE = 'ACTIVE',
   DEACTIVE = 'DEACTIVE',
@@ -22,3 +37,23 @@ export interface RoyaltyFilter {
   startDate?: string;
   endDate?: string;
 }
+
+export interface RoyaltyFormGroup {
+  id: FormControl<number | null>;
+  name: FormControl<string | null | undefined>;
+  titleId: FormControl<number | null | undefined>;
+  authorId: FormControl<number | null | undefined>;
+  publisherId: FormControl<number | null | undefined>;
+  print_mah: FormControl<number | null | undefined>;
+  print_third_party: FormControl<number | null | undefined>;
+  prime: FormControl<number | null | undefined>;
+  ebook_mah: FormControl<number | null | undefined>;
+  ebook_third_party: FormControl<number | null | undefined>;
+}
+
+export type RoyalFormGroupAmountField =
+  | 'print_mah'
+  | 'print_third_party'
+  | 'prime'
+  | 'ebook_mah'
+  | 'ebook_third_party';

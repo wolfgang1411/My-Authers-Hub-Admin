@@ -1,9 +1,6 @@
-<form [formGroup]="titleForm">
-  @if (printingArraySignal() && printingArraySignal().controls.length>0) {
-
-  <div formArrayName="printing" class="mt-4">
-    @for ( printGroup of printingArraySignal().controls ; track $index) {
-    <div [formGroupName]="$index">
+<form [formGroup]="printingGroup()">
+  <div class="mt-4">
+    <div>
       <div class="grid grid-cols-4 gap-4 items-start">
         <mat-form-field>
           <mat-label>{{ "bindingtype" | translate }}</mat-label>
@@ -46,7 +43,7 @@
           </mat-select>
         </mat-form-field>
       </div>
-      @if(printGroup.get('insideCover')?.value === true) {
+      @if(printingGroup().get('insideCover')?.value === true) {
       <div class="flex justify-between">
         <div class="flex gap-4 items-start">
           <div class="flex flex-col gap-2">
@@ -72,7 +69,7 @@
           </button>
         </div>
         <div>
-          @for(media of documentMedia.controls; track $index) {
+          @for(media of documentMedia().controls; track $index) {
           @if(media.get('mediaType')?.value === 'InsideCover') {
           @if(media.get('file')?.value?.type === 'application/pdf') {
           <mat-card
@@ -85,7 +82,7 @@
               </p>
               <p class="text-xs text-gray-500">
                 {{
-                  media.get("file")?.value?.size / 1024 / 1024
+                  (media.get("file")?.value?.size || 0) / 1024 / 1024
                     | number : "1.1-1"
                 }}
                 MB
@@ -132,9 +129,9 @@
       <div class="grid grid-cols-4 gap-4 items-start mt-4">
         <mat-form-field>
           <mat-label>{{ "laminationtype" | translate }}</mat-label>
-          <mat-select [formControl]="getLaminationControl(printGroup)">
-            @for (item of getFilteredLaminationTypes(printGroup); track $index)
-            {
+          <mat-select [formControl]="getLaminationControl(printingGroup())">
+            @for (item of getFilteredLaminationTypes(printingGroup()); track
+            $index) {
             <mat-option [value]="item.id">{{ item.name }}</mat-option>
             }
           </mat-select>
@@ -166,41 +163,7 @@
             }
           </mat-select>
         </mat-form-field>
-        <mat-form-field class="!w-full flex">
-          <mat-label>
-            {{ "printingcost" | translate }}
-          </mat-label>
-          <input
-            matInput
-            placeholder=""
-            [value]="printCost() | currency : 'INR' : 'symbol' : '1.0-0'"
-            required
-            readonly
-          />
-          <button
-            mat-stroked-button
-            type="button"
-            matButton="filled"
-            class="!bg-green-600 !text-white !h-[28px] disabled:!bg-gray-300"
-            (click)="calculatePrintingCost(printGroup)"
-            [disabled]="
-              !printGroup.valid ||
-              printGroup.get('printCost')?.value > 0 ||
-              loadingPrice
-            "
-          >
-            @if (loadingPrice) {
-            <mat-progress-spinner
-              diameter="20"
-              mode="indeterminate"
-              class="inline-block align-middle text-white !fill-white"
-            />
-            } @else { Calculate }
-          </button>
-        </mat-form-field>
       </div>
     </div>
-    }
   </div>
-  }
 </form>

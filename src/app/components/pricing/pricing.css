@@ -1,4 +1,4 @@
-.royalties-container {
+.pricing-container {
   grid-column: 1/-1;
   --tw-shadow: 0 4px 6px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1)),
     0 2px 4px -2px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
@@ -11,23 +11,23 @@
   border: 1px solid gray;
 }
 
-.royalties-container > li {
+.pricing-container > li {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(6, 150px);
 }
 
-.royalties-container > li:first-child {
+.pricing-container > li:first-child {
   font-weight: 500;
 }
 
-.royalties-container > li:not(:last-child) {
+.pricing-container > li:not(:last-child) {
   border-bottom: 1px solid gray;
 }
 
-.royalties-container > li > span {
+.pricing-container > li > span {
   padding: calc(var(--spacing) * 2);
 }
 
-.royalties-container > li > span:not(:last-child) {
+.pricing-container > li > span:not(:last-child) {
   border-right: 1px solid gray;
 }
