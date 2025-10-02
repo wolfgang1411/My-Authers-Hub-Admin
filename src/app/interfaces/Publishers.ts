@@ -16,8 +16,15 @@ export interface Publishers {
   user: User;
   titles: Title[];
   authors: Author[];
+  status: PublisherStatus;
 }
 
+export enum PublisherStatus {
+  Active = 'Active',
+  Pending = 'Pending',
+  Rejected = 'Rejected',
+  Deactivated = 'Deactivated',
+}
 export interface CreatePublisher {
   pocName: string;
   pocEmail: string;
@@ -34,6 +41,7 @@ export interface PublisherFilter {
 }
 
 export interface PublisherResponse {
+  id: number;
   name: string;
   email: string;
   phonenumber: string;

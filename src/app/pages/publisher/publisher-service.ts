@@ -1,10 +1,15 @@
 import { Injectable } from '@angular/core';
 import { Server } from '../../services/server';
-import { PublisherFilter, Publishers } from '../../interfaces/Publishers';
+import {
+  PublisherFilter,
+  Publishers,
+  PublisherStatus,
+} from '../../interfaces/Publishers';
 import { Pagination } from '../../interfaces';
 import { Invite } from '../../interfaces/Invite';
 import { Logger } from '../../services/logger';
 import { LoaderService } from '../../services/loader';
+import { Distribution } from '../../interfaces/Distribution';
 
 @Injectable({
   providedIn: 'root',
@@ -51,10 +56,48 @@ export class PublisherService {
       throw error;
     }
   }
+  async updatePublisherStatus(status: PublisherStatus, publisherId: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.patch(`publishers/${publisherId}`, {
+          status: status,
+        })
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
   async sendInviteLink(invite: Invite) {
     try {
       return await this.loader.loadPromise(
         this.server.post('publishers/invite', invite)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+  async approvePublisher(
+    distributionData: Distribution[],
+    publisherId: number
+  ) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post(`publishers/${publisherId}/approve`, {
+          data: distributionData,
+        })
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async rejectPublisher(publisherId: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post(`publishers/${publisherId}/reject`, {})
       );
     } catch (error) {
       this.logger.logError(error);

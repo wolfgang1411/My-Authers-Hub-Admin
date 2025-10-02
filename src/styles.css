@@ -17,7 +17,7 @@
   --accent: #ce0000;
   --accent-light: #e94b4b; /* Kept as-is since no replacement provided */
   --secondary: #5950ac;
-
+  --red-colour: #c00505;
   --background: #f4faf6;
   --surface: #f2f0ff;
 
@@ -33,6 +33,7 @@
   --primary: #89c2d9;
   --primary-dark: #00397e;
   --primary-contrast: #ffffff;
+  --green-2: #00af57;
 
   --accent: #ffb5a7;
   --accent-contrast: #ffffff;
@@ -76,6 +77,9 @@
   --color-text-placeholder: var(--text-placeholder);
   --color-text-heading: var(--text-heading);
   --color-danger: var(--text-danger);
+  --color-green-2: var(--green-2);
+  --color-red-colour: var(--red-colour);
+  --color-purple: var(--purple);
 }
 
 * {

@@ -78,26 +78,59 @@
   </app-list-table>
   <ng-template #actionButtons let-element>
     <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
-      <button
+      <!-- <button
         class="!bg-primary"
         mat-icon-button
         [routerLink]="['/author', element.id]"
       >
         <mat-icon class="!text-white">visibility</mat-icon>
-      </button>
+      </button> -->
       <button
         class="!bg-primary"
         mat-icon-button
+        [title]="'edit' | translate"
         [routerLink]="['/author', element.id]"
       >
         <mat-icon class="!text-white">edit</mat-icon>
       </button>
-      <button class="!bg-primary" mat-icon-button>
+      <button
+        class="!bg-primary"
+        mat-icon-button
+        [title]="'resetpassword' | translate"
+      >
         <mat-icon class="!text-white">lock_reset</mat-icon>
       </button>
-      <button class="!bg-accent" mat-icon-button>
+      @if(element.status !== AuthorStatus.Deactivated) {
+      <button
+        class="!bg-accent active:bg-accent/60"
+        mat-icon-button
+        [title]="'deactivate' | translate"
+        (click)="updateStatus(element.id)"
+      >
         <mat-icon class="!text-white">block</mat-icon>
       </button>
+      } @if(element.status === AuthorStatus.Pending) {
+      <button
+        class="!bg-green-2 active:bg-green-2/60"
+        mat-icon-button
+        (click)="approveAuthor(element.id)"
+        [title]="'approve' | translate"
+      >
+        <mat-icon class="!text-white">check</mat-icon>
+      </button>
+      <button
+        class="!bg-red-colour active:bg-red-colour/60"
+        mat-icon-button
+        [title]="'reject' | translate"
+        (click)="rejectAuthor(element.id)"
+      >
+        <mat-icon class="!text-white">cancel</mat-icon>
+      </button>
+      } @if(element.status === AuthorStatus.Active){
+      <button class="!bg-purple" mat-icon-button [title]="'active' | translate">
+        <mat-icon class="!text-white">toggle_on</mat-icon>
+      </button>
+      }
     </div>
   </ng-template>
 </div>
