@@ -42,4 +42,37 @@
       }
     </li>
   </ul>
+
+  <div class="flex flex-col gap-2">
+    <h2 class="text-lg font-medium">Calculations</h2>
+
+    <ul class="royalties-container">
+      <li class="!grid-cols-6">
+        <span>{{ "name" | translate }}</span>
+        @for (item of displayedColumns(); track $index) {
+        <span>{{ item | translate }}</span>
+        }
+      </li>
+
+      @for (royaltyGroup of royaltiesController().controls; track $index) {
+      <li class="!grid-cols-6">
+        <span class="">{{ royaltyGroup.controls.name.value }}</span>
+
+        @for (item of displayedColumns(); track $index) {
+        <span>
+          {{
+            (totalRoyaltiesAmount()[
+              royaltyGroup.controls.authorId.value ? "authors" : "publisher"
+            ][
+              royaltyGroup.controls.authorId.value ||
+                royaltyGroup.controls.publisherId.value ||
+                0
+            ]?.[item] || 0) | currency
+          }}
+        </span>
+        }
+      </li>
+      }
+    </ul>
+  </div>
 </div>
