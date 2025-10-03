@@ -7,8 +7,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const { access_token } = authService.getAuthToken();
 
-  console.log({ access_token });
-
   if (access_token) {
     req = req.clone({
       ...req,
@@ -18,9 +16,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     });
   }
 
-  return next(req.clone({
-    setHeaders:{
-      'ngrok-skip-browser-warning': '69420'
-    }
-  }));
+  return next(
+    req.clone({
+      setHeaders: {
+        'ngrok-skip-browser-warning': '69420',
+      },
+    })
+  );
 };

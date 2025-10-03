@@ -55,32 +55,30 @@ export class Titles {
           id: title.id,
           title: title.name,
           isbnPrint:
-            title.isbnPrint && title.isbnPrint.isbnNumber
-              ? title.isbnPrint.isbnNumber
-              : 'N/A',
+            title.isbnPrint && title.isbnPrint ? title.isbnPrint : 'N/A',
           isbnEbook:
-            title.isbnEbook && title.isbnEbook.isbnNumber
-              ? title.isbnEbook.isbnNumber
-              : 'N/A',
+            title.isbnEbook && title.isbnEbook ? title.isbnEbook : 'N/A',
           pages:
             title.printing && title.printing.length
               ? title.printing[0].totalPages
               : 'N/A',
-          royaltiesearned:
-            title.Royalty && title.Royalty.length
-              ? title.Royalty.reduce((acc, royalty) => {
-                  const sumForOne =
-                    (royalty.print_mah || 0) +
-                    (royalty.print_third_party || 0) +
-                    (royalty.prime || 0) +
-                    (royalty.ebook_mah || 0) +
-                    (royalty.ebook_third_party || 0);
-                  return acc + sumForOne;
-                }, 0)
-              : 0,
+
+          royaltiesearned: 0,
+          // royaltiesearned:
+          //   title.royalties && title.royalties.length
+          //     ? title.royalties.reduce((acc, royalty) => {
+          //         const sumForOne =
+          //           (royalty.print_mah || 0) +
+          //           (royalty.print_third_party || 0) +
+          //           (royalty.prime || 0) +
+          //           (royalty.ebook_mah || 0) +
+          //           (royalty.ebook_third_party || 0);
+          //         return acc + sumForOne;
+          //       }, 0)
+          //     : 0,
           authors:
             title.authors && title.authors.length
-              ? title.authors.map((author) => author.name).join(' ,')
+              ? title.authors.map((author) => author.author?.name).join(' ,')
               : 'N/A',
           publishedby: title.publisher ? title.publisher.name : 'N/A',
           actions: '',

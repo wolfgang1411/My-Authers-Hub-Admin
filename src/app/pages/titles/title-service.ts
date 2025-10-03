@@ -1,15 +1,20 @@
 import { Injectable } from '@angular/core';
 import { Server } from '../../services/server';
-import { Pagination } from '../../interfaces';
+import { Pagination, Royalty, UpdateRoyalty } from '../../interfaces';
 import {
+  PricingCreate,
+  PrintingCreate,
   Title,
   TitleCategory,
   TitleCreate,
   TitleFilter,
   TitleGenre,
+  TitlePricing,
+  TitlePrinting,
 } from '../../interfaces/Titles';
 import { Logger } from '../../services/logger';
 import { LoaderService } from '../../services/loader';
+import { Pricing } from '../../components/pricing/pricing';
 
 @Injectable({
   providedIn: 'root',
@@ -87,6 +92,60 @@ export class TitleService {
           titleDetails.id ? `titles/${titleDetails.id}` : 'titles',
           titleDetails
         )
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async createOrUpdatePrinting(data: PrintingCreate) {
+    try {
+      const method = data.id ? 'patch' : 'post';
+      const url = data.id ? `title-printing/${data.id}` : 'title-printing';
+      delete data.id;
+      return this.loader.loadPromise(
+        this.server[method]<TitlePrinting>(url, data),
+        'updating-printing'
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  createOrUpdatePricing(data: PricingCreate) {
+    try {
+      const method = data.id ? 'patch' : 'post';
+      const url = data.id ? `pricing/${data.id}` : 'pricing';
+      delete data.id;
+      return this.loader.loadPromise(
+        this.server[method]<TitlePricing>(url, data)
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async createManyPricing(data: PricingCreate[]) {
+    try {
+      return await this.loader.loadPromise<Pricing[]>(
+        this.server.post('pricing/multi', { data })
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async createOrUpdateRoyaties(data: UpdateRoyalty) {
+    try {
+      data = { ...data };
+      const method = data.id ? 'patch' : 'post';
+      const url = data.id ? `royalty/${data.id}` : 'royalty';
+      delete data.id;
+      return await this.loader.loadPromise(
+        this.server[method]<Royalty>(url, data)
       );
     } catch (error) {
       this.logger.logError(error);

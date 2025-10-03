@@ -1,3 +1,5 @@
+import { FormControl } from '@angular/forms';
+
 export interface Media {
   id: number;
   url: string;
@@ -12,3 +14,11 @@ export type MediaType =
   | 'FrontCover'
   | 'BackCover'
   | 'InsideCover';
+
+export interface MediaGroup {
+  id: FormControl<number | null>;
+  url: FormControl<string | null | undefined>;
+  type: FormControl<MediaType | null | undefined>;
+  file: FormControl<File | null | undefined>;
+  mediaType: FormControl<MediaType | null>;
+}

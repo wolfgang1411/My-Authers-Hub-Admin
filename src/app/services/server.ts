@@ -10,11 +10,6 @@ export class Server {
   constructor(private readonly http: HttpClient) {}
 
   private parseUrl(url: string) {
-    console.log({
-      urlEn: url.includes('http') ? url : `${environment.apiUrl}${url}`,
-      url,
-    });
-
     return url.includes('http') ? url : `${environment.apiUrl}${url}`;
   }
 
