@@ -61,6 +61,17 @@ export class Sidebar implements OnInit {
         icon: 'images/house-solid-full.svg',
       },
       {
+        name: 'isbn',
+        url: '/isbn',
+        icon: 'images/house-solid-full.svg',
+      },
+      {
+        name: 'royalties',
+        url: '/royalties',
+        icon: 'images/house-solid-full.svg',
+      },
+
+      {
         name: 'bookings',
         url: '/bookings',
         icon: 'images/house-solid-full.svg',

@@ -1,0 +1,72 @@
+<div class="flex flex-col gap-4 w-[480px] max-w-[90vw] p-3">
+  <h2 mat-dialog-title class="text-xl heading !text-primary">Create ISBN</h2>
+
+  <mat-dialog-content>
+    <form [formGroup]="createIsbnForm" class="flex flex-col gap-4">
+      <mat-form-field class="w-full">
+        <mat-label>{{ "isbnnumber" | translate }}</mat-label>
+        <input
+          matInput
+          type="text"
+          formControlName="isbnNumber"
+          required
+          [maxlength]="13"
+          [minlength]="13"
+        />
+        @if(createIsbnForm.get('isbnNumber')?.hasError('required')) {
+        <mat-error>
+          {{ "isbn_required" | translate }}
+        </mat-error>
+        } @if(createIsbnForm.get('isbnNumber')?.hasError('pattern')) {
+        <mat-error>
+          {{ "isbn_invalid_format" | translate }}
+        </mat-error>
+        } @if(createIsbnForm.get('isbnNumber')?.hasError('invalidIsbn')) {
+        <mat-error>
+          {{ "isbn_verification_failed" | translate }}
+        </mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="flex-1">
+        <mat-label>{{ "selectisbntype" | translate }}</mat-label>
+        <mat-select formControlName="type" required>
+          <mat-option [value]="null" disabled>{{
+            "selectisbntype" | translate
+          }}</mat-option>
+          <mat-option value="PRINT">{{ "Print" | translate }}</mat-option>
+          <mat-option value="EBOOK">{{ "Ebook" | translate }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field class="flex-1">
+        <mat-label>{{ "selecttitle" | translate }}</mat-label>
+        <mat-select formControlName="titleId">
+          <mat-option [value]="null" disabled>{{
+            "selecttitle" | translate
+          }}</mat-option>
+          @for (title of titleList(); track $index) {
+          <mat-option [value]="title.id">{{ title.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </form>
+  </mat-dialog-content>
+  <mat-dialog-actions>
+    <button
+      (click)="data.onClose()"
+      mat-button
+      matButton="filled"
+      class="!bg-accent"
+    >
+      {{ "close" | translate }}
+    </button>
+    <button
+      (click)="onSubmit()"
+      mat-button
+      matButton="filled"
+      class="!bg-primary"
+    >
+      {{ "confirm" | translate }}
+    </button>
+  </mat-dialog-actions>
+</div>

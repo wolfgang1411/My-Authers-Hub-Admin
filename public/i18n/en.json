@@ -140,7 +140,7 @@
   "keepdisplaynamesameaspublishername": "Keep Display Name same as Publisher Name",
   "displaynameforauthor": "Display Name for Author",
   "keepdisplaynamesameasauthorname": "Keep Display Name same as Author Name",
-  "isbn": "ISBN Number",
+  "isbn": "ISBN",
   "publishedby": "Published By",
   "paperback": "Paperback",
   "hardbound": "Hardbound",
@@ -215,5 +215,16 @@
   "tradecategory":"Trade Category",
   "approve":"Approve",
   "pendingforapproval":"Pending for Approval",
-  "reject":"Reject"
+  "reject":"Reject",
+  "royalties":"Royalties",
+  "ISBN List":"ISBN List",
+  "isbntype":"ISBN Type",
+  "createdby":"Created By",
+  "downloadbarcode":"Download Barcode",
+  "createisbn":"Create ISBN",
+  "selecttitle":"Select Title",
+  "selectisbntype":"Select ISBN Type",
+  "isbn_required":"ISBN Number Required",
+  "isbn_invalid_format":"Invalid ISBN",
+  "isbn_verification_failed":"ISBN Verification Failed"
 }

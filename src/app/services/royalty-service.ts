@@ -9,9 +9,9 @@ import { Logger } from './logger';
 export class RoyaltyService {
   constructor(private server: Server, private logger: Logger) {}
 
-  async getRoyalties(filter?: RoyaltyFilter): Promise<{ items: Royalty[] }> {
+  async getRoyalties(filter?: RoyaltyFilter): Promise<Pagination<Royalty>> {
     try {
-      return await this.server.get<Pagination<Royalty>>('titles', filter);
+      return await this.server.get<Pagination<Royalty>>('royalty', filter);
     } catch (error) {
       this.logger.logError(error);
       throw error;
