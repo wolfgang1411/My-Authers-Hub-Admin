@@ -76,4 +76,24 @@ export class Server {
       throw error as HttpErrorResponse;
     }
   }
+  getDocument(url: string, params?: any): Promise<any> {
+    return new Promise((resolve, reject) => {
+      firstValueFrom(
+        this.http.get(`${environment.apiUrl}${url}`, {
+          params,
+          headers: {
+            contentType: 'application/json',
+          },
+          responseType: 'blob',
+          observe: 'response',
+        })
+      )
+        .then((response) => {
+          resolve(response);
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    });
+  }
 }

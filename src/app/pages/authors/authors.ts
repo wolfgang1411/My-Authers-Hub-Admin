@@ -47,6 +47,7 @@ export class Authors {
     'phonenumber',
     'numberoftitles',
     'royaltiesearned',
+    'status',
     'actions',
   ];
   dataSource = new MatTableDataSource<AuthorResponse>();
@@ -88,8 +89,11 @@ export class Authors {
         }));
         this.dataSource.data = mapped;
 
+        this.dataSource.data = mapped;
         if (mapped.length > 0) {
-          this.displayedColumns = Object.keys(mapped[0]);
+          const filtrCol = { ...mapped[0] };
+          delete (filtrCol as any).id;
+          this.displayedColumns = Object.keys(filtrCol);
         }
         console.log('Fetched publishers:', this.authors());
       })
@@ -193,7 +197,7 @@ export class Authors {
       text: 'Once Deactivated, you will not be able to recover this account!',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Yes, reject it!',
+      confirmButtonText: 'Yes, deactivate it!',
       cancelButtonText: 'Cancel',
       reverseButtons: true,
       heightAuto: false,

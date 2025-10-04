@@ -36,6 +36,9 @@ export interface RoyaltyFilter {
   bookId?: number;
   startDate?: string;
   endDate?: string;
+  page: number;
+  itemsPerPage: number;
+  searchStr: string;
 }
 
 export interface RoyaltyFormGroup {

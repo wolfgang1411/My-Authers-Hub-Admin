@@ -49,6 +49,18 @@ export const routes: Routes = [
     canActivate: [privateRouteGuard],
   },
   {
+    path: 'isbn',
+    loadComponent: () =>
+      import('./pages/isbn-list/isbn-list').then((c) => c.ISBNList),
+    canActivate: [privateRouteGuard],
+  },
+  {
+    path: 'royalties',
+    loadComponent: () =>
+      import('./pages/royalties/royalties').then((c) => c.Royalties),
+    canActivate: [privateRouteGuard],
+  },
+  {
     path: 'publisherDetails/:id',
     loadComponent: () =>
       import('./pages/publisher-details/publisher-details').then(
