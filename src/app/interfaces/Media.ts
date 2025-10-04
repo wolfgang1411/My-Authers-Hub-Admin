@@ -1,4 +1,5 @@
 import { FormControl } from '@angular/forms';
+import { TitleMediaType } from './Titles';
 
 export interface Media {
   id: number;
@@ -15,10 +16,11 @@ export type MediaType =
   | 'BackCover'
   | 'InsideCover';
 
-export interface MediaGroup {
+export interface TitleMediaGroup {
   id: FormControl<number | null>;
   url: FormControl<string | null | undefined>;
-  type: FormControl<MediaType | null | undefined>;
+  type: FormControl<TitleMediaType | null | undefined>;
   file: FormControl<File | null | undefined>;
-  mediaType: FormControl<MediaType | null>;
+  mediaType: FormControl<TitleMediaType>;
+  maxSize: FormControl<number | null>;
 }

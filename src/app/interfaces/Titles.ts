@@ -3,11 +3,11 @@ import { Publisher } from '../pages/publisher/publisher';
 import { Author } from './Authors';
 import { Booking } from './Booking';
 import { ISBN } from './Isbn';
-import { Media, MediaGroup } from './Media';
 import { Publishers } from './Publishers';
 import { Royalty, RoyaltyFormGroup } from './Royalty';
 import { User } from './user';
 import { DistributionType } from './Distribution';
+import { Media, TitleMediaGroup } from './Media';
 
 export interface Title {
   id: number;
@@ -38,13 +38,24 @@ export interface Title {
   printing: TitlePrinting[];
   Booking: Booking[];
   royalties: Royalty[];
-  documentMedia: Media[];
+  documentMedia: TitleMedia[];
   isbnPrint?: string;
   isbnEbook?: string;
-  media: Media[];
+  media: TitleMedia[];
   pricing: TitlePricing[];
   distribution: TitleDistribution[];
 }
+
+export interface TitleMedia extends Media {
+  type: TitleMediaType;
+}
+
+export type TitleMediaType =
+  | 'FULL_COVER'
+  | 'INTERIOR'
+  | 'FRONT_COVER'
+  | 'BACK_COVER'
+  | 'INSIDE_COVER ';
 
 export interface TitleDistribution {
   id: number;
@@ -307,13 +318,13 @@ export type PricingGroup = FormGroup<{
 export interface TitleFormGroup {
   printingFormat: FormControl<string | null | undefined>;
   hasFiles: FormControl<boolean | null | undefined>;
-  publishingType: FormControl<string | null | undefined>;
+  publishingType: FormControl<PublishingType | null | undefined>;
 
   titleDetails: FormGroup<TitleDetailsFormGroup>;
   printing: FormGroup<PrintingFormGroup>;
   pricing: FormArray<PricingGroup>;
 
-  documentMedia: FormArray<FormGroup<MediaGroup>>;
+  documentMedia: FormArray<FormGroup<TitleMediaGroup>>;
   royalties: FormArray<FormGroup<RoyaltyFormGroup>>;
   distribution: FormArray<FormGroup<TitleDistributionGroup>>;
 }

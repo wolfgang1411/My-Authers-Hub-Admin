@@ -1,6 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Server } from '../../services/server';
-import { Pagination, Royalty, UpdateRoyalty } from '../../interfaces';
+import {
+  Media,
+  MediaType,
+  Pagination,
+  Royalty,
+  UpdateRoyalty,
+} from '../../interfaces';
 import {
   PricingCreate,
   PrintingCreate,
@@ -16,6 +22,7 @@ import { Logger } from '../../services/logger';
 import { LoaderService } from '../../services/loader';
 import { Pricing } from '../../components/pricing/pricing';
 import { DistributionType } from '../../interfaces/Distribution';
+import { S3Service } from '../../services/s3';
 
 @Injectable({
   providedIn: 'root',
@@ -24,7 +31,8 @@ export class TitleService {
   constructor(
     private server: Server,
     private logger: Logger,
-    private loader: LoaderService
+    private loader: LoaderService,
+    private s3Service: S3Service
   ) {}
 
   async getTitles(filter?: TitleFilter) {
@@ -165,6 +173,31 @@ export class TitleService {
           distributions,
         })
       );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async uploadMultiMedia(
+    titleId: number,
+    data: { file: File; type: MediaType }[]
+  ) {
+    return await Promise.all(data.map((d) => this.uploadMedia(titleId, d)));
+  }
+
+  async uploadMedia(titleId: number, data: { file: File; type: MediaType }) {
+    try {
+      const { key, url } = await this.s3Service.getS3Url(
+        data.file.name,
+        data.file.type
+      );
+      await this.s3Service.putS3Object(url, data.file);
+      return await this.server.post<Media>(`title-media/${titleId}/medias`, {
+        keyname: key,
+        type: data.type,
+        autoDeleteOldIfExisit: true,
+      });
     } catch (error) {
       this.logger.logError(error);
       throw error;
