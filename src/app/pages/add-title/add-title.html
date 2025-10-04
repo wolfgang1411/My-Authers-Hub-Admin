@@ -371,16 +371,23 @@
     </div>
   </mat-step>
 
-  <!-- <mat-step [stepControl]="distributionCtrl" label="Distribution">
-    <form [formGroup]="distributionCtrl">
-      <mat-select formControlName="type">
-        <mat-option value="national">National</mat-option>
-        <mat-option value="prime">Prime</mat-option>
-        <mat-option value="global">Global</mat-option>
-      </mat-select>
-      <div class="flex justify-end">
-        <button mat-button (click)="onSubmit()">Submit</button>
-      </div>
-    </form>
-  </mat-step> -->
+  <mat-step
+    [stepControl]="tempForm.controls.distribution"
+    label="Distribution"
+    [completed]="titleId && tempForm.controls.distribution.valid"
+  >
+    <app-title-distribution
+      [distributionControl]="tempForm.controls.distribution"
+      (onClickPurchasePoint)="onClickPurchasePoint($event)"
+    ></app-title-distribution>
+    <div class="flex justify-end">
+      <button
+        (click)="onDistributionSubmit()"
+        class="!bg-primary mt-2"
+        matButton="filled"
+      >
+        Next
+      </button>
+    </div>
+  </mat-step>
 </mat-stepper>

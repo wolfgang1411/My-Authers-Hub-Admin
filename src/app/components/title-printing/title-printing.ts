@@ -52,7 +52,6 @@ import { combineLatest, debounceTime, from, switchMap } from 'rxjs';
     MatIconModule,
     MatCardModule,
     MatButton,
-    MatProgressSpinner,
   ],
   templateUrl: './title-printing.html',
   styleUrl: './title-printing.css',

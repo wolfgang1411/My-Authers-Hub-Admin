@@ -15,6 +15,7 @@ import {
 import { Logger } from '../../services/logger';
 import { LoaderService } from '../../services/loader';
 import { Pricing } from '../../components/pricing/pricing';
+import { DistributionType } from '../../interfaces/Distribution';
 
 @Injectable({
   providedIn: 'root',
@@ -146,6 +147,23 @@ export class TitleService {
       delete data.id;
       return await this.loader.loadPromise(
         this.server[method]<Royalty>(url, data)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async createTitleDistribution(
+    titleId: number,
+    distributions: DistributionType[]
+  ) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post('title-distribution', {
+          titleId,
+          distributions,
+        })
       );
     } catch (error) {
       this.logger.logError(error);

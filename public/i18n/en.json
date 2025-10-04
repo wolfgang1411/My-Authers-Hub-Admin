@@ -226,5 +226,14 @@
   "prime": "Prime",
   "ebook_mah": "Ebook MAH",
   "ebook_third_party": "Ebook Third Party",
-  "totalroyalties": "Total royalties"
+  "totalroyalties": "Total royalties",
+  "selectdistributions": "Select distributions",
+  "availablepoints": "Available points",
+  "purchasepoints": "Purchase points",
+  "Global": "Global",
+  "Audiobook": "Audiobook",
+  "Hardbound_National": "Hard-Bound National",
+  "National": "National",
+  "National_Prime": "National Prime",
+  "publish": "Publish"
 }

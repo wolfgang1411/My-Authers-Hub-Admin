@@ -7,6 +7,7 @@ import { Media, MediaGroup } from './Media';
 import { Publishers } from './Publishers';
 import { Royalty, RoyaltyFormGroup } from './Royalty';
 import { User } from './user';
+import { DistributionType } from './Distribution';
 
 export interface Title {
   id: number;
@@ -42,6 +43,12 @@ export interface Title {
   isbnEbook?: string;
   media: Media[];
   pricing: TitlePricing[];
+  distribution: TitleDistribution[];
+}
+
+export interface TitleDistribution {
+  id: number;
+  type: DistributionType;
 }
 
 export interface AuthorTitle {
@@ -308,6 +315,15 @@ export interface TitleFormGroup {
 
   documentMedia: FormArray<FormGroup<MediaGroup>>;
   royalties: FormArray<FormGroup<RoyaltyFormGroup>>;
+  distribution: FormArray<FormGroup<TitleDistributionGroup>>;
+}
+
+export interface TitleDistributionGroup {
+  id: FormControl<number | null>;
+  type: FormControl<DistributionType>;
+  name: FormControl<string>;
+  isSelected: FormControl<boolean>;
+  availablePoints: FormControl<number>;
 }
 
 // 👤 Author group

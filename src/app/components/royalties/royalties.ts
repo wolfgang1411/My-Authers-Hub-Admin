@@ -165,8 +165,6 @@ export class Royalties implements OnInit {
 
           const prices: Partial<Record<RoyalFormGroupAmountField, number>> = {};
           this.channelKeys().map((key) => {
-            console.log({ key });
-
             prices[key as RoyalFormGroupAmountField] =
               this.caculateAmountForRoyaltiesField(
                 key as RoyalFormGroupAmountField,

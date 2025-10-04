@@ -11,7 +11,14 @@ import {
   ViewChildren,
 } from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { combineLatest, debounceTime, map, Observable } from 'rxjs';
+import {
+  combineLatest,
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  Observable,
+  startWith,
+} from 'rxjs';
 import { StepperOrientation } from '@angular/cdk/stepper';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import {
@@ -38,6 +45,7 @@ import { MatRadioModule } from '@angular/material/radio';
 import {
   Author,
   AuthorFormGroup,
+  AuthorStatus,
   BookBindings,
   ChannalType,
   CreateRoyalty,
@@ -53,6 +61,7 @@ import {
   PrintingFormGroup,
   PublisherFormGroup,
   Publishers,
+  PublisherStatus,
   PublishingType,
   RoyalFormGroupAmountField,
   Royalty,
@@ -61,6 +70,7 @@ import {
   TitleCategory,
   TitleCreate,
   TitleDetailsFormGroup,
+  TitleDistributionGroup,
   TitleFormGroup,
   TitleGenre,
   TitlePricing,
@@ -73,7 +83,7 @@ import { PublisherService } from '../publisher/publisher-service';
 import { AuthorsService } from '../authors/authors-service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { PrintingService } from '../../services/printing-service';
 // import * as pdfjsLib from 'pdfjs-dist';
@@ -84,6 +94,9 @@ import { BookDetails } from '../../components/book-details/book-details';
 import { Pricing } from '../../components/pricing/pricing';
 import { Publisher } from '../publisher/publisher';
 import { pid } from 'process';
+import { TitleDistribution } from '../../title-distribution/title-distribution';
+import { DistributionType } from '../../interfaces/Distribution';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-add-title',
@@ -106,6 +119,7 @@ import { pid } from 'process';
     BookDetails,
     Pricing,
     Royalties,
+    TitleDistribution,
   ],
   templateUrl: './add-title.html',
   styleUrl: './add-title.css',
@@ -116,7 +130,8 @@ export class AddTitle {
     private titleService: TitleService,
     private publisherService: PublisherService,
     private authorService: AuthorsService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     const breakpointObserver = inject(BreakpointObserver);
     this.stepperOrientation = breakpointObserver
@@ -219,27 +234,65 @@ export class AddTitle {
     pricing: this.createPricingArrayTemp(),
     documentMedia: new FormArray<FormGroup<MediaGroup>>([]),
     royalties: new FormArray<FormGroup<RoyaltyFormGroup>>([]),
+    distribution: this.createDistributionOptions(),
   });
 
   async ngOnInit() {
     const { items: bindingTypes } = await this.printingService.getBindingType();
     this.bindingType = bindingTypes;
 
-    const { items: publishersItem } =
-      await this.publisherService.getPublishers();
+    const { items: publishersItem } = await this.publisherService.getPublishers(
+      {
+        status: PublisherStatus.Active,
+      }
+    );
     this.publishers.set(publishersItem);
 
-    const { items: authorItems } = await this.authorService.getAuthors();
+    const { items: authorItems } = await this.authorService.getAuthors({
+      status: AuthorStatus.Active,
+    });
     this.authorsList.set(authorItems);
 
-    if (this.titleId) {
-      this.titleService.getTitleById(this.titleId).then((response) => {
-        this.titleDetails.set(response);
-        this.prefillFormData(response);
+    this.tempForm.controls.titleDetails.controls.publisher.controls.id.valueChanges
+      .pipe(debounceTime(400), distinctUntilChanged())
+      .subscribe(() => {
+        this.fetchAndUpdatePublishingPoints();
       });
+
+    if (this.titleId) {
+      const response = await this.titleService.getTitleById(this.titleId);
+      this.titleDetails.set(response);
+      this.prefillFormData(response);
     }
 
     this.calculatePrintingCost();
+  }
+
+  async fetchAndUpdatePublishingPoints() {
+    const publisherId =
+      this.tempForm.controls.titleDetails.controls.publisher.controls.id.value;
+
+    if (publisherId) {
+      try {
+        const { items: publishingPoints } =
+          await this.publisherService.fetchPublishingPoints(publisherId);
+
+        publishingPoints.forEach(({ distributionType, availablePoints }) => {
+          const distributionController =
+            this.tempForm.controls.distribution.controls.find(
+              ({ controls: { type } }) => type.value === distributionType
+            );
+
+          if (distributionController) {
+            distributionController.controls.availablePoints.patchValue(
+              availablePoints
+            );
+          }
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    }
   }
 
   mapRoyaltiesArray(publisher: Publishers | null, authors: Author[]) {
@@ -256,6 +309,8 @@ export class AddTitle {
 
     const pulisherId = publisher.id;
     const authorIds = authors.map(({ id }) => id);
+
+    console.log({ pulisherId, authorIds });
 
     while (
       royaltyControl.controls.filter(
@@ -296,8 +351,9 @@ export class AddTitle {
 
     authors.forEach(({ id: authorId, name, user }) => {
       const isAuthorControlExisit = royaltyControl.controls.filter(
-        ({ controls }) => controls.publisherId.value === publisher.id
+        ({ controls }) => controls.authorId.value === authorId
       )[0];
+
       if (!isAuthorControlExisit) {
         royaltyControl.push(
           this.createRoyaltyGroup({
@@ -399,8 +455,6 @@ export class AddTitle {
   }
 
   prefillFormData(data: Title): void {
-    console.log('prefillll');
-
     this.tempForm.patchValue({
       printingFormat: data.publishingType,
       hasFiles: true,
@@ -527,6 +581,16 @@ export class AddTitle {
         this.tempForm.controls.royalties.push(this.createRoyaltyGroup(d));
       }
     });
+
+    data.distribution.forEach(({ id, type }) => {
+      const disTypeControl = this.tempForm.controls.distribution.controls.find(
+        ({ controls }) => controls.type.value === type
+      );
+      if (disTypeControl) {
+        disTypeControl.controls.isSelected.patchValue(true);
+        disTypeControl.controls.id.patchValue(id);
+      }
+    });
   }
 
   minWordsValidator(minWords: number): ValidatorFn {
@@ -594,6 +658,23 @@ export class AddTitle {
       }
       return null;
     };
+  }
+
+  createDistributionOptions(): FormArray<FormGroup<TitleDistributionGroup>> {
+    return new FormArray<FormGroup<TitleDistributionGroup>>(
+      Object.keys(DistributionType).map(
+        (type) =>
+          new FormGroup<TitleDistributionGroup>({
+            id: new FormControl<number | null>(null),
+            isSelected: new FormControl(false, { nonNullable: true }),
+            name: new FormControl(type, { nonNullable: true }),
+            type: new FormControl(type as DistributionType, {
+              nonNullable: true,
+            }),
+            availablePoints: new FormControl(0, { nonNullable: true }),
+          })
+      )
+    );
   }
 
   createPricingArrayTemp(): FormArray<PricingGroup> {
@@ -699,19 +780,6 @@ export class AddTitle {
     });
   }
 
-  addRoyalty(): void {
-    // this.royalties.push(
-    //   this._formBuilder.group({
-    //     id: [null],
-    //     percentage: [0, Validators.required],
-    //     channal: [''],
-    //     author: [null],
-    //     publisher: [null],
-    //     status: ['ACTIVE'],
-    //   })
-    // );
-  }
-
   addDefaultMedia() {
     this.tempForm.controls.documentMedia.clear();
     this.tempForm.controls.documentMedia.push(
@@ -732,11 +800,6 @@ export class AddTitle {
     const exisitingMedia = this.titleDetails()?.media.filter(
       ({ type }) => type === mediaType
     )[0];
-
-    console.log({
-      exisitingMedia,
-      mediaType,
-    });
 
     return new FormGroup<MediaGroup>({
       id: new FormControl(1 || exisitingMedia?.id || 0),
@@ -880,8 +943,6 @@ export class AddTitle {
   async onPricingSubmit() {
     const pricingControls = this.tempForm.controls.pricing;
 
-    console.log(pricingControls);
-
     if (pricingControls.valid) {
       const data: PricingCreate[] = pricingControls.controls.map(
         ({ controls: { channal, id, mrp, salesPrice } }) => ({
@@ -922,6 +983,7 @@ export class AddTitle {
         createPrinting
       );
       printing.controls.id.patchValue(response.id);
+      this.stepper()?.next();
     }
   }
 
@@ -968,5 +1030,40 @@ export class AddTitle {
     this.titleService.createManyPricing;
   }
 
-  onSubmit() {}
+  async onClickPurchasePoint(type: DistributionType) {
+    try {
+      const res = await this.publisherService.buyPublishingPoints(type, 1);
+      if (res.status === 'pending' && res.url) {
+        window.open(res.url, '_blank');
+      }
+
+      if (res.status === 'success') {
+        this.fetchAndUpdatePublishingPoints();
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async onDistributionSubmit() {
+    const selectedDistributions = this.tempForm.controls.distribution.value
+      .filter(({ isSelected }) => isSelected)
+      .map(({ type }) => type as DistributionType);
+    if (
+      this.tempForm.controls.distribution.valid &&
+      selectedDistributions.length
+    ) {
+      await this.titleService.createTitleDistribution(
+        this.titleId,
+        selectedDistributions
+      );
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Title has been send for approval to admin',
+      });
+      this.router.navigate(['/titles']);
+    }
+  }
 }

@@ -148,6 +148,15 @@ select::placeholder {
 .btn {
   @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md shadow-sm;
 }
+
+.btn__primary {
+  @apply bg-primary;
+}
+
+.btn__white {
+  @apply !bg-white;
+}
+
 .heading {
   @apply text-lg font-semibold text-text-heading;
 }
@@ -178,4 +187,8 @@ mat-label {
 
 .booking-details .mdc-list-item__content > span {
   @apply flex justify-between w-full;
+}
+
+.text-primary {
+  color: var(--color-primary);
 }
