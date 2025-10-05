@@ -37,6 +37,7 @@ export interface AuthorResponse {
 
 export interface AuthorFilter {
   publisherId?: number;
+  titleId?: number;
 }
 export enum AuthorStatus {
   Active = 'Active',

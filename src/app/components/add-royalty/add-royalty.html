@@ -1,0 +1,156 @@
+<div class="flex flex-col gap-4 max-w-[90vw] p-3">
+  <div class="flex items-center justify-between">
+    <h2 mat-dialog-title class="text-xl heading !text-primary">
+      Create Royalties
+    </h2>
+    <button
+      class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
+      matButton="filled"
+      matButton
+      (click)="addRoyalty()"
+    >
+      <mat-icon class="material-icons">person_add</mat-icon>
+      {{ "addroyalty" | translate }}
+    </button>
+  </div>
+  <mat-dialog-content>
+    <form [formGroup]="addRoyaltyForm" class="gap-4 flex flex-col">
+      <ng-container formArrayName="royalties">
+        @if (royaltiesArray.length > 0) { @for (item of royaltiesArray.controls;
+        let i = $index; track i) {
+        <div
+          [formGroupName]="i"
+          class="border p-3 rounded-md grid grid-cols-[repeat(4,_1fr)_auto] gap-2"
+        >
+          <mat-form-field class="flex-1">
+            <mat-label>{{ "selecttitle" | translate }}</mat-label>
+            <mat-select
+              formControlName="titleId"
+              (selectionChange)="getAuthorPublisherList($event.value)"
+            >
+              <mat-option [value]="null" disabled>{{
+                "selecttitle" | translate
+              }}</mat-option>
+              @for (type of titleList(); track type.id) {
+              <mat-option [value]="type.id">{{ type.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field class="flex-1">
+            <mat-label>
+              {{ "selectauthor" | translate }}
+            </mat-label>
+            <mat-select formControlName="authorId">
+              <mat-option [value]="null" disabled>{{
+                "selectauthor" | translate
+              }}</mat-option>
+              @for (item of authorList(); track $index) {
+              <mat-option [value]="item.id">{{
+                item.user.firstName + " " + item.user.lastName
+              }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field class="flex-1">
+            <mat-label>
+              {{ "selectpublisher" | translate }}
+            </mat-label>
+            <mat-select formControlName="publisherId">
+              <mat-option [value]="null" disabled>{{
+                "selectpublisher" | translate
+              }}</mat-option>
+              @for (item of publisherList(); track $index) {
+              <mat-option [value]="item.id">{{ item.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field class="flex-1">
+            <mat-label>
+              {{ "print_mah" | translate }}
+            </mat-label>
+            <input
+              matInput
+              type="number"
+              required
+              formControlName="print_mah"
+            />
+          </mat-form-field>
+          <mat-form-field class="flex-1">
+            <mat-label>
+              {{ "print_third_party" | translate }}
+            </mat-label>
+            <input
+              matInput
+              type="number"
+              required
+              formControlName="print_third_party"
+            />
+          </mat-form-field>
+          <mat-form-field class="flex-1">
+            <mat-label>
+              {{ "prime" | translate }}
+            </mat-label>
+            <input matInput type="number" required formControlName="prime" />
+          </mat-form-field>
+          <mat-form-field class="flex-1">
+            <mat-label>
+              {{ "ebook_mah" | translate }}
+            </mat-label>
+            <input
+              matInput
+              type="number"
+              required
+              formControlName="ebook_mah"
+            />
+          </mat-form-field>
+          <mat-form-field class="flex-1">
+            <mat-label>
+              {{ "ebook_third_party" | translate }}
+            </mat-label>
+            <input
+              matInput
+              type="number"
+              required
+              formControlName="ebook_third_party"
+            />
+          </mat-form-field>
+          <button
+            mat-icon-button
+            color="warn"
+            class="!bg-accent mt-2 rounded-full items-center p-1.5 flex justify-center"
+          >
+            <mat-icon class="!fill-red">delete</mat-icon>
+          </button>
+        </div>
+        @if(item.errors?.['authorOrPublisherRequired'] && (item.dirty ||
+        item.touched)) {
+        <mat-error class>
+          {{ "Any one out of Author or Publisher must be selected." }}
+        </mat-error>
+        } @if(item.errors?.['onlyOneAllowed'] &&(item.dirty || item.touched)){
+        <mat-error
+          >{{ "Either Author or Publisher can be selected." }}
+        </mat-error>
+        } } }
+      </ng-container>
+    </form>
+  </mat-dialog-content>
+  <mat-dialog-actions>
+    <button
+      (click)="data.onClose()"
+      mat-button
+      matButton="filled"
+      class="!bg-accent"
+    >
+      {{ "close" | translate }}
+    </button>
+    <button
+      (click)="onSubmit()"
+      mat-button
+      matButton="filled"
+      class="!bg-primary"
+    >
+      {{ "confirm" | translate }}
+    </button>
+  </mat-dialog-actions>
+</div>

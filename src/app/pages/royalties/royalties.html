@@ -24,6 +24,15 @@
         {{ "search" | translate }}
       </button>
     </div>
+    <button
+      class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
+      matButton="filled"
+      matButton
+      (click)="addRoyalty()"
+    >
+      <mat-icon class="material-icons">person_add</mat-icon>
+      {{ "addroyalty" | translate }}
+    </button>
   </div>
   <div class="flex gap-2">
     <button class="!bg-primary" matButton="filled">
@@ -44,9 +53,29 @@
     [dataSource]="dataSource"
     [displayedColumns]="displayedColumns"
     [actionTemplate]="actionButtons"
+    [cellTemplate]="royaltyCellTemplate"
   >
   </app-list-table>
   <ng-template #actionButtons let-element>
     <div class="flex gap-2 text-sm items-center lg:flex-wrap"></div>
+  </ng-template>
+  <ng-template #royaltyCellTemplate let-element let-column="column">
+    @switch (column) { @case ('print_mah') {
+    {{ element.print_mah != null ? element.print_mah + "%" : "-" }}
+    } @case ('print_third_party') {
+    {{
+      element.print_third_party != null ? element.print_third_party + "%" : "-"
+    }}
+    } @case ('prime') {
+    {{ element.prime != null ? element.prime + "%" : "-" }}
+    } @case ('ebook_mah') {
+    {{ element.ebook_mah != null ? element.ebook_mah + "%" : "-" }}
+    } @case ('ebook_third_party') {
+    {{
+      element.ebook_third_party != null ? element.ebook_third_party + "%" : "-"
+    }}
+    } @default {
+    {{ element[column] ?? "-" }}
+    } }
   </ng-template>
 </div>

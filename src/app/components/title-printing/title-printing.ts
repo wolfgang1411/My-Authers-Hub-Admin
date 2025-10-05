@@ -1,15 +1,10 @@
 import {
   ChangeDetectorRef,
   Component,
-  computed,
-  effect,
   ElementRef,
   input,
-  Input,
-  Signal,
   signal,
   viewChild,
-  ViewChild,
 } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -31,7 +26,6 @@ import {
   PrintingFormGroup,
   SizeCategory,
   TitlePrinting as titlepr,
-  TitlePrintingCostPayload,
 } from '../../interfaces';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
@@ -40,7 +34,7 @@ import { PrintingService } from '../../services/printing-service';
 import { MatButton } from '@angular/material/button';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { Logger } from '../../services/logger';
-import { combineLatest, debounceTime, from, switchMap } from 'rxjs';
+import { combineLatest, debounceTime } from 'rxjs';
 @Component({
   selector: 'app-title-printing',
   imports: [
@@ -52,7 +46,6 @@ import { combineLatest, debounceTime, from, switchMap } from 'rxjs';
     MatIconModule,
     MatCardModule,
     MatButton,
-    MatProgressSpinner,
   ],
   templateUrl: './title-printing.html',
   styleUrl: './title-printing.css',

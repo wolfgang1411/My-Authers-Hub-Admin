@@ -1,0 +1,8 @@
+::ng-deep.cdk-overlay-pane.mat-mdc-dialog-panel {
+  width: 1200px !important;
+  max-width: 90vw !important;
+  min-width: 480px !important;
+}
+::ng-deep.mat-mdc-dialog-container {
+  width: 1200px;
+}

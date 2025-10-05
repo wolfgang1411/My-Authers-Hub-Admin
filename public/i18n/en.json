@@ -226,5 +226,17 @@
   "prime": "Prime",
   "ebook_mah": "Ebook MAH",
   "ebook_third_party": "Ebook Third Party",
-  "totalroyalties": "Total royalties"
+  "totalroyalties": "Total royalties",
+  "royalties":"Royalties",
+  "addroyalty":"Add Royalty",
+  "selectauthor":"Select Author",
+  "selectpublisher":"Select Publisher",
+  "selecttitle":"Select Title",
+  "downloadbarcode":"Download BarCode",
+  "createisbn":"Create ISBN",
+  "isbntype":"ISBN Type",
+  "createdby":"Created By",
+  "isbnPrint":"ISBN Print",
+  "isbnEbook":"ISBN EBook",
+  "selectisbntype":"Select ISBN Type"
 }

@@ -7,11 +7,15 @@ export interface Royalty {
   percentage: number;
   authorId?: number;
   publisherId?: number;
+  titleId: number;
 }
 
 export interface CreateRoyalty {
   titleId: number;
   authorId?: number | null;
+  author?: string;
+  publisher?: string;
+  title?: string;
   publisherId?: number | null;
   print_mah: number | null;
   print_third_party: number | null;
