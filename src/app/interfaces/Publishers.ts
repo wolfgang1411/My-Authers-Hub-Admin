@@ -1,6 +1,7 @@
 import { Address } from './Address';
 import { Author } from './Authors';
 import { BankDetails } from './BankDetails';
+import { DistributionType } from './Distribution';
 import { Title } from './Titles';
 import { User } from './user';
 
@@ -38,6 +39,7 @@ export interface CreatePublisher {
 
 export interface PublisherFilter {
   parentPublisherId?: number;
+  status?: PublisherStatus | PublisherStatus[];
 }
 
 export interface PublisherResponse {
@@ -48,4 +50,13 @@ export interface PublisherResponse {
   titles: number;
   authors: number;
   companyname: string;
+}
+
+export interface PublishingPoints {
+  id: string;
+  availablePoints: number;
+  publisherId: number;
+  distributionType: DistributionType;
+  createdAt: string;
+  updatedAt: string;
 }

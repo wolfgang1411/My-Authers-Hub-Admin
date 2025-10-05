@@ -11,7 +11,14 @@ import {
   ViewChildren,
 } from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { combineLatest, debounceTime, map, Observable } from 'rxjs';
+import {
+  combineLatest,
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  Observable,
+  startWith,
+} from 'rxjs';
 import { StepperOrientation } from '@angular/cdk/stepper';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import {
@@ -38,13 +45,11 @@ import { MatRadioModule } from '@angular/material/radio';
 import {
   Author,
   AuthorFormGroup,
+  AuthorStatus,
   BookBindings,
   ChannalType,
   CreateRoyalty,
-  IsbnFormGroup,
   LaminationType,
-  Media,
-  MediaGroup,
   MediaType,
   PaperType,
   PricingCreate,
@@ -53,16 +58,18 @@ import {
   PrintingFormGroup,
   PublisherFormGroup,
   Publishers,
+  PublisherStatus,
   PublishingType,
   RoyalFormGroupAmountField,
-  Royalty,
   RoyaltyFormGroup,
   Title,
-  TitleCategory,
   TitleCreate,
   TitleDetailsFormGroup,
+  TitleDistributionGroup,
   TitleFormGroup,
-  TitleGenre,
+  TitleMedia,
+  TitleMediaGroup,
+  TitleMediaType,
   TitlePricing,
   TitlePrintingCostPayload,
   TitleStatus,
@@ -73,17 +80,22 @@ import { PublisherService } from '../publisher/publisher-service';
 import { AuthorsService } from '../authors/authors-service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { PrintingService } from '../../services/printing-service';
-// import * as pdfjsLib from 'pdfjs-dist';
 import { TitlePrinting } from '../../components/title-printing/title-printing';
 import { Royalties } from '../../components/royalties/royalties';
 import { TitleService } from '../titles/title-service';
 import { BookDetails } from '../../components/book-details/book-details';
 import { Pricing } from '../../components/pricing/pricing';
-import { Publisher } from '../publisher/publisher';
-import { pid } from 'process';
+import { TitleDistribution } from '../../title-distribution/title-distribution';
+import { DistributionType } from '../../interfaces/Distribution';
+import Swal from 'sweetalert2';
+import {
+  getFileSizeFromS3Url,
+  getFileToBase64,
+} from '../../common/util.ts/file';
+import * as pdfjsLib from 'pdfjs-dist';
 
 @Component({
   selector: 'app-add-title',
@@ -106,6 +118,7 @@ import { pid } from 'process';
     BookDetails,
     Pricing,
     Royalties,
+    TitleDistribution,
   ],
   templateUrl: './add-title.html',
   styleUrl: './add-title.css',
@@ -116,7 +129,8 @@ export class AddTitle {
     private titleService: TitleService,
     private publisherService: PublisherService,
     private authorService: AuthorsService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     const breakpointObserver = inject(BreakpointObserver);
     this.stepperOrientation = breakpointObserver
@@ -174,16 +188,18 @@ export class AddTitle {
     this.publisherSignal.set(publisher);
   }
 
-  getDocumentLabel(mediaType: MediaType | string | null): string {
+  getDocumentLabel(mediaType?: TitleMediaType): string {
     switch (mediaType) {
-      case 'FullCover':
+      case 'FULL_COVER':
         return 'Upload Full Cover (PDF)';
-      case 'PrintInterior':
+      case 'INTERIOR':
         return 'Upload Print Interior (PDF)';
-      case 'FrontCover':
+      case 'FRONT_COVER':
         return 'Upload Front Cover (JPG/PNG)';
-      case 'BackCover':
+      case 'BACK_COVER':
         return 'Upload Back Cover (Optional)';
+      case 'INSIDE_COVER ':
+        return 'Upload Inside Cover';
       default:
         return 'Upload File';
     }
@@ -204,42 +220,88 @@ export class AddTitle {
     }
   }
 
-  getAcceptedTypes(mediaType: MediaType | string | null): string {
-    if (mediaType === 'PrintInterior' || mediaType === 'FullCover')
-      return '.pdf';
+  getAcceptedTypes(mediaType: TitleMediaType | undefined): string {
+    if (mediaType === 'INTERIOR' || mediaType === 'FULL_COVER')
+      return 'application/pdf';
     return 'image/*';
   }
 
+  PublishingType = PublishingType;
   tempForm = new FormGroup<TitleFormGroup>({
     printingFormat: new FormControl<string | null>(null, Validators.required),
     hasFiles: new FormControl<boolean | null>(null, Validators.required),
-    publishingType: new FormControl<string | null>(null, Validators.required),
+    publishingType: new FormControl<PublishingType | null>(
+      null,
+      Validators.required
+    ),
     titleDetails: this.createTitleDetailsGroup(),
     printing: this.createPrintingGroupTemp(),
     pricing: this.createPricingArrayTemp(),
-    documentMedia: new FormArray<FormGroup<MediaGroup>>([]),
+    documentMedia: new FormArray<FormGroup<TitleMediaGroup>>([]),
     royalties: new FormArray<FormGroup<RoyaltyFormGroup>>([]),
+    distribution: this.createDistributionOptions(),
   });
 
   async ngOnInit() {
     const { items: bindingTypes } = await this.printingService.getBindingType();
     this.bindingType = bindingTypes;
 
-    const { items: publishersItem } =
-      await this.publisherService.getPublishers();
+    const { items: publishersItem } = await this.publisherService.getPublishers(
+      {
+        status: PublisherStatus.Active,
+      }
+    );
     this.publishers.set(publishersItem);
 
-    const { items: authorItems } = await this.authorService.getAuthors();
+    const { items: authorItems } = await this.authorService.getAuthors({
+      status: AuthorStatus.Active,
+    });
     this.authorsList.set(authorItems);
 
-    if (this.titleId) {
-      this.titleService.getTitleById(this.titleId).then((response) => {
-        this.titleDetails.set(response);
-        this.prefillFormData(response);
+    this.tempForm.controls.titleDetails.controls.publisher.controls.id.valueChanges
+      .pipe(debounceTime(400), distinctUntilChanged())
+      .subscribe(() => {
+        this.fetchAndUpdatePublishingPoints();
       });
+
+    let media: TitleMedia[] = [];
+    if (this.titleId) {
+      const response = await this.titleService.getTitleById(this.titleId);
+      this.titleDetails.set(response);
+      this.prefillFormData(response);
+      media = response.media;
     }
 
     this.calculatePrintingCost();
+    this.addDefaultMediaArray(media);
+    this.handelInsideCoverMedia();
+  }
+
+  async fetchAndUpdatePublishingPoints() {
+    const publisherId =
+      this.tempForm.controls.titleDetails.controls.publisher.controls.id.value;
+
+    if (publisherId) {
+      try {
+        const { items: publishingPoints } =
+          await this.publisherService.fetchPublishingPoints(publisherId);
+
+        publishingPoints.forEach(({ distributionType, availablePoints }) => {
+          const distributionController =
+            this.tempForm.controls.distribution.controls.find(
+              ({ controls: { type } }) => type.value === distributionType
+            );
+
+          if (distributionController) {
+            distributionController.controls.availablePoints.patchValue(
+              availablePoints
+            );
+          }
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    }
   }
 
   mapRoyaltiesArray(publisher: Publishers | null, authors: Author[]) {
@@ -296,8 +358,9 @@ export class AddTitle {
 
     authors.forEach(({ id: authorId, name, user }) => {
       const isAuthorControlExisit = royaltyControl.controls.filter(
-        ({ controls }) => controls.publisherId.value === publisher.id
+        ({ controls }) => controls.authorId.value === authorId
       )[0];
+
       if (!isAuthorControlExisit) {
         royaltyControl.push(
           this.createRoyaltyGroup({
@@ -399,8 +462,6 @@ export class AddTitle {
   }
 
   prefillFormData(data: Title): void {
-    console.log('prefillll');
-
     this.tempForm.patchValue({
       printingFormat: data.publishingType,
       hasFiles: true,
@@ -449,7 +510,6 @@ export class AddTitle {
         msp: data.printing[0]?.printCost,
       },
     });
-
     this.tempForm.controls.titleDetails.controls.authorIds.clear();
     this.authorsSignal.set(data.authors.map(({ author }) => author));
     this.publisherSignal.set(data.publisher);
@@ -465,7 +525,6 @@ export class AddTitle {
       );
     });
 
-    this.buildMediaArray(data.publishingType);
     this.updatePricingArray(data.pricing);
 
     const royaltControlData = data.royalties.reduce(
@@ -473,8 +532,6 @@ export class AddTitle {
         const isAuthorOrPubllisherPut = acc.filter(
           (a) => a.authorId === authorId || a.publisherId === publisherId
         )[0] as CreateRoyalty | undefined;
-
-        console.log({ isAuthorOrPubllisherPut });
 
         let d: Partial<CreateRoyalty> = {
           ...isAuthorOrPubllisherPut,
@@ -507,8 +564,6 @@ export class AddTitle {
           acc.push(d as CreateRoyalty);
         }
 
-        console.log({ d });
-
         return acc;
       },
       Array<CreateRoyalty>()
@@ -520,11 +575,20 @@ export class AddTitle {
         ({ controls: { authorId, publisherId } }) =>
           authorId.value === aId || publisherId.value === pId
       )[0];
-      console.log({ controlExisit, d });
       if (controlExisit) {
         controlExisit.patchValue(d);
       } else {
         this.tempForm.controls.royalties.push(this.createRoyaltyGroup(d));
+      }
+    });
+
+    data.distribution.forEach(({ id, type }) => {
+      const disTypeControl = this.tempForm.controls.distribution.controls.find(
+        ({ controls }) => controls.type.value === type
+      );
+      if (disTypeControl) {
+        disTypeControl.controls.isSelected.patchValue(true);
+        disTypeControl.controls.id.patchValue(id);
       }
     });
   }
@@ -594,6 +658,23 @@ export class AddTitle {
       }
       return null;
     };
+  }
+
+  createDistributionOptions(): FormArray<FormGroup<TitleDistributionGroup>> {
+    return new FormArray<FormGroup<TitleDistributionGroup>>(
+      Object.keys(DistributionType).map(
+        (type) =>
+          new FormGroup<TitleDistributionGroup>({
+            id: new FormControl<number | null>(null),
+            isSelected: new FormControl(false, { nonNullable: true }),
+            name: new FormControl(type, { nonNullable: true }),
+            type: new FormControl(type as DistributionType, {
+              nonNullable: true,
+            }),
+            availablePoints: new FormControl(0, { nonNullable: true }),
+          })
+      )
+    );
   }
 
   createPricingArrayTemp(): FormArray<PricingGroup> {
@@ -699,136 +780,162 @@ export class AddTitle {
     });
   }
 
-  addRoyalty(): void {
-    // this.royalties.push(
-    //   this._formBuilder.group({
-    //     id: [null],
-    //     percentage: [0, Validators.required],
-    //     channal: [''],
-    //     author: [null],
-    //     publisher: [null],
-    //     status: ['ACTIVE'],
-    //   })
-    // );
+  handelInsideCoverMedia() {
+    this.tempForm.controls.printing.controls.insideCover.valueChanges
+      .pipe(debounceTime(400))
+      .subscribe(async (insideCover) => {
+        const insideCoverControl =
+          this.tempForm.controls.documentMedia.controls.find(
+            ({ controls: { mediaType } }) => mediaType.value === 'INSIDE_COVER '
+          );
+        if (insideCover && !insideCoverControl) {
+          this.tempForm.controls.documentMedia.push(
+            await this.createMedia('INSIDE_COVER ', true)
+          );
+        } else {
+          const insideCoverMediaIndex =
+            this.tempForm.controls.documentMedia.controls.findIndex(
+              ({ controls }) => controls.mediaType.value === 'INSIDE_COVER '
+            );
+
+          if (insideCoverMediaIndex >= 0) {
+            this.tempForm.controls.documentMedia.removeAt(
+              insideCoverMediaIndex
+            );
+          }
+        }
+      });
   }
 
-  addDefaultMedia() {
-    this.tempForm.controls.documentMedia.clear();
-    this.tempForm.controls.documentMedia.push(
-      this.createMedia('FullCover', true)
+  async addDefaultMediaArray(medias?: TitleMedia[]) {
+    const mediaArrayControl = this.tempForm.controls.documentMedia;
+
+    mediaArrayControl.push(
+      await this.createMedia(
+        'FRONT_COVER',
+        true,
+        medias?.find(({ type }) => type === 'FRONT_COVER')
+      )
     );
-    this.tempForm.controls.documentMedia.push(
-      this.createMedia('FrontCover', true)
+    mediaArrayControl.push(
+      await this.createMedia(
+        'BACK_COVER',
+        false,
+        medias?.find(({ type }) => type === 'BACK_COVER')
+      )
     );
-    this.tempForm.controls.documentMedia.push(
-      this.createMedia('BackCover', false)
+    mediaArrayControl.push(
+      await this.createMedia(
+        'INTERIOR',
+        true,
+        medias?.find(({ type }) => type === 'INTERIOR')
+      )
     );
-    this.tempForm.controls.documentMedia.push(
-      this.createMedia('PrintInterior', true)
-    );
-  }
 
-  createMedia(mediaType: MediaType, required = true): FormGroup<MediaGroup> {
-    const exisitingMedia = this.titleDetails()?.media.filter(
-      ({ type }) => type === mediaType
-    )[0];
+    if (
+      this.tempForm.controls.publishingType.value !== PublishingType.ONLY_EBOOK
+    ) {
+      mediaArrayControl.push(
+        await this.createMedia(
+          'FULL_COVER',
+          true,
+          medias?.find(({ type }) => type === 'FULL_COVER')
+        )
+      );
+    }
 
-    console.log({
-      exisitingMedia,
-      mediaType,
-    });
-
-    return new FormGroup<MediaGroup>({
-      id: new FormControl(1 || exisitingMedia?.id || 0),
-      url: new FormControl(
-        'https://fastly.picsum.photos/id/376/536/354.jpg?hmac=FY3pGZTc81LYCnJOB0PiRX570QylTn7xchj6FZA6TeQ'
-      ),
-      type: new FormControl(mediaType),
-      file: new FormControl(new File([], 'test.png')),
-      mediaType: new FormControl(mediaType),
-    });
-  }
-
-  buildMediaArray(format: string) {
-    this.tempForm.controls.documentMedia.clear();
-    switch (format) {
-      case 'ONLY_EBOOK':
-        this.tempForm.controls.documentMedia.push(
-          this.createMedia('FullCover', true)
-        );
-        this.tempForm.controls.documentMedia.push(
-          this.createMedia('FrontCover', true)
-        );
-        break;
-
-      case 'ONLY_PRINT':
-        this.tempForm.controls.documentMedia.push(
-          this.createMedia('FullCover', true)
-        );
-        this.tempForm.controls.documentMedia.push(
-          this.createMedia('FrontCover', true)
-        );
-        this.tempForm.controls.documentMedia.push(
-          this.createMedia('BackCover', false)
-        );
-        this.tempForm.controls.documentMedia.push(
-          this.createMedia('PrintInterior', true)
-        );
-        break;
-
-      case 'PRINT_EBOOK':
-        this.tempForm.controls.documentMedia.push(
-          this.createMedia('FullCover', true)
-        );
-        this.tempForm.controls.documentMedia.push(
-          this.createMedia('FrontCover', true)
-        );
-        this.tempForm.controls.documentMedia.push(
-          this.createMedia('BackCover', false)
-        );
-        this.tempForm.controls.documentMedia.push(
-          this.createMedia('PrintInterior', true)
-        );
-        break;
-
-      default:
-        // no format selected → leave empty
-        break;
+    if (this.tempForm.controls.printing.controls.insideCover.value) {
+      mediaArrayControl.push(
+        await this.createMedia(
+          'INSIDE_COVER ',
+          true,
+          medias?.find(({ type }) => type === 'INSIDE_COVER ')
+        )
+      );
     }
   }
+
+  async createMedia(
+    mediaType: TitleMediaType,
+    required = true,
+    media?: TitleMedia
+  ): Promise<FormGroup<TitleMediaGroup>> {
+    let maxSize: number | null = null;
+
+    const format: string[] = [];
+    switch (mediaType) {
+      case 'FULL_COVER':
+        maxSize = 20;
+        break;
+      case 'INTERIOR':
+        maxSize = 10;
+        break;
+      case 'BACK_COVER':
+      case 'FRONT_COVER':
+      case 'INSIDE_COVER ':
+        maxSize = 2;
+        break;
+    }
+
+    let size = 0;
+    if (media?.url) {
+      const res = await getFileSizeFromS3Url(media.url);
+      if (res) {
+        size = Number((res / (1024 * 1024)).toFixed(2));
+      }
+    }
+
+    console.log({ size });
+
+    return new FormGroup<TitleMediaGroup>({
+      id: new FormControl(media?.id || null),
+      url: new FormControl(media?.url, {
+        validators: required ? Validators.required : [],
+      }),
+      type: new FormControl(mediaType, { nonNullable: true }),
+      file: new FormControl(null),
+      mediaType: new FormControl<TitleMediaType>(mediaType, {
+        nonNullable: true,
+      }),
+      maxSize: new FormControl(maxSize),
+      name: new FormControl(media?.name || null),
+      allowedFormat: new FormControl(format, { nonNullable: true }),
+      size: new FormControl(size),
+    });
+  }
+
   isRequired(control: AbstractControl | null): boolean {
     if (!control?.validator) return false;
     const validator = control.validator({} as any);
     return !!(validator && validator['required']);
   }
 
-  onFileSelected(event: Event, index: number) {
+  async onFileSelected(event: Event, mediaGroup: FormGroup<TitleMediaGroup>) {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-      const mediaType = this.tempForm.controls.documentMedia
-        .at(index)
-        .get('mediaType')?.value as MediaType;
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const fileResult = reader.result as string;
-        this.tempForm.controls.documentMedia.at(index).patchValue({
-          file: file,
-          url:
-            mediaType === 'PrintInterior' || mediaType === 'FullCover'
-              ? null
-              : fileResult,
-        });
-        if (mediaType === 'FullCover' && file.type === 'application/pdf') {
-          const typedArray = new Uint8Array(await file.arrayBuffer());
-          // const pdf = await pdfjsLib.getDocument(typedArray).promise;
-          // const totalPages = pdf.numPages;
-          // this.printing.at(0).patchValue({ totalPages: totalPages });
-          // console.log(`FullCover PDF has ${totalPages} pages`);
-        }
-      };
-      reader.readAsDataURL(file);
+    const file = input.files?.item(0);
+
+    if (!file) return;
+
+    const fileSizeInMB = file.size / (1024 * 1024);
+
+    const maxAllowedSize = mediaGroup.controls.maxSize.value;
+    if (maxAllowedSize && fileSizeInMB > maxAllowedSize) {
+      const errorText = `Maximum allowed size is (${maxAllowedSize} MB) <br> Uploaded file is (${fileSizeInMB} MB)`;
+      Swal.fire({
+        icon: 'error',
+        title: 'Incorrect file size',
+        html: errorText,
+      });
+      return;
     }
+
+    const url = await getFileToBase64(file);
+
+    mediaGroup.patchValue({
+      url,
+      file,
+      name: file.name,
+    });
   }
 
   removeFile(index: number) {
@@ -877,10 +984,21 @@ export class AddTitle {
     });
   }
 
+  async onMediaUpload() {
+    if (this.tempForm.controls.documentMedia.valid) {
+      const mediaToUpload = this.tempForm.controls.documentMedia.value
+        .filter(({ file, type }) => file && type)
+        .map(({ file, type }) => ({
+          file: file as File,
+          type: type as MediaType,
+        }));
+      await this.titleService.uploadMultiMedia(this.titleId, mediaToUpload);
+      this.stepper()?.next();
+    }
+  }
+
   async onPricingSubmit() {
     const pricingControls = this.tempForm.controls.pricing;
-
-    console.log(pricingControls);
 
     if (pricingControls.valid) {
       const data: PricingCreate[] = pricingControls.controls.map(
@@ -922,6 +1040,7 @@ export class AddTitle {
         createPrinting
       );
       printing.controls.id.patchValue(response.id);
+      this.stepper()?.next();
     }
   }
 
@@ -968,5 +1087,40 @@ export class AddTitle {
     this.titleService.createManyPricing;
   }
 
-  onSubmit() {}
+  async onClickPurchasePoint(type: DistributionType) {
+    try {
+      const res = await this.publisherService.buyPublishingPoints(type, 1);
+      if (res.status === 'pending' && res.url) {
+        window.open(res.url, '_blank');
+      }
+
+      if (res.status === 'success') {
+        this.fetchAndUpdatePublishingPoints();
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async onDistributionSubmit() {
+    const selectedDistributions = this.tempForm.controls.distribution.value
+      .filter(({ isSelected }) => isSelected)
+      .map(({ type }) => type as DistributionType);
+    if (
+      this.tempForm.controls.distribution.valid &&
+      selectedDistributions.length
+    ) {
+      await this.titleService.createTitleDistribution(
+        this.titleId,
+        selectedDistributions
+      );
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Title has been send for approval to admin',
+      });
+      this.router.navigate(['/titles']);
+    }
+  }
 }

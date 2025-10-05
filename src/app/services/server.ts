@@ -76,6 +76,16 @@ export class Server {
       throw error as HttpErrorResponse;
     }
   }
+
+  async put(url: string, file: File) {
+    try {
+      url = url.includes('http') ? url : `${environment.apiUrl}${url}`;
+      return await firstValueFrom(this.http.put(url, file));
+    } catch (error) {
+      throw error;
+    }
+  }
+
   getDocument(url: string, params?: any): Promise<any> {
     return new Promise((resolve, reject) => {
       firstValueFrom(

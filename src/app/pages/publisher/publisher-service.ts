@@ -4,12 +4,13 @@ import {
   PublisherFilter,
   Publishers,
   PublisherStatus,
+  PublishingPoints,
 } from '../../interfaces/Publishers';
-import { Pagination } from '../../interfaces';
+import { Pagination, PublishingType } from '../../interfaces';
 import { Invite } from '../../interfaces/Invite';
 import { Logger } from '../../services/logger';
 import { LoaderService } from '../../services/loader';
-import { Distribution } from '../../interfaces/Distribution';
+import { Distribution, DistributionType } from '../../interfaces/Distribution';
 
 @Injectable({
   providedIn: 'root',
@@ -98,6 +99,37 @@ export class PublisherService {
     try {
       return await this.loader.loadPromise(
         this.server.post(`publishers/${publisherId}/reject`, {})
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  buyPublishingPoints(distributionType: DistributionType, points: number) {
+    try {
+      return this.loader.loadPromise(
+        this.server.post<{
+          url?: string;
+          status: 'pending' | 'success';
+          id: number;
+        }>('publishing-points/buy', {
+          distributionType,
+          points,
+        })
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async fetchPublishingPoints(publisherId: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<PublishingPoints>>('publishing-points', {
+          publisherIds: [publisherId],
+        })
       );
     } catch (error) {
       this.logger.logError(error);

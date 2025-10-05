@@ -1,18 +1,10 @@
-import {
-  ChangeDetectorRef,
-  Component,
-  ElementRef,
-  input,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, ElementRef, input, signal, viewChild } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { SharedModule } from '../../modules/shared/shared-module';
 import {
   AbstractControl,
   FormArray,
-  FormBuilder,
   FormControl,
   FormGroup,
   ReactiveFormsModule,
@@ -20,20 +12,15 @@ import {
 import {
   BookBindings,
   LaminationType,
-  MediaGroup,
-  MediaType,
   PaperQuailty,
   PrintingFormGroup,
   SizeCategory,
-  TitlePrinting as titlepr,
+  TitleMediaGroup,
 } from '../../interfaces';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { PrintingService } from '../../services/printing-service';
-import { MatButton } from '@angular/material/button';
-import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { Logger } from '../../services/logger';
 import { combineLatest, debounceTime } from 'rxjs';
 @Component({
   selector: 'app-title-printing',
@@ -45,17 +32,12 @@ import { combineLatest, debounceTime } from 'rxjs';
     MatInputModule,
     MatIconModule,
     MatCardModule,
-    MatButton,
   ],
   templateUrl: './title-printing.html',
   styleUrl: './title-printing.css',
 })
 export class TitlePrinting {
-  constructor(
-    private printingService: PrintingService,
-    private logger: Logger,
-    private _cdr: ChangeDetectorRef
-  ) {}
+  constructor(private printingService: PrintingService) {}
 
   bindingType = signal<BookBindings[]>([]);
   laminationTypes = signal<LaminationType[]>([]);
@@ -64,7 +46,7 @@ export class TitlePrinting {
   loadingPrice: boolean = false;
 
   printingGroup = input.required<FormGroup<PrintingFormGroup>>();
-  documentMedia = input.required<FormArray<FormGroup<MediaGroup>>>();
+  documentMedia = input.required<FormArray<FormGroup<TitleMediaGroup>>>();
 
   fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
@@ -95,47 +77,46 @@ export class TitlePrinting {
     ])
       .pipe(debounceTime(400))
       .subscribe(([colorPages, totalPages]) => {
-        console.log({ blackAndWhitePagesControl });
-
         blackAndWhitePagesControl.patchValue(
           (Number(totalPages) || 0) - (Number(colorPages) || 0)
         );
       });
   }
 
-  createDocumentMediaGroup(
-    mediaType: string,
-    file: File,
-    url: string | null = null
-  ): FormGroup {
-    return new FormGroup<MediaGroup>({
-      id: new FormControl(1 || 0),
-      url: new FormControl(
-        'https://fastly.picsum.photos/id/376/536/354.jpg?hmac=FY3pGZTc81LYCnJOB0PiRX570QylTn7xchj6FZA6TeQ'
-      ),
-      type: new FormControl(mediaType as MediaType),
-      file: new FormControl(new File([], 'test.png')),
-      mediaType: new FormControl(mediaType as MediaType),
-    });
-  }
+  // createDocumentMediaGroup(
+  //   mediaType: string,
+  //   file: File,
+  //   url: string | null = null
+  // ): FormGroup {
+  //   return new FormGroup<MediaGroup>({
+  //     id: new FormControl(1 || 0),
+  //     url: new FormControl(
+  //       'https://fastly.picsum.photos/id/376/536/354.jpg?hmac=FY3pGZTc81LYCnJOB0PiRX570QylTn7xchj6FZA6TeQ'
+  //     ),
+  //     type: new FormControl(mediaType as MediaType),
+  //     file: new FormControl(new File([], 'test.png')),
+  //     mediaType: new FormControl(mediaType as MediaType),
+  //     maxSize
+  //   });
+  // }
   openFileDialog() {
     this.fileInput()?.nativeElement?.click();
   }
 
-  onInsideCoverUpload(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-    const index = this.documentMedia().controls.findIndex(
-      (ctrl) => ctrl.get('mediaType')?.value === 'InsideCover'
-    );
-    if (index > -1) {
-      this.documentMedia().removeAt(index);
-    }
-    const newGroup = this.createDocumentMediaGroup('InsideCover', file);
-    this.documentMedia().push(newGroup);
-    input.value = '';
-  }
+  // onInsideCoverUpload(event: Event) {
+  //   const input = event.target as HTMLInputElement;
+  //   const file = input.files?.[0];
+  //   if (!file) return;
+  //   const index = this.documentMedia().controls.findIndex(
+  //     (ctrl) => ctrl.get('mediaType')?.value === 'InsideCover'
+  //   );
+  //   if (index > -1) {
+  //     this.documentMedia().removeAt(index);
+  //   }
+  //   const newGroup = this.createDocumentMediaGroup('InsideCover', file);
+  //   this.documentMedia().push(newGroup);
+  //   input.value = '';
+  // }
   getFilteredLaminationTypes(print: AbstractControl): any[] {
     const bindingTypeId = print.get('bookBindingsId')?.value;
     if (!this.laminationTypes()?.length) return [];
