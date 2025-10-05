@@ -77,8 +77,6 @@ export class TitlePrinting {
     ])
       .pipe(debounceTime(400))
       .subscribe(([colorPages, totalPages]) => {
-        console.log({ blackAndWhitePagesControl });
-
         blackAndWhitePagesControl.patchValue(
           (Number(totalPages) || 0) - (Number(colorPages) || 0)
         );

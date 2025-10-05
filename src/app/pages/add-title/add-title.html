@@ -310,8 +310,14 @@
                 type="file"
                 class="block w-full text-sm text-gray-600"
                 (change)="onFileSelected($event, media)"
-                [accept]="getAcceptedTypes(media.value.mediaType || '')"
+                [accept]="getAcceptedTypes(media.value.type)"
+                [ngClass]="{
+                  hidden: media.value.url
+                }"
               />
+              @if( media.value.url) {
+              <span>{{ media.value.name }}</span>
+              }
               <button
                 matButton="filled"
                 class="px-4 py-2 !bg-primary text-white rounded-lg shadow hover:bg-primary/90 transition"
@@ -324,12 +330,12 @@
             </div>
 
             <p class="text-xs text-gray-500 mt-4">
-              {{ getHelperText(media.value.mediaType || "") }}
+              {{ getHelperText(media.value.type || "") }}
             </p>
           </div>
 
           <div class="self-center flex">
-            @if(media.value.url && media.value.mediaType !== 'INTERIOR' &&
+            @if(media.value.url && media.value.type !== 'INTERIOR' &&
             media.value.mediaType !== 'FULL_COVER' ) {
             <div class="border rounded p-2 inline-block bg-white shadow-sm">
               <img
@@ -338,22 +344,24 @@
                 class="h-32 object-contain rounded"
               />
             </div>
-            } @if(media.get('file')?.value && (media.get('mediaType')?.value ===
-            'INTERIOR' || media.value.mediaType === 'FULL_COVER')) {
+            } @if(media.get('url')?.value && (media.get('type')?.value ===
+            'INTERIOR' || media.value.type === 'FULL_COVER')) {
             <mat-card
               class="flex !flex-row !items-center !gap-4 p-3 bg-gray-50 shadow-sm rounded-md"
             >
               <mat-icon color="warn">picture_as_pdf</mat-icon>
               <div>
                 <p class="text-sm font-medium text-gray-800">
-                  {{ media.get("file")?.value?.name }}
+                  {{ media.get("name")?.value }}
                 </p>
                 <p class="text-xs text-gray-500">
+                  @if ( (media.get("file")?.value)) {
                   {{
                     (media.get("file")?.value?.size || 0) / 1024 / 1024
                       | number : "1.1-1"
                   }}
-                  MB
+                  MB } @else if (media.get("size")?.value) {
+                  {{ media.get("size")?.value || 0 }} MB }
                 </p>
               </div>
               <button
