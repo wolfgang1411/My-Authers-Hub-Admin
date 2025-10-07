@@ -2,6 +2,7 @@ import { Address } from './Address';
 import { Author } from './Authors';
 import { BankDetails } from './BankDetails';
 import { DistributionType } from './Distribution';
+import { socialMediaGroup } from './SocialMedia';
 import { Title } from './Titles';
 import { User } from './user';
 
@@ -18,6 +19,7 @@ export interface Publishers {
   titles: Title[];
   authors: Author[];
   status: PublisherStatus;
+  socialMedias: socialMediaGroup[];
 }
 
 export enum PublisherStatus {

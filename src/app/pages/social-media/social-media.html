@@ -1,0 +1,21 @@
+<div [formGroup]="socialMediaGroup" class="grid-cols-2 grid gap-4">
+  <mat-form-field appearance="fill" class="w-full">
+    <mat-label>{{ socialMediaGroup.value.type }}</mat-label>
+    <input
+      matInput
+      placeholder="https://..."
+      formControlName="url"
+      type="url"
+    />
+  </mat-form-field>
+
+  <mat-form-field appearance="fill" class="w-full">
+    <mat-label>Name on {{ socialMediaGroup.value.type }}</mat-label>
+    <input
+      matInput
+      placeholder="Facebook / Instagram etc."
+      formControlName="name"
+      type="text"
+    />
+  </mat-form-field>
+</div>

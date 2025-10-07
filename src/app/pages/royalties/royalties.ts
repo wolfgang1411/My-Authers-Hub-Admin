@@ -24,6 +24,7 @@ import { AuthorsService } from '../authors/authors-service';
 import { PublisherService } from '../publisher/publisher-service';
 import { TitleService } from '../titles/title-service';
 import { AddRoyalty } from '../../components/add-royalty/add-royalty';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-royalties',
@@ -52,7 +53,6 @@ export class Royalties {
     private royaltyService: RoyaltyService,
     private authorService: AuthorsService,
     private publisher: PublisherService,
-    private titleService: TitleService,
     private dialog: MatDialog
   ) {}
   displayedColumns: string[] = [
@@ -65,6 +65,7 @@ export class Royalties {
     'prime',
     'ebook_mah',
     'ebook_third_party',
+    'earnings',
   ];
   filter: RoyaltyFilter = {
     page: 1,
@@ -119,9 +120,7 @@ export class Royalties {
       const publisher = await this.publisher.getPublisherById(publisherId);
       publisherMap.set(publisherId, publisher.name);
     }
-
     const grouped = new Map<string, CreateRoyalty>();
-
     items.forEach(async (royalty) => {
       const authorId = royalty.authorId ?? null;
       const publisherId = royalty.publisherId ?? null;
@@ -144,6 +143,12 @@ export class Royalties {
           ebook_mah: null,
           ebook_third_party: null,
           name: null,
+          totalEarnings:
+            royalty.earnings && royalty.earnings.length
+              ? royalty.earnings.reduce((acc, earning) => {
+                  return acc + earning.amount;
+                }, 0)
+              : 0,
         });
       }
 
@@ -179,7 +184,28 @@ export class Royalties {
   }
   addRoyalty() {
     const dialog = this.dialog.open(AddRoyalty, {
-      data: {},
+      data: {
+        onSubmit: async (royaltyArray: CreateRoyalty[]) => {
+          if (royaltyArray.length) {
+            const response = await this.royaltyService.createRoyalties(
+              royaltyArray
+            );
+            if (response) {
+              dialog.close();
+              Swal.fire({
+                title: 'success',
+                text: 'The Royalties have been created successfully!',
+                icon: 'success',
+                heightAuto: false,
+              });
+              this.updateRoyaltyList();
+            }
+          }
+        },
+        onClose: () => {
+          dialog.close();
+        },
+      },
     });
   }
 }

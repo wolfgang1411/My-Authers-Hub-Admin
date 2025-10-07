@@ -23,6 +23,7 @@ import { MatButtonModule } from '@angular/material/button';
 import {
   Author,
   AuthorFilter,
+  CreateRoyalty,
   PublisherFilter,
   Publishers,
   Title,
@@ -58,48 +59,6 @@ export class AddRoyalty {
     effect(async () => {
       const { items: titleList } = await this.titleService.getTitles();
       this.titleList.set(titleList);
-      this.royaltiesArray.controls.forEach(
-        async (group: AbstractControl, index: number) => {
-          const royaltyGroup = group as FormGroup;
-          const titleIdControl = royaltyGroup.get('titleId');
-          const authorControl = royaltyGroup.get('authorId');
-          const publisherControl = royaltyGroup.get('publisherId');
-          const currentTitleId = titleIdControl?.value;
-          if (currentTitleId) {
-            await this.getAuthorPublisherList(currentTitleId);
-          }
-          titleIdControl?.valueChanges.subscribe(
-            async (value: number | null) => {
-              if (value) {
-                await this.getAuthorPublisherList(value);
-                authorControl?.enable();
-                publisherControl?.enable();
-              } else {
-                authorControl?.disable();
-                publisherControl?.disable();
-                authorControl?.reset();
-              }
-            }
-          );
-
-          authorControl?.valueChanges.subscribe((value) => {
-            if (value) {
-              publisherControl?.disable();
-              publisherControl?.reset();
-            } else {
-              publisherControl?.enable();
-            }
-          });
-          publisherControl?.valueChanges.subscribe((value) => {
-            if (value) {
-              authorControl?.disable();
-              authorControl?.reset();
-            } else {
-              authorControl?.enable();
-            }
-          });
-        }
-      );
     });
   }
   data = inject<Inputs>(MAT_DIALOG_DATA);
@@ -151,21 +110,18 @@ export class AddRoyalty {
     return this.addRoyaltyForm.get('royalties') as FormArray;
   }
   async getAuthorPublisherList(titleId: number) {
-    if (titleId) {
-      const authorFilter: AuthorFilter = {
-        titleId: titleId,
-      };
-      const publisherFilter: PublisherFilter = {};
-      const { items: authors } = await this.authorService.getAuthors(
-        authorFilter
-      );
-      const { items: publishers } = await this.publisherService.getPublishers(
-        publisherFilter
-      );
-      this.authorList.set(authors);
-      this.publisherList.set(publishers);
-    }
+    const authorFilter: AuthorFilter = { titleId };
+    const publisherFilter: PublisherFilter = {};
+
+    const [{ items: authors }, { items: publishers }] = await Promise.all([
+      this.authorService.getAuthors(authorFilter),
+      this.publisherService.getPublishers(publisherFilter),
+    ]);
+
+    this.authorList.set(authors);
+    this.publisherList.set(publishers);
   }
+
   addRoyalty() {
     const newRoyalty = new FormGroup(
       {
@@ -185,35 +141,16 @@ export class AddRoyalty {
       { validators: this.authorOrPublisherRequired }
     );
 
-    const authorControl = newRoyalty.get('authorId');
-    const publisherControl = newRoyalty.get('publisherId');
-
-    authorControl?.valueChanges.subscribe((value) => {
-      if (value) {
-        publisherControl?.disable();
-        publisherControl?.reset();
-      } else {
-        publisherControl?.enable();
-      }
-    });
-
-    publisherControl?.valueChanges.subscribe((value) => {
-      if (value) {
-        authorControl?.disable();
-        authorControl?.reset();
-      } else {
-        authorControl?.enable();
-      }
-    });
-
     this.royaltiesArray.push(newRoyalty);
   }
   onSubmit() {
     if (this.addRoyaltyForm.valid) {
+      const addFormData = this.addRoyaltyForm.get('royalties')?.value;
+      this.data.onSubmit(addFormData as CreateRoyalty[]);
     }
   }
 }
 interface Inputs {
-  onSubmit: () => void;
+  onSubmit: (royaltiesArray: CreateRoyalty[]) => void;
   onClose: () => void;
 }

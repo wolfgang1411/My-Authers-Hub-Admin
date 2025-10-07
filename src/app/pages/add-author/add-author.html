@@ -188,10 +188,39 @@
       <button class="!bg-primary mt-8 !text-white" matButton matStepperPrevious>
         Back
       </button>
-      <button class="!bg-primary mt-8 !text-white" matButton (click)="onSubmit()">
+      <button class="!bg-primary mt-8 !text-white" matButton matStepperNext>
+        Next
+      </button>
+    </div>
+  </mat-step>
+  <mat-step
+    [stepControl]="authorSocialMediaGroup"
+    class="!text-accent !p-0"
+    label="Add your social media links"
+  >
+    <form [formGroup]="authorSocialMediaGroup">
+      <div formArrayName="socialMedia" class="grid grid-cols-2 gap-4 my-4">
+        @for (group of socialMediaArray.controls; track $index) {
+        <div [formGroupName]="$index">
+          <app-social-media
+            [socialMediaGroup]="group"
+            [socialMediaArray]="socialMediaArray"
+          ></app-social-media>
+        </div>
+        }
+      </div>
+    </form>
+    <div class="flex flex-row gap-2">
+      <button class="!bg-primary mt-8 !text-white" matButton matStepperPrevious>
+        Back
+      </button>
+      <button
+        class="!bg-primary mt-8 !text-white"
+        matButton
+        (click)="onSubmit()"
+      >
         Submit
       </button>
     </div>
   </mat-step>
-
 </mat-stepper>

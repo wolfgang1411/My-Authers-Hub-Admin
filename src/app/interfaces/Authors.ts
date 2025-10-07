@@ -3,6 +3,7 @@ import { Address } from './Address';
 import { BankDetails } from './BankDetails';
 import { Media } from './Media';
 import { Royalty } from './Royalty';
+import { socialMediaGroup } from './SocialMedia';
 import { Title } from './Titles';
 import { User } from './user';
 
@@ -24,6 +25,7 @@ export interface Author {
   Royalty: Royalty[];
   signupCode?: string;
   user: User;
+  socialMedias: socialMediaGroup[];
 }
 
 export interface AuthorResponse {

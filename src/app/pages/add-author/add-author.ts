@@ -4,6 +4,9 @@ import {
   Validators,
   FormsModule,
   ReactiveFormsModule,
+  FormGroup,
+  FormArray,
+  FormControl,
 } from '@angular/forms';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import {
@@ -28,6 +31,12 @@ import Swal from 'sweetalert2';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Authors } from '../authors/authors';
 import { InviteService } from '../../services/invite';
+import {
+  socialMediaGroup,
+  SocialMediaType,
+} from '../../interfaces/SocialMedia';
+import { SocialMediaService } from '../../services/social-media-service';
+import { SocialMedia } from '../social-media/social-media';
 
 @Component({
   selector: 'app-add-author',
@@ -43,6 +52,7 @@ import { InviteService } from '../../services/invite';
     MatSelectModule,
     MatCardModule,
     UploadFile,
+    SocialMedia,
   ],
   templateUrl: './add-author.html',
   styleUrl: './add-author.css',
@@ -54,7 +64,8 @@ export class AddAuthor {
     private bankDetailService: BankDetailService,
     private route: ActivatedRoute,
     private inviteService: InviteService,
-    private router: Router
+    private router: Router,
+    private socialService: SocialMediaService
   ) {
     const breakpointObserver = inject(BreakpointObserver);
     this.stepperOrientation = breakpointObserver
@@ -90,6 +101,21 @@ export class AddAuthor {
       this.authorFormGroup.controls.email.patchValue(invite.email);
       this.authorFormGroup.controls.email.disable();
     }
+    Object.values(SocialMediaType).forEach((type) => {
+      this.socialMediaArray.push(
+        new FormGroup({
+          type: new FormControl<SocialMediaType | null>(type),
+          url: new FormControl<string | null>(
+            '',
+            Validators.pattern(/^https?:\/\/.+/)
+          ),
+          name: new FormControl<string | null>(''),
+          autherId: new FormControl<number | null>(null),
+          publisherId: new FormControl<number | null>(null),
+          id: new FormControl<number | null>(null),
+        })
+      );
+    });
   }
 
   private _formBuilder = inject(FormBuilder);
@@ -123,6 +149,24 @@ export class AddAuthor {
     pincode: ['', Validators.required],
     signupCode: <string | null>null,
   });
+  authorSocialMediaGroup = new FormGroup({
+    socialMedia: new FormArray<
+      FormGroup<{
+        type: FormControl<SocialMediaType | null>;
+        url: FormControl<string | null>;
+        publisherId: FormControl<number | null>;
+        name: FormControl<string | null>;
+        autherId: FormControl<number | null>;
+        id: FormControl<number | null>;
+      }>
+    >([]),
+  });
+
+  get socialMediaArray(): FormArray<socialMediaGroupType> {
+    return this.authorSocialMediaGroup.get(
+      'socialMedia'
+    ) as FormArray<socialMediaGroupType>;
+  }
 
   prefillForm(authorDetails: Author) {
     this.authorFormGroup.patchValue({
@@ -148,6 +192,22 @@ export class AddAuthor {
       ifsc: authorDetails.bankDetails?.[0]?.ifsc,
       panCardNo: authorDetails.bankDetails?.[0]?.panCardNo,
       accountType: authorDetails.bankDetails?.[0]?.accountType,
+    });
+    const socialMediaArray = this.authorSocialMediaGroup.get(
+      'socialMedia'
+    ) as FormArray<socialMediaGroupType>;
+    socialMediaArray.clear();
+    authorDetails.socialMedias?.forEach((media) => {
+      socialMediaArray.push(
+        new FormGroup({
+          type: new FormControl<SocialMediaType | null>(media.type),
+          url: new FormControl<string | null>(media.url),
+          publisherId: new FormControl<number | null>(media.publisherId),
+          name: new FormControl<string | null>(media.name),
+          autherId: new FormControl<number | null>(media.autherId),
+          id: new FormControl<number | null>(media.id),
+        })
+      );
     });
   }
 
@@ -176,6 +236,18 @@ export class AddAuthor {
         await this.bankDetailService.createOrUpdateBankDetail(
           authorBankData as createBankDetails
         );
+        const socialMediaData = this.socialMediaArray.controls
+          .map((group) => ({
+            ...group.value,
+            publisherId: response.id,
+          }))
+          .filter((item) => item.url?.trim());
+        if (socialMediaData.length > 0) {
+          await this.socialService.createOrUpdateSocialMediaLinks(
+            socialMediaData as socialMediaGroup[]
+          );
+          console.log(socialMediaData, 'social media');
+        }
       }
 
       let html = 'You have successfully created author';
@@ -207,3 +279,11 @@ export class AddAuthor {
     }
   }
 }
+type socialMediaGroupType = FormGroup<{
+  type: FormControl<SocialMediaType | null>;
+  url: FormControl<string | null>;
+  publisherId: FormControl<number | null>;
+  name: FormControl<string | null>;
+  autherId: FormControl<number | null>;
+  id: FormControl<number | null>;
+}>;

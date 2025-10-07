@@ -27,6 +27,7 @@
             <mat-select
               formControlName="titleId"
               (selectionChange)="getAuthorPublisherList($event.value)"
+              required
             >
               <mat-option [value]="null" disabled>{{
                 "selecttitle" | translate
@@ -36,26 +37,31 @@
               }
             </mat-select>
           </mat-form-field>
-          <mat-form-field class="flex-1">
-            <mat-label>
-              {{ "selectauthor" | translate }}
-            </mat-label>
-            <mat-select formControlName="authorId">
-              <mat-option [value]="null" disabled>{{
-                "selectauthor" | translate
-              }}</mat-option>
-              @for (item of authorList(); track $index) {
-              <mat-option [value]="item.id">{{
-                item.user.firstName + " " + item.user.lastName
-              }}</mat-option>
+          <mat-form-field>
+            <mat-label>{{ "selectauthor" | translate }}</mat-label>
+            <mat-select
+              formControlName="authorId"
+              [required]="!item.get('publisherId')?.value"
+            >
+              <mat-option [value]="null" disabled>
+                {{ "selectauthor" | translate }}
+              </mat-option>
+              @for (item of authorList(); track item.id) {
+              <mat-option [value]="item.id">
+                {{ item.user.firstName + " " + item.user.lastName }}
+              </mat-option>
               }
             </mat-select>
           </mat-form-field>
+
           <mat-form-field class="flex-1">
             <mat-label>
               {{ "selectpublisher" | translate }}
             </mat-label>
-            <mat-select formControlName="publisherId">
+            <mat-select
+              formControlName="publisherId"
+              [required]="!item.get('authorId')?.value"
+            >
               <mat-option [value]="null" disabled>{{
                 "selectpublisher" | translate
               }}</mat-option>

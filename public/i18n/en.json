@@ -235,8 +235,7 @@
   "Hardbound_National": "Hard-Bound National",
   "National": "National",
   "National_Prime": "National Prime",
-  "publish": "Publish"
-  "totalroyalties": "Total royalties",
+  "publish": "Publish",
   "royalties":"Royalties",
   "addroyalty":"Add Royalty",
   "selectauthor":"Select Author",
@@ -248,5 +247,6 @@
   "createdby":"Created By",
   "isbnPrint":"ISBN Print",
   "isbnEbook":"ISBN EBook",
-  "selectisbntype":"Select ISBN Type"
+  "selectisbntype":"Select ISBN Type",
+  "earnings":"Earnings"
 }

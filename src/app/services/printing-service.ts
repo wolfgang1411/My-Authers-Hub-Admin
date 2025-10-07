@@ -10,9 +10,7 @@ import {
   TitlePrintingCostPayload,
   TitlePrintingCostResponse,
 } from '../interfaces';
-import { TitlePrinting } from '../components/title-printing/title-printing';
 import { Logger } from './logger';
-import path from 'path';
 
 @Injectable({
   providedIn: 'root',

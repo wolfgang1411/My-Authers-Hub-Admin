@@ -1,5 +1,6 @@
 import { FormControl } from '@angular/forms';
 import { ChannalType } from './Titles';
+import { Earnings } from './Earnings';
 
 export interface Royalty {
   channal: ChannalType;
@@ -8,6 +9,7 @@ export interface Royalty {
   authorId?: number;
   publisherId?: number;
   titleId: number;
+  earnings: Earnings[];
 }
 
 export interface CreateRoyalty {
@@ -23,6 +25,7 @@ export interface CreateRoyalty {
   ebook_mah: number | null;
   ebook_third_party: number | null;
   name?: string | null;
+  totalEarnings: number;
 }
 
 export interface UpdateRoyalty extends Partial<CreateRoyalty> {

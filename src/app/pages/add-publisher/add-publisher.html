@@ -181,25 +181,53 @@
         <mat-form-field>
           <mat-label>{{ "panCardNo" | translate }}</mat-label>
           <input matInput formControlName="panCardNo" placeholder="" required />
-          </mat-form-field>
+        </mat-form-field>
         <mat-form-field>
-  <mat-label>{{ "accountType" | translate }}</mat-label>
+          <mat-label>{{ "accountType" | translate }}</mat-label>
           <mat-select formControlName="accountType" placeholder="" required>
-    <mat-option value="SAVING">SAVING</mat-option>
+            <mat-option value="SAVING">SAVING</mat-option>
             <mat-option value="CURRENT">CURRENT</mat-option>
-  </mat-select>
-</mat-form-field>
-        
+          </mat-select>
+        </mat-form-field>
       </div>
     </form>
     <div class="flex flex-row gap-2">
       <button class="!bg-primary mt-8 !text-white" matButton matStepperPrevious>
         Back
       </button>
-      <button class="!bg-primary mt-8 !text-white" matButton  (click)="onSubmit()">
+      <button class="!bg-primary mt-8 !text-white" matButton matStepperNext>
+        Next
+      </button>
+    </div>
+  </mat-step>
+  <mat-step
+    [stepControl]="publisherSocialMediaGroup"
+    class="!text-accent !p-0"
+    label="Add your social media links"
+  >
+    <form [formGroup]="publisherSocialMediaGroup">
+      <div formArrayName="socialMedia" class="grid grid-cols-2 gap-4 my-4">
+        @for (group of socialMediaArray.controls; track $index) {
+        <div [formGroupName]="$index">
+          <app-social-media
+            [socialMediaGroup]="group"
+            [socialMediaArray]="socialMediaArray"
+          ></app-social-media>
+        </div>
+        }
+      </div>
+    </form>
+    <div class="flex flex-row gap-2">
+      <button class="!bg-primary mt-8 !text-white" matButton matStepperPrevious>
+        Back
+      </button>
+      <button
+        class="!bg-primary mt-8 !text-white"
+        matButton
+        (click)="onSubmit()"
+      >
         Submit
       </button>
     </div>
   </mat-step>
-
 </mat-stepper>
