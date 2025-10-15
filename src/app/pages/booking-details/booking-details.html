@@ -1,59 +1,264 @@
-<div class="booking-details flex flex-col gap-4 h-full">
-  <h1 class="flex justify-between bg-primary p-4 rounded-md text-white">
-    <span> {{ "orderid" | translate }}: #{{ bookingId }} </span>
-    <span>{{ booking()?.createdAt | myDate }}</span>
-  </h1>
+<div class="booking-details flex flex-col gap-6 h-full p-4">
+  <div class="flex justify-between items-center">
+    <h2 class="text-xl heading !text-primary">
+      {{ "customerbookingdetails" | translate }}
+    </h2>
+    <app-back></app-back>
+  </div>
+  <div
+    class="flex justify-between items-center bg-primary text-white p-4 rounded-md shadow"
+  >
+    <div>
+      <h2 class="text-lg font-semibold">
+        {{ "invoice" | translate }}: #{{ bookingId }}
+      </h2>
+      <p class="text-sm">
+        {{ "issuedon" | translate }}:
+        {{ booking()?.createdAt | date : "mediumDate" }} <br />
+        {{ "dueon" | translate }}: {{ today | date : "mediumDate" }}
+      </p>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="flex flex-col gap-4">
+      <div class="bg-white shadow-md rounded-md p-4">
+        <h3
+          class="bg-primary text-white p-2 rounded text-md font-medium flex items-center gap-2"
+        >
+          <mat-icon>menu_book</mat-icon>
+          {{ "bookinformation" | translate }}
+        </h3>
 
-  <mat-list class="bg-white shadow-md rounded-md divide-y">
-    <!-- Title -->
-    <mat-list-item class="flex justify-between items-center">
-      <span class="font-medium">{{ "title" | translate }}</span>
-      <span>{{ booking()?.title?.name }}</span>
-    </mat-list-item>
+        <div class="flex gap-4 mt-4">
+          <img
+            src="images/The Art of Writing Design.png"
+            alt="Book Cover"
+            class="w-40 h-40 object-cover rounded shadow"
+          />
 
-    <!-- Booking Date -->
-    <mat-list-item class="flex justify-between items-center">
-      <span class="font-medium">{{ "bookingdate" | translate }}</span>
-      <span>{{ booking()?.bookingDate | date : "mediumDate" }}</span>
-    </mat-list-item>
+          <div class="flex flex-col gap-1">
+            <h3 class="text-lg font-semibold">{{ booking()?.title?.name }}</h3>
+            <p class="text-sm text-gray-600">
+              {{ booking()?.title?.shortDescription }}
+            </p>
+            @if(booking()?.type === 'PRINT') {
 
-    <!-- Customer Name -->
-    <mat-list-item class="flex justify-between items-center">
-      <span class="font-medium">{{ "customername" | translate }}</span>
-      <span
-        >{{ booking()?.userDetails?.firstName }}
-        {{ booking()?.userDetails?.lastName }}</span
+            <p class="text-xs text-green-700 mt-2">
+              {{ "ISBNPrint" | translate }}: {{ title()?.isbnPrint }}
+            </p>
+            } @if(booking()?.type === 'EBOOK') {
+
+            <p class="text-xs text-green-700">
+              {{ "ISBNEBook" | translate }}: {{ title()?.isbnEbook }}
+            </p>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white shadow-md rounded-md p-4">
+        <h3
+          class="bg-primary text-white p-2 rounded text-md font-medium flex items-center gap-2"
+        >
+          <mat-icon>event_note</mat-icon>
+          {{ "bookingdetails" | translate }}
+        </h3>
+
+        <mat-list class="divide-y mt-2">
+          <mat-list-item class="flex justify-between items-center">
+            <span class="font-medium">{{ "bookingdate" | translate }}</span>
+            <span>{{ booking()?.bookingDate | date : "mediumDate" }}</span>
+          </mat-list-item>
+          <mat-list-item class="flex justify-between items-center">
+            <span class="font-medium">{{ "bookformat" | translate }}</span>
+            <span>{{ booking()?.type }}</span>
+          </mat-list-item>
+          <mat-list-item class="flex justify-between items-center">
+            <span class="font-medium">{{ "channal" | translate }}</span>
+            <span>{{ booking()?.channal | translate }}</span>
+          </mat-list-item>
+          <mat-list-item class="flex justify-between items-center">
+            <span class="font-medium">{{ "customername" | translate }}</span>
+            <span>
+              {{ booking()?.userDetails?.firstName }}
+              {{ booking()?.userDetails?.lastName }}
+            </span>
+          </mat-list-item>
+
+          <mat-list-item class="flex justify-between items-center">
+            <span class="font-medium">{{ "totalamount" | translate }}</span>
+            <span>{{ booking()?.totalAmount | currency : "INR" }}</span>
+          </mat-list-item>
+
+          <mat-list-item class="flex justify-between items-center">
+            <span class="font-medium">{{ "status" | translate }}</span>
+            <span
+              class="px-3 py-1 rounded-full text-xs font-semibold"
+              [ngClass]="{
+                'bg-green-100 text-green-800':
+                  booking()?.status === 'COMPLETED',
+                'bg-yellow-100 text-yellow-800':
+                  booking()?.status === 'PENDING',
+                'bg-red-100 text-red-800': booking()?.status === 'FAILED',
+                'bg-blue-100 text-blue-800': booking()?.status === 'CONFIRMED'
+              }"
+            >
+              {{ booking()?.status }}
+            </span>
+          </mat-list-item>
+        </mat-list>
+      </div>
+    </div>
+    <div class="flex flex-col gap-4">
+      <div class="bg-white shadow-md rounded-md p-4">
+        <h3
+          class="bg-primary text-white p-2 rounded text-md font-medium flex items-center gap-2"
+        >
+          <mat-icon>person</mat-icon>
+          {{ "clientdetails" | translate }}
+        </h3>
+
+        <div class="mt-3 text-sm flex flex-col gap-4">
+          <p class="font-semibold flex gap-2 items-center">
+            <mat-icon class="w-8">person_circle</mat-icon>
+            {{ booking()?.userDetails?.firstName }}
+            {{ booking()?.userDetails?.lastName }}
+          </p>
+          <p class="text-gray-600 flex items-center gap-2">
+            <mat-icon class="w-8">email</mat-icon>
+            {{ booking()?.userDetails?.email }}
+          </p>
+          <p class="text-gray-600 flex items-center gap-2">
+            <mat-icon class="w-8">call</mat-icon>
+            {{ booking()?.userDetails?.phoneNumber || "8249404376" }}
+          </p>
+        </div>
+      </div>
+      <div class="bg-white shadow-md rounded-md p-4">
+        <h3
+          class="bg-primary text-white p-2 rounded text-md font-medium flex items-center gap-2"
+        >
+          <mat-icon>payments</mat-icon>
+          {{ "paymentsummary" | translate }}
+        </h3>
+
+        <div class="mt-3 text-sm flex flex-col gap-2">
+          <p class="flex justify-between">
+            <span>{{ "totalamount" | translate }}:</span>
+            <span>{{ booking()?.totalAmount | currency : "INR" }}</span>
+          </p>
+
+          <p class="flex justify-between">
+            <span>{{ "amountpaid" | translate }}:</span>
+            <span>₹0.00</span>
+          </p>
+
+          <p class="flex justify-between text-red-600 font-semibold">
+            <span>{{ "amountdue" | translate }}:</span>
+            <span>{{ booking()?.totalAmount | currency : "INR" }}</span>
+          </p>
+
+          <p class="text-xs text-red-500 mt-1">
+            {{ "dueon" | translate }}: {{ today | date : "fullDate" }}
+          </p>
+        </div>
+        <div class="flex gap-4 items-center">
+          <mat-form-field class="w-full mt-4 !bg-white">
+            <mat-label>{{ "selectmodeofpayment" | translate }}</mat-label>
+            <mat-select>
+              <mat-option value="credit">Credit Card</mat-option>
+              <mat-option value="upi">UPI</mat-option>
+              <mat-option value="netbanking">Net Banking</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <button
+          mat-raised-button
+          color="primary"
+          class="w-full mt-3 !bg-primary !text-white"
+        >
+          {{ "makethepayment" | translate }}
+        </button>
+      </div>
+      <div
+        class="bg-white shadow-md rounded-md p-4 grid grid-cols-3 gap-3 justify-between"
       >
-    </mat-list-item>
-
-    <!-- Total Amount -->
-    <mat-list-item class="flex justify-between items-center">
-      <span class="font-medium">{{ "totalamount" | translate }}</span>
-      <span>{{ booking()?.totalAmount | currency : "INR" }}</span>
-    </mat-list-item>
-
-    <!-- Status -->
-    <mat-list-item class="flex justify-between items-center">
-      <span class="font-medium">{{ "status" | translate }}</span>
-      <span
-        class="px-3 py-1 rounded-full text-xs font-semibold"
-        [ngClass]="{
-          'bg-green-100 text-green-800': booking()?.status === 'COMPLETED',
-          'bg-yellow-100 text-yellow-800': booking()?.status === 'PENDING',
-          'bg-red-100 text-red-800': booking()?.status === 'FAILED',
-          'bg-blue-100 text-blue-800': booking()?.status === 'CONFIRMED'
-        }"
-      >
-        {{ booking()?.status }}
-      </span>
-    </mat-list-item>
-  </mat-list>
-
+        <button
+          mat-stroked-button
+          color="primary"
+          class="!bg-primary !text-white"
+          (click)="getInvoice(booking()?.transactions)"
+        >
+          <mat-icon>download</mat-icon>
+          {{ "download" | translate }}
+        </button>
+        <button
+          mat-raised-button
+          color="accent"
+          class="!bg-green-2 !text-white"
+        >
+          <mat-icon>share</mat-icon>
+          {{ "sendinvoice" | translate }}
+        </button>
+        <button
+          mat-stroked-button
+          color="warn"
+          class="!bg-red-colour !text-white"
+        >
+          <mat-icon>block</mat-icon>
+          {{ "cancelbooking" | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
   <div class="flex-grow">
+    <h3
+      class="bg-primary text-white p-2 rounded text-md font-medium flex items-center gap-2"
+    >
+      <mat-icon>payments</mat-icon>
+      {{ "transactions" | translate }}
+    </h3>
     @if (booking()?.transactions) {
     <app-transaction-table
       [transactions]="booking()?.transactions"
     ></app-transaction-table>
+    }
+  </div>
+  <div class="flex-grow">
+    <h3
+      class="bg-primary text-white p-2 rounded text-md font-medium flex items-center gap-2"
+    >
+      <mat-icon>payments</mat-icon>
+      {{ "royalty" | translate }}
+    </h3>
+    @if (title()?.royalties) {
+    <app-royalty-table [royalties]="title()?.royalties"> </app-royalty-table>
+    <ng-template #actionButtons let-element>
+      <div class="flex gap-2 text-sm items-center lg:flex-wrap"></div>
+    </ng-template>
+    <ng-template #royaltyCellTemplate let-element let-column="column">
+      @switch (column) { @case ('print_mah') {
+      {{ element.print_mah != null ? element.print_mah + "%" : "-" }}
+      } @case ('print_third_party') {
+      {{
+        element.print_third_party != null
+          ? element.print_third_party + "%"
+          : "-"
+      }}
+      } @case ('prime') {
+      {{ element.prime != null ? element.prime + "%" : "-" }}
+      } @case ('ebook_mah') {
+      {{ element.ebook_mah != null ? element.ebook_mah + "%" : "-" }}
+      } @case ('ebook_third_party') {
+      {{
+        element.ebook_third_party != null
+          ? element.ebook_third_party + "%"
+          : "-"
+      }}
+      } @default {
+      {{ element[column] ?? "-" }}
+      } }
+    </ng-template>
     }
   </div>
 </div>

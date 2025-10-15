@@ -122,6 +122,34 @@ export class AuthService {
     }
   }
 
+  async changePassword(oldPassword: string, newPassword: string) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post('auth/password-change', {
+          oldPassword: md5(oldPassword),
+          newPassword: md5(newPassword),
+          confirmPassword: md5(newPassword),
+          requestType: 'UPDATE',
+        })
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+  logout() {
+    if (typeof window === 'undefined') return;
+    window.localStorage.removeItem('authToken');
+    this.isUserAuthenticated.set(false);
+    this.accessToken = undefined;
+    this.tokenInfo = undefined;
+    if (this.refreshTokenTimeout) {
+      clearTimeout(this.refreshTokenTimeout);
+      this.refreshTokenTimeout = undefined;
+    }
+    window.location.href = '/login';
+  }
+
   async whoAmI() {
     try {
       return await this.server.get<User>('auth/whoami');

@@ -14,3 +14,4 @@ export * from './UploadFile';
 export * from './Booking';
 export * from './Transaction';
 export * from './Royalty';
+export * from './Intl';

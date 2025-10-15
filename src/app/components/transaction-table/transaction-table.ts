@@ -30,7 +30,7 @@ export class TransactionTable {
     // 👇 react whenever transactions() changes
     effect(() => {
       const txs = this.transactions();
-      console.log({ txs });
+      console.log({ txs }, 'finaltransacccc');
 
       this.dataSource.data =
         txs?.map((transaction) => ({
@@ -41,7 +41,7 @@ export class TransactionTable {
           orderID: '#' + transaction.id,
           orderid: '#' + transaction.id,
           email: transaction.booking?.userDetails?.email,
-          title: transaction.booking?.titleDetails?.name,
+          title: transaction.booking?.titleDetails?.name || transaction.title,
           status: transaction.status,
           amount: transaction.amount + ' INR',
           txnid: transaction.merchantTxnId || 'N/A',

@@ -84,5 +84,18 @@
       </button>
     </mat-list-item>
     }
+    <mat-list-item class="flex justify-center !p-0">
+      <button
+        class="group !w-full rounded-4xl justify-start text-primary fill-primary px-4 py-2 flex items-center gap-4 router-link hover:bg-primary hover:fill-white hover:!text-white"
+        (click)="onLogout()"
+      >
+        <mat-icon class="w-8 transition-colors group-[.bg-primary]:fill-white"
+          >logout</mat-icon
+        >
+        <span class="mt-1 transition-colors group-[.bg-primary]:!text-white">{{
+          "logout" | translate
+        }}</span>
+      </button>
+    </mat-list-item>
   </mat-nav-list>
 </mat-sidenav>

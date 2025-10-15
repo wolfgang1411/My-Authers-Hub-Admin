@@ -1,0 +1,41 @@
+<div class="bg-white rounded-lg p-4 shadow-sm">
+  <div class="flex flex-col items-center gap-3">
+    <div
+      class="w-28 h-28 rounded-full bg-gray-100 relative overflow-hidden flex items-center justify-center"
+    >
+      <img
+        src="images/user-solid-full.svg"
+        alt="avatar"
+        class="w-[30px] h-[30px] object-cover"
+      />
+      <button
+        (click)="onClickUpdateImage()"
+        class="absolute bottom-2 right-5 z-50 w-7 h-7 p-1 rounded-full bg-primary text-white flex items-center justify-center shadow"
+      >
+        <svg-icon
+          class="flex w-6 !fill-white"
+          src="images/camera-solid-full.svg"
+        ></svg-icon>
+      </button>
+    </div>
+    <div class="text-center">
+      <h3 class="text-lg font-semibold text-primary">Ritika Singh</h3>
+      <p class="text-sm text-gray-500">Super Admin</p>
+      <p class="text-sm text-gray-400 mt-1">New Delhi, India</p>
+    </div>
+    <div class="w-full flex gap-2">
+      <button
+        class="flex-1 py-2 bg-primary text-white rounded hover:bg-primary/85 cursor-pointer"
+        [routerLink]="['/profile']"
+        routerLinkActive="router-link-active"
+      >
+        Edit Profile
+      </button>
+      <button
+        class="flex-1 py-2 bg-primary-superlight border rounded hover:bg-primary-light"
+      >
+        Settings
+      </button>
+    </div>
+  </div>
+</div>

@@ -14,6 +14,8 @@ export interface Transaction {
   merchantTxnId: string;
   paymentGatewayRef: string;
   userId: number;
+  title: string;
+  invoice: string;
 }
 
 export enum TransactionStatus {

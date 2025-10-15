@@ -1011,7 +1011,7 @@ export class AddTitle {
         })
       );
 
-      await this.titleService.createManyPricing(data);
+      await this.titleService.createManyPricing(data, this.titleId);
       this.stepper()?.next();
     }
   }

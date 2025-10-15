@@ -44,15 +44,49 @@
             required
           />
         </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ "poccontactnumber" | translate }}</mat-label>
+        <mat-form-field appearance="fill">
+          <mat-label>Phone Number</mat-label>
           <input
             matInput
-            placeholder="+91-########33"
+            type="tel"
+            placeholder="+91 1234567890"
             formControlName="pocPhoneNumber"
             required
           />
+          @if(publisherFormGroup.get('pocPhoneNumber')?.hasError('required')) {
+          <mat-error> Phone number is required </mat-error>
+          } @if(publisherFormGroup.get('pocPhoneNumber')?.hasError('pattern')) {
+
+          <mat-error> Enter a valid 10-digit mobile number </mat-error>
+          }
         </mat-form-field>
+        <!-- <div class="bg-">
+          <span>{{ "poccontactnumber" | translate }}</span>
+          <ngx-intl-tel-input
+            required
+            [cssClass]="'custom-tel-input'"
+            [preferredCountries]="[
+              inputData.CountryISO.UnitedStates,
+              inputData.CountryISO.UnitedKingdom,
+              inputData.CountryISO.Denmark
+            ]"
+            [enableAutoCountrySelect]="true"
+            [enablePlaceholder]="true"
+            [searchCountryFlag]="true"
+            [searchCountryField]="[
+              inputData.SearchCountryField.Iso2,
+              inputData.SearchCountryField.Name
+            ]"
+            [selectFirstCountry]="false"
+            [selectedCountryISO]="inputData.CountryISO.India"
+            [maxLength]="15"
+            [phoneValidation]="true"
+            customPlaceholder="Mobile No"
+            name="Phone Number"
+            formControlName="pocPhoneNumber"
+            required
+          ></ngx-intl-tel-input>
+        </div> -->
         <mat-form-field>
           <mat-label>{{ "pocemailid" | translate }}</mat-label>
           <input
@@ -62,6 +96,20 @@
             required
           />
         </mat-form-field>
+        @if( publisherFormGroup.get('id')?.value === null ||
+        publisherFormGroup.get('id')?.value === undefined ) {
+
+        <mat-form-field>
+          <mat-label>{{ "createpassword" | translate }}</mat-label>
+          <input
+            matInput
+            type="password"
+            placeholder="********"
+            formControlName="userPassword"
+            required
+          />
+        </mat-form-field>
+        }
         <mat-form-field>
           <mat-label>{{ "pocdesignation" | translate }}</mat-label>
           <input

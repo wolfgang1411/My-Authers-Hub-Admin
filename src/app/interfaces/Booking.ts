@@ -1,6 +1,8 @@
 import { User } from './user';
 import { Transaction } from './Transaction';
-import { Title } from './Titles';
+import { ChannalType, Title } from './Titles';
+import { Royalties } from '../pages/royalties/royalties';
+import { Royalty } from './Royalty';
 
 export interface Booking {
   id: number;
@@ -13,7 +15,10 @@ export interface Booking {
   status: BookingStatus;
   bookingDate: string;
   transactions: Transaction[];
+  royalties: Royalty[];
   createdAt: string;
+  type: BookingType;
+  channal: ChannalType;
 }
 
 export interface BookingFilter {
@@ -34,4 +39,8 @@ export enum BookingStatus {
   CANCELLED = 'CANCELLED',
   COMPLETED = 'COMPLETED',
   FAILED = 'FAILED',
+}
+export enum BookingType {
+  PRINT = 'PRINT',
+  EBOOK = 'EBOOK',
 }

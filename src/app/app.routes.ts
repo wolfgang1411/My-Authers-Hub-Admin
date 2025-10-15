@@ -121,6 +121,12 @@ export const routes: Routes = [
     canActivate: [privateRouteGuard],
   },
   {
+    path: 'profile',
+    loadComponent: () =>
+      import('./pages/edit-profile/edit-profile').then((c) => c.EditProfile),
+    canActivate: [privateRouteGuard],
+  },
+  {
     path: 'settings',
     loadComponent: () =>
       import('./pages/settings/settings').then((c) => c.Settings),

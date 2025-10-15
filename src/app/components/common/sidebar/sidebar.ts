@@ -1,4 +1,11 @@
-import { Component, OnInit, Signal, signal, ViewChild } from '@angular/core';
+import {
+  Component,
+  Inject,
+  OnInit,
+  Signal,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { SharedModule } from '../../../modules/shared/shared-module';
 import { RouterModule } from '@angular/router';
 import { LayoutService } from '../../../services/layout';
@@ -8,6 +15,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { BreakpointObserver, LayoutModule } from '@angular/cdk/layout';
 import { MatButtonModule } from '@angular/material/button';
+import { AuthService } from '../../../services/auth';
 
 @Component({
   selector: 'app-sidebar',
@@ -26,6 +34,7 @@ import { MatButtonModule } from '@angular/material/button';
 export class Sidebar implements OnInit {
   constructor(
     private layoutService: LayoutService,
+    @Inject(AuthService) private authService: AuthService,
     private observer: BreakpointObserver
   ) {
     this.isSidemenuOpen = layoutService.isSidemenuOpen$;
@@ -87,6 +96,11 @@ export class Sidebar implements OnInit {
         icon: 'images/house-solid-full.svg',
       },
       {
+        name: 'profile',
+        url: '/profile',
+        icon: 'images/house-solid-full.svg',
+      },
+      {
         name: 'settings',
         url: '/settings',
         icon: 'images/house-solid-full.svg',
@@ -111,5 +125,9 @@ export class Sidebar implements OnInit {
     if (window.innerWidth < 768) {
       this.layoutService.toggleSidemenu(); // auto-close on mobile
     }
+  }
+  onLogout(): void {
+    console.log('logoutesjent');
+    this.authService.logout();
   }
 }

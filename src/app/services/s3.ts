@@ -13,6 +13,27 @@ export class S3Service {
     private loader: LoaderService
   ) {}
 
+  uploadMedia(file: File): Promise<{
+    name: string;
+  }> {
+    return new Promise((resolve, reject) => {
+      this.getS3Url(file.name, file.type)
+        .then((response) => {
+          this.putS3Object(response.url, file)
+            .then(() => {
+              resolve({
+                name: response.key,
+              });
+            })
+            .catch((error) => {
+              reject(error);
+            });
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    });
+  }
   async getS3Url(filename: string, mime: string) {
     try {
       return await this.loader.loadPromise(

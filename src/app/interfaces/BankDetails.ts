@@ -1,23 +1,24 @@
 export interface BankDetails {
   name: string;
-    accountNo: string;
+  accountNo: string;
   ifsc: string;
   panCardNo: string;
-  accountType: 'SAVING';
+  accountType: accountType;
   signupCode?: string;
- id?: number;
+  id?: number;
+  gstNumber: string;
 }
 
 export type accountType = 'SAVING' | 'CURRENT';
 
-export interface createBankDetails 
-    {  name: string;
-    accountNo: string;
+export interface createBankDetails {
+  name: string;
+  accountNo: string;
   ifsc: string;
   panCardNo: string;
-  accountType: 'SAVING';
+  accountType: accountType;
   signupCode?: string;
   publisherId: number;
-  autherId:number;
+  autherId: number;
   id?: number;
-    }
+}

@@ -36,6 +36,13 @@ import {
 } from '../../interfaces/SocialMedia';
 import { SocialMedia } from '../social-media/social-media';
 import { SocialMediaService } from '../../services/social-media-service';
+import { NGXIntlTel } from '../../interfaces/Intl';
+import {
+  CountryISO,
+  NgxIntlTelInputModule,
+  PhoneNumberFormat,
+  SearchCountryField,
+} from 'ngx-intl-tel-input';
 @Component({
   selector: 'app-add-publisher',
   imports: [
@@ -51,6 +58,7 @@ import { SocialMediaService } from '../../services/social-media-service';
     MatCardModule,
     UploadFile,
     SocialMedia,
+    NgxIntlTelInputModule,
   ],
   templateUrl: './add-publisher.html',
   styleUrl: './add-publisher.css',
@@ -78,6 +86,21 @@ export class AddPublisher {
   signupCode?: string;
   publisherId?: number;
   publisherDetails?: Publishers;
+  inputData = {
+    separateDialCode: true,
+    SearchCountryField: SearchCountryField,
+    CountryISO: CountryISO,
+    PhoneNumberFormat: PhoneNumberFormat,
+    preferredCountries: [
+      CountryISO.India,
+      CountryISO.Denmark,
+      CountryISO.Sweden,
+      CountryISO.Norway,
+      CountryISO.Finland,
+      CountryISO.Germany,
+    ],
+  };
+
   async ngOnInit() {
     if (this.publisherId) {
       const response = await this.publisherService.getPublisherById(
@@ -125,11 +148,15 @@ export class AddPublisher {
     id: <number | null>null,
     pocName: ['', Validators.required],
     pocEmail: ['', [Validators.required, Validators.email]],
-    pocPhoneNumber: ['', Validators.required],
+    pocPhoneNumber: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
     email: ['', [Validators.required, Validators.email]],
     name: ['', Validators.required],
     designation: ['', Validators.required],
     logo: [''],
+    userPassword: [
+      '',
+      this.signupCode ? [] : [Validators.required, Validators.minLength(8)],
+    ],
     signupCode: <string | null>null,
   });
 
@@ -221,6 +248,7 @@ export class AddPublisher {
       ...this.publisherFormGroup.value,
       pocEmail: this.publisherFormGroup.controls.pocEmail.value,
     } as any;
+
     try {
       const response = (await this.publisherService.createPublisher(
         publisherData

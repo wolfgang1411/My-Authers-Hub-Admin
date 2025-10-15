@@ -136,10 +136,10 @@ export class TitleService {
     }
   }
 
-  async createManyPricing(data: PricingCreate[]) {
+  async createManyPricing(data: PricingCreate[], titleId: number) {
     try {
       return await this.loader.loadPromise<Pricing[]>(
-        this.server.post('pricing/multi', { data })
+        this.server.post(`pricing/title/${titleId}/multi`, { data })
       );
     } catch (error) {
       this.logger.logError(error);

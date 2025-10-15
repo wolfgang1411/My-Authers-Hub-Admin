@@ -99,12 +99,10 @@ body {
 .input-field {
   @apply w-full h-[38px] px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
 }
-/* ✅ Only target your custom .input-field, not Material */
 .input-field {
   @apply text-text-secondary text-sm bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
 }
 
-/* ✅ Restore Material input defaults */
 .mat-input-element {
   color: var(--text-primary) !important;
   background: transparent !important;
@@ -120,9 +118,6 @@ select::placeholder {
   @apply text-text-placeholder;
 }
 
-/* input:focus {
-  @apply ring-2 ring-primary;
-} */
 .icon {
   @apply w-full h-full block fill-inherit;
 }
@@ -163,9 +158,6 @@ select::placeholder {
 .mat-horizontal-content-container {
   @apply !p-0;
 }
-/* .mat-step-header {
-  @apply !p-0;
-} */
 
 .mat-stepper-horizontal-line {
   @apply !m-0;
@@ -191,4 +183,25 @@ mat-label {
 
 .text-primary {
   color: var(--color-primary);
+}
+.mdc-switch--selected .mdc-switch__track::after {
+  @apply !bg-primary;
+}
+
+.mdc-text-field--outlined:not(.mdc-text-field--disabled)
+  .mat-mdc-notch-piece:first-child {
+  border-right: 0 !important;
+}
+.custom-tel-input {
+  border-radius: 5px;
+  width: 100%;
+  border-radius: 5px;
+  outline: none;
+  border: none;
+  /* border: 1px solid rgba(#, 0.3);
+  background-color: ; */
+  padding: 7px 20px;
+  display: flex;
+  min-height: 38px;
+  align-items: center;
 }

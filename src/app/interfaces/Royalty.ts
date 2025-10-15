@@ -10,6 +10,7 @@ export interface Royalty {
   publisherId?: number;
   titleId: number;
   earnings: Earnings[];
+  titlename: string;
 }
 
 export interface CreateRoyalty {
@@ -25,6 +26,7 @@ export interface CreateRoyalty {
   ebook_mah: number | null;
   ebook_third_party: number | null;
   name?: string | null;
+  titlename?: string;
   totalEarnings: number;
 }
 

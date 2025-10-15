@@ -1,0 +1,426 @@
+<div class="container mx-auto p-6">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div
+      class="md:col-span-1 bg-white rounded-lg shadow p-6 flex flex-col gap-4"
+    >
+      <div class="flex flex-col items-center gap-4">
+        <div
+          class="relative w-30 h-30 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden"
+        >
+          <img
+            class="object-cover w-[60px] h-[60px]"
+            [src]="
+              loggedInUser()?.url !== null
+                ? loggedInUser()?.url
+                : 'images/user-solid-full.svg'
+            "
+          />
+          <button
+            type="button"
+            class="absolute bottom-3 right-5 bg-primary rounded-full w-7 h-7 flex items-center justify-center shadow-md p-1 hover:bg-purple/90"
+            (click)="onClickUpdateImage()"
+          >
+            <svg-icon
+              class="flex w-6 !fill-white"
+              src="images/camera-solid-full.svg"
+            ></svg-icon>
+          </button>
+        </div>
+        <div class="flex flex-col items-center">
+          <h2 class="text-lg font-semibold">
+            {{ loggedInUser()?.firstName + " " + loggedInUser()?.lastName }}
+          </h2>
+          <p class="text-sm text-gray-500">{{ loggedInUser()?.accessLevel }}</p>
+          @if(this.userAddress()?.address || this.userAddress()?.city ||
+          this.userAddress()?.state || this.userAddress()?.country ) {
+          <p class="text-sm text-gray-500">{{ completeAddress() }}</p>
+          }
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3 mt-2">
+        <button mat-flat-button color="primary" class="w-full !bg-primary">
+          <mat-icon>edit</mat-icon>
+          <span class="ml-2">Edit Profile</span>
+        </button>
+        @if(this.loggedInUser()?.accessLevel !== 'SUPERADMIN') {
+        <button
+          mat-flat-button
+          color="accent"
+          class="w-full !bg-primary"
+          (click)="showTicketForm.set(!showTicketForm())"
+        >
+          <mat-icon>support_agent</mat-icon>
+          <span class="ml-2">Raise Ticket / Other Details</span>
+        </button>
+
+        }
+        <button
+          mat-flat-button
+          color="warn"
+          class="w-full !bg-primary"
+          (click)="deactivateAccount()"
+        >
+          <mat-icon>toggle_off</mat-icon>
+          <span class="ml-2">Deactivate</span>
+        </button>
+
+        <button
+          mat-flat-button
+          class="w-full !bg-primary"
+          (click)="deleteAccount()"
+        >
+          <mat-icon>delete_forever</mat-icon>
+          <span class="ml-2">Delete Account</span>
+        </button>
+      </div>
+
+      <div class="mt-4 border-t pt-4">
+        <h3 class="text-sm font-medium text-gray-600 mb-2">Contact</h3>
+        <ul class="text-sm text-gray-700 space-y-1">
+          <li class="flex items-center gap-2">
+            <mat-icon>email</mat-icon> chandresh@example.com
+          </li>
+          <li class="flex items-center gap-2">
+            <mat-icon>phone</mat-icon> +91 9876543210
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="md:col-span-2 space-y-6">
+      <section class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold">
+            {{ "personaldetails" | translate }}
+          </h3>
+          <div class="flex items-center gap-2">
+            <button
+              mat-icon-button
+              (click)="isEditing.set(!isEditing())"
+              aria-label="toggle edit"
+            >
+              <mat-icon>{{
+                isEditing() ? "visibility_off" : "visibility"
+              }}</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <form
+          [formGroup]="personalForm"
+          (ngSubmit)="updateUserProfile()"
+          class="grid grid-cols-1 md:grid-cols-2 gap-4"
+        >
+          <mat-form-field class="w-full">
+            <mat-label>First name</mat-label>
+            <input
+              matInput
+              formControlName="firstName"
+              placeholder="First name"
+            />
+            <mat-icon matSuffix>person</mat-icon>
+            @if(personalForm.controls.firstName.invalid &&
+            personalForm.controls.firstName.touched) {
+
+            <mat-hint class="text-red-600">Required</mat-hint>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="w-full">
+            <mat-label>Last name</mat-label>
+            <input
+              matInput
+              formControlName="lastName"
+              placeholder="Last name"
+            />
+            <mat-icon matSuffix>person_outline</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field class="w-full">
+            <mat-label>Email</mat-label>
+            <input
+              matInput
+              type="email"
+              formControlName="email"
+              placeholder="you@example.com"
+            />
+            <mat-icon matSuffix>email</mat-icon>
+            @if( personalForm.controls.email.invalid &&
+            personalForm.controls.email.touched) {
+
+            <mat-hint class="text-red-600">Enter a valid email</mat-hint>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="w-full">
+            <mat-label>Phone</mat-label>
+            <input
+              matInput
+              formControlName="phoneNumber"
+              placeholder="+91 9xxxxxxxxx"
+            />
+            <mat-icon matSuffix>phone</mat-icon>
+          </mat-form-field>
+
+          <div class="md:col-span-2 flex gap-3 justify-end mt-2">
+            <button
+              mat-flat-button
+              class="!bg-primary !text-white cursor-pointer disabled:opacity-50"
+              color="primary"
+              [disabled]="personalForm.invalid"
+              type="submit"
+            >
+              <mat-icon>save</mat-icon>
+              <span class="ml-2">Save</span>
+            </button>
+            <button
+              mat-flat-button
+              type="button"
+              class="!bg-red-colour cursor-pointer"
+              (click)="personalForm.reset()"
+            >
+              <mat-icon>refresh</mat-icon>
+              <span class="ml-2">Reset</span>
+            </button>
+          </div>
+        </form>
+      </section>
+      @if(showTicketForm()) {
+
+      <section class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold">Additional Details / Ticket</h3>
+          <button mat-icon-button (click)="showTicketForm.set(false)">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <form
+          [formGroup]="ticketForm"
+          (ngSubmit)="raiseUserTicket()"
+          class="grid grid-cols-1 md:grid-cols-3 gap-4"
+        >
+          <mat-form-field class="w-full">
+            <mat-label>Address</mat-label>
+            <input matInput formControlName="address" />
+          </mat-form-field>
+
+          <mat-form-field class="w-full">
+            <mat-label>City</mat-label>
+            <input matInput formControlName="city" />
+          </mat-form-field>
+
+          <mat-form-field class="w-full">
+            <mat-label>State</mat-label>
+            <input matInput formControlName="state" />
+          </mat-form-field>
+
+          <mat-form-field class="w-full">
+            <mat-label>Country</mat-label>
+            <input matInput formControlName="country" />
+          </mat-form-field>
+
+          <mat-form-field class="w-full">
+            <mat-label>Pincode</mat-label>
+            <input matInput formControlName="pincode" />
+          </mat-form-field>
+
+          <mat-form-field class="w-full">
+            <mat-label>BANK Name</mat-label>
+            <input matInput formControlName="bankName" />
+          </mat-form-field>
+
+          <mat-form-field class="w-full">
+            <mat-label>Account No</mat-label>
+            <input matInput formControlName="accountNo" />
+          </mat-form-field>
+
+          <mat-form-field class="w-full">
+            <mat-label>IFSC</mat-label>
+            <input matInput formControlName="ifsc" />
+          </mat-form-field>
+
+          <mat-form-field class="w-full">
+            <mat-label>PAN</mat-label>
+            <input matInput formControlName="panCardNo" />
+          </mat-form-field>
+
+          <mat-form-field class="w-full">
+            <mat-label>GST Number</mat-label>
+            <input matInput formControlName="gstNumber" />
+            @if(ticketForm.controls.gstNumber.invalid &&
+            ticketForm.controls.gstNumber.hasError('gstNumber') &&
+            ticketForm.controls.gstNumber.touched) {
+            <mat-hint class="text-red-600">
+              {{ ticketForm.get("gstNumber")?.getError("gstNumber") }}
+            </mat-hint>
+            }
+          </mat-form-field>
+
+          @if(loggedInUser()?.accessLevel === 'PUBLISHER') {
+
+          <mat-form-field class="w-full">
+            <mat-label>Pubisher Name</mat-label>
+            <input matInput formControlName="publisherName" />
+          </mat-form-field>
+          <mat-form-field class="w-full">
+            <mat-label>Pubisher Email</mat-label>
+            <input matInput formControlName="publisherEmail" />
+          </mat-form-field>
+
+          } @if(loggedInUser()?.accessLevel === 'AUTHER'){
+          <mat-form-field class="w-full">
+            <mat-label>UserName</mat-label>
+            <input matInput formControlName="authorUsername" />
+          </mat-form-field>
+          <mat-form-field class="w-full">
+            <mat-label>About</mat-label>
+            <textarea matInput row="4" formControlName="authorAbout"></textarea>
+          </mat-form-field>
+
+          }
+
+          <div class="md:col-span-2 flex gap-3 justify-end mt-2">
+            <button
+              mat-flat-button
+              class="!bg-primary !text-white cursor-pointer"
+              color="primary"
+              type="submit"
+            >
+              <mat-icon>send</mat-icon>
+              <span class="ml-2 text-white">Submit Ticket</span>
+            </button>
+            <button
+              mat-flat-button
+              type="button"
+              class="!bg-red-colour cursor-pointer"
+              (click)="ticketForm.reset()"
+            >
+              <mat-icon>refresh</mat-icon>
+              <span class="ml-2">Reset</span>
+            </button>
+          </div>
+        </form>
+      </section>
+      }
+      <section class="bg-white rounded-lg shadow p-6 grid md:grid-cols-2 gap-6">
+        <div>
+          <h4 class="text-md font-medium mb-3">Notifications</h4>
+          <div class="flex flex-col gap-2">
+            <mat-slide-toggle
+              [checked]="notifications.email()"
+              (change)="notifications.email.set($event.checked)"
+            >
+              Email Notifications
+            </mat-slide-toggle>
+            <mat-slide-toggle
+              [checked]="notifications.sms()"
+              (change)="notifications.sms.set($event.checked)"
+            >
+              SMS Notifications
+            </mat-slide-toggle>
+            <mat-slide-toggle
+              [checked]="notifications.push()"
+              (change)="notifications.push.set($event.checked)"
+            >
+              Push Notifications
+            </mat-slide-toggle>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-md font-medium mb-3">Privacy & Security</h4>
+          <div class="flex flex-col gap-2">
+            <mat-slide-toggle
+              [checked]="privacy.showProfilePublic()"
+              (change)="privacy.showProfilePublic.set($event.checked)"
+            >
+              Show profile publicly
+            </mat-slide-toggle>
+            <mat-slide-toggle
+              [checked]="privacy.twoFactorAuth()"
+              (change)="privacy.twoFactorAuth.set($event.checked)"
+            >
+              Two-factor authentication
+            </mat-slide-toggle>
+          </div>
+        </div>
+      </section>
+      <section class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold">Change Password</h3>
+          <div class="text-sm text-gray-500">
+            Password must be at least 8 characters
+          </div>
+        </div>
+
+        <form
+          [formGroup]="passwordForm"
+          (ngSubmit)="changePassword()"
+          class="grid grid-cols-1 md:grid-cols-3 gap-4"
+        >
+          <mat-form-field class="w-full md:col-span-1">
+            <mat-label>Current Password</mat-label>
+            <input
+              id="oldPassword"
+              matInput
+              type="password"
+              formControlName="oldPassword"
+            />
+          </mat-form-field>
+
+          <mat-form-field class="w-full md:col-span-1">
+            <mat-label>New Password</mat-label>
+            <input
+              id="newPassword"
+              matInput
+              type="password"
+              formControlName="newPassword"
+            />
+            <mat-icon matSuffix (click)="openPassword()" class="cursor-pointer"
+              >lock</mat-icon
+            >
+            @if(passwordForm.controls.newPassword.invalid &&
+            passwordForm.controls.newPassword.touched) {
+            <mat-hint class="text-red-600">
+              Password must be at least 8 characters
+            </mat-hint>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="w-full md:col-span-1">
+            <mat-label>Confirm Password</mat-label>
+            <input
+              id="confirmPassword"
+              matInput
+              type="password"
+              formControlName="confirmPassword"
+            />
+          </mat-form-field>
+
+          <div class="md:col-span-3 flex gap-3 justify-end mt-2">
+            <button
+              mat-flat-button
+              color="!bg-primary"
+              class="!bg-primary !text-white cursor-pointer disabled:opacity-50"
+              type="submit"
+              [disabled]="passwordForm.invalid"
+            >
+              <mat-icon>lock</mat-icon>
+              <span class="ml-2">Change Password</span>
+            </button>
+            <button
+              mat-flat-button
+              class="!bg-red-colour cursor-pointer"
+              type="button"
+              (click)="passwordForm.reset()"
+            >
+              <mat-icon>refresh</mat-icon>
+              <span class="ml-2">Reset</span>
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+</div>
