@@ -136,6 +136,17 @@ export const routes: Routes = [
     },
   },
   {
+    path: 'notifications',
+    loadComponent: () =>
+      import('./pages/notifications/notifications').then(
+        (c) => c.Notifications
+      ),
+    canActivate: [privateRouteGuard],
+    data: {
+      accessLevels: 'SUPERADMIN',
+    },
+  },
+  {
     path: '',
     redirectTo: '/dashboard',
     pathMatch: 'full',

@@ -105,6 +105,11 @@ export class Sidebar implements OnInit {
         url: '/settings',
         icon: 'images/house-solid-full.svg',
       },
+      {
+        name: 'notifications',
+        url: '/notifications',
+        icon: 'images/bell-solid-full.svg',
+      },
     ]);
     this.observer.observe(['(max-width: 800px)']).subscribe((res) => {
       if (res.matches) {
