@@ -91,10 +91,7 @@ import { Pricing } from '../../components/pricing/pricing';
 import { TitleDistribution } from '../../title-distribution/title-distribution';
 import { DistributionType } from '../../interfaces/Distribution';
 import Swal from 'sweetalert2';
-import {
-  getFileSizeFromS3Url,
-  getFileToBase64,
-} from '../../common/util.ts/file';
+import { getFileSizeFromS3Url, getFileToBase64 } from '../../common/utils/file';
 import * as pdfjsLib from 'pdfjs-dist';
 
 @Component({

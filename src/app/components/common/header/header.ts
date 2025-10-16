@@ -8,6 +8,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { NotificationService } from '../../../services/notifications';
 import { MyNotification } from '../../../interfaces';
+import { Notification } from '../notification/notification';
 @Component({
   selector: 'app-header',
   imports: [
@@ -16,6 +17,7 @@ import { MyNotification } from '../../../interfaces';
     MatBadgeModule,
     MatMenuModule,
     MatButtonModule,
+    Notification,
   ],
   templateUrl: './header.html',
   styleUrl: './header.css',
@@ -23,23 +25,10 @@ import { MyNotification } from '../../../interfaces';
 export class Header implements OnInit {
   constructor(
     private layoutService: LayoutService,
-    public userService: UserService,
-    private notificationService: NotificationService
-  ) {
-    this.notifications = notificationService.notifications;
-  }
-
-  notifications!: Signal<MyNotification[]>;
+    public userService: UserService
+  ) {}
 
   ngOnInit(): void {}
-
-  unreadNotifications = computed(() => {
-    const notifications = this.notifications();
-    return notifications.filter(
-      ({ markAsReadByUser }) =>
-        !markAsReadByUser.includes(this.userService.loggedInUser$()?.id || 0)
-    );
-  });
 
   fullName = computed(() => {
     return (
@@ -51,28 +40,5 @@ export class Header implements OnInit {
 
   onSidebarToggle() {
     this.layoutService.toggleSidemenu();
-  }
-
-  async onNotificationClose() {
-    const user = this.userService.loggedInUser$();
-    if (!user) return;
-
-    const unreadNotificaitons = this.notifications()
-      .filter(({ markAsReadByUser }) => !markAsReadByUser.includes(user?.id))
-      .map(({ id }) => id);
-
-    if (!unreadNotificaitons.length) return;
-
-    await this.notificationService.markAsViewed(unreadNotificaitons);
-
-    this.notificationService.notifications.update((notifications) => {
-      return notifications.map((notification) => {
-        if (unreadNotificaitons.includes(notification.id)) {
-          notification.markAsReadByUser.push(user.id);
-        }
-
-        return notification;
-      });
-    });
   }
 }

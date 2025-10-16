@@ -11,29 +11,7 @@
       <b class="text-text-heading">{{ fullName() }}</b>
     </span>
     @if (!!userService.loggedInUser$()) {
-    <div class="flex gap-4">
-      <button mat-icon-button class="w-8 h-8">
-        <svg-icon
-          class="fill-black"
-          src="images/user-solid-full.svg"
-        ></svg-icon>
-      </button>
-
-      <button
-        mat-icon-button
-        [matMenuTriggerFor]="notificationMenu"
-        matBadge="{{ unreadNotifications().length }}"
-        matBadgeColor="warn"
-        matBadgeOverlap="false"
-        class="w-8 h-8"
-      >
-        <svg-icon
-          class="fill-black"
-          src="images/bell-solid-full.svg"
-        ></svg-icon>
-      </button>
-    </div>
-
+    <app-notification></app-notification>
     }
   </nav>
 </header>
@@ -41,22 +19,3 @@
 <ng-template #placeholder>
   <span></span>
 </ng-template>
-
-<mat-menu
-  (closed)="onNotificationClose()"
-  #notificationMenu="matMenu"
-  class="w-[300px] h-[300px]"
->
-  @if (notifications().length) { @for (notification of notifications(); track
-  $index) {
-
-  <div
-    class="flex text-start flex-col gap-1 not-last:border-b items-start justify-start p-2"
-  >
-    <span class="w-full">{{ notification.title }}</span>
-    <p class="w-full">{{ notification.message }}</p>
-  </div>
-  } } @else {
-  <span class="px-4 py-2 block text-gray-500">No new notifications</span>
-  }
-</mat-menu>

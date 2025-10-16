@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { Server } from '../services/server';
 import { AuthResponse, LoginWithEmail, TokeInfo, User } from '../interfaces';
-import storage from '../common/util.ts/storage';
+import storage from '../common/utils/storage';
 import { jwtDecode } from 'jwt-decode';
 import md5 from 'md5';
 import { Logger } from './logger';

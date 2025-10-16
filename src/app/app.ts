@@ -91,7 +91,8 @@ export class App {
       if (this.isInitialNotificationFetched) return;
 
       const { items } = await this.notificationService.fetchNotifications({
-        itemsPerPage: 100,
+        itemsPerPage: 10,
+        popupSuperadmin: false,
       });
       this.notificationService.notifications.set(items);
     } catch (error) {

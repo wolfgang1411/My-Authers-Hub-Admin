@@ -1,3 +1,5 @@
+import { AccessLevel } from './user';
+
 export interface MyNotification {
   id: number;
   title: string;
@@ -14,6 +16,8 @@ export interface NotificationFilter {
   page?: number;
   sent?: boolean;
   unread?: boolean;
+  popupSuperadmin?: boolean;
+  byAccessLevel?: AccessLevel;
 }
 
 export interface CreateNotification {
