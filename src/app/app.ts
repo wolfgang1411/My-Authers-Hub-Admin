@@ -11,6 +11,7 @@ import { Layout } from './components/common/layout/layout';
 import { SharedModule } from './modules/shared/shared-module';
 import { LayoutService } from './services/layout';
 import { Loader } from './components/loader/loader';
+import { NotificationService } from './services/notifications';
 
 @Component({
   selector: 'app-root',
@@ -25,7 +26,7 @@ export class App {
     private userService: UserService,
     private layoutService: LayoutService,
     router: Router,
-    private route: ActivatedRoute
+    private notificationService: NotificationService
   ) {
     this.hydrateToken();
     router.events.subscribe((ev) => {
@@ -41,10 +42,15 @@ export class App {
 
   authEffect = effect(
     () => {
-      console.log('rinnnnn');
       if (this.authService.isUserAuthenticated$()) {
         this.setSidebarVisibility(window.location.pathname);
         this.setHeaderVisibility(window.location.pathname);
+
+        const token = this.authService.getAuthToken().access_token;
+        if (token) {
+          this.fetchInitialNotifications();
+          this.notificationService.listenToNotifications(token);
+        }
       } else {
         this.layoutService.changeHeaderVisibility(false);
         this.layoutService.changeSidebarVisibility(false);
@@ -74,6 +80,20 @@ export class App {
         return;
       }
       this.userService.setLoggedInUser(user);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  isInitialNotificationFetched = false;
+  async fetchInitialNotifications() {
+    try {
+      if (this.isInitialNotificationFetched) return;
+
+      const { items } = await this.notificationService.fetchNotifications({
+        itemsPerPage: 100,
+      });
+      this.notificationService.notifications.set(items);
     } catch (error) {
       console.log(error);
     }

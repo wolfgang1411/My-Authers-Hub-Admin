@@ -15,3 +15,4 @@ export * from './Booking';
 export * from './Transaction';
 export * from './Royalty';
 export * from './Intl';
+export * from './Notification';

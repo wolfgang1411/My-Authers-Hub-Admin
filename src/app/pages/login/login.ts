@@ -4,12 +4,11 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth';
 import { UserService } from '../../services/user';
 import { Router } from '@angular/router';
-import {MatButton, MatButtonModule} from '@angular/material/button';    
-
+import { MatButton, MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-login',
-  imports: [SharedModule, ReactiveFormsModule,MatButtonModule],
+  imports: [SharedModule, ReactiveFormsModule, MatButtonModule],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
@@ -37,9 +36,6 @@ export class Login {
         this.userService.setLoggedInUser(user);
         this.router.navigate(['/']);
       }
-      console.log({
-        authResponse,
-      });
     } catch (error) {
       console.log(error);
     }
