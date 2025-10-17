@@ -69,3 +69,9 @@ export type UserAddress = {
 };
 
 export type AccessLevel = 'PUBLISHER' | 'AUTHER' | 'USER' | 'SUPERADMIN';
+export enum AccessLevelEnum {
+  'PUBLISHER',
+  'AUTHER',
+  'USER',
+  'SUPERADMIN',
+}

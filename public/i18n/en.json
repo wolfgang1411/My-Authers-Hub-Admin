@@ -277,5 +277,18 @@
   "recenttitles": "Recent Titles",
   "manage": "Manage",
   "loadmore": "Load more",
-  "loading": "Loading"
+  "loading": "Loading",
+  "notifications": "Notifications",
+  "message": "Message",
+  "sendat": "Sent at",
+  "to": "Sent to",
+  "notificationdeletewarning": "Are you sure you want to delete notification <br> <strong>{{title}}</strong>",
+  "warning": "Warning",
+  "yes": "Yes",
+  "no": "No",
+  "addnewnotification": "Add new notification",
+  "updatenotification": "Update notification",
+  "notificationcreateed": "Notification Created",
+  "notificationupdated": "Notification updated",
+  "success": "Success"
 }

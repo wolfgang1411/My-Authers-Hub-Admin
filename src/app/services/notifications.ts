@@ -29,6 +29,17 @@ export class NotificationService {
   notifications = signal<MyNotification[]>([]);
   private abortController?: AbortController;
 
+  async deleteNotification(id: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.delete(`notifications/${id}`)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
   async fetchNotifications(filter: NotificationFilter, showLoader = true) {
     try {
       return await this.loader.loadPromise(

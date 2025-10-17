@@ -6,7 +6,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 })
 export class MyDatePipe implements PipeTransform {
   transform(
-    value?: string | null,
+    value?: string | Date | null,
     format = 'dd-MM-yyyy',
     defaultText?: string
   ) {

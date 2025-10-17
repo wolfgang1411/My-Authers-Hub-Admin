@@ -1,4 +1,4 @@
-import { AccessLevel } from './user';
+import { AccessLevel, User } from './user';
 
 export interface MyNotification {
   id: number;
@@ -6,6 +6,8 @@ export interface MyNotification {
   message: string;
   sent: boolean;
   sendAt: string;
+  byAccessLevel?: AccessLevel;
+  user?: User[];
   markAsReadByUser: number[];
   createdAt: string;
   updatedAt: string;
@@ -24,6 +26,7 @@ export interface CreateNotification {
   title: string;
   message: string;
   sendAt: string;
+  byAccessLevel?: AccessLevel;
   userIds?: number[];
 }
 

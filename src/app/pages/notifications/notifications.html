@@ -1,1 +1,46 @@
-<p>notifications works!</p>
+<div class="flex flex-col flex-grow gap-4">
+  <div class="flex justify-between items-center">
+    <h3 class="heading">
+      {{ "notifications" | translate }}
+    </h3>
+
+    <button
+      (click)="onAddEditNotification()"
+      class="!bg-primary"
+      matButton="filled"
+    >
+      {{ "addnewnotification" | translate }}
+    </button>
+  </div>
+
+  <app-list-table
+    class="pt-6"
+    [dataSource]="dataSource"
+    [displayedColumns]="displayedColumns"
+    [actionTemplate]="actionButtons"
+  >
+  </app-list-table>
+
+  <ng-template #actionButtons let-element>
+    <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
+      @if (!element.sent) {
+      <button
+        (click)="onAddEditNotification(element)"
+        class="!bg-primary"
+        mat-icon-button
+        [title]="'edit' | translate"
+      >
+        <mat-icon class="!text-white">edit</mat-icon>
+      </button>
+      <button
+        class="!bg-red-500"
+        mat-icon-button
+        [title]="'delete' | translate"
+        (click)="onDeleteNotification(element)"
+      >
+        <mat-icon class="!text-white">delete</mat-icon>
+      </button>
+      }
+    </div>
+  </ng-template>
+</div>

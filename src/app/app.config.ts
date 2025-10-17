@@ -26,6 +26,10 @@ import { authInterceptor } from './interceptors/auth-interceptor';
 import { LoaderService } from './services/loader';
 import { Logger } from './services/logger';
 
+import { provideDateFnsAdapter } from 'ngx-material-date-fns-adapter';
+import { MAT_DATE_LOCALE } from '@angular/material/core';
+import { enIN } from 'date-fns/locale';
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
@@ -43,6 +47,8 @@ export const appConfig: ApplicationConfig = {
     }),
     provideAngularSvgIcon(),
     provideAnimations(),
+    provideDateFnsAdapter(),
+    { provide: MAT_DATE_LOCALE, useValue: enIN },
     LoaderService,
     Logger,
     { provide: LOCALE_ID, useValue: 'en-IN' }, // ← Set default locale to India

@@ -1,0 +1,90 @@
+<form
+  [formGroup]="form"
+  (ngSubmit)="onSubmit()"
+  class="flex flex-col gap-4 w-[480px] max-w-[90vw] p-3"
+>
+  <h2 mat-dialog-title class="text-xl heading !text-primary">
+    {{
+      (data.notification ? "updatenotification" : "addnewnotification")
+        | translate
+    }}
+  </h2>
+
+  <mat-dialog-content>
+    <div>
+      <mat-form-field class="w-full">
+        <mat-label>{{ "title" | translate }}</mat-label>
+        <input matInput type="text" formControlName="title" />
+      </mat-form-field>
+
+      <mat-form-field class="w-full">
+        <mat-label>{{ "message" | translate }}</mat-label>
+        <textarea matInput type="text" formControlName="message"></textarea>
+      </mat-form-field>
+
+      <mat-form-field class="w-full">
+        <mat-label>Pick a date and time</mat-label>
+
+        <input
+          type="text"
+          matInput
+          (focus)="picker.open()"
+          (click)="picker.open()"
+          [value]="form.controls.sendAt.value | myDate : 'dd-MM-yyyy HH:MM'"
+          [ngClass]="{
+            'ng-invalid': form.controls.sendAt.invalid,
+            'ng-touched': form.controls.sendAt.touched
+          }"
+        />
+
+        <input
+          class="hidden"
+          matInput
+          [ngxMatDatetimePicker]="picker"
+          placeholder="Choose date and time"
+          (focus)="picker.open()"
+          (click)="picker.open()"
+          formControlName="sendAt"
+          tabindex="-1"
+        />
+        <ngx-mat-datetime-picker #picker>
+          <ngx-mat-datepicker-actions>
+            <div class="flex w-full justify-between">
+              <button mat-button ngxMatDatepickerCancel>Cancel</button>
+              <button mat-raised-button color="primary" ngxMatDatepickerApply>
+                Apply
+              </button>
+            </div>
+          </ngx-mat-datepicker-actions>
+        </ngx-mat-datetime-picker>
+      </mat-form-field>
+
+      <mat-form-field class="w-full">
+        <mat-label>{{ "sendto" | translate }}</mat-label>
+        <mat-select formControlName="byAccessLevel">
+          @for (accessLevel of accessLevelOptions(); track $index) {
+          <mat-option [value]="accessLevel">{{
+            accessLevel | translate
+          }}</mat-option>
+          }
+        </mat-select>
+        <!-- <input matInput type="text" formControlName="title" /> -->
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions>
+    <button
+      type="button"
+      (click)="data.onClose()"
+      mat-button
+      matButton="filled"
+      class="!bg-accent"
+    >
+      {{ "close" | translate }}
+    </button>
+    <button type="submit" mat-button matButton="filled" class="!bg-primary">
+      {{ "submit" | translate }}
+    </button>
+  </mat-dialog-actions>
+</form>
