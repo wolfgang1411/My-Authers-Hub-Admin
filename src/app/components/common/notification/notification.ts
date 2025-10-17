@@ -7,6 +7,8 @@ import { NotificationService } from '../../../services/notifications';
 import { MyNotification, User } from '../../../interfaces';
 import { UserService } from '../../../services/user';
 import { RouterModule } from '@angular/router';
+import { LoaderService } from '../../../services/loader';
+import { combineLatest, map, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-notification',
@@ -22,16 +24,26 @@ import { RouterModule } from '@angular/router';
 })
 export class Notification {
   constructor(
+    private loaderService: LoaderService,
     private notificationService: NotificationService,
     userService: UserService
   ) {
     this.notifications = notificationService.notifications;
+    this.lastPage = notificationService.lastPage;
+    this.page = notificationService.page;
     this.loggedInUser = userService.loggedInUser$;
+    this.isNotificationLoading$ = this.loaderService.isAreaLoading$(
+      'fetch-notifications'
+    );
   }
 
   loggedInUser!: Signal<User | null>;
 
+  page!: Signal<number>;
+  lastPage!: Signal<number>;
   notifications!: Signal<MyNotification[]>;
+
+  isNotificationLoading$!: Observable<boolean>;
 
   unreadNotifications = computed(() => {
     const notifications = this.notifications();
@@ -61,6 +73,15 @@ export class Notification {
 
         return notification;
       });
+    });
+  }
+
+  loadMoreNotifications(event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.notificationService.loadMoreNotifications({
+      popupSuperadmin: false,
+      itemsPerPage: this.notificationService.itemsPerPage(),
     });
   }
 }

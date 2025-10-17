@@ -22,18 +22,50 @@ export class NotificationService {
     private loader: LoaderService
   ) {}
 
+  lastPage = signal(1);
+  page = signal(1);
+  itemsPerPage = signal(10);
+
   notifications = signal<MyNotification[]>([]);
   private abortController?: AbortController;
 
-  async fetchNotifications(filter: NotificationFilter) {
+  async fetchNotifications(filter: NotificationFilter, showLoader = true) {
     try {
       return await this.loader.loadPromise(
         this.server.get<Pagination<MyNotification>>('notifications', filter),
-        'fetch-notifications'
+        'fetch-notifications',
+        !showLoader
       );
     } catch (error) {
       this.logger.logError(error);
       throw error;
+    }
+  }
+
+  isInitialFetched = false;
+  async fetchInitialNotifications(filter: NotificationFilter) {
+    if (this.isInitialFetched) return;
+    const { items, itemsPerPage, totalCount } = await this.fetchNotifications(
+      filter,
+      false
+    );
+
+    this.isInitialFetched = true;
+    this.notifications.set(items);
+    this.page.set(1);
+    this.lastPage.set(Math.ceil(totalCount / itemsPerPage));
+  }
+
+  async loadMoreNotifications(filter: NotificationFilter) {
+    if (this.lastPage() > this.page()) {
+      this.page.update((page) => page + 1);
+      const { items, totalCount, itemsPerPage } = await this.fetchNotifications(
+        filter,
+        false
+      );
+
+      this.notifications.update((data) => [...items, ...data]);
+      this.lastPage.set(Math.ceil(totalCount / itemsPerPage));
     }
   }
 
@@ -75,7 +107,9 @@ export class NotificationService {
     }
   }
 
+  isListnerAdded = false;
   listenToNotifications(token: string) {
+    if (this.isListnerAdded) return;
     this.stopListening();
 
     const url = environment.apiUrl + 'sse/notifications';
@@ -96,6 +130,7 @@ export class NotificationService {
         const reader = response.body?.getReader();
         const decoder = new TextDecoder('utf-8');
         let buffer = '';
+        this.isListnerAdded = true;
 
         while (true) {
           const { done, value } = await reader!.read();

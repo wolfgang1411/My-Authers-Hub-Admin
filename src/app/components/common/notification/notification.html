@@ -58,19 +58,34 @@
   </div>
 
   <!-- Manage Button (SuperAdmin only) -->
-  @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
-  <div class="border-t border-gray-200 p-2 text-center">
-    <button mat-stroked-button color="primary" class="w-full">
-      {{ "loadmore" | translate }}
+  <div class="grid grid-cols-2 gap-4 border-t border-gray-200 p-2 text-center">
+    @if (lastPage() > page()) {
+
+    <!-- fetch-notifications -->
+    <button
+      (click)="loadMoreNotifications($event)"
+      mat-stroked-button
+      class="w-full !text-primary"
+      [disabled]="isNotificationLoading$ | async"
+    >
+      {{
+        ((isNotificationLoading$ | async) ? "loading" : "loadmore") | translate
+      }}
+      @if((isNotificationLoading$ | async)) {
+      <span class="loading-dots"></span>
+      }
     </button>
+    } @else {
+    <span>&nbsp;</span>
+    } @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
+
     <button
       mat-stroked-button
-      color="primary"
-      class="w-full"
+      class="w-full !text-primary"
       routerLink="/notifications"
     >
       {{ "manage" | translate }}
     </button>
+    }
   </div>
-  }
 </mat-menu>

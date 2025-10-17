@@ -48,7 +48,11 @@ export class App {
 
         const token = this.authService.getAuthToken().access_token;
         if (token) {
-          this.fetchInitialNotifications();
+          this.notificationService.fetchInitialNotifications({
+            popupSuperadmin: false,
+            itemsPerPage: this.notificationService.itemsPerPage(),
+            page: 1,
+          });
           this.notificationService.listenToNotifications(token);
         }
       } else {
@@ -80,21 +84,6 @@ export class App {
         return;
       }
       this.userService.setLoggedInUser(user);
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  isInitialNotificationFetched = false;
-  async fetchInitialNotifications() {
-    try {
-      if (this.isInitialNotificationFetched) return;
-
-      const { items } = await this.notificationService.fetchNotifications({
-        itemsPerPage: 10,
-        popupSuperadmin: false,
-      });
-      this.notificationService.notifications.set(items);
     } catch (error) {
       console.log(error);
     }
