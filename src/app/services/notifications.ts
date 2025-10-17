@@ -179,7 +179,7 @@ export class NotificationService {
       })
       .catch((err) => {
         if (err.name !== 'AbortError') {
-          this.logger.logError('SSE connection error');
+          // this.logger.logError('SSE connection error');
         }
       });
   }
