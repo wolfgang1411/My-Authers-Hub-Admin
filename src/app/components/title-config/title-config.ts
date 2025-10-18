@@ -6,11 +6,19 @@ import { MatAnchor } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
-import { TitleConfig, StaticValues, TitleConfigType } from '../../interfaces';
+import {
+  TitleConfig,
+  StaticValues,
+  TitleConfigType,
+  Title,
+  CreateTitleConfig,
+} from '../../interfaces';
 import Swal from 'sweetalert2';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { UpdateTitleConfigList } from '../update-title-config-list/update-title-config-list';
+import { AddTitleConfig } from '../add-title-config/add-title-config';
+import { TitleService } from '../../pages/titles/title-service';
 
 @Component({
   selector: 'app-title-config',
@@ -26,6 +34,7 @@ import { UpdateTitleConfigList } from '../update-title-config-list/update-title-
 })
 export class TitleConfigComponent implements OnInit {
   constructor(
+    private titleService: TitleService,
     private titleConfigService: TitleConfigService,
     private staticValueService: StaticValuesService,
     private translateService: TranslateService,
@@ -103,13 +112,91 @@ export class TitleConfigComponent implements OnInit {
     });
   }
 
-  onClickUpdateList(type: string) {
+  onClickUpdateList(event: Event, type: string) {
+    event.preventDefault();
+    event.stopPropagation();
     const data = this.titleConfigsData()?.find((d) => d.type === type);
     const dialog = this.matDialog.open(UpdateTitleConfigList, {
       data: {
         type,
-        items: data?.data,
+        items: [...(data?.data || [])],
         onClose: () => dialog.close(),
+        onSave: async (data: { id: number; position: number }[]) => {
+          await this.titleConfigService.reorderTitleConfig(type as any, data);
+          this.titleConfigsData.update((configData) => {
+            configData =
+              configData?.map((configD) => {
+                configD.data = configD.data.sort((a, b) => {
+                  const aFinalPosition =
+                    data.find(({ id }) => id === a.id)?.position || a.position;
+                  const bFinalPosition =
+                    data.find(({ id }) => id === b.id)?.position || b.position;
+
+                  return aFinalPosition - bFinalPosition;
+                });
+
+                return configD;
+              }) || [];
+
+            return configData;
+          });
+          dialog.close();
+        },
+      },
+    });
+  }
+
+  titlesWithMinimumDetails = signal<Title[] | null>(null);
+  async onClickAddNewItem(event: Event, type: string) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!this.titlesWithMinimumDetails()) {
+      const { items } = await this.titleService.getTitleWithLessDetails({});
+      this.titlesWithMinimumDetails.set(items);
+    }
+
+    const nextPosition =
+      (this.titleConfigsData()
+        ?.find((d) => d.type === type)
+        ?.data.reduce((a, { position }) => (position > a ? position : a), 0) ||
+        0) + 1;
+
+    const existingTitles = this.titleConfigsData()
+      ?.find((d) => d.type === type)
+      ?.data.map(({ title: { id } }) => id);
+
+    const dialog = this.matDialog.open(AddTitleConfig, {
+      data: {
+        titles: this.titlesWithMinimumDetails()?.filter(
+          ({ id }) => !existingTitles?.includes(id)
+        ),
+        type,
+        nextPosition,
+        onClose: () => dialog.close(),
+        onSubmit: async (data: CreateTitleConfig) => {
+          const response = await this.titleConfigService.createTitleConfig(
+            data
+          );
+
+          this.titleConfigsData.update((configData) => {
+            configData =
+              configData?.map((configD) => {
+                if (configD.type === type) {
+                  configD.data.push(response);
+                }
+
+                configD.data = configD.data.sort(
+                  (a, b) => a.position - b.position
+                );
+                return configD;
+              }) || [];
+
+            return configData;
+          });
+
+          dialog.close();
+        },
       },
     });
   }

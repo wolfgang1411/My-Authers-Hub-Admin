@@ -35,6 +35,17 @@ export class TitleService {
     private s3Service: S3Service
   ) {}
 
+  async getTitleWithLessDetails(filter?: TitleFilter) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<Title>>('titles/miminum', filter)
+      );
+    } catch (error) {
+      console.error('Error fetching publishers:', error);
+      throw error;
+    }
+  }
+
   async getTitles(filter?: TitleFilter) {
     try {
       return await this.loader.loadPromise(

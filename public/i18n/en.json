@@ -305,5 +305,9 @@
   "FEATURED": "Featured",
   "titleconfigdeletewarningtitle": "Are you sure?",
   "titleconfigdeletewarningcontent": "By clicking yes {{title}} will be removed from {{type}}",
-  "notitlesfound": "No titles found"
+  "notitlesfound": "No titles found",
+  "draganddroptoreorder": "Drag and drop to reorder",
+  "reorderitems": "Reorder items",
+  "additem": "Add item",
+  "position": "Position"
 }

@@ -1,4 +1,4 @@
-import { StaticValues } from './index';
+import { StaticValues, TitleConfigType } from './index';
 import { Title } from './Titles';
 
 export interface TitleConfig {
@@ -14,4 +14,10 @@ export interface TitleConfigFilter {
   type?:
     | typeof StaticValues.TitleConfigType
     | (typeof StaticValues.TitleConfigType)[];
+}
+
+export interface CreateTitleConfig {
+  type: TitleConfigType;
+  titleId: number;
+  position: number;
 }

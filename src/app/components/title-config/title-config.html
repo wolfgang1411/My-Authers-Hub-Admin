@@ -11,14 +11,25 @@
           <span class="text-lg font-medium">
             {{ titleConfigItem.type | translate }}
           </span>
-          <button
-            (click)="onClickUpdateList(titleConfigItem.type)"
-            mat-stroked-button
-            color="primary"
-          >
-            <mat-icon>update</mat-icon>
-            {{ "updateList" | translate }}
-          </button>
+
+          <div class="flex gap-4">
+            <button
+              (click)="onClickAddNewItem($event, titleConfigItem.type)"
+              mat-stroked-button
+              color="primary"
+            >
+              <mat-icon>add</mat-icon>
+              {{ "additem" | translate }}
+            </button>
+            <button
+              (click)="onClickUpdateList($event, titleConfigItem.type)"
+              mat-stroked-button
+              color="primary"
+            >
+              <mat-icon>update</mat-icon>
+              {{ "reorderitems" | translate }}
+            </button>
+          </div>
         </mat-panel-title>
       </mat-expansion-panel-header>
 
@@ -31,7 +42,7 @@
           <!-- Thumbnail -->
           <img
             class="w-16 h-20 object-cover rounded"
-            [src]="titleConfig.title.media[0].url"
+            [src]="titleConfig.title.media[0]?.url"
             alt="{{ titleConfig.title.name }}"
           />
 
@@ -47,7 +58,7 @@
               </div>
               <div>
                 <strong>{{ "msp" | translate }}:</strong>
-                {{ titleConfig.title.pricing[0].msp | currency }}
+                {{ titleConfig.title.pricing[0]?.msp | currency }}
               </div>
             </div>
 

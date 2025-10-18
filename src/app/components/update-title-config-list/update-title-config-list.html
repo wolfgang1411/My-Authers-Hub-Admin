@@ -1,1 +1,46 @@
-<p>update-title-config-list works!</p>
+<div class="w-[320px]">
+  <h2 mat-dialog-title class="text-xl heading !text-primary">
+    {{ data.type | translate }}
+  </h2>
+  <span class="ml-6 block subtitle">
+    {{ "draganddroptoreorder" | translate }}
+  </span>
+
+  <mat-dialog-content>
+    <ul
+      (cdkDropListDropped)="drop($event)"
+      cdkDropList
+      class="flex flex-col gap-4"
+    >
+      @for (item of data.items; track $index) {
+      <li
+        class="flex items-center justify-center bg-white shadow-md px-4 py-2 rounded-md"
+        cdkDrag
+      >
+        <span class="grow bg-white font-medium">
+          {{ item.title.name }}
+        </span>
+      </li>
+      }
+    </ul>
+  </mat-dialog-content>
+
+  <mat-dialog-actions>
+    <button
+      (click)="data.onClose()"
+      mat-button
+      matButton="filled"
+      class="!bg-accent"
+    >
+      {{ "close" | translate }}
+    </button>
+    <button
+      (click)="onClickConfirmReorder()"
+      mat-button
+      matButton="filled"
+      class="!bg-primary"
+    >
+      {{ "confirm" | translate }}
+    </button>
+  </mat-dialog-actions>
+</div>

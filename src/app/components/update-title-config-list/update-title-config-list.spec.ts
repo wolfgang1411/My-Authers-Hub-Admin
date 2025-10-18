@@ -8,9 +8,8 @@ describe('UpdateTitleConfigList', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [UpdateTitleConfigList]
-    })
-    .compileComponents();
+      imports: [UpdateTitleConfigList],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(UpdateTitleConfigList);
     component = fixture.componentInstance;
