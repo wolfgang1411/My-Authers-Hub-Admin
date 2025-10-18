@@ -14,7 +14,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { createIsbn, IsbnType, Title } from '../../interfaces';
+import { createIsbn, ISBNType, Title } from '../../interfaces';
 import { TitleService } from '../../pages/titles/title-service';
 import { IsbnService } from '../../services/isbn-service';
 import { MatInputModule } from '@angular/material/input';
@@ -55,7 +55,7 @@ export class CreateIsbn {
       Validators.required,
       Validators.pattern(/^(97(8|9))?\d{9}(\d|X)$/),
     ]),
-    type: new FormControl<IsbnType | null>(null, [Validators.required]),
+    type: new FormControl<ISBNType | null>(null, [Validators.required]),
     titleId: new FormControl<number | null>(null),
   });
 

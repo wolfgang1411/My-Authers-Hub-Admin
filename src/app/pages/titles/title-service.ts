@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Server } from '../../services/server';
 import {
+  DistributionType,
   Media,
-  MediaType,
   Pagination,
   Royalty,
+  TitleMediaType,
   UpdateRoyalty,
 } from '../../interfaces';
 import {
@@ -21,7 +22,6 @@ import {
 import { Logger } from '../../services/logger';
 import { LoaderService } from '../../services/loader';
 import { Pricing } from '../../components/pricing/pricing';
-import { DistributionType } from '../../interfaces/Distribution';
 import { S3Service } from '../../services/s3';
 
 @Injectable({
@@ -181,12 +181,15 @@ export class TitleService {
 
   async uploadMultiMedia(
     titleId: number,
-    data: { file: File; type: MediaType }[]
+    data: { file: File; type: TitleMediaType }[]
   ) {
     return await Promise.all(data.map((d) => this.uploadMedia(titleId, d)));
   }
 
-  async uploadMedia(titleId: number, data: { file: File; type: MediaType }) {
+  async uploadMedia(
+    titleId: number,
+    data: { file: File; type: TitleMediaType }
+  ) {
     try {
       const { key, url } = await this.s3Service.getS3Url(
         data.file.name,

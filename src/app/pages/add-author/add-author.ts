@@ -23,7 +23,12 @@ import { SharedModule } from '../../modules/shared/shared-module';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCardModule } from '@angular/material/card';
 import { UploadFile } from '../../components/upload-file/upload-file';
-import { Address, createBankDetails, Author } from '../../interfaces';
+import {
+  Address,
+  createBankDetails,
+  Author,
+  SocialMediaType,
+} from '../../interfaces';
 import { AddressService } from '../../services/address-service';
 import { BankDetailService } from '../../services/bank-detail-service';
 import { AuthorsService } from '../authors/authors-service';
@@ -31,10 +36,7 @@ import Swal from 'sweetalert2';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Authors } from '../authors/authors';
 import { InviteService } from '../../services/invite';
-import {
-  socialMediaGroup,
-  SocialMediaType,
-} from '../../interfaces/SocialMedia';
+import { socialMediaGroup } from '../../interfaces/SocialMedia';
 import { SocialMediaService } from '../../services/social-media-service';
 import { SocialMedia } from '../social-media/social-media';
 

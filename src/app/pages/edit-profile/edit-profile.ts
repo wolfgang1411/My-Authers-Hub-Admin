@@ -9,7 +9,7 @@ import {
   Validators,
 } from '@angular/forms';
 import {
-  accountType,
+  BankDetailsType,
   Address,
   BankDetails,
   CreateUser,
@@ -106,7 +106,7 @@ export class EditProfile {
     accountNo: new FormControl<string | null>(null),
     ifsc: new FormControl<string | null>(null),
     panCardNo: new FormControl<string | null>(null),
-    accountType: new FormControl<accountType | null>(null),
+    accountType: new FormControl<BankDetailsType | null>(null),
     gstNumber: new FormControl<string | null>(null, [
       this.gstFormatValidator(),
     ]),

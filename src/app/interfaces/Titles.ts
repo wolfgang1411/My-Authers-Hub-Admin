@@ -6,8 +6,17 @@ import { ISBN } from './Isbn';
 import { Publishers } from './Publishers';
 import { Royalty, RoyaltyFormGroup } from './Royalty';
 import { User } from './user';
-import { DistributionType } from './Distribution';
 import { Media, TitleMediaGroup } from './Media';
+import {
+  PublishingType,
+  TitleMediaType,
+  TitleStatus,
+  ChannelType,
+  TitleCategoryType,
+  DistributionType,
+  PaperType,
+  SizeCategoryType,
+} from './index';
 
 export interface Title {
   id: number;
@@ -27,6 +36,7 @@ export interface Title {
   tradeCategory: TitleCategory;
   genre: TitleGenre;
   keywords: string;
+  copiesSold: number;
   publisherDisplayNames: {
     [id: number]: string;
   };
@@ -50,12 +60,12 @@ export interface TitleMedia extends Media {
   type: TitleMediaType;
 }
 
-export type TitleMediaType =
-  | 'FULL_COVER'
-  | 'INTERIOR'
-  | 'FRONT_COVER'
-  | 'BACK_COVER'
-  | 'INSIDE_COVER ';
+// export type TitleMediaType =
+//   | 'FULL_COVER'
+//   | 'INTERIOR'
+//   | 'FRONT_COVER'
+//   | 'BACK_COVER'
+//   | 'INSIDE_COVER ';
 
 export interface TitleDistribution {
   id: number;
@@ -71,7 +81,7 @@ export interface AuthorTitle {
 
 export interface TitlePricing {
   id: number;
-  channal: ChannalType;
+  channal: ChannelType;
   salesPrice: number;
   mrp: number;
   msp: number;
@@ -108,11 +118,7 @@ export interface TitleCreate {
     }
   ];
 }
-export enum PublishingType {
-  'PRINT_EBOOK' = 'PRINT_EBOOK',
-  'ONLY_PRINT' = 'ONLY_PRINT',
-  'ONLY_EBOOK' = 'ONLY_EBOOK',
-}
+
 export interface TitleResponse {
   title: string;
   isbnPrint: string;
@@ -163,24 +169,19 @@ export interface TitlePrinting {
   customDeliveryCharges: number;
 }
 
-export enum ChannalType {
-  PRINT_MAH = 'PRINT_MAH',
-  PRINT_THIRD_PARTY = 'PRINT_THIRD_PARTY',
-  PRIME = 'PRIME',
-  EBOOK_MAH = 'EBOOK_MAH',
-  EBOOK_THIRD_PARTY = 'EBOOK_THIRD_PARTY',
-}
+// export enum ChannalType {
+//   PRINT_MAH = 'PRINT_MAH',
+//   PRINT_THIRD_PARTY = 'PRINT_THIRD_PARTY',
+//   PRIME = 'PRIME',
+//   EBOOK_MAH = 'EBOOK_MAH',
+//   EBOOK_THIRD_PARTY = 'EBOOK_THIRD_PARTY',
+// }
 
-export enum TitleStatus {
-  Active = 'Active',
-  Deactivated = 'Deactivated',
-}
-
-export enum TitleCategoryType {
-  CATEGORY = 'CATEGORY',
-  SUBCATEGORY = 'SUBCATEGORY',
-  TRADE = 'TRADE',
-}
+// export enum TitleCategoryType {
+//   CATEGORY = 'CATEGORY',
+//   SUBCATEGORY = 'SUBCATEGORY',
+//   TRADE = 'TRADE',
+// }
 export interface BookBindings {
   id: number;
   name: string;
@@ -197,10 +198,10 @@ export interface LaminationType {
   TitlePrinting: TitlePrinting[];
 }
 
-export enum PaperType {
-  WHITE = 'WHITE',
-  OFFWHITE = 'OFFWHITE',
-}
+// export enum PaperType {
+//   WHITE = 'WHITE',
+//   OFFWHITE = 'OFFWHITE',
+// }
 
 export interface PaperQuailty {
   id: number;
@@ -222,12 +223,6 @@ export interface SizeCategory {
   packetPrice: number;
   weightMultiplayer: number;
   TitlePrinting: TitlePrinting[];
-}
-
-export enum SizeCategoryType {
-  A = 'A',
-  B = 'B',
-  C = 'C',
 }
 
 export interface TitlePrintingCostPayload {

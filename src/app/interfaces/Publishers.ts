@@ -1,8 +1,8 @@
 import { Address } from './Address';
 import { Author } from './Authors';
 import { BankDetails } from './BankDetails';
-import { DistributionType } from './Distribution';
 import { socialMediaGroup } from './SocialMedia';
+import { DistributionType, PublisherStatus } from './StaticValue';
 import { Title } from './Titles';
 import { User } from './user';
 
@@ -22,12 +22,6 @@ export interface Publishers {
   socialMedias: socialMediaGroup[];
 }
 
-export enum PublisherStatus {
-  Active = 'Active',
-  Pending = 'Pending',
-  Rejected = 'Rejected',
-  Deactivated = 'Deactivated',
-}
 export interface CreatePublisher {
   pocName: string;
   pocEmail: string;

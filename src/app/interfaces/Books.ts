@@ -1,5 +1,6 @@
-import { Author } from "./Authors";
-import { ISBN } from "./Isbn";
+import { Author } from './Authors';
+import { ISBN } from './Isbn';
+import { TitleStatus } from './StaticValue';
 
 export interface Books {
   id: number;
@@ -14,7 +15,7 @@ export interface Books {
   pages: number;
   productForm: string;
   distributionType: string;
-  author:Author
+  author: Author;
   isbn: ISBN;
   createdAt: string;
   updatedAt: string;
@@ -33,13 +34,8 @@ export interface Title {
   pages: number;
   productForm: string;
   distributionType: string;
-  author:Author
+  author: Author;
   isbnId: number;
   createdAt: string;
   updatedAt: string;
 }
-
-
-
-
-export type TitleStatus = "Active"

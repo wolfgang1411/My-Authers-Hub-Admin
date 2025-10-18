@@ -47,10 +47,10 @@ import {
   AuthorFormGroup,
   AuthorStatus,
   BookBindings,
-  ChannalType,
+  ChannelType,
   CreateRoyalty,
+  DistributionType,
   LaminationType,
-  MediaType,
   PaperType,
   PricingCreate,
   PricingGroup,
@@ -89,10 +89,8 @@ import { TitleService } from '../titles/title-service';
 import { BookDetails } from '../../components/book-details/book-details';
 import { Pricing } from '../../components/pricing/pricing';
 import { TitleDistribution } from '../../title-distribution/title-distribution';
-import { DistributionType } from '../../interfaces/Distribution';
 import Swal from 'sweetalert2';
 import { getFileSizeFromS3Url, getFileToBase64 } from '../../common/utils/file';
-import * as pdfjsLib from 'pdfjs-dist';
 
 @Component({
   selector: 'app-add-title',
@@ -162,7 +160,7 @@ export class AddTitle {
 
   private stepper = viewChild<MatStepper>('stepperForm');
 
-  channalTypes = signal([
+  ChannelTypes = signal([
     'PRINT_MAH',
     'PRINT_THIRD_PARTY',
     'PRIME',
@@ -195,14 +193,14 @@ export class AddTitle {
         return 'Upload Front Cover (JPG/PNG)';
       case 'BACK_COVER':
         return 'Upload Back Cover (Optional)';
-      case 'INSIDE_COVER ':
+      case 'INSIDE_COVER':
         return 'Upload Inside Cover';
       default:
         return 'Upload File';
     }
   }
 
-  getHelperText(mediaType: MediaType | string | null): string {
+  getHelperText(mediaType: TitleMediaType | string | null): string {
     switch (mediaType) {
       case 'FullCover':
         return 'PDF, max 20MB';
@@ -385,30 +383,30 @@ export class AddTitle {
     });
   }
 
-  getFieldForChannal(channal: ChannalType) {
-    const temp: Partial<Record<ChannalType, RoyalFormGroupAmountField>> = {};
-    Object.keys(ChannalType).forEach((ch) => {
+  getFieldForChannal(channal: ChannelType) {
+    const temp: Partial<Record<ChannelType, RoyalFormGroupAmountField>> = {};
+    Object.keys(ChannelType).forEach((ch) => {
       let field: RoyalFormGroupAmountField = 'ebook_mah';
 
       switch (channal) {
-        case ChannalType.EBOOK_MAH:
+        case ChannelType.EBOOK_MAH:
           field = 'ebook_mah';
           break;
-        case ChannalType.EBOOK_THIRD_PARTY:
+        case ChannelType.EBOOK_THIRD_PARTY:
           field = 'ebook_third_party';
           break;
-        case ChannalType.PRIME:
+        case ChannelType.PRIME:
           field = 'prime';
           break;
-        case ChannalType.PRINT_MAH:
+        case ChannelType.PRINT_MAH:
           field = 'print_mah';
           break;
-        case ChannalType.PRINT_THIRD_PARTY:
+        case ChannelType.PRINT_THIRD_PARTY:
           field = 'print_third_party';
           break;
       }
 
-      temp[ch as ChannalType] = field;
+      temp[ch as ChannelType] = field;
     });
 
     return temp[channal] as RoyalFormGroupAmountField;
@@ -676,7 +674,7 @@ export class AddTitle {
 
   createPricingArrayTemp(): FormArray<PricingGroup> {
     return new FormArray(
-      Object.keys(ChannalType).map(
+      Object.keys(ChannelType).map(
         (channal) =>
           new FormGroup({
             id: new FormControl<number | null | undefined>(null),
@@ -709,7 +707,7 @@ export class AddTitle {
         Validators.required,
         this.minWordsValidator(5),
       ]),
-      status: new FormControl<TitleStatus>(TitleStatus.Active),
+      status: new FormControl<TitleStatus>(TitleStatus.DRAFT),
       category: new FormControl<number | null>(null),
       subCategory: new FormControl<number | null>(null),
       tradeCategory: new FormControl<number | null>(null),
@@ -783,16 +781,16 @@ export class AddTitle {
       .subscribe(async (insideCover) => {
         const insideCoverControl =
           this.tempForm.controls.documentMedia.controls.find(
-            ({ controls: { mediaType } }) => mediaType.value === 'INSIDE_COVER '
+            ({ controls: { mediaType } }) => mediaType.value === 'INSIDE_COVER'
           );
         if (insideCover && !insideCoverControl) {
           this.tempForm.controls.documentMedia.push(
-            await this.createMedia('INSIDE_COVER ', true)
+            await this.createMedia(TitleMediaType.INSIDE_COVER, true)
           );
         } else {
           const insideCoverMediaIndex =
             this.tempForm.controls.documentMedia.controls.findIndex(
-              ({ controls }) => controls.mediaType.value === 'INSIDE_COVER '
+              ({ controls }) => controls.mediaType.value === 'INSIDE_COVER'
             );
 
           if (insideCoverMediaIndex >= 0) {
@@ -809,21 +807,21 @@ export class AddTitle {
 
     mediaArrayControl.push(
       await this.createMedia(
-        'FRONT_COVER',
+        TitleMediaType.FULL_COVER,
         true,
         medias?.find(({ type }) => type === 'FRONT_COVER')
       )
     );
     mediaArrayControl.push(
       await this.createMedia(
-        'BACK_COVER',
+        TitleMediaType.BACK_COVER,
         false,
         medias?.find(({ type }) => type === 'BACK_COVER')
       )
     );
     mediaArrayControl.push(
       await this.createMedia(
-        'INTERIOR',
+        TitleMediaType.INTERIOR,
         true,
         medias?.find(({ type }) => type === 'INTERIOR')
       )
@@ -834,7 +832,7 @@ export class AddTitle {
     ) {
       mediaArrayControl.push(
         await this.createMedia(
-          'FULL_COVER',
+          TitleMediaType.FULL_COVER,
           true,
           medias?.find(({ type }) => type === 'FULL_COVER')
         )
@@ -844,9 +842,9 @@ export class AddTitle {
     if (this.tempForm.controls.printing.controls.insideCover.value) {
       mediaArrayControl.push(
         await this.createMedia(
-          'INSIDE_COVER ',
+          TitleMediaType.INSIDE_COVER,
           true,
-          medias?.find(({ type }) => type === 'INSIDE_COVER ')
+          medias?.find(({ type }) => type === 'INSIDE_COVER')
         )
       );
     }
@@ -869,7 +867,7 @@ export class AddTitle {
         break;
       case 'BACK_COVER':
       case 'FRONT_COVER':
-      case 'INSIDE_COVER ':
+      case 'INSIDE_COVER':
         maxSize = 2;
         break;
     }
@@ -987,7 +985,7 @@ export class AddTitle {
         .filter(({ file, type }) => file && type)
         .map(({ file, type }) => ({
           file: file as File,
-          type: type as MediaType,
+          type: type as TitleMediaType,
         }));
       await this.titleService.uploadMultiMedia(this.titleId, mediaToUpload);
       this.stepper()?.next();

@@ -1,7 +1,6 @@
 import { User } from './user';
 import { Transaction } from './Transaction';
-import { ChannalType, Title } from './Titles';
-import { Royalties } from '../pages/royalties/royalties';
+import { BookingStatus, BookingType, ChannelType, Title } from './index';
 import { Royalty } from './Royalty';
 
 export interface Booking {
@@ -18,7 +17,7 @@ export interface Booking {
   royalties: Royalty[];
   createdAt: string;
   type: BookingType;
-  channal: ChannalType;
+  channal: ChannelType;
 }
 
 export interface BookingFilter {
@@ -31,16 +30,4 @@ export interface BookingFilter {
   page?: number;
   itemsPerPage?: number;
   searchStr?: string;
-}
-
-export enum BookingStatus {
-  PENDING = 'PENDING',
-  CONFIRMED = 'CONFIRMED',
-  CANCELLED = 'CANCELLED',
-  COMPLETED = 'COMPLETED',
-  FAILED = 'FAILED',
-}
-export enum BookingType {
-  PRINT = 'PRINT',
-  EBOOK = 'EBOOK',
 }

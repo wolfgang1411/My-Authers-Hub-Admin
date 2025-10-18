@@ -1,16 +1,17 @@
 import { Injectable } from '@angular/core';
 import { Server } from '../../services/server';
 import {
+  DistributionType,
   PublisherFilter,
   Publishers,
   PublisherStatus,
   PublishingPoints,
-} from '../../interfaces/Publishers';
+} from '../../interfaces';
 import { Pagination, PublishingType } from '../../interfaces';
 import { Invite } from '../../interfaces/Invite';
 import { Logger } from '../../services/logger';
 import { LoaderService } from '../../services/loader';
-import { Distribution, DistributionType } from '../../interfaces/Distribution';
+import { Distribution } from '../../interfaces/Distribution';
 
 @Injectable({
   providedIn: 'root',

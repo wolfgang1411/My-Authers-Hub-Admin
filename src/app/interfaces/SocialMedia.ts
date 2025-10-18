@@ -1,3 +1,5 @@
+import { SocialMediaType } from './index';
+
 export interface socialMediaGroup {
   type: SocialMediaType;
   url: string;
@@ -5,12 +7,4 @@ export interface socialMediaGroup {
   name: string;
   autherId: number;
   id: number;
-}
-export enum SocialMediaType {
-  'FACEBOOK' = 'FACEBOOK',
-  'TWITTER' = 'TWITTER',
-  'INSTAGRAM' = 'INSTAGRAM',
-  'LINKEDIN' = 'LINKEDIN',
-  'YOUTUBE' = 'YOUTUBE',
-  'WEBSITE' = 'WEBSITE',
 }

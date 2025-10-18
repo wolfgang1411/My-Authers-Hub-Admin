@@ -290,5 +290,20 @@
   "updatenotification": "Update notification",
   "notificationcreateed": "Notification Created",
   "notificationupdated": "Notification updated",
-  "success": "Success"
+  "success": "Success",
+  "titleconfigs": "Title Config",
+  "TOP_SELLER": "Top Seller",
+  "MOST_WATCHED": "Most Watched",
+  "RECOMMENDED": "Recommended",
+  "RECOMMENDED_IN_CATEGORY": "Recommended  in Category",
+  "RECOMMENDED_IN_GENRE": "Recommended in Genre",
+  "TOP_IN_CATEGORY": "Top in Category",
+  "TOP_IN_GENRE": "Top in Genre",
+  "MOST_RATED": "Most Rated",
+  "TRENDING": "Trending",
+  "NEW_RELEASE": "New Release",
+  "FEATURED": "Featured",
+  "titleconfigdeletewarningtitle": "Are you sure?",
+  "titleconfigdeletewarningcontent": "By clicking yes {{title}} will be removed from {{type}}",
+  "notitlesfound": "No titles found"
 }

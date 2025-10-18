@@ -1,11 +1,10 @@
 import { Component, input, output, signal } from '@angular/core';
 import { FormArray, FormGroup } from '@angular/forms';
-import { TitleDistributionGroup } from '../interfaces';
+import { DistributionType, TitleDistributionGroup } from '../interfaces';
 import { SharedModule } from '../modules/shared/shared-module';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { DistributionType } from '../interfaces/Distribution';
 
 @Component({
   selector: 'app-title-distribution',
@@ -61,6 +60,8 @@ export class TitleDistribution {
         return 'flag';
       case DistributionType.National_Prime:
         return 'star';
+      default:
+        return '';
     }
   }
 

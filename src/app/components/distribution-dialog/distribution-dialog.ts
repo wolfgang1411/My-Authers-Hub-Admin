@@ -17,7 +17,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { Distribution, DistributionType } from '../../interfaces/Distribution';
+import { Distribution } from '../../interfaces/Distribution';
+import { DistributionType } from '../../interfaces';
 
 @Component({
   selector: 'app-distribution-dialog',

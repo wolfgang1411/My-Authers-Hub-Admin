@@ -1,4 +1,5 @@
 import { Booking } from './Booking';
+import { TransactionStatus } from './StaticValue';
 import { User } from './user';
 
 export interface Transaction {
@@ -16,14 +17,6 @@ export interface Transaction {
   userId: number;
   title: string;
   invoice: string;
-}
-
-export enum TransactionStatus {
-  PENDING = 'PENDING',
-  SUCCESS = 'SUCCESS',
-  FAILED = 'FAILED',
-  REFUNDED = 'REFUNDED',
-  CANCELLED = 'CANCELLED',
 }
 
 export interface TransactionFilter {
