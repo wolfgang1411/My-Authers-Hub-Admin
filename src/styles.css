@@ -205,3 +205,36 @@ mat-label {
   min-height: 38px;
   align-items: center;
 }
+
+.compact-select {
+  --mat-select-trigger-height: 100%;
+  height: 100% !important;
+}
+
+.compact-select .mdc-text-field {
+  height: 100% !important;
+  min-height: 100% !important;
+}
+
+.compact-select .mat-mdc-form-field-flex {
+  height: 100% !important;
+  align-items: center;
+  padding: 0 8px !important;
+}
+
+.compact-select .mat-mdc-select-trigger {
+  height: 100% !important;
+  line-height: 100% !important;
+  padding: 0 !important;
+}
+
+.compact-select .mat-mdc-form-field-infix {
+  padding: 0 !important;
+  border-top: 0 !important;
+  min-height: unset !important;
+}
+
+.compact-select .mat-mdc-select-value {
+  display: flex;
+  align-items: center;
+}

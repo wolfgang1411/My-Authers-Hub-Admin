@@ -105,6 +105,13 @@ export enum InviteType {
   AUTHER = 'AUTHER',
 }
 
+export enum PuplisherStatus {
+  Active = 'Active',
+  Pending = 'Pending',
+  Rejected = 'Rejected',
+  Deactivated = 'Deactivated',
+}
+
 export enum PublisherStatus {
   Active = 'Active',
   Pending = 'Pending',
@@ -410,4 +417,5 @@ export const StaticValues = {
   CouponStatus,
   DiscountType,
   ApplyOnType,
+  PuplisherStatus,
 } as const;

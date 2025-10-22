@@ -23,10 +23,16 @@ export class PublisherService {
     private loader: LoaderService
   ) {}
 
-  async getPublishers(filter?: PublisherFilter) {
+  async getPublishers(filter?: PublisherFilter, showLoader = true) {
     try {
+      filter = { ...filter };
+      if (filter && (!filter.status || filter.status === ('ALL' as any))) {
+        delete filter.status;
+      }
       return await this.loader.loadPromise(
-        this.server.get<Pagination<Publishers>>('publishers', filter)
+        this.server.get<Pagination<Publishers>>('publishers', filter),
+        'fetch-publisher',
+        !showLoader
       );
     } catch (error) {
       this.logger.logError(error);

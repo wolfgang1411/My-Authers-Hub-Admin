@@ -1,9 +1,14 @@
-import { Component, signal } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { AuthorsService } from './authors-service';
 import { debounceTime, Subject } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { Author, AuthorResponse, AuthorStatus } from '../../interfaces';
+import {
+  Author,
+  AuthorFilter,
+  AuthorResponse,
+  AuthorStatus,
+} from '../../interfaces';
 import { MatTableDataSource } from '@angular/material/table';
 import { ListTable } from '../../components/list-table/list-table';
 import { MatIcon } from '@angular/material/icon';
@@ -15,6 +20,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { Invite } from '../../interfaces/Invite';
 import Swal from 'sweetalert2';
 import { PublisherService } from '../publisher/publisher-service';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { StaticValuesService } from '../../services/static-values';
 
 @Component({
   selector: 'app-authors',
@@ -25,6 +33,8 @@ import { PublisherService } from '../publisher/publisher-service';
     MatIcon,
     MatButton,
     MatIconButton,
+    MatFormFieldModule,
+    MatSelectModule,
   ],
   templateUrl: './authors.html',
   styleUrl: './authors.css',
@@ -33,7 +43,8 @@ export class Authors {
   constructor(
     private authorService: AuthorsService,
     private dialog: MatDialog,
-    private publisherService: PublisherService
+    private publisherService: PublisherService,
+    private staticValueService: StaticValuesService
   ) {}
   searchStr = new Subject<string>();
 
@@ -52,16 +63,16 @@ export class Authors {
   ];
   dataSource = new MatTableDataSource<AuthorResponse>();
   AuthorStatus = AuthorStatus;
-  temp(d: any) {
-    console.log(d);
-  }
-  ngOnInit(): void {
-    this.searchStr.pipe(debounceTime(400)).subscribe((value) => {
-      console.log('Search string:', value);
-    });
 
+  filter: AuthorFilter = {
+    page: 1,
+    itemsPerPage: 30,
+    status: 'ALL' as any,
+  };
+
+  fetchAuthors(showLoader = true) {
     this.authorService
-      .getAuthors()
+      .getAuthors(this.filter, showLoader)
       .then(({ items }) => {
         this.authors.set(items);
         const mapped = items.map((author, idx) => ({
@@ -87,13 +98,19 @@ export class Authors {
           //     : 0,
           actions: '',
         }));
-        this.dataSource.data = mapped;
+        const exisitingData = this.dataSource.data;
+        this.dataSource.data =
+          exisitingData && exisitingData.length && (this.filter.page || 0) > 1
+            ? [...exisitingData, ...mapped]
+            : mapped;
 
         this.dataSource.data = mapped;
         if (mapped.length > 0) {
           const filtrCol = { ...mapped[0] };
           delete (filtrCol as any).id;
-          this.displayedColumns = Object.keys(filtrCol);
+          if (!exisitingData || !exisitingData.length) {
+            this.displayedColumns = Object.keys(filtrCol);
+          }
         }
         console.log('Fetched publishers:', this.authors());
       })
@@ -101,6 +118,22 @@ export class Authors {
         console.error('Error fetching publishers:', error);
       });
   }
+
+  authorDBStatus = computed(() => {
+    return Object.keys(
+      this.staticValueService.staticValues()?.AuthorStatus || {}
+    );
+  });
+
+  ngOnInit(): void {
+    this.searchStr.pipe(debounceTime(400)).subscribe((value) => {
+      this.filter.page = 1;
+      this.filter.searchStr = value;
+      this.fetchAuthors(false);
+    });
+    this.fetchAuthors();
+  }
+
   inviteAuthor(): void {
     const dialogRef = this.dialog.open(InviteDialog, {
       data: {
@@ -131,6 +164,7 @@ export class Authors {
       },
     });
   }
+
   approveAuthor(authorId: number) {
     Swal.fire({
       title: 'Are you sure?',
@@ -161,6 +195,7 @@ export class Authors {
       }
     });
   }
+
   rejectAuthor(authorId: number) {
     Swal.fire({
       title: 'Are you sure?',
@@ -191,6 +226,7 @@ export class Authors {
       }
     });
   }
+
   updateStatus(authorId: number) {
     Swal.fire({
       title: 'Are you sure?',
