@@ -4,6 +4,7 @@ import { Logger } from './logger';
 import { LoaderService } from './loader';
 import { Observable, of } from 'rxjs';
 import { Stat } from '../interfaces/Stats';
+import { Title, TitleFilter } from '../interfaces';
 
 @Injectable({
   providedIn: 'root',
@@ -120,6 +121,17 @@ export class DashboardService {
       { rank: 2, title: 'JS Secrets', royalties: 987.7, copies: 950 },
       { rank: 3, title: 'Tailwind Mastery', royalties: 765.2, copies: 800 },
     ]);
+  }
+
+  async getRecentTitles(titleFilter: TitleFilter): Promise<Title[]> {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get('titles', titleFilter)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
   }
 
   getBrowserUsage() {

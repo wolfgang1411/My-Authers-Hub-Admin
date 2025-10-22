@@ -79,7 +79,7 @@ export class Bookings implements OnInit {
         name:
           booking.userDetails.firstName +
           ' ' +
-          (booking.userDetails.lastName || ''),
+          (booking.userDetails.lastName || 'N/A'),
         email: booking.userDetails.email,
         title: booking.title.name,
         status: booking.status,

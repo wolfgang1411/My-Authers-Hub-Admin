@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
 import { DashboardService } from '../../services/dashboard-service';
 import { DecimalPipe } from '@angular/common';
-
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 @Component({
   selector: 'app-browser-usage-component',
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, MatProgressBarModule],
   templateUrl: './browser-usage-component.html',
   styleUrl: './browser-usage-component.css',
 })
@@ -20,5 +20,10 @@ export class BrowserUsageComponent {
   }
   getPct(v: number) {
     return Math.round((v / this.total) * 100);
+  }
+  colors = ['#ce0000', '#3f32b1', '#00af57', '#fca200'];
+
+  getColor(i: number) {
+    return this.colors[i % this.colors.length];
   }
 }

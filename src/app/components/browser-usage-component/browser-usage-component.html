@@ -14,7 +14,11 @@
       <div class="font-semibold">{{ b.value | number }}</div>
     </div>
     <div class="w-full h-2 bg-gray-100 rounded">
-      <div class="h-2 rounded" [style.width.%]="getPct(b.value)"></div>
+      <mat-progress-bar
+        mode="determinate"
+        value="40"
+        [color]="getColor($index)"
+      ></mat-progress-bar>
     </div>
   </div>
   }
