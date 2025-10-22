@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   ElementRef,
   inject,
   OnInit,
@@ -8,7 +9,11 @@ import {
 } from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { debounceTime, Subject } from 'rxjs';
-import { PublisherResponse, Publishers } from '../../interfaces/Publishers';
+import {
+  PublisherFilter,
+  PublisherResponse,
+  Publishers,
+} from '../../interfaces/Publishers';
 import { PublisherService } from './publisher-service';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -25,6 +30,8 @@ import Swal from 'sweetalert2';
 import { DistributionDialog } from '../../components/distribution-dialog/distribution-dialog';
 import { Distribution } from '../../interfaces/Distribution';
 import { PublisherStatus } from '../../interfaces';
+import { MatOption, MatSelectModule } from '@angular/material/select';
+import { StaticValuesService } from '../../services/static-values';
 
 @Component({
   selector: 'app-publisher',
@@ -37,6 +44,7 @@ import { PublisherStatus } from '../../interfaces';
     RouterLink,
     MatIconButton,
     MatButtonModule,
+    MatSelectModule,
   ],
   templateUrl: './publisher.html',
   styleUrl: './publisher.css',
@@ -45,8 +53,18 @@ import { PublisherStatus } from '../../interfaces';
 export class Publisher implements OnInit {
   constructor(
     private publisherService: PublisherService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private staticValueService: StaticValuesService
   ) {}
+
+  publisherDBStatus = computed(() => {
+    console.log(this.staticValueService.staticValues(), 'Fdafsaf');
+
+    return Object.keys(
+      this.staticValueService.staticValues()?.PuplisherStatus || {}
+    );
+  });
+
   searchStr = new Subject<string>();
   PublisherStatus = PublisherStatus;
   test!: Subject<string>;
@@ -63,14 +81,18 @@ export class Publisher implements OnInit {
     'companyname',
     'actions',
   ];
-  ngOnInit(): void {
-    this.searchStr.pipe(debounceTime(400)).subscribe((value) => {
-      console.log('Search string:', value);
-    });
+
+  filter: PublisherFilter = {
+    page: 1,
+    itemsPerPage: 30,
+    status: 'ALL' as any,
+  };
+  fetchPublishers(showLoader = true) {
     this.publisherService
-      .getPublishers()
+      .getPublishers(this.filter, showLoader)
       .then(({ items }) => {
         this.publishers.set(items);
+
         const mapped = items.map((publisher, idx) => ({
           id: publisher.id,
           serial: idx + 1,
@@ -92,11 +114,15 @@ export class Publisher implements OnInit {
           actions: '',
         }));
 
-        this.dataSource.data = mapped;
+        const existingData = this.dataSource.data;
+        this.dataSource.data =
+          existingData && existingData.length && (this.filter.page || 0) > 2
+            ? [...existingData, ...mapped]
+            : mapped;
         if (mapped.length > 0) {
           const filtrCol = { ...mapped[0] };
           delete (filtrCol as any).id;
-          this.displayedColumns = Object.keys(filtrCol);
+          if (!existingData) this.displayedColumns = Object.keys(filtrCol);
         }
 
         console.log('Mapped publishers:', mapped);
@@ -106,9 +132,16 @@ export class Publisher implements OnInit {
       });
   }
 
-  applyFilter(event: Event) {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.dataSource.filter = filterValue.trim().toLowerCase();
+  ngOnInit(): void {
+    this.fetchPublishers();
+    this.searchStr.pipe(debounceTime(400)).subscribe((value) => {
+      this.filter.page = 1;
+      this.filter.searchStr = value;
+      if (!value?.length) {
+        delete this.filter.searchStr;
+      }
+      this.fetchPublishers(false);
+    });
   }
 
   openDistributionDialog(publisherId: number) {
@@ -235,4 +268,6 @@ export class Publisher implements OnInit {
       },
     });
   }
+
+  onClickFilter() {}
 }

@@ -34,8 +34,11 @@ export interface CreatePublisher {
 }
 
 export interface PublisherFilter {
+  page?: number;
+  itemsPerPage?: number;
   parentPublisherId?: number;
-  status?: PublisherStatus | PublisherStatus[];
+  status?: PublisherStatus | PublisherStatus[] | null | string;
+  searchStr?: string;
 }
 
 export interface PublisherResponse {

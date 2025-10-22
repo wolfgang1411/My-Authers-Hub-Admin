@@ -254,7 +254,7 @@
     label="Add your social media links"
   >
     <form [formGroup]="publisherSocialMediaGroup">
-      <div formArrayName="socialMedia" class="grid grid-cols-2 gap-4 my-4">
+      <div formArrayName="socialMedia" class="flex flex-col gap-4 my-4">
         @for (group of socialMediaArray.controls; track $index) {
         <div [formGroupName]="$index">
           <app-social-media

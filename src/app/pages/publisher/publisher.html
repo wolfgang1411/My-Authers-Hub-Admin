@@ -1,39 +1,9 @@
 <div class="flex flex-col flex-grow gap-4">
-  <h3 class="heading">
-    {{ "publishers" | translate }}
-  </h3>
-
-  <div class="flex md:flex-row flex-col justify-between w-full gap-4">
-    <div
-      class="flex h-[38px] items-center justify-center md:min-w-[480px] min-w-full gap-2"
-    >
-      <input
-        class="input-field outline-none w-full"
-        #input
-        [placeholder]="'search' | translate"
-        matInput
-        (keyup)="applyFilter($event)"
-      />
-      <button
-        class="btn h-[38px] flex items-center self-end justify-center gap-2"
-        (click)="searchStr.next(input.value)"
-      >
-        <svg-icon
-          src="images/magnifying-glass-solid-full.svg"
-          class="w-4 fill-white flex"
-        ></svg-icon>
-        {{ "search" | translate }}
-      </button>
-    </div>
-
-    <div class="flex gap-2">
-      <button
-        matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
-      >
-        <mat-icon class="material-icons">filter_list</mat-icon>
-        {{ "filter" | translate }}
-      </button>
+  <div class="flex justify-between items-center">
+    <h3 class="heading">
+      {{ "publishers" | translate }}
+    </h3>
+    <div class="flex gap-4">
       <button
         matButton
         matButton="filled"
@@ -55,7 +25,52 @@
       </button>
     </div>
   </div>
-  <div class="flex gap-2 pt-4">
+
+  <div class="flex md:flex-row flex-col justify-between w-full gap-4">
+    <div
+      class="flex h-[38px] items-center justify-center md:min-w-[480px] min-w-full gap-2"
+    >
+      <input
+        class="input-field outline-none w-full"
+        #input
+        [placeholder]="'search' | translate"
+        (input)="searchStr.next(input.value)"
+      />
+      <button
+        class="btn h-[38px] flex items-center self-end justify-center gap-2"
+        (click)="searchStr.next(input.value)"
+      >
+        <svg-icon
+          src="images/magnifying-glass-solid-full.svg"
+          class="w-4 fill-white flex"
+        ></svg-icon>
+        {{ "search" | translate }}
+      </button>
+    </div>
+
+    <div class="flex gap-2 pr-2">
+      <mat-form-field class="compact-select h-[42px]" appearance="outline">
+        <mat-select
+          (selectionChange)="filter.status = $event.value; fetchPublishers()"
+          [value]="filter.status"
+        >
+          <mat-option value="ALL">ALL</mat-option>
+          @for (status of publisherDBStatus(); track $index) {
+          <mat-option [value]="status">{{ status | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <!-- <button
+        matButton="filled"
+        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+      >
+        <mat-icon class="material-icons">filter_list</mat-icon>
+        {{ "filter" | translate }}
+      </button> -->
+    </div>
+  </div>
+  <!-- <div class="flex gap-2 pt-4">
     <button class="!bg-primary" matButton="filled">
       {{ "all" | translate }}
     </button>
@@ -68,7 +83,7 @@
     <button class="!bg-primary" matButton="filled">
       {{ "dormant" | translate }}
     </button>
-  </div>
+  </div> -->
 
   <app-list-table
     class="pt-6"
