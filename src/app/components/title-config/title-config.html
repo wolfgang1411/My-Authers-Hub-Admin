@@ -1,0 +1,86 @@
+<div class="container mx-auto my-6 flex flex-col gap-6">
+  <h1 class="text-2xl font-semibold text-primary">
+    {{ "titleconfigs" | translate }}
+  </h1>
+
+  <mat-accordion class="flex flex-col gap-4">
+    @for (titleConfigItem of titleConfigsData(); track $index) {
+    <mat-expansion-panel class="rounded-lg shadow-sm">
+      <mat-expansion-panel-header>
+        <mat-panel-title class="flex items-center justify-between w-full">
+          <span class="text-lg font-medium">
+            {{ titleConfigItem.type | translate }}
+          </span>
+
+          <div class="flex gap-4">
+            <button
+              (click)="onClickAddNewItem($event, titleConfigItem.type)"
+              mat-stroked-button
+              color="primary"
+            >
+              <mat-icon>add</mat-icon>
+              {{ "additem" | translate }}
+            </button>
+            <button
+              (click)="onClickUpdateList($event, titleConfigItem.type)"
+              mat-stroked-button
+              color="primary"
+            >
+              <mat-icon>update</mat-icon>
+              {{ "reorderitems" | translate }}
+            </button>
+          </div>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      @if(titleConfigItem.data.length) {
+      <div class="flex gap-4 p-4">
+        @for (titleConfig of titleConfigItem.data; track $index) {
+        <mat-card
+          class="flex !flex-row items-center gap-3 p-2 hover:shadow-md transition-shadow duration-200 w-[200px]"
+        >
+          <!-- Thumbnail -->
+          <img
+            class="w-16 h-20 object-cover rounded"
+            [src]="titleConfig.title.media[0]?.url"
+            alt="{{ titleConfig.title.name }}"
+          />
+
+          <!-- Content -->
+          <div class="flex flex-col items-center justify-center flex-1">
+            <div class="text-sm leading-tight">
+              <div class="font-medium text-sm">
+                {{ titleConfig.title.name }}
+              </div>
+              <div>
+                <strong>{{ "sold" | translate }}:</strong>
+                {{ titleConfig.title.copiesSold }} {{ "copies" | translate }}
+              </div>
+              <div>
+                <strong>{{ "msp" | translate }}:</strong>
+                {{ titleConfig.title.pricing[0]?.msp | currency }}
+              </div>
+            </div>
+
+            <button
+              mat-icon-button
+              color="warn"
+              class="self-end mt-1"
+              aria-label="Delete title"
+              (click)="onClickDeleteConfigItem(titleConfig)"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </mat-card>
+        }
+      </div>
+      } @else {
+      <mat-card class="m-4 text-center p-4 text-gray-500">
+        {{ "notitlesfound" | translate }}
+      </mat-card>
+      }
+    </mat-expansion-panel>
+    }
+  </mat-accordion>
+</div>

@@ -24,16 +24,18 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCardModule } from '@angular/material/card';
 import { UploadFile } from '../../components/upload-file/upload-file';
 import { PublisherService } from '../publisher/publisher-service';
-import { Address, createBankDetails, Publishers } from '../../interfaces';
+import {
+  Address,
+  createBankDetails,
+  Publishers,
+  SocialMediaType,
+} from '../../interfaces';
 import { AddressService } from '../../services/address-service';
 import { BankDetailService } from '../../services/bank-detail-service';
 import Swal from 'sweetalert2';
 import { ActivatedRoute, Router } from '@angular/router';
 import { InviteService } from '../../services/invite';
-import {
-  socialMediaGroup,
-  SocialMediaType,
-} from '../../interfaces/SocialMedia';
+import { socialMediaGroup } from '../../interfaces/SocialMedia';
 import { SocialMedia } from '../social-media/social-media';
 import { SocialMediaService } from '../../services/social-media-service';
 import { NGXIntlTel } from '../../interfaces/Intl';

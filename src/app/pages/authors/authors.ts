@@ -3,7 +3,7 @@ import { AuthorsService } from './authors-service';
 import { debounceTime, Subject } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { Author, AuthorResponse, AuthorStatus } from '../../interfaces/Authors';
+import { Author, AuthorResponse, AuthorStatus } from '../../interfaces';
 import { MatTableDataSource } from '@angular/material/table';
 import { ListTable } from '../../components/list-table/list-table';
 import { MatIcon } from '@angular/material/icon';

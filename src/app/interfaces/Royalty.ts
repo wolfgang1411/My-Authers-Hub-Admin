@@ -1,9 +1,9 @@
 import { FormControl } from '@angular/forms';
-import { ChannalType } from './Titles';
+import { ChannelType } from './index';
 import { Earnings } from './Earnings';
 
 export interface Royalty {
-  channal: ChannalType;
+  channal: ChannelType;
   id: number;
   percentage: number;
   authorId?: number;
@@ -34,11 +34,6 @@ export interface UpdateRoyalty extends Partial<CreateRoyalty> {
   id?: number | null;
 }
 
-export enum RoyaltyStatus {
-  ACTIVE = 'ACTIVE',
-  DEACTIVE = 'DEACTIVE',
-  DELETED = 'DELETED',
-}
 export interface RoyaltyFilter {
   publisherId?: number;
   authorId?: number;

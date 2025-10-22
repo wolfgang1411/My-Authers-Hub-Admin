@@ -1,10 +1,7 @@
-export interface Invite{
-    email : string;
-    type 
-    : InviteType;
-    userId: number;
-}
-export enum InviteType {
-      PUBLISHER= 'PUBLISHER',
-  AUTHER= 'AUTHER'
+import { InviteType } from './StaticValue';
+
+export interface Invite {
+  email: string;
+  type: InviteType;
+  userId: number;
 }

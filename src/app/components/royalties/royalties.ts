@@ -18,7 +18,7 @@ import { SharedModule } from '../../modules/shared/shared-module';
 import { MatIconModule } from '@angular/material/icon';
 import {
   Author,
-  ChannalType,
+  ChannelType,
   PricingGroup,
   Publishers,
 } from '../../interfaces';
@@ -185,22 +185,22 @@ export class Royalties implements OnInit {
     field: RoyalFormGroupAmountField,
     percent: number
   ) {
-    let ch: ChannalType;
+    let ch: ChannelType;
     switch (field) {
       case 'ebook_mah':
-        ch = ChannalType.EBOOK_MAH;
+        ch = ChannelType.EBOOK_MAH;
         break;
       case 'ebook_third_party':
-        ch = ChannalType.EBOOK_THIRD_PARTY;
+        ch = ChannelType.EBOOK_THIRD_PARTY;
         break;
       case 'prime':
-        ch = ChannalType.PRIME;
+        ch = ChannelType.PRIME;
         break;
       case 'print_mah':
-        ch = ChannalType.PRINT_MAH;
+        ch = ChannelType.PRINT_MAH;
         break;
       case 'print_third_party':
-        ch = ChannalType.EBOOK_THIRD_PARTY;
+        ch = ChannelType.EBOOK_THIRD_PARTY;
         break;
     }
 

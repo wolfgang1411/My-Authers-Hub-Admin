@@ -13,10 +13,16 @@ import { PrintingService } from '../../services/printing-service';
 import { PrintingCalculator } from '../../components/printing-calculator/printing-calculator';
 import { MatTabsModule } from '@angular/material/tabs';
 import { SharedModule } from '../../modules/shared/shared-module';
+import { TitleConfigComponent } from '../../components/title-config/title-config';
 
 @Component({
   selector: 'app-settings',
-  imports: [PrintingCalculator, MatTabsModule, SharedModule],
+  imports: [
+    PrintingCalculator,
+    MatTabsModule,
+    SharedModule,
+    TitleConfigComponent,
+  ],
   templateUrl: './settings.html',
   styleUrl: './settings.css',
 })

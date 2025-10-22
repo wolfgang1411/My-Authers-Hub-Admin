@@ -4,6 +4,7 @@ import { BankDetails } from './BankDetails';
 import { Media } from './Media';
 import { Royalty } from './Royalty';
 import { socialMediaGroup } from './SocialMedia';
+import { AuthorStatus } from './StaticValue';
 import { Title } from './Titles';
 import { User } from './user';
 
@@ -41,10 +42,4 @@ export interface AuthorFilter {
   publisherId?: number;
   titleId?: number;
   status?: AuthorStatus | AuthorStatus[];
-}
-export enum AuthorStatus {
-  Active = 'Active',
-  Deactivated = 'Deactivated',
-  Rejected = 'Rejected',
-  Pending = 'Pending',
 }

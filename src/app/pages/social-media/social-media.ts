@@ -7,8 +7,8 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { SocialMediaType } from '../../interfaces/SocialMedia';
 import { MatInputModule } from '@angular/material/input';
+import { SocialMediaType } from '../../interfaces';
 
 @Component({
   selector: 'app-social-media',

@@ -1,5 +1,6 @@
 import { Booking } from './Booking';
 import { Royalty } from './Royalty';
+import { EarningsStatus } from './StaticValue';
 import { Transaction } from './Transaction';
 
 export interface Earnings {
@@ -15,8 +16,4 @@ export interface Earnings {
   updatedAt: Date;
   Booking?: Booking;
   bookingId?: number;
-}
-export enum EarningsStatus {
-  'PENDING' = 'PENDING',
-  'PAID' = 'PAID',
 }

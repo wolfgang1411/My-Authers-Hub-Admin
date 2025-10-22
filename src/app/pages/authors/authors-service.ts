@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Server } from '../../services/server';
 import { Pagination } from '../../interfaces';
-import { Author, AuthorFilter, AuthorStatus } from '../../interfaces/Authors';
+import { Author, AuthorFilter, AuthorStatus } from '../../interfaces';
 import { Logger } from '../../services/logger';
 import { LoaderService } from '../../services/loader';
 

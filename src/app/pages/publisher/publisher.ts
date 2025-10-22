@@ -24,7 +24,7 @@ import { Invite } from '../../interfaces/Invite';
 import Swal from 'sweetalert2';
 import { DistributionDialog } from '../../components/distribution-dialog/distribution-dialog';
 import { Distribution } from '../../interfaces/Distribution';
-import { PublisherStatus } from '../../interfaces/Publishers';
+import { PublisherStatus } from '../../interfaces';
 
 @Component({
   selector: 'app-publisher',

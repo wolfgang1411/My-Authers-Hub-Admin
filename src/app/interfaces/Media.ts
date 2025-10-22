@@ -1,5 +1,5 @@
 import { FormControl } from '@angular/forms';
-import { TitleMediaType } from './Titles';
+import { TitleMediaType } from './StaticValue';
 
 export interface Media {
   id: number;
@@ -7,15 +7,8 @@ export interface Media {
   url: string;
   type: string;
   file: File;
-  mediaType: MediaType;
+  mediaType: TitleMediaType;
 }
-
-export type MediaType =
-  | 'FullCover'
-  | 'PrintInterior'
-  | 'FrontCover'
-  | 'BackCover'
-  | 'InsideCover';
 
 export interface TitleMediaGroup {
   id: FormControl<number | null>;

@@ -1,0 +1,7 @@
+/* my-dialog.component.scss */
+.subtitle {
+  font-size: 14px;
+  font-weight: normal;
+  color: gray;
+  margin-top: 4px;
+}

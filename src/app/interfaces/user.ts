@@ -1,7 +1,7 @@
 import { Address } from './Address';
 import { Author } from './Authors';
-import { accountType, BankDetails } from './BankDetails';
 import { Publishers } from './Publishers';
+import { BankDetailsType, UpdateTicketType } from './index';
 import { Wallet } from './Wallet';
 
 export interface User {
@@ -35,7 +35,7 @@ export interface UpdateUserWithTicket {
   accountNo?: string;
   ifsc?: string;
   panCardNo?: string;
-  accountType?: accountType;
+  accountType?: BankDetailsType;
   gstNumber?: string;
   publisherName?: string;
   publisherEmail?: string;
@@ -45,12 +45,6 @@ export interface UpdateUserWithTicket {
   authorAbout?: string;
   authorUsername?: string;
   type?: UpdateTicketType;
-}
-export enum UpdateTicketType {
-  'PUBLISHER' = 'PUBLISHER',
-  'AUTHOR' = 'AUTHOR',
-  'BANK' = 'BANK',
-  'ADDRESS' = 'ADDRESS',
 }
 
 export interface UpdateUser extends Partial<CreateUser> {
