@@ -15,10 +15,16 @@ export class AuthorsService {
     private loader: LoaderService
   ) {}
 
-  async getAuthors(filter?: AuthorFilter) {
+  async getAuthors(filter?: AuthorFilter, showLoader = true) {
     try {
+      filter = { ...filter };
+      if (!filter.status || filter.status.toLocaleString() === ('all' as any)) {
+        delete filter.status;
+      }
       return await this.loader.loadPromise(
-        this.server.get<Pagination<Author>>('authors', filter)
+        this.server.get<Pagination<Author>>('authors', filter),
+        'fetch-authors',
+        !showLoader
       );
     } catch (error) {
       this.logger.logError(error);

@@ -1,7 +1,30 @@
 <div class="flex flex-col flex-grow gap-4">
-  <h3 class="heading">
-    {{ "authors" | translate }}
-  </h3>
+  <div class="flex justify-between">
+    <h3 class="heading">
+      {{ "authors" | translate }}
+    </h3>
+    <div class="flex gap-4">
+      <button
+        matButton
+        matButton="filled"
+        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        [routerLink]="['/author', 0]"
+        routerLinkActive="router-link-active"
+      >
+        <mat-icon class="material-icons">add_circle_outline</mat-icon>
+        {{ "addauthor" | translate }}
+      </button>
+      <button
+        matButton
+        matButton="filled"
+        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        (click)="inviteAuthor()"
+      >
+        <mat-icon class="material-icons">person_add</mat-icon>
+        {{ "inviteauthor" | translate }}
+      </button>
+    </div>
+  </div>
 
   <div class="flex justify-between w-full gap-4">
     <div
@@ -26,36 +49,29 @@
     </div>
 
     <div class="flex gap-2">
-      <button
+      <mat-form-field class="compact-select h-[42px]" appearance="outline">
+        <mat-select
+          [(value)]="filter.status"
+          (valueChange)="fetchAuthors(false)"
+        >
+          <mat-option value="ALL">ALL</mat-option>
+          @for (status of authorDBStatus(); track $index) {
+          <mat-option [value]="status">{{ status | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <!-- <button
         matButton="filled"
         class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
       >
         <mat-icon class="material-icons">filter_list</mat-icon>
 
         {{ "filter" | translate }}
-      </button>
-      <button
-        matButton
-        matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
-        [routerLink]="['/author', 0]"
-        routerLinkActive="router-link-active"
-      >
-        <mat-icon class="material-icons">add_circle_outline</mat-icon>
-        {{ "addauthor" | translate }}
-      </button>
-      <button
-        matButton
-        matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
-        (click)="inviteAuthor()"
-      >
-        <mat-icon class="material-icons">person_add</mat-icon>
-        {{ "inviteauthor" | translate }}
-      </button>
+      </button> -->
     </div>
   </div>
-  <div class="flex gap-2">
+  <!-- <div class="flex gap-2">
     <button class="!bg-primary" matButton="filled">
       {{ "all" | translate }}
     </button>
@@ -68,7 +84,7 @@
     <button class="!bg-primary" matButton="filled">
       {{ "dormant" | translate }}
     </button>
-  </div>
+  </div> -->
   <app-list-table
     class="pt-6"
     [dataSource]="dataSource"

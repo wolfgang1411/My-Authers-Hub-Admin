@@ -42,4 +42,7 @@ export interface AuthorFilter {
   publisherId?: number;
   titleId?: number;
   status?: AuthorStatus | AuthorStatus[];
+  page?: number;
+  itemsPerPage?: number;
+  searchStr?: string;
 }
