@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Server } from './server';
 import { LoaderService } from './loader';
 import { Logger } from './logger';
-import { SalesFilter } from '../interfaces';
+import { CreateSale, SalesFilter } from '../interfaces';
 
 @Injectable({
   providedIn: 'root',
@@ -21,6 +21,17 @@ export class SalesService {
           'sales/count/total',
           filter
         )
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async createSalesMulti(data: CreateSale[]) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post('sales/new', { data })
       );
     } catch (error) {
       this.logger.logError(error);

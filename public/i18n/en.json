@@ -313,5 +313,10 @@
   "GOOGLE_PLAY": "Google play",
   "KINDLE": "KDP",
   "FLIPKART": "Flipkart",
-  "AMAZON": "Amazon"
+  "AMAZON": "Amazon",
+  "saketype": "Sale Type",
+  "platform": "Platform",
+  "qunatity": "Qunatity",
+  "soldat": "Sold At",
+  "bookingtype": "Booking Type"
 }

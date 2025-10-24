@@ -48,8 +48,19 @@ export class TitleService {
 
   async getTitles(filter?: TitleFilter) {
     try {
+      const temp: any = {};
+
+      if (filter) {
+        Object.keys(filter).forEach((key) => {
+          const val = (filter as any)[key];
+          if (val && val.length) {
+            temp[key] = val;
+          }
+        });
+      }
+
       return await this.loader.loadPromise(
-        this.server.get<Pagination<Title>>('titles', filter)
+        this.server.get<Pagination<Title>>('titles', temp)
       );
     } catch (error) {
       console.error('Error fetching publishers:', error);

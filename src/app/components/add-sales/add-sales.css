@@ -1,0 +1,44 @@
+table {
+  border: 1px solid gray;
+  display: flex;
+  flex-direction: column;
+}
+
+table tr th {
+  padding: 1rem;
+}
+
+table tr {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+table tr:not(:last-child) {
+  border-bottom: 1px solid gray;
+}
+
+table tr td,
+table tr th {
+  height: 42px;
+  display: flex;
+  align-items: center;
+  /* justify-content: center; */
+}
+
+table tr td {
+  padding: 0 0.8rem;
+}
+
+table tr td input,
+table tr td select {
+  width: 0;
+  min-width: calc(100% - 1rem);
+  height: 100%;
+  border: none;
+  outline: none;
+}
+
+table tr td:not(:last-child),
+table tr th:not(:last-child) {
+  border-right: 1px solid gray;
+}

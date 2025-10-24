@@ -11,7 +11,7 @@ import {
   PublishingType,
   TitleMediaType,
   TitleStatus,
-  ChannelType,
+  ChannalType,
   TitleCategoryType,
   DistributionType,
   PaperType,
@@ -83,7 +83,7 @@ export interface AuthorTitle {
 
 export interface TitlePricing {
   id: number;
-  channal: ChannelType;
+  channal: ChannalType;
   salesPrice: number;
   mrp: number;
   msp: number;
@@ -154,6 +154,7 @@ export interface TitleFilter {
   categoryId?: number | number[];
   genreId?: number | number[];
   bestSellingMAH?: boolean;
+  searchStr?: string;
 }
 export interface TitleGenre {
   id: number;

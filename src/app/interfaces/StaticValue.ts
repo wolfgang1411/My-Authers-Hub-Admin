@@ -306,12 +306,18 @@ export enum RoyaltyStatus {
   DELETED = 'DELETED',
 }
 
-export enum ChannelType {
+export enum ChannalType {
   PRINT_MAH = 'PRINT_MAH',
   PRINT_THIRD_PARTY = 'PRINT_THIRD_PARTY',
   PRIME = 'PRIME',
   EBOOK_MAH = 'EBOOK_MAH',
   EBOOK_THIRD_PARTY = 'EBOOK_THIRD_PARTY',
+}
+
+export enum SalesType {
+  SALE = 'SALE',
+  LIVE_SALE = 'LIVE_SALE',
+  INVENTORY = 'INVENTORY',
 }
 
 export enum EarningsStatus {
@@ -409,7 +415,7 @@ export const StaticValues = {
   SizeCategoryStatus,
   SizeCategoryType,
   RoyaltyStatus,
-  ChannelType,
+  ChannalType,
   EarningsStatus,
   DeliveryChargesType,
   DeliveryChargesStatus,
@@ -418,4 +424,5 @@ export const StaticValues = {
   DiscountType,
   ApplyOnType,
   PuplisherStatus,
+  SalesType,
 } as const;
