@@ -4,7 +4,15 @@ import { Logger } from './logger';
 import { LoaderService } from './loader';
 import { Observable, of } from 'rxjs';
 import { Stat } from '../interfaces/Stats';
-import { Pagination, Title, TitleFilter } from '../interfaces';
+import {
+  DashbordStateType,
+  StatsMonthly,
+  StatsResponseMap,
+  StatsWeekly,
+  StatsYearly,
+  Title,
+  TitleFilter,
+} from '../interfaces';
 
 @Injectable({
   providedIn: 'root',
@@ -25,6 +33,20 @@ export class DashboardService {
 
   getTimeWindow() {
     return this.timeWindowDays;
+  }
+
+  async getStatsTemp<T extends keyof StatsResponseMap>(
+    type: T
+  ): Promise<StatsResponseMap[T][]> {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get(`sales/count/duration/${type}`),
+        'fetch-stats'
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
   }
 
   getStats(): Observable<Stat[]> {
