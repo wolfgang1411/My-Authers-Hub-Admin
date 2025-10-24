@@ -19,6 +19,7 @@ export class RecentTitles {
   titleFilter: TitleFilter = {
     publishedAfter: formatDate(subDays(new Date(), 30), 'yyyy-MM-dd'),
     status: TitleStatus.APPROVED,
+    itemsPerPage: 10,
   };
 
   async ngOnInit() {

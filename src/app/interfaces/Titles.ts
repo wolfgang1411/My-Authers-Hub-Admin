@@ -16,6 +16,7 @@ import {
   DistributionType,
   PaperType,
   SizeCategoryType,
+  TitleConfigType,
 } from './index';
 
 export interface Title {
@@ -141,9 +142,18 @@ export interface TitleCategory {
   trade: Title[];
 }
 export interface TitleFilter {
-  publisherId?: number;
+  publisherIds?: number | number[];
   publishedAfter?: string;
+  itemsPerPage?: number;
+  page?: number;
+  orderBy?: string;
+  orderByVal?: string;
   status?: TitleStatus | TitleStatus[];
+  configType?: TitleConfigType | TitleConfigType[];
+  publishedBefore?: string;
+  categoryId?: number | number[];
+  genreId?: number | number[];
+  bestSellingMAH?: boolean;
 }
 export interface TitleGenre {
   id: number;

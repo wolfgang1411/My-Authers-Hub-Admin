@@ -18,14 +18,13 @@ export class RecentAuthors {
   authors = signal<Author[] | null>(null);
 
   filter: AuthorFilter = {
-    // status: AuthorStatus.Active,
+    status: AuthorStatus.Active,
     showTotalEarnings: true,
-    // approvedAfter: formatDate(subDays(new Date(), 30), 'yyyy-MM-dd'),
+    approvedAfter: formatDate(subDays(new Date(), 30), 'yyyy-MM-dd'),
   };
 
   async ngOnInit() {
     const { items } = await this.authorService.getAuthors(this.filter);
-
     this.authors.update((authors) =>
       authors && authors.length ? [...authors, ...items] : items
     );
