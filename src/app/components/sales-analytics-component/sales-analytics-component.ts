@@ -3,6 +3,8 @@ import { ChartOptions } from 'chart.js';
 import { ChartConfiguration } from 'chart.js';
 import { DashboardService } from '../../services/dashboard-service';
 import { NgChartsModule } from 'ng2-charts';
+import { StaticValuesService } from '../../services/static-values';
+import { SalesService } from '../../services/sales';
 @Component({
   selector: 'app-sales-analytics-component',
   imports: [NgChartsModule],
@@ -10,6 +12,12 @@ import { NgChartsModule } from 'ng2-charts';
   styleUrl: './sales-analytics-component.css',
 })
 export class SalesAnalyticsComponent {
+  constructor(
+    private staticValService: StaticValuesService,
+    private svc: DashboardService,
+    private salesService: SalesService
+  ) {}
+
   labels: string[] = [];
   chartData: ChartConfiguration<'line'>['data'] = { datasets: [], labels: [] };
   chartOptions: ChartOptions<'line'> = {
@@ -25,8 +33,6 @@ export class SalesAnalyticsComponent {
     },
   };
   lineType: any = 'line';
-
-  constructor(private svc: DashboardService) {}
 
   ngOnInit(): void {
     this.svc.getSalesSeries().subscribe((d) => {
