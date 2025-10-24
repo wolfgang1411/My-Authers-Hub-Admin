@@ -10,11 +10,12 @@ import { RecentOrdersComponent } from '../../components/recent-orders-component/
 import { DashboardService } from '../../services/dashboard-service';
 import { RecentAuthors } from '../../components/recent-authors/recent-authors';
 import { RecentTitles } from '../../components/recent-titles/recent-titles';
-import { MatDatepicker } from '@angular/material/datepicker';
 import {
-  MatDatepickerToggle,
+  MatDatepicker,
   MatDatepickerInput,
-} from '../../../../node_modules/@angular/material/datepicker/index';
+  MatDatepickerToggle,
+} from '@angular/material/datepicker';
+
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import moment, { Moment } from 'moment';
 import { MatInputModule } from '@angular/material/input';
