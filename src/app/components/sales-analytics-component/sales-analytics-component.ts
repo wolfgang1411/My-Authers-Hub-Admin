@@ -1,25 +1,41 @@
-import { Component } from '@angular/core';
-import { ChartOptions } from 'chart.js';
-import { ChartConfiguration } from 'chart.js';
-import { DashboardService } from '../../services/dashboard-service';
+import { Component, OnInit, signal } from '@angular/core';
+import { ChartConfiguration, ChartOptions } from 'chart.js';
 import { NgChartsModule } from 'ng2-charts';
+import { DashboardService } from '../../services/dashboard-service';
 import { StaticValuesService } from '../../services/static-values';
-import { SalesService } from '../../services/sales';
+import { DashbordStateType, PlatForm } from '../../interfaces';
+import { TranslateService } from '@ngx-translate/core';
+import { MatRadioModule } from '@angular/material/radio';
+import { BehaviorSubject } from 'rxjs';
+
 @Component({
   selector: 'app-sales-analytics-component',
-  imports: [NgChartsModule],
   templateUrl: './sales-analytics-component.html',
-  styleUrl: './sales-analytics-component.css',
+  styleUrls: ['./sales-analytics-component.css'],
+  imports: [NgChartsModule, MatRadioModule],
 })
-export class SalesAnalyticsComponent {
+export class SalesAnalyticsComponent implements OnInit {
   constructor(
     private staticValService: StaticValuesService,
     private svc: DashboardService,
-    private salesService: SalesService
+    private translateService: TranslateService
   ) {}
 
-  labels: string[] = [];
-  chartData: ChartConfiguration<'line'>['data'] = { datasets: [], labels: [] };
+  salesDuration = new BehaviorSubject<DashbordStateType>('WEEKLY');
+
+  // Signals
+  labels = signal<string[]>([]);
+  chartData = signal<ChartConfiguration<'line'>['data']>({
+    datasets: [],
+    labels: [],
+  });
+
+  // Cache for sales data
+  private salesCache: Record<
+    DashbordStateType,
+    ChartConfiguration<'line'>['data']
+  > = {} as any;
+
   chartOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
@@ -34,29 +50,64 @@ export class SalesAnalyticsComponent {
   };
   lineType: any = 'line';
 
+  async fetchAndUpdateStates(type: DashbordStateType = 'MONTHLY') {
+    // Check if data already cached
+    if (this.salesCache[type]) {
+      this.chartData.set(this.salesCache[type]);
+      this.labels.set(this.salesCache[type].labels || ([] as any));
+      return;
+    }
+
+    try {
+      const res = await this.svc.getStatsTemp(type);
+
+      // Extract labels
+      const newLabels = res.map((item) => Object.keys(item)[0]);
+      this.labels.set(newLabels);
+
+      // Extract all platforms
+      const platforms = Object.keys(
+        this.staticValService.staticValues()?.PlatForm || {}
+      ) as PlatForm[];
+
+      // Build datasets
+      const datasets = platforms.map((platform) => {
+        const data = res.map((item) => {
+          const unitData = Object.values(item)[0];
+          return unitData[platform]?.amount || 0;
+        });
+        const color = this.getRandomColor();
+        return {
+          label: this.translateService.instant(platform),
+          data,
+          tension: 0.4,
+          fill: false,
+          borderColor: color,
+          backgroundColor: color,
+        };
+      });
+
+      const chartData = { labels: newLabels, datasets };
+
+      // Cache it
+      this.salesCache[type] = chartData;
+
+      this.chartData.set(chartData);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   ngOnInit(): void {
-    this.svc.getSalesSeries().subscribe((d) => {
-      this.labels = d.labels;
-      this.chartData = {
-        labels: d.labels,
-        datasets: [
-          {
-            label: 'Total Sales',
-            data: d.sales,
-            tension: 0.4,
-            fill: true,
-            backgroundColor: 'rgba(99,102,241,0.12)',
-            borderColor: 'rgba(99,102,241,0.9)',
-          },
-          {
-            label: 'Total Orders',
-            data: d.orders,
-            tension: 0.4,
-            fill: false,
-            borderColor: 'rgba(6,182,212,0.9)',
-          },
-        ],
-      };
+    this.salesDuration.subscribe((duration) => {
+      this.fetchAndUpdateStates(duration);
     });
+  }
+
+  private getRandomColor(): string {
+    const r = Math.floor(Math.random() * 200);
+    const g = Math.floor(Math.random() * 200);
+    const b = Math.floor(Math.random() * 200);
+    return `rgb(${r},${g},${b})`;
   }
 }

@@ -309,5 +309,9 @@
   "draganddroptoreorder": "Drag and drop to reorder",
   "reorderitems": "Reorder items",
   "additem": "Add item",
-  "position": "Position"
+  "position": "Position",
+  "GOOGLE_PLAY": "Google play",
+  "KINDLE": "KDP",
+  "FLIPKART": "Flipkart",
+  "AMAZON": "Amazon"
 }
