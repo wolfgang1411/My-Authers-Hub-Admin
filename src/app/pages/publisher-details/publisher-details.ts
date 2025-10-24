@@ -11,14 +11,21 @@ import { Royalty } from '../../interfaces/Royalty';
 import { Wallet } from '../../interfaces/Wallet';
 import { AuthorsService } from '../authors/authors-service';
 import { TitleService } from '../titles/title-service';
-import {MatTabsModule} from '@angular/material/tabs';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatFormField } from '@angular/material/form-field';
-import {MatTableDataSource, MatTableModule} from '@angular/material/table';
-import {MatInputModule} from '@angular/material/input';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatInputModule } from '@angular/material/input';
 import { RoyaltyService } from '../../services/royalty-service';
 @Component({
   selector: 'app-publisher-details',
-  imports: [SharedModule, Back ,MatTabsModule, MatFormField , MatTableModule, MatInputModule],
+  imports: [
+    SharedModule,
+    Back,
+    MatTabsModule,
+    MatFormField,
+    MatTableModule,
+    MatInputModule,
+  ],
   templateUrl: './publisher-details.html',
   styleUrl: './publisher-details.css',
 })
@@ -38,10 +45,14 @@ export class PublisherDetails {
   publisherId!: number;
   publisherDetails = signal<Publishers | null>(null);
   booksPublished = signal<Title[]>([]);
-  completeAddress= computed(()=> this.publisherDetails()?.address?.map((address) => {
-    return `${address.address}, ${address.city}, ${address.state}, ${address.country}, ${address.pincode}`;
-  }).join(' | '));
-  
+  completeAddress = computed(() =>
+    this.publisherDetails()
+      ?.address?.map((address) => {
+        return `${address.address}, ${address.city}, ${address.state}, ${address.country}, ${address.pincode}`;
+      })
+      .join(' | ')
+  );
+
   authors = signal<Author[]>([]);
   subPublishers = signal<Publishers[]>([]);
   royalties = signal<Royalty[]>([]);
@@ -49,10 +60,43 @@ export class PublisherDetails {
   publishedLinks = signal<any[]>([]);
   attachments = signal<any[]>([]);
 
-  displayedColumns: string[] = ['serial', 'bookname', 'ISBN', 'Pages', 'royaltiesearned','authorname', 'links'];
-  displayedAuthorColumns: string[] = ['serial', 'name', 'email', 'phonenumber', 'titles', 'royaltyearned', 'links'];
-  displayedSubPublisherColumns: string[] = ['serial', 'name', 'email', 'phonenumber', 'titles', 'authors', 'companyname'];
-  displayedRoyaltyColumns: string[] = ['serial','date', 'authorname', 'booktitle', 'sales','royaltyfromsales', 'publisherearnings', 'royaltyamount' ];
+  displayedColumns: string[] = [
+    'serial',
+    'bookname',
+    'ISBN',
+    'Pages',
+    'royaltiesearned',
+    'authorname',
+    'links',
+  ];
+  displayedAuthorColumns: string[] = [
+    'serial',
+    'name',
+    'email',
+    'phonenumber',
+    'titles',
+    'royaltyearned',
+    'links',
+  ];
+  displayedSubPublisherColumns: string[] = [
+    'serial',
+    'name',
+    'email',
+    'phonenumber',
+    'titles',
+    'authors',
+    'companyname',
+  ];
+  displayedRoyaltyColumns: string[] = [
+    'serial',
+    'date',
+    'authorname',
+    'booktitle',
+    'sales',
+    'royaltyfromsales',
+    'publisherearnings',
+    'royaltyamount',
+  ];
   bookPublishData = new MatTableDataSource<Title>(this.booksPublished());
   authorData = new MatTableDataSource<Author>(this.authors());
   subPublisherData = new MatTableDataSource<Publishers>(this.subPublishers());
@@ -60,7 +104,7 @@ export class PublisherDetails {
   ngOnInit(): void {
     // Fetch publisher details using the publisherId
     this.fetchPublisherDetails();
-    this.fetchSubPublishers()
+    this.fetchSubPublishers();
     this.fetchAuthors();
     this.fetchTitles();
   }
@@ -81,7 +125,7 @@ export class PublisherDetails {
       const { items } = await this.publisherService.getPublishers({
         parentPublisherId: this.publisherId,
       });
-      this.subPublishers.set(items as Publishers[])
+      this.subPublishers.set(items as Publishers[]);
       this.subPublisherData.data = items as Publishers[];
     } catch (error) {
       console.error('Error fetching sub publisher:', error);
@@ -103,16 +147,16 @@ export class PublisherDetails {
   async fetchTitles() {
     try {
       const { items } = await this.titleService.getTitles({
-        publisherId: this.publisherId,
+        publisherIds: this.publisherId,
       });
       this.booksPublished.set(items as Title[]);
       this.bookPublishData.data = items as Title[];
     } catch (error) {
-      throw error;   
+      throw error;
     }
   }
 
-    async fetchRoyalty() {
+  async fetchRoyalty() {
     // try {
     //   const { items } = await this.royaltyService.getRoyalties({
     //     publisherId: this.publisherId,
@@ -124,32 +168,31 @@ export class PublisherDetails {
     // }
   }
 
-scrollToSection(sectionId: string) {
-  const element = document.getElementById(sectionId);
-  if (element) {
-    const headerOffset = 200; 
-    const elementPosition = element.getBoundingClientRect().top + window.scrollY;
-    const offsetPosition = elementPosition - headerOffset;
+  scrollToSection(sectionId: string) {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const headerOffset = 200;
+      const elementPosition =
+        element.getBoundingClientRect().top + window.scrollY;
+      const offsetPosition = elementPosition - headerOffset;
 
-    window.scrollTo({
-      top: offsetPosition,
-      behavior: 'smooth'
-    });
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth',
+      });
+    }
   }
-}
-applyFilter(event: Event) {
-  const filterValue = (event.target as HTMLInputElement).value;
-  this.bookPublishData.filter = filterValue.trim().toLowerCase();
-}
+  applyFilter(event: Event) {
+    const filterValue = (event.target as HTMLInputElement).value;
+    this.bookPublishData.filter = filterValue.trim().toLowerCase();
+  }
 
-applyAuhtorFilter(event: Event) {
-  const filterValue = (event.target as HTMLInputElement).value;
-  this.authorData.filter = filterValue.trim().toLowerCase();
-}
-applySubPublisherFilter(event: Event) {
-  const filterValue = (event.target as HTMLInputElement).value;
-  this.subPublisherData.filter = filterValue.trim().toLowerCase();
-}
-
-  
+  applyAuhtorFilter(event: Event) {
+    const filterValue = (event.target as HTMLInputElement).value;
+    this.authorData.filter = filterValue.trim().toLowerCase();
+  }
+  applySubPublisherFilter(event: Event) {
+    const filterValue = (event.target as HTMLInputElement).value;
+    this.subPublisherData.filter = filterValue.trim().toLowerCase();
+  }
 }

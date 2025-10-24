@@ -14,10 +14,10 @@
     </div>
   </div>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-    @for(s of stats ; track $index){
+    @for(stat of stats() ; track $index){
     <ng-container>
       <app-stat-card-component
-        [stat]="s"
+        [stat]="stat"
         class="bg-white p-4 rounded-lg shadow-sm"
       ></app-stat-card-component>
     </ng-container>
@@ -29,44 +29,39 @@
       <app-sales-analytics-component
         class="bg-white p-4 rounded-lg shadow-sm"
       ></app-sales-analytics-component>
-      <div class="flex flex-col gap-2 bg-white p-4 rounded-lg shadow-sm">
-        <div
-          class="bg-white border-primary-superlight border rounded-lg shadow-lg justify-end w-[220px] content-end self-end h-[42px] flex items-center"
-          (focus)="dp.open()"
-          (click)="dp.open()"
-        >
-          <input
-            matInput
-            [matDatepicker]="dp"
-            [formControl]="date"
-            (dateInput)="onDateSelected($event)"
-            (dateChange)="onDateSelected($event)"
-            [placeholder]="'selectdate' | translate"
-          />
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- <div class="input-field">
+          <input matInput [matDatepicker]="dp" [formControl]="date" />
           <mat-datepicker-toggle
             matIconSuffix
             [for]="dp"
           ></mat-datepicker-toggle>
-          <mat-datepicker #dp> </mat-datepicker>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          @if(list && list.length) {
-          <app-recent-titles class="col-span-1 md:col-span-1" [list]="list">
-          </app-recent-titles>
-          }
-          <app-recent-authors class="col-span-1 md:col-span-1">
-          </app-recent-authors>
-          <app-best-selling-component
-            class="col-span-1 md:col-span-1"
-          ></app-best-selling-component>
+          <mat-datepicker
+            #dp
+            startView="multi-year"
+            panelClass="example-month-picker"
+          >
+          </mat-datepicker>
+        </div> -->
+        <app-recent-titles
+          class="col-span-1 md:col-span-1 bg-white p-4 rounded-lg shadow-sm"
+        >
+        </app-recent-titles>
+        <app-recent-authors
+          class="col-span-1 md:col-span-1 bg-white p-4 rounded-lg shadow-sm"
+        >
+        </app-recent-authors>
+        <app-best-selling-component
+          class="col-span-1 md:col-span-1 bg-white p-4 rounded-lg shadow-sm"
+        ></app-best-selling-component>
 
-          <app-browser-usage-component
-            class="col-span-1 md:col-span-1"
-          ></app-browser-usage-component>
-          <app-activity-timeline-component
-            class="col-span-1 md:col-span-1"
-          ></app-activity-timeline-component>
-        </div>
+        <!-- <app-browser-usage-component
+          class="col-span-1 md:col-span-1 bg-white p-4 rounded-lg shadow-sm"
+        ></app-browser-usage-component> -->
+        <app-activity-timeline-component
+          class="col-span-1 md:col-span-1 bg-white p-4 rounded-lg shadow-sm"
+        ></app-activity-timeline-component>
       </div>
     </div>
     <div class="gap-4 flex flex-col">

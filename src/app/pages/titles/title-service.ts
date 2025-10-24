@@ -56,6 +56,18 @@ export class TitleService {
       throw error;
     }
   }
+
+  async getTitleCount(filter: TitleFilter) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<{ count: number }>('titles/count', filter)
+      );
+    } catch (error) {
+      console.error('Error fetching publishers:', error);
+      throw error;
+    }
+  }
+
   // Initialization logic can gp here if needed
   async getTitleById(id: number) {
     try {

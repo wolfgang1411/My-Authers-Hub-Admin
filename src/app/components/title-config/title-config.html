@@ -42,7 +42,7 @@
           <!-- Thumbnail -->
           <img
             class="w-16 h-20 object-cover rounded"
-            [src]="titleConfig.title.media[0]?.url"
+            [src]="titleConfig.title.media?.[0]?.url"
             alt="{{ titleConfig.title.name }}"
           />
 
@@ -58,7 +58,7 @@
               </div>
               <div>
                 <strong>{{ "msp" | translate }}:</strong>
-                {{ titleConfig.title.pricing[0]?.msp | currency : "INR" }}
+                {{ titleConfig.title.pricing?.[0]?.msp | currency }}
               </div>
             </div>
 

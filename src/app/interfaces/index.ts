@@ -18,3 +18,4 @@ export * from './Intl';
 export * from './Notification';
 export * from './StaticValue';
 export * from './Title-config';
+export * from './Sales';

@@ -1,7 +1,10 @@
-import { Component, Input } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
+import { Component, signal } from '@angular/core';
 import { DashboardService } from '../../services/dashboard-service';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { Title } from '../../interfaces';
+import { Title, TitleFilter, TitleStatus } from '../../interfaces';
+import { TitleService } from '../../pages/titles/title-service';
+import { formatDate, subDays } from 'date-fns';
 
 @Component({
   selector: 'app-recent-titles',
@@ -10,7 +13,21 @@ import { Title } from '../../interfaces';
   styleUrl: './recent-titles.css',
 })
 export class RecentTitles {
-  @Input() list!: Title[];
-  constructor(private svc: DashboardService) {}
-  ngOnInit() {}
+  constructor(private titleService: TitleService) {}
+
+  titles = signal<Title[] | null>(null);
+  titleFilter: TitleFilter = {
+    publishedAfter: formatDate(subDays(new Date(), 30), 'yyyy-MM-dd'),
+    status: TitleStatus.APPROVED,
+    itemsPerPage: 10,
+  };
+
+  async ngOnInit() {
+    this.fetchAndUpdateTitles();
+  }
+
+  async fetchAndUpdateTitles() {
+    const { items } = await this.titleService.getTitles(this.titleFilter);
+    this.titles.update((t) => (t ? [...t, ...items] : items));
+  }
 }

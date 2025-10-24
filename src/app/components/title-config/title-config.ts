@@ -1,4 +1,4 @@
-import { Component, computed, effect, OnInit, signal } from '@angular/core';
+import { Component, effect, OnInit, signal } from '@angular/core';
 import { TitleConfigService } from '../../services/title-config';
 import { StaticValuesService } from '../../services/static-values';
 import { SharedModule } from '../../modules/shared/shared-module';
@@ -6,19 +6,19 @@ import { MatAnchor } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
-import {
-  TitleConfig,
-  StaticValues,
-  TitleConfigType,
-  Title,
-  CreateTitleConfig,
-} from '../../interfaces';
+
 import Swal from 'sweetalert2';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { UpdateTitleConfigList } from '../update-title-config-list/update-title-config-list';
 import { AddTitleConfig } from '../add-title-config/add-title-config';
 import { TitleService } from '../../pages/titles/title-service';
+import {
+  CreateTitleConfig,
+  Title,
+  TitleConfig,
+  TitleConfigType,
+} from '../../interfaces';
 
 @Component({
   selector: 'app-title-config',

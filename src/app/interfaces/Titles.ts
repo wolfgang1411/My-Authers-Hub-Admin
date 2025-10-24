@@ -16,6 +16,7 @@ import {
   DistributionType,
   PaperType,
   SizeCategoryType,
+  TitleConfigType,
 } from './index';
 
 export interface Title {
@@ -37,6 +38,7 @@ export interface Title {
   genre: TitleGenre;
   keywords: string;
   copiesSold: number;
+  totalSales: number;
   publisherDisplayNames: {
     [id: number]: string;
   };
@@ -44,16 +46,16 @@ export interface Title {
     [id: number]: string;
   };
   publisher: Publishers;
-  authors: AuthorTitle[];
-  printing: TitlePrinting[];
+  authors?: AuthorTitle[];
+  printing?: TitlePrinting[];
   Booking: Booking[];
-  royalties: Royalty[];
-  documentMedia: TitleMedia[];
+  royalties?: Royalty[];
+  documentMedia?: TitleMedia[];
   isbnPrint?: string;
   isbnEbook?: string;
-  media: TitleMedia[];
-  pricing: TitlePricing[];
-  distribution: TitleDistribution[];
+  media?: TitleMedia[];
+  pricing?: TitlePricing[];
+  distribution?: TitleDistribution[];
 }
 
 export interface TitleMedia extends Media {
@@ -140,9 +142,18 @@ export interface TitleCategory {
   trade: Title[];
 }
 export interface TitleFilter {
-  publisherId?: number;
-  publishedAfter?: string | Date;
-  approvedAfter?: string | Date;
+  publisherIds?: number | number[];
+  publishedAfter?: string;
+  itemsPerPage?: number;
+  page?: number;
+  orderBy?: string;
+  orderByVal?: string;
+  status?: TitleStatus | TitleStatus[];
+  configType?: TitleConfigType | TitleConfigType[];
+  publishedBefore?: string;
+  categoryId?: number | number[];
+  genreId?: number | number[];
+  bestSellingMAH?: boolean;
 }
 export interface TitleGenre {
   id: number;
