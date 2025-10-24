@@ -309,5 +309,6 @@
   "draganddroptoreorder": "Drag and drop to reorder",
   "reorderitems": "Reorder items",
   "additem": "Add item",
-  "position": "Position"
+  "position": "Position",
+  "selectdate" :"Select Date"
 }

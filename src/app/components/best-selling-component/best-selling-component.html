@@ -1,7 +1,11 @@
-<div class="bg-white rounded-lg p-4 shadow-sm">
-  <h3 class="text-slate-800 font-semibold mb-3">Best Selling Books</h3>
+<div class="bg-white rounded-lg p-4 shadow-sm min-h-[244px]">
+  <h3 class="text-slate-800 font-semibold mb-3 top-0 sticky">
+    Best Selling Books
+  </h3>
   @for (b of list; track $index) {
-  <div class="flex items-center justify-between py-2 border-b last:border-b-0">
+  <div
+    class="flex items-center justify-between py-2 border-b last:border-b-0 overflow-scroll"
+  >
     <div class="flex items-center gap-3">
       <div
         class="w-8 h-8 rounded bg-indigo-100 flex items-center justify-center text-indigo-600"

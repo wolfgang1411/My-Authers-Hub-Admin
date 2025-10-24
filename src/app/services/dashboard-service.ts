@@ -4,7 +4,7 @@ import { Logger } from './logger';
 import { LoaderService } from './loader';
 import { Observable, of } from 'rxjs';
 import { Stat } from '../interfaces/Stats';
-import { Title, TitleFilter } from '../interfaces';
+import { Pagination, Title, TitleFilter } from '../interfaces';
 
 @Injectable({
   providedIn: 'root',
@@ -123,7 +123,7 @@ export class DashboardService {
     ]);
   }
 
-  async getRecentTitles(titleFilter: TitleFilter): Promise<Title[]> {
+  async getRecentTitles(titleFilter: TitleFilter): Promise<Pagination<Title>> {
     try {
       return await this.loader.loadPromise(
         this.server.get('titles', titleFilter)

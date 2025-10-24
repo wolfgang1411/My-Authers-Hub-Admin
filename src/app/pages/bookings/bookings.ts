@@ -5,10 +5,6 @@ import { signal } from '@angular/core';
 import { ListTable } from '../../components/list-table/list-table';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { SharedModule } from '../../modules/shared/shared-module';
-import {
-  f,
-  M,
-} from '../../../../node_modules/@angular/material/icon-module.d-COXCrhrh';
 import { RouterModule } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
 import { BehaviorSubject, debounceTime, Subject } from 'rxjs';

@@ -45,4 +45,5 @@ export interface AuthorFilter {
   page?: number;
   itemsPerPage?: number;
   searchStr?: string;
+  approvedAfter?: string | Date;
 }

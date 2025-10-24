@@ -14,10 +14,13 @@ import { MatDatepicker } from '@angular/material/datepicker';
 import {
   MatDatepickerToggle,
   MatDatepickerInput,
-} from '../../../../node_modules/@angular/material/datepicker/index';
+} from '@angular/material/datepicker';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import moment, { Moment } from 'moment';
+import moment from 'moment';
 import { MatInputModule } from '@angular/material/input';
+import { Author, AuthorFilter, Title, TitleFilter } from '../../interfaces';
+import { SharedModule } from '../../modules/shared/shared-module';
+import { AuthorsService } from '../authors/authors-service';
 
 @Component({
   selector: 'app-dashboard',
@@ -38,18 +41,57 @@ import { MatInputModule } from '@angular/material/input';
     FormsModule,
     MatInputModule,
     ReactiveFormsModule,
+    SharedModule,
   ],
+
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
 export class Dashboard {
-  constructor(private svc: DashboardService) {}
+  constructor(
+    private svc: DashboardService,
+    private authorService: AuthorsService
+  ) {}
   stats: any[] = [];
   date = new FormControl(moment());
+  list: Title[] = [];
+  authorList: Author[] = [];
+  titleFilter: TitleFilter = {};
+  authorFilter: AuthorFilter = {};
   toggleTheme() {
     document.documentElement.classList.toggle('dark');
   }
-  ngOnInit() {
+  async ngOnInit() {
     this.svc.getStats().subscribe((s) => (this.stats = s));
+    this.getRecentTitles();
+    this.getRecentAuthors();
+  }
+  onDateSelected(event: any) {
+    const selectedDate = event.value?.toDate?.() ?? event.value;
+    if (selectedDate) {
+      this.getRecentTitles(selectedDate);
+    }
+  }
+  async getRecentTitles(publishedAfter?: Date) {
+    if (publishedAfter) {
+      this.titleFilter = {
+        publishedAfter: publishedAfter as Date,
+      };
+    }
+    const { items: TitleResponse } = await this.svc.getRecentTitles(
+      this.titleFilter
+    );
+    this.list = TitleResponse;
+  }
+  async getRecentAuthors(approvedAfter?: Date) {
+    if (approvedAfter) {
+      this.authorFilter = {
+        approvedAfter: approvedAfter as Date,
+      };
+    }
+    const { items: AuthorResponse } = await this.authorService.getAuthors(
+      this.authorFilter
+    );
+    this.authorList = AuthorResponse;
   }
 }

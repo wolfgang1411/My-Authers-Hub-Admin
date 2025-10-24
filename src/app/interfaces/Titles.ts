@@ -141,7 +141,8 @@ export interface TitleCategory {
 }
 export interface TitleFilter {
   publisherId?: number;
-  publishedAfter?: string;
+  publishedAfter?: string | Date;
+  approvedAfter?: string | Date;
 }
 export interface TitleGenre {
   id: number;
