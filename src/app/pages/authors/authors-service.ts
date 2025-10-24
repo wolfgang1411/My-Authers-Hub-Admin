@@ -15,6 +15,23 @@ export class AuthorsService {
     private loader: LoaderService
   ) {}
 
+  async getAuthorsCount(filter: AuthorFilter, showLoader = true) {
+    try {
+      filter = { ...filter };
+      if (!filter.status || filter.status.toLocaleString() === ('all' as any)) {
+        delete filter.status;
+      }
+      return await this.loader.loadPromise(
+        this.server.get<{ count: number }>('authors/count', filter),
+        'fetch-authors',
+        !showLoader
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
   async getAuthors(filter?: AuthorFilter, showLoader = true) {
     try {
       filter = { ...filter };

@@ -46,16 +46,16 @@ export interface Title {
     [id: number]: string;
   };
   publisher: Publishers;
-  authors: AuthorTitle[];
-  printing: TitlePrinting[];
+  authors?: AuthorTitle[];
+  printing?: TitlePrinting[];
   Booking: Booking[];
-  royalties: Royalty[];
-  documentMedia: TitleMedia[];
+  royalties?: Royalty[];
+  documentMedia?: TitleMedia[];
   isbnPrint?: string;
   isbnEbook?: string;
-  media: TitleMedia[];
-  pricing: TitlePricing[];
-  distribution: TitleDistribution[];
+  media?: TitleMedia[];
+  pricing?: TitlePricing[];
+  distribution?: TitleDistribution[];
 }
 
 export interface TitleMedia extends Media {

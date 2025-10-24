@@ -73,7 +73,7 @@ export class BookingDetails implements OnInit {
       this.title.set(titleResponse);
       this.title.set({
         ...titleResponse,
-        royalties: titleResponse.royalties.map((txn) => ({
+        royalties: titleResponse.royalties?.map((txn) => ({
           ...txn,
           titlename: titleResponse.name,
         })),

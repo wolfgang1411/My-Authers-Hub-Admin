@@ -14,10 +14,10 @@
     </div>
   </div>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-    @for(s of stats ; track $index){
+    @for(stat of stats() ; track $index){
     <ng-container>
       <app-stat-card-component
-        [stat]="s"
+        [stat]="stat"
         class="bg-white p-4 rounded-lg shadow-sm"
       ></app-stat-card-component>
     </ng-container>

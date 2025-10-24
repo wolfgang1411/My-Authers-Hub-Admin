@@ -264,7 +264,7 @@ export class AddTitle {
       const response = await this.titleService.getTitleById(this.titleId);
       this.titleDetails.set(response);
       this.prefillFormData(response);
-      media = response.media;
+      media = response?.media || [];
     }
 
     this.calculatePrintingCost();
@@ -491,25 +491,25 @@ export class AddTitle {
       },
 
       printing: {
-        id: data.printing[0]?.id,
-        bookBindingsId: data.printing[0]?.bindingType.id,
-        totalPages: data.printing[0]?.totalPages || 0,
-        colorPages: data.printing[0]?.colorPages || 0,
-        isColorPagesRandom: data.printing[0]?.isColorPagesRandom,
-        bwPages: data.printing[0]?.bwPages,
-        insideCover: data.printing[0]?.insideCover,
-        laminationTypeId: data.printing[0]?.laminationType.id,
-        paperType: data.printing[0]?.paperType,
-        paperQuailtyId: data.printing[0]?.paperQuailty.id,
-        sizeCategoryId: data.printing[0]?.sizeCategory.id,
-        msp: data.printing[0]?.printCost,
+        id: data.printing?.[0]?.id,
+        bookBindingsId: data.printing?.[0]?.bindingType.id,
+        totalPages: data.printing?.[0]?.totalPages || 0,
+        colorPages: data.printing?.[0]?.colorPages || 0,
+        isColorPagesRandom: data.printing?.[0]?.isColorPagesRandom,
+        bwPages: data.printing?.[0]?.bwPages,
+        insideCover: data.printing?.[0]?.insideCover,
+        laminationTypeId: data.printing?.[0]?.laminationType.id,
+        paperType: data.printing?.[0]?.paperType,
+        paperQuailtyId: data.printing?.[0]?.paperQuailty.id,
+        sizeCategoryId: data.printing?.[0]?.sizeCategory.id,
+        msp: data.printing?.[0]?.printCost,
       },
     });
     this.tempForm.controls.titleDetails.controls.authorIds.clear();
-    this.authorsSignal.set(data.authors.map(({ author }) => author));
+    this.authorsSignal.set(data.authors?.map(({ author }) => author) || []);
     this.publisherSignal.set(data.publisher);
 
-    data.authors.forEach(({ author, display_name }) => {
+    data.authors?.forEach(({ author, display_name }) => {
       this.tempForm.controls.titleDetails.controls.authorIds.push(
         new FormGroup<AuthorFormGroup>({
           id: new FormControl<number | null>(author.id),
@@ -522,7 +522,7 @@ export class AddTitle {
 
     this.updatePricingArray(data.pricing);
 
-    const royaltControlData = data.royalties.reduce(
+    const royaltControlData = data.royalties?.reduce(
       (acc, { authorId, publisherId, channal, percentage }) => {
         const isAuthorOrPubllisherPut = acc.filter(
           (a) => a.authorId === authorId || a.publisherId === publisherId
@@ -577,7 +577,7 @@ export class AddTitle {
       }
     });
 
-    data.distribution.forEach(({ id, type }) => {
+    data.distribution?.forEach(({ id, type }) => {
       const disTypeControl = this.tempForm.controls.distribution.controls.find(
         ({ controls }) => controls.type.value === type
       );
