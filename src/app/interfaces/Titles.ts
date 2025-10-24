@@ -37,6 +37,7 @@ export interface Title {
   genre: TitleGenre;
   keywords: string;
   copiesSold: number;
+  totalSales: number;
   publisherDisplayNames: {
     [id: number]: string;
   };
@@ -142,6 +143,7 @@ export interface TitleCategory {
 export interface TitleFilter {
   publisherId?: number;
   publishedAfter?: string;
+  status?: TitleStatus | TitleStatus[];
 }
 export interface TitleGenre {
   id: number;

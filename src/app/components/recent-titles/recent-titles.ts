@@ -1,24 +1,32 @@
 import { DecimalPipe } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { DashboardService } from '../../services/dashboard-service';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { Title, TitleFilter } from '../../interfaces';
+import { Title, TitleFilter, TitleStatus } from '../../interfaces';
+import { TitleService } from '../../pages/titles/title-service';
+import { formatDate, subDays } from 'date-fns';
 
 @Component({
   selector: 'app-recent-titles',
-  imports: [DecimalPipe, SharedModule],
+  imports: [SharedModule],
   templateUrl: './recent-titles.html',
   styleUrl: './recent-titles.css',
 })
 export class RecentTitles {
-  list: Title[] = [];
-  constructor(private svc: DashboardService) {}
-  titleFilter: TitleFilter = {};
+  constructor(private titleService: TitleService) {}
+
+  titles = signal<Title[] | null>(null);
+  titleFilter: TitleFilter = {
+    publishedAfter: formatDate(subDays(new Date(), 30), 'yyyy-MM-dd'),
+    status: TitleStatus.APPROVED,
+  };
+
   async ngOnInit() {
-    this.titleFilter = {
-      publishedAfter: '',
-    };
-    const TitleResponse = await this.svc.getRecentTitles(this.titleFilter);
-    this.list = TitleResponse;
+    this.fetchAndUpdateTitles();
+  }
+
+  async fetchAndUpdateTitles() {
+    const { items } = await this.titleService.getTitles(this.titleFilter);
+    this.titles.update((t) => (t ? [...t, ...items] : items));
   }
 }

@@ -17,8 +17,8 @@ import {
 } from '@angular/material/datepicker';
 
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import moment, { Moment } from 'moment';
 import { MatInputModule } from '@angular/material/input';
+import { formatDate } from 'date-fns';
 
 @Component({
   selector: 'app-dashboard',
@@ -45,8 +45,10 @@ import { MatInputModule } from '@angular/material/input';
 })
 export class Dashboard {
   constructor(private svc: DashboardService) {}
+
   stats: any[] = [];
-  date = new FormControl(moment());
+  date = new FormControl(formatDate(new Date(), 'yyyy-MM-dd'));
+
   toggleTheme() {
     document.documentElement.classList.toggle('dark');
   }

@@ -19,6 +19,7 @@ export interface Author {
   about: string;
   authorMedia: Media[];
   bankDetails?: BankDetails[];
+  totalEarning: number;
   links: string[];
   address: Address[];
   status: AuthorStatus;
@@ -43,6 +44,9 @@ export interface AuthorFilter {
   titleId?: number;
   status?: AuthorStatus | AuthorStatus[];
   page?: number;
+  showTotalEarnings?: boolean;
   itemsPerPage?: number;
   searchStr?: string;
+  approvedAfter?: string;
+  approvedBefore?: string;
 }

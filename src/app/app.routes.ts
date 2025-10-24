@@ -1,13 +1,13 @@
 import { Routes } from '@angular/router';
 import { privateRouteGuard } from './guards/private-route-guard';
 import { publicRouteGuard } from './guards/public-route-guard';
-import { accessLevelGuard } from './guards/access-level-guard';
 
 export const routes: Routes = [
   {
     path: 'dashboard',
     loadComponent: () =>
       import('./pages/dashboard/dashboard').then((c) => c.Dashboard),
+    canActivate: [privateRouteGuard],
   },
   {
     path: 'login',

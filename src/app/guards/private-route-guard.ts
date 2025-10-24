@@ -8,6 +8,8 @@ export const privateRouteGuard: CanActivateFn = (route, state) => {
 
   const isUserAuthenticated = authService.isUserAuthenticated$();
 
+  console.log({ isUserAuthenticated });
+
   if (isUserAuthenticated) {
     return true;
   }
