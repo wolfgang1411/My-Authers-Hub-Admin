@@ -47,7 +47,7 @@ import {
   AuthorFormGroup,
   AuthorStatus,
   BookBindings,
-  ChannelType,
+  ChannalType,
   CreateRoyalty,
   DistributionType,
   LaminationType,
@@ -160,7 +160,7 @@ export class AddTitle {
 
   private stepper = viewChild<MatStepper>('stepperForm');
 
-  ChannelTypes = signal([
+  ChannalTypes = signal([
     'PRINT_MAH',
     'PRINT_THIRD_PARTY',
     'PRIME',
@@ -383,30 +383,30 @@ export class AddTitle {
     });
   }
 
-  getFieldForChannal(channal: ChannelType) {
-    const temp: Partial<Record<ChannelType, RoyalFormGroupAmountField>> = {};
-    Object.keys(ChannelType).forEach((ch) => {
+  getFieldForChannal(channal: ChannalType) {
+    const temp: Partial<Record<ChannalType, RoyalFormGroupAmountField>> = {};
+    Object.keys(ChannalType).forEach((ch) => {
       let field: RoyalFormGroupAmountField = 'ebook_mah';
 
       switch (channal) {
-        case ChannelType.EBOOK_MAH:
+        case ChannalType.EBOOK_MAH:
           field = 'ebook_mah';
           break;
-        case ChannelType.EBOOK_THIRD_PARTY:
+        case ChannalType.EBOOK_THIRD_PARTY:
           field = 'ebook_third_party';
           break;
-        case ChannelType.PRIME:
+        case ChannalType.PRIME:
           field = 'prime';
           break;
-        case ChannelType.PRINT_MAH:
+        case ChannalType.PRINT_MAH:
           field = 'print_mah';
           break;
-        case ChannelType.PRINT_THIRD_PARTY:
+        case ChannalType.PRINT_THIRD_PARTY:
           field = 'print_third_party';
           break;
       }
 
-      temp[ch as ChannelType] = field;
+      temp[ch as ChannalType] = field;
     });
 
     return temp[channal] as RoyalFormGroupAmountField;
@@ -674,7 +674,7 @@ export class AddTitle {
 
   createPricingArrayTemp(): FormArray<PricingGroup> {
     return new FormArray(
-      Object.keys(ChannelType).map(
+      Object.keys(ChannalType).map(
         (channal) =>
           new FormGroup({
             id: new FormControl<number | null | undefined>(null),

@@ -1,12 +1,15 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, combineLatest, map } from 'rxjs';
+import { BehaviorSubject, combineLatest, debounceTime, map } from 'rxjs';
 import { v4 as uuidV4 } from 'uuid';
 
 @Injectable()
 export class LoaderService {
   private loadingAreas = new BehaviorSubject<string[]>([]);
 
-  isLoading$ = this.loadingAreas.pipe(map((areas) => areas.length > 0));
+  isLoading$ = this.loadingAreas.pipe(
+    debounceTime(100),
+    map((areas) => areas.length > 0)
+  );
   loadingAreas$ = this.loadingAreas.asObservable();
 
   private privateLoadingAreas = new BehaviorSubject<string[]>([]);

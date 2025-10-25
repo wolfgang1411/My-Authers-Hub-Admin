@@ -1,9 +1,9 @@
 import { FormControl } from '@angular/forms';
-import { ChannelType } from './index';
+import { ChannalType } from './index';
 import { Earnings } from './Earnings';
 
 export interface Royalty {
-  channal: ChannelType;
+  channal: ChannalType;
   id: number;
   percentage: number;
   authorId?: number;

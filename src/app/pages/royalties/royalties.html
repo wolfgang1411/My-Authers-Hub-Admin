@@ -24,6 +24,17 @@
         {{ "search" | translate }}
       </button>
     </div>
+
+    <button
+      class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
+      matButton="filled"
+      matButton
+      (click)="onClickUploadCSV()"
+    >
+      <mat-icon class="material-icons">person_add</mat-icon>
+      {{ "uploadroyaltieswithcsv" | translate }}
+    </button>
+
     <button
       class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
       matButton="filled"
