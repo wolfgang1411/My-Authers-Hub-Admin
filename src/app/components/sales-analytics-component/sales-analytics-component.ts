@@ -22,15 +22,11 @@ export class SalesAnalyticsComponent implements OnInit {
   ) {}
 
   salesDuration = new BehaviorSubject<DashbordStateType>('WEEKLY');
-
-  // Signals
   labels = signal<string[]>([]);
   chartData = signal<ChartConfiguration<'line'>['data']>({
     datasets: [],
     labels: [],
   });
-
-  // Cache for sales data
   private salesCache: Record<
     DashbordStateType,
     ChartConfiguration<'line'>['data']
@@ -51,7 +47,6 @@ export class SalesAnalyticsComponent implements OnInit {
   lineType: any = 'line';
 
   async fetchAndUpdateStates(type: DashbordStateType = 'MONTHLY') {
-    // Check if data already cached
     if (this.salesCache[type]) {
       this.chartData.set(this.salesCache[type]);
       this.labels.set(this.salesCache[type].labels || ([] as any));
@@ -60,17 +55,11 @@ export class SalesAnalyticsComponent implements OnInit {
 
     try {
       const res = await this.svc.getStatsTemp(type);
-
-      // Extract labels
       const newLabels = res.map((item) => Object.keys(item)[0]);
       this.labels.set(newLabels);
-
-      // Extract all platforms
       const platforms = Object.keys(
         this.staticValService.staticValues()?.PlatForm || {}
       ) as PlatForm[];
-
-      // Build datasets
       const datasets = platforms.map((platform) => {
         const data = res.map((item) => {
           const unitData = Object.values(item)[0];
@@ -88,10 +77,7 @@ export class SalesAnalyticsComponent implements OnInit {
       });
 
       const chartData = { labels: newLabels, datasets };
-
-      // Cache it
       this.salesCache[type] = chartData;
-
       this.chartData.set(chartData);
     } catch (error) {
       console.error(error);

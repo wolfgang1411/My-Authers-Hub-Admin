@@ -6,6 +6,7 @@ import { Observable, of } from 'rxjs';
 import { Stat } from '../interfaces/Stats';
 import {
   DashbordStateType,
+  Pagination,
   StatsMonthly,
   StatsResponseMap,
   StatsWeekly,

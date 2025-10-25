@@ -35,11 +35,11 @@ import { SharedModule } from '../../modules/shared/shared-module';
     ActivityTimelineComponent,
     RecentOrdersComponent,
     RecentAuthors,
-    RecentTitles,
     FormsModule,
     MatInputModule,
     ReactiveFormsModule,
     SharedModule,
+    ProfileCardComponent,
   ],
 
   templateUrl: './dashboard.html',
