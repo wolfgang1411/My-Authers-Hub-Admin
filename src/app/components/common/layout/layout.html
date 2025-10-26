@@ -1,19 +1,30 @@
 <main
-  class="grid grid-cols-1 mobile:grid-cols-[300px_1fr] mobile:grid-rows-[84px_1fr] min-h-screen"
+  class="flex min-h-screen bg-gray-50 text-slate-800"
   [ngClass]="{
-    'mobile:!flex flex-col':
-      (!showSidebar() && showHeader()) || (!showSidebar() && !showHeader())
+    'flex-col': !showSidebar()
   }"
 >
-  @if(showSidebar()) {
-
-  <app-sidebar
-    class="fixed mobile:sticky top-0 max-h-[100vh] !bg-primary-superlight"
-  ></app-sidebar>
-  } @if (showHeader()) {
-  <app-header></app-header>
+  <!-- Sidebar -->
+  @if (showSidebar()) {
+  <aside
+    class="group z-30 h-screen bg-primary-superlight transition-all duration-300 w-[80px] hover:w-[260px] shadow-md sticky top-0"
+  >
+    <app-sidebar></app-sidebar>
+  </aside>
   }
-  <div class="m-8 h-full grow flex flex-col overflow-x-hidden">
-    <ng-content></ng-content>
-  </div>
+
+  <!-- Main Section -->
+  <section class="flex-1 flex flex-col min-h-screen overflow-hidden">
+    <!-- Header -->
+    @if (showHeader()) {
+    <app-header class="sticky top-0 z-20 shadow-sm"></app-header>
+    }
+
+    <!-- Page Content -->
+    <div
+      class="flex-1 p-6 md:p-8 overflow-y-auto overflow-x-hidden transition-all duration-300"
+    >
+      <ng-content></ng-content>
+    </div>
+  </section>
 </main>

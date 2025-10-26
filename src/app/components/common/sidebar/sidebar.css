@@ -1,5 +1,5 @@
 :host {
-  grid-row: 1/3;
+  /* grid-row: 1/3; */
   z-index: 10;
   height: 100%;
 }
@@ -15,11 +15,22 @@
   display: none;
 } */
 
-
-
 ::ng-deep.mdc-list-item__content {
-  @apply w-full ;
+  @apply w-full;
 }
-::ng-deep.mat-mdc-list-item-unscoped-content{
-@apply w-full;
+::ng-deep.mat-mdc-list-item-unscoped-content {
+  @apply w-full;
+}
+:host {
+  display: block;
+  height: 100%;
+}
+
+mat-sidenav {
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+button.router-link {
+  font-weight: 500;
+  font-size: 15px;
 }

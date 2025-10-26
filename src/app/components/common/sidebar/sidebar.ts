@@ -41,80 +41,93 @@ export class Sidebar implements OnInit {
     this.showHeader = layoutService.showHeader$;
   }
   @ViewChild('sidenav') sidenav!: MatSidenav;
-  sidebarMenu = signal<SideMenu[]>([]);
   isSidemenuOpen!: Signal<boolean>;
   showHeader!: Signal<boolean>;
 
   mode: 'side' | 'over' = 'side';
 
+  sidebarMenu() {
+    return [
+      { name: 'Dashboard', url: '/dashboard', icon: 'dashboard' },
+      { name: 'Publishers', url: '/publishers', icon: 'people' },
+      { name: 'Authors', url: '/authors', icon: 'edit' },
+      { name: 'Titles', url: '/titles', icon: 'library_books' },
+      { name: 'ISBN', url: '/isbn', icon: 'qr_code' },
+      { name: 'Royalties', url: '/royalties', icon: 'attach_money' },
+      { name: 'Bookings', url: '/bookings', icon: 'book_online' },
+      { name: 'Transactions', url: '/transactions', icon: 'receipt_long' },
+      { name: 'Payouts', url: '/payouts', icon: 'credit_card' },
+      { name: 'Profile', url: '/profile', icon: 'account_circle' },
+      { name: 'Settings', url: '/settings', icon: 'settings' },
+    ];
+  }
   ngOnInit(): void {
-    this.sidebarMenu.set([
-      {
-        name: 'dashboard',
-        url: '/dashboard',
-        icon: 'images/house-solid-full.svg',
-      },
-      {
-        name: 'publishers',
-        url: '/publisher',
-        icon: 'images/house-solid-full.svg',
-      },
-      {
-        name: 'authors',
-        url: '/author',
-        icon: 'images/house-solid-full.svg',
-      },
-      {
-        name: 'titles',
-        url: '/titles',
-        icon: 'images/house-solid-full.svg',
-      },
-      {
-        name: 'isbn',
-        url: '/isbn',
-        icon: 'images/house-solid-full.svg',
-      },
-      {
-        name: 'royalties',
-        url: '/royalties',
-        icon: 'images/house-solid-full.svg',
-      },
-
-      {
-        name: 'bookings',
-        url: '/bookings',
-        icon: 'images/house-solid-full.svg',
-      },
-      {
-        name: 'transactions',
-        url: '/transactions',
-        icon: 'images/house-solid-full.svg',
-      },
-      {
-        name: 'payouts',
-        url: '/payouts',
-        icon: 'images/house-solid-full.svg',
-      },
-      {
-        name: 'profile',
-        url: '/profile',
-        icon: 'images/house-solid-full.svg',
-      },
-      {
-        name: 'settings',
-        url: '/settings',
-        icon: 'images/house-solid-full.svg',
-      },
-    ]);
-    this.observer.observe(['(max-width: 800px)']).subscribe((res) => {
-      if (res.matches) {
-        this.mode = 'over';
-        this.sidenav?.close();
-      } else {
-        this.mode = 'side';
-        this.sidenav?.open();
-      }
-    });
+    // this.sidebarMenu.set([
+    //   {
+    //     name: 'dashboard',
+    //     url: '/dashboard',
+    //     icon: 'images/house-solid-full.svg',
+    //   },
+    //   {
+    //     name: 'publishers',
+    //     url: '/publisher',
+    //     icon: 'images/house-solid-full.svg',
+    //   },
+    //   {
+    //     name: 'authors',
+    //     url: '/author',
+    //     icon: 'images/house-solid-full.svg',
+    //   },
+    //   {
+    //     name: 'titles',
+    //     url: '/titles',
+    //     icon: 'images/house-solid-full.svg',
+    //   },
+    //   {
+    //     name: 'isbn',
+    //     url: '/isbn',
+    //     icon: 'images/house-solid-full.svg',
+    //   },
+    //   {
+    //     name: 'royalties',
+    //     url: '/royalties',
+    //     icon: 'images/house-solid-full.svg',
+    //   },
+    //   {
+    //     name: 'bookings',
+    //     url: '/bookings',
+    //     icon: 'images/house-solid-full.svg',
+    //   },
+    //   {
+    //     name: 'transactions',
+    //     url: '/transactions',
+    //     icon: 'images/house-solid-full.svg',
+    //   },
+    //   {
+    //     name: 'payouts',
+    //     url: '/payouts',
+    //     icon: 'images/house-solid-full.svg',
+    //   },
+    //   {
+    //     name: 'profile',
+    //     url: '/profile',
+    //     icon: 'images/house-solid-full.svg',
+    //   },
+    //   {
+    //     name: 'settings',
+    //     url: '/settings',
+    //     icon: 'images/house-solid-full.svg',
+    //   },
+    // ]);
+    // this.observer.observe(['(max-width: 800px)']).subscribe((res) => {
+    //   if (res.matches) {
+    //     this.mode = 'over';
+    //     this.sidenav?.close();
+    //   } else {
+    //     this.mode = 'side';
+    //     this.sidenav?.open();
+    //   }
+    // });
   }
 
   onToggleSidebar() {

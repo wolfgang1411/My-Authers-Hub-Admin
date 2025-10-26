@@ -318,5 +318,6 @@
   "platform": "Platform",
   "qunatity": "Qunatity",
   "soldat": "Sold At",
-  "bookingtype": "Booking Type"
+  "bookingtype": "Booking Type",
+  "uploadroyaltieswithcsv" :"Upload Royalties with CSV"
 }

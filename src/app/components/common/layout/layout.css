@@ -1,3 +1,7 @@
 :host {
   @apply h-screen w-screen max-h-screen max-w-screen overflow-hidden;
 }
+
+section {
+  transition: margin-left 0.3s ease;
+}
