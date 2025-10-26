@@ -9,6 +9,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { NotificationService } from '../../../services/notifications';
 import { MyNotification } from '../../../interfaces';
 import { Notification } from '../notification/notification';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { filter, map } from 'rxjs';
 @Component({
   selector: 'app-header',
   imports: [
@@ -27,8 +29,17 @@ export class Header implements OnInit {
     private layoutService: LayoutService,
     public userService: UserService
   ) {}
-
-  ngOnInit(): void {}
+  pageTitle: string = '';
+  pageIcon: string = 'dashboard';
+  ngOnInit() {
+    this.layoutService.pageTitle$.subscribe((title) => {
+      this.pageTitle = title;
+    });
+    this.layoutService.pageIcone$.subscribe((icon) => {
+      this.pageIcon = icon || 'dashboard';
+      console.log(this.pageIcon, icon, 'iconnnnn');
+    });
+  }
 
   fullName = computed(() => {
     return (

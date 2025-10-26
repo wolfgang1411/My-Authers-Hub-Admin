@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { Subject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -24,5 +24,14 @@ export class LayoutService {
 
   changeSidebarVisibility(show = false) {
     this.showSidebar.set(show);
+  }
+  private pageTitleSubject = new BehaviorSubject<string>('Dashboard');
+  pageTitle$ = this.pageTitleSubject.asObservable();
+  private pageIconSubject = new BehaviorSubject<string>('dashboard');
+  pageIcone$ = this.pageIconSubject.asObservable();
+
+  setPageTitle(title: string, icon: string) {
+    this.pageTitleSubject.next(title);
+    this.pageIconSubject.next(icon);
   }
 }

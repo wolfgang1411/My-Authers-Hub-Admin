@@ -18,7 +18,7 @@
   <!-- Menu Items -->
   <mat-nav-list class="!p-3 space-y-1">
     @for (item of sidebarMenu(); track $index + item.name) {
-    <mat-list-item class="!p-0">
+    <mat-list-item class="!p-0" (click)="onMenuClick(item)">
       <button
         [routerLink]="item.url"
         routerLinkActive="!bg-primary !text-white"

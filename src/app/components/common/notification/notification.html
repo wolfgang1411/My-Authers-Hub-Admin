@@ -1,9 +1,4 @@
 <div class="flex gap-4 items-center">
-  <!-- User Icon -->
-  <button mat-icon-button class="w-8 h-8">
-    <svg-icon class="fill-black" src="images/user-solid-full.svg"></svg-icon>
-  </button>
-
   <!-- Notification Icon with Badge -->
   <button
     mat-icon-button
@@ -16,8 +11,6 @@
     <svg-icon class="fill-black" src="images/bell-solid-full.svg"></svg-icon>
   </button>
 </div>
-
-<!-- Notification Menu -->
 <mat-menu
   #notificationMenu="matMenu"
   class="!p-0 w-[320px] max-w-[320px]"
@@ -28,7 +21,6 @@
     <span class="font-semibold text-sm text-gray-700">Notifications</span>
   </div>
 
-  <!-- Notifications List (scrollable container inside menu) -->
   <div class="max-h-[300px] overflow-y-auto">
     @if (notifications().length) { @for (notification of notifications(); track
     $index) {

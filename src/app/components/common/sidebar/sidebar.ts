@@ -49,8 +49,8 @@ export class Sidebar implements OnInit {
   sidebarMenu() {
     return [
       { name: 'Dashboard', url: '/dashboard', icon: 'dashboard' },
-      { name: 'Publishers', url: '/publishers', icon: 'people' },
-      { name: 'Authors', url: '/authors', icon: 'edit' },
+      { name: 'Publishers', url: '/publisher', icon: 'people' },
+      { name: 'Authors', url: '/author', icon: 'edit' },
       { name: 'Titles', url: '/titles', icon: 'library_books' },
       { name: 'ISBN', url: '/isbn', icon: 'qr_code' },
       { name: 'Royalties', url: '/royalties', icon: 'attach_money' },
@@ -62,7 +62,6 @@ export class Sidebar implements OnInit {
     ];
   }
   ngOnInit(): void {
-    // this.sidebarMenu.set([
     //   {
     //     name: 'dashboard',
     //     url: '/dashboard',
@@ -129,7 +128,9 @@ export class Sidebar implements OnInit {
     //   }
     // });
   }
-
+  onMenuClick(item: any) {
+    this.layoutService.setPageTitle(item.name, item.icon);
+  }
   onToggleSidebar() {
     this.layoutService.toggleSidemenu();
     this.sidenav.toggle();
