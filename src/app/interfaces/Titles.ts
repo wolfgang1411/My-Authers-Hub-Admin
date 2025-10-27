@@ -60,6 +60,7 @@ export interface Title {
 
 export interface TitleMedia extends Media {
   type: TitleMediaType;
+  noOfPages: number;
 }
 
 // export type TitleMediaType =

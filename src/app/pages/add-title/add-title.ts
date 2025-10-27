@@ -91,6 +91,7 @@ import { Pricing } from '../../components/pricing/pricing';
 import { TitleDistribution } from '../../title-distribution/title-distribution';
 import Swal from 'sweetalert2';
 import { getFileSizeFromS3Url, getFileToBase64 } from '../../common/utils/file';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-add-title',
@@ -125,7 +126,8 @@ export class AddTitle {
     private publisherService: PublisherService,
     private authorService: AuthorsService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private translateService: TranslateService
   ) {
     const breakpointObserver = inject(BreakpointObserver);
     this.stepperOrientation = breakpointObserver
@@ -522,6 +524,16 @@ export class AddTitle {
 
     this.updatePricingArray(data.pricing);
 
+    const interior = data.media?.find(
+      ({ type }) => type === TitleMediaType.INTERIOR
+    );
+
+    if (interior) {
+      this.tempForm.controls.printing.controls.totalPages.patchValue(
+        interior.noOfPages || 0
+      );
+    }
+
     const royaltControlData = data.royalties?.reduce(
       (acc, { authorId, publisherId, channal, percentage }) => {
         const isAuthorOrPubllisherPut = acc.filter(
@@ -745,10 +757,16 @@ export class AddTitle {
     return new FormGroup<PrintingFormGroup>({
       id: new FormControl<number | null>(null),
       bookBindingsId: new FormControl<number | null>(null, Validators.required),
-      totalPages: new FormControl<number>(0, {
-        validators: [Validators.required],
-        nonNullable: true,
-      }),
+      totalPages: new FormControl<number>(
+        {
+          value: 0,
+          disabled: true,
+        },
+        {
+          validators: [Validators.required, Validators.min(1)],
+          nonNullable: true,
+        }
+      ),
       colorPages: new FormControl<number>(0, {
         validators: [Validators.required],
         nonNullable: true,
@@ -807,7 +825,7 @@ export class AddTitle {
 
     mediaArrayControl.push(
       await this.createMedia(
-        TitleMediaType.FULL_COVER,
+        TitleMediaType.FRONT_COVER,
         true,
         medias?.find(({ type }) => type === 'FRONT_COVER')
       )
@@ -880,8 +898,6 @@ export class AddTitle {
       }
     }
 
-    console.log({ size });
-
     return new FormGroup<TitleMediaGroup>({
       id: new FormControl(media?.id || null),
       url: new FormControl(media?.url, {
@@ -896,6 +912,7 @@ export class AddTitle {
       name: new FormControl(media?.name || null),
       allowedFormat: new FormControl(format, { nonNullable: true }),
       size: new FormControl(size),
+      noOfPages: new FormControl(media?.noOfPages || 0),
     });
   }
 
@@ -941,6 +958,10 @@ export class AddTitle {
   }
 
   onTitleSubmit() {
+    if (!this.tempForm.controls.titleDetails.valid) {
+      return;
+    }
+
     const titleDetails = this.tempForm.controls.titleDetails?.value;
     const basicData: TitleCreate = {
       publishingType: this.tempForm.controls.publishingType
@@ -987,7 +1008,18 @@ export class AddTitle {
           file: file as File,
           type: type as TitleMediaType,
         }));
-      await this.titleService.uploadMultiMedia(this.titleId, mediaToUpload);
+      const mediaResposne = await this.titleService.uploadMultiMedia(
+        this.titleId,
+        mediaToUpload
+      );
+
+      const interior = mediaResposne.find(
+        ({ type }) => type === TitleMediaType.INTERIOR
+      );
+      this.tempForm.controls.printing.controls.totalPages.patchValue(
+        interior?.noOfPages || 0
+      );
+
       this.stepper()?.next();
     }
   }
@@ -1014,8 +1046,32 @@ export class AddTitle {
   async savePrintingDraft() {
     const printing = this.tempForm.controls.printing;
     const printingDetails = this.tempForm.get('printing')?.value;
+    const insideCoverMedia = this.tempForm.controls.documentMedia.controls.find(
+      ({ controls: { type } }) => type.value === TitleMediaType.INSIDE_COVER
+    );
+
+    console.log({ insideCoverMedia });
 
     if (printing?.valid) {
+      if (printing.controls.insideCover.value && !insideCoverMedia?.valid) {
+        Swal.fire({
+          icon: 'error',
+          title: this.translateService.instant('error'),
+          html: this.translateService.instant('missinginsicovermediaerror'),
+        });
+        return;
+      }
+
+      if (
+        insideCoverMedia?.controls?.file?.value &&
+        printing.controls.insideCover.value
+      ) {
+        await this.titleService.uploadMedia(this.titleId, {
+          file: insideCoverMedia?.controls?.file?.value,
+          type: TitleMediaType.INSIDE_COVER,
+        });
+      }
+
       const createPrinting: PrintingCreate = {
         id: printingDetails?.id,
         titleId: Number(this.titleId),

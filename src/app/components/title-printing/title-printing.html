@@ -35,13 +35,29 @@
           <mat-label>B/W Pages</mat-label>
           <input matInput formControlName="bwPages" readonly />
         </mat-form-field>
-        <mat-form-field>
-          <mat-label>Inside Cover / Duplex Cover</mat-label>
-          <mat-select formControlName="insideCover">
-            <mat-option [value]="true">Yes</mat-option>
-            <mat-option [value]="false">No</mat-option>
-          </mat-select>
-        </mat-form-field>
+        <div class="flex flex-col">
+          <mat-form-field class="inside-cover">
+            <mat-label>Inside Cover / Duplex Cover</mat-label>
+            <mat-select formControlName="insideCover">
+              <mat-option [value]="true">Yes</mat-option>
+              <mat-option [value]="false">No</mat-option>
+            </mat-select>
+          </mat-form-field>
+          @if (insideCoverMedia()) {
+          <button
+            (click)="onInsideCoverUpload($event)"
+            class="flex items-center text-start text-primary font-medium mt-1"
+          >
+            <mat-icon>upload</mat-icon>
+            <span>
+              {{
+                insideCoverMedia()?.controls?.name?.value ||
+                  "Click to upload inside cover media"
+              }}
+            </span>
+          </button>
+          }
+        </div>
       </div>
       <!-- @if(printingGroup().get('insideCover')?.value === true) {
       <div class="flex justify-between">

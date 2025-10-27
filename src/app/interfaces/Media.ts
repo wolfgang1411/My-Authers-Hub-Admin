@@ -7,6 +7,7 @@ export interface Media {
   url: string;
   type: string;
   file: File;
+  noOfPages?: number;
   mediaType: TitleMediaType;
 }
 
@@ -18,6 +19,7 @@ export interface TitleMediaGroup {
   mediaType: FormControl<TitleMediaType>;
   maxSize: FormControl<number | null>;
   name: FormControl<string | null>;
+  noOfPages: FormControl<number | null>;
   allowedFormat: FormControl<string[]>;
   size: FormControl<number | null>;
 }

@@ -56,7 +56,7 @@
             (click)="
               tempForm
                 .get('publishingType')
-                ?.setValue(PublishingType.ONLY_EBOOK)
+                ?.setValue(PublishingType.ONLY_PRINT)
             "
           >
             <svg-icon class="fill-primary" src="images/print.svg"></svg-icon>
@@ -215,75 +215,6 @@
     </div>
   </mat-step>
 
-  <!-- printing details step -->
-  @if(tempForm.controls.printingFormat.value !== 'ebookOnly') {
-  <mat-step
-    [stepControl]="tempForm.controls.printing"
-    label="Print Details"
-    [completed]="tempForm.controls.printing.controls.id.value"
-  >
-    <app-title-printing
-      [printingGroup]="tempForm.controls.printing"
-      [documentMedia]="tempForm.controls.documentMedia"
-      [channalTypes]="ChannalTypes()"
-    ></app-title-printing>
-    <div class="flex justify-end">
-      <button
-        class="!bg-primary"
-        matButton="filled"
-        (click)="savePrintingDraft()"
-      >
-        Next
-      </button>
-    </div>
-  </mat-step>
-  }
-
-  <mat-step
-    [stepControl]="tempForm.controls.pricing"
-    label="Pricing"
-    [completed]="titleId && tempForm.controls.pricing.valid"
-  >
-    <app-pricing
-      [pricingControls]="tempForm.controls.pricing"
-      [msp]="tempForm.controls.printing.controls.msp.value || 0"
-    ></app-pricing>
-
-    <div class="flex justify-end">
-      <button
-        class="!bg-primary"
-        matButton="filled"
-        (click)="onPricingSubmit()"
-      >
-        Next
-      </button>
-    </div>
-  </mat-step>
-
-  <mat-step
-    [stepControl]="tempForm.controls.royalties"
-    label="Royalty"
-    [completed]="titleId && tempForm.controls.royalties.valid"
-  >
-    <app-royalties
-      [royaltiesController]="tempForm.controls.royalties"
-      [pricingController]="tempForm.controls.pricing"
-      [authors]="authorsSignal()"
-      [publisher]="publisherSignal()"
-    >
-      >
-    </app-royalties>
-    <div class="flex justify-end">
-      <button
-        (click)="saveRoyalties()"
-        class="!bg-primary mt-2"
-        matButton="filled"
-      >
-        Next
-      </button>
-    </div>
-  </mat-step>
-
   <!-- media details step -->
   <mat-step
     [stepControl]="tempForm.controls.documentMedia"
@@ -389,6 +320,75 @@
         </button>
       </div>
     </form>
+  </mat-step>
+
+  <!-- printing details step -->
+  @if(tempForm.controls.printingFormat.value !== 'ebookOnly') {
+  <mat-step
+    [stepControl]="tempForm.controls.printing"
+    label="Print Details"
+    [completed]="tempForm.controls.printing.controls.id.value"
+  >
+    <app-title-printing
+      [printingGroup]="tempForm.controls.printing"
+      [documentMedia]="tempForm.controls.documentMedia"
+      [channalTypes]="ChannalTypes()"
+    ></app-title-printing>
+    <div class="flex justify-end">
+      <button
+        class="!bg-primary"
+        matButton="filled"
+        (click)="savePrintingDraft()"
+      >
+        Next
+      </button>
+    </div>
+  </mat-step>
+  }
+
+  <mat-step
+    [stepControl]="tempForm.controls.pricing"
+    label="Pricing"
+    [completed]="titleId && tempForm.controls.pricing.valid"
+  >
+    <app-pricing
+      [pricingControls]="tempForm.controls.pricing"
+      [msp]="tempForm.controls.printing.controls.msp.value || 0"
+    ></app-pricing>
+
+    <div class="flex justify-end">
+      <button
+        class="!bg-primary"
+        matButton="filled"
+        (click)="onPricingSubmit()"
+      >
+        Next
+      </button>
+    </div>
+  </mat-step>
+
+  <mat-step
+    [stepControl]="tempForm.controls.royalties"
+    label="Royalty"
+    [completed]="titleId && tempForm.controls.royalties.valid"
+  >
+    <app-royalties
+      [royaltiesController]="tempForm.controls.royalties"
+      [pricingController]="tempForm.controls.pricing"
+      [authors]="authorsSignal()"
+      [publisher]="publisherSignal()"
+    >
+      >
+    </app-royalties>
+    <div class="flex justify-end">
+      <button
+        (click)="saveRoyalties()"
+        class="!bg-primary mt-2"
+        matButton="filled"
+      >
+        Next
+      </button>
+    </div>
   </mat-step>
 
   <mat-step

@@ -1,4 +1,12 @@
-import { Component, ElementRef, input, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  computed,
+  ElementRef,
+  input,
+  Signal,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { SharedModule } from '../../modules/shared/shared-module';
@@ -16,12 +24,14 @@ import {
   PrintingFormGroup,
   SizeCategory,
   TitleMediaGroup,
+  TitleMediaType,
 } from '../../interfaces';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { PrintingService } from '../../services/printing-service';
 import { combineLatest, debounceTime } from 'rxjs';
+import { getFileToBase64, selectFile } from '../../common/utils/file';
 @Component({
   selector: 'app-title-printing',
   imports: [
@@ -52,6 +62,8 @@ export class TitlePrinting {
 
   channalTypes = input<string[]>();
 
+  insideCoverMedia = signal<FormGroup<TitleMediaGroup> | null>(null);
+
   async ngOnInit() {
     const { items: laminations } =
       await this.printingService.getLaminationType();
@@ -64,6 +76,14 @@ export class TitlePrinting {
     this.sizeCategory.set(sizes.sort((a, b) => a.id - b.id));
 
     this.handleBlackAndWhitePages();
+
+    this.documentMedia().valueChanges.subscribe((controls) => {
+      const insideCover = this.documentMedia().controls.find(
+        ({ controls: { type } }) => type.value === TitleMediaType.INSIDE_COVER
+      );
+
+      this.insideCoverMedia.set(insideCover || null);
+    });
   }
 
   handleBlackAndWhitePages() {
@@ -103,20 +123,21 @@ export class TitlePrinting {
     this.fileInput()?.nativeElement?.click();
   }
 
-  // onInsideCoverUpload(event: Event) {
-  //   const input = event.target as HTMLInputElement;
-  //   const file = input.files?.[0];
-  //   if (!file) return;
-  //   const index = this.documentMedia().controls.findIndex(
-  //     (ctrl) => ctrl.get('mediaType')?.value === 'InsideCover'
-  //   );
-  //   if (index > -1) {
-  //     this.documentMedia().removeAt(index);
-  //   }
-  //   const newGroup = this.createDocumentMediaGroup('InsideCover', file);
-  //   this.documentMedia().push(newGroup);
-  //   input.value = '';
-  // }
+  async onInsideCoverUpload(event: Event) {
+    const mediaGroup = this.insideCoverMedia();
+    const file = (await selectFile(
+      mediaGroup?.controls?.allowedFormat?.value?.[0] || 'image/*'
+    )) as File;
+
+    if (!mediaGroup || !file) return;
+
+    mediaGroup.patchValue({
+      file,
+      name: file.name,
+      url: await getFileToBase64(file),
+    });
+  }
+
   getFilteredLaminationTypes(print: AbstractControl): any[] {
     const bindingTypeId = print.get('bookBindingsId')?.value;
     if (!this.laminationTypes()?.length) return [];

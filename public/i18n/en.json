@@ -319,5 +319,7 @@
   "qunatity": "Qunatity",
   "soldat": "Sold At",
   "bookingtype": "Booking Type",
-  "uploadroyaltieswithcsv" :"Upload Royalties with CSV"
+  "uploadroyaltieswithcsv": "Upload Royalties with CSV",
+  "missinginsicovermediaerror": "When Inside Cover/ Duplex Cover is selected <br> Inside cover media is required",
+  "error": "Error"
 }
