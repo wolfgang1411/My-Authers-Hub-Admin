@@ -363,7 +363,7 @@ export class AddTitle {
           this.createRoyaltyGroup({
             authorId: authorId,
             titleId: this.titleId,
-            name: name || user.firstName || '' + ' ' + user.lastName || '',
+            name: name || (user.firstName || '') + ' ' + (user.lastName || ''),
           })
         );
       }
@@ -1076,7 +1076,7 @@ export class AddTitle {
         id: printingDetails?.id,
         titleId: Number(this.titleId),
         bindingTypeId: Number(printingDetails?.bookBindingsId),
-        totalPages: Number(printingDetails?.totalPages),
+        totalPages: printing.controls.totalPages.value,
         colorPages: Number(printingDetails?.colorPages),
         laminationTypeId: Number(printingDetails?.laminationTypeId),
         paperType: printingDetails?.paperType as PaperType,
@@ -1091,6 +1091,7 @@ export class AddTitle {
         createPrinting
       );
       printing.controls.id.patchValue(response.id);
+      await this.calculatePrintingCost();
       this.stepper()?.next();
     }
   }
