@@ -196,6 +196,21 @@ export class TitleService {
     }
   }
 
+  async createManyRoyalties(royalties: UpdateRoyalty[], titleId: number) {
+    try {
+      return this.loader.loadPromise(
+        this.server.post('royalty/multi', {
+          royalties,
+          titleId,
+        }),
+        'create-many-royalties'
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
   async createTitleDistribution(
     titleId: number,
     distributions: DistributionType[]

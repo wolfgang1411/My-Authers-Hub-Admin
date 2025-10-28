@@ -61,6 +61,7 @@ import {
   PublisherStatus,
   PublishingType,
   RoyalFormGroupAmountField,
+  Royalty,
   RoyaltyFormGroup,
   Title,
   TitleCreate,
@@ -536,54 +537,59 @@ export class AddTitle {
 
     const royaltControlData = data.royalties?.reduce(
       (acc, { authorId, publisherId, channal, percentage }) => {
-        const isAuthorOrPubllisherPut = acc.filter(
-          (a) => a.authorId === authorId || a.publisherId === publisherId
-        )[0] as CreateRoyalty | undefined;
+        const field = this.getFieldForChannal(channal);
 
-        let d: Partial<CreateRoyalty> = {
-          ...isAuthorOrPubllisherPut,
-        };
+        const existing = acc.find(
+          (a) =>
+            (authorId && a.authorId === authorId) ||
+            (publisherId && a.publisherId === publisherId)
+        );
 
-        if (isAuthorOrPubllisherPut) {
-          d[this.getFieldForChannal(channal)] = percentage;
-          acc = acc.map(
-            (a) =>
-              (a.authorId === authorId || a.publisherId === publisherId
-                ? d
-                : a) as CreateRoyalty
-          );
+        if (existing) {
+          existing[field] = percentage;
         } else {
-          d['authorId'] = authorId;
-          d['publisherId'] = publisherId;
-          d[this.getFieldForChannal(channal)] = percentage;
-          const author = this.authorsList().filter(
-            ({ id }) => id == authorId
-          )[0];
-          const publisher = this.publishers().filter(
+          const author = this.authorsList().find(({ id }) => id == authorId);
+          const publisher = this.publishers().find(
             ({ id }) => id == publisherId
-          )[0];
-          d['name'] =
-            publisher?.name ||
-            author?.name ||
-            author?.user?.firstName ||
-            '' + ' ' + author?.user?.lastName ||
-            '';
-          acc.push(d as CreateRoyalty);
+          );
+
+          const newRoyalty: CreateRoyalty = {
+            authorId,
+            publisherId,
+            name:
+              publisher?.name ||
+              author?.name ||
+              [author?.user?.firstName, author?.user?.lastName]
+                .filter(Boolean)
+                .join(' ') ||
+              '',
+            ebook_mah: null,
+            ebook_third_party: null,
+            prime: null,
+            print_mah: null,
+            print_third_party: null,
+            titleId: this.titleId,
+            [field]: percentage,
+            totalEarnings: 0,
+          };
+
+          acc.push(newRoyalty);
         }
 
         return acc;
       },
-      Array<CreateRoyalty>()
+      [] as CreateRoyalty[]
     );
 
     royaltControlData?.forEach((d) => {
       const { authorId: aId, publisherId: pId } = d;
-      const controlExisit = this.tempForm.controls.royalties.controls.filter(
+      const controlExist = this.tempForm.controls.royalties.controls.find(
         ({ controls: { authorId, publisherId } }) =>
-          authorId.value === aId || publisherId.value === pId
-      )[0];
-      if (controlExisit) {
-        controlExisit.patchValue(d);
+          (aId && aId === authorId.value) || (pId && pId === publisherId.value)
+      );
+
+      if (controlExist) {
+        controlExist.patchValue(d);
       } else {
         this.tempForm.controls.royalties.push(this.createRoyaltyGroup(d));
       }
@@ -1098,10 +1104,9 @@ export class AddTitle {
 
   async saveRoyalties() {
     const royaltiesControl = this.tempForm.controls.royalties;
-    console.log({ royaltiesControl });
 
     if (royaltiesControl.valid) {
-      const data: UpdateRoyalty[] = royaltiesControl.controls.map(
+      const royalties: UpdateRoyalty[] = royaltiesControl.controls.map(
         ({
           controls: {
             id: { value: id },
@@ -1128,15 +1133,10 @@ export class AddTitle {
         })
       );
 
-      const res = await Promise.all(
-        data.map(async (d) => this.titleService.createOrUpdateRoyaties(d))
-      );
-
-      console.log({ res });
+      await this.titleService.createManyRoyalties(royalties, this.titleId);
 
       this.stepper()?.next();
     }
-    this.titleService.createManyPricing;
   }
 
   async onClickPurchasePoint(type: DistributionType) {

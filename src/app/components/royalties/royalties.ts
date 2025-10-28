@@ -157,25 +157,32 @@ export class Royalties implements OnInit {
         const temp = this.totalRoyaltiesAmount();
 
         data.forEach((royalty) => {
-          temp[royalty.authorId ? 'authors' : 'publisher'] = {
-            ...(temp[royalty.authorId ? 'authors' : 'publisher'][
-              royalty.authorId || royalty.publisherId || 0
-            ] = {}),
-          };
+          const key = royalty.authorId ? 'authors' : 'publisher';
+          const id = royalty.authorId || royalty.publisherId || 0;
+
+          // ✅ Ensure container object exists
+          temp[key] = temp[key] || {};
+
+          // ✅ Initialize entry for this ID if missing
+          temp[key][id] = temp[key][id] || {};
 
           const prices: Partial<Record<RoyalFormGroupAmountField, number>> = {};
-          this.channelKeys().map((key) => {
-            prices[key as RoyalFormGroupAmountField] =
+          this.channelKeys().forEach((channelKey) => {
+            prices[channelKey as RoyalFormGroupAmountField] =
               this.caculateAmountForRoyaltiesField(
-                key as RoyalFormGroupAmountField,
-                royalty[key as RoyalFormGroupAmountField] || 0
+                channelKey as RoyalFormGroupAmountField,
+                royalty[channelKey as RoyalFormGroupAmountField] || 0
               );
           });
 
-          temp[royalty.authorId ? 'authors' : 'publisher'][
-            royalty.authorId || royalty.publisherId || 0
-          ] = prices;
+          // ✅ Merge prices for this specific author/publisher
+          temp[key][id] = {
+            ...temp[key][id],
+            ...prices,
+          };
         });
+
+        console.log({ temp, data });
 
         this.totalRoyaltiesAmount.set(temp);
       });
