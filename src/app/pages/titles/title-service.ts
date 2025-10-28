@@ -217,8 +217,7 @@ export class TitleService {
   ) {
     try {
       return await this.loader.loadPromise(
-        this.server.post('title-distribution', {
-          titleId,
+        this.server.post(`title-distribution/title/${titleId}`, {
           distributions,
         })
       );
