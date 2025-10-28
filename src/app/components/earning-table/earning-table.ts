@@ -5,6 +5,7 @@ import { PublisherService } from '../../pages/publisher/publisher-service';
 import { MatTableDataSource } from '@angular/material/table';
 import { ListTable } from '../list-table/list-table';
 import { TranslateService } from '@ngx-translate/core';
+import { formatCurrency } from '@angular/common';
 
 @Component({
   selector: 'app-earning-table',
@@ -34,7 +35,7 @@ export class EarningTable {
         'publisher/author':
           earning.royalty.publisher?.name ||
           earning.royalty.author?.user.firstName,
-        amount: earning.amount,
+        amount: formatCurrency(earning.amount, 'en', '', 'INR'),
         channal: this.translateService.instant(earning.channal),
         platform: this.translateService.instant(earning.platform),
         'paidAt/holduntill': earning.holdUntil || earning.paidAt,
