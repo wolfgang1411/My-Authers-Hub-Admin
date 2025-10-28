@@ -74,21 +74,26 @@
         mat-icon-button
         [routerLink]="['/title', element.id]"
       >
-        <mat-icon class="!text-white">visibility</mat-icon>
-      </button>
-      <button
-        class="!bg-primary"
-        mat-icon-button
-        [routerLink]="['/title', element.id]"
-      >
         <mat-icon class="!text-white">edit</mat-icon>
       </button>
-      <button class="!bg-primary" mat-icon-button>
-        <mat-icon class="!text-white">lock_reset</mat-icon>
+      @if (element.status === 'PENDING') {
+      <button
+        (click)="onClickApprove(element)"
+        title="Approve"
+        class="!bg-green-700"
+        mat-icon-button
+      >
+        <mat-icon class="!text-white">thumb_up</mat-icon>
       </button>
-      <button class="!bg-accent" mat-icon-button>
-        <mat-icon class="!text-white">block</mat-icon>
+      <button
+        (click)="onClickReject(element)"
+        title="Reject"
+        class="!bg-accent"
+        mat-icon-button
+      >
+        <mat-icon class="!text-white">thumb_down</mat-icon>
       </button>
+      }
     </div>
   </ng-template>
 
@@ -118,7 +123,7 @@
         <div>{{ title.author.name }}</div>
         <div>{{ title.links && title.links.length > 0 ? title.links.join(", ") : "No Links Available"}}</div>
         <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
-          <button 
+          <button
             [routerLink]="['/title', title.id]"
             routerLinkActive="router-link-active"
             class="btn h-[38px] w-[38px] !p-0"
@@ -128,7 +133,7 @@
             class="btn h-[38px] w-[38px] !p-0"
             ><svg-icon class="flex fill-white w-6" src="images/pen-to-square-regular-full.svg"></svg-icon></button
           >
-        
+
           <button class="btn h-[38px] w-[38px] !p-0 border-accent !bg-red-200"><svg-icon class="flex fill-accent w-6" src="images/trash-can-solid-full.svg"></svg-icon></button>
         </div>
       </li>

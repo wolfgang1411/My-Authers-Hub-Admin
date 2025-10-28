@@ -82,6 +82,16 @@ export interface AuthorTitle {
   order: number;
 }
 
+export interface ApproveTitlePayload {
+  distributionType: DistributionType;
+  link: string;
+}
+
+export interface ApproveTitleGroup {
+  distributionType: FormControl<DistributionType>;
+  link: FormControl<string | null>;
+}
+
 export interface TitlePricing {
   id: number;
   channal: ChannalType;

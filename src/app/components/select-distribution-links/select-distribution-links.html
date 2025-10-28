@@ -1,0 +1,44 @@
+<form
+  (ngSubmit)="onSubmit()"
+  [formGroup]="form"
+  class="flex flex-col w-[350px] max-w-[90vw] p-3"
+>
+  <div class="flex items-center justify-between">
+    <h2 mat-dialog-title class="text-xl heading !text-primary">
+      Add Distribution Links!
+    </h2>
+  </div>
+
+  <mat-dialog-content>
+    <div class="gap-4 flex flex-col">
+      @for (distribution of form.controls.distribution.controls; track $index) {
+
+      <mat-form-field>
+        <mat-label>
+          {{ distribution.controls.distributionType.value | translate }}
+        </mat-label>
+        <input
+          matInput
+          type="text"
+          [formControl]="distribution.controls.link"
+        />
+      </mat-form-field>
+      }
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions>
+    <button
+      (click)="data.onClose()"
+      mat-button
+      matButton="filled"
+      class="!bg-accent"
+      type="button"
+    >
+      {{ "close" | translate }}
+    </button>
+    <button type="submit" mat-button matButton="filled" class="!bg-primary">
+      {{ "confirm" | translate }}
+    </button>
+  </mat-dialog-actions>
+</form>

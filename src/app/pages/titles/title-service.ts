@@ -9,6 +9,7 @@ import {
   UpdateRoyalty,
 } from '../../interfaces';
 import {
+  ApproveTitlePayload,
   PricingCreate,
   PrintingCreate,
   Title,
@@ -42,6 +43,30 @@ export class TitleService {
       );
     } catch (error) {
       console.error('Error fetching publishers:', error);
+      throw error;
+    }
+  }
+
+  async rejectTitle(id: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<Title>(`titles/${id}/reject`)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async approveTitle(id: number, data: ApproveTitlePayload[]) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.patch<Title>(`titles/${id}/approve`, {
+          data,
+        })
+      );
+    } catch (error) {
+      this.logger.logError(error);
       throw error;
     }
   }

@@ -1,13 +1,21 @@
 import { Component, signal } from '@angular/core';
 import { debounceTime, Subject } from 'rxjs';
-import { Title, TitleResponse } from '../../interfaces/Titles';
+import {
+  ApproveTitlePayload,
+  Title,
+  TitleResponse,
+} from '../../interfaces/Titles';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { TitleService } from './title-service';
 import { RouterLink } from '@angular/router';
 import { ListTable } from '../../components/list-table/list-table';
 import { MatTableDataSource } from '@angular/material/table';
-import { MatIcon } from '@angular/material/icon';
+import { MatIcon, MatIconModule } from '@angular/material/icon';
 import { MatButton, MatIconButton } from '@angular/material/button';
+import Swal from 'sweetalert2';
+import { TranslateService } from '@ngx-translate/core';
+import { MatDialog } from '@angular/material/dialog';
+import { SelectDistributionLinks } from '../../components/select-distribution-links/select-distribution-links';
 
 @Component({
   selector: 'app-titles',
@@ -15,7 +23,7 @@ import { MatButton, MatIconButton } from '@angular/material/button';
     SharedModule,
     RouterLink,
     ListTable,
-    MatIcon,
+    MatIconModule,
     MatIconButton,
     MatButton,
   ],
@@ -23,7 +31,11 @@ import { MatButton, MatIconButton } from '@angular/material/button';
   styleUrl: './titles.css',
 })
 export class Titles {
-  constructor(private titleService: TitleService) {}
+  constructor(
+    private titleService: TitleService,
+    private translateService: TranslateService,
+    private matDialog: MatDialog
+  ) {}
   searchStr = new Subject<string>();
 
   test!: Subject<string>;
@@ -54,6 +66,7 @@ export class Titles {
           serial: idx + 1,
           id: title.id,
           title: title.name,
+          distribution: title.distribution,
           isbnPrint:
             title.isbnPrint && title.isbnPrint ? title.isbnPrint : 'N/A',
           isbnEbook:
@@ -81,12 +94,15 @@ export class Titles {
               ? title.authors.map((author) => author.author?.name).join(' ,')
               : 'N/A',
           publishedby: title.publisher ? title.publisher.name : 'N/A',
+          status: title.status,
           actions: '',
         }));
 
         this.dataSource.data = mapped;
         if (mapped.length > 0) {
-          this.displayedColumns = Object.keys(mapped[0]);
+          this.displayedColumns = Object.keys(mapped[0]).filter(
+            (key) => !['status', 'distribution'].includes(key)
+          );
         }
 
         console.log('Fetched titles:', this.titles());
@@ -94,5 +110,47 @@ export class Titles {
       .catch((error) => {
         console.error('Error fetching titles:', error);
       });
+  }
+
+  onClickApprove(title: Title) {
+    if (!title.distribution || !title.distribution.length) {
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text: this.translateService.instant('titledistributionsnotfound'),
+      });
+      return;
+    }
+    const dialog = this.matDialog.open(SelectDistributionLinks, {
+      data: {
+        distribution: title.distribution,
+        onClose: () => dialog.close(),
+        onSave: async (data: ApproveTitlePayload[]) => {
+          const response = await this.titleService.approveTitle(title.id, data);
+          this.titles.update((titles) => {
+            return titles.map((t) => (t.id === response.id ? response : t));
+          });
+          dialog.close();
+        },
+      },
+    });
+  }
+
+  async onClickReject(title: any) {
+    const { value } = await Swal.fire({
+      icon: 'warning',
+      title: this.translateService.instant('warning'),
+      html: this.translateService.instant('rejettitlewarninghtml', {
+        title: title.title,
+      }),
+      showCancelButton: true,
+    });
+    if (!value) return;
+
+    const response = await this.titleService.rejectTitle(title.id);
+
+    this.titles.update((titles) => {
+      return titles.map((t) => (t.id === response.id ? response : t));
+    });
   }
 }

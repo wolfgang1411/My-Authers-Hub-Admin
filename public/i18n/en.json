@@ -321,5 +321,11 @@
   "bookingtype": "Booking Type",
   "uploadroyaltieswithcsv": "Upload Royalties with CSV",
   "missinginsicovermediaerror": "When Inside Cover/ Duplex Cover is selected <br> Inside cover media is required",
-  "error": "Error"
+  "error": "Error",
+  "rejettitlewarninghtml": "Are you sure? <br> You wanna reject <br> <strong>{{title}}</strong>",
+  "titledistributionsnotfound": "Title without distributions cannot be approved",
+  "missingdistributionwarningtitle": "Missing distribution links",
+  "missingdistributionwarninghtml": "Distribution links for {{distribution}} are missing",
+  "skipandcontinue": "Skip and Continue",
+  "cancel": "Cancel"
 }
