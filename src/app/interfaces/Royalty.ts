@@ -1,5 +1,5 @@
 import { FormControl } from '@angular/forms';
-import { ChannalType } from './index';
+import { Author, ChannalType, Publishers, Title } from './index';
 import { Earnings } from './Earnings';
 
 export interface Royalty {
@@ -11,6 +11,9 @@ export interface Royalty {
   titleId: number;
   earnings: Earnings[];
   titlename: string;
+  author: Author | null;
+  publisher: Publishers | null;
+  title: Title;
 }
 
 export interface CreateRoyalty {

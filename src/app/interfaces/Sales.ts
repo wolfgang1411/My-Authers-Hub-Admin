@@ -1,5 +1,11 @@
 import { FormControl, FormGroup } from '@angular/forms';
-import { BookingType, ChannalType, PlatForm, SalesType } from './StaticValue';
+import {
+  BookingType,
+  ChannalType,
+  EarningsStatus,
+  PlatForm,
+  SalesType,
+} from './StaticValue';
 
 export interface SalesFilter {
   itemsPerPage?: number;
@@ -21,6 +27,27 @@ export interface SalesFilter {
   channals?: string | string[];
 
   userId?: number;
+}
+
+export interface EarningFilter {
+  itemsPerPage?: number;
+
+  page?: number;
+  paidBefore?: string;
+
+  paidAfter?: string;
+
+  titleIds?: number[];
+
+  authorIds?: number[];
+
+  publisherIds?: number[];
+
+  status?: EarningsStatus | EarningsStatus[];
+  platforms?: PlatForm | PlatForm[];
+
+  channals?: string | string[];
+  searchStr?: string;
 }
 
 export interface CreateSale {

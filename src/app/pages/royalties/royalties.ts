@@ -15,6 +15,7 @@ import {
   BookingType,
   CreateRoyalty,
   CreateSale,
+  EarningFilter,
   PlatForm,
   RoyalFormGroupAmountField,
   Royalty,
@@ -35,6 +36,8 @@ import { Papa } from 'ngx-papaparse';
 import { Logger } from '../../services/logger';
 import { format, parse } from 'date-fns';
 import { TitleService } from '../titles/title-service';
+import { Earnings } from '../../interfaces/Earnings';
+import { EarningTable } from '../../components/earning-table/earning-table';
 
 @Component({
   selector: 'app-royalties',
@@ -53,7 +56,7 @@ import { TitleService } from '../titles/title-service';
     MatInputModule,
     MatButtonModule,
     MatDialogModule,
-    RoyaltyTable,
+    EarningTable,
   ],
   templateUrl: './royalties.html',
   styleUrl: './royalties.css',
@@ -69,7 +72,7 @@ export class Royalties {
     private titleService: TitleService
   ) {}
 
-  filter: RoyaltyFilter = {
+  filter: EarningFilter = {
     page: 1,
     itemsPerPage: 30,
     searchStr: '',
@@ -87,16 +90,21 @@ export class Royalties {
     });
 
   lastPage = signal(1);
-  royaltyList = signal<Royalty[]>([]);
+  earningList = signal<Earnings[]>([]);
   ngOnInit(): void {
     this.updateRoyaltyList();
   }
 
   async updateRoyaltyList() {
-    const { items: royaltyList } = await this.royaltyService.getRoyalties(
-      this.filter
-    );
-    this.royaltyList.set(royaltyList);
+    const { items, totalCount, itemsPerPage, page } =
+      await this.salesService.fetchEarnings(this.filter);
+
+    this.earningList.update((earningList) => {
+      return page > 1 && earningList.length
+        ? [...earningList, ...items]
+        : items;
+    });
+    this.lastPage.set(Math.ceil(totalCount / itemsPerPage));
   }
 
   addRoyalty(data?: Partial<CreateSale & { availableTitles: number[] }>[]) {

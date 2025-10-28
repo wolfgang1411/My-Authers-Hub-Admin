@@ -2,7 +2,13 @@ import { Injectable } from '@angular/core';
 import { Server } from './server';
 import { LoaderService } from './loader';
 import { Logger } from './logger';
-import { CreateSale, SalesFilter } from '../interfaces';
+import {
+  CreateSale,
+  EarningFilter,
+  Pagination,
+  SalesFilter,
+} from '../interfaces';
+import { Earnings } from '../interfaces/Earnings';
 
 @Injectable({
   providedIn: 'root',
@@ -13,6 +19,18 @@ export class SalesService {
     private loader: LoaderService,
     private logger: Logger
   ) {}
+
+  async fetchEarnings(filter: EarningFilter) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<Earnings>>('earnings', filter),
+        'fetching-earnings'
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
 
   async fetchSalesCount(filter: SalesFilter) {
     try {

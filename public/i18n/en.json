@@ -327,5 +327,7 @@
   "missingdistributionwarningtitle": "Missing distribution links",
   "missingdistributionwarninghtml": "Distribution links for {{distribution}} are missing",
   "skipandcontinue": "Skip and Continue",
-  "cancel": "Cancel"
+  "cancel": "Cancel",
+  "publisher/author": "Publisher/Author",
+  "paidAt/holduntill": "Paid At/Hold Untill"
 }
