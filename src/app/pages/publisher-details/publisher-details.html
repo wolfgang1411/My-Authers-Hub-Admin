@@ -1,5 +1,5 @@
 <div class="flex flex-col flex-grow gap-4">
-  <nav class="flex flex-col gap-6 sticky top-[84px] z-10 py-4">
+  <nav class="flex flex-col gap-6 sticky z-10 py-4">
     <div class="flex justify-between items-center">
       <h3 class="heading">{{ "publisherdetails" | translate }}</h3>
       <app-back></app-back>
@@ -101,92 +101,24 @@
         id="books-published"
         class="mt-10 bg-white p-6 rounded-xl shadow"
       >
-        <h2 class="heading mb-4">{{ "bookspublished" | translate }}</h2>
-        <mat-form-field>
-          <mat-label>{{ "filter" | translate }}</mat-label>
-          <input
-            matInput
-            (keyup)="applyFilter($event)"
-            placeholder="Ex. ium"
-            #input
-          />
-        </mat-form-field>
-
-        <table
-          mat-table
+        <div class="flex justify-between">
+          <h2 class="heading mb-4">{{ "bookspublished" | translate }}</h2>
+          <mat-form-field>
+            <mat-label>{{ "filter" | translate }}</mat-label>
+            <input
+              matInput
+              (keyup)="applyFilter($event)"
+              placeholder="Ex. ium"
+              #input
+            />
+          </mat-form-field>
+        </div>
+        <app-list-table
+          class="pt-6"
           [dataSource]="bookPublishData"
-          class="mat-elevation-z8 !rounded-2xl overflow-hidden"
+          [displayedColumns]="displayedColumns"
         >
-          <ng-container matColumnDef="serial">
-            <th mat-header-cell *matHeaderCellDef>
-              {{ "serialno" | translate }}
-            </th>
-            <td mat-cell *matCellDef="let element; let i = index">
-              {{ i + 1 }}
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="bookname">
-            <th mat-header-cell *matHeaderCellDef>
-              {{ "bookname" | translate }}
-            </th>
-            <td mat-cell *matCellDef="let element">{{ element.name }}</td>
-          </ng-container>
-          <ng-container matColumnDef="ISBN">
-            <th mat-header-cell *matHeaderCellDef>{{ "ISBN" | translate }}</th>
-            <td mat-cell *matCellDef="let element">
-              @if (element.isbn) {
-              {{ element.isbn.isbnNumber }}
-              } @else {
-              {{ "N/A" | translate }}
-              }
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="Pages">
-            <th mat-header-cell *matHeaderCellDef>{{ "pages" | translate }}</th>
-            <td mat-cell *matCellDef="let element">{{ element.pages }}</td>
-          </ng-container>
-          <ng-container matColumnDef="royaltiesearned">
-            <th mat-header-cell *matHeaderCellDef>
-              {{ "royaltiesearned" | translate }}
-            </th>
-            <td mat-cell *matCellDef="let element">{{ 0 }}</td>
-          </ng-container>
-          <ng-container matColumnDef="authorname">
-            <th mat-header-cell *matHeaderCellDef>
-              {{ "authorname" | translate }}
-            </th>
-            <td mat-cell *matCellDef="let element">
-              @if (element.author) {
-              {{ element.author.name }}
-              } @else {
-              {{ "No author" | translate }}
-              }
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="links">
-            <th mat-header-cell *matHeaderCellDef>{{ "links" | translate }}</th>
-            <td mat-cell *matCellDef="let element">
-              {{
-                element.links && element.links.length > 0
-                  ? element.links.join(", ")
-                  : "No links available"
-              }}
-            </td>
-          </ng-container>
-
-          <tr
-            class="!bg-primary-light"
-            mat-header-row
-            *matHeaderRowDef="displayedColumns"
-          ></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-
-          <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell" colspan="4">
-              No data matching the filter "{{ input.value }}"
-            </td>
-          </tr>
-        </table>
+        </app-list-table>
       </section>
     </mat-tab>
     <!-- Authors -->
@@ -197,89 +129,24 @@
         </span>
       </ng-template>
       <section id="authors" class="mt-10 bg-white p-6 rounded-xl shadow">
-        <h2 class="heading mb-4">{{ "authors" | translate }}</h2>
-        <mat-form-field>
-          <mat-label>{{ "filter" | translate }}</mat-label>
-          <input
-            matInput
-            (keyup)="applyAuhtorFilter($event)"
-            placeholder="Ex. ium"
-            #input
-          />
-        </mat-form-field>
-        <table
-          mat-table
+        <div class="flex justify-between">
+          <h2 class="heading mb-4">{{ "authors" | translate }}</h2>
+          <mat-form-field>
+            <mat-label>{{ "filter" | translate }}</mat-label>
+            <input
+              matInput
+              (input)="applyAuthorFilter($event)"
+              placeholder="Ex. ium"
+              #input
+            />
+          </mat-form-field>
+        </div>
+        <app-list-table
+          class="pt-6"
           [dataSource]="authorData"
-          class="mat-elevation-z8 !rounded-2xl overflow-hidden"
+          [displayedColumns]="displayedAuthorColumns"
         >
-          <ng-container matColumnDef="serial">
-            <th mat-header-cell *matHeaderCellDef>
-              {{ "serialno" | translate }}
-            </th>
-            <td mat-cell *matCellDef="let element; let i = index">
-              {{ i + 1 }}
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef>{{ "name" | translate }}</th>
-            <td mat-cell *matCellDef="let element">{{ element.username }}</td>
-          </ng-container>
-          <ng-container matColumnDef="email">
-            <th mat-header-cell *matHeaderCellDef>{{ "email" | translate }}</th>
-            <td mat-cell *matCellDef="let element">
-              {{ element.email }}
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="phonenumber">
-            <th mat-header-cell *matHeaderCellDef>
-              {{ "phonenumber" | translate }}
-            </th>
-            <td mat-cell *matCellDef="let element">
-              {{ element.phoneNumber }}
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="titles">
-            <th mat-header-cell *matHeaderCellDef>
-              {{ "titles" | translate }}
-            </th>
-            <td mat-cell *matCellDef="let element">{{ 0 }}</td>
-          </ng-container>
-          <ng-container matColumnDef="royaltyearned">
-            <th mat-header-cell *matHeaderCellDef>
-              {{ "royaltyearned" | translate }}
-            </th>
-            <td mat-cell *matCellDef="let element">
-              {{ element.royalty }}
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="links">
-            <th mat-header-cell *matHeaderCellDef>{{ "links" | translate }}</th>
-            <td mat-cell *matCellDef="let element">
-              {{
-                element.links && element.links.length > 0
-                  ? element.links.join(", ")
-                  : "No links available"
-              }}
-            </td>
-          </ng-container>
-
-          <tr
-            class="!bg-primary-light"
-            mat-header-row
-            *matHeaderRowDef="displayedAuthorColumns"
-          ></tr>
-          <tr
-            mat-row
-            *matRowDef="let row; columns: displayedAuthorColumns"
-          ></tr>
-
-          <!-- Row shown when there is no matching data. -->
-          <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell" colspan="4">
-              No data matching the filter "{{ input.value }}"
-            </td>
-          </tr>
-        </table>
+        </app-list-table>
       </section>
     </mat-tab>
     <!-- Sub-Publishers -->
@@ -290,90 +157,24 @@
         </span>
       </ng-template>
       <section id="sub-publishers" class="mt-10 bg-white p-6 rounded-xl shadow">
-        <h2 class="heading mb-4">{{ "subpublishers" | translate }}</h2>
-        <mat-form-field>
-          <mat-label>{{ "filter" | translate }}</mat-label>
-          <input
-            matInput
-            (keyup)="applySubPublisherFilter($event)"
-            placeholder="Ex. ium"
-            #input
-          />
-        </mat-form-field>
-        <table
-          mat-table
+        <div class="flex justify-between">
+          <h2 class="heading mb-4">{{ "subpublishers" | translate }}</h2>
+          <mat-form-field>
+            <mat-label>{{ "filter" | translate }}</mat-label>
+            <input
+              matInput
+              (keyup)="applySubPublisherFilter($event)"
+              placeholder="Ex. ium"
+              #input
+            />
+          </mat-form-field>
+        </div>
+        <app-list-table
+          class="pt-6"
           [dataSource]="subPublisherData"
-          class="mat-elevation-z8 !rounded-2xl overflow-hidden"
+          [displayedColumns]="displayedSubPublisherColumns"
         >
-          <ng-container matColumnDef="serial">
-            <th mat-header-cell *matHeaderCellDef>
-              {{ "serialno" | translate }}
-            </th>
-            <td mat-cell *matCellDef="let element; let i = index">
-              {{ i + 1 }}
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef>{{ "name" | translate }}</th>
-            <td mat-cell *matCellDef="let element">
-              {{ element?.user?.firstName + " " + element?.user?.lastName }}
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="email">
-            <th mat-header-cell *matHeaderCellDef>
-              {{ "email" | translate }} / {{ "comapnyemailId" | translate }}
-            </th>
-            <td mat-cell *matCellDef="let element">
-              {{ element.user.email || "N/A" }} / {{ element.email || "N/A" }}
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="phonenumber">
-            <th mat-header-cell *matHeaderCellDef>
-              {{ "phonenumber" | translate }}
-            </th>
-            <td mat-cell *matCellDef="let element">
-              {{ element?.user?.phone || "N/A" }} /
-              {{ element.phoneNumber || "N/A" }}
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="titles">
-            <th mat-header-cell *matHeaderCellDef>
-              {{ "nooftitles" | translate }}
-            </th>
-            <td mat-cell *matCellDef="let element">{{ 0 }}</td>
-          </ng-container>
-          <ng-container matColumnDef="authors">
-            <th mat-header-cell *matHeaderCellDef>
-              {{ "noofauthors" | translate }}
-            </th>
-            <td mat-cell *matCellDef="let element">
-              {{ 0 }}
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="companyname">
-            <th mat-header-cell *matHeaderCellDef>
-              {{ "companyname" | translate }}
-            </th>
-            <td mat-cell *matCellDef="let element">{{ element.name }}</td>
-          </ng-container>
-
-          <tr
-            class="!bg-primary-light"
-            mat-header-row
-            *matHeaderRowDef="displayedSubPublisherColumns"
-          ></tr>
-          <tr
-            mat-row
-            *matRowDef="let row; columns: displayedSubPublisherColumns"
-          ></tr>
-
-          <!-- Row shown when there is no matching data. -->
-          <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell" colspan="4">
-              No data matching the filter "{{ input.value }}"
-            </td>
-          </tr>
-        </table>
+        </app-list-table>
       </section>
     </mat-tab>
 

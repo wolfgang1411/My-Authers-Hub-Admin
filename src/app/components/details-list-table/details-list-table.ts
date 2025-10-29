@@ -1,17 +1,18 @@
 import {
-  AfterViewInit,
   Component,
+  effect,
   Input,
   TemplateRef,
   ViewChild,
 } from '@angular/core';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { SharedModule } from '../../modules/shared/shared-module';
 import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { SharedModule } from '../../modules/shared/shared-module';
+import { MatFormField, MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+
 @Component({
-  selector: 'app-list-table',
+  selector: 'app-details-list-table',
   imports: [
     SharedModule,
     MatFormFieldModule,
@@ -19,10 +20,11 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
     MatTableModule,
     MatSortModule,
   ],
-  templateUrl: './list-table.html',
-  styleUrl: './list-table.css',
+  templateUrl: './details-list-table.html',
+  styleUrl: './details-list-table.css',
 })
-export class ListTable implements AfterViewInit {
+export class DetailsListTable {
+  constructor() {}
   data = [];
   @Input() displayedColumns!: string[];
   @Input() dataSource!: MatTableDataSource<any>;

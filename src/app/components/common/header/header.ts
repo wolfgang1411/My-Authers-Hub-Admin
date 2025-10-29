@@ -1,4 +1,4 @@
-import { Component, computed, OnInit, Signal } from '@angular/core';
+import { Component, computed, OnInit } from '@angular/core';
 import { SharedModule } from '../../../modules/shared/shared-module';
 import { LayoutService } from '../../../services/layout';
 import { UserService } from '../../../services/user';
@@ -6,11 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
-import { NotificationService } from '../../../services/notifications';
-import { MyNotification } from '../../../interfaces';
 import { Notification } from '../notification/notification';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
-import { filter, map } from 'rxjs';
 @Component({
   selector: 'app-header',
   imports: [

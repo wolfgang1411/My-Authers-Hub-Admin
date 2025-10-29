@@ -5,7 +5,7 @@ import { PublisherService } from '../publisher/publisher-service';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { Back } from '../../components/back/back';
 import { Title } from '../../interfaces/Titles';
-import { Author } from '../../interfaces/Authors';
+import { Author, AuthorFilter } from '../../interfaces/Authors';
 import { Publishers } from '../../interfaces/Publishers';
 import { Royalty } from '../../interfaces/Royalty';
 import { Wallet } from '../../interfaces/Wallet';
@@ -16,6 +16,8 @@ import { MatFormField } from '@angular/material/form-field';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatInputModule } from '@angular/material/input';
 import { RoyaltyService } from '../../services/royalty-service';
+import { ListTable } from '../../components/list-table/list-table';
+import { DetailsListTable } from '../../components/details-list-table/details-list-table';
 @Component({
   selector: 'app-publisher-details',
   imports: [
@@ -25,6 +27,7 @@ import { RoyaltyService } from '../../services/royalty-service';
     MatFormField,
     MatTableModule,
     MatInputModule,
+    ListTable,
   ],
   templateUrl: './publisher-details.html',
   styleUrl: './publisher-details.css',
@@ -59,15 +62,15 @@ export class PublisherDetails {
   wallet = signal<Wallet | null>(null);
   publishedLinks = signal<any[]>([]);
   attachments = signal<any[]>([]);
-
+  authorFilter = signal({ page: 1 });
   displayedColumns: string[] = [
     'serial',
-    'bookname',
-    'ISBN',
-    'Pages',
+    'title',
+    'isbnPrint',
+    'isbnEbook',
+    'pages',
     'royaltiesearned',
-    'authorname',
-    'links',
+    'authors',
   ];
   displayedAuthorColumns: string[] = [
     'serial',
@@ -75,17 +78,16 @@ export class PublisherDetails {
     'email',
     'phonenumber',
     'titles',
+    'bookssold',
     'royaltyearned',
     'links',
   ];
   displayedSubPublisherColumns: string[] = [
-    'serial',
     'name',
+    'nooftitles',
+    'noofauthors',
     'email',
     'phonenumber',
-    'titles',
-    'authors',
-    'companyname',
   ];
   displayedRoyaltyColumns: string[] = [
     'serial',
@@ -97,12 +99,11 @@ export class PublisherDetails {
     'publisherearnings',
     'royaltyamount',
   ];
-  bookPublishData = new MatTableDataSource<Title>(this.booksPublished());
-  authorData = new MatTableDataSource<Author>(this.authors());
-  subPublisherData = new MatTableDataSource<Publishers>(this.subPublishers());
+  bookPublishData = new MatTableDataSource<any>([]);
+  authorData = new MatTableDataSource<any>([]);
+  subPublisherData = new MatTableDataSource<any>([]);
   royaltyData = new MatTableDataSource<Royalty>(this.royalties());
   ngOnInit(): void {
-    // Fetch publisher details using the publisherId
     this.fetchPublisherDetails();
     this.fetchSubPublishers();
     this.fetchAuthors();
@@ -121,39 +122,84 @@ export class PublisherDetails {
   }
 
   async fetchSubPublishers() {
-    try {
-      const { items } = await this.publisherService.getPublishers({
-        parentPublisherId: this.publisherId,
-      });
-      this.subPublishers.set(items as Publishers[]);
-      this.subPublisherData.data = items as Publishers[];
-    } catch (error) {
-      console.error('Error fetching sub publisher:', error);
-    }
+    this.publisherService
+      .getPublishers({ parentPublisherId: this.publisherId })
+      .then(({ items }) => {
+        const mapped = items.map((publisher) => ({
+          ...publisher,
+          phonenumber: publisher.phoneNumber || publisher.user.phoneNumber,
+          nooftitles: publisher.noOfTitles,
+          noofauthors: publisher.noOfAuthors,
+        }));
+        this.subPublisherData = new MatTableDataSource(mapped);
+        this.subPublisherData.filterPredicate = (data, filter) =>
+          data.name.toLowerCase().includes(filter) ||
+          data.email.toLowerCase().includes(filter) ||
+          data.phonenumber?.toLowerCase().includes(filter);
+      })
+      .catch((error) => console.error('Error fetching authors:', error));
   }
+  fetchAuthors() {
+    this.authorsService
+      .getAuthors({ publisherId: this.publisherId })
+      .then(({ items }) => {
+        const mapped = items.map((author, idx) => ({
+          ...author,
+          serial: idx + 1,
+          name: `${author.user.firstName} ${author.user.lastName}`,
+          email: author.user.email,
+          phonenumber: author.user.phoneNumber,
+          titles: author.noOfTitles,
+          booksSold: author.booksSold,
+          royaltyearned: author.totalEarning || 0,
+          links: author.socialMedias?.map((sm) => sm.url) || 'N/A',
+        }));
+        this.authorData = new MatTableDataSource(mapped);
 
-  async fetchAuthors() {
-    try {
-      const { items } = await this.authorsService.getAuthors({
-        publisherId: this.publisherId,
-      });
-      this.authors.set(items as Author[]);
-      this.authorData.data = items as Author[];
-    } catch (error) {
-      throw error;
-    }
+        this.authorData.filterPredicate = (data, filter) =>
+          data.name.toLowerCase().includes(filter) ||
+          data.email.toLowerCase().includes(filter) ||
+          data.phonenumber?.toLowerCase().includes(filter);
+      })
+      .catch((error) => console.error('Error fetching authors:', error));
   }
 
   async fetchTitles() {
-    try {
-      const { items } = await this.titleService.getTitles({
-        publisherIds: this.publisherId,
+    this.titleService
+      .getTitles()
+      .then(({ items }) => {
+        const mapped = items.map((title, idx) => ({
+          serial: idx + 1,
+          id: title.id,
+          title: title.name,
+          distribution: title.distribution,
+          isbnPrint:
+            title.isbnPrint && title.isbnPrint ? title.isbnPrint : 'N/A',
+          isbnEbook:
+            title.isbnEbook && title.isbnEbook ? title.isbnEbook : 'N/A',
+          pages:
+            title.printing && title.printing.length
+              ? title.printing[0].totalPages
+              : 'N/A',
+
+          royaltiesearned: 0,
+
+          authors:
+            title.authors && title.authors.length
+              ? title.authors.map((author) => author.author?.name).join(' ,')
+              : 'N/A',
+          status: title.status,
+        }));
+        this.bookPublishData = new MatTableDataSource(mapped);
+        this.bookPublishData.filterPredicate = (data, filter) =>
+          data.title.toLowerCase().includes(filter) ||
+          data.distribution.toLowerCase().includes(filter) ||
+          data.isbnPrint.toLowerCase().includes(filter) ||
+          data.isbnEbook.toLowerCase().includes(filter);
+      })
+      .catch((error) => {
+        console.error('Error fetching titles:', error);
       });
-      this.booksPublished.set(items as Title[]);
-      this.bookPublishData.data = items as Title[];
-    } catch (error) {
-      throw error;
-    }
   }
 
   async fetchRoyalty() {
@@ -186,10 +232,9 @@ export class PublisherDetails {
     const filterValue = (event.target as HTMLInputElement).value;
     this.bookPublishData.filter = filterValue.trim().toLowerCase();
   }
-
-  applyAuhtorFilter(event: Event) {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.authorData.filter = filterValue.trim().toLowerCase();
+  applyAuthorFilter(event: Event) {
+    const value = (event.target as HTMLInputElement).value.trim().toLowerCase();
+    this.authorData.filter = value;
   }
   applySubPublisherFilter(event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
