@@ -74,6 +74,13 @@
         mat-icon-button
         [routerLink]="['/title', element.id]"
       >
+        <mat-icon class="!text-white">visibility</mat-icon>
+      </button>
+      <button
+        class="!bg-primary"
+        mat-icon-button
+        [routerLink]="['/title', element.id]"
+      >
         <mat-icon class="!text-white">edit</mat-icon>
       </button>
       @if (element.status === 'PENDING') {
@@ -94,6 +101,14 @@
         <mat-icon class="!text-white">thumb_down</mat-icon>
       </button>
       }
+
+      <button
+        (click)="onClickDeleteTitle(element)"
+        class="!bg-accent"
+        mat-icon-button
+      >
+        <mat-icon class="!text-white">delete</mat-icon>
+      </button>
     </div>
   </ng-template>
 

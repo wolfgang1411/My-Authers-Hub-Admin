@@ -36,6 +36,15 @@ export class TitleService {
     private s3Service: S3Service
   ) {}
 
+  async deleteTitle(id: number) {
+    try {
+      return await this.loader.loadPromise(this.server.delete(`titles/${id}`));
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
   async getTitleWithLessDetails(filter?: TitleFilter) {
     try {
       return await this.loader.loadPromise(

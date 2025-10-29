@@ -322,7 +322,7 @@
   "uploadroyaltieswithcsv": "Upload Royalties with CSV",
   "missinginsicovermediaerror": "When Inside Cover/ Duplex Cover is selected <br> Inside cover media is required",
   "error": "Error",
-  "rejettitlewarninghtml": "Are you sure? <br> You wanna reject <br> <strong>{{title}}</strong>",
+  "rejettitlewarninghtml": "Click \"Yes\" to reject title <br> Once rejected <strong>{{title}}</strong> will not be published",
   "titledistributionsnotfound": "Title without distributions cannot be approved",
   "missingdistributionwarningtitle": "Missing distribution links",
   "missingdistributionwarninghtml": "Distribution links for {{distribution}} are missing",
@@ -335,5 +335,8 @@
   "passwordmismatcherror": "Password did not match",
   "requiredvalueerror": "Value is required",
   "passwordchangesuccessfully": "Password updated successfully",
-  "bookssold": "Books Sold"
+  "bookssold": "Books Sold",
+  "launchdate": "Launch Date",
+  "areyousure": "Are you sure?",
+  "titledeletewarning": "Click \"Yes\" to continue deleting title <strong>{{name}}</strong>"
 }
