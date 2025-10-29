@@ -64,10 +64,13 @@ export class PublisherService {
       throw error;
     }
   }
-  async updatePublisherStatus(status: PublisherStatus, publisherId: number) {
+  async updatePublisherStatus(
+    { status }: { status: PublisherStatus; delinkTitle?: boolean },
+    publisherId: number
+  ) {
     try {
       return await this.loader.loadPromise(
-        this.server.patch(`publishers/${publisherId}`, {
+        this.server.patch(`publishers/${publisherId}/status`, {
           status: status,
         })
       );

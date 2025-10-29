@@ -201,39 +201,85 @@ export class Publisher implements OnInit {
       }
     });
   }
-  updateStatus(publisherId: number) {
-    Swal.fire({
-      title: 'Are you sure?',
-      text: 'Once Deactivated, you will not be able to recover this account!',
+  async updateStatus(publisherId: number, status: 'Active' | 'Deactivated') {
+    const isDeactivating = status === 'Deactivated';
+
+    const title = isDeactivating
+      ? 'Deactivate Publisher?'
+      : 'Activate Publisher?';
+    const html = isDeactivating
+      ? `
+      <p>Once deactivated, this publisher will no longer be accessible.</p>
+      <div class="flex items-center justify-center mt-4">
+        <input type="checkbox" id="delistCheckbox" />
+        <label for="delistCheckbox" class="ml-2">Also delist all titles</label>
+      </div>
+    `
+      : 'This publisher account will be activated and made accessible again.';
+
+    const confirmButtonText = isDeactivating
+      ? 'Yes, deactivate it!'
+      : 'Yes, activate it!';
+    const cancelButtonText = 'Cancel';
+
+    const result = await Swal.fire({
+      title,
+      html,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Yes, reject it!',
-      cancelButtonText: 'Cancel',
-      reverseButtons: true,
-      heightAuto: false,
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        const response = await this.publisherService.updatePublisherStatus(
-          PublisherStatus.Deactivated,
-          publisherId
-        );
-        if (response) {
-          const updatedData = this.dataSource.data.map((item) =>
-            item.id === publisherId
-              ? { ...item, status: PublisherStatus.Deactivated }
-              : item
-          );
-          this.dataSource.data = updatedData;
-          Swal.fire({
-            text: 'The publisher has been Deactivated!',
-            icon: 'success',
-            title: 'success',
-            heightAuto: false,
-          });
+      confirmButtonText,
+      cancelButtonText,
+      focusConfirm: false,
+      customClass: {
+        confirmButton: '!bg-accent',
+        cancelButton: '!bg-primary',
+      },
+      preConfirm: () => {
+        if (isDeactivating) {
+          const checkbox = (
+            Swal.getPopup()?.querySelector(
+              '#delistCheckbox'
+            ) as HTMLInputElement
+          )?.checked;
+          return { delist: checkbox };
         }
-      }
+        return { delist: false };
+      },
+      heightAuto: false,
     });
+
+    console.log({ result });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await this.publisherService.updatePublisherStatus(
+        { status: status as any, delinkTitle: result.value['delist'] },
+        publisherId
+      );
+
+      Swal.fire({
+        title: 'Success',
+        text: isDeactivating
+          ? 'The publisher has been deactivated successfully.'
+          : 'The publisher has been activated successfully.',
+        icon: 'success',
+        heightAuto: false,
+      });
+
+      this.dataSource.data = this.dataSource.data.map((item) =>
+        item.id === publisherId ? { ...item, status } : item
+      );
+    } catch (error) {
+      Swal.fire({
+        title: 'Error',
+        text: 'Something went wrong while updating the status.',
+        icon: 'error',
+        heightAuto: false,
+      });
+    }
   }
+
   invitePublisher(): void {
     const dialogRef = this.dialog.open(InviteDialog, {
       data: {

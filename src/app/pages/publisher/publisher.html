@@ -123,9 +123,9 @@
         class="!bg-accent active:bg-accent/60"
         mat-icon-button
         [title]="'deactivate' | translate"
-        (click)="updateStatus(element.id)"
+        (click)="updateStatus(element.id, 'Deactivated')"
       >
-        <mat-icon class="!text-white">block</mat-icon>
+        <mat-icon class="!text-white">lock</mat-icon>
       </button>
       } @if(element.status === PublisherStatus.Pending) {
       <button
@@ -144,9 +144,14 @@
       >
         <mat-icon class="!text-white">cancel</mat-icon>
       </button>
-      } @if(element.status === PublisherStatus.Active){
-      <button class="!bg-purple" mat-icon-button [title]="'active' | translate">
-        <mat-icon class="!text-white">toggle_on</mat-icon>
+      } @if(element.status === PublisherStatus.Deactivated){
+      <button
+        (click)="updateStatus(element.id, 'Active')"
+        class="!bg-purple"
+        mat-icon-button
+        [title]="'active' | translate"
+      >
+        <mat-icon class="!text-white">lock_open</mat-icon>
       </button>
       }
     </div>
