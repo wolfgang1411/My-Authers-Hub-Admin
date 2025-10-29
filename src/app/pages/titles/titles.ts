@@ -16,6 +16,8 @@ import Swal from 'sweetalert2';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { SelectDistributionLinks } from '../../components/select-distribution-links/select-distribution-links';
+import { format } from 'date-fns';
+import { TitleStatus } from '../../interfaces';
 
 @Component({
   selector: 'app-titles',
@@ -41,17 +43,14 @@ export class Titles {
   test!: Subject<string>;
   titles = signal<Title[]>([]);
   displayedColumns: string[] = [
-    'serial',
-    'title',
-    'isbnPrint',
-    'isbnEbook',
-    'pages',
-    'royaltiesearned',
+    'name',
+    'bookssold',
     'authors',
-    'publishedby',
+    'isbn',
+    'launchdate',
     'actions',
   ];
-  dataSource = new MatTableDataSource<TitleResponse>();
+  dataSource = new MatTableDataSource<any>();
 
   ngOnInit(): void {
     this.searchStr.pipe(debounceTime(400)).subscribe((value) => {
@@ -63,47 +62,35 @@ export class Titles {
       .then(({ items }) => {
         this.titles.set(items);
         const mapped = items.map((title, idx) => ({
-          serial: idx + 1,
-          id: title.id,
-          title: title.name,
-          distribution: title.distribution,
-          isbnPrint:
-            title.isbnPrint && title.isbnPrint ? title.isbnPrint : 'N/A',
-          isbnEbook:
-            title.isbnEbook && title.isbnEbook ? title.isbnEbook : 'N/A',
+          ...title,
+          isbn: `${title.isbnPrint || ''}<br>${title.isbnEbook || ''}`,
           pages:
             title.printing && title.printing.length
               ? title.printing[0].totalPages
               : 'N/A',
 
-          royaltiesearned: 0,
-          // royaltiesearned:
-          //   title.royalties && title.royalties.length
-          //     ? title.royalties.reduce((acc, royalty) => {
-          //         const sumForOne =
-          //           (royalty.print_mah || 0) +
-          //           (royalty.print_third_party || 0) +
-          //           (royalty.prime || 0) +
-          //           (royalty.ebook_mah || 0) +
-          //           (royalty.ebook_third_party || 0);
-          //         return acc + sumForOne;
-          //       }, 0)
-          //     : 0,
           authors:
             title.authors && title.authors.length
-              ? title.authors.map((author) => author.author?.name).join(' ,')
+              ? title.authors
+                  .map(
+                    (author) =>
+                      author.display_name ||
+                      (author.author?.user.firstName || '') +
+                        ' ' +
+                        (author.author.user.lastName || '')
+                  )
+                  .join(' ,')
               : 'N/A',
-          publishedby: title.publisher ? title.publisher.name : 'N/A',
+
           status: title.status,
+          bookssold: title.copiesSold,
+          launchdate: title.submission_date
+            ? format(title.submission_date, 'dd-MM-yyyy')
+            : null,
           actions: '',
         }));
 
         this.dataSource.data = mapped;
-        if (mapped.length > 0) {
-          this.displayedColumns = Object.keys(mapped[0]).filter(
-            (key) => !['status', 'distribution'].includes(key)
-          );
-        }
 
         console.log('Fetched titles:', this.titles());
       })
@@ -137,13 +124,17 @@ export class Titles {
   }
 
   async onClickReject(title: any) {
+    console.log({ title });
+
     const { value } = await Swal.fire({
       icon: 'warning',
-      title: this.translateService.instant('warning'),
+      title: this.translateService.instant('areyousure'),
       html: this.translateService.instant('rejettitlewarninghtml', {
-        title: title.title,
+        title: title.name,
       }),
       showCancelButton: true,
+      confirmButtonText: this.translateService.instant('yes'),
+      cancelButtonText: this.translateService.instant('no'),
     });
     if (!value) return;
 
@@ -152,5 +143,32 @@ export class Titles {
     this.titles.update((titles) => {
       return titles.map((t) => (t.id === response.id ? response : t));
     });
+    this.dataSource.data = this.dataSource.data.map((t) =>
+      t.id === title.id ? { ...t, status: 'REJECTED' } : t
+    );
+  }
+
+  async onClickDeleteTitle(title: Title) {
+    const { value } = await Swal.fire({
+      icon: 'warning',
+      title: this.translateService.instant('areyousure'),
+      html: this.translateService.instant('titledeletewarning', {
+        name: title.name,
+      }),
+      showCancelButton: true,
+      confirmButtonText: this.translateService.instant('yes'),
+      cancelButtonText: this.translateService.instant('no'),
+      customClass: {
+        confirmButton: '!bg-accent',
+        cancelButton: '!bg-primary',
+      },
+    });
+    if (!value) return;
+
+    await this.titleService.deleteTitle(title.id);
+    this.titles.update((titles) => titles.filter((t) => t.id !== title.id));
+    this.dataSource.data = this.dataSource.data.filter(
+      ({ id }) => id !== title.id
+    );
   }
 }

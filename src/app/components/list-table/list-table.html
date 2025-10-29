@@ -12,9 +12,12 @@
   @for (column of displayedColumns; track $index) {
 
   <ng-container [matColumnDef]="column">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header>
-      {{ column | translate }}
-    </th>
+    <th
+      [innerHTML]="column | translate"
+      mat-header-cell
+      *matHeaderCellDef
+      mat-sort-header
+    ></th>
     <td mat-cell *matCellDef="let element">
       @if(column === 'actions') {
       <ng-container
@@ -29,7 +32,7 @@
         "
       ></ng-container>
       } @else {
-      {{ element[column] ?? "-" }}
+      <div [innerHTML]="element[column] ?? '-'"></div>
       } }
     </td>
   </ng-container>

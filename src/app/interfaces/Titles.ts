@@ -32,6 +32,7 @@ export interface Title {
   language: string;
   subject: string;
   status: TitleStatus;
+  submission_date?: string;
   category: TitleCategory;
   subCategory: TitleCategory;
   tradeCategory: TitleCategory;
