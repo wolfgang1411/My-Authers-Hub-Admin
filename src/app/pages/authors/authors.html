@@ -94,13 +94,13 @@
   </app-list-table>
   <ng-template #actionButtons let-element>
     <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
-      <!-- <button
+      <button
         class="!bg-primary"
         mat-icon-button
-        [routerLink]="['/author', element.id]"
+        [routerLink]="['/authorDetails', element.id]"
       >
         <mat-icon class="!text-white">visibility</mat-icon>
-      </button> -->
+      </button>
       <button
         class="!bg-primary"
         mat-icon-button
@@ -113,6 +113,7 @@
         class="!bg-primary"
         mat-icon-button
         [title]="'resetpassword' | translate"
+        (click)="onClickChangePassword(element)"
       >
         <mat-icon class="!text-white">lock_reset</mat-icon>
       </button>
@@ -121,9 +122,9 @@
         class="!bg-accent active:bg-accent/60"
         mat-icon-button
         [title]="'deactivate' | translate"
-        (click)="updateStatus(element.id)"
+        (click)="updateStatus(element.id, 'Deactivated')"
       >
-        <mat-icon class="!text-white">block</mat-icon>
+        <mat-icon class="!text-white">lock</mat-icon>
       </button>
       } @if(element.status === AuthorStatus.Pending) {
       <button
@@ -142,9 +143,14 @@
       >
         <mat-icon class="!text-white">cancel</mat-icon>
       </button>
-      } @if(element.status === AuthorStatus.Active){
-      <button class="!bg-purple" mat-icon-button [title]="'active' | translate">
-        <mat-icon class="!text-white">toggle_on</mat-icon>
+      } @if(element.status === AuthorStatus.Deactivated){
+      <button
+        (click)="updateStatus(element.id, 'Active')"
+        class="!bg-purple"
+        mat-icon-button
+        [title]="'active' | translate"
+      >
+        <mat-icon class="!text-white">lock_up</mat-icon>
       </button>
       }
     </div>

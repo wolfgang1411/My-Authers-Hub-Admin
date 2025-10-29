@@ -28,6 +28,8 @@ export interface Author {
   signupCode?: string;
   user: User;
   socialMedias: socialMediaGroup[];
+  noOfTitles: number;
+  booksSold: number;
 }
 
 export interface AuthorResponse {

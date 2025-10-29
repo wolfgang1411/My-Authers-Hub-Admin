@@ -94,11 +94,15 @@ export class AuthorsService {
       throw error;
     }
   }
-  async updateAuthorStatus(status: AuthorStatus, authorId: number) {
+  async updateAuthorStatus(
+    { status, delinkTitle }: { status: AuthorStatus; delinkTitle?: number },
+    authorId: number
+  ) {
     try {
       return await this.loader.loadPromise(
-        this.server.patch(`authors/${authorId}`, {
+        this.server.patch(`authors/${authorId}/status`, {
           status: status,
+          delinkTitle,
         })
       );
     } catch (error) {

@@ -334,5 +334,6 @@
   "minlengtherror": "Value must be at least {{length}} characters",
   "passwordmismatcherror": "Password did not match",
   "requiredvalueerror": "Value is required",
-  "passwordchangesuccessfully": "Password updated successfully"
+  "passwordchangesuccessfully": "Password updated successfully",
+  "bookssold": "Books Sold"
 }

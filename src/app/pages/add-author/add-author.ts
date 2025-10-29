@@ -173,9 +173,12 @@ export class AddAuthor {
   prefillForm(authorDetails: Author) {
     this.authorFormGroup.patchValue({
       id: authorDetails.id,
-      name: authorDetails.name,
-      email: authorDetails.email,
-      phoneNumber: authorDetails.phoneNumber,
+      name:
+        authorDetails?.user?.firstName +
+        ' ' +
+        (authorDetails?.user?.lastName || ''),
+      email: authorDetails?.user?.email,
+      phoneNumber: authorDetails?.user?.phoneNumber,
       username: authorDetails.username,
       about: authorDetails.about,
     });

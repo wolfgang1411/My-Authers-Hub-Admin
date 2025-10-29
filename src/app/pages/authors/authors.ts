@@ -23,6 +23,9 @@ import { PublisherService } from '../publisher/publisher-service';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { StaticValuesService } from '../../services/static-values';
+import { ChangePassword } from '../../components/change-password/change-password';
+import { AuthService } from '../../services/auth';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-authors',
@@ -44,30 +47,30 @@ export class Authors {
     private authorService: AuthorsService,
     private dialog: MatDialog,
     private publisherService: PublisherService,
-    private staticValueService: StaticValuesService
+    private staticValueService: StaticValuesService,
+    private authService: AuthService,
+    private translateService: TranslateService
   ) {}
   searchStr = new Subject<string>();
 
   test!: Subject<string>;
   authors = signal<Author[]>([]);
   displayedColumns: string[] = [
-    'serial',
     'name',
-    'username',
-    'emailid',
-    'phonenumber',
     'numberoftitles',
+    'bookssold',
     'royaltiesearned',
     'status',
     'actions',
   ];
-  dataSource = new MatTableDataSource<AuthorResponse>();
+  dataSource = new MatTableDataSource<any>();
   AuthorStatus = AuthorStatus;
 
   filter: AuthorFilter = {
     page: 1,
     itemsPerPage: 30,
     status: 'ALL' as any,
+    showTotalEarnings: true,
   };
 
   fetchAuthors(showLoader = true) {
@@ -76,26 +79,11 @@ export class Authors {
       .then(({ items }) => {
         this.authors.set(items);
         const mapped = items.map((author, idx) => ({
-          id: author.id,
-          serial: idx + 1,
+          ...author,
           name: author.user.firstName + ' ' + author.user.lastName,
-          username: author.username,
-          emailid: author.user.email,
-          phonenumber: author.user.phoneNumber,
-          numberoftitles: author.titles ? author.titles.length : 0,
-          royaltiesearned: 0,
-          // royaltiesearned:
-          //   author.Royalty && author.Royalty.length
-          //     ? author.Royalty.reduce((acc, royalty) => {
-          //         const sumForOne =
-          //           (royalty.print_mah || 0) +
-          //           (royalty.print_third_party || 0) +
-          //           (royalty.prime || 0) +
-          //           (royalty.ebook_mah || 0) +
-          //           (royalty.ebook_third_party || 0);
-          //         return acc + sumForOne;
-          //       }, 0)
-          //     : 0,
+          numberoftitles: author.noOfTitles,
+          bookssold: author.booksSold,
+          royaltiesearned: author.totalEarning || 0,
           actions: '',
         }));
         const exisitingData = this.dataSource.data;
@@ -105,13 +93,6 @@ export class Authors {
             : mapped;
 
         this.dataSource.data = mapped;
-        if (mapped.length > 0) {
-          const filtrCol = { ...mapped[0] };
-          delete (filtrCol as any).id;
-          if (!exisitingData || !exisitingData.length) {
-            this.displayedColumns = Object.keys(filtrCol);
-          }
-        }
         console.log('Fetched publishers:', this.authors());
       })
       .catch((error) => {
@@ -227,37 +208,94 @@ export class Authors {
     });
   }
 
-  updateStatus(authorId: number) {
-    Swal.fire({
-      title: 'Are you sure?',
-      text: 'Once Deactivated, you will not be able to recover this account!',
+  async updateStatus(authorId: number, status: 'Active' | 'Deactivated') {
+    const isDeactivating = status === 'Deactivated';
+
+    const title = isDeactivating ? 'Deactivate Author?' : 'Activate Author?';
+    const html = isDeactivating
+      ? `
+      <p>Once deactivated, this author will no longer be accessible.</p>
+      <div class="flex items-center justify-center mt-4">
+        <input type="checkbox" id="delistCheckbox" />
+        <label for="delistCheckbox" class="ml-2">Also delist all titles</label>
+      </div>
+    `
+      : 'This author account will be activated and made accessible again.';
+
+    const confirmButtonText = isDeactivating
+      ? 'Yes, deactivate it!'
+      : 'Yes, activate it!';
+    const cancelButtonText = 'Cancel';
+
+    const result = await Swal.fire({
+      title,
+      html,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Yes, deactivate it!',
-      cancelButtonText: 'Cancel',
-      reverseButtons: true,
-      heightAuto: false,
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        const response = await this.authorService.updateAuthorStatus(
-          AuthorStatus.Deactivated,
-          authorId
-        );
-        if (response) {
-          const updatedData = this.dataSource.data.map((item) =>
-            item.id === authorId
-              ? { ...item, status: AuthorStatus.Deactivated }
-              : item
-          );
-          this.dataSource.data = updatedData;
-          Swal.fire({
-            text: 'The Author has been Deactivated!',
-            icon: 'success',
-            title: 'success',
-            heightAuto: false,
-          });
+      confirmButtonText,
+      cancelButtonText,
+      focusConfirm: false,
+      customClass: {
+        confirmButton: '!bg-accent',
+        cancelButton: '!bg-primary',
+      },
+      preConfirm: () => {
+        if (isDeactivating) {
+          const checkbox = (
+            Swal.getPopup()?.querySelector(
+              '#delistCheckbox'
+            ) as HTMLInputElement
+          )?.checked;
+          return { delist: checkbox };
         }
-      }
+        return { delist: false };
+      },
+      heightAuto: false,
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await this.authorService.updateAuthorStatus(
+        { status: status as any, delinkTitle: result.value['delist'] },
+        authorId
+      );
+
+      Swal.fire({
+        title: 'Success',
+        text: isDeactivating
+          ? 'The author has been deactivated successfully.'
+          : 'The author has been activated successfully.',
+        icon: 'success',
+        heightAuto: false,
+      });
+
+      this.dataSource.data = this.dataSource.data.map((item) =>
+        item.id === authorId ? { ...item, status } : item
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  onClickChangePassword(author: Author) {
+    const dialog = this.dialog.open(ChangePassword, {
+      data: {
+        onClose: () => dialog.close(),
+        onSubmit: async (password: string) => {
+          console.log({ password });
+          await this.authService.changeAuthorPublisherPassword(
+            author.user.id,
+            password
+          );
+          Swal.fire({
+            icon: 'success',
+            title: this.translateService.instant('success'),
+            html: this.translateService.instant('passwordchangesuccessfully'),
+          });
+          dialog.close();
+        },
+      },
     });
   }
 }
