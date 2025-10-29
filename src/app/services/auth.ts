@@ -157,4 +157,18 @@ export class AuthService {
       throw error;
     }
   }
+
+  async changeAuthorPublisherPassword(userId: number, password: string) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post(`auth/change-password/user/${userId}`, {
+          password: md5(password),
+        }),
+        'update-password'
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
 }

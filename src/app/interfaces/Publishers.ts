@@ -17,7 +17,9 @@ export interface Publishers {
   bankDetails?: BankDetails[]; // Optional attachments related to the publisher
   user: User;
   titles: Title[];
-  authors: Author[];
+  authers: Author[];
+  noOfTitles: number;
+  noOfAuthors: number;
   status: PublisherStatus;
   socialMedias: socialMediaGroup[];
 }

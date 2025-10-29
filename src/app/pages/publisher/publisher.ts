@@ -32,6 +32,10 @@ import { Distribution } from '../../interfaces/Distribution';
 import { PublisherStatus } from '../../interfaces';
 import { MatOption, MatSelectModule } from '@angular/material/select';
 import { StaticValuesService } from '../../services/static-values';
+import { ChangePassword } from '../../components/change-password/change-password';
+import { UserService } from '../../services/user';
+import { AuthService } from '../../services/auth';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-publisher',
@@ -54,7 +58,10 @@ export class Publisher implements OnInit {
   constructor(
     private publisherService: PublisherService,
     private dialog: MatDialog,
-    private staticValueService: StaticValuesService
+    private staticValueService: StaticValuesService,
+    private userService: UserService,
+    private authService: AuthService,
+    private translateService: TranslateService
   ) {}
 
   publisherDBStatus = computed(() => {
@@ -69,16 +76,14 @@ export class Publisher implements OnInit {
   PublisherStatus = PublisherStatus;
   test!: Subject<string>;
   publishers = signal<Publishers[]>([]);
-  dataSource = new MatTableDataSource<PublisherResponse>();
+  dataSource = new MatTableDataSource<any>();
 
   displayedColumns: string[] = [
-    'serial',
     'name',
+    'nooftitles',
+    'noofauthors',
     'email',
     'phonenumber',
-    'titles',
-    'authors',
-    'companyname',
     'actions',
   ];
 
@@ -91,26 +96,17 @@ export class Publisher implements OnInit {
     this.publisherService
       .getPublishers(this.filter, showLoader)
       .then(({ items }) => {
+        items = items.filter(
+          ({ user: { id } }) => id !== this.userService.loggedInUser$()?.id
+        );
+
         this.publishers.set(items);
 
-        const mapped = items.map((publisher, idx) => ({
-          id: publisher.id,
-          serial: idx + 1,
-          name: publisher.user
-            ? publisher.user.firstName + ' ' + publisher.user.lastName
-            : '',
-          email: publisher.email,
-          phonenumber: publisher.phoneNumber,
-          titles:
-            publisher.titles && publisher.titles.length
-              ? publisher.titles.length
-              : 0,
-          authors:
-            publisher.authors && publisher.authors.length
-              ? publisher.authors.length
-              : 0,
-          companyname: publisher.name,
-          status: publisher.status,
+        const mapped = items.map((publisher) => ({
+          ...publisher,
+          phonenumber: publisher.phoneNumber || publisher.user.phoneNumber,
+          nooftitles: publisher.noOfTitles,
+          noofauthors: publisher.noOfAuthors,
           actions: '',
         }));
 
@@ -269,5 +265,24 @@ export class Publisher implements OnInit {
     });
   }
 
-  onClickFilter() {}
+  onClickChangePassword(publisher: Publishers) {
+    const dialog = this.dialog.open(ChangePassword, {
+      data: {
+        onClose: () => dialog.close(),
+        onSubmit: async (password: string) => {
+          console.log({ password });
+          await this.authService.changeAuthorPublisherPassword(
+            publisher.user.id,
+            password
+          );
+          Swal.fire({
+            icon: 'success',
+            title: this.translateService.instant('success'),
+            html: this.translateService.instant('passwordchangesuccessfully'),
+          });
+          dialog.close();
+        },
+      },
+    });
+  }
 }

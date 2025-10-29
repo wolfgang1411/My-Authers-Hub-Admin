@@ -329,5 +329,10 @@
   "skipandcontinue": "Skip and Continue",
   "cancel": "Cancel",
   "publisher/author": "Publisher/Author",
-  "paidAt/holduntill": "Paid At/Hold Untill"
+  "paidAt/holduntill": "Paid At/Hold Untill",
+  "changepassword": "Change password",
+  "minlengtherror": "Value must be at least {{length}} characters",
+  "passwordmismatcherror": "Password did not match",
+  "requiredvalueerror": "Value is required",
+  "passwordchangesuccessfully": "Password updated successfully"
 }

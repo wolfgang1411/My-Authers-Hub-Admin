@@ -94,13 +94,13 @@
   </app-list-table>
   <ng-template #actionButtons let-element>
     <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
-      <!-- <button
+      <button
         class="!bg-primary"
         mat-icon-button
         [routerLink]="['/publisherDetails', element.id]"
       >
         <mat-icon class="!text-white">visibility</mat-icon>
-      </button> -->
+      </button>
       <button
         class="!bg-primary"
         mat-icon-button
@@ -114,6 +114,7 @@
         class="!bg-primary"
         mat-icon-button
         [title]="'resetpassword' | translate"
+        (click)="onClickChangePassword(element)"
       >
         <mat-icon class="!text-white">lock_reset</mat-icon>
       </button>
