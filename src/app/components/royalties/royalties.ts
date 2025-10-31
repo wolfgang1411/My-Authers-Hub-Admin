@@ -1,37 +1,20 @@
-import {
-  Component,
-  effect,
-  input,
-  Input,
-  OnInit,
-  signal,
-  Signal,
-} from '@angular/core';
+import { Component, computed, input, OnInit, signal } from '@angular/core';
 import {
   FormArray,
-  FormBuilder,
   FormGroup,
   FormsModule,
   ReactiveFormsModule,
 } from '@angular/forms';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { MatIconModule } from '@angular/material/icon';
-import {
-  Author,
-  ChannalType,
-  PricingGroup,
-  Publishers,
-} from '../../interfaces';
+import { Author, PlatForm, PricingGroup, Publishers } from '../../interfaces';
 import { MatTableModule } from '@angular/material/table';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
-import {
-  RoyalFormGroupAmountField,
-  Royalty,
-  RoyaltyFormGroup,
-} from '../../interfaces/Royalty';
-import { combineLatest, debounceTime, firstValueFrom } from 'rxjs';
-import { TranslateService } from '@ngx-translate/core';
+import { Royalty, RoyaltyFormGroup } from '../../interfaces/Royalty';
+import { combineLatest, debounceTime } from 'rxjs';
+import { StaticValuesService } from '../../services/static-values';
+import { GroupRoyaltiesPipe } from '../../pipes/group-royalties-pipe';
 
 @Component({
   selector: 'app-royalties',
@@ -43,12 +26,13 @@ import { TranslateService } from '@ngx-translate/core';
     MatTableModule,
     MatInputModule,
     FormsModule,
+    GroupRoyaltiesPipe,
   ],
   templateUrl: './royalties.html',
   styleUrl: './royalties.css',
 })
 export class Royalties implements OnInit {
-  constructor(private translateService: TranslateService) {}
+  constructor(private staticValueService: StaticValuesService) {}
 
   royaltiesController =
     input.required<FormArray<FormGroup<RoyaltyFormGroup>>>();
@@ -56,94 +40,49 @@ export class Royalties implements OnInit {
   authors = input.required<Author[]>();
   publisher = input.required<Publishers | null>();
 
-  displayedColumns = signal<RoyalFormGroupAmountField[]>([
-    'print_mah',
-    'print_third_party',
-    'prime',
-    'ebook_mah',
-    'ebook_third_party',
-  ]);
-  royaltyRows = signal<RoyaltyRow[]>([]);
-
-  channelKeys = signal<RoyalFormGroupAmountField[]>([
-    'print_mah',
-    'print_third_party',
-    'prime',
-    'ebook_mah',
-    'ebook_third_party',
-  ]);
-
-  channelLabels = signal({
-    print_mah: 'Print (MAH)',
-    print_third_party: 'Print (3rd Party)',
-    prime: 'Prime',
-    ebook_mah: 'E-Book (MAH)',
-    ebook_third_party: 'E-Book (3rd Party)',
+  displayedColumns = computed(() => {
+    return Object.keys(
+      this.staticValueService.staticValues()?.PlatForm || {}
+    ) as PlatForm[];
   });
 
-  totalRoyaties = signal<Record<RoyalFormGroupAmountField, number>>({
-    print_mah: 0,
-    print_third_party: 0,
-    prime: 0,
-    ebook_mah: 0,
-    ebook_third_party: 0,
-  });
-
-  totalRoyaltiesAmount = signal<{
-    authors: Partial<
-      Record<string, Partial<Record<RoyalFormGroupAmountField, number>>>
-    >;
-    publisher: Partial<
-      Record<string, Partial<Record<RoyalFormGroupAmountField, number>>>
-    >;
-  }>({
-    authors: {},
-    publisher: {},
-  });
+  totalRoyalties = signal<Partial<Record<PlatForm, number>>>({});
+  totalRoyaltiesAmount = signal<
+    Record<string, Partial<Record<PlatForm, number>>>
+  >({});
 
   ngOnInit() {
-    this.displayedColumns.set([...this.channelKeys()]);
     this.calculateTotalRoyalties();
     this.calculateRoyaltyAmountPerPerson();
   }
 
-  async validateTotalRoyaltyByType(
-    totalRoyaties: Record<RoyalFormGroupAmountField, number>
-  ) {
-    if (!this.translateService) return;
-
-    const overRoyalties = Object.keys(totalRoyaties)
-      .filter((key) => totalRoyaties[key as RoyalFormGroupAmountField] > 100)
-      .map((key) => this.translateService.instant(key));
-
-    if (overRoyalties.length) {
-      this.royaltiesController().setErrors({
-        invalid: `Total royalties for specific channal cannot be higer then 100. fix ${overRoyalties.join(
-          ','
-        )}`,
-      });
-    } else {
-      this.royaltiesController().setErrors(null);
-    }
+  validatateTotalRoyalties() {
+    Object.keys(this.totalRoyalties()).forEach((key) => {
+      const val = (this.totalRoyalties() as any)[key] as number;
+      console.log({ val });
+      if (val > 100) {
+        this.royaltiesController().setErrors({
+          ...this.royaltiesController().errors,
+          invalid: `Royalties for ${key} cannot be higher then 100`,
+        });
+      }
+    });
   }
 
   calculateTotalRoyalties() {
     this.royaltiesController()
       .valueChanges.pipe(debounceTime(400))
       .subscribe((data) => {
-        const totalToUpdate = this.totalRoyaties();
-        Object.keys(this.totalRoyaties()).forEach((key) => {
-          this.totalRoyaties.update((totalRoyaties) => {
-            const keyTotal = data.reduce(
-              (a, d) => a + Number(d[key as RoyalFormGroupAmountField] || 0),
-              0
-            );
-            totalRoyaties[key as RoyalFormGroupAmountField] = keyTotal;
-            return totalToUpdate;
-          });
-        });
-
-        this.validateTotalRoyaltyByType(this.totalRoyaties());
+        const temp: Partial<Record<PlatForm, number>> = {};
+        Object.keys(this.staticValueService.staticValues()?.PlatForm || {}).map(
+          (platform) => {
+            temp[platform as PlatForm] = data
+              .filter((d) => d.platform === platform)
+              .reduce((a, { percentage }) => a + (percentage || 0), 0);
+          }
+        );
+        this.totalRoyalties.set(temp);
+        this.validatateTotalRoyalties();
       });
   }
 
@@ -154,79 +93,28 @@ export class Royalties implements OnInit {
     ])
       .pipe(debounceTime(400))
       .subscribe(([data]) => {
-        const temp = this.totalRoyaltiesAmount();
+        const temp: Record<string, Partial<Record<PlatForm, number>>> = {};
 
-        data.forEach((royalty) => {
-          const key = royalty.authorId ? 'authors' : 'publisher';
-          const id = royalty.authorId || royalty.publisherId || 0;
+        data.forEach(({ authorId, publisherId, percentage, platform }) => {
+          const key = authorId
+            ? 'author' + authorId
+            : 'publisher' + publisherId;
 
-          // ✅ Ensure container object exists
-          temp[key] = temp[key] || {};
+          const exisitingData = temp[key];
+          if (!exisitingData) {
+            temp[key] = {};
+          }
 
-          // ✅ Initialize entry for this ID if missing
-          temp[key][id] = temp[key][id] || {};
+          const salesPrice = this.pricingController().controls.find(
+            ({ controls }) => controls.platform.value === platform
+          )?.controls.salesPrice?.value;
 
-          const prices: Partial<Record<RoyalFormGroupAmountField, number>> = {};
-          this.channelKeys().forEach((channelKey) => {
-            prices[channelKey as RoyalFormGroupAmountField] =
-              this.caculateAmountForRoyaltiesField(
-                channelKey as RoyalFormGroupAmountField,
-                royalty[channelKey as RoyalFormGroupAmountField] || 0
-              );
-          });
-
-          // ✅ Merge prices for this specific author/publisher
-          temp[key][id] = {
-            ...temp[key][id],
-            ...prices,
-          };
+          temp[key][platform as PlatForm] = Number(
+            percentage ? (salesPrice * (percentage / 100)).toFixed(2) : 0
+          );
         });
-
-        console.log({ temp, data });
 
         this.totalRoyaltiesAmount.set(temp);
       });
   }
-
-  caculateAmountForRoyaltiesField(
-    field: RoyalFormGroupAmountField,
-    percent: number
-  ) {
-    let ch: ChannalType;
-    switch (field) {
-      case 'ebook_mah':
-        ch = ChannalType.EBOOK_MAH;
-        break;
-      case 'ebook_third_party':
-        ch = ChannalType.EBOOK_THIRD_PARTY;
-        break;
-      case 'prime':
-        ch = ChannalType.PRIME;
-        break;
-      case 'print_mah':
-        ch = ChannalType.PRINT_MAH;
-        break;
-      case 'print_third_party':
-        ch = ChannalType.EBOOK_THIRD_PARTY;
-        break;
-    }
-
-    const salesPrice =
-      this.pricingController().controls.filter(
-        ({ controls: { channal } }) => channal.value === ch
-      )[0]?.controls?.salesPrice?.value || 0;
-
-    return Number((salesPrice * (percent / 100)).toFixed(2));
-  }
-
-  submitRoyalties() {
-    // const payload = this.royaltyRows.map((row) => {
-    //   const { name, ...data } = row;
-    //   return data;
-    // });
-    // console.log('API Payload:', payload);
-  }
-}
-interface RoyaltyRow extends Royalty {
-  name: string;
 }

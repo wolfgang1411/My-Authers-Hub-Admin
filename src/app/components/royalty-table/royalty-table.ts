@@ -1,9 +1,5 @@
 import { Component, effect, input } from '@angular/core';
-import {
-  CreateRoyalty,
-  RoyalFormGroupAmountField,
-  Royalty,
-} from '../../interfaces';
+import { CreateRoyalty, Royalty } from '../../interfaces';
 import { ListTable } from '../list-table/list-table';
 import { MatTableDataSource } from '@angular/material/table';
 import { AuthorsService } from '../../pages/authors/authors-service';
@@ -71,34 +67,34 @@ export class RoyaltyTable {
         const publisherId = royalty.publisherId ?? null;
         const titleId = royalty.titleId ?? null;
         const key = `${authorId ?? 'null'}-${publisherId ?? 'null'}-${titleId}`;
-        if (!grouped.has(key)) {
-          grouped.set(key, {
-            titleId: 0,
-            title: royalty.titlename,
-            authorId: royalty.authorId ?? null,
-            author: authorId ? authorMap.get(authorId) ?? 'N/A' : 'N/A',
-            publisher: publisherId
-              ? publisherMap.get(publisherId) ?? 'N/A'
-              : 'N/A',
-            publisherId: royalty.publisherId ?? null,
-            print_mah: null,
-            print_third_party: null,
-            prime: null,
-            ebook_mah: null,
-            ebook_third_party: null,
-            name: null,
-            totalEarnings:
-              royalty.earnings && royalty.earnings.length
-                ? royalty.earnings.reduce((acc, earning) => {
-                    return acc + earning.amount;
-                  }, 0)
-                : 0,
-          });
-        }
+        // if (!grouped.has(key)) {
+        //   grouped.set(key, {
+        //     titleId: 0,
+        //     title: royalty.titlename,
+        //     authorId: royalty.authorId ?? null,
+        //     author: authorId ? authorMap.get(authorId) ?? 'N/A' : 'N/A',
+        //     publisher: publisherId
+        //       ? publisherMap.get(publisherId) ?? 'N/A'
+        //       : 'N/A',
+        //     publisherId: royalty.publisherId ?? null,
+        //     print_mah: null,
+        //     print_third_party: null,
+        //     prime: null,
+        //     ebook_mah: null,
+        //     ebook_third_party: null,
+        //     name: null,
+        //     totalEarnings:
+        //       royalty.earnings && royalty.earnings.length
+        //         ? royalty.earnings.reduce((acc, earning) => {
+        //             return acc + earning.amount;
+        //           }, 0)
+        //         : 0,
+        //   });
+        // }
 
         const group = grouped.get(key)!;
 
-        const channalMap: Record<string, RoyalFormGroupAmountField> = {
+        const channalMap: any = {
           PRINT_MAH: 'print_mah',
           PRINT_THIRD_PARTY: 'print_third_party',
           PRIME: 'prime',
@@ -106,11 +102,11 @@ export class RoyaltyTable {
           EBOOK_THIRD_PARTY: 'ebook_third_party',
         };
 
-        const field = channalMap[royalty.channal];
+        // const field = channalMap[royalty.channal];
 
-        if (field) {
-          group[field] = royalty.percentage;
-        }
+        // if (field) {
+        //   group[field] = royalty.percentage;
+        // }
       });
 
       const groupedData = Array.from(grouped.entries()).map(

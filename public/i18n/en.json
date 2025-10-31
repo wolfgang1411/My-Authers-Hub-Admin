@@ -338,5 +338,7 @@
   "bookssold": "Books Sold",
   "launchdate": "Launch Date",
   "areyousure": "Are you sure?",
-  "titledeletewarning": "Click \"Yes\" to continue deleting title <strong>{{name}}</strong>"
+  "titledeletewarning": "Click \"Yes\" to continue deleting title <strong>{{name}}</strong>",
+  "MAH_PRINT": "MAH Print",
+  "MAH_EBOOK": "MAH Ebook"
 }

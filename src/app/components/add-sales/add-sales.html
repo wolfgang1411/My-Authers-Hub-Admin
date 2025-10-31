@@ -15,7 +15,6 @@
         <tr>
           <th>{{ "saketype" | translate }}</th>
           <th>{{ "title" | translate }}</th>
-          <th>{{ "bookingtype" | translate }}</th>
           <th>{{ "platform" | translate }}</th>
           <th>{{ "amount" | translate }}</th>
           <th>{{ "qunatity" | translate }}</th>
@@ -57,29 +56,6 @@
                 myTitleFilterBySale:saleGroup.controls.title.controls.availableOptions.value;
                 track $index) {
                 <mat-option [value]="title.id">{{ title.name }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field> -->
-          </td>
-
-          <td>
-            <select [formControl]="saleGroup.controls.bookingType">
-              @for (bt of bookingType(); track $index) {
-              <option [value]="bt">
-                {{ bt | translate }}
-              </option>
-              }
-            </select>
-            <!-- <mat-form-field>
-              <mat-label>{{ "selectchannal" | translate }}</mat-label>
-              <mat-select
-                [formControl]="saleGroup.controls.title.controls.id"
-                required
-              >
-                @for (channal of channals(); track $index) {
-                <mat-option [value]="channal">
-                  {{ channal | translate }}
-                </mat-option>
                 }
               </mat-select>
             </mat-form-field> -->

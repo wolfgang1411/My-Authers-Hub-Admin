@@ -16,7 +16,6 @@ import {
 } from '@angular/forms';
 import {
   BookingType,
-  ChannalType,
   CreateSale,
   CreateSaleForm,
   PlatForm,
@@ -89,12 +88,6 @@ export class AddSales implements OnInit {
     ) as SalesType[];
   });
 
-  bookingType = computed(() => {
-    return Object.keys(
-      this.staticValueService.staticValues()?.BookingType || {}
-    ) as ChannalType[];
-  });
-
   platforms = computed(() => {
     return Object.keys(
       this.staticValueService.staticValues()?.PlatForm || {}
@@ -155,13 +148,6 @@ export class AddSales implements OnInit {
         validators: [Validators.required],
         nonNullable: true,
       }),
-      bookingType: new FormControl<CreateSale['bookingType']>(
-        data?.bookingType as BookingType,
-        {
-          validators: [Validators.required],
-          nonNullable: true,
-        }
-      ),
       title: new FormGroup({
         id: new FormControl(selectedTitle || undefined, {
           validators: [Validators.required, Validators.min(1)],
@@ -204,7 +190,6 @@ export class AddSales implements OnInit {
         ({
           controls: {
             amount,
-            bookingType,
             delivery,
             platform,
             quantity,
@@ -219,7 +204,6 @@ export class AddSales implements OnInit {
             quantity: Number(quantity.value) || 1,
             titleId: Number(title.value.id),
             soldAt: format(soldAt.value || new Date(), 'yyyy-MM-dd'),
-            bookingType: bookingType.value as BookingType,
             platform: platform.value as PlatForm,
             type: type.value as SalesType,
           };

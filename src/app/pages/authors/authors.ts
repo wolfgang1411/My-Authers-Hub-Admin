@@ -154,11 +154,17 @@ export class Authors {
       showCancelButton: true,
       confirmButtonText: 'Yes, Approve it!',
       cancelButtonText: 'Cancel',
-      reverseButtons: true,
       heightAuto: false,
+      customClass: {
+        cancelButton: '!bg-accent',
+        confirmButton: '!bg-primary',
+      },
     }).then(async (result) => {
       if (result.isConfirmed) {
-        const response = await this.authorService.approveAuthor(authorId);
+        const response = await this.authorService.updateAuthorStatus(
+          { status: AuthorStatus.Active },
+          authorId
+        );
         if (response) {
           const updatedData = this.dataSource.data.map((item) =>
             item.id === authorId
@@ -185,11 +191,17 @@ export class Authors {
       showCancelButton: true,
       confirmButtonText: 'Yes, reject it!',
       cancelButtonText: 'Cancel',
-      reverseButtons: true,
       heightAuto: false,
+      customClass: {
+        confirmButton: '!bg-accent',
+        cancelButton: '!bg-primary',
+      },
     }).then(async (result) => {
       if (result.isConfirmed) {
-        const response = await this.authorService.rejectAuthor(authorId);
+        const response = await this.authorService.updateAuthorStatus(
+          { status: AuthorStatus.Rejected },
+          authorId
+        );
         if (response) {
           const updatedData = this.dataSource.data.map((item) =>
             item.id === authorId
@@ -198,7 +210,7 @@ export class Authors {
           );
           this.dataSource.data = updatedData;
           Swal.fire({
-            text: 'The publisher has been rejected!',
+            text: 'The author has been rejected!',
             icon: 'success',
             title: 'success',
             heightAuto: false,

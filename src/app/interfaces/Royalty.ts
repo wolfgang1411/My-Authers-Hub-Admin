@@ -1,9 +1,9 @@
 import { FormControl } from '@angular/forms';
-import { Author, ChannalType, Publishers, Title } from './index';
+import { Author, PlatForm, Publishers, Title } from './index';
 import { Earnings } from './Earnings';
 
 export interface Royalty {
-  channal: ChannalType;
+  platform: PlatForm;
   id: number;
   percentage: number;
   authorId?: number;
@@ -23,11 +23,8 @@ export interface CreateRoyalty {
   publisher?: string;
   title?: string;
   publisherId?: number | null;
-  print_mah: number | null;
-  print_third_party: number | null;
-  prime: number | null;
-  ebook_mah: number | null;
-  ebook_third_party: number | null;
+  platform: PlatForm;
+  percentage: number;
   name?: string | null;
   titlename?: string;
   totalEarnings: number;
@@ -54,16 +51,6 @@ export interface RoyaltyFormGroup {
   titleId: FormControl<number | null | undefined>;
   authorId: FormControl<number | null | undefined>;
   publisherId: FormControl<number | null | undefined>;
-  print_mah: FormControl<number | null | undefined>;
-  print_third_party: FormControl<number | null | undefined>;
-  prime: FormControl<number | null | undefined>;
-  ebook_mah: FormControl<number | null | undefined>;
-  ebook_third_party: FormControl<number | null | undefined>;
+  platform: FormControl<PlatForm | null | undefined>;
+  percentage: FormControl<number | null | undefined>;
 }
-
-export type RoyalFormGroupAmountField =
-  | 'print_mah'
-  | 'print_third_party'
-  | 'prime'
-  | 'ebook_mah'
-  | 'ebook_third_party';

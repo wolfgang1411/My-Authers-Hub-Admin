@@ -17,7 +17,6 @@ import {
   CreateSale,
   EarningFilter,
   PlatForm,
-  RoyalFormGroupAmountField,
   Royalty,
   RoyaltyFilter,
   SalesCsvData,

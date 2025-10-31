@@ -11,12 +11,12 @@ import {
   PublishingType,
   TitleMediaType,
   TitleStatus,
-  ChannalType,
   TitleCategoryType,
   DistributionType,
   PaperType,
   SizeCategoryType,
   TitleConfigType,
+  PlatForm,
 } from './index';
 
 export interface Title {
@@ -95,7 +95,7 @@ export interface ApproveTitleGroup {
 
 export interface TitlePricing {
   id: number;
-  channal: ChannalType;
+  platform: PlatForm;
   salesPrice: number;
   mrp: number;
   msp: number;
@@ -324,14 +324,14 @@ export interface PrintingCreate {
 
 export interface PricingCreate {
   id?: number | null;
-  channal: string;
+  platform: string;
   salesPrice: number;
   mrp: number;
 }
 
 export type PricingGroup = FormGroup<{
   id: FormControl;
-  channal: FormControl;
+  platform: FormControl;
   salesPrice: FormControl;
   mrp: FormControl;
 }>;

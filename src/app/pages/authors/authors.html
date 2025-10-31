@@ -109,6 +109,7 @@
       >
         <mat-icon class="!text-white">edit</mat-icon>
       </button>
+      @if(element.status !== AuthorStatus.Rejected) {
       <button
         class="!bg-primary"
         mat-icon-button
@@ -117,7 +118,8 @@
       >
         <mat-icon class="!text-white">lock_reset</mat-icon>
       </button>
-      @if(element.status !== AuthorStatus.Deactivated) {
+      } @if(element.status !== AuthorStatus.Deactivated && element.status !==
+      AuthorStatus.Rejected) {
       <button
         class="!bg-accent active:bg-accent/60"
         mat-icon-button

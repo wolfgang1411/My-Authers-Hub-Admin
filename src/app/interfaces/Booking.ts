@@ -1,6 +1,6 @@
 import { User } from './user';
 import { Transaction } from './Transaction';
-import { BookingStatus, BookingType, ChannalType, Title } from './index';
+import { BookingStatus, BookingType, PlatForm, Title } from './index';
 import { Royalty } from './Royalty';
 
 export interface Booking {
@@ -17,7 +17,7 @@ export interface Booking {
   royalties: Royalty[];
   createdAt: string;
   type: BookingType;
-  channal: ChannalType;
+  platform: PlatForm;
 }
 
 export interface BookingFilter {

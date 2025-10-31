@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import {
   FormArray,
   FormBuilder,
+  FormControl,
   FormGroup,
   ReactiveFormsModule,
   Validators,
@@ -18,7 +19,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { Distribution } from '../../interfaces/Distribution';
-import { DistributionType } from '../../interfaces';
+import { DiscountType, DistributionType } from '../../interfaces';
 
 @Component({
   selector: 'app-distribution-dialog',
@@ -50,21 +51,36 @@ export class DistributionDialog {
   }
 
   createDistribution(type: DistributionType, amount: number | null) {
+    console.log({ type });
+
     return this.fb.group({
-      distributionType: this.fb.control<DistributionType | null>(type, [
-        Validators.required,
-      ]),
+      distributionType: this.fb.control<DistributionType | null>({
+        value: type,
+        disabled: true,
+      }),
       amount: this.fb.control<number | null>(amount, Validators.required),
     });
   }
 
-  get distributions(): FormArray {
+  get distributions(): FormArray<
+    FormGroup<{
+      amount: FormControl;
+      distributionType: FormControl<DistributionType>;
+    }>
+  > {
     return this.form.get('distributions') as FormArray;
   }
 
   onSubmit() {
     if (this.form.valid) {
-      this.data.onSubmit(this.distributions.value);
+      this.data.onSubmit(
+        this.distributions.controls.map(
+          ({ controls: { amount, distributionType } }) => ({
+            amount: amount.value,
+            distributionType: distributionType.value,
+          })
+        )
+      );
     }
   }
 }

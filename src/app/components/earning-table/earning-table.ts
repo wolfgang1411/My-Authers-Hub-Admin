@@ -19,7 +19,6 @@ export class EarningTable {
     'title',
     'publisher/author',
     'amount',
-    'channal',
     'platform',
     'paidAt/holduntill',
   ];
@@ -36,7 +35,6 @@ export class EarningTable {
           earning.royalty.publisher?.name ||
           earning.royalty.author?.user.firstName,
         amount: formatCurrency(earning.amount, 'en', '', 'INR'),
-        channal: this.translateService.instant(earning.channal),
         platform: this.translateService.instant(earning.platform),
         'paidAt/holduntill': earning.holdUntil || earning.paidAt,
       }));

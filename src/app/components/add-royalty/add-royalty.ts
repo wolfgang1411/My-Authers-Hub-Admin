@@ -146,7 +146,7 @@ export class AddRoyalty {
   onSubmit() {
     if (this.addRoyaltyForm.valid) {
       const addFormData = this.addRoyaltyForm.get('royalties')?.value;
-      this.data.onSubmit(addFormData as CreateRoyalty[]);
+      // this.data.onSubmit(addFormData as CreateRoyalty[]);
     }
   }
 }

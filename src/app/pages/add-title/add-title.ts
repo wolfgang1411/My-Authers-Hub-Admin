@@ -47,11 +47,11 @@ import {
   AuthorFormGroup,
   AuthorStatus,
   BookBindings,
-  ChannalType,
   CreateRoyalty,
   DistributionType,
   LaminationType,
   PaperType,
+  PlatForm,
   PricingCreate,
   PricingGroup,
   PrintingCreate,
@@ -60,7 +60,6 @@ import {
   Publishers,
   PublisherStatus,
   PublishingType,
-  RoyalFormGroupAmountField,
   Royalty,
   RoyaltyFormGroup,
   Title,
@@ -93,6 +92,7 @@ import { TitleDistribution } from '../../title-distribution/title-distribution';
 import Swal from 'sweetalert2';
 import { getFileSizeFromS3Url, getFileToBase64 } from '../../common/utils/file';
 import { TranslateService } from '@ngx-translate/core';
+import { StaticValuesService } from '../../services/static-values';
 
 @Component({
   selector: 'app-add-title',
@@ -151,6 +151,8 @@ export class AddTitle {
     ElementRef<HTMLInputElement>
   >;
 
+  staticValueService = inject(StaticValuesService);
+
   stepperOrientation: Observable<StepperOrientation>;
   bindingType!: BookBindings[];
   laminationTypes!: LaminationType[];
@@ -163,13 +165,6 @@ export class AddTitle {
 
   private stepper = viewChild<MatStepper>('stepperForm');
 
-  ChannalTypes = signal([
-    'PRINT_MAH',
-    'PRINT_THIRD_PARTY',
-    'PRIME',
-    'EBOOK_MAH',
-    'EBOOK_THIRD_PARTY',
-  ]);
   onAuthorChangeChild(authorId: number) {
     const author = this.authorsList().find((a) => a.id === authorId);
     if (!author) return;
@@ -303,117 +298,148 @@ export class AddTitle {
   }
 
   mapRoyaltiesArray(publisher: Publishers | null, authors: Author[]) {
-    if (
-      !publisher ||
-      !authors ||
-      !authors.length ||
-      !this.tempForm.controls.printing.valid ||
-      !this.tempForm.controls.pricing.valid
-    ) {
+    const { printing, pricing, royalties } = this.tempForm.controls;
+
+    console.log(royalties);
+
+    // Early exit if required data is missing
+    if (!publisher || !authors?.length || !printing.valid || !pricing.valid) {
       return;
     }
-    const royaltyControl = this.tempForm.controls.royalties;
 
-    const pulisherId = publisher.id;
-    const authorIds = authors.map(({ id }) => id);
+    const publisherId = publisher.id;
+    const authorIds = authors.map((a) => a.id);
 
-    while (
-      royaltyControl.controls.filter(
-        ({ controls }) =>
-          controls.publisherId.value !== pulisherId &&
-          !authorIds.includes(controls.authorId.value || 0)
-      ).length
-    ) {
-      const removeIndex = royaltyControl.controls.indexOf(
-        royaltyControl.controls.filter(
-          ({ controls }) =>
-            controls.publisherId.value !== pulisherId &&
-            !authorIds.includes(controls.authorId.value || 0)
-        )[0]
-      );
-      if (removeIndex >= 0) {
-        royaltyControl.removeAt(removeIndex);
-      }
+    const platforms =
+      (Object.keys(
+        this.staticValueService.staticValues()?.PlatForm || {}
+      ) as PlatForm[]) || [];
+
+    // 🧹 STEP 1: Remove royalties not related to current publisher or authors
+    for (let i = royalties.length - 1; i >= 0; i--) {
+      const control = royalties.at(i);
+      const { publisherId: pid, authorId: aid } = control.value;
+
+      const isValid = pid === publisherId || (aid && authorIds.includes(aid));
+
+      if (!isValid) royalties.removeAt(i);
     }
 
-    const isPublisherControlExisit = royaltyControl.controls.filter(
-      ({ controls }) => controls.publisherId.value === publisher.id
-    )[0];
+    // 🧱 STEP 2: Ensure publisher royalties per platform
+    for (const platform of platforms) {
+      let control = royalties.controls.find(
+        ({ value }) =>
+          value.publisherId === publisherId && value.platform === platform
+      );
 
-    if (!isPublisherControlExisit) {
-      royaltyControl.push(
-        this.createRoyaltyGroup({
-          publisherId: publisher.id,
+      if (!control) {
+        // ✅ Create new if missing
+        control = this.createRoyaltyGroup({
+          publisherId,
           titleId: this.titleId,
           name:
             publisher.name ||
-            publisher.user.firstName ||
-            '' + ' ' + publisher.user.lastName ||
-            '',
-        })
-      );
+            `${publisher.user.firstName || ''} ${
+              publisher.user.lastName || ''
+            }`.trim(),
+          platform,
+        });
+        royalties.push(control);
+      } else {
+        // ✅ Keep existing values
+        const existingValue = control.value;
+        control.patchValue({
+          publisherId,
+          titleId: this.titleId,
+          name:
+            publisher.name ||
+            `${publisher.user.firstName || ''} ${
+              publisher.user.lastName || ''
+            }`.trim(),
+          platform,
+          percentage: existingValue.percentage,
+        });
+      }
     }
 
-    authors.forEach(({ id: authorId, name, user }) => {
-      const isAuthorControlExisit = royaltyControl.controls.filter(
-        ({ controls }) => controls.authorId.value === authorId
-      )[0];
+    // 👥 STEP 3: Ensure author royalties per platform
+    for (const author of authors) {
+      const { id: authorId, name, user } = author;
 
-      if (!isAuthorControlExisit) {
-        royaltyControl.push(
-          this.createRoyaltyGroup({
-            authorId: authorId,
-            titleId: this.titleId,
-            name: name || (user.firstName || '') + ' ' + (user.lastName || ''),
-          })
+      for (const platform of platforms) {
+        let control = royalties.controls.find(
+          ({ value }) =>
+            value.authorId === authorId && value.platform === platform
         );
+
+        if (!control) {
+          // ✅ Create new if missing
+          control = this.createRoyaltyGroup({
+            authorId,
+            titleId: this.titleId,
+            name:
+              name || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+            platform,
+          });
+          royalties.push(control);
+        } else {
+          // ✅ Preserve existing values
+          const existingValue = control.value;
+          control.patchValue({
+            authorId,
+            titleId: this.titleId,
+            name:
+              name || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+            platform,
+            ...existingValue,
+          });
+        }
       }
-    });
+    }
   }
 
   createRoyaltyGroup(data?: UpdateRoyalty) {
     return new FormGroup<RoyaltyFormGroup>({
-      id: new FormControl<number | null>(null),
+      id: new FormControl<number | null>(data?.id || null),
       name: new FormControl<string | null>(data?.name || null),
       authorId: new FormControl<number | null>(data?.authorId || null),
       publisherId: new FormControl<number | null>(data?.publisherId || null),
-      ebook_mah: new FormControl<number>(data?.ebook_mah || 0),
-      ebook_third_party: new FormControl<number>(data?.ebook_third_party || 0),
-      prime: new FormControl<number>(data?.prime || 0),
-      print_mah: new FormControl<number>(data?.print_mah || 0),
-      print_third_party: new FormControl<number>(data?.print_third_party || 0),
+      percentage: new FormControl(data?.percentage || null, [
+        Validators.required,
+      ]),
+      platform: new FormControl(data?.platform || null),
       titleId: new FormControl<number>(this.titleId),
     });
   }
 
-  getFieldForChannal(channal: ChannalType) {
-    const temp: Partial<Record<ChannalType, RoyalFormGroupAmountField>> = {};
-    Object.keys(ChannalType).forEach((ch) => {
-      let field: RoyalFormGroupAmountField = 'ebook_mah';
+  // getFieldForPlatform(plataForm: PlatForm) {
+  //   const temp: Partial<Record<PlatForm, RoyalFormGroupAmountField>> = {};
+  //   Object.keys(PlatForm).forEach((ch) => {
+  //     let field: RoyalFormGroupAmountField = 'ebook_mah';
 
-      switch (channal) {
-        case ChannalType.EBOOK_MAH:
-          field = 'ebook_mah';
-          break;
-        case ChannalType.EBOOK_THIRD_PARTY:
-          field = 'ebook_third_party';
-          break;
-        case ChannalType.PRIME:
-          field = 'prime';
-          break;
-        case ChannalType.PRINT_MAH:
-          field = 'print_mah';
-          break;
-        case ChannalType.PRINT_THIRD_PARTY:
-          field = 'print_third_party';
-          break;
-      }
+  //     switch (channal) {
+  //       case ChannalType.EBOOK_MAH:
+  //         field = 'ebook_mah';
+  //         break;
+  //       case ChannalType.EBOOK_THIRD_PARTY:
+  //         field = 'ebook_third_party';
+  //         break;
+  //       case ChannalType.PRIME:
+  //         field = 'prime';
+  //         break;
+  //       case ChannalType.PRINT_MAH:
+  //         field = 'print_mah';
+  //         break;
+  //       case ChannalType.PRINT_THIRD_PARTY:
+  //         field = 'print_third_party';
+  //         break;
+  //     }
 
-      temp[ch as ChannalType] = field;
-    });
+  //     temp[ch as ChannalType] = field;
+  //   });
 
-    return temp[channal] as RoyalFormGroupAmountField;
-  }
+  //   return temp[channal] as RoyalFormGroupAmountField;
+  // }
   async calculatePrintingCost() {
     const printGroup = this.tempForm.controls.printing;
 
@@ -535,63 +561,30 @@ export class AddTitle {
       );
     }
 
-    const royaltControlData = data.royalties?.reduce(
-      (acc, { authorId, publisherId, channal, percentage }) => {
-        const field = this.getFieldForChannal(channal);
-
-        const existing = acc.find(
-          (a) =>
-            (authorId && a.authorId === authorId) ||
-            (publisherId && a.publisherId === publisherId)
-        );
-
-        if (existing) {
-          existing[field] = percentage;
-        } else {
-          const author = this.authorsList().find(({ id }) => id == authorId);
-          const publisher = this.publishers().find(
-            ({ id }) => id == publisherId
-          );
-
-          const newRoyalty: CreateRoyalty = {
-            authorId,
-            publisherId,
-            name:
-              publisher?.name ||
-              author?.name ||
-              [author?.user?.firstName, author?.user?.lastName]
-                .filter(Boolean)
-                .join(' ') ||
-              '',
-            ebook_mah: null,
-            ebook_third_party: null,
-            prime: null,
-            print_mah: null,
-            print_third_party: null,
-            titleId: this.titleId,
-            [field]: percentage,
-            totalEarnings: 0,
-          };
-
-          acc.push(newRoyalty);
-        }
-
-        return acc;
-      },
-      [] as CreateRoyalty[]
-    );
-
-    royaltControlData?.forEach((d) => {
+    data.royalties?.forEach((d) => {
       const { authorId: aId, publisherId: pId } = d;
       const controlExist = this.tempForm.controls.royalties.controls.find(
-        ({ controls: { authorId, publisherId } }) =>
-          (aId && aId === authorId.value) || (pId && pId === publisherId.value)
+        ({ controls: { authorId, publisherId, platform } }) =>
+          (aId && aId === authorId.value && platform.value === d.platform) ||
+          (pId && pId === publisherId.value && platform.value === d.platform)
       );
 
+      console.log({ d, controlExist });
+
       if (controlExist) {
-        controlExist.patchValue(d);
+        controlExist.patchValue({
+          percentage: d.percentage,
+        });
       } else {
-        this.tempForm.controls.royalties.push(this.createRoyaltyGroup(d));
+        this.tempForm.controls.royalties.push(
+          this.createRoyaltyGroup({
+            platform: d.platform,
+            percentage: d.percentage,
+            publisherId: pId,
+            authorId: aId,
+            titleId: this.titleId,
+          })
+        );
       }
     });
 
@@ -618,15 +611,15 @@ export class AddTitle {
   }
 
   updatePricingArray(pricing?: TitlePricing[]) {
-    pricing?.forEach(({ channal, id, mrp, salesPrice }) => {
+    pricing?.forEach(({ platform, id, mrp, salesPrice }) => {
       const pricingControl = this.tempForm.controls['pricing'].controls?.filter(
-        ({ controls }) => controls.channal.value === channal
+        ({ controls }) => controls.platform.value === platform
       )[0];
 
       if (pricingControl) {
         pricingControl.patchValue({
           id,
-          channal,
+          platform,
           mrp,
           salesPrice,
         });
@@ -692,11 +685,11 @@ export class AddTitle {
 
   createPricingArrayTemp(): FormArray<PricingGroup> {
     return new FormArray(
-      Object.keys(ChannalType).map(
-        (channal) =>
+      Object.keys(this.staticValueService.staticValues()?.PlatForm || {}).map(
+        (platform) =>
           new FormGroup({
             id: new FormControl<number | null | undefined>(null),
-            channal: new FormControl<string>(channal, Validators.required),
+            platform: new FormControl<string>(platform, Validators.required),
             salesPrice: new FormControl<number | null | undefined>(
               null,
               Validators.required
@@ -765,7 +758,7 @@ export class AddTitle {
       bookBindingsId: new FormControl<number | null>(null, Validators.required),
       totalPages: new FormControl<number>(
         {
-          value: 0,
+          value: 100,
           disabled: true,
         },
         {
@@ -972,8 +965,8 @@ export class AddTitle {
     const basicData: TitleCreate = {
       publishingType: this.tempForm.controls.publishingType
         .value as PublishingType,
-      isbnPrint: titleDetails?.isbnPrint ?? '',
-      isbnEbook: titleDetails.isbnEbook ?? '',
+      isbnPrint: titleDetails?.isbnPrint ?? undefined,
+      isbnEbook: titleDetails.isbnEbook ?? undefined,
       categoryId: titleDetails.category as number,
       subCategoryId: titleDetails.subCategory as number,
       tradeCategoryId: titleDetails.tradeCategory as number,
@@ -1035,9 +1028,9 @@ export class AddTitle {
 
     if (pricingControls.valid) {
       const data: PricingCreate[] = pricingControls.controls.map(
-        ({ controls: { channal, id, mrp, salesPrice } }) => ({
+        ({ controls: { platform, id, mrp, salesPrice } }) => ({
           id: id.value,
-          channal: channal.value,
+          platform: platform.value,
           mrp: Number(mrp.value),
           salesPrice: Number(salesPrice.value),
           titleId: Number(this.titleId),
@@ -1111,22 +1104,16 @@ export class AddTitle {
           controls: {
             id: { value: id },
             authorId: { value: authorId },
-            ebook_mah: { value: ebook_mah },
-            ebook_third_party: { value: ebook_third_party },
             name: { value: name },
-            prime: { value: prime },
-            print_mah: { value: print_mah },
-            print_third_party: { value: print_third_party },
+            percentage: { value: percentage },
             publisherId: { value: publisherId },
+            platform: { value: platform },
           },
         }) => ({
           id,
           authorId,
-          ebook_mah: Number(ebook_mah),
-          ebook_third_party: Number(ebook_third_party),
-          prime: Number(prime),
-          print_mah: Number(print_mah),
-          print_third_party: Number(print_third_party),
+          platform: platform as PlatForm,
+          percentage: percentage as number,
           name,
           publisherId,
           titleId: this.titleId,

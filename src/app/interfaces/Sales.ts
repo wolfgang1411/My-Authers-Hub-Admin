@@ -1,7 +1,6 @@
 import { FormControl, FormGroup } from '@angular/forms';
 import {
   BookingType,
-  ChannalType,
   EarningsStatus,
   PlatForm,
   SalesType,
@@ -52,7 +51,6 @@ export interface EarningFilter {
 
 export interface CreateSale {
   type: SalesType;
-  bookingType: BookingType;
   titleId: number;
   platform: PlatForm;
   amount: number;
@@ -63,7 +61,6 @@ export interface CreateSale {
 
 export interface CreateSaleForm {
   type: FormControl<SalesType | undefined>;
-  bookingType: FormControl<BookingType | undefined>;
   title: FormGroup<{
     id: FormControl<number | undefined>;
     availableOptions: FormControl<number[] | null | undefined>;

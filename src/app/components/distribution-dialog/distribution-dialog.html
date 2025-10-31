@@ -8,9 +8,14 @@
       <div formArrayName="distributions" class="flex flex-col gap-4">
         @for(dist of distributions.controls ;track $index){
         <div [formGroupName]="$index" class="grid grid-cols-2 gap-3">
-          <mat-form-field class="w-full">
-            <mat-label>Distribution Type</mat-label>
-            <input matInput formControlName="distributionType" required />
+          <mat-form-field>
+            <input
+              matInput
+              type="text"
+              [value]="dist.controls.distributionType.value | translate"
+              required
+              disabled
+            />
           </mat-form-field>
 
           <mat-form-field class="w-full">

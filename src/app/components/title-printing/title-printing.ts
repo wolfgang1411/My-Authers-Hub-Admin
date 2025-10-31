@@ -60,8 +60,6 @@ export class TitlePrinting {
 
   fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
-  channalTypes = input<string[]>();
-
   insideCoverMedia = signal<FormGroup<TitleMediaGroup> | null>(null);
 
   async ngOnInit() {
