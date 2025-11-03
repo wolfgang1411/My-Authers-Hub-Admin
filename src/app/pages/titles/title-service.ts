@@ -67,12 +67,10 @@ export class TitleService {
     }
   }
 
-  async approveTitle(id: number, data: ApproveTitlePayload[]) {
+  async approveTitle(id: number, data: ApproveTitlePayload) {
     try {
       return await this.loader.loadPromise(
-        this.server.patch<Title>(`titles/${id}/approve`, {
-          data,
-        })
+        this.server.patch<Title>(`titles/${id}/approve`, data)
       );
     } catch (error) {
       this.logger.logError(error);

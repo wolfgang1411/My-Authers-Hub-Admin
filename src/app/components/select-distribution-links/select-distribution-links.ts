@@ -93,7 +93,7 @@ export class SelectDistributionLinks implements OnInit {
       }))
       .filter(({ link }) => link && link.length);
 
-    this.data.onSave(data);
+    // this.data.onSave(data);
   }
 }
 

@@ -17,6 +17,7 @@ import {
   SizeCategoryType,
   TitleConfigType,
   PlatForm,
+  BookingType,
 } from './index';
 
 export interface Title {
@@ -57,6 +58,14 @@ export interface Title {
   media?: TitleMedia[];
   pricing?: TitlePricing[];
   distribution?: TitleDistribution[];
+  titlePlatformIdentifier: TitlePlatformIdentifier[];
+}
+
+export interface TitlePlatformIdentifier {
+  id: number;
+  platform: PlatForm;
+  type: BookingType;
+  uniqueIdentifier: string;
 }
 
 export interface TitleMedia extends Media {
@@ -84,9 +93,12 @@ export interface AuthorTitle {
 }
 
 export interface ApproveTitlePayload {
-  distributionType: DistributionType;
-  link: string;
+  distributionLinks: CreateDistributionLink[];
+  platformIdentifier: CreatePlatformIdentifier[];
 }
+
+//  distributionType: DistributionType;
+//   link: string;
 
 export interface ApproveTitleGroup {
   distributionType: FormControl<DistributionType>;
@@ -422,4 +434,21 @@ export interface TitleDetailsFormGroup {
   authorIds: FormArray<FormGroup<AuthorFormGroup>>;
   isbnPrint: FormControl<string | null | undefined>;
   isbnEbook: FormControl<string | null | undefined>;
+}
+
+export interface PlatFormIndetifierGroup {
+  uniqueIdentifier: FormControl<string | null>;
+  platform: FormControl<PlatForm>;
+  type: FormControl<BookingType>;
+}
+
+export interface CreatePlatformIdentifier {
+  platform: PlatForm;
+  type: BookingType;
+  uniqueIdentifier: string;
+}
+
+export interface CreateDistributionLink {
+  distributionType: DistributionType;
+  link: string;
 }

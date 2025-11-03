@@ -1,0 +1,76 @@
+<form
+  (ngSubmit)="onSubmit()"
+  [formGroup]="form"
+  class="flex flex-col gap-4 w-[480px] max-w-[90vw] p-3"
+>
+  <h1 mat-dialog-title class="text-xl heading !text-primary">
+    {{ "additionaltitledetails" | translate }}
+  </h1>
+
+  <mat-dialog-content>
+    <div class="flex flex-col gap-2">
+      <h2 class="text-xl heading !text-primary !font-medium">
+        {{ "platformuniqueidentifier" | translate }}
+      </h2>
+
+      <ul class="grid grid-cols-2 gap-x-2">
+        @for (platformIdentifier of form.controls.platformIdentifier.controls;
+        track $index) {
+        <li class="overflow-hidden">
+          <mat-form-field>
+            <mat-label>
+              {{ platformIdentifier.controls.platform.value | translate }}
+            </mat-label>
+            <input
+              matInput
+              type="text"
+              [formControl]="platformIdentifier.controls.uniqueIdentifier"
+              class="w-0 min-w-full"
+            />
+          </mat-form-field>
+        </li>
+        }
+      </ul>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <h2 class="text-xl heading !text-primary !font-medium">
+        {{ "distributionlinks" | translate }}
+      </h2>
+
+      <ul class="grid grid-cols-2 gap-x-2">
+        @for (distribution of form.controls.distributionLinks.controls; track
+        $index) {
+        <li class="overflow-hidden">
+          <mat-form-field>
+            <mat-label>
+              {{ distribution.controls.distributionType.value | translate }}
+            </mat-label>
+            <input
+              matInput
+              type="text"
+              [formControl]="distribution.controls.link"
+              class="w-0 min-w-full"
+            />
+          </mat-form-field>
+        </li>
+        }
+      </ul>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions>
+    <button
+      (click)="data.onClose()"
+      mat-button
+      matButton="filled"
+      class="!bg-accent"
+      type="button"
+    >
+      {{ "close" | translate }}
+    </button>
+    <button type="submit" mat-button matButton="filled" class="!bg-primary">
+      {{ "confirm" | translate }}
+    </button>
+  </mat-dialog-actions>
+</form>

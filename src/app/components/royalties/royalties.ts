@@ -48,7 +48,7 @@ export class Royalties implements OnInit {
 
   totalRoyalties = signal<Partial<Record<PlatForm, number>>>({});
   totalRoyaltiesAmount = signal<
-    Record<string, Partial<Record<PlatForm, number>>>
+    Record<string, Partial<Record<PlatForm, number>> | undefined>
   >({});
 
   ngOnInit() {

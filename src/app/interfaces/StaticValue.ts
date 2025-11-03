@@ -211,8 +211,12 @@ export enum VerifiedISBNStatus {
 }
 
 export enum PlatForm {
-  AMAZON = 'AMAZON',
-  MAH = 'MAH',
+  'AMAZON' = 'AMAZON',
+  'FLIPKART' = 'FLIPKART',
+  'MAH_PRINT' = 'MAH_PRINT',
+  'MAH_EBOOK' = 'MAH_EBOOK',
+  'KINDLE' = 'KINDLE',
+  'GOOGLE_PLAY' = 'GOOGLE_PLAY',
 }
 
 export enum DeliveryStatus {

@@ -340,5 +340,8 @@
   "areyousure": "Are you sure?",
   "titledeletewarning": "Click \"Yes\" to continue deleting title <strong>{{name}}</strong>",
   "MAH_PRINT": "MAH Print",
-  "MAH_EBOOK": "MAH Ebook"
+  "MAH_EBOOK": "MAH Ebook",
+  "additionaltitledetails": "Additional Title Details",
+  "platformuniqueidentifier": "Platform unique identifier",
+  "distributionlinks": "Distribution Links"
 }

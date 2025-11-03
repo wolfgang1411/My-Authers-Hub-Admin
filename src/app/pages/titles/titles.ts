@@ -2,6 +2,8 @@ import { Component, signal } from '@angular/core';
 import { debounceTime, Subject } from 'rxjs';
 import {
   ApproveTitlePayload,
+  CreateDistributionLink,
+  CreatePlatformIdentifier,
   Title,
   TitleResponse,
 } from '../../interfaces/Titles';
@@ -18,6 +20,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { SelectDistributionLinks } from '../../components/select-distribution-links/select-distribution-links';
 import { format } from 'date-fns';
 import { TitleStatus } from '../../interfaces';
+import { ApproveTitle } from '../../components/approve-title/approve-title';
 
 @Component({
   selector: 'app-titles',
@@ -108,19 +111,44 @@ export class Titles {
       });
       return;
     }
-    const dialog = this.matDialog.open(SelectDistributionLinks, {
+
+    const dialog = this.matDialog.open(ApproveTitle, {
       data: {
         distribution: title.distribution,
         onClose: () => dialog.close(),
-        onSave: async (data: ApproveTitlePayload[]) => {
-          const response = await this.titleService.approveTitle(title.id, data);
-          this.titles.update((titles) => {
-            return titles.map((t) => (t.id === response.id ? response : t));
-          });
-          dialog.close();
+        onSubmit: async (data: {
+          distributionLinks: CreateDistributionLink[];
+          platformIdentifier: CreatePlatformIdentifier[];
+        }) => {
+          try {
+            const response = await this.titleService.approveTitle(
+              title.id,
+              data
+            );
+            this.titles.update((titles) => {
+              return titles.map((t) => (t.id === response.id ? response : t));
+            });
+            dialog.close();
+          } catch (error) {
+            console.log(error);
+          }
         },
       },
     });
+
+    // const dialog = this.matDialog.open(SelectDistributionLinks, {
+    //   data: {
+    //     distribution: title.distribution,
+    //     onClose: () => dialog.close(),
+    //     onSave: async (data: ApproveTitlePayload[]) => {
+    //       const response = await this.titleService.approveTitle(title.id, data);
+    //       this.titles.update((titles) => {
+    //         return titles.map((t) => (t.id === response.id ? response : t));
+    //       });
+    //       dialog.close();
+    //     },
+    //   },
+    // });
   }
 
   async onClickReject(title: any) {
