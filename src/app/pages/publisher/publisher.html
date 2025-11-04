@@ -118,7 +118,6 @@
       >
         <mat-icon class="!text-white">lock_reset</mat-icon>
       </button>
-      {{ loggedInUser()?.accessLevel || "N/A" }}
       @if (loggedInUser()?.accessLevel === 'SUPERADMIN') { @if(element.status
       !== PublisherStatus.Deactivated) {
       <button

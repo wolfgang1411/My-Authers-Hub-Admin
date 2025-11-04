@@ -159,8 +159,8 @@ export class Royalties {
               amount,
               quantity,
               delivery,
-              titleId: items[0].id,
-              availableTitles: items.length ? items.map(({ id }) => id) : [],
+              titleId: items[0]?.id,
+              availableTitles: items?.length ? items.map(({ id }) => id) : [],
               soldAt: formattedSoldAt,
             };
           }

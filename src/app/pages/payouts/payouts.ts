@@ -153,6 +153,7 @@ export class Payouts implements OnInit {
         title: 'Error',
         text: 'Your wallet does not have enough amount to make a payout request',
       });
+      return;
     }
     const dialog = this.matDialog.open(InviteDialog, {
       data: {
