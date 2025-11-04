@@ -1128,7 +1128,16 @@ export class AddTitle {
 
   async onClickPurchasePoint(type: DistributionType) {
     try {
-      const res = await this.publisherService.buyPublishingPoints(type, 1);
+      const publisherId =
+        Number(
+          this.tempForm.controls.titleDetails.controls.publisher.controls.id
+            .value
+        ) || undefined;
+      const res = await this.publisherService.buyPublishingPoints(
+        type,
+        1,
+        publisherId
+      );
       if (res.status === 'pending' && res.url) {
         window.open(res.url, '_blank');
       }

@@ -118,7 +118,9 @@
       >
         <mat-icon class="!text-white">lock_reset</mat-icon>
       </button>
-      @if(element.status !== PublisherStatus.Deactivated) {
+      {{ loggedInUser()?.accessLevel || "N/A" }}
+      @if (loggedInUser()?.accessLevel === 'SUPERADMIN') { @if(element.status
+      !== PublisherStatus.Deactivated) {
       <button
         class="!bg-accent active:bg-accent/60"
         mat-icon-button
@@ -153,7 +155,7 @@
       >
         <mat-icon class="!text-white">lock_open</mat-icon>
       </button>
-      }
+      } }
     </div>
   </ng-template>
 </div>

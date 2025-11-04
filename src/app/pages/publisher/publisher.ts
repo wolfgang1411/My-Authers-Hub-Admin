@@ -5,6 +5,7 @@ import {
   ElementRef,
   inject,
   OnInit,
+  Signal,
   signal,
 } from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
@@ -29,7 +30,7 @@ import { Invite } from '../../interfaces/Invite';
 import Swal from 'sweetalert2';
 import { DistributionDialog } from '../../components/distribution-dialog/distribution-dialog';
 import { Distribution } from '../../interfaces/Distribution';
-import { PublisherStatus } from '../../interfaces';
+import { PublisherStatus, User } from '../../interfaces';
 import { MatOption, MatSelectModule } from '@angular/material/select';
 import { StaticValuesService } from '../../services/static-values';
 import { ChangePassword } from '../../components/change-password/change-password';
@@ -62,7 +63,11 @@ export class Publisher implements OnInit {
     private userService: UserService,
     private authService: AuthService,
     private translateService: TranslateService
-  ) {}
+  ) {
+    this.loggedInUser = this.userService.loggedInUser$;
+  }
+
+  loggedInUser!: Signal<User | null>;
 
   publisherDBStatus = computed(() => {
     console.log(this.staticValueService.staticValues(), 'Fdafsaf');

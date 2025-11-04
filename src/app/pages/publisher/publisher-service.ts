@@ -116,7 +116,11 @@ export class PublisherService {
     }
   }
 
-  buyPublishingPoints(distributionType: DistributionType, points: number) {
+  buyPublishingPoints(
+    distributionType: DistributionType,
+    points: number,
+    publisherId?: number
+  ) {
     try {
       return this.loader.loadPromise(
         this.server.post<{
@@ -126,6 +130,7 @@ export class PublisherService {
         }>('publishing-points/buy', {
           distributionType,
           points,
+          publisherId,
         })
       );
     } catch (error) {

@@ -83,7 +83,8 @@
       >
         <mat-icon class="!text-white">edit</mat-icon>
       </button>
-      @if (element.status === 'PENDING') {
+      @if(loggedInUser()?.accessLevel === 'SUPERADMIN') { @if (element.status
+      === 'PENDING') {
       <button
         (click)="onClickApprove(element)"
         title="Approve"
@@ -109,6 +110,7 @@
       >
         <mat-icon class="!text-white">delete</mat-icon>
       </button>
+      }
     </div>
   </ng-template>
 

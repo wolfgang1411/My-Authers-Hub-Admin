@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, Signal, signal } from '@angular/core';
 import { debounceTime, Subject } from 'rxjs';
 import {
   ApproveTitlePayload,
@@ -19,8 +19,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { SelectDistributionLinks } from '../../components/select-distribution-links/select-distribution-links';
 import { format } from 'date-fns';
-import { TitleStatus } from '../../interfaces';
+import { TitleStatus, User } from '../../interfaces';
 import { ApproveTitle } from '../../components/approve-title/approve-title';
+import { UserService } from '../../services/user';
 
 @Component({
   selector: 'app-titles',
@@ -39,8 +40,14 @@ export class Titles {
   constructor(
     private titleService: TitleService,
     private translateService: TranslateService,
-    private matDialog: MatDialog
-  ) {}
+    private matDialog: MatDialog,
+    private userService: UserService
+  ) {
+    this.loggedInUser = this.userService.loggedInUser$;
+  }
+
+  loggedInUser!: Signal<User | null>;
+
   searchStr = new Subject<string>();
 
   test!: Subject<string>;
@@ -55,6 +62,39 @@ export class Titles {
   ];
   dataSource = new MatTableDataSource<any>();
 
+  mapDataList() {
+    const mapped = this.titles().map((title, idx) => ({
+      ...title,
+      isbn: `${title.isbnPrint || ''}<br>${title.isbnEbook || ''}`,
+      pages:
+        title.printing && title.printing.length
+          ? title.printing[0].totalPages
+          : 'N/A',
+
+      authors:
+        title.authors && title.authors.length
+          ? title.authors
+              .map(
+                (author) =>
+                  author.display_name ||
+                  (author.author?.user.firstName || '') +
+                    ' ' +
+                    (author.author.user.lastName || '')
+              )
+              .join(' ,')
+          : 'N/A',
+
+      status: title.status,
+      bookssold: title.copiesSold,
+      launchdate: title.submission_date
+        ? format(title.submission_date, 'dd-MM-yyyy')
+        : null,
+      actions: '',
+    }));
+
+    this.dataSource.data = mapped;
+  }
+
   ngOnInit(): void {
     this.searchStr.pipe(debounceTime(400)).subscribe((value) => {
       console.log('Search string:', value);
@@ -64,36 +104,7 @@ export class Titles {
       .getTitles()
       .then(({ items }) => {
         this.titles.set(items);
-        const mapped = items.map((title, idx) => ({
-          ...title,
-          isbn: `${title.isbnPrint || ''}<br>${title.isbnEbook || ''}`,
-          pages:
-            title.printing && title.printing.length
-              ? title.printing[0].totalPages
-              : 'N/A',
-
-          authors:
-            title.authors && title.authors.length
-              ? title.authors
-                  .map(
-                    (author) =>
-                      author.display_name ||
-                      (author.author?.user.firstName || '') +
-                        ' ' +
-                        (author.author.user.lastName || '')
-                  )
-                  .join(' ,')
-              : 'N/A',
-
-          status: title.status,
-          bookssold: title.copiesSold,
-          launchdate: title.submission_date
-            ? format(title.submission_date, 'dd-MM-yyyy')
-            : null,
-          actions: '',
-        }));
-
-        this.dataSource.data = mapped;
+        this.mapDataList();
 
         console.log('Fetched titles:', this.titles());
       })
@@ -128,6 +139,7 @@ export class Titles {
             this.titles.update((titles) => {
               return titles.map((t) => (t.id === response.id ? response : t));
             });
+            this.mapDataList();
             dialog.close();
           } catch (error) {
             console.log(error);
