@@ -135,6 +135,7 @@ export class AddAuthor {
   authorBankDetails = this._formBuilder.group({
     id: <number | null>null,
     name: ['', Validators.required],
+    accountHolderName: ['', Validators.required],
     accountNo: ['', Validators.required],
     ifsc: ['', Validators.required],
     panCardNo: ['', Validators.required],
@@ -197,6 +198,7 @@ export class AddAuthor {
       ifsc: authorDetails.bankDetails?.[0]?.ifsc,
       panCardNo: authorDetails.bankDetails?.[0]?.panCardNo,
       accountType: authorDetails.bankDetails?.[0]?.accountType,
+      accountHolderName: authorDetails.bankDetails?.[0]?.accountHolderName,
     });
     const socialMediaArray = this.authorSocialMediaGroup.get(
       'socialMedia'

@@ -146,12 +146,7 @@
       <div class="grid-cols-4 grid gap-4 my-4">
         <mat-form-field>
           <mat-label>{{ "nameonaccount" | translate }}</mat-label>
-          <input
-            matInput
-            formControlName="name"
-            placeholder="M Singh"
-            required
-          />
+          <input matInput formControlName="name" placeholder="HDFC" required />
         </mat-form-field>
         <mat-form-field>
           <mat-label>{{ "bankaccnumber" | translate }}</mat-label>
@@ -159,6 +154,15 @@
             matInput
             formControlName="accountNo"
             placeholder="78************56"
+            required
+          />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "accountholdername" | translate }}</mat-label>
+          <input
+            matInput
+            formControlName="accountHolderName"
+            placeholder="M Singh"
             required
           />
         </mat-form-field>
