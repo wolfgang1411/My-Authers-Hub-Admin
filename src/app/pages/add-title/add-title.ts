@@ -300,10 +300,21 @@ export class AddTitle {
   mapRoyaltiesArray(publisher: Publishers | null, authors: Author[]) {
     const { printing, pricing, royalties } = this.tempForm.controls;
 
-    console.log(royalties);
+    console.log({
+      publisher,
+      authors,
+      printing,
+      pricing,
+    });
 
     // Early exit if required data is missing
-    if (!publisher || !authors?.length || !printing.valid || !pricing.valid) {
+    if (
+      !publisher ||
+      !authors?.length ||
+      !printing.valid ||
+      !pricing.valid ||
+      !pricing.length
+    ) {
       return;
     }
 
@@ -314,6 +325,8 @@ export class AddTitle {
       (Object.keys(
         this.staticValueService.staticValues()?.PlatForm || {}
       ) as PlatForm[]) || [];
+
+    console.log({ platforms });
 
     // 🧹 STEP 1: Remove royalties not related to current publisher or authors
     for (let i = royalties.length - 1; i >= 0; i--) {
@@ -332,6 +345,8 @@ export class AddTitle {
           value.publisherId === publisherId && value.platform === platform
       );
 
+      console.log({ control });
+
       if (!control) {
         // ✅ Create new if missing
         control = this.createRoyaltyGroup({
@@ -344,10 +359,14 @@ export class AddTitle {
             }`.trim(),
           platform,
         });
+        console.log({ control });
+
         royalties.push(control);
       } else {
         // ✅ Keep existing values
         const existingValue = control.value;
+        console.log({ existingValue });
+
         control.patchValue({
           publisherId,
           titleId: this.titleId,
@@ -903,7 +922,9 @@ export class AddTitle {
         validators: required ? Validators.required : [],
       }),
       type: new FormControl(mediaType, { nonNullable: true }),
-      file: new FormControl(null),
+      file: new FormControl(null, {
+        validators: media?.id ? null : [Validators.required],
+      }),
       mediaType: new FormControl<TitleMediaType>(mediaType, {
         nonNullable: true,
       }),
@@ -993,6 +1014,8 @@ export class AddTitle {
     } as TitleCreate;
     console.log(titleDetails, 'valuee title');
     console.log(basicData, 'basicccccc');
+    console.log(this.tempForm.controls.titleDetails);
+
     this.titleService.createTitle(basicData).then((res: { id: number }) => {
       this.titleId = res.id;
       this.stepper()?.next();
@@ -1038,6 +1061,16 @@ export class AddTitle {
       );
 
       await this.titleService.createManyPricing(data, this.titleId);
+      const publisher = this.publisherSignal();
+      const authors = this.authorsSignal();
+      console.log({
+        publisher,
+        authors,
+      });
+
+      if (publisher) {
+        this.mapRoyaltiesArray(publisher, authors);
+      }
       this.stepper()?.next();
     }
   }
