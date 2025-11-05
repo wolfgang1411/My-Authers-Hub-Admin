@@ -9,6 +9,7 @@ export interface BankDetails {
   signupCode?: string;
   id?: number;
   gstNumber: string;
+  accountHolderName?: string;
 }
 
 export interface createBankDetails {
