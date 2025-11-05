@@ -21,7 +21,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButton, MatButtonModule } from '@angular/material/button';
 import { ListTable } from '../../components/list-table/list-table';
 import { MatTableDataSource } from '@angular/material/table';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatIconButton } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { InviteDialog } from '../../components/invite-dialog/invite-dialog';
@@ -31,7 +31,7 @@ import Swal from 'sweetalert2';
 import { DistributionDialog } from '../../components/distribution-dialog/distribution-dialog';
 import { Distribution } from '../../interfaces/Distribution';
 import { PublisherStatus, User } from '../../interfaces';
-import { MatOption, MatSelectModule } from '@angular/material/select';
+import { MatSelectModule } from '@angular/material/select';
 import { StaticValuesService } from '../../services/static-values';
 import { ChangePassword } from '../../components/change-password/change-password';
 import { UserService } from '../../services/user';
@@ -62,7 +62,8 @@ export class Publisher implements OnInit {
     private staticValueService: StaticValuesService,
     private userService: UserService,
     private authService: AuthService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private router: Router
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -144,7 +145,6 @@ export class Publisher implements OnInit {
       this.fetchPublishers(false);
     });
   }
-
   openDistributionDialog(publisherId: number) {
     const dialogRef = this.dialog.open(DistributionDialog, {
       data: {

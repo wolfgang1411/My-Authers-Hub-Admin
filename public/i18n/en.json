@@ -343,5 +343,15 @@
   "MAH_EBOOK": "MAH Ebook",
   "additionaltitledetails": "Additional Title Details",
   "platformuniqueidentifier": "Platform unique identifier",
-  "distributionlinks": "Distribution Links"
+  "distributionlinks": "Distribution Links",
+  "raiseaticket" : "Raise a ticket",
+  "addsocialmedialinks" :"Add Social Media Links",
+  "addmore" : "Add More",
+  "socialmediatype":"Social Media Type",
+  "facebook" : "Facebook",
+  "twitter":"Twitter",
+  "instagram" :"Instagram",
+  "youtube" :"Youtube",
+  "website":"Website",
+  "linkedin":"LinkedIn"
 }

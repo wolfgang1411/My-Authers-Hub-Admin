@@ -135,6 +135,34 @@
         <app-upload-file></app-upload-file>
       </mat-card>
     </form>
+    <form [formGroup]="publisherSocialMediaGroup">
+      <div formArrayName="socialMedia" class="flex flex-col gap-4 my-4">
+        <div class="flex justify-between items-center">
+          <h3>
+            {{ "addsocialmedialinks" | translate }}
+          </h3>
+          <button
+            matButton
+            matButton="filled"
+            class="!bg-primary"
+            (click)="this.addSocialMedia()"
+          >
+            <mat-icon class="material-icons">add_circle_outline</mat-icon>
+            {{ "addmore" | translate }}
+          </button>
+        </div>
+        @for (group of publisherSocialMediaGroup.controls.socialMedia.controls;
+        track $index) {
+        <div [formGroupName]="$index">
+          <app-social-media
+            [socialMediaGroup]="group"
+            [socialMediaArray]="socialMediaArray"
+            [index]="$index"
+          ></app-social-media>
+        </div>
+        }
+      </div>
+    </form>
     <button
       matButton="filled"
       class="!bg-primary mt-8"
@@ -214,6 +242,18 @@
           />
         </mat-form-field>
         <mat-form-field>
+          <mat-label>
+            {{ "bankname" | translate }}
+          </mat-label>
+          <mat-select formControlName="bankName" required>
+            <mat-option value="">Select Bank</mat-option>
+            <mat-option value="HDFC">HDFC</mat-option>
+            <mat-option value="SBI">SBI</mat-option>
+            <mat-option value="ICICI">ICICI</mat-option>
+            <mat-option value="AXIS">AXIS</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
           <mat-label>{{ "bankaccnumber" | translate }}</mat-label>
           <input
             matInput
@@ -258,18 +298,6 @@
     class="!text-accent !p-0"
     label="Add your social media links"
   >
-    <form [formGroup]="publisherSocialMediaGroup">
-      <div formArrayName="socialMedia" class="flex flex-col gap-4 my-4">
-        @for (group of socialMediaArray.controls; track $index) {
-        <div [formGroupName]="$index">
-          <app-social-media
-            [socialMediaGroup]="group"
-            [socialMediaArray]="socialMediaArray"
-          ></app-social-media>
-        </div>
-        }
-      </div>
-    </form>
     <div class="flex flex-row gap-2">
       <button class="!bg-primary mt-8 !text-white" matButton matStepperPrevious>
         Back
@@ -279,7 +307,11 @@
         matButton
         (click)="onSubmit()"
       >
-        Submit
+        {{
+          loggedInUser()?.accessLevel === "SUPERADMIN" || !this.publisherId
+            ? ("submit" | translate)
+            : ("raiseaticket" | translate)
+        }}
       </button>
     </div>
   </mat-step>

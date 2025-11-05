@@ -1,4 +1,4 @@
-import { Component, inject, model, signal } from '@angular/core';
+import { Component, inject, model, Signal, signal } from '@angular/core';
 import {
   FormBuilder,
   Validators,
@@ -29,13 +29,18 @@ import {
   createBankDetails,
   Publishers,
   SocialMediaType,
+  UpdateTicketType,
+  User,
 } from '../../interfaces';
 import { AddressService } from '../../services/address-service';
 import { BankDetailService } from '../../services/bank-detail-service';
 import Swal from 'sweetalert2';
 import { ActivatedRoute, Router } from '@angular/router';
 import { InviteService } from '../../services/invite';
-import { socialMediaGroup } from '../../interfaces/SocialMedia';
+import {
+  socialMediaGroup,
+  SocialMediaGroupType,
+} from '../../interfaces/SocialMedia';
 import { SocialMedia } from '../social-media/social-media';
 import { SocialMediaService } from '../../services/social-media-service';
 import { NGXIntlTel } from '../../interfaces/Intl';
@@ -45,6 +50,8 @@ import {
   PhoneNumberFormat,
   SearchCountryField,
 } from 'ngx-intl-tel-input';
+import { UserService } from '../../services/user';
+import { MatIcon } from '@angular/material/icon';
 @Component({
   selector: 'app-add-publisher',
   imports: [
@@ -61,6 +68,7 @@ import {
     UploadFile,
     SocialMedia,
     NgxIntlTelInputModule,
+    MatIcon,
   ],
   templateUrl: './add-publisher.html',
   styleUrl: './add-publisher.css',
@@ -73,7 +81,8 @@ export class AddPublisher {
     private route: ActivatedRoute,
     private router: Router,
     private inviteService: InviteService,
-    private socialService: SocialMediaService
+    private socialService: SocialMediaService,
+    private userService: UserService
   ) {
     const breakpointObserver = inject(BreakpointObserver);
     this.stepperOrientation = breakpointObserver
@@ -83,6 +92,7 @@ export class AddPublisher {
       this.publisherId = Number(id) || undefined;
       this.signupCode = signupCode;
     });
+    this.loggedInUser = this.userService.loggedInUser$;
   }
 
   signupCode?: string;
@@ -102,6 +112,7 @@ export class AddPublisher {
       CountryISO.Germany,
     ],
   };
+  loggedInUser!: Signal<User | null>;
 
   async ngOnInit() {
     if (this.publisherId) {
@@ -130,21 +141,21 @@ export class AddPublisher {
       this.publisherFormGroup.controls.pocEmail.patchValue(invite.email);
       this.publisherFormGroup.controls.pocEmail.disable();
     }
-    Object.values(SocialMediaType).forEach((type) => {
-      this.socialMediaArray.push(
-        new FormGroup({
-          type: new FormControl<SocialMediaType | null>(type),
-          url: new FormControl<string | null>(
-            '',
-            Validators.pattern(/^https?:\/\/.+/)
-          ),
-          name: new FormControl<string | null>(''),
-          autherId: new FormControl<number | null>(null),
-          publisherId: new FormControl<number | null>(null),
-          id: new FormControl<number | null>(null),
-        })
-      );
-    });
+    // Object.values(SocialMediaType).forEach((type) => {
+    //   this.socialMediaArray.push(
+    //     new FormGroup({
+    //       type: new FormControl<SocialMediaType | null>(type),
+    //       url: new FormControl<string | null>(
+    //         '',
+    //         Validators.pattern(/^https?:\/\/.+/)
+    //       ),
+    //       name: new FormControl<string | null>(''),
+    //       autherId: new FormControl<number | null>(null),
+    //       publisherId: new FormControl<number | null>(null),
+    //       id: new FormControl<number | null>(null),
+    //     })
+    //   );
+    // });
   }
   private _formBuilder = inject(FormBuilder);
   stepperOrientation: Observable<StepperOrientation>;
@@ -164,8 +175,9 @@ export class AddPublisher {
 
   publisherBankDetails = this._formBuilder.group({
     id: <number | null>null,
-    name: ['', Validators.required],
-    accountNo: ['', Validators.required],
+    name: ['', [Validators.required, Validators.pattern(/^[A-Za-z\s]+$/)]],
+    bankName: ['', [Validators.required]],
+    accountNo: ['', [Validators.required]],
     ifsc: ['', Validators.required],
     panCardNo: ['', Validators.required],
     accountType: ['', Validators.required],
@@ -182,24 +194,28 @@ export class AddPublisher {
     signupCode: <string | null>null,
   });
   publisherSocialMediaGroup = new FormGroup({
-    socialMedia: new FormArray<
-      FormGroup<{
-        type: FormControl<SocialMediaType | null>;
-        url: FormControl<string | null>;
-        publisherId: FormControl<number | null>;
-        name: FormControl<string | null>;
-        autherId: FormControl<number | null>;
-        id: FormControl<number | null>;
-      }>
-    >([]),
+    socialMedia: new FormArray<FormGroup<SocialMediaGroupType>>([
+      this.createSocialGroup(),
+    ]),
   });
-
-  get socialMediaArray(): FormArray<socialMediaGroupType> {
-    return this.publisherSocialMediaGroup.get(
-      'socialMedia'
-    ) as FormArray<socialMediaGroupType>;
+  createSocialGroup(): FormGroup<SocialMediaGroupType> {
+    return new FormGroup<SocialMediaGroupType>({
+      type: new FormControl<SocialMediaType | null>(null),
+      url: new FormControl<string | null>(null),
+      publisherId: new FormControl<number | null>(null),
+      name: new FormControl<string | null>(null),
+      autherId: new FormControl<number | null>(null),
+      id: new FormControl<number | null>(null),
+    });
   }
-
+  get socialMediaArray(): FormArray<FormGroup<SocialMediaGroupType>> {
+    return this.publisherSocialMediaGroup.get('socialMedia') as FormArray<
+      FormGroup<SocialMediaGroupType>
+    >;
+  }
+  addSocialMedia() {
+    this.socialMediaArray.push(this.createSocialGroup());
+  }
   prefillForm(publisherDetails: Publishers) {
     this.publisherFormGroup.patchValue({
       id: publisherDetails.id,
@@ -229,19 +245,23 @@ export class AddPublisher {
     });
     const socialMediaArray = this.publisherSocialMediaGroup.get(
       'socialMedia'
-    ) as FormArray<socialMediaGroupType>;
+    ) as FormArray<FormGroup<SocialMediaGroupType>>;
+
     socialMediaArray.clear();
+    if (!publisherDetails.socialMedias?.length) {
+      socialMediaArray.push(this.createSocialGroup());
+    }
     publisherDetails.socialMedias?.forEach((media) => {
-      socialMediaArray.push(
-        new FormGroup({
-          type: new FormControl<SocialMediaType | null>(media.type),
-          url: new FormControl<string | null>(media.url),
-          publisherId: new FormControl<number | null>(media.publisherId),
-          name: new FormControl<string | null>(media.name),
-          autherId: new FormControl<number | null>(media.autherId),
-          id: new FormControl<number | null>(media.id),
-        })
-      );
+      const group = new FormGroup<SocialMediaGroupType>({
+        type: new FormControl<SocialMediaType | null>(media.type),
+        url: new FormControl<string | null>(media.url),
+        publisherId: new FormControl<number | null>(media.publisherId),
+        name: new FormControl<string | null>(media.name),
+        autherId: new FormControl<number | null>(media.autherId),
+        id: new FormControl<number | null>(media.id),
+      });
+
+      socialMediaArray.push(group);
     });
   }
 
@@ -252,54 +272,113 @@ export class AddPublisher {
     } as any;
 
     try {
-      const response = (await this.publisherService.createPublisher(
-        publisherData
-      )) as Publishers;
-      if (response && response.id) {
-        const publisherAddressData = {
-          ...this.publisherAddressDetails.value,
-          publisherId: response.id,
-        };
-        await this.addressService.createOrUpdateAddress({
-          ...publisherAddressData,
-          publisherId: response.id,
-        } as Address);
-
-        const publisherBankData = {
-          ...this.publisherBankDetails.value,
-          publisherId: response.id,
-        };
-        await this.bankDetailService.createOrUpdateBankDetail(
-          publisherBankData as createBankDetails
-        );
-        const socialMediaData = this.socialMediaArray.controls
-          .map((group) => ({
-            ...group.value,
+      if (
+        this.loggedInUser()?.accessLevel === 'SUPERADMIN' ||
+        !this.publisherId
+      ) {
+        const response = (await this.publisherService.createPublisher(
+          publisherData
+        )) as Publishers;
+        if (response && response.id) {
+          const publisherAddressData = {
+            ...this.publisherAddressDetails.value,
             publisherId: response.id,
-          }))
-          .filter((item) => item.url?.trim());
-        if (socialMediaData.length > 0) {
-          await this.socialService.createOrUpdateSocialMediaLinks(
-            socialMediaData as socialMediaGroup[]
+          };
+          await this.addressService.createOrUpdateAddress({
+            ...publisherAddressData,
+            publisherId: response.id,
+          } as Address);
+
+          const publisherBankData = {
+            ...this.publisherBankDetails.value,
+            publisherId: response.id,
+          };
+          await this.bankDetailService.createOrUpdateBankDetail(
+            publisherBankData as createBankDetails
           );
-          console.log(socialMediaData, 'social media');
+          const socialMediaData = this.socialMediaArray.controls
+            .map((group) => ({
+              ...group.value,
+              publisherId: response.id,
+            }))
+            .filter((item) => item.url?.trim());
+          if (socialMediaData.length > 0) {
+            await this.socialService.createOrUpdateSocialMediaLinks(
+              socialMediaData as socialMediaGroup[]
+            );
+            console.log(socialMediaData, 'social media');
+          }
+        }
+
+        let html = 'You have successfully created the publisher.';
+        if (response.id) {
+          html = 'You have successfully updated the publisher.';
+        }
+
+        if (this.signupCode) {
+          html = `You have successfully registerd as publisher please login to continue`;
+        }
+
+        await Swal.fire({
+          title: 'success',
+          icon: 'success',
+          html,
+          heightAuto: false,
+        });
+      } else {
+        const sections = [
+          {
+            type: UpdateTicketType.ADDRESS,
+            fields: ['address', 'city', 'state', 'country', 'pincode'],
+          },
+          {
+            type: UpdateTicketType.BANK,
+            fields: [
+              'bankName',
+              'accountNo',
+              'ifsc',
+              'panCardNo',
+              'accountType',
+              'gstNumber',
+            ],
+          },
+          {
+            type: UpdateTicketType.PUBLISHER,
+            fields: ['publisherName', 'publisherEmail'],
+          },
+        ];
+        const rawValue = {
+          ...this.publisherAddressDetails.value,
+          ...this.publisherBankDetails.value,
+          ...publisherData,
+          publisherName: this.publisherFormGroup.value.name,
+          publisherEmail: this.publisherFormGroup.value.email,
+        };
+
+        for (const section of sections) {
+          const payload: any = { type: section.type };
+          let hasValues = false;
+          section.fields.forEach((field: string) => {
+            const value = rawValue[field as keyof typeof rawValue];
+            if (value !== undefined && value !== null && value !== '') {
+              payload[field as keyof typeof payload] = value;
+              hasValues = true;
+            } else {
+              payload[field as keyof typeof payload] = null;
+            }
+            console.log(payload, 'raising a ticket');
+          });
+          if (hasValues) {
+            await this.userService.raisingTicket(payload);
+          }
+          Swal.fire({
+            icon: 'success',
+            text: 'Update ticket raised successfully',
+            title: 'Success',
+            heightAuto: false,
+          });
         }
       }
-      let html = 'You have successfully created the publisher.';
-      if (response.id) {
-        html = 'You have successfully updated the publisher.';
-      }
-
-      if (this.signupCode) {
-        html = `You have successfully registerd as publisher please login to continue`;
-      }
-
-      await Swal.fire({
-        title: 'success',
-        icon: 'success',
-        html,
-        heightAuto: false,
-      });
       if (this.signupCode) {
         this.router.navigate(['/login']);
       } else {
@@ -323,11 +402,3 @@ export class AddPublisher {
     );
   }
 }
-type socialMediaGroupType = FormGroup<{
-  type: FormControl<SocialMediaType | null>;
-  url: FormControl<string | null>;
-  publisherId: FormControl<number | null>;
-  name: FormControl<string | null>;
-  autherId: FormControl<number | null>;
-  id: FormControl<number | null>;
-}>;
