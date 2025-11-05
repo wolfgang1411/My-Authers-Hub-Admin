@@ -105,6 +105,8 @@ export class AddPublisher {
 
   async ngOnInit() {
     if (this.publisherId) {
+      this.publisherFormGroup.controls.userPassword.disable();
+
       const response = await this.publisherService.getPublisherById(
         this.publisherId
       );
@@ -156,10 +158,7 @@ export class AddPublisher {
     name: ['', Validators.required],
     designation: ['', Validators.required],
     logo: [''],
-    userPassword: [
-      '',
-      this.publisherId ? [] : [Validators.required, Validators.minLength(8)],
-    ],
+    userPassword: ['', [Validators.required, Validators.minLength(8)]],
     signupCode: <string | null>null,
   });
 
