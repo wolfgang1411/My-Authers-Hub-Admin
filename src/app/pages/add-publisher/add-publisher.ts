@@ -108,6 +108,7 @@ export class AddPublisher {
       const response = await this.publisherService.getPublisherById(
         this.publisherId
       );
+      console.log(this.publisherId, 'publisheridddddddd');
       this.publisherDetails = response;
       this.prefillForm(response);
     }
@@ -157,7 +158,7 @@ export class AddPublisher {
     logo: [''],
     userPassword: [
       '',
-      this.signupCode ? [] : [Validators.required, Validators.minLength(8)],
+      this.publisherId ? [] : [Validators.required, Validators.minLength(8)],
     ],
     signupCode: <string | null>null,
   });
@@ -302,6 +303,8 @@ export class AddPublisher {
       });
       if (this.signupCode) {
         this.router.navigate(['/login']);
+      } else {
+        this.router.navigate(['/publisher']);
       }
     } catch (error: any) {
       Swal.fire({
@@ -311,6 +314,14 @@ export class AddPublisher {
         heightAuto: false,
       });
     }
+  }
+  jumptonext() {
+    console.log(
+      this.publisherAddressDetails.value,
+      'adrdressss',
+      this.publisherFormGroup.value,
+      'publiserrr form'
+    );
   }
 }
 type socialMediaGroupType = FormGroup<{

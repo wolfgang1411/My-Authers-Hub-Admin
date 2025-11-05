@@ -242,9 +242,10 @@ export class EditProfile {
       return;
     }
     const payload: CreateUser = this.personalForm.getRawValue();
-    if (this.userDetails() && this.userDetails()?.id) {
-      (payload as UpdateUser).id = this.userDetails()?.id;
+    if (this.loggedInUser() && this.loggedInUser()?.id) {
+      (payload as UpdateUser).id = this.loggedInUser()?.id;
     }
+    console.log(this.loggedInUser(), 'userrrdetaill');
     const response = await this.userService.createOrUpdateUser(payload);
     if (response) {
       this.userService.setLoggedInUser(response);

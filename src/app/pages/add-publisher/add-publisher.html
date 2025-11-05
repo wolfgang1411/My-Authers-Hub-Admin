@@ -21,7 +21,7 @@
           <mat-label>{{ "companyname" | translate }}</mat-label>
           <input
             matInput
-            placeholder="companyname pvt ltd"
+            placeholder="Company Name Pvt Ltd"
             formControlName="name"
             required
           />
@@ -135,7 +135,12 @@
         <app-upload-file></app-upload-file>
       </mat-card>
     </form>
-    <button matButton="filled" class="!bg-primary mt-8" matStepperNext>
+    <button
+      matButton="filled"
+      class="!bg-primary mt-8"
+      matStepperNext
+      (click)="jumptonext()"
+    >
       Next
     </button>
   </mat-step>
