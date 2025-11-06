@@ -2,7 +2,6 @@ import { BankDetailsType } from './StaticValue';
 
 export interface BankDetails {
   name: string;
-  bankName: string;
   accountNo: string;
   ifsc: string;
   panCardNo: string;
@@ -15,6 +14,7 @@ export interface BankDetails {
 
 export interface createBankDetails {
   name: string;
+  accountHolderName?: string;
   accountNo: string;
   ifsc: string;
   panCardNo: string;

@@ -1,4 +1,12 @@
-import { Component, inject, model, Signal, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  model,
+  Signal,
+  signal,
+} from '@angular/core';
 import {
   FormBuilder,
   Validators,
@@ -84,6 +92,14 @@ export class AddPublisher {
     private socialService: SocialMediaService,
     private userService: UserService
   ) {
+    effect(() => {
+      const selected =
+        (this.publisherSocialMediaGroup.get('socialMedia') as FormArray)?.value
+          ?.map((s: any) => s?.type)
+          ?.filter((t: string) => !!t) ?? [];
+      this.selectedTypes.set(selected);
+    });
+
     const breakpointObserver = inject(BreakpointObserver);
     this.stepperOrientation = breakpointObserver
       .observe('(min-width: 800px)')
@@ -113,6 +129,10 @@ export class AddPublisher {
     ],
   };
   loggedInUser!: Signal<User | null>;
+  selectedTypes = signal<string[]>([]);
+  isAllSelected = computed(() => {
+    return this.selectedTypes().length >= this.socialMediaArray.length;
+  });
 
   async ngOnInit() {
     if (this.publisherId) {
@@ -175,8 +195,11 @@ export class AddPublisher {
 
   publisherBankDetails = this._formBuilder.group({
     id: <number | null>null,
-    name: ['', [Validators.required, Validators.pattern(/^[A-Za-z\s]+$/)]],
-    bankName: ['', [Validators.required]],
+    accountHolderName: [
+      '',
+      [Validators.required, Validators.pattern(/^[A-Za-z\s]+$/)],
+    ],
+    name: ['', [Validators.required]],
     accountNo: ['', [Validators.required]],
     ifsc: ['', Validators.required],
     panCardNo: ['', Validators.required],
@@ -214,7 +237,18 @@ export class AddPublisher {
     >;
   }
   addSocialMedia() {
-    this.socialMediaArray.push(this.createSocialGroup());
+    this.socialMediaArray.push(
+      new FormGroup<SocialMediaGroupType>({
+        type: new FormControl<SocialMediaType | null>(null, [
+          Validators.required,
+        ]),
+        url: new FormControl<string | null>(null, [Validators.required]),
+        publisherId: new FormControl<number | null>(null),
+        name: new FormControl<string | null>(null, [Validators.required]),
+        autherId: new FormControl<number | null>(null),
+        id: new FormControl<number | null>(null),
+      })
+    );
   }
   prefillForm(publisherDetails: Publishers) {
     this.publisherFormGroup.patchValue({
@@ -237,6 +271,7 @@ export class AddPublisher {
     });
     this.publisherBankDetails.patchValue({
       id: publisherDetails.bankDetails?.[0]?.id,
+      accountHolderName: publisherDetails.bankDetails?.[0]?.accountHolderName,
       name: publisherDetails.bankDetails?.[0]?.name,
       accountNo: publisherDetails.bankDetails?.[0]?.accountNo,
       ifsc: publisherDetails.bankDetails?.[0]?.ifsc,
@@ -263,6 +298,15 @@ export class AddPublisher {
 
       socialMediaArray.push(group);
     });
+  }
+  get isAllSocialMediaSelected(): boolean {
+    const allOptions = this.socialMediaArray ?? [];
+    const formValue = this.publisherSocialMediaGroup?.value ?? {};
+    const selectedTypes: string[] = (formValue.socialMedia ?? [])
+      .map((s: any) => s?.type)
+      .filter((t: string) => !!t);
+
+    return selectedTypes.length >= allOptions.length;
   }
 
   async onSubmit() {
@@ -351,8 +395,14 @@ export class AddPublisher {
           ...this.publisherAddressDetails.value,
           ...this.publisherBankDetails.value,
           ...publisherData,
+          accountHolderName: this.publisherBankDetails.value.accountHolderName,
+          bankName: this.publisherBankDetails.value.name,
           publisherName: this.publisherFormGroup.value.name,
           publisherEmail: this.publisherFormGroup.value.email,
+          publisherPocName: this.publisherFormGroup.value.pocName,
+          publisherPocEmail: this.publisherFormGroup.value.pocEmail,
+          publisherPocPhoneNumber: this.publisherFormGroup.value.pocPhoneNumber,
+          publisherDesignation: this.publisherFormGroup.value.designation,
         };
 
         for (const section of sections) {
@@ -370,6 +420,18 @@ export class AddPublisher {
           });
           if (hasValues) {
             await this.userService.raisingTicket(payload);
+          }
+          const socialMediaData = this.socialMediaArray.controls
+            .map((group) => ({
+              ...group.value,
+              publisherId: this.publisherId,
+            }))
+            .filter((item) => item.url?.trim());
+          if (socialMediaData.length > 0) {
+            await this.socialService.createOrUpdateSocialMediaLinks(
+              socialMediaData as socialMediaGroup[]
+            );
+            console.log(socialMediaData, 'social media');
           }
           Swal.fire({
             icon: 'success',

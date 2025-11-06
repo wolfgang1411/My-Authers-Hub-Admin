@@ -120,20 +120,6 @@
           />
         </mat-form-field>
       </div>
-
-      <mat-card class="example-card !gap-4" appearance="outlined">
-        <mat-card-header class="flex flex-col gap-2">
-          <mat-card-title class="!text-primary text-left !font-medium">{{
-            "uploadlogo" | translate
-          }}</mat-card-title>
-          <mat-card-subtitle class="text-"
-            >{{
-              "imagesizeshouldbelessthan2MB" | translate
-            }}.</mat-card-subtitle
-          >
-        </mat-card-header>
-        <app-upload-file></app-upload-file>
-      </mat-card>
     </form>
     <form [formGroup]="publisherSocialMediaGroup">
       <div formArrayName="socialMedia" class="flex flex-col gap-4 my-4">
@@ -144,8 +130,11 @@
           <button
             matButton
             matButton="filled"
-            class="!bg-primary"
+            class="!bg-primary disabled:opacity-40"
             (click)="this.addSocialMedia()"
+            [disabled]="isAllSelected()"
+            matTooltip="All social media types have been added"
+            matTooltipDisabled="!isAllSocialMediaSelected"
           >
             <mat-icon class="material-icons">add_circle_outline</mat-icon>
             {{ "addmore" | translate }}
@@ -162,6 +151,21 @@
         </div>
         }
       </div>
+    </form>
+    <form [formGroup]="publisherFormGroup">
+      <mat-card class="example-card !gap-4" appearance="outlined">
+        <mat-card-header class="flex flex-col gap-2">
+          <mat-card-title class="!text-primary text-left !font-medium">{{
+            "uploadlogo" | translate
+          }}</mat-card-title>
+          <mat-card-subtitle class="text-"
+            >{{
+              "imagesizeshouldbelessthan2MB" | translate
+            }}.</mat-card-subtitle
+          >
+        </mat-card-header>
+        <app-upload-file></app-upload-file>
+      </mat-card>
     </form>
     <button
       matButton="filled"
@@ -236,7 +240,7 @@
           <mat-label>{{ "nameonaccount" | translate }}</mat-label>
           <input
             matInput
-            formControlName="name"
+            formControlName="accountHolderName"
             placeholder="M Singh"
             required
           />
@@ -245,7 +249,7 @@
           <mat-label>
             {{ "bankname" | translate }}
           </mat-label>
-          <mat-select formControlName="bankName" required>
+          <mat-select formControlName="name" required>
             <mat-option value="">Select Bank</mat-option>
             <mat-option value="HDFC">HDFC</mat-option>
             <mat-option value="SBI">SBI</mat-option>
@@ -284,20 +288,6 @@
         </mat-form-field>
       </div>
     </form>
-    <div class="flex flex-row gap-2">
-      <button class="!bg-primary mt-8 !text-white" matButton matStepperPrevious>
-        Back
-      </button>
-      <button class="!bg-primary mt-8 !text-white" matButton matStepperNext>
-        Next
-      </button>
-    </div>
-  </mat-step>
-  <mat-step
-    [stepControl]="publisherSocialMediaGroup"
-    class="!text-accent !p-0"
-    label="Add your social media links"
-  >
     <div class="flex flex-row gap-2">
       <button class="!bg-primary mt-8 !text-white" matButton matStepperPrevious>
         Back

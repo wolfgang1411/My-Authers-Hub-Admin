@@ -15,6 +15,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { StaticValuesService } from '../../services/static-values';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule, MatIconButton } from '@angular/material/button';
 
 @Component({
   selector: 'app-social-media',
@@ -25,6 +26,8 @@ import { MatIconModule } from '@angular/material/icon';
     MatSelectModule,
     SharedModule,
     MatIconModule,
+    MatButtonModule,
+    MatIconButton,
   ],
   templateUrl: './social-media.html',
   styleUrl: './social-media.css',
@@ -68,17 +71,42 @@ export class SocialMedia {
     return mediaType;
   }
   socialMediaOptions = [
-    { value: 'FACEBOOK', label: 'Facebook', icon: 'facebook' },
-    { value: 'TWITTER', label: 'Twitter', icon: 'alternate_email' },
-    { value: 'INSTAGRAM', label: 'Instagram', icon: 'photo_camera' },
-    { value: 'LINKEDIN', label: 'LinkedIn', icon: 'business_center' },
-    { value: 'YOUTUBE', label: 'YouTube', icon: 'subscriptions' },
-    { value: 'WEBSITE', label: 'Website', icon: 'public' },
+    {
+      value: 'FACEBOOK',
+      label: 'Facebook',
+      icon: 'facebook',
+      color: '#1877F2',
+    },
+    {
+      value: 'TWITTER',
+      label: 'Twitter',
+      icon: 'alternate_email',
+      color: '#1DA1F2',
+    },
+    {
+      value: 'INSTAGRAM',
+      label: 'Instagram',
+      icon: 'photo_camera',
+      color: '#E4405F',
+    },
+    { value: 'LINKEDIN', label: 'LinkedIn', icon: 'work', color: '#0077B5' },
+    {
+      value: 'YOUTUBE',
+      label: 'YouTube',
+      icon: 'smart_display',
+      color: '#FF0000',
+    },
+    { value: 'WEBSITE', label: 'Website', icon: 'language', color: '#6C63FF' },
   ];
 
   getIcon(type: string | null | undefined) {
-    const f = this.socialMediaOptions.find((o) => o.value === type);
-    return f?.icon ?? 'share';
+    const item = this.socialMediaOptions.find((o) => o.value === type);
+    return item ? item.icon : 'public';
+  }
+
+  getPlatformColor(type: string | null | undefined) {
+    const item = this.socialMediaOptions.find((o) => o.value === type);
+    return item ? item.color : '#6B7280';
   }
 }
 type socialMediaGroupType = FormGroup<{

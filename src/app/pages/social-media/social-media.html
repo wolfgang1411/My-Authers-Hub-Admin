@@ -1,15 +1,27 @@
-<div [formGroup]="socialMediaGroup" class="grid grid-cols-2 gap-4">
-  <mat-form-field appearance="outline" class="w-full">
+<div
+  [formGroup]="socialMediaGroup"
+  class="grid grid-cols-3 gap-3 items-center bg-white p-3 rounded-xl shadow-sm border border-gray-100"
+>
+  <mat-form-field class="w-full slim-field">
     <mat-label>Select Platform</mat-label>
-    <mat-select formControlName="type">
+    <mat-select formControlName="type" required>
       <mat-select-trigger>
         <div class="flex items-center gap-2">
-          <mat-icon>{{
-            getIcon(socialMediaGroup.get("type")?.value)
-          }}</mat-icon>
-          <span>{{
-            socialMediaGroup.get("type")?.value || "Select Platform"
-          }}</span>
+          <button
+            mat-icon-button
+            disableRipple
+            class="!w-7 !h-7"
+            [ngStyle]="{
+              color: getPlatformColor(socialMediaGroup.get('type')?.value)
+            }"
+          >
+            <mat-icon class="text-base">
+              {{ getIcon(socialMediaGroup.get("type")?.value) }}
+            </mat-icon>
+          </button>
+          <span class="font-medium text-gray-800 text-sm">
+            {{ socialMediaGroup.get("type")?.value || "Select Platform" }}
+          </span>
         </div>
       </mat-select-trigger>
 
@@ -19,21 +31,46 @@
         [disabled]="isSocialMediaTypeSelected(option.value)"
       >
         <div class="flex items-center gap-2">
-          <mat-icon>{{ option.icon }}</mat-icon>
-          <span>{{ option.label }}</span>
+          <button
+            mat-icon-button
+            disableRipple
+            class="!w-7 !h-7"
+            [ngStyle]="{ color: option.color }"
+          >
+            <mat-icon class="text-base">{{ option.icon }}</mat-icon>
+          </button>
+          <span class="text-gray-800 text-sm">{{ option.label }}</span>
         </div>
       </mat-option>
       }
     </mat-select>
   </mat-form-field>
-  <mat-form-field appearance="outline" class="w-full">
+  <mat-form-field>
+    <mat-label
+      >{{ "username" | translate }} / {{ "userhandle" | translate }} /
+      {{ "nameofwebsite" | translate }}</mat-label
+    >
+    <input matInput formControlName="name" required />
+  </mat-form-field>
+
+  <mat-form-field class="w-full slim-field">
     <mat-label>Profile URL</mat-label>
-    <span matPrefix> <mat-icon>link</mat-icon></span>
+    <span matPrefix>
+      <button
+        mat-icon-button
+        disableRipple
+        class="!w-7 !h-7 text-indigo-500 hover:text-indigo-700 transition-all"
+      >
+        <mat-icon class="text-base">link</mat-icon>
+      </button>
+    </span>
     <input
       matInput
       placeholder="https://..."
       formControlName="url"
+      required
       type="url"
+      class="text-sm"
     />
   </mat-form-field>
 </div>

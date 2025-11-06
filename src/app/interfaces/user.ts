@@ -32,6 +32,7 @@ export interface UpdateUserWithTicket {
   country?: string;
   pincode?: string;
   bankName?: string;
+  accountHolderName?: string;
   accountNo?: string;
   ifsc?: string;
   panCardNo?: string;
@@ -39,6 +40,10 @@ export interface UpdateUserWithTicket {
   gstNumber?: string;
   publisherName?: string;
   publisherEmail?: string;
+  publisherPocName?: string;
+  publisherPocEmail?: string;
+  publisherPocPhoneNumber?: string;
+  publisherDesignation?: string;
   authorName?: string;
   authorEmail?: string;
   authorContactNumber?: string;
