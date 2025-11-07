@@ -145,8 +145,14 @@
     <form [formGroup]="authorBankDetails">
       <div class="grid-cols-4 grid gap-4 my-4">
         <mat-form-field>
-          <mat-label>{{ "nameonaccount" | translate }}</mat-label>
-          <input matInput formControlName="name" placeholder="HDFC" required />
+          <mat-label>{{ "bankname" | translate }}</mat-label>
+          <mat-select formControlName="name" required>
+            <mat-option value="">Select Bank</mat-option>
+            @for (bank of bankOptions(); track $index) {
+            <mat-option [value]="bank.BANK">{{ bank.BANK }}</mat-option>
+            }
+          </mat-select>
+          <!-- <input matInput formControlName="name" placeholder="HDFC" required /> -->
         </mat-form-field>
         <mat-form-field>
           <mat-label>{{ "bankaccnumber" | translate }}</mat-label>

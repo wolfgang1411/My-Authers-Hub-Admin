@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import {
   FormBuilder,
   Validators,
@@ -7,6 +7,9 @@ import {
   FormGroup,
   FormArray,
   FormControl,
+  ValidatorFn,
+  AbstractControl,
+  ValidationErrors,
 } from '@angular/forms';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import {
@@ -28,6 +31,7 @@ import {
   createBankDetails,
   Author,
   SocialMediaType,
+  BankOption,
 } from '../../interfaces';
 import { AddressService } from '../../services/address-service';
 import { BankDetailService } from '../../services/bank-detail-service';
@@ -39,6 +43,7 @@ import { InviteService } from '../../services/invite';
 import { socialMediaGroup } from '../../interfaces/SocialMedia';
 import { SocialMediaService } from '../../services/social-media-service';
 import { SocialMedia } from '../social-media/social-media';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-add-author',
@@ -67,7 +72,8 @@ export class AddAuthor {
     private route: ActivatedRoute,
     private inviteService: InviteService,
     private router: Router,
-    private socialService: SocialMediaService
+    private socialService: SocialMediaService,
+    private translateService: TranslateService
   ) {
     const breakpointObserver = inject(BreakpointObserver);
     this.stepperOrientation = breakpointObserver
@@ -81,13 +87,31 @@ export class AddAuthor {
   authorId?: number;
   signupCode?: string;
   authorDetails?: Author;
-  async ngOnInit() {
-    if (this.authorId) {
-      const response = await this.authorsService.getAuthorrById(this.authorId);
-      this.authorDetails = response;
-      this.prefillForm(response);
-    }
 
+  bankOptions = signal<BankOption[]>([]);
+
+  ifscCodeValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const prefix = this.bankOptions().find(
+        ({ BANK }) => BANK === this.authorBankDetails.controls.name.value
+      )?.BANKCODE;
+      if (!prefix) return null;
+      const value = control.value?.toUpperCase?.().trim?.() || '';
+      if (!value) return null; // skip if empty, let 'required' handle that
+      return value.startsWith(prefix.toUpperCase())
+        ? null
+        : {
+            startsWith: this.translateService.instant(
+              'invalidifscodestartwitherror',
+              {
+                prefix,
+              }
+            ),
+          };
+    };
+  }
+
+  async ngOnInit() {
     this.authorFormGroup.controls.signupCode.patchValue(
       this.signupCode || null
     );
@@ -97,6 +121,9 @@ export class AddAuthor {
     this.authorAddressDetails.controls.signupCode.patchValue(
       this.signupCode || null
     );
+
+    const { data } = await this.bankDetailService.fetchBankOptions();
+    this.bankOptions.set(data);
 
     if (this.signupCode) {
       const invite = await this.inviteService.findOne(this.signupCode);
@@ -118,6 +145,12 @@ export class AddAuthor {
         })
       );
     });
+
+    if (this.authorId) {
+      const response = await this.authorsService.getAuthorrById(this.authorId);
+      this.authorDetails = response;
+      this.prefillForm(response);
+    }
   }
 
   private _formBuilder = inject(FormBuilder);
@@ -137,7 +170,7 @@ export class AddAuthor {
     name: ['', Validators.required],
     accountHolderName: ['', Validators.required],
     accountNo: ['', Validators.required],
-    ifsc: ['', Validators.required],
+    ifsc: ['', [Validators.required, this.ifscCodeValidator()]],
     panCardNo: ['', Validators.required],
     accountType: ['', Validators.required],
     signupCode: <string | null>null,
