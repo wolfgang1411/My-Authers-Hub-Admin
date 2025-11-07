@@ -119,18 +119,12 @@ export class Authors {
     const dialogRef = this.dialog.open(InviteDialog, {
       data: {
         onSave: async (email: string) => {
-          const inviteData = {
-            email: email,
-            type: 'AUTHER',
-          };
-          const response = await this.publisherService.sendInviteLink(
-            inviteData as Invite
-          );
+          const response = await this.authorService.sendInviteLink(email);
           if (response) {
             dialogRef.close();
             Swal.fire({
               title: 'success',
-              html: (response as any).message,
+              html: response.message,
               icon: 'success',
               heightAuto: false,
             });

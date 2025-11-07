@@ -49,9 +49,19 @@
           class="col-span-1 md:col-span-1 bg-white p-4 rounded-lg shadow-sm"
         >
         </app-recent-authors>
-        <app-best-selling-component
+        <app-title-preview-component
+          [heading]="titleConfigs().bestSelling.heading"
+          [filter]="titleConfigs().bestSelling.filter"
+          [type]="titleConfigs().bestSelling.type"
           class="col-span-1 md:col-span-1 bg-white p-4 rounded-lg shadow-sm"
-        ></app-best-selling-component>
+        ></app-title-preview-component>
+
+        <app-title-preview-component
+          [heading]="titleConfigs().recent.heading"
+          [filter]="titleConfigs().recent.filter"
+          [type]="titleConfigs().recent.type"
+          class="col-span-1 md:col-span-1 bg-white p-4 rounded-lg shadow-sm"
+        ></app-title-preview-component>
 
         <!-- <app-browser-usage-component
           class="col-span-1 md:col-span-1 bg-white p-4 rounded-lg shadow-sm"

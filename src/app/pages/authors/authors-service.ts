@@ -15,6 +15,22 @@ export class AuthorsService {
     private loader: LoaderService
   ) {}
 
+  async sendInviteLink(email: string) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post<{ message: string; success: boolean }>(
+          'authors/invite',
+          {
+            email,
+          }
+        )
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
   async getAuthorsCount(filter: AuthorFilter, showLoader = true) {
     try {
       filter = { ...filter };

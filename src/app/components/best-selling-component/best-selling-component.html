@@ -1,5 +1,5 @@
 <div class="bg-white rounded-lg p-4 shadow-sm">
-  <h3 class="text-slate-800 font-semibold mb-3">Best Selling Books</h3>
+  <h3 class="text-slate-800 font-semibold mb-3">{{ heading() }}</h3>
   @for (title of titles(); track $index) {
   <div class="flex items-center justify-between py-2 border-b last:border-b-0">
     <div class="flex items-center gap-3">
@@ -10,7 +10,13 @@
       </div>
       <div>
         <div class="text-sm font-medium">{{ title.name }}</div>
+        @if(type() === 'BEST_SELLING_MAH') {
         <div class="text-xs text-gray-400">Copies: {{ title.copiesSold }}</div>
+        } @else if (type() === 'RECENT') {
+        <div class="text-xs text-gray-400">
+          Published At: {{ title.submission_date | myDate }}
+        </div>
+        }
       </div>
     </div>
     <div class="text-right">

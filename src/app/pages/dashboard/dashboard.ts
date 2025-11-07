@@ -2,7 +2,7 @@ import { Component, signal } from '@angular/core';
 import { NgChartsModule } from 'ng2-charts';
 import { StatCardComponent } from '../../components/stat-card-component/stat-card-component';
 import { SalesAnalyticsComponent } from '../../components/sales-analytics-component/sales-analytics-component';
-import { BestSellingComponent } from '../../components/best-selling-component/best-selling-component';
+import { TitlePreviewComponent } from '../../components/best-selling-component/best-selling-component';
 import { ActivityTimelineComponent } from '../../components/activity-timeline-component/activity-timeline-component';
 import { ProfileCardComponent } from '../../components/profile-card-component/profile-card-component';
 import { RecentOrdersComponent } from '../../components/recent-orders-component/recent-orders-component';
@@ -10,20 +10,21 @@ import { DashboardService } from '../../services/dashboard-service';
 import { RecentAuthors } from '../../components/recent-authors/recent-authors';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
-import { formatDate } from 'date-fns';
+import { formatDate, subDays } from 'date-fns';
 import { TitleService } from '../titles/title-service';
 import { AuthorsService } from '../authors/authors-service';
 import { SalesService } from '../../services/sales';
 import { UserService } from '../../services/user';
 import { SharedModule } from '../../modules/shared/shared-module';
+import { TitleStatus } from '../../interfaces';
 
 @Component({
   selector: 'app-dashboard',
   imports: [
+    TitlePreviewComponent,
     NgChartsModule,
     StatCardComponent,
     SalesAnalyticsComponent,
-    BestSellingComponent,
     ActivityTimelineComponent,
     RecentOrdersComponent,
     RecentAuthors,
@@ -53,6 +54,25 @@ export class Dashboard {
   toggleTheme() {
     document.documentElement.classList.toggle('dark');
   }
+
+  titleConfigs = signal({
+    bestSelling: {
+      heading: 'Best Selling Books',
+      filter: {
+        bestSellingMAH: true,
+        status: TitleStatus.APPROVED,
+      },
+      type: 'BEST_SELLING_MAH',
+    },
+    recent: {
+      heading: 'Recent Books',
+      filter: {
+        publishedAfter: subDays(new Date(), 30).toISOString(),
+        status: TitleStatus.APPROVED,
+      },
+      type: 'RECENT',
+    },
+  });
 
   ngOnInit() {
     this.fetchStats();
