@@ -41,6 +41,7 @@ export interface EarningFilter {
   authorIds?: number[];
 
   publisherIds?: number[];
+  showPublisherAuthorEarnings?: boolean;
 
   status?: EarningsStatus | EarningsStatus[];
   platforms?: PlatForm | PlatForm[];

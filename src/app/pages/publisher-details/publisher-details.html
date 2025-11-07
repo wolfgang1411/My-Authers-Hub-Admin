@@ -194,19 +194,27 @@
           <li>
             🪙 {{ "walletbalance" | translate }} :
             <label class="font-medium">{{
-              (wallet()?.totalAmount || 0) - (wallet()?.holdAmount || 0)
+              (publisherDetails()?.user?.wallet?.totalAmount || 0) -
+                (publisherDetails()?.user?.wallet?.holdAmount || 0)
                 | currency : "INR"
             }}</label>
           </li>
           <li>
             ⏳{{ "onhold" | translate }} :
             <label class="font-medium">{{
-              wallet()?.holdAmount | currency : "INR"
+              publisherDetails()?.user?.wallet?.holdAmount || 0
+                | currency : "INR"
             }}</label>
           </li>
         </ul>
 
-        <table
+        <app-list-table
+          [dataSource]="royaltyData"
+          [displayedColumns]="displayedRoyaltyColumns()"
+        >
+        </app-list-table>
+
+        <!-- <table
           mat-table
           [dataSource]="royaltyData"
           class="mat-elevation-z8 !rounded-2xl overflow-hidden"
@@ -280,8 +288,7 @@
             *matRowDef="let row; columns: displayedRoyaltyColumns"
           ></tr>
 
-          <!-- Row shown when there is no matching data. -->
-        </table>
+        </table> -->
       </section>
     </mat-tab>
 

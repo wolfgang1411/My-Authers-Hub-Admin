@@ -18,6 +18,10 @@ import { MatInputModule } from '@angular/material/input';
 import { RoyaltyService } from '../../services/royalty-service';
 import { ListTable } from '../../components/list-table/list-table';
 import { DetailsListTable } from '../../components/details-list-table/details-list-table';
+import { SalesService } from '../../services/sales';
+import { formatCurrency } from '@angular/common';
+import { TranslateService } from '@ngx-translate/core';
+import { format } from 'date-fns';
 @Component({
   selector: 'app-publisher-details',
   imports: [
@@ -38,7 +42,8 @@ export class PublisherDetails {
     private publisherService: PublisherService,
     private authorsService: AuthorsService,
     private titleService: TitleService,
-    private royaltyService: RoyaltyService
+    private salesService: SalesService,
+    private translateService: TranslateService
   ) {
     this.route.params.subscribe(({ id }) => {
       this.publisherId = id;
@@ -59,7 +64,6 @@ export class PublisherDetails {
   authors = signal<Author[]>([]);
   subPublishers = signal<Publishers[]>([]);
   royalties = signal<Royalty[]>([]);
-  wallet = signal<Wallet | null>(null);
   publishedLinks = signal<any[]>([]);
   attachments = signal<any[]>([]);
   authorFilter = signal({ page: 1 });
@@ -88,25 +92,23 @@ export class PublisherDetails {
     'email',
     'phonenumber',
   ];
-  displayedRoyaltyColumns: string[] = [
-    'serial',
-    'date',
-    'authorname',
-    'booktitle',
-    'sales',
-    'royaltyfromsales',
-    'publisherearnings',
-    'royaltyamount',
-  ];
+  displayedRoyaltyColumns = signal([
+    'title',
+    'publisher/author',
+    'amount',
+    'platform',
+    'paidAt/holduntill',
+  ]);
   bookPublishData = new MatTableDataSource<any>([]);
   authorData = new MatTableDataSource<any>([]);
   subPublisherData = new MatTableDataSource<any>([]);
-  royaltyData = new MatTableDataSource<Royalty>(this.royalties());
-  ngOnInit(): void {
-    this.fetchPublisherDetails();
-    this.fetchSubPublishers();
-    this.fetchAuthors();
-    this.fetchTitles();
+  royaltyData = new MatTableDataSource<Royalty>();
+  async ngOnInit() {
+    await this.fetchPublisherDetails();
+    await this.fetchSubPublishers();
+    await this.fetchAuthors();
+    await this.fetchTitles();
+    await this.fetchRoyalty();
   }
 
   async fetchPublisherDetails() {
@@ -201,15 +203,25 @@ export class PublisherDetails {
   }
 
   async fetchRoyalty() {
-    // try {
-    //   const { items } = await this.royaltyService.getRoyalties({
-    //     publisherId: this.publisherId,
-    //   });
-    //   this.royalties.set(items as Royalty[]);
-    //   this.royaltyData.data = items as Royalty[];
-    // } catch (error) {
-    //   throw error;
-    // }
+    const { items } = await this.salesService.fetchEarnings({
+      publisherIds: [this.publisherId],
+    });
+    const mappedData = items?.map((earning) => ({
+      ...earning,
+      title: earning.royalty.title.name,
+      'publisher/author':
+        earning.royalty.publisher?.name ||
+        earning.royalty.author?.user.firstName,
+      amount: formatCurrency(earning.amount, 'en', '', 'INR'),
+      platform: this.translateService.instant(earning.platform),
+      'paidAt/holduntill': (() => {
+        const date = earning.holdUntil || earning.paidAt;
+        if (!date) return '-';
+        return format(date, 'dd-MM-yyyy');
+      })(),
+    }));
+
+    this.royaltyData.data = mappedData as any;
   }
 
   scrollToSection(sectionId: string) {
