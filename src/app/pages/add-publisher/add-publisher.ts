@@ -15,6 +15,9 @@ import {
   FormArray,
   FormGroup,
   FormControl,
+  ValidatorFn,
+  ValidationErrors,
+  AbstractControl,
 } from '@angular/forms';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import {
@@ -34,6 +37,7 @@ import { UploadFile } from '../../components/upload-file/upload-file';
 import { PublisherService } from '../publisher/publisher-service';
 import {
   Address,
+  BankOption,
   createBankDetails,
   Publishers,
   SocialMediaType,
@@ -60,6 +64,8 @@ import {
 } from 'ngx-intl-tel-input';
 import { UserService } from '../../services/user';
 import { MatIcon } from '@angular/material/icon';
+import { startsWithValidator } from '../../common/utils/custom-validators';
+import { TranslateService } from '@ngx-translate/core';
 @Component({
   selector: 'app-add-publisher',
   imports: [
@@ -90,7 +96,8 @@ export class AddPublisher {
     private router: Router,
     private inviteService: InviteService,
     private socialService: SocialMediaService,
-    private userService: UserService
+    private userService: UserService,
+    private translateService: TranslateService
   ) {
     effect(() => {
       const selected =
@@ -111,6 +118,7 @@ export class AddPublisher {
     this.loggedInUser = this.userService.loggedInUser$;
   }
 
+  bankOptions = signal<BankOption[]>([]);
   signupCode?: string;
   publisherId?: number;
   publisherDetails?: Publishers;
@@ -135,17 +143,6 @@ export class AddPublisher {
   });
 
   async ngOnInit() {
-    if (this.publisherId) {
-      this.publisherFormGroup.controls.userPassword.disable();
-
-      const response = await this.publisherService.getPublisherById(
-        this.publisherId
-      );
-      console.log(this.publisherId, 'publisheridddddddd');
-      this.publisherDetails = response;
-      this.prefillForm(response);
-    }
-
     this.publisherFormGroup.controls.signupCode.patchValue(
       this.signupCode || null
     );
@@ -156,29 +153,55 @@ export class AddPublisher {
       this.signupCode || null
     );
 
+    this.publisherBankDetails.controls.name.valueChanges.subscribe((v) => {
+      this.selectedBankPrefix.set(
+        this.bankOptions().find(({ BANK }) => BANK === v)?.BANKCODE || null
+      );
+    });
+
+    const { data: bankOptions } =
+      await this.bankDetailService.fetchBankOptions();
+    this.bankOptions.set(bankOptions);
+
     if (this.signupCode) {
       const invite = await this.inviteService.findOne(this.signupCode);
       this.publisherFormGroup.controls.pocEmail.patchValue(invite.email);
       this.publisherFormGroup.controls.pocEmail.disable();
     }
-    // Object.values(SocialMediaType).forEach((type) => {
-    //   this.socialMediaArray.push(
-    //     new FormGroup({
-    //       type: new FormControl<SocialMediaType | null>(type),
-    //       url: new FormControl<string | null>(
-    //         '',
-    //         Validators.pattern(/^https?:\/\/.+/)
-    //       ),
-    //       name: new FormControl<string | null>(''),
-    //       autherId: new FormControl<number | null>(null),
-    //       publisherId: new FormControl<number | null>(null),
-    //       id: new FormControl<number | null>(null),
-    //     })
-    //   );
-    // });
+
+    if (this.publisherId) {
+      this.publisherFormGroup.controls.userPassword.disable();
+
+      const response = await this.publisherService.getPublisherById(
+        this.publisherId
+      );
+      this.publisherDetails = response;
+      this.prefillForm(response);
+    }
   }
   private _formBuilder = inject(FormBuilder);
   stepperOrientation: Observable<StepperOrientation>;
+
+  ifscCodeValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const prefix = this.bankOptions().find(
+        ({ BANK }) => BANK === this.publisherBankDetails.controls.name.value
+      )?.BANKCODE;
+      if (!prefix) return null;
+      const value = control.value?.toUpperCase?.().trim?.() || '';
+      if (!value) return null; // skip if empty, let 'required' handle that
+      return value.startsWith(prefix.toUpperCase())
+        ? null
+        : {
+            startsWith: this.translateService.instant(
+              'invalidifscodestartwitherror',
+              {
+                prefix,
+              }
+            ),
+          };
+    };
+  }
 
   publisherFormGroup = this._formBuilder.group({
     id: <number | null>null,
@@ -193,6 +216,8 @@ export class AddPublisher {
     signupCode: <string | null>null,
   });
 
+  selectedBankPrefix = signal<string | null>(null);
+
   publisherBankDetails = this._formBuilder.group({
     id: <number | null>null,
     accountHolderName: [
@@ -201,7 +226,7 @@ export class AddPublisher {
     ],
     name: ['', [Validators.required]],
     accountNo: ['', [Validators.required]],
-    ifsc: ['', Validators.required],
+    ifsc: ['', [Validators.required, this.ifscCodeValidator()]],
     panCardNo: ['', Validators.required],
     accountType: ['', Validators.required],
     signupCode: <string | null>null,
@@ -269,6 +294,11 @@ export class AddPublisher {
       country: publisherDetails.address[0]?.country,
       pincode: publisherDetails.address[0]?.pincode,
     });
+    this.selectedBankPrefix.set(
+      this.bankOptions().find(
+        ({ BANK }) => BANK === publisherDetails.bankDetails?.[0]?.name
+      )?.BANKCODE || null
+    );
     this.publisherBankDetails.patchValue({
       id: publisherDetails.bankDetails?.[0]?.id,
       accountHolderName: publisherDetails.bankDetails?.[0]?.accountHolderName,
@@ -337,6 +367,9 @@ export class AddPublisher {
             ...this.publisherBankDetails.value,
             publisherId: response.id,
           };
+
+          console.log({ publisherBankData });
+
           await this.bankDetailService.createOrUpdateBankDetail(
             publisherBankData as createBankDetails
           );

@@ -249,12 +249,14 @@
           <mat-label>
             {{ "bankname" | translate }}
           </mat-label>
-          <mat-select formControlName="name" required>
+          <mat-select
+            [formControl]="publisherBankDetails.controls.name"
+            required
+          >
             <mat-option value="">Select Bank</mat-option>
-            <mat-option value="HDFC">HDFC</mat-option>
-            <mat-option value="SBI">SBI</mat-option>
-            <mat-option value="ICICI">ICICI</mat-option>
-            <mat-option value="AXIS">AXIS</mat-option>
+            @for (bank of bankOptions(); track $index) {
+            <mat-option [value]="bank.BANK">{{ bank.BANK }}</mat-option>
+            }
           </mat-select>
         </mat-form-field>
         <mat-form-field>

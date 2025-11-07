@@ -24,3 +24,21 @@ export interface createBankDetails {
   autherId: number;
   id?: number;
 }
+
+export interface BankOption {
+  BANK: string;
+  IFSC: string;
+  BRANCH: string;
+  CENTRE: string;
+  DISTRICT: string;
+  STATE: string;
+  ADDRESS: string;
+  CONTACT: string;
+  IMPS: boolean;
+  RTGS: boolean;
+  CITY: string;
+  ISO3166: string;
+  NEFT: boolean;
+  UPI: boolean;
+  BANKCODE: string;
+}
