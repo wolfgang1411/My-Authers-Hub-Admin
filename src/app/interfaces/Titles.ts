@@ -83,6 +83,7 @@ export interface TitleMedia extends Media {
 export interface TitleDistribution {
   id: number;
   type: DistributionType;
+  link: string;
 }
 
 export interface AuthorTitle {
@@ -451,4 +452,12 @@ export interface CreatePlatformIdentifier {
 export interface CreateDistributionLink {
   distributionType: DistributionType;
   link: string;
+}
+
+export interface TitleDistributionFilter {
+  itemsPerPage?: number;
+  page?: number;
+  publisherIds?: number | number[];
+  titleIds?: number | number[];
+  authorIds?: number | number[];
 }

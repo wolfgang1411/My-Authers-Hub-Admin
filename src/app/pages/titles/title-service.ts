@@ -15,6 +15,8 @@ import {
   Title,
   TitleCategory,
   TitleCreate,
+  TitleDistribution,
+  TitleDistributionFilter,
   TitleFilter,
   TitleGenre,
   TitlePricing,
@@ -252,6 +254,20 @@ export class TitleService {
         this.server.post(`title-distribution/title/${titleId}`, {
           distributions,
         })
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async fetchTitleDistribution(filter: TitleDistributionFilter) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<TitleDistribution>>(
+          'title-distribution',
+          filter
+        )
       );
     } catch (error) {
       this.logger.logError(error);

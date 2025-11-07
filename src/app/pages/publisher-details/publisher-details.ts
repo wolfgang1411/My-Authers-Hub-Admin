@@ -4,7 +4,7 @@ import { signal } from '@angular/core';
 import { PublisherService } from '../publisher/publisher-service';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { Back } from '../../components/back/back';
-import { Title } from '../../interfaces/Titles';
+import { Title, TitleDistribution } from '../../interfaces/Titles';
 import { Author, AuthorFilter } from '../../interfaces/Authors';
 import { Publishers } from '../../interfaces/Publishers';
 import { Royalty } from '../../interfaces/Royalty';
@@ -64,7 +64,8 @@ export class PublisherDetails {
   authors = signal<Author[]>([]);
   subPublishers = signal<Publishers[]>([]);
   royalties = signal<Royalty[]>([]);
-  publishedLinks = signal<any[]>([]);
+  // publishedLinks = signal<any[]>([]);
+  distributions = signal<TitleDistribution[]>([]);
   attachments = signal<any[]>([]);
   authorFilter = signal({ page: 1 });
   displayedColumns: string[] = [
@@ -109,6 +110,7 @@ export class PublisherDetails {
     await this.fetchAuthors();
     await this.fetchTitles();
     await this.fetchRoyalty();
+    await this.fetchDistributionLinks();
   }
 
   async fetchPublisherDetails() {
@@ -222,6 +224,14 @@ export class PublisherDetails {
     }));
 
     this.royaltyData.data = mappedData as any;
+  }
+
+  async fetchDistributionLinks() {
+    const { items } = await this.titleService.fetchTitleDistribution({
+      itemsPerPage: 100,
+      publisherIds: this.publisherId,
+    });
+    this.distributions.set(items);
   }
 
   scrollToSection(sectionId: string) {
