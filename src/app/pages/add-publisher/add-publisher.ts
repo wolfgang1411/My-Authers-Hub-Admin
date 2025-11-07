@@ -447,12 +447,7 @@ export class AddPublisher {
         this.router.navigate(['/publisher']);
       }
     } catch (error: any) {
-      Swal.fire({
-        title: 'error',
-        text: error.message,
-        icon: 'error',
-        heightAuto: false,
-      });
+      console.log(error);
     }
   }
   jumptonext() {

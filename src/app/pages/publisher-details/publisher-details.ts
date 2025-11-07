@@ -80,7 +80,6 @@ export class PublisherDetails {
     'titles',
     'bookssold',
     'royaltyearned',
-    'links',
   ];
   displayedSubPublisherColumns: string[] = [
     'name',
@@ -141,7 +140,7 @@ export class PublisherDetails {
   }
   fetchAuthors() {
     this.authorsService
-      .getAuthors({ publisherId: this.publisherId })
+      .getAuthors({ publisherId: this.publisherId, showTotalEarnings: true })
       .then(({ items }) => {
         const mapped = items.map((author, idx) => ({
           ...author,
@@ -150,7 +149,7 @@ export class PublisherDetails {
           email: author.user.email,
           phonenumber: author.user.phoneNumber,
           titles: author.noOfTitles,
-          booksSold: author.booksSold,
+          bookssold: author.booksSold,
           royaltyearned: author.totalEarning || 0,
           links: author.socialMedias?.map((sm) => sm.url) || 'N/A',
         }));
@@ -182,11 +181,10 @@ export class PublisherDetails {
               ? title.printing[0].totalPages
               : 'N/A',
 
-          royaltiesearned: 0,
-
+          royaltiesearned: title.totalSales,
           authors:
             title.authors && title.authors.length
-              ? title.authors.map((author) => author.author?.name).join(' ,')
+              ? title.authors.map(({ display_name }) => display_name).join(' ,')
               : 'N/A',
           status: title.status,
         }));
