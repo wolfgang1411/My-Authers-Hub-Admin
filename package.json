@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "setup": "npx ts-node setup.ts",
-    "ng": "ng",
+    "setup": "node setup.js",
+    "prebuild": "node setup.js",
+    "build": "ng build --configuration production",
     "start": "ng serve --host 0.0.0.0 --port 4200",
-    "build": "npm run setup && ng build --configuration production",
     "serve:static": "npx serve dist/my-authors-hub/browser",
     "test": "ng test",
     "watch": "ng build --watch --configuration development"
