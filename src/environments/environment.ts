@@ -1,5 +1,5 @@
 export const environment = {
-  production: undefined as any,
-  apiUrl: undefined as any,
-  i18nHash: undefined as any
-}
+  production: false,
+  apiUrl: 'http://localhost:3000/',
+  i18nHash: 1762618307057,
+};
