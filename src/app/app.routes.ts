@@ -57,6 +57,17 @@ export const routes: Routes = [
     canActivate: [privateRouteGuard],
   },
   {
+    path: 'titleDetails/:id',
+    loadComponent: () =>
+      import('./pages/title-details/title-details').then((c) => c.TitleDetails),
+    canActivate: [privateRouteGuard],
+  },
+  {
+    path: 'wallet',
+    loadComponent: () => import('./pages/wallet/wallet').then((c) => c.Wallet),
+    canActivate: [privateRouteGuard],
+  },
+  {
     path: 'isbn',
     loadComponent: () =>
       import('./pages/isbn-list/isbn-list').then((c) => c.ISBNList),

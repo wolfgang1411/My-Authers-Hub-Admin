@@ -58,6 +58,7 @@ import { SocialMedia } from '../social-media/social-media';
 import { TranslateService } from '@ngx-translate/core';
 import { MatIcon } from '@angular/material/icon';
 import { UserService } from '../../services/user';
+import { Back } from '../../components/back/back';
 
 @Component({
   selector: 'app-add-author',
@@ -75,6 +76,7 @@ import { UserService } from '../../services/user';
     UploadFile,
     SocialMedia,
     MatIcon,
+    Back,
   ],
   templateUrl: './add-author.html',
   styleUrl: './add-author.css',

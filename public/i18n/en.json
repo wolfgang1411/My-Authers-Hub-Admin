@@ -360,4 +360,5 @@
   "invalidifscodestartwitherror": "IFSC code must start with {{prefix}}",
   "authorDetails":"Author Details",
   "authoremailid":"Author Email Id",
-  "authorcontactnumber":"Author Contact Number "}
+  "authorcontactnumber":"Author Contact Number ",
+"noisbn":"No ISBN"}

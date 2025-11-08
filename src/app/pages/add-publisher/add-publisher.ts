@@ -64,8 +64,8 @@ import {
 } from 'ngx-intl-tel-input';
 import { UserService } from '../../services/user';
 import { MatIcon } from '@angular/material/icon';
-import { startsWithValidator } from '../../common/utils/custom-validators';
 import { TranslateService } from '@ngx-translate/core';
+import { Back } from '../../components/back/back';
 @Component({
   selector: 'app-add-publisher',
   imports: [
@@ -83,6 +83,7 @@ import { TranslateService } from '@ngx-translate/core';
     SocialMedia,
     NgxIntlTelInputModule,
     MatIcon,
+    Back,
   ],
   templateUrl: './add-publisher.html',
   styleUrl: './add-publisher.css',

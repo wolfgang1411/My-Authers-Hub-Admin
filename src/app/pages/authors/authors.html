@@ -167,9 +167,9 @@
       authorTitles()[element.id]; track $index) {
       <li
         mat-menu-item
-        class="text-sm w-full text-left px-4 py-2 list-disc list-inside rounded-md hover:bg-primary-superlight transition"
+        class="text-sm w-full text-left px-4 py-2 !list-disc rounded-md hover:!bg-primary-superlight transition"
         [ngClass]="{
-          'bg-gray-80': $index % 2 === 0,
+          'bg-primary-superlight': $index % 2 === 0,
           'bg-white': $index % 2 !== 0
         }"
       >
@@ -199,9 +199,9 @@
       authorBooksSold()[element.id]; track $index) {
       <li
         mat-menu-item
-        class="text-sm w-full text-left px-4 py-2 list-disc list-inside rounded-md hover:bg-primary-superlight transition"
+        class="text-sm w-full text-left px-4 py-2 !list-disc rounded-md hover:!bg-primary-superlight transition"
         [ngClass]="{
-          'bg-gray-80': $index % 2 === 0,
+          'bg-primary-superlight': $index % 2 === 0,
           'bg-white': $index % 2 !== 0
         }"
       >

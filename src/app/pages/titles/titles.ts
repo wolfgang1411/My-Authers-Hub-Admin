@@ -1,10 +1,11 @@
-import { Component, Signal, signal } from '@angular/core';
+import { Component, computed, Signal, signal } from '@angular/core';
 import { debounceTime, Subject } from 'rxjs';
 import {
   ApproveTitlePayload,
   CreateDistributionLink,
   CreatePlatformIdentifier,
   Title,
+  TitleFilter,
   TitleResponse,
 } from '../../interfaces/Titles';
 import { SharedModule } from '../../modules/shared/shared-module';
@@ -22,6 +23,9 @@ import { format } from 'date-fns';
 import { TitleStatus, User } from '../../interfaces';
 import { ApproveTitle } from '../../components/approve-title/approve-title';
 import { UserService } from '../../services/user';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { StaticValuesService } from '../../services/static-values';
 
 @Component({
   selector: 'app-titles',
@@ -32,6 +36,8 @@ import { UserService } from '../../services/user';
     MatIconModule,
     MatIconButton,
     MatButton,
+    MatFormFieldModule,
+    MatSelectModule,
   ],
   templateUrl: './titles.html',
   styleUrl: './titles.css',
@@ -41,13 +47,21 @@ export class Titles {
     private titleService: TitleService,
     private translateService: TranslateService,
     private matDialog: MatDialog,
-    private userService: UserService
+    private userService: UserService,
+    private staticValueService: StaticValuesService
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
 
   loggedInUser!: Signal<User | null>;
 
+  titleDBStatus = computed(() => {
+    console.log(this.staticValueService.staticValues(), 'Fdafsaf');
+
+    return Object.keys(
+      this.staticValueService.staticValues()?.PuplisherStatus || {}
+    );
+  });
   searchStr = new Subject<string>();
 
   test!: Subject<string>;
@@ -61,7 +75,24 @@ export class Titles {
     'actions',
   ];
   dataSource = new MatTableDataSource<any>();
+  filter: TitleFilter = {
+    page: 1,
+    itemsPerPage: 30,
+    status: 'ALL' as any,
+  };
+  fetchTitleDetails() {
+    this.titleService
+      .getTitles()
+      .then(({ items }) => {
+        this.titles.set(items);
+        this.mapDataList();
 
+        console.log('Fetched titles:', this.titles());
+      })
+      .catch((error) => {
+        console.error('Error fetching titles:', error);
+      });
+  }
   mapDataList() {
     const mapped = this.titles().map((title, idx) => ({
       ...title,
@@ -96,21 +127,15 @@ export class Titles {
   }
 
   ngOnInit(): void {
+    this.fetchTitleDetails();
     this.searchStr.pipe(debounceTime(400)).subscribe((value) => {
-      console.log('Search string:', value);
+      this.filter.page = 1;
+      this.filter.searchStr = value;
+      if (!value?.length) {
+        delete this.filter.searchStr;
+      }
+      this.fetchTitleDetails();
     });
-
-    this.titleService
-      .getTitles()
-      .then(({ items }) => {
-        this.titles.set(items);
-        this.mapDataList();
-
-        console.log('Fetched titles:', this.titles());
-      })
-      .catch((error) => {
-        console.error('Error fetching titles:', error);
-      });
   }
 
   onClickApprove(title: Title) {

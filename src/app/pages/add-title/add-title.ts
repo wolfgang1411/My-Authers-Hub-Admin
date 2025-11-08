@@ -4,25 +4,15 @@ import {
   ElementRef,
   inject,
   QueryList,
-  Signal,
   signal,
   viewChild,
-  ViewChild,
   ViewChildren,
 } from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
-import {
-  combineLatest,
-  debounceTime,
-  distinctUntilChanged,
-  map,
-  Observable,
-  startWith,
-} from 'rxjs';
+import { debounceTime, distinctUntilChanged, map, Observable } from 'rxjs';
 import { StepperOrientation } from '@angular/cdk/stepper';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import {
-  FormBuilder,
   Validators,
   FormsModule,
   ReactiveFormsModule,
@@ -47,7 +37,6 @@ import {
   AuthorFormGroup,
   AuthorStatus,
   BookBindings,
-  CreateRoyalty,
   DistributionType,
   LaminationType,
   PaperType,
@@ -60,7 +49,6 @@ import {
   Publishers,
   PublisherStatus,
   PublishingType,
-  Royalty,
   RoyaltyFormGroup,
   Title,
   TitleCreate,
@@ -93,6 +81,7 @@ import Swal from 'sweetalert2';
 import { getFileSizeFromS3Url, getFileToBase64 } from '../../common/utils/file';
 import { TranslateService } from '@ngx-translate/core';
 import { StaticValuesService } from '../../services/static-values';
+import { Back } from '../../components/back/back';
 
 @Component({
   selector: 'app-add-title',
@@ -116,6 +105,7 @@ import { StaticValuesService } from '../../services/static-values';
     Pricing,
     Royalties,
     TitleDistribution,
+    Back,
   ],
   templateUrl: './add-title.html',
   styleUrl: './add-title.css',

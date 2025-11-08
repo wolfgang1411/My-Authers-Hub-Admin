@@ -160,7 +160,7 @@
             <mat-label>{{ "filter" | translate }}</mat-label>
             <input
               matInput
-              (keyup)="applySubPublisherFilter($event)"
+              (keyup)="applyPublisherFilter($event)"
               placeholder="Ex. ium"
               #input
             />
@@ -168,8 +168,8 @@
         </div>
         <app-list-table
           class="pt-6"
-          [dataSource]="subPublisherData"
-          [displayedColumns]="displayedSubPublisherColumns"
+          [dataSource]="PublisherData"
+          [displayedColumns]="displayedPublisherColumns"
         >
         </app-list-table>
       </section>

@@ -41,6 +41,7 @@ export interface PublisherFilter {
   parentPublisherId?: number;
   status?: PublisherStatus | PublisherStatus[] | null | string;
   searchStr?: string;
+  authorIds?: number;
 }
 
 export interface PublisherResponse {

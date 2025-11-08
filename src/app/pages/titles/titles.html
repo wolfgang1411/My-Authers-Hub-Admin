@@ -26,13 +26,31 @@
     </div>
 
     <div class="flex gap-2">
-      <button
+      <!-- <button
         matButton="filled"
         class="!bg-primary text-white flex items-center gap-2 rounded-md p-2"
       >
         <mat-icon class="material-icons">filter_list</mat-icon>
         {{ "filter" | translate }}
-      </button>
+      </button> -->
+      <div class="flex gap-2 pr-2">
+        <mat-form-field
+          class="compact-select !bg-surface h-[42px]"
+          appearance="outline"
+        >
+          <mat-select
+            (selectionChange)="
+              filter.status = $event.value; fetchTitleDetails()
+            "
+            [value]="filter.status"
+          >
+            <mat-option value="ALL">ALL</mat-option>
+            @for (status of titleDBStatus(); track $index) {
+            <mat-option [value]="status">{{ status | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
       <button
         matButton
         matButton="filled"
@@ -45,7 +63,7 @@
       </button>
     </div>
   </div>
-  <div class="flex gap-2">
+  <!-- <div class="flex gap-2">
     <button class="!bg-primary" matButton="filled">
       {{ "all" | translate }}
     </button>
@@ -58,7 +76,7 @@
     <button class="!bg-primary" matButton="filled">
       {{ "dormant" | translate }}
     </button>
-  </div>
+  </div> -->
 
   <app-list-table
     class="pt-6"
@@ -72,7 +90,7 @@
       <button
         class="!bg-primary"
         mat-icon-button
-        [routerLink]="['/title', element.id]"
+        [routerLink]="['/titleDetails', element.id]"
       >
         <mat-icon class="!text-white">visibility</mat-icon>
       </button>

@@ -1,0 +1,133 @@
+<div class="p-4 rounded-md bg-[var(--surface)] min-h-screen">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-semibold text-[var(--text-heading)]">
+      My Book Titles
+    </h1>
+    <app-back></app-back>
+  </div>
+
+  <div
+    class="bg-white rounded-2xl shadow-sm border border-[var(--primary-superlight)] flex flex-col md:flex-row p-6 hover:shadow-lg transition-all"
+  >
+    <!-- Book Cover -->
+    <div
+      class="w-[120px] h-[160px] bg-[var(--light-purple-bg)] rounded-lg flex items-center justify-center text-[var(--text-placeholder)] font-medium border border-[var(--primary-light)]"
+    >
+      YOUR COVER
+    </div>
+
+    <!-- Book Info + Progress -->
+    <div class="flex-1 ml-6">
+      <div class="flex justify-between items-start">
+        <div>
+          <h2 class="text-lg font-semibold text-[var(--text-heading)]">
+            Journey to the Hidden World
+          </h2>
+          <p class="text-[var(--text-secondary)] text-sm">
+            Fiction | English | Paperback & eBook
+          </p>
+        </div>
+        <button mat-icon-button color="warn" matTooltip="Delete Title">
+          <mat-icon>delete_outline</mat-icon>
+        </button>
+      </div>
+
+      <!-- Stepper -->
+      <div class="mt-4 flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <div
+            class="w-8 h-8 flex items-center justify-center rounded-full bg-[var(--green-2)] text-white font-semibold"
+          >
+            1
+          </div>
+          <span class="text-[var(--text-heading)] font-medium text-sm"
+            >Book Details</span
+          >
+        </div>
+
+        <div class="flex-1 border-t border-[var(--primary-light)] mx-2"></div>
+
+        <div class="flex items-center gap-2">
+          <div
+            class="w-8 h-8 flex items-center justify-center rounded-full bg-[var(--primary-superlight)] text-[var(--primary)] font-semibold"
+          >
+            2
+          </div>
+          <span class="text-[var(--text-secondary)] text-sm">Book Content</span>
+        </div>
+
+        <div class="flex-1 border-t border-[var(--primary-light)] mx-2"></div>
+
+        <div class="flex items-center gap-2">
+          <div
+            class="w-8 h-8 flex items-center justify-center rounded-full bg-[var(--primary-superlight)] text-[var(--primary)] font-semibold"
+          >
+            3
+          </div>
+          <span class="text-[var(--text-secondary)] text-sm">Book Design</span>
+        </div>
+
+        <div class="flex-1 border-t border-[var(--primary-light)] mx-2"></div>
+
+        <div class="flex items-center gap-2">
+          <div
+            class="w-8 h-8 flex items-center justify-center rounded-full bg-[var(--primary-superlight)] text-[var(--primary)] font-semibold"
+          >
+            4
+          </div>
+          <span class="text-[var(--text-secondary)] text-sm"
+            >Book Distribution</span
+          >
+        </div>
+      </div>
+
+      <!-- Continue Button -->
+      <div class="mt-6">
+        <button
+          mat-flat-button
+          class="!bg-primary !text-white font-medium !px-8 !py-2 !rounded-lg shadow-lg hover:!bg-[var(--purple)]"
+        >
+          Continue Publishing →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Example of multiple titles -->
+  <div
+    class="mt-8 grid gap-6 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 transition-all"
+  >
+    @for ( i of [1, 2, 3, 4]; track $index) {
+    <div
+      class="bg-white rounded-2xl shadow-sm border border-[var(--primary-superlight)] p-5 hover:shadow-lg transition-all flex flex-col"
+    >
+      <div class="flex items-center gap-4">
+        <div
+          class="w-[100px] h-[140px] bg-[var(--light-purple-bg)] rounded-md flex items-center justify-center text-[var(--text-placeholder)] font-medium border border-[var(--primary-light)]"
+        >
+          COVER
+        </div>
+        <div>
+          <h3 class="text-[var(--text-heading)] font-semibold text-base">
+            Title {{ i }}
+          </h3>
+          <p class="text-[var(--text-secondary)] text-sm mb-2">
+            Status: In Progress
+          </p>
+          <mat-progress-bar
+            mode="determinate"
+            value="{{ i * 20 }}"
+            class="!h-2 !rounded-full"
+          ></mat-progress-bar>
+        </div>
+      </div>
+      <button
+        mat-stroked-button
+        class="!border-[var(--primary-light)] !text-[var(--primary)] mt-4 rounded-lg hover:!bg-[var(--primary-superlight)]"
+      >
+        View Details
+      </button>
+    </div>
+    }
+  </div>
+</div>

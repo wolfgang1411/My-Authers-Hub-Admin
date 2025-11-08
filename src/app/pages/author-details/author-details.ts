@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { ListTable } from '../../components/list-table/list-table';
 import { MatInputModule } from '@angular/material/input';
+import { PublisherService } from '../publisher/publisher-service';
 
 @Component({
   selector: 'app-author-details',
@@ -41,7 +42,8 @@ export class AuthorDetails {
     private authorsService: AuthorsService,
     private titleService: TitleService,
     private salesService: SalesService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private publisherService: PublisherService
   ) {
     this.route.params.subscribe(({ id }) => {
       this.authorId = id;
@@ -83,7 +85,7 @@ export class AuthorDetails {
     'bookssold',
     'royaltyearned',
   ];
-  displayedSubPublisherColumns: string[] = [
+  displayedPublisherColumns: string[] = [
     'name',
     'nooftitles',
     'noofauthors',
@@ -99,11 +101,11 @@ export class AuthorDetails {
   ]);
   bookPublishData = new MatTableDataSource<any>([]);
   authorData = new MatTableDataSource<any>([]);
-  subPublisherData = new MatTableDataSource<any>([]);
+  PublisherData = new MatTableDataSource<any>([]);
   royaltyData = new MatTableDataSource<Royalty>();
   async ngOnInit() {
     await this.fetchauthorDetails();
-    // await this.fetchSubPublishers();
+    await this.fetchPublishers();
     // await this.fetchAuthors();
     await this.fetchTitles();
     await this.fetchRoyalty();
@@ -119,24 +121,24 @@ export class AuthorDetails {
     }
   }
 
-  // async fetchSubPublishers() {
-  //   this.publisherService
-  //     .getPublishers({ parentPublisherId: this.publisherId })
-  //     .then(({ items }) => {
-  //       const mapped = items.map((publisher) => ({
-  //         ...publisher,
-  //         phonenumber: publisher.phoneNumber || publisher.user.phoneNumber,
-  //         nooftitles: publisher.noOfTitles,
-  //         noofauthors: publisher.noOfAuthors,
-  //       }));
-  //       this.subPublisherData = new MatTableDataSource(mapped);
-  //       this.subPublisherData.filterPredicate = (data, filter) =>
-  //         data.name.toLowerCase().includes(filter) ||
-  //         data.email.toLowerCase().includes(filter) ||
-  //         data.phonenumber?.toLowerCase().includes(filter);
-  //     })
-  //     .catch((error) => console.error('Error fetching authors:', error));
-  // }
+  async fetchPublishers() {
+    this.publisherService
+      .getPublishers({ authorIds: this.authorId })
+      .then(({ items }) => {
+        const mapped = items.map((publisher) => ({
+          ...publisher,
+          phonenumber: publisher.phoneNumber || publisher.user.phoneNumber,
+          nooftitles: publisher.noOfTitles,
+          noofauthors: publisher.noOfAuthors,
+        }));
+        this.PublisherData = new MatTableDataSource(mapped);
+        this.PublisherData.filterPredicate = (data, filter) =>
+          data.name.toLowerCase().includes(filter) ||
+          data.email.toLowerCase().includes(filter) ||
+          data.phonenumber?.toLowerCase().includes(filter);
+      })
+      .catch((error) => console.error('Error fetching authors:', error));
+  }
   // fetchAuthors() {
   //   this.authorsService
   //     .getAuthors({ publisherId: this.publisherId, showTotalEarnings: true })
@@ -251,8 +253,8 @@ export class AuthorDetails {
     const value = (event.target as HTMLInputElement).value.trim().toLowerCase();
     this.authorData.filter = value;
   }
-  applySubPublisherFilter(event: Event) {
+  applyPublisherFilter(event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
-    this.subPublisherData.filter = filterValue.trim().toLowerCase();
+    this.PublisherData.filter = filterValue.trim().toLowerCase();
   }
 }

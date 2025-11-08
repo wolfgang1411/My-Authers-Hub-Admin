@@ -1,9 +1,12 @@
 @switch (stepperOrientation | async) { @case ('horizontal') { } @case
 ('vertical') { } }
 
-<h3 class="heading">
-  {{ "uploadtitle" | translate }}
-</h3>
+<div class="flex justify-between">
+  <h3 class="heading">
+    {{ "uploadtitle" | translate }}
+  </h3>
+  <app-back></app-back>
+</div>
 <mat-stepper
   class="example-stepper !my-4"
   [orientation]="(stepperOrientation | async)!"

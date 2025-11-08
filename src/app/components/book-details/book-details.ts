@@ -74,10 +74,10 @@ export class BookDetails {
   TitleGenre = signal<TitleGenre[]>([]);
 
   _formBuilder = inject(FormBuilder);
-  isbnVerified = signal<boolean | null>(!!this.titleId);
+  isbnVerified = signal<boolean | null>(null);
   isVerifying = signal(false);
-  isbnEbookVerified = signal(!!this.titleId);
-  isISBNEbookErifying = signal(!!this.titleId);
+  isbnEbookVerified = signal<boolean | null>(null);
+  isISBNEbookErifying = signal(false);
 
   async ngOnInit() {
     const { items: category } = await this.titleService.getTitleCategory();
