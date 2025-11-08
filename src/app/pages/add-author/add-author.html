@@ -65,7 +65,37 @@
           ></textarea>
         </mat-form-field>
       </div>
-
+    </form>
+    <form [formGroup]="authorSocialMediaGroup">
+      <div formArrayName="socialMedia" class="flex flex-col gap-4 my-4">
+        <div class="flex justify-between items-center">
+          <h3>
+            {{ "addsocialmedialinks" | translate }}
+          </h3>
+          <button
+            matButton
+            matButton="filled"
+            class="!bg-primary disabled:opacity-40"
+            (click)="this.addSocialMedia()"
+            [disabled]="isAllSelected()"
+          >
+            <mat-icon class="material-icons">add_circle_outline</mat-icon>
+            {{ "addmore" | translate }}
+          </button>
+        </div>
+        @for (group of authorSocialMediaGroup.controls.socialMedia.controls;
+        track $index) {
+        <div [formGroupName]="$index">
+          <app-social-media
+            [socialMediaGroup]="group"
+            [socialMediaArray]="socialMediaArray"
+            [index]="$index"
+          ></app-social-media>
+        </div>
+        }
+      </div>
+    </form>
+    <form [formGroup]="authorFormGroup">
       <mat-card class="example-card !gap-4" appearance="outlined">
         <mat-card-header class="flex flex-col gap-2">
           <mat-card-title class="!text-primary text-left !font-medium">{{
@@ -198,38 +228,16 @@
       <button class="!bg-primary mt-8 !text-white" matButton matStepperPrevious>
         Back
       </button>
-      <button class="!bg-primary mt-8 !text-white" matButton matStepperNext>
-        Next
-      </button>
-    </div>
-  </mat-step>
-  <mat-step
-    [stepControl]="authorSocialMediaGroup"
-    class="!text-accent !p-0"
-    label="Add your social media links"
-  >
-    <form [formGroup]="authorSocialMediaGroup">
-      <div formArrayName="socialMedia" class="grid grid-cols-2 gap-4 my-4">
-        @for (group of socialMediaArray.controls; track $index) {
-        <div [formGroupName]="$index">
-          <app-social-media
-            [socialMediaGroup]="group"
-            [socialMediaArray]="socialMediaArray"
-          ></app-social-media>
-        </div>
-        }
-      </div>
-    </form>
-    <div class="flex flex-row gap-2">
-      <button class="!bg-primary mt-8 !text-white" matButton matStepperPrevious>
-        Back
-      </button>
       <button
         class="!bg-primary mt-8 !text-white"
         matButton
         (click)="onSubmit()"
       >
-        Submit
+        {{
+          loggedInUser()?.accessLevel === "SUPERADMIN" || !this.authorId
+            ? ("submit" | translate)
+            : ("raiseaticket" | translate)
+        }}
       </button>
     </div>
   </mat-step>
