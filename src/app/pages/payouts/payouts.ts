@@ -105,33 +105,66 @@ export class Payouts implements OnInit {
   }
 
   async onUpdatePayout(id: number, status: PayoutStatus) {
-    const text =
-      status === 'REJECTED'
-        ? 'You are about to reject this payout request.'
-        : 'You are about to approve this payout request.';
-    const confirmButtonText =
-      status === 'REJECTED' ? 'Yes, reject it!' : 'Yes, approve it!';
-    const { value } = await Swal.fire({
+    const isReject = status === 'REJECTED';
+    const text = isReject
+      ? 'You are about to reject this payout request.'
+      : 'You are about to approve this payout request.';
+
+    const confirmButtonText = isReject ? 'Yes, reject it!' : 'Yes, approve it!';
+
+    // Build SweetAlert config
+    const swalConfig: any = {
       icon: 'warning',
       title: 'Are you sure?',
       text,
       showCancelButton: true,
       confirmButtonText,
       cancelButtonText: 'Cancel',
-      confirmButtonColor: status === 'REJECTED' ? '#ff6b6b' : '#00397e',
-    });
+      confirmButtonColor: isReject ? '#ff6b6b' : '#00397e',
+    };
 
-    if (!value) return;
+    // Add checkbox only for REJECTED
+    if (isReject) {
+      swalConfig.input = 'checkbox';
+      swalConfig.inputValue = 1; // default checked
+      swalConfig.inputPlaceholder = 'Refund hold amount to user';
+      swalConfig.inputValidator = (value: number) => {
+        if (value === 0) {
+          return null; // valid even if unchecked
+        }
+        return null;
+      };
+    }
+
+    const { value: checkboxValue, isConfirmed } = await Swal.fire(swalConfig);
+
+    if (!isConfirmed) return;
 
     try {
-      const res = await this.payoutService.updatePayout(id, { status });
+      // Determine refundHoldAmount only for rejection
+      const refundHoldAmount = isReject ? Boolean(checkboxValue) : undefined;
+
+      const payload: any = { status };
+      if (refundHoldAmount !== undefined) {
+        payload.refundHoldAmount = refundHoldAmount;
+      }
+
+      const res = await this.payoutService.updatePayout(id, payload);
+
       const temp = this.payouts()?.map((payout) =>
         payout.id === id ? res : payout
       );
+
       this.payouts.set(temp || []);
       this.setDataSource();
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: `Payout ${status.toLowerCase()} successfully!`,
+      });
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   }
 

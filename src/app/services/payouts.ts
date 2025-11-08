@@ -37,7 +37,10 @@ export class PayoutsService {
     }
   }
 
-  async updatePayout(id: number, data: { status: PayoutStatus }) {
+  async updatePayout(
+    id: number,
+    data: { status: PayoutStatus; refundHoldAmount?: boolean }
+  ) {
     try {
       return await this.loader.loadPromise(
         this.server.patch<Payout>(`wallet-request/${id}`, data)
