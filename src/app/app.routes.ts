@@ -33,6 +33,14 @@ export const routes: Routes = [
     canActivate: [privateRouteGuard],
   },
   {
+    path: 'authorDetails/:id',
+    loadComponent: () =>
+      import('./pages/author-details/author-details').then(
+        (c) => c.AuthorDetails
+      ),
+    canActivate: [privateRouteGuard],
+  },
+  {
     path: 'author/invite/:signupCode',
     loadComponent: () =>
       import('./pages/add-author/add-author').then((c) => c.AddAuthor),

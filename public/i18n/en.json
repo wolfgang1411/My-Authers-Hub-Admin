@@ -357,5 +357,6 @@
   "linkedin": "LinkedIn",
   "userhandle": "Username",
   "nameofwebsite": "Name Of Website",
-  "invalidifscodestartwitherror": "IFSC code must start with {{prefix}}"
+  "invalidifscodestartwitherror": "IFSC code must start with {{prefix}}",
+  "authorDetails":"Author Details"
 }
