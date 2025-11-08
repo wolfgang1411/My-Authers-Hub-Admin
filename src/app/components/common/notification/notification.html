@@ -69,7 +69,8 @@
     </button>
     } @else {
     <span>&nbsp;</span>
-    } @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
+    } @if (loggedInUser()?.accessLevel === 'SUPERADMIN' ||
+    loggedInUser()?.accessLevel === 'PUBLISHER') {
 
     <button
       mat-stroked-button
