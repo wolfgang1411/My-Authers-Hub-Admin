@@ -114,8 +114,10 @@
           <mat-form-field>
             <mat-label> {{ "language" | translate }} </mat-label>
             <mat-select formControlName="language" required>
-              <mat-option value="en">English</mat-option>
-              <mat-option value="fr">French</mat-option>
+              @for (language of languages(); track $index) {
+              <mat-option [value]="language">{{ language }}</mat-option>
+              <mat-option [value]="language">{{ language }}</mat-option>
+              }
             </mat-select>
           </mat-form-field>
           <mat-form-field>

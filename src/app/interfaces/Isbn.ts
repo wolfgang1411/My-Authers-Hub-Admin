@@ -4,7 +4,7 @@ import { User } from './user';
 
 export interface ISBN {
   id: number;
-  isbnNumber: String;
+  isbnNumber: string;
   image: string;
   type: ISBNType;
   admin: User;
@@ -13,6 +13,7 @@ export interface ISBN {
 }
 
 export interface createIsbn {
+  id?: number;
   isbnNumber: string;
   type: ISBNType;
   titleId: number;

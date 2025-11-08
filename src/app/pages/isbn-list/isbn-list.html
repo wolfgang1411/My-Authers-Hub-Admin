@@ -34,20 +34,7 @@
       {{ "createisbn" | translate }}
     </button>
   </div>
-  <div class="flex gap-2">
-    <button class="!bg-primary" matButton="filled">
-      {{ "all" | translate }}
-    </button>
-    <button class="!bg-primary" matButton="filled">
-      {{ "active" | translate }}
-    </button>
-    <button class="!bg-primary" matButton="filled">
-      {{ "inactive" | translate }}
-    </button>
-    <button class="!bg-primary" matButton="filled">
-      {{ "dormant" | translate }}
-    </button>
-  </div>
+
   <app-list-table
     class="pt-6"
     [dataSource]="dataSource"
@@ -67,6 +54,18 @@
 
         {{ "downloadbarcode" | translate }}
       </button>
+      @if (!element.title?.length) {
+      <button
+        class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
+        matButton="filled"
+        matButton
+        (click)="createIsbn(element)"
+      >
+        <mat-icon class="material-icons">link</mat-icon>
+
+        {{ "assigntitle" | translate }}
+      </button>
+      }
     </div>
   </ng-template>
 </div>
