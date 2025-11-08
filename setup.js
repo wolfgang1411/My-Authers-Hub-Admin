@@ -14,7 +14,7 @@ if (!fs.existsSync(envDir)) {
   console.log("📁 Created environments folder:", envDir);
 }
 
-const apiUrl = process.env.API_URL || "http://localhost:3000/";
+const apiUrl = process.env.apiUrl || "http://localhost:3001/";
 const nodeEnv = process.env.NODE_ENV || "development";
 
 // Environment file content
