@@ -1,28 +1,16 @@
 {
   "name": "my-authors-hub",
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "private": true,
   "scripts": {
+    "setup": "ts-node setup.ts",
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0 --port 4200",
-    "build": "ng build --configuration production",
-    "watch": "ng build --watch --configuration development",
+    "build": "npm run setup && ng build --configuration production",
+    "serve:static": "npx serve dist/my-authors-hub/browser",
     "test": "ng test",
-    "serve:ssr:my-authors-hub": "node dist/my-authors-hub/server/server.mjs",
-    "serve": "ng serve --host 0.0.0.0 --port 4200",
-    "serve:static": "serve dist/my-authors-hub/browser",
-    "ngrok": "ngrok http --url=adequate-mustang-usefully.ngrok-free.app 3000"
+    "watch": "ng build --watch --configuration development"
   },
-  "prettier": {
-    "overrides": [
-      {
-        "files": "*.html",
-        "options": {
-          "parser": "angular"
-        }
-      }
-    ]
-  },
-  "private": true,
   "dependencies": {
     "@angular/animations": "^20.1.4",
     "@angular/cdk": "^20.1.4",
@@ -33,15 +21,13 @@
     "@angular/material": "^20.1.4",
     "@angular/material-moment-adapter": "^20.2.10",
     "@angular/platform-browser": "^20.1.0",
-    "@angular/platform-server": "^20.1.0",
     "@angular/router": "^20.1.0",
-    "@angular/ssr": "^20.1.4",
     "@ngx-translate/core": "^17.0.0",
     "@ngx-translate/http-loader": "^17.0.0",
     "@ngxmc/datetime-picker": "^20.1.0",
     "angular-svg-icon": "^19.1.1",
     "date-fns": "^4.1.0",
-    "express": "^5.1.0",
+    "dotenv": "^17.2.3",
     "google-libphonenumber": "^3.2.42",
     "intl-tel-input": "^19.5.7",
     "jwt-decode": "^4.0.0",
@@ -77,5 +63,15 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.11",
     "typescript": "~5.8.2"
+  },
+  "prettier": {
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
   }
 }
