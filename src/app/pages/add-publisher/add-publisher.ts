@@ -325,7 +325,6 @@ export class AddPublisher {
         autherId: new FormControl<number | null>(media.autherId),
         id: new FormControl<number | null>(media.id),
       });
-
       socialMediaArray.push(group);
     });
   }

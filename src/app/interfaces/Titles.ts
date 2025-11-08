@@ -47,6 +47,7 @@ export interface Title {
   authorDisplayNames: {
     [id: number]: string;
   };
+  publisherId: number;
   publisher: Publishers;
   authors?: AuthorTitle[];
   printing?: TitlePrinting[];
@@ -168,6 +169,7 @@ export interface TitleCategory {
 }
 export interface TitleFilter {
   publisherIds?: number | number[];
+  authorIds?: number | number[];
   publishedAfter?: string;
   itemsPerPage?: number;
   page?: number;

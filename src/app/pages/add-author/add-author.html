@@ -53,18 +53,17 @@
             required
           />
         </mat-form-field>
-
-        <mat-form-field>
-          <mat-label>{{ "about" | translate }}</mat-label>
-          <textarea
-            matInput
-            placeholder="xyz"
-            formControlName="about"
-            required
-            rows="4"
-          ></textarea>
-        </mat-form-field>
       </div>
+      <mat-form-field class="!flex w-full">
+        <mat-label>{{ "about" | translate }}</mat-label>
+        <textarea
+          matInput
+          placeholder="xyz"
+          formControlName="about"
+          required
+          rows="4"
+        ></textarea>
+      </mat-form-field>
     </form>
     <form [formGroup]="authorSocialMediaGroup">
       <div formArrayName="socialMedia" class="flex flex-col gap-4 my-4">
