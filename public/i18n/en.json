@@ -358,5 +358,7 @@
   "userhandle": "Username",
   "nameofwebsite": "Name Of Website",
   "invalidifscodestartwitherror": "IFSC code must start with {{prefix}}",
-  "authorDetails":"Author Details"
+  "authorDetails":"Author Details",
+  "authoremailid":"Author Email Id",
+  "authorcontactnumber ":"Author Contact Number "
 }

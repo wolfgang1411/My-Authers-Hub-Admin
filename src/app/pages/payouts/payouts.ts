@@ -52,7 +52,6 @@ export class Payouts implements OnInit {
   searchStr = new Subject<string>();
 
   displayedColumns: string[] = [
-    'orderid',
     'amount',
     'status',
     'user',

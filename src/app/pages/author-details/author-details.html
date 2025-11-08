@@ -19,7 +19,7 @@
         <h2 class="heading mb-4">{{ "authorDetails" | translate }}</h2>
         <ul class="space-y-2 grid grid-cols-3 gap-4">
           <li class="text-text">
-            <label class="font-medium">{{ "companyname" | translate }} :</label>
+            <label class="font-medium">{{ "username" | translate }} :</label>
             {{ authorDetails()?.name }}
           </li>
           <li class="text-text">
@@ -29,9 +29,7 @@
             {{ authorDetails()?.email || "xyzpublication@gmail.com" }}
           </li>
           <li class="text-text">
-            <label class="font-medium"
-              >{{ "publishername" | translate }} :</label
-            >
+            <label class="font-medium">{{ "authorname" | translate }} :</label>
             {{
               authorDetails()?.user?.firstName +
                 " " +
@@ -40,13 +38,13 @@
           </li>
           <li class="text-text">
             <label class="font-medium"
-              >{{ "publishercontactnumber" | translate }} :</label
+              >{{ "authorcontactnumber" | translate }} :</label
             >{{ authorDetails()?.user?.phoneNumber }} ,
             {{ authorDetails()?.phoneNumber }}
           </li>
           <li class="text-text">
             <label class="font-medium"
-              >{{ "publisheremailid" | translate }} :</label
+              >{{ "authoremailid" | translate }} :</label
             >
             {{ authorDetails()?.user?.email }}
           </li>
