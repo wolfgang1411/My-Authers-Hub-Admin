@@ -1,14 +1,15 @@
-import { Component, computed, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  signal,
+  TemplateRef,
+  ViewChild,
+} from '@angular/core';
 import { AuthorsService } from './authors-service';
 import { debounceTime, Subject } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { SharedModule } from '../../modules/shared/shared-module';
-import {
-  Author,
-  AuthorFilter,
-  AuthorResponse,
-  AuthorStatus,
-} from '../../interfaces';
+import { Author, AuthorFilter, AuthorStatus } from '../../interfaces';
 import { MatTableDataSource } from '@angular/material/table';
 import { ListTable } from '../../components/list-table/list-table';
 import { MatIcon } from '@angular/material/icon';
@@ -17,7 +18,6 @@ import { MatIconButton } from '@angular/material/button';
 import { InviteDialog } from '../../components/invite-dialog/invite-dialog';
 import { Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { Invite } from '../../interfaces/Invite';
 import Swal from 'sweetalert2';
 import { PublisherService } from '../publisher/publisher-service';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -26,6 +26,10 @@ import { StaticValuesService } from '../../services/static-values';
 import { ChangePassword } from '../../components/change-password/change-password';
 import { AuthService } from '../../services/auth';
 import { TranslateService } from '@ngx-translate/core';
+import { TitleService } from '../titles/title-service';
+import { MatMenuItem, MatMenuModule } from '@angular/material/menu';
+import { TransactionService } from '../../services/transaction';
+import { SalesService } from '../../services/sales';
 
 @Component({
   selector: 'app-authors',
@@ -38,6 +42,8 @@ import { TranslateService } from '@ngx-translate/core';
     MatIconButton,
     MatFormFieldModule,
     MatSelectModule,
+    MatMenuModule,
+    MatMenuItem,
   ],
   templateUrl: './authors.html',
   styleUrl: './authors.css',
@@ -49,12 +55,17 @@ export class Authors {
     private publisherService: PublisherService,
     private staticValueService: StaticValuesService,
     private authService: AuthService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private titleService: TitleService,
+    private salesService: SalesService
   ) {}
   searchStr = new Subject<string>();
-
+  @ViewChild('nameRowMenu') nameRowMenu!: TemplateRef<any>;
   test!: Subject<string>;
   authors = signal<Author[]>([]);
+  authorTitles = signal<Record<string, any[]>>({});
+  authorBooksSold = signal<Record<string, any[]>>({});
+  publishers = signal<{ [id: number]: any }>({});
   displayedColumns: string[] = [
     'name',
     'numberoftitles',
@@ -65,13 +76,22 @@ export class Authors {
   ];
   dataSource = new MatTableDataSource<any>();
   AuthorStatus = AuthorStatus;
+  authorRowMenus = signal<Record<string, TemplateRef<any>>>({});
 
+  @ViewChild('numberOfTitlesMenu') numberOfTitlesMenu!: TemplateRef<any>;
+  @ViewChild('booksSoldMenu') booksSoldMenu!: TemplateRef<any>;
   filter: AuthorFilter = {
     page: 1,
     itemsPerPage: 30,
     status: 'ALL' as any,
     showTotalEarnings: true,
   };
+  ngAfterViewInit() {
+    this.authorRowMenus.set({
+      numberoftitles: this.numberOfTitlesMenu,
+      bookssold: this.booksSoldMenu,
+    });
+  }
 
   fetchAuthors(showLoader = true) {
     this.authorService
@@ -100,6 +120,67 @@ export class Authors {
       });
   }
 
+  fetchTitlesByAuthor(authorId: number) {
+    if (this.authorTitles()[authorId]) return;
+
+    console.log(authorId, 'authorssiidd');
+
+    this.titleService
+      .getTitles({ authorIds: +authorId })
+      .then(async ({ items }) => {
+        this.authorTitles.update((prev) => ({
+          ...prev,
+          [authorId]: items,
+        }));
+        const publisherIds = Array.from(
+          new Set(items.map((t) => t.publisherId).filter((id) => !!id))
+        );
+        await Promise.all(
+          publisherIds.map(async (id) => {
+            if (!this.publishers()[id]) {
+              try {
+                const publisher = await this.publisherService.getPublisherById(
+                  id
+                );
+                this.publishers.update((prev) => ({
+                  ...prev,
+                  [id]: publisher,
+                }));
+              } catch (err) {
+                console.error(`Error fetching publisher ${id}:`, err);
+              }
+            }
+          })
+        );
+      })
+      .catch((err) => {
+        console.error('Error fetching titles:', err);
+        this.authorTitles.update((prev) => ({
+          ...prev,
+          [authorId]: [],
+        }));
+      });
+  }
+
+  fetchEarningsByAuthor(authorId: number) {
+    if (this.authorBooksSold()[authorId]) return;
+    console.log(authorId, 'authorssiidd');
+    this.salesService
+      .fetchEarnings({ authorIds: +authorId })
+      .then(({ items }) => {
+        this.authorBooksSold.update((prev) => ({
+          ...prev,
+          [authorId]: items,
+        }));
+      })
+      .catch((err) => {
+        console.error('Error fetching titles:', err);
+        this.authorBooksSold.update((prev) => ({
+          ...prev,
+          [authorId]: [],
+        }));
+      });
+  }
   authorDBStatus = computed(() => {
     return Object.keys(
       this.staticValueService.staticValues()?.AuthorStatus || {}

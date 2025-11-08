@@ -1,4 +1,11 @@
-import { Component, computed, inject, Signal, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  Signal,
+  signal,
+} from '@angular/core';
 import {
   FormBuilder,
   Validators,
@@ -33,6 +40,7 @@ import {
   SocialMediaType,
   BankOption,
   User,
+  UpdateTicketType,
 } from '../../interfaces';
 import { AddressService } from '../../services/address-service';
 import { BankDetailService } from '../../services/bank-detail-service';
@@ -83,6 +91,13 @@ export class AddAuthor {
     private translateService: TranslateService,
     private userService: UserService
   ) {
+    effect(() => {
+      const selected =
+        (this.authorSocialMediaGroup.get('socialMedia') as FormArray)?.value
+          ?.map((s: any) => s?.type)
+          ?.filter((t: string) => !!t) ?? [];
+      this.selectedTypes.set(selected);
+    });
     const breakpointObserver = inject(BreakpointObserver);
     this.stepperOrientation = breakpointObserver
       .observe('(min-width: 800px)')
@@ -99,6 +114,7 @@ export class AddAuthor {
   loggedInUser!: Signal<User | null>;
   bankOptions = signal<BankOption[]>([]);
   selectedTypes = signal<string[]>([]);
+  selectedBankPrefix = signal<string | null>(null);
 
   isAllSelected = computed(() => {
     return this.selectedTypes().length >= this.socialMediaArray.length;
@@ -136,29 +152,21 @@ export class AddAuthor {
       this.signupCode || null
     );
 
-    const { data } = await this.bankDetailService.fetchBankOptions();
-    this.bankOptions.set(data);
+    this.authorBankDetails.controls.name.valueChanges.subscribe((v) => {
+      this.selectedBankPrefix.set(
+        this.bankOptions().find(({ BANK }) => BANK === v)?.BANKCODE || null
+      );
+    });
+
+    const { data: bankOptions } =
+      await this.bankDetailService.fetchBankOptions();
+    this.bankOptions.set(bankOptions);
 
     if (this.signupCode) {
       const invite = await this.inviteService.findOne(this.signupCode);
       this.authorFormGroup.controls.email.patchValue(invite.email);
       this.authorFormGroup.controls.email.disable();
     }
-    Object.values(SocialMediaType).forEach((type) => {
-      this.socialMediaArray.push(
-        new FormGroup({
-          type: new FormControl<SocialMediaType | null>(type),
-          url: new FormControl<string | null>(
-            '',
-            Validators.pattern(/^https?:\/\/.+/)
-          ),
-          name: new FormControl<string | null>(''),
-          autherId: new FormControl<number | null>(null),
-          publisherId: new FormControl<number | null>(null),
-          id: new FormControl<number | null>(null),
-        })
-      );
-    });
 
     if (this.authorId) {
       const response = await this.authorsService.getAuthorrById(this.authorId);
@@ -182,7 +190,10 @@ export class AddAuthor {
   authorBankDetails = this._formBuilder.group({
     id: <number | null>null,
     name: ['', Validators.required],
-    accountHolderName: ['', Validators.required],
+    accountHolderName: [
+      '',
+      [Validators.required, Validators.pattern(/^[A-Za-z\s]+$/)],
+    ],
     accountNo: ['', Validators.required],
     ifsc: ['', [Validators.required, this.ifscCodeValidator()]],
     panCardNo: ['', Validators.required],
@@ -253,6 +264,11 @@ export class AddAuthor {
       country: authorDetails.address[0]?.country,
       pincode: authorDetails.address[0]?.pincode,
     });
+    this.selectedBankPrefix.set(
+      this.bankOptions().find(
+        ({ BANK }) => BANK === authorDetails.bankDetails?.[0]?.name
+      )?.BANKCODE || null
+    );
     this.authorBankDetails.patchValue({
       id: authorDetails.bankDetails?.[0]?.id,
       name: authorDetails.bankDetails?.[0]?.name,
@@ -290,55 +306,134 @@ export class AddAuthor {
       email: this.authorFormGroup.controls.email.value,
     };
     try {
-      const response = (await this.authorsService.createAuthor(
-        authorData as Author
-      )) as Author;
-      if (response && response.id) {
-        const authorAddressData = {
-          ...this.authorAddressDetails.value,
-          autherId: response.id,
-        };
-        await this.addressService.createOrUpdateAddress(
-          authorAddressData as Address
-        );
-
-        const authorBankData = {
-          ...this.authorBankDetails.value,
-          autherId: response.id,
-        };
-        await this.bankDetailService.createOrUpdateBankDetail(
-          authorBankData as createBankDetails
-        );
-        const socialMediaData = this.socialMediaArray.controls
-          .map((group) => ({
-            ...group.value,
+      if (this.loggedInUser()?.accessLevel === 'SUPERADMIN' || !this.authorId) {
+        const response = (await this.authorsService.createAuthor(
+          authorData as Author
+        )) as Author;
+        if (response && response.id) {
+          const authorAddressData = {
+            ...this.authorAddressDetails.value,
             autherId: response.id,
-          }))
-          .filter((item) => item.url?.trim());
-        if (socialMediaData.length > 0) {
-          await this.socialService.createOrUpdateSocialMediaLinks(
-            socialMediaData as socialMediaGroup[]
+          };
+          await this.addressService.createOrUpdateAddress(
+            authorAddressData as Address
           );
-          console.log(socialMediaData, 'social media');
+
+          const authorBankData = {
+            ...this.authorBankDetails.value,
+            autherId: response.id,
+          };
+          await this.bankDetailService.createOrUpdateBankDetail(
+            authorBankData as createBankDetails
+          );
+          const socialMediaData = this.socialMediaArray.controls
+            .map((group) => ({
+              ...group.value,
+              autherId: response.id,
+            }))
+            .filter((item) => item.url?.trim());
+          if (socialMediaData.length > 0) {
+            await this.socialService.createOrUpdateSocialMediaLinks(
+              socialMediaData as socialMediaGroup[]
+            );
+            console.log(socialMediaData, 'social media');
+          }
+        }
+
+        let html = 'You have successfully created author';
+        if (this.authorId) {
+          html = 'You have successfully updated author';
+        }
+
+        if (this.signupCode) {
+          html =
+            'You have successfully registerd as author please login to continue';
+        }
+
+        await Swal.fire({
+          html,
+          title: 'success',
+          icon: 'success',
+          heightAuto: false,
+        });
+      } else {
+        const sections = [
+          {
+            type: UpdateTicketType.ADDRESS,
+            fields: ['address', 'city', 'state', 'country', 'pincode'],
+          },
+          {
+            type: UpdateTicketType.BANK,
+            fields: [
+              'bankName',
+              'accountHolderName',
+              'accountNo',
+              'ifsc',
+              'panCardNo',
+              'accountType',
+              'gstNumber',
+            ],
+          },
+          {
+            type: UpdateTicketType.AUTHOR,
+            fields: [
+              'authorName',
+              'authorEmail',
+              'authorContactNumber',
+              'authorAbout',
+              'authorUsername',
+            ],
+          },
+        ];
+        const rawValue = {
+          ...this.authorAddressDetails.value,
+          ...this.authorAddressDetails.value,
+          ...authorData,
+          accountHolderName: this.authorBankDetails.value.accountHolderName,
+          bankName: this.authorBankDetails.value.name,
+          authorName: this.authorFormGroup.value.name,
+          authorEmail: this.authorFormGroup.value.email,
+          authorContactNumber: this.authorFormGroup.value.phoneNumber,
+          authorAbout: this.authorFormGroup.value.about,
+          authorUsername: this.authorFormGroup.value.username,
+        };
+
+        for (const section of sections) {
+          const payload: any = { type: section.type };
+          let hasValues = false;
+          section.fields.forEach((field: string) => {
+            const value = rawValue[field as keyof typeof rawValue];
+            if (value !== undefined && value !== null && value !== '') {
+              payload[field as keyof typeof payload] = value;
+              hasValues = true;
+            } else {
+              payload[field as keyof typeof payload] = null;
+            }
+            console.log(payload, 'raising a ticket');
+          });
+          if (hasValues) {
+            await this.userService.raisingTicket(payload);
+          }
+          const socialMediaData = this.socialMediaArray.controls
+            .map((group) => ({
+              ...group.value,
+              autherId: this.authorId,
+            }))
+            .filter((item) => item.url?.trim());
+          if (socialMediaData.length > 0) {
+            await this.socialService.createOrUpdateSocialMediaLinks(
+              socialMediaData as socialMediaGroup[]
+            );
+            console.log(socialMediaData, 'social media');
+          }
+          Swal.fire({
+            icon: 'success',
+            text: 'Update ticket raised successfully',
+            title: 'Success',
+            heightAuto: false,
+          });
         }
       }
-
-      let html = 'You have successfully created author';
-      if (this.authorId) {
-        html = 'You have successfully updated author';
-      }
-
-      if (this.signupCode) {
-        html =
-          'You have successfully registerd as author please login to continue';
-      }
-
-      await Swal.fire({
-        html,
-        title: 'success',
-        icon: 'success',
-        heightAuto: false,
-      });
       if (this.signupCode) {
         this.router.navigate(['/login']);
       }

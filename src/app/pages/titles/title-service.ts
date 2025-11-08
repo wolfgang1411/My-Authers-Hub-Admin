@@ -87,7 +87,13 @@ export class TitleService {
       if (filter) {
         Object.keys(filter).forEach((key) => {
           const val = (filter as any)[key];
-          if (val && val.length) {
+
+          if (
+            (Array.isArray(val) && val.length) ||
+            typeof val === 'number' ||
+            typeof val === 'boolean' ||
+            (typeof val === 'string' && val.trim() !== '')
+          ) {
             temp[key] = val;
           }
         });
@@ -97,7 +103,7 @@ export class TitleService {
         this.server.get<Pagination<Title>>('titles', temp)
       );
     } catch (error) {
-      console.error('Error fetching publishers:', error);
+      console.error('Error fetching titles:', error);
       throw error;
     }
   }

@@ -38,7 +38,7 @@ export interface EarningFilter {
 
   titleIds?: number[];
 
-  authorIds?: number[];
+  authorIds?: number[] | number;
 
   publisherIds?: number[];
   showPublisherAuthorEarnings?: boolean;

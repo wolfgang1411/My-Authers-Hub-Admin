@@ -20,7 +20,7 @@
         <ul class="space-y-2 grid grid-cols-3 gap-4">
           <li class="text-text">
             <label class="font-medium">{{ "username" | translate }} :</label>
-            {{ authorDetails()?.name }}
+            {{ authorDetails()?.username }}
           </li>
           <li class="text-text">
             <label class="font-medium" class="font-medium"
@@ -38,9 +38,8 @@
           </li>
           <li class="text-text">
             <label class="font-medium"
-              >{{ "authorcontactnumber" | translate }} :</label
-            >{{ authorDetails()?.user?.phoneNumber }} ,
-            {{ authorDetails()?.phoneNumber }}
+              >{{ "authorcontactnumber" | translate }} : </label
+            >{{ authorDetails()?.user?.phoneNumber }}
           </li>
           <li class="text-text">
             <label class="font-medium"
@@ -148,15 +147,15 @@
       </section>
     </mat-tab> -->
     <!-- Sub-Publishers -->
-    <!-- <mat-tab>
+    <mat-tab>
       <ng-template mat-tab-label>
         <span class="text-text-heading font-medium">
-          {{ "subpublishers" | translate }}
+          {{ "publishers" | translate }}
         </span>
       </ng-template>
       <section id="sub-publishers" class="mt-10 bg-white p-6 rounded-xl shadow">
         <div class="flex justify-between">
-          <h2 class="heading mb-4">{{ "subpublishers" | translate }}</h2>
+          <h2 class="heading mb-4">{{ "publishers" | translate }}</h2>
           <mat-form-field>
             <mat-label>{{ "filter" | translate }}</mat-label>
             <input
@@ -174,7 +173,7 @@
         >
         </app-list-table>
       </section>
-    </mat-tab> -->
+    </mat-tab>
 
     <!-- Royalties -->
     <mat-tab>
