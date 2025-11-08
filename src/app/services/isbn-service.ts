@@ -48,10 +48,12 @@ export class IsbnService {
       throw error;
     }
   }
-  async createIsbn(isbnDetails: createIsbn) {
+  async createOrUpdateIsbn(isbnDetails: createIsbn) {
     try {
+      const url = isbnDetails.id ? `isbn/${isbnDetails.id}` : 'isbn';
+      const method = isbnDetails.id ? 'patch' : 'post';
       return await this.loader.loadPromise(
-        this.serverService.post('isbn', isbnDetails)
+        this.serverService[method]<ISBN>(url, isbnDetails)
       );
     } catch (error) {
       this.logger.logError(error);

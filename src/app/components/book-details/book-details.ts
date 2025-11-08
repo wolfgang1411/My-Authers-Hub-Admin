@@ -79,6 +79,19 @@ export class BookDetails {
   isbnEbookVerified = signal<boolean | null>(null);
   isISBNEbookErifying = signal(false);
 
+  languages = signal([
+    'English',
+    'Hindi',
+    'Spanish',
+    'French',
+    'German',
+    'Chinese',
+    'Japanese',
+    'Arabic',
+    'Russian',
+    'Portuguese',
+  ]);
+
   async ngOnInit() {
     const { items: category } = await this.titleService.getTitleCategory();
     this.TitleCategory.set(category);

@@ -35,10 +35,8 @@ export class ISBNList {
     private dialog: MatDialog
   ) {}
   displayedColumns: string[] = [
-    'serial',
     'isbnnumber',
-    'isbntype',
-    'title',
+    'titlenamelabel',
     'createdby',
     'actions',
   ];
@@ -65,11 +63,15 @@ export class ISBNList {
     this.updateISBNList();
   }
 
-  async createIsbn() {
+  async createIsbn(isbn?: ISBN) {
     const dialogRef = this.dialog.open(CreateIsbn, {
       data: {
+        isbn,
         onSubmit: async (createIsbn: createIsbn) => {
-          const response = await this.isbnService.createIsbn(createIsbn);
+          const response = await this.isbnService.createOrUpdateIsbn({
+            ...createIsbn,
+            id: isbn?.id,
+          });
           if (response) {
             dialogRef.close();
             Swal.fire({
@@ -93,11 +95,18 @@ export class ISBNList {
     this.lastPage.set(Math.ceil(isbnList.totalCount / isbnList.itemsPerPage));
     this.dataSource.data = isbnList.items.map((isbn, index) => {
       return {
-        serial: index + 1,
+        ...isbn,
         id: isbn.id,
         isbnnumber: isbn.isbnNumber,
         isbntype: isbn.type,
-        title: isbn.title && isbn.title.length ? isbn.title[0].name : 'N/A',
+        titlenamelabel:
+          isbn.title && isbn.title.length
+            ? `${isbn.title[0].name} (${
+                isbn.title[0].printing?.[0]?.totalPages
+              }) (${isbn.title[0].language}) <br> ${isbn.title[0]?.authors
+                ?.map(({ display_name }) => display_name)
+                .join(',')}`
+            : 'N/A',
         createdby: isbn.admin
           ? isbn.admin.firstName + ' ' + isbn.admin.lastName
           : 'N/A',

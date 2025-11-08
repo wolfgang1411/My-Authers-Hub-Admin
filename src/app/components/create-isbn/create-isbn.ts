@@ -14,7 +14,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { createIsbn, ISBNType, Title } from '../../interfaces';
+import { createIsbn, ISBN, ISBNType, Title } from '../../interfaces';
 import { TitleService } from '../../pages/titles/title-service';
 import { IsbnService } from '../../services/isbn-service';
 import { MatInputModule } from '@angular/material/input';
@@ -59,7 +59,15 @@ export class CreateIsbn {
     titleId: new FormControl<number | null>(null),
   });
 
-  ngOnInit() {}
+  ngOnInit() {
+    if (this.data.isbn) {
+      this.createIsbnForm.patchValue({
+        isbnNumber: this.data.isbn.isbnNumber,
+        type: this.data.isbn.type,
+        titleId: this.data.isbn.title?.[0]?.id,
+      });
+    }
+  }
   async onSubmit() {
     if (this.createIsbnForm.valid) {
       try {
@@ -82,6 +90,7 @@ export class CreateIsbn {
   }
 }
 interface Inputs {
+  isbn?: ISBN;
   onSubmit: (createIsbn: createIsbn) => void;
   onClose: () => void;
 }
