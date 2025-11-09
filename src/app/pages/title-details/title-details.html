@@ -6,33 +6,54 @@
     <app-back></app-back>
   </div>
 
+  <!-- ========== Draft / Pending Titles (Continue Publishing) ========== -->
+  @if (draftTitles().length > 0) { @for (title of draftTitles(); track title.id)
+  {
   <div
-    class="bg-white rounded-2xl shadow-sm border border-[var(--primary-superlight)] flex flex-col md:flex-row p-6 hover:shadow-lg transition-all"
+    class="bg-white rounded-2xl shadow-sm border border-[var(--primary-superlight)] flex flex-col md:flex-row p-6 hover:shadow-lg transition-all mb-6"
   >
     <!-- Book Cover -->
     <div
       class="w-[120px] h-[160px] bg-[var(--light-purple-bg)] rounded-lg flex items-center justify-center text-[var(--text-placeholder)] font-medium border border-[var(--primary-light)]"
     >
-      YOUR COVER
+      COVER
     </div>
 
-    <!-- Book Info + Progress -->
+    <!-- Book Info -->
     <div class="flex-1 ml-6">
       <div class="flex justify-between items-start">
         <div>
           <h2 class="text-lg font-semibold text-[var(--text-heading)]">
-            Journey to the Hidden World
+            {{ title.name }}
           </h2>
           <p class="text-[var(--text-secondary)] text-sm">
-            Fiction | English | Paperback & eBook
+            {{ title.category.name }} | {{ title.language | uppercase }} |
+            {{ title.publishingType }}
           </p>
+          <!-- ✅ ISBN Section -->
+          <div class="mt-1 text-xs text-[var(--text-secondary)]">
+            <p>
+              <span class="font-medium">ISBN (Print):</span>
+              {{ title.isbnPrint || "Not Assigned" }}
+            </p>
+            <p>
+              <span class="font-medium">ISBN (eBook):</span>
+              {{ title.isbnEbook || "Not Assigned" }}
+            </p>
+          </div>
         </div>
-        <button mat-icon-button color="warn" matTooltip="Delete Title">
+
+        <button
+          mat-icon-button
+          color="warn"
+          matTooltip="Delete Title"
+          (click)="deleteTitle(title.id)"
+        >
           <mat-icon>delete_outline</mat-icon>
         </button>
       </div>
 
-      <!-- Stepper -->
+      <!-- Stepper (optional visualization) -->
       <div class="mt-4 flex items-center gap-6">
         <div class="flex items-center gap-2">
           <div
@@ -44,9 +65,7 @@
             >Book Details</span
           >
         </div>
-
         <div class="flex-1 border-t border-[var(--primary-light)] mx-2"></div>
-
         <div class="flex items-center gap-2">
           <div
             class="w-8 h-8 flex items-center justify-center rounded-full bg-[var(--primary-superlight)] text-[var(--primary)] font-semibold"
@@ -55,9 +74,7 @@
           </div>
           <span class="text-[var(--text-secondary)] text-sm">Book Content</span>
         </div>
-
         <div class="flex-1 border-t border-[var(--primary-light)] mx-2"></div>
-
         <div class="flex items-center gap-2">
           <div
             class="w-8 h-8 flex items-center justify-center rounded-full bg-[var(--primary-superlight)] text-[var(--primary)] font-semibold"
@@ -66,9 +83,7 @@
           </div>
           <span class="text-[var(--text-secondary)] text-sm">Book Design</span>
         </div>
-
         <div class="flex-1 border-t border-[var(--primary-light)] mx-2"></div>
-
         <div class="flex items-center gap-2">
           <div
             class="w-8 h-8 flex items-center justify-center rounded-full bg-[var(--primary-superlight)] text-[var(--primary)] font-semibold"
@@ -81,7 +96,6 @@
         </div>
       </div>
 
-      <!-- Continue Button -->
       <div class="mt-6">
         <button
           mat-flat-button
@@ -92,12 +106,13 @@
       </div>
     </div>
   </div>
+  } }
 
-  <!-- Example of multiple titles -->
+  <!-- ========== Published Titles (Grid View) ========== -->
   <div
     class="mt-8 grid gap-6 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 transition-all"
   >
-    @for ( i of [1, 2, 3, 4]; track $index) {
+    @for (title of publishedTitles(); track title.id) {
     <div
       class="bg-white rounded-2xl shadow-sm border border-[var(--primary-superlight)] p-5 hover:shadow-lg transition-all flex flex-col"
     >
@@ -109,21 +124,37 @@
         </div>
         <div>
           <h3 class="text-[var(--text-heading)] font-semibold text-base">
-            Title {{ i }}
+            {{ title.name }}
           </h3>
           <p class="text-[var(--text-secondary)] text-sm mb-2">
-            Status: In Progress
+            {{ title.category.name }} | {{ title.language | uppercase }} |
+            {{ title.publishingType }}
           </p>
+          <p class="text-[var(--text-secondary)] text-sm mb-2">
+            Status: {{ title.status }}
+          </p>
+          <!-- ✅ ISBN Section -->
+          <div class="text-xs text-[var(--text-secondary)] mb-2">
+            <p>
+              <span class="font-medium">ISBN (Print):</span>
+              {{ title.isbnPrint || "Not Assigned" }}
+            </p>
+            <p>
+              <span class="font-medium">ISBN (eBook):</span>
+              {{ title.isbnEbook || "Not Assigned" }}
+            </p>
+          </div>
+
           <mat-progress-bar
             mode="determinate"
-            value="{{ i * 20 }}"
+            [value]="title.totalSales / 100"
             class="!h-2 !rounded-full"
           ></mat-progress-bar>
         </div>
       </div>
       <button
         mat-stroked-button
-        class="!border-[var(--primary-light)] !text-[var(--primary)] mt-4 rounded-lg hover:!bg-[var(--primary-superlight)]"
+        class="!border-[var(--primary-light)] hover:!text-[var(--primary)] mt-4 rounded-lg !bg-primary !text-white hover:!bg-[var(--primary-superlight)] transition-all"
       >
         View Details
       </button>
