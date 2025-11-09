@@ -127,22 +127,52 @@ export class AddTitle {
     this.route.params.subscribe(({ titleId }) => {
       this.titleId = Number(titleId);
     });
+    this.route.queryParamMap.subscribe((params) => {
+      const stepParam = params.get('step');
+      if (stepParam) {
+        this.navigateStepperTo(stepParam);
+      }
+    });
 
     effect(() => {
       const publisher = this.publisherSignal();
       const authors = this.authorsSignal();
 
       this.mapRoyaltiesArray(publisher, authors);
-
-      // Put your logic here — this runs whenever either signal changes
     });
   }
+
+  private readonly baseOrder = [
+    'details',
+    'documents',
+    'print',
+    'pricing',
+    'royalty',
+    'distribution',
+  ];
+  private navigateStepperTo(step: string, publishingType?: string): void {
+    const stepOrder =
+      publishingType === 'ONLY_EBOOK'
+        ? this.baseOrder.filter((s) => s !== 'print')
+        : this.baseOrder;
+
+    const index = stepOrder.indexOf(step);
+    const stepperInstance = this.stepper();
+    if (
+      index !== -1 &&
+      stepperInstance &&
+      index < stepperInstance.steps.length
+    ) {
+      setTimeout(() => (stepperInstance.selectedIndex = index), 200);
+    }
+  }
+
   @ViewChildren('fileInput') fileInputs!: QueryList<
     ElementRef<HTMLInputElement>
   >;
 
   staticValueService = inject(StaticValuesService);
-
+  currentStep = signal<string | null>(null);
   stepperOrientation: Observable<StepperOrientation>;
   bindingType!: BookBindings[];
   laminationTypes!: LaminationType[];

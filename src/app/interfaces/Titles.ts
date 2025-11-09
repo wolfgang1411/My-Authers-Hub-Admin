@@ -18,6 +18,7 @@ import {
   TitleConfigType,
   PlatForm,
   BookingType,
+  PricingStatus,
 } from './index';
 
 export interface Title {
@@ -59,7 +60,16 @@ export interface Title {
   media?: TitleMedia[];
   pricing?: TitlePricing[];
   distribution?: TitleDistribution[];
+  updatedAt?: string;
   titlePlatformIdentifier: TitlePlatformIdentifier[];
+}
+export interface TitleStepProgress {
+  bookDetails: boolean;
+  uploadDocuments: boolean;
+  printDetails: boolean;
+  pricing: boolean;
+  royalty: boolean;
+  distribution: boolean;
 }
 
 export interface TitlePlatformIdentifier {
@@ -117,6 +127,7 @@ export interface TitlePricing {
   deliveryCharges: number; // Normal delivery charge based on weight
   createdAt: string;
   updatedAt: string;
+  status: PricingStatus;
 }
 
 export interface TitleCreate {

@@ -1,0 +1,783 @@
+<div class="p-6 bg-[var(--surface)] min-h-screen rounded-2xl">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-medium text-[var(--text-heading)]">
+      {{ titleDetails()?.name || "Book Title" }}
+    </h1>
+    <app-back></app-back>
+  </div>
+
+  <mat-tab-group
+    class="bg-white rounded-2xl shadow-sm border border-[var(--primary-superlight)]"
+  >
+    <!-- OVERVIEW TAB -->
+    <mat-tab label="Overview">
+      <div class="p-6">
+        <!-- Hero Section -->
+        <div
+          class="bg-gradient-to-r from-[var(--light-purple-bg)] to-white border border-[var(--primary-light)] rounded-2xl shadow-md p-6 flex flex-col md:flex-row items-start gap-6 mb-8 transition-all hover:shadow-lg"
+        >
+          <!-- Cover -->
+          <div
+            class="w-[180px] h-[250px] rounded-xl overflow-hidden shadow-lg border border-[var(--primary-light)] bg-white flex items-center justify-center text-[var(--text-placeholder)] font-medium text-sm"
+          >
+            @if (frontCoverUrl()) {
+            <img
+              [src]="frontCoverUrl()"
+              alt="Front Cover"
+              class="object-cover w-full h-full rounded-xl"
+            />
+            } @else {
+            <span>COVER</span>
+            }
+          </div>
+
+          <!-- Book Info -->
+          <div class="flex-1">
+            <h2
+              class="text-2xl font-bold text-[var(--primary)] mb-1 capitalize"
+            >
+              {{ titleDetails()?.name }}
+            </h2>
+            <p class="text-[var(--text-primary)] text-sm mb-4">
+              {{ titleDetails()?.category?.name }} |
+              {{ titleDetails()?.language | uppercase }} |
+              {{ titleDetails()?.publishingType }}
+            </p>
+
+            <!-- Info Grid -->
+            <div
+              class="grid sm:grid-cols-2 gap-x-6 gap-y-3 text-sm text-[var(--text-primary)]"
+            >
+              <p>
+                <span class="font-medium text-[var(--text-heading)]"
+                  >ISBN (Print):</span
+                >
+                {{ titleDetails()?.isbnPrint || "Not Assigned" }}
+              </p>
+              <p>
+                <span class="font-medium text-[var(--text-heading)]"
+                  >ISBN (eBook):</span
+                >
+                {{ titleDetails()?.isbnEbook || "Not Assigned" }}
+              </p>
+              <p>
+                <span class="font-medium text-[var(--text-heading)]"
+                  >Publisher:</span
+                >
+                {{ titleDetails()?.publisherDisplay }}
+              </p>
+              <p>
+                <span class="font-medium text-[var(--text-heading)]"
+                  >Edition:</span
+                >
+                {{ titleDetails()?.edition }}
+              </p>
+              <p>
+                <span class="font-medium text-[var(--text-heading)]"
+                  >Genre:</span
+                >
+                {{ titleDetails()?.genre?.name }}
+              </p>
+              <p>
+                <span class="font-medium text-[var(--text-heading)]"
+                  >Trade Category:</span
+                >
+                {{ titleDetails()?.tradeCategory?.name }}
+              </p>
+            </div>
+
+            <div class="mt-4">
+              <span
+                class="inline-flex items-center gap-2 p-4 text-xs font-medium rounded-full"
+                [ngClass]="{
+                  'bg-[var(--light-green-bg)] text-[var(--green-2)] border border-[var(--light-green-2)]':
+                    titleDetails()?.status === 'APPROVED',
+                  'bg-[var(--light-purple-bg)] text-[var(--primary)] border border-[var(--primary-light)]':
+                    titleDetails()?.status !== 'APPROVED'
+                }"
+              >
+                @if(titleDetails()?.status !== 'APPROVED') {
+                <mat-icon class="text-sm">check_circle</mat-icon>
+                }
+                {{ titleDetails()?.status }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Description Section -->
+        <div
+          class="bg-gradient-to-r from-[var(--light-purple-bg)] to-white border border-[var(--primary-superlight)] rounded-2xl shadow-md p-6 hover:shadow-lg transition-all"
+        >
+          <h3
+            class="text-lg font-bold text-[var(--primary)] border-b border-[var(--primary-superlight)] pb-2 mb-4 flex items-center gap-2"
+          >
+            <mat-icon class="text-[var(--primary)] text-lg">menu_book</mat-icon>
+            Book Description
+          </h3>
+
+          <p
+            class="text-[var(--text-primary)] leading-relaxed mb-4 text-justify"
+          >
+            {{ titleDetails()?.longDescription || "No description provided." }}
+          </p>
+
+          <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+            <p class="font-medium text-[var(--primary)]">Theme / Subject:</p>
+            <span class="text-[var(--text-primary)]">
+              {{ titleDetails()?.subject }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- MEDIA TAB -->
+    <mat-tab label="Media">
+      <div
+        class="bg-white border border-[var(--primary-superlight)] rounded-2xl shadow-md p-6 mb-8 m-6 transition-all hover:shadow-lg"
+      >
+        <h3
+          class="text-lg font-medium text-[var(--primary)] mb-6 flex items-center gap-2"
+        >
+          <mat-icon class="text-[var(--primary)]">perm_media</mat-icon>
+          Uploaded Media
+        </h3>
+
+        @if (!titleDetails()?.media?.length) {
+        <div
+          class="flex flex-col items-center justify-center py-12 bg-[var(--light-purple-bg)] rounded-xl border border-[var(--primary-light)]"
+        >
+          <mat-icon class="text-[var(--primary)] text-4xl mb-2"
+            >photo_library</mat-icon
+          >
+          <p class="text-[var(--text-primary)] text-sm">
+            No media uploaded yet.
+          </p>
+        </div>
+        } @if (titleDetails()?.media?.length) {
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          @for (media of titleDetails()?.media; track $index) {
+          <div
+            class="group rounded-2xl overflow-hidden border border-[var(--primary-light)] bg-[var(--light-purple-bg)] shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all"
+          >
+            <div class="p-4 flex flex-col justify-between h-full">
+              <div class="flex items-center justify-between mb-3">
+                <p class="font-medium text-[var(--text-heading)] text-sm">
+                  {{ media.type }}
+                </p>
+                @if (media?.url?.toLowerCase()?.includes('.pdf')) {
+                <mat-icon class="text-[var(--primary)] text-base"
+                  >picture_as_pdf</mat-icon
+                >
+                }
+              </div>
+              @if (media.url && media.url.toLowerCase().includes('.pdf')) {
+              <div
+                class="relative bg-white rounded-lg border border-[var(--primary-superlight)] overflow-hidden"
+              >
+                <iframe
+                  [src]="media.url | safeUrl"
+                  class="w-full h-48"
+                  frameborder="0"
+                ></iframe>
+
+                <div
+                  class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                >
+                  <a
+                    [href]="media.url"
+                    target="_blank"
+                    class="bg-[var(--primary)] text-white text-sm px-3 py-3 rounded-md shadow hover:bg-[var(--purple)] transition"
+                  >
+                    Open PDF
+                  </a>
+                </div>
+              </div>
+              }
+
+              <!-- 🖼 Image Preview -->
+              @else if (media.url) {
+              <div
+                class="relative overflow-hidden rounded-lg border border-[var(--primary-superlight)]"
+              >
+                <img
+                  [src]="media.url"
+                  alt="{{ media.name }}"
+                  class="object-cover w-full h-48 rounded-lg bg-white group-hover:scale-[1.05] transition-transform"
+                />
+
+                <div
+                  class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                >
+                  <a
+                    [href]="media.url"
+                    target="_blank"
+                    class="text-white text-sm font-medium bg-[var(--primary)] px-3 py-3 rounded-md shadow hover:bg-[var(--purple)] transition"
+                  >
+                    View Image
+                  </a>
+                </div>
+              </div>
+              }
+
+              <!-- 🚫 Placeholder -->
+              @else {
+              <div
+                class="h-48 flex flex-col items-center justify-center bg-gradient-to-br from-[var(--light-purple-bg)] to-[var(--primary-superlight)] rounded-lg border border-[var(--primary-light)]"
+              >
+                <mat-icon class="text-[var(--primary)] text-3xl mb-2"
+                  >insert_photo</mat-icon
+                >
+                <p class="text-xs text-[var(--text-primary)]">
+                  No preview available
+                </p>
+              </div>
+              }
+
+              <!-- 📄 File Name -->
+              <p
+                class="mt-3 text-xs text-[var(--text-primary)] truncate text-center"
+                title="{{ media.name }}"
+              >
+                {{ media.name || "Untitled File" }}
+              </p>
+            </div>
+          </div>
+          }
+        </div>
+        }
+      </div>
+    </mat-tab>
+
+    <!-- PRINTING TAB -->
+    <mat-tab label="Printing">
+      <div class="m-6">
+        <!-- Header -->
+        <div
+          class="bg-gradient-to-r from-[var(--primary-superlight)] via-[var(--light-purple-bg)] to-white p-6 rounded-2xl shadow-md border border-[var(--primary-light)] mb-6 flex items-center justify-between"
+        >
+          <div>
+            <h3
+              class="text-xl font-medium text-[var(--primary)] mb-1 flex items-center gap-2"
+            >
+              <mat-icon class="text-[var(--primary)]">print</mat-icon>
+              Printing Details
+            </h3>
+            <p class="text-[var(--text-primary)] text-sm">
+              Overview of your book’s printing configuration
+            </p>
+          </div>
+          <span
+            class="bg-[var(--primary)] text-white px-4 py-2 rounded-lg text-sm font-medium shadow hover:bg-[var(--purple)] transition-all"
+          >
+            PRINT CONFIGURATION
+          </span>
+        </div>
+        @if (titleDetails()?.printing?.length) { @let p =
+        titleDetails()?.printing?.[0];
+        <div
+          class="bg-white border border-[var(--primary-superlight)] rounded-2xl p-6 shadow-md hover:shadow-lg transition-all hover:scale-[1.01]"
+        >
+          <div class="flex items-center gap-3 mb-6">
+            <div
+              class="p-3 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)] shadow-inner"
+            >
+              <mat-icon>local_printshop</mat-icon>
+            </div>
+            <div>
+              <h4 class="font-medium text-[var(--text-heading)] text-lg">
+                Printing Setup
+              </h4>
+              <p class="text-[var(--text-primary)] text-sm">
+                Below are the details for your selected printing configuration
+              </p>
+            </div>
+          </div>
+
+          <!-- Details Grid -->
+          <div
+            class="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-5 text-sm leading-6"
+          >
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--primary)] text-base">style</mat-icon>
+              <p>
+                <label class="font-medium">Binding : </label>
+                {{ p?.bindingType?.name }}
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--primary)] text-base"
+                >layers</mat-icon
+              >
+              <p>
+                <label class="font-medium">Paper Quality : </label>
+                {{ p?.paperQuailty?.name }}
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--primary)] text-base">brush</mat-icon>
+              <p>
+                <label class="font-medium">Lamination:</label>
+                {{ p?.laminationType?.name }}
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--primary)] text-base"
+                >aspect_ratio</mat-icon
+              >
+              <p>
+                <label class="font-medium">Size : </label>
+                {{ p?.sizeCategory?.size }}
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--primary)] text-base"
+                >description</mat-icon
+              >
+              <p>
+                <label class="font-medium">Total Pages : </label>
+                {{ p?.totalPages }}
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--primary)] text-base"
+                >palette</mat-icon
+              >
+              <p>
+                <label class="font-medium">Color Pages : </label>
+                {{ p?.colorPages }}
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--primary)] text-base"
+                >layers_clear</mat-icon
+              >
+              <p>
+                <label class="font-medium">Inside Cover : </label>
+                {{ p?.insideCover ? "Yes" : "No" }}
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--primary)] text-base"
+                >layers</mat-icon
+              >
+              <p>
+                <label class="font-medium">Paper Type : </label>
+                {{ p?.paperType }}
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--green-2)] text-base"
+                >payments</mat-icon
+              >
+              <p>
+                <label class="font-medium">Print Cost : </label>
+                <span class="text-[var(--green-2)] font-medium">{{
+                  p?.printCost | currency : "INR"
+                }}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+        } @else {
+        <!-- Empty State -->
+        <div
+          class="flex flex-col items-center justify-center py-12 bg-[var(--light-purple-bg)] rounded-2xl border border-[var(--primary-light)]"
+        >
+          <mat-icon class="text-[var(--primary)] text-5xl mb-3"
+            >print_disabled</mat-icon
+          >
+          <p class="text-[var(--text-primary)] text-sm">
+            No printing setup available for this title.
+          </p>
+        </div>
+        }
+      </div>
+    </mat-tab>
+
+    <!-- PRICING & ROYALTY TAB -->
+    <mat-tab label="Pricing & Royalty">
+      <div
+        class="bg-white border border-[var(--primary-superlight)] rounded-2xl shadow-sm p-6 mb-6 m-6"
+      >
+        <h3
+          class="text-lg font-medium text-[var(--text-heading)] border-b border-[var(--primary-superlight)] pb-2 mb-4"
+        >
+          Pricing & Royalty
+        </h3>
+
+        <div>
+          <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
+            @for (price of titleDetails()?.pricing; track $index) {
+            <div
+              class="group border border-[var(--primary-superlight)] rounded-xl p-4 bg-gradient-to-br from-white to-[var(--light-purple-bg)] hover:shadow-lg hover:scale-[1.02] transition-all"
+            >
+              <!-- Header Row -->
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  <div
+                    class="p-2 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)]"
+                  >
+                    <mat-icon>storefront</mat-icon>
+                  </div>
+                  <h5
+                    class="font-medium text-[var(--text-heading)] text-base uppercase tracking-wide"
+                  >
+                    {{ price.platform }}
+                  </h5>
+                </div>
+
+                <span
+                  class="text-[var(--green-2)] text-xs font-medium bg-[var(--light-green-bg)] px-3 py-1 rounded-full border border-[var(--light-green-2)]"
+                >
+                  {{ price.status }}
+                </span>
+              </div>
+
+              <!-- Pricing Details -->
+              <div class="text-sm text-[var(--text-primary)] space-y-1">
+                <p>
+                  <span class="font-medium text-[var(--text-heading)]"
+                    >MRP:</span
+                  >
+                  <span class="ml-2 text-[var(--primary)] font-semibold">
+                    ₹{{ price.mrp }}
+                  </span>
+                </p>
+
+                <p>
+                  <span class="font-medium text-[var(--text-heading)]"
+                    >Sales Price:</span
+                  >
+                  <span class="ml-2 text-[var(--green-2)] font-semibold">
+                    ₹{{ price.salesPrice }}
+                  </span>
+                </p>
+
+                <p>
+                  <span class="font-medium text-[var(--text-heading)]"
+                    >MSP:</span
+                  >
+                  <span class="ml-2 text-[var(--primary)] font-medium">
+                    ₹{{ price.msp }}
+                  </span>
+                </p>
+
+                <p>
+                  <span class="font-medium text-[var(--text-heading)]"
+                    >Delivery Charges:</span
+                  >
+                  <span class="ml-2 text-[var(--text-secondary)] font-medium">
+                    ₹{{ price.deliveryCharges }}
+                  </span>
+                </p>
+              </div>
+
+              <!-- Visual Line -->
+              <div
+                class="relative h-[2px] bg-[var(--primary-superlight)] rounded-full overflow-hidden mt-3"
+              >
+                <div
+                  class="absolute top-0 left-0 h-[2px] bg-[var(--primary)] transition-all duration-500"
+                  [style.width]="(price.salesPrice / price.mrp) * 100 + '%'"
+                ></div>
+              </div>
+
+              <!-- Footer -->
+              <div class="flex justify-between items-center mt-3">
+                <p class="text-xs text-[var(--text-secondary)] italic">
+                  Margin after discount:
+                </p>
+                <p class="text-xs text-[var(--primary)] font-semibold">
+                  {{ (100 - (price.salesPrice / price.mrp) * 100).toFixed(1) }}%
+                </p>
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+
+        <!-- Modern Royalty Section -->
+        <div
+          class="bg-gradient-to-r from-[var(--primary-superlight)] via-[var(--light-purple-bg)] to-white p-6 rounded-2xl shadow-md border border-[var(--primary-light)] my-6"
+        >
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <div
+                class="p-3 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)] shadow-inner"
+              >
+                <mat-icon>percent</mat-icon>
+              </div>
+              <div>
+                <h3 class="text-xl font-medium text-[var(--primary)]">
+                  Royalty Breakdown
+                </h3>
+                <p class="text-[var(--text-primary)] text-sm">
+                  Publisher and author splits per platform
+                </p>
+              </div>
+            </div>
+          </div>
+
+          @if (titleDetails()?.royalties?.length) {
+          <div class="space-y-6 grid grid-cols-3 gap-4">
+            @for (platform of platforms(); track platform) { @if
+            (getRoyaltyByPlatform(platform).length) {
+            <div
+              class="bg-white border border-[var(--primary-superlight)] rounded-2xl shadow-md hover:shadow-lg transition-all p-5"
+            >
+              <!-- Platform Header -->
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  <div
+                    class="p-2 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)]"
+                  >
+                    <mat-icon>storefront</mat-icon>
+                  </div>
+                  <h4
+                    class="font-medium text-[var(--text-heading)] uppercase tracking-wide"
+                  >
+                    {{ platform }}
+                  </h4>
+                </div>
+                <p
+                  class="text-xs font-medium text-[var(--text-primary)] italic"
+                >
+                  Total: {{ getTotalRoyalty(platform) }}%
+                </p>
+              </div>
+
+              <!-- Table -->
+              <div class="overflow-x-auto">
+                <table
+                  class="w-full text-sm border-collapse rounded-lg shadow-sm overflow-hidden"
+                >
+                  <thead>
+                    <tr
+                      class="bg-[var(--primary-superlight)] text-[var(--text-heading)]"
+                    >
+                      <th class="py-2 px-4 text-left !font-medium">Name</th>
+                      <th class="py-2 px-4 text-left !font-medium">Type</th>
+                      <th class="py-2 px-4 text-right !font-medium">
+                        Royalty (%)
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Publisher -->
+                    @if (getPublisherRoyalty(platform)) {
+                    <tr
+                      class="border-b border-[var(--primary-superlight)] hover:bg-[var(--light-purple-bg)] transition"
+                    >
+                      <td
+                        class="py-2 px-4 font-medium text-[var(--text-heading)]"
+                      >
+                        {{ getPublisherName() }}
+                      </td>
+                      <td class="py-2 px-4 text-[var(--text-primary)]">
+                        Publisher
+                      </td>
+                      <td
+                        class="py-2 px-4 text-right font-medium text-[var(--primary)]"
+                      >
+                        {{ getPublisherRoyalty(platform)?.percentage }}%
+                      </td>
+                    </tr>
+                    }
+
+                    <!-- Authors -->
+                    @for (r of getAuthorRoyalties(platform); track $index) {
+                    <tr
+                      class="border-b border-[var(--primary-superlight)] hover:bg-[var(--light-purple-bg)] transition"
+                    >
+                      <td
+                        class="py-2 px-4 font-medium text-[var(--text-heading)]"
+                      >
+                        {{ getAuthorName(r.authorId) }}
+                      </td>
+                      <td class="py-2 px-4 text-[var(--text-primary)]">
+                        Author
+                      </td>
+                      <td
+                        class="py-2 px-4 text-right font-medium text-[var(--green-2)]"
+                      >
+                        {{ r.percentage }}%
+                      </td>
+                    </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Visual Split -->
+              <div
+                class="relative h-2 bg-[var(--primary-superlight)] rounded-full overflow-hidden mt-3"
+              >
+                <div
+                  class="absolute top-0 left-0 h-2 bg-[var(--green-2)] transition-all duration-500"
+                  [style.width]="getTotalRoyalty(platform) + '%'"
+                ></div>
+              </div>
+            </div>
+            } }
+          </div>
+          } @else {
+          <div
+            class="flex flex-col items-center justify-center py-10 bg-[var(--light-purple-bg)] rounded-2xl border border-[var(--primary-light)]"
+          >
+            <mat-icon class="text-[var(--primary)] text-5xl mb-3"
+              >percent</mat-icon
+            >
+            <p class="text-[var(--text-primary)] text-sm">
+              No royalty data available for this title.
+            </p>
+          </div>
+          }
+        </div>
+      </div>
+    </mat-tab>
+    <mat-tab label="Distribution">
+      <div class="m-6">
+        <div
+          class="bg-gradient-to-r from-[var(--primary-superlight)] via-[var(--light-purple-bg)] to-white p-6 rounded-2xl shadow-md border border-[var(--primary-light)] mb-6 flex items-center justify-between"
+        >
+          <div>
+            <h3
+              class="text-xl font-medium text-[var(--primary)] mb-1 flex items-center gap-2"
+            >
+              <mat-icon class="text-[var(--primary)]">public</mat-icon>
+              Distribution Details
+            </h3>
+            <p class="text-[var(--text-primary)] text-sm">
+              Information about your book’s distribution and platform
+              identifiers
+            </p>
+          </div>
+          <span
+            class="bg-[var(--primary)] text-white px-4 py-2 rounded-lg text-sm font-medium shadow hover:bg-[var(--purple)] transition-all"
+          >
+            DISTRIBUTION INFO
+          </span>
+        </div>
+
+        <!-- Distribution Channels Card -->
+        <div
+          class="bg-white border border-[var(--primary-superlight)] rounded-2xl p-6 shadow-md hover:shadow-lg transition-all mb-6"
+        >
+          <div class="flex items-center gap-3 mb-4">
+            <div
+              class="p-3 rounded-full bg-[var(--light-green-bg)] text-[var(--green-2)] shadow-inner"
+            >
+              <mat-icon>share</mat-icon>
+            </div>
+            <div>
+              <h4 class="font-medium text-[var(--text-heading)] text-lg">
+                Distribution Channels
+              </h4>
+              <p class="text-[var(--text-primary)] text-sm">
+                All available distribution types linked to this title
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-3 mt-4">
+            @for (d of titleDetails()?.distribution; track $index) {
+            <div
+              class="px-4 py-2 rounded-full text-sm font-medium border border-[var(--light-green-2)] bg-[var(--light-green-bg)] text-[var(--green-2)] shadow-sm hover:scale-105 transition-transform cursor-default"
+            >
+              {{ d.type }}
+            </div>
+            }
+          </div>
+        </div>
+
+        <!-- Platform Identifiers Card -->
+        <div
+          class="bg-white border border-[var(--primary-superlight)] rounded-2xl p-6 shadow-md hover:shadow-lg transition-all"
+        >
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-4">
+            <div
+              class="p-3 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)] shadow-inner"
+            >
+              <mat-icon>dns</mat-icon>
+            </div>
+            <div>
+              <h4 class="font-medium text-[var(--text-heading)] text-lg">
+                Platform Identifiers
+              </h4>
+              <p class="text-[var(--text-primary)] text-sm">
+                Platform-specific identifiers and publishing types
+              </p>
+            </div>
+          </div>
+
+          <!-- Table or Cards -->
+          @if (titleDetails()?.titlePlatformIdentifier?.length) {
+          <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
+            @for (pid of titleDetails()?.titlePlatformIdentifier; track $index)
+            {
+            <div
+              class="group border border-[var(--primary-superlight)] rounded-xl p-4 bg-gradient-to-br from-white to-[var(--light-purple-bg)] hover:shadow-lg hover:scale-[1.02] transition-all"
+            >
+              <!-- Header Row -->
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  <div
+                    class="p-2 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)]"
+                  >
+                    <mat-icon>storefront</mat-icon>
+                  </div>
+                  <h5 class="font-medium text-[var(--text-heading)] text-base">
+                    {{ pid.platform }}
+                  </h5>
+                </div>
+                <span
+                  class="text-[var(--green-2)] text-xs font-medium bg-[var(--light-green-bg)] px-3 py-1 rounded-full border border-[var(--light-green-2)]"
+                >
+                  {{ pid.type }}
+                </span>
+              </div>
+
+              <!-- Details -->
+              <div class="text-sm text-[var(--text-primary)]">
+                <p>
+                  <span class="font-medium text-[var(--text-heading)]"
+                    >Unique ID:</span
+                  >
+                  <span
+                    class="ml-2 px-2 py-[2px] rounded bg-[var(--primary-superlight)] text-[var(--primary)] font-medium text-xs"
+                    >{{ pid.uniqueIdentifier }}</span
+                  >
+                </p>
+              </div>
+            </div>
+            }
+          </div>
+          } @else {
+          <!-- Empty State -->
+          <div
+            class="flex flex-col items-center justify-center py-8 bg-[var(--light-purple-bg)] rounded-2xl border border-[var(--primary-light)]"
+          >
+            <mat-icon class="text-[var(--primary)] text-5xl mb-3"
+              >data_object</mat-icon
+            >
+            <p class="text-[var(--text-primary)] text-sm">
+              No platform identifiers available for this title.
+            </p>
+          </div>
+          }
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>
