@@ -5,6 +5,7 @@ import {
   inject,
   QueryList,
   signal,
+  ViewChild,
   viewChild,
   ViewChildren,
 } from '@angular/core';
@@ -141,7 +142,18 @@ export class AddTitle {
       this.mapRoyaltiesArray(publisher, authors);
     });
   }
+  @ViewChild('scrollTarget') scrollTarget!: ElementRef;
 
+  onSelectDocumentsReady() {
+    this.tempForm.get('hasFiles')?.setValue(true);
+
+    setTimeout(() => {
+      this.scrollTarget.nativeElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 200);
+  }
   private readonly baseOrder = [
     'details',
     'documents',
