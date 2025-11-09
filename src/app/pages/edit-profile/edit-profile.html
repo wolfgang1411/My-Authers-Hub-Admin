@@ -90,10 +90,11 @@
         <h3 class="text-sm font-medium text-gray-600 mb-2">Contact</h3>
         <ul class="text-sm text-gray-700 space-y-1">
           <li class="flex items-center gap-2">
-            <mat-icon>email</mat-icon> chandresh@example.com
+            <mat-icon>email</mat-icon> {{ loggedInUser()?.email }}
           </li>
           <li class="flex items-center gap-2">
-            <mat-icon>phone</mat-icon> +91 9876543210
+            <mat-icon>phone</mat-icon>
+            {{ loggedInUser()?.phoneNumber || "N/A" }}
           </li>
         </ul>
       </div>
