@@ -26,7 +26,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { UserService } from '../../services/user';
 import Swal from 'sweetalert2';
 import { AuthService } from '../../services/auth';
@@ -45,6 +45,7 @@ import { TranslateService } from '@ngx-translate/core';
     ReactiveFormsModule,
     MatSlideToggleModule,
     SharedModule,
+    RouterModule,
   ],
   templateUrl: './edit-profile.html',
   styleUrl: './edit-profile.css',
