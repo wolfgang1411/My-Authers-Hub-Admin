@@ -61,6 +61,16 @@
         <mat-icon class="material-icons">add_circle_outline</mat-icon>
         {{ "addtitle" | translate }}
       </button>
+      <button
+        matButton
+        matButton="filled"
+        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        [routerLink]="['/titleDetails']"
+        routerLinkActive="router-link-active"
+      >
+        <mat-icon>menu_book</mat-icon>
+        {{ "mytitles" | translate }}
+      </button>
     </div>
   </div>
   <!-- <div class="flex gap-2">
@@ -90,7 +100,7 @@
       <button
         class="!bg-primary"
         mat-icon-button
-        [routerLink]="['/titleDetails', element.id]"
+        [routerLink]="['/titleSummary', element.id]"
       >
         <mat-icon class="!text-white">visibility</mat-icon>
       </button>

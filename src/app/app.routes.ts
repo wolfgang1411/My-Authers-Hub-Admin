@@ -51,15 +51,22 @@ export const routes: Routes = [
       import('./pages/add-title/add-title').then((c) => c.AddTitle),
     canActivate: [privateRouteGuard],
   },
+
   {
     path: 'titles',
     loadComponent: () => import('./pages/titles/titles').then((c) => c.Titles),
     canActivate: [privateRouteGuard],
   },
   {
-    path: 'titleDetails/:id',
+    path: 'titleDetails',
     loadComponent: () =>
       import('./pages/title-details/title-details').then((c) => c.TitleDetails),
+    canActivate: [privateRouteGuard],
+  },
+  {
+    path: 'titleSummary/:titleId',
+    loadComponent: () =>
+      import('./pages/title-summary/title-summary').then((c) => c.TitleSummary),
     canActivate: [privateRouteGuard],
   },
   {

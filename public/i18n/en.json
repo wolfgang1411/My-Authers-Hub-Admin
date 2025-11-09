@@ -363,5 +363,11 @@
   "authorcontactnumber ": "Author Contact Number ",
   "titlenamelabel": "Title",
   "assigntitle": "Assign Title",
-  "authorcontactnumber": "Author Contact Number "
+  "authorcontactnumber": "Author Contact Number ",
+   "bookDetails": "Book Details",
+    "uploadDocuments":"Upload Documents",
+    "printDetails":"Print Details",
+    "pricing":"Pricing",
+    "distribution":"Distribution",
+    "mytitles":"My Titles"
 }
