@@ -726,6 +726,7 @@ export class AddTitle {
       subject: new FormControl<string>('', [
         Validators.required,
         this.minWordsValidator(5),
+        Validators.maxLength(50),
       ]),
       status: new FormControl<TitleStatus>(TitleStatus.DRAFT),
       category: new FormControl<number | null>(null),

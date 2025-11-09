@@ -108,6 +108,8 @@
           <input matInput formControlName="subject" required />
           @if(titleDetailsGroup().controls.subject.hasError('minWords')) {
           <mat-error> Subject must be at least 5 words. </mat-error>
+          } @if(titleDetailsGroup().controls.subject.hasError('maxlength')) {
+          <mat-error> Subject cannot exceed 50 characters </mat-error>
           }
         </mat-form-field>
         <div class="grid grid-cols-2 gap-4">

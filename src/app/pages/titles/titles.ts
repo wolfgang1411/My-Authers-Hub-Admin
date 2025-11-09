@@ -72,6 +72,7 @@ export class Titles {
     'authors',
     'isbn',
     'launchdate',
+    'status',
     'actions',
   ];
   dataSource = new MatTableDataSource<any>();
@@ -96,7 +97,7 @@ export class Titles {
   mapDataList() {
     const mapped = this.titles().map((title, idx) => ({
       ...title,
-      isbn: `${title.isbnPrint || ''}<br>${title.isbnEbook || ''}`,
+      isbn: `${title.isbnPrint || 'N/A'}<br>${title.isbnEbook || ''}`,
       pages:
         title.printing && title.printing.length
           ? title.printing[0].totalPages
@@ -119,7 +120,7 @@ export class Titles {
       bookssold: title.copiesSold,
       launchdate: title.submission_date
         ? format(title.submission_date, 'dd-MM-yyyy')
-        : null,
+        : 'N/A',
       actions: '',
     }));
 
