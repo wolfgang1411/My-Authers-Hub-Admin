@@ -43,7 +43,18 @@
           <mat-icon>edit</mat-icon>
           <span class="ml-2">Edit Profile</span>
         </button>
-        @if(this.loggedInUser()?.accessLevel !== 'SUPERADMIN') {
+
+        @if (loggedInUser()?.accessLevel === 'PUBLISHER') {
+        <button
+          mat-flat-button
+          color="accent"
+          class="w-full !bg-primary"
+          [routerLink]="['/publisherDetails', loggedInUser()?.publisher?.id]"
+        >
+          <mat-icon>visibility</mat-icon>
+          <span class="ml-2">My Publishing Details</span>
+        </button>
+        } @if(this.loggedInUser()?.accessLevel !== 'SUPERADMIN') {
         <button
           mat-flat-button
           color="accent"
