@@ -46,19 +46,5 @@
       </button>
     </div>
   </div>
-  <div class="flex gap-2">
-    <button class="!bg-primary" matButton="filled">
-      {{ "all" | translate }}
-    </button>
-    <button class="!bg-primary" matButton="filled">
-      {{ "active" | translate }}
-    </button>
-    <button class="!bg-primary" matButton="filled">
-      {{ "inactive" | translate }}
-    </button>
-    <button class="!bg-primary" matButton="filled">
-      {{ "dormant" | translate }}
-    </button>
-  </div>
   <app-earning-table [earnings]="earningList()"></app-earning-table>
 </div>
