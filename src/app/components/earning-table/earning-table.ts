@@ -6,6 +6,7 @@ import { MatTableDataSource } from '@angular/material/table';
 import { ListTable } from '../list-table/list-table';
 import { TranslateService } from '@ngx-translate/core';
 import { formatCurrency } from '@angular/common';
+import { format } from 'date-fns';
 
 @Component({
   selector: 'app-earning-table',
@@ -36,7 +37,11 @@ export class EarningTable {
           earning.royalty.author?.user.firstName,
         amount: formatCurrency(earning.amount, 'en', '', 'INR'),
         platform: this.translateService.instant(earning.platform),
-        'paidAt/holduntill': earning.holdUntil || earning.paidAt,
+        'paidAt/holduntill': (() => {
+          const date = earning.holdUntil || earning.paidAt;
+          if (!date) return undefined;
+          return format(date, 'dd-MM-yyyy');
+        })(),
       }));
 
       this.dataSource.data = mappedData || [];
