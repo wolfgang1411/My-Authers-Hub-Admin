@@ -1,12 +1,12 @@
-import { Component, computed } from '@angular/core';
+import { Component, computed, effect } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { signal } from '@angular/core';
 import { PublisherService } from '../publisher/publisher-service';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { Back } from '../../components/back/back';
 import { Title, TitleDistribution } from '../../interfaces/Titles';
-import { Author, AuthorFilter } from '../../interfaces/Authors';
-import { Publishers } from '../../interfaces/Publishers';
+import { Author } from '../../interfaces/Authors';
+import { Publishers, PublishingPoints } from '../../interfaces/Publishers';
 import { Royalty } from '../../interfaces/Royalty';
 import { Wallet } from '../../interfaces/Wallet';
 import { AuthorsService } from '../authors/authors-service';
@@ -15,13 +15,16 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatFormField } from '@angular/material/form-field';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatInputModule } from '@angular/material/input';
-import { RoyaltyService } from '../../services/royalty-service';
 import { ListTable } from '../../components/list-table/list-table';
-import { DetailsListTable } from '../../components/details-list-table/details-list-table';
 import { SalesService } from '../../services/sales';
 import { formatCurrency } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { format } from 'date-fns';
+import { DistributionType } from '../../interfaces';
+import Swal from 'sweetalert2';
+import { MatIconModule } from '@angular/material/icon';
+import { StaticValuesService } from '../../services/static-values';
+import { MatButtonModule } from '@angular/material/button';
 @Component({
   selector: 'app-publisher-details',
   imports: [
@@ -32,6 +35,8 @@ import { format } from 'date-fns';
     MatTableModule,
     MatInputModule,
     ListTable,
+    MatIconModule,
+    MatButtonModule,
   ],
   templateUrl: './publisher-details.html',
   styleUrl: './publisher-details.css',
@@ -43,12 +48,19 @@ export class PublisherDetails {
     private authorsService: AuthorsService,
     private titleService: TitleService,
     private salesService: SalesService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    public staticValueService: StaticValuesService
   ) {
     this.route.params.subscribe(({ id }) => {
       this.publisherId = id;
     });
   }
+
+  distributionType = computed(() => {
+    return Object.keys(
+      this.staticValueService.staticValues()?.DistributionType || {}
+    ) as DistributionType[];
+  });
 
   publisherId!: number;
   publisherDetails = signal<Publishers | null>(null);
@@ -67,6 +79,7 @@ export class PublisherDetails {
   // publishedLinks = signal<any[]>([]);
   distributions = signal<TitleDistribution[]>([]);
   attachments = signal<any[]>([]);
+  publishingpoints = signal<PublishingPoints[]>([]);
   authorFilter = signal({ page: 1 });
   displayedColumns: string[] = [
     'serial',
@@ -104,6 +117,14 @@ export class PublisherDetails {
   authorData = new MatTableDataSource<any>([]);
   subPublisherData = new MatTableDataSource<any>([]);
   royaltyData = new MatTableDataSource<Royalty>();
+  pointsMap = computed(() => {
+    const map: Record<string, PublishingPoints> = {};
+    this.publishingpoints()?.forEach((p) => {
+      map[p.distributionType] = p;
+    });
+    return map;
+  });
+
   async ngOnInit() {
     await this.fetchPublisherDetails();
     await this.fetchSubPublishers();
@@ -111,6 +132,7 @@ export class PublisherDetails {
     await this.fetchTitles();
     await this.fetchRoyalty();
     await this.fetchDistributionLinks();
+    await this.fetchPublishingPoints();
   }
 
   async fetchPublisherDetails() {
@@ -121,6 +143,33 @@ export class PublisherDetails {
       this.publisherDetails.set(response as Publishers);
     } catch (error) {
       console.error('Error fetching publisher details:', error);
+    }
+  }
+  async fetchPublishingPoints() {
+    try {
+      const { items: response } =
+        await this.publisherService.fetchPublishingPoints(this.publisherId);
+      this.publishingpoints.set(response as PublishingPoints[]);
+    } catch (error) {
+      console.error('Error fetching publisher details:', error);
+    }
+  }
+  async buyPoints(type: DistributionType) {
+    try {
+      const res = await this.publisherService.buyPublishingPoints(
+        type,
+        2,
+        this.publisherId
+      );
+      if (res) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Requested',
+          text: 'Purchase request has been sent to admin for approval',
+        });
+      }
+    } catch (error) {
+      console.log(error);
     }
   }
 

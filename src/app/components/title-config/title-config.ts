@@ -2,9 +2,9 @@ import { Component, effect, OnInit, signal } from '@angular/core';
 import { TitleConfigService } from '../../services/title-config';
 import { StaticValuesService } from '../../services/static-values';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { MatAnchor } from '@angular/material/button';
+import { MatAnchor, MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatExpansionModule } from '@angular/material/expansion';
+import { MatAccordion, MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 
 import Swal from 'sweetalert2';
@@ -28,6 +28,8 @@ import {
     MatCardModule,
     MatExpansionModule,
     MatIconModule,
+    MatButtonModule,
+    MatAccordion,
   ],
   templateUrl: './title-config.html',
   styleUrl: './title-config.css',

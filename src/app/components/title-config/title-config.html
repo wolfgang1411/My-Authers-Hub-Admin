@@ -1,84 +1,108 @@
-<div class="container mx-auto my-6 flex flex-col gap-6">
-  <h1 class="text-2xl font-semibold text-primary">
-    {{ "titleconfigs" | translate }}
-  </h1>
+<div class="container mx-auto my-8 flex flex-col gap-8">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-medium text-[var(--primary)] tracking-tight">
+      {{ "storesettings" | translate }}
+    </h1>
+  </div>
 
-  <mat-accordion class="flex flex-col gap-4">
+  <!-- Accordion -->
+  <mat-accordion class="flex flex-col gap-5">
     @for (titleConfigItem of titleConfigsData(); track $index) {
-    <mat-expansion-panel class="rounded-lg shadow-sm">
-      <mat-expansion-panel-header>
+    <mat-expansion-panel
+      class="overflow-hidden rounded-xl border-0 bg-gradient-to-r from-[var(--light-purple-bg)] via-white to-[var(--primary-superlight)] shadow-md hover:shadow-lg transition-all duration-300"
+    >
+      <!-- Panel Header -->
+      <mat-expansion-panel-header
+        class="!bg-gradient-to-r from-[var(--primary-superlight)] to-[var(--light-purple-bg)] rounded-t-xl py-3 px-5"
+      >
         <mat-panel-title class="flex items-center justify-between w-full">
-          <span class="text-lg font-medium">
+          <span class="text-base font-medium text-[var(--primary)]">
             {{ titleConfigItem.type | translate }}
           </span>
 
-          <div class="flex gap-4">
+          <div class="flex gap-3">
             <button
               (click)="onClickAddNewItem($event, titleConfigItem.type)"
-              mat-stroked-button
-              color="primary"
+              mat-flat-button
+              class="!bg-[var(--primary)] text-white rounded-full shadow-sm hover:shadow-md transition-all duration-200 px-3 py-1 text-xs"
             >
-              <mat-icon>add</mat-icon>
+              <mat-icon class="text-white text-sm mr-1">add</mat-icon>
               {{ "additem" | translate }}
             </button>
+
             <button
               (click)="onClickUpdateList($event, titleConfigItem.type)"
-              mat-stroked-button
-              color="primary"
+              mat-flat-button
+              class="!bg-[var(--green-2)] text-white rounded-full shadow-sm hover:shadow-md transition-all duration-200 px-3 py-1 text-xs"
             >
-              <mat-icon>update</mat-icon>
+              <mat-icon class="text-white text-sm mr-1">update</mat-icon>
               {{ "reorderitems" | translate }}
             </button>
           </div>
         </mat-panel-title>
       </mat-expansion-panel-header>
 
-      @if(titleConfigItem.data.length) {
-      <div class="flex gap-4 p-4">
+      <!-- Panel Content -->
+      @if (titleConfigItem.data.length) {
+      <div
+        class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 p-4"
+      >
         @for (titleConfig of titleConfigItem.data; track $index) {
-        <mat-card
-          class="flex !flex-row items-center gap-3 p-2 hover:shadow-md transition-shadow duration-200 w-[200px]"
+        <div
+          class="relative bg-gradient-to-br from-white to-[var(--light-purple-bg)] border border-[var(--primary-light)] rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:scale-[1.015] p-3 flex flex-col items-start"
         >
           <!-- Thumbnail -->
           <img
-            class="w-16 h-20 object-cover rounded"
+            class="w-28 h-24 object-cover rounded-md mb-2"
             [src]="titleConfig.title.media?.[0]?.url"
             alt="{{ titleConfig.title.name }}"
           />
 
-          <!-- Content -->
-          <div class="flex flex-col items-center justify-center flex-1">
-            <div class="text-sm leading-tight">
-              <div class="font-medium text-sm">
-                {{ titleConfig.title.name }}
-              </div>
-              <div>
-                <strong>{{ "sold" | translate }}:</strong>
-                {{ titleConfig.title.copiesSold }} {{ "copies" | translate }}
-              </div>
-              <div>
-                <strong>{{ "msp" | translate }}:</strong>
-                {{ titleConfig.title.pricing?.[0]?.msp | currency }}
-              </div>
-            </div>
-
-            <button
-              mat-icon-button
-              color="warn"
-              class="self-end mt-1"
-              aria-label="Delete title"
-              (click)="onClickDeleteConfigItem(titleConfig)"
-            >
-              <mat-icon>delete</mat-icon>
-            </button>
+          <!-- Title Info -->
+          <div class="w-full space-y-0.5">
+            <h3 class="text-sm font-medium text-[var(--text-heading)] truncate">
+              {{ titleConfig.title.name }}
+            </h3>
+            <p class="text-xs text-gray-700">
+              <label class="font-medium">{{ "sold" | translate }} : </label>
+              <span class="text-[var(--primary)] font-medium"
+                >{{ titleConfig.title.copiesSold }}
+                {{ "copies" | translate }}</span
+              >
+            </p>
+            <p class="text-xs text-gray-700">
+              <label class="font-medium">{{ "msp" | translate }} : </label>
+              <span class="text-[var(--primary)] font-medium">{{
+                      titleConfig.title.pricing?.[0]?.msp | currency
+              }}</span>
+            </p>
           </div>
-        </mat-card>
+
+          <!-- Delete Button -->
+          <button
+            mat-icon-button
+            color="warn"
+            class="!absolute top-1 right-1 !bg-[var(--accent)] hover:!bg-[var(--accent/70)] transition-colors duration-300 rounded-full shadow-sm flex items-center"
+            aria-label="Delete title"
+            (click)="onClickDeleteConfigItem(titleConfig)"
+          >
+            <mat-icon class="!text-white !text-sm">delete</mat-icon>
+          </button>
+        </div>
         }
       </div>
       } @else {
-      <mat-card class="m-4 text-center p-4 text-gray-500">
-        {{ "notitlesfound" | translate }}
-      </mat-card>
+      <div
+        class="p-6 flex flex-col items-center justify-center text-center bg-[var(--light-purple-bg)] border-t border-[var(--primary-superlight)]"
+      >
+        <mat-icon class="text-[var(--primary)] text-4xl mb-1"
+          >library_books</mat-icon
+        >
+        <p class="text-[var(--text-primary)] font-medium text-xs">
+          {{ "notitlesfound" | translate }}
+        </p>
+      </div>
       }
     </mat-expansion-panel>
     }

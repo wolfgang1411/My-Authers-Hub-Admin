@@ -39,6 +39,7 @@ import {
 } from '@ngxmc/datetime-picker';
 import { MyDatePipe } from '../../pipes/my-date-pipe';
 import { format } from 'date-fns';
+import { MatIconModule } from '@angular/material/icon';
 
 @Pipe({
   name: 'myTitleFilterBySale',
@@ -66,6 +67,7 @@ export class TitleFilterBySale implements PipeTransform {
     NgxMatDatepickerInput,
     NgxMatDatetimepicker,
     MyDatePipe,
+    MatIconModule,
   ],
 
   templateUrl: './add-sales.html',

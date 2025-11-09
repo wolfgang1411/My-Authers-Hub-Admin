@@ -1,253 +1,228 @@
-<section class="bg-surface p-4 rounded-md text-text-primary">
-  <div>
-    <div class="mb-8">
-      <h1 class="text-3xl font-medium text-text-heading">Sales & Royalty</h1>
-      <p class="text-text-secondary mt-1">
-        Track sales, monitor royalties, and withdraw earnings.
+<section class="bg-[var(--surface)] p-6 rounded-2xl text-[var(--text-primary)]">
+  <!-- Header -->
+  <div class="mb-10">
+    <h1 class="text-3xl font-medium text-[var(--text-heading)]">
+      Sales & Royalty Dashboard
+    </h1>
+    <p class="text-[var(--text-primary)] mt-1">
+      Track book sales, monitor royalties, and manage withdrawals.
+    </p>
+  </div>
+
+  <!-- Wallet Overview -->
+  <div class="grid md:grid-cols-3 gap-6 mb-10">
+    <!-- Withdrawals -->
+    <div
+      class="bg-gradient-to-br from-[var(--light-purple-bg)] to-white p-6 rounded-2xl shadow-md hover:shadow-xl border border-[var(--primary-superlight)] transition-all"
+    >
+      <div class="flex items-center gap-4 mb-4">
+        <div
+          class="bg-gradient-to-br from-[var(--green-2)] to-[var(--light-green-2)] text-white w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold"
+        >
+          ₹
+        </div>
+        <div>
+          <h3 class="font-medium text-lg text-[var(--text-heading)]">
+            Withdrawals
+          </h3>
+          <p class="text-sm text-[var(--text-primary)]">
+            Total Paid or Requested
+          </p>
+        </div>
+      </div>
+      <div class="text-2xl font-medium text-[var(--text-heading)]">
+        ₹{{ loggedInUser()?.wallet?.totalAmount ?? 0 }}
+      </div>
+      <p class="text-sm text-[var(--text-primary)] mt-1">
+        Royalty Withdrawn :
+        <span class="font-medium text-[var(--primary)]">
+          {{
+            (loggedInUser()?.wallet?.totalAmount ?? 0) -
+              (loggedInUser()?.wallet?.holdAmount ?? 0) | currency : "INR"
+          }}
+        </span>
       </p>
     </div>
 
-    <div class="grid md:grid-cols-3 gap-6 mb-10">
-      <div
-        class="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all border border-primary-superlight"
-      >
-        <div class="flex items-center gap-4 mb-4">
-          <div
-            class="bg-gradient-to-br from-green-2 to-green-2 text-white w-12 h-12 rounded-xl flex items-center justify-center text-xl font-medium"
-          >
-            W
-          </div>
-          <div>
-            <h3 class="font-semifont-medium text-lg text-text-heading">
-              Withdrawals
-            </h3>
-            <p class="text-sm text-text-secondary">Payment Requested</p>
-          </div>
-        </div>
-        <div class="text-2xl font-medium text-text-primary">₹0.00</div>
-        <p class="text-sm text-text-secondary mt-1">
-          Royalty Withdrawn/Paid:
-          <span class="font-semifont-medium text-primary">₹0.00</span>
-        </p>
-      </div>
-
-      <!-- Book Sales -->
-      <div
-        class="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all border border-primary-superlight"
-      >
-        <div class="flex items-center gap-4 mb-4">
-          <div
-            class="bg-gradient-to-br from-blue-colour to-primary text-white w-12 h-12 rounded-xl flex items-center justify-center text-xl font-medium"
-          >
-            B
-          </div>
-          <div>
-            <h3 class="font-semifont-medium text-lg text-text-heading">
-              Book Sales
-            </h3>
-            <p class="text-sm text-text-secondary">Total Sold</p>
-          </div>
-        </div>
-        <div class="text-2xl font-medium text-text-primary">0</div>
-        <p class="text-sm text-text-secondary mt-1">
-          Total Returned:
-          <span class="font-semifont-medium text-accent">0</span>
-        </p>
-      </div>
-
-      <!-- Earnings -->
-      <div
-        class="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all border border-primary-superlight"
-      >
-        <div class="flex items-center gap-4 mb-4">
-          <div
-            class="bg-gradient-to-br from-accent to-accent-light text-white w-12 h-12 rounded-xl flex items-center justify-center text-xl font-medium"
-          >
-            ₹
-          </div>
-          <div>
-            <h3 class="font-semifont-medium text-lg text-text-heading">
-              Earnings
-            </h3>
-            <p class="text-sm text-text-secondary">Lifetime Earning</p>
-          </div>
-        </div>
-        <div class="text-2xl font-medium text-text-primary">₹0.00</div>
-        <button
-          class="mt-4 bg-green-2 hover:bg-green-2 text-white py-2 px-4 rounded-lg font-semifont-medium text-sm"
+    <!-- Book Sales -->
+    <div
+      class="bg-gradient-to-br from-[var(--primary-superlight)] to-white p-6 rounded-2xl shadow-md hover:shadow-xl border border-[var(--primary-superlight)] transition-all"
+    >
+      <div class="flex items-center gap-4 mb-4">
+        <div
+          class="bg-gradient-to-br from-[var(--primary)] to-[var(--purple)] text-white w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold"
         >
-          Withdraw Funds
-        </button>
+          📘
+        </div>
+        <div>
+          <h3 class="font-medium text-lg text-[var(--text-heading)]">
+            Book Sales
+          </h3>
+          <p class="text-sm text-[var(--text-primary)]">Total Books Sold</p>
+        </div>
       </div>
+      <div class="text-2xl font-medium text-[var(--text-heading)]">
+        {{ earningList().length }}
+      </div>
+      <p class="text-sm text-[var(--text-primary)] mt-1">
+        Total Platforms :
+        <span class="font-medium text-[var(--primary)]">
+          {{ uniquePlatformsCount() }}
+        </span>
+      </p>
     </div>
 
-    <!-- Ledger Section -->
-    <!-- <div
-      class="bg-white rounded-2xl shadow-md p-6 border border-primary-superlight"
+    <!-- Earnings -->
+    <div
+      class="bg-gradient-to-br from-[var(--light-green-bg)] to-white p-6 rounded-2xl shadow-md hover:shadow-xl border border-[var(--primary-superlight)] transition-all"
     >
-      <div
-        class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4"
-      >
-        <h2 class="text-xl font-semifont-medium text-text-heading">
-          Sales Ledger History
-        </h2>
-        <div class="flex gap-3">
-          <button
-            class="border border-primary-superlight text-primary font-semifont-medium py-2 px-4 rounded-lg hover:bg-primary-superlight"
-          >
-            Export CSV
-          </button>
-          <button
-            class="bg-primary text-white font-semifont-medium py-2 px-4 rounded-lg hover:bg-purple"
-          >
-            Request Withdrawal
-          </button>
-        </div>
-      </div>
-
-      <!-- Filters -->
-    <!-- <div class="grid md:grid-cols-4 gap-4 mb-6">
-        <mat-form-field
-          appearance="outline"
-          class="w-fullh-[42px] compact-select"
+      <div class="flex items-center gap-4 mb-4">
+        <div
+          class="bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] text-white w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold"
         >
-          <mat-label>Transaction Type</mat-label>
-          <mat-select>
-            <mat-option value="sale">Sale</mat-option>
-            <mat-option value="refund">Refund</mat-option>
-            <mat-option value="withdrawal">Withdrawal</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="w-full compact-select">
-          <mat-label>Select Platform</mat-label>
-          <mat-select>
-            <mat-option value="notionpress">NotionPress</mat-option>
-            <mat-option value="amazon">Amazon</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="w-full compact-select">
-          <mat-label>Select Date</mat-label>
-          <input matInput [matDatepicker]="picker" />
-          <mat-datepicker-toggle
-            matSuffix
-            [for]="picker"
-          ></mat-datepicker-toggle>
-          <mat-datepicker #picker></mat-datepicker>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="w-full compact-select">
-          <mat-label>Search</mat-label>
-          <input matInput placeholder="Search" />
-        </mat-form-field>
+          💰
+        </div>
+        <div>
+          <h3 class="font-medium text-lg text-[var(--text-heading)]">
+            Earnings
+          </h3>
+          <p class="text-sm text-[var(--text-primary)]">Lifetime Earnings</p>
+        </div>
       </div>
+      <div class="text-2xl font-medium text-[var(--text-heading)]">
+        {{ totalPaidFormatted() | currency : "INR" }}
+      </div>
+      <!-- <button
+        class="mt-4 bg-[var(--green-2)] hover:bg-[var(--green-2)] text-white py-2 px-4 rounded-lg font-medium text-sm shadow-md active:bg-green-2/80"
+      >
+        Withdraw Funds
+      </button> -->
+    </div>
+  </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full border-collapse">
-          <thead>
-            <tr
-              class="bg-primary-superlight text-left text-text-secondary text-sm"
+  <!-- Recent Earnings & Wallet Summary -->
+  <div class="grid md:grid-cols-3 gap-6 mt-10">
+    <!-- Recent Earnings -->
+    <div
+      class="md:col-span-2 bg-white p-6 rounded-2xl shadow-md border border-[var(--primary-superlight)]"
+    >
+      <h3 class="text-lg font-medium text-[var(--text-heading)] mb-4">
+        Recent Earnings
+      </h3>
+      <p class="text-[var(--text-primary)] mb-6 text-sm">
+        Overview of your latest royalty transactions
+      </p>
+
+      @if (earningList().length) {
+      <div class="flex flex-col gap-4">
+        @for (e of earningList(); track e.id) {
+        <div
+          class="p-4 rounded-xl flex justify-between items-center border border-[var(--primary-superlight)] hover:bg-[var(--light-purple-bg)] transition-all shadow-sm"
+        >
+          <div>
+            <div class="font-medium text-[var(--text-heading)]">
+              {{ e.royalty.title.name || "Untitled" }}
+            </div>
+            <div class="text-sm text-[var(--text-primary)] mt-1">
+              Platform:
+              <span class="text-[var(--primary)] font-medium">
+                {{ e.platform }}
+              </span>
+              •
+              <span
+                class="capitalize"
+                [class.text-[var(--green-2)]]="e.status === 'PAID'"
+                [class.text-[var(--accent)]]="e.status === 'PENDING'"
+              >
+                {{ e.status }}
+              </span>
+            </div>
+          </div>
+          <div class="text-right">
+            <div
+              class="font-medium"
+              [ngClass]="{
+                'text-[var(--green-2)]': e.status === 'PAID',
+                'text-[var(--text-primary)]': e.status !== 'PAID'
+              }"
             >
-              <th class="py-3 px-4">#</th>
-              <th class="py-3 px-4">Type</th>
-              <th class="py-3 px-4">Platform</th>
-              <th class="py-3 px-4">Date</th>
-              <th class="py-3 px-4">Amount</th>
-              <th class="py-3 px-4">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td colspan="6" class="text-center py-6 text-text-secondary">
-                No records found
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div> 
-    </div> -->
-
-    <!-- Earnings and Wallet -->
-    <div class="grid md:grid-cols-3 gap-6 mt-10">
-      <!-- Recent Earnings -->
-      <div
-        class="md:col-span-2 bg-white p-6 rounded-2xl shadow-md border border-primary-superlight"
-      >
-        <h3 class="text-lg font-semifont-medium text-text-heading mb-4">
-          Recent Earnings
-        </h3>
-        <p class="text-text-secondary mb-6">
-          A quick overview of recent royalty events and hold periods.
-        </p>
-        <div class="flex flex-col gap-4">
-          <div
-            class="bg-primary-superlight p-4 rounded-xl flex justify-between items-center"
-          >
-            <div>
-              <div class="font-semifont-medium text-text-primary">
-                Title: Whispering Shadows
-              </div>
-              <div class="text-sm text-text-secondary">
-                Platform: NotionPress • Royalty: 10%
-              </div>
+              ₹{{ e.amount | number : "1.2-2" }}
             </div>
-            <div class="text-right">
-              <div class="font-medium text-text-primary">₹0.00</div>
-              <div class="text-xs text-text-secondary">Hold until: —</div>
+            <div class="text-xs text-[var(--text-primary)] mt-1">
+              @if (e.holdUntil) { Hold until:
+              <span class="text-[var(--primary)] font-medium">
+                {{ e.holdUntil | date : "yyyy-MM-dd" }}
+              </span>
+              } @else {
+              <span>Paid on:</span>
+              <span class="text-[var(--primary)] font-medium">
+                {{ e.paidAt | date : "yyyy-MM-dd" }}
+              </span>
+              }
             </div>
           </div>
+        </div>
+        }
+      </div>
+      } @else {
+      <div
+        class="text-center p-6 border border-[var(--primary-superlight)] rounded-xl text-[var(--text-primary)]"
+      >
+        No recent earnings available.
+      </div>
+      }
+    </div>
 
-          <div
-            class="bg-primary-superlight p-4 rounded-xl flex justify-between items-center"
-          >
-            <div>
-              <div class="font-semifont-medium text-text-primary">
-                Title: Dawn Over Ashes
-              </div>
-              <div class="text-sm text-text-secondary">
-                Platform: Amazon • Royalty: 8%
-              </div>
-            </div>
-            <div class="text-right">
-              <div class="font-medium text-green-2">₹120.00</div>
-              <div class="text-xs text-text-secondary">
-                Hold until: 2025-12-01
-              </div>
-            </div>
+    <!-- Wallet Summary -->
+    <div
+      class="bg-gradient-to-br from-[var(--light-purple-bg)] to-white p-6 rounded-2xl shadow-md border border-[var(--primary-superlight)] flex flex-col justify-between max-h-[260px]"
+    >
+      <div>
+        <h3 class="text-lg font-medium text-[var(--text-heading)] mb-4">
+          Wallet Summary
+        </h3>
+
+        <div class="space-y-3 text-sm">
+          <div class="flex justify-between">
+            <span class="text-[var(--text-primary)]">Total Amount</span>
+            <span class="font-medium text-[var(--primary)]">
+              ₹{{ loggedInUser()?.wallet?.totalAmount ?? 0 }}
+            </span>
+          </div>
+
+          <div class="flex justify-between">
+            <span class="text-[var(--text-primary)]">Hold Amount</span>
+            <span class="font-medium text-[var(--accent)]">
+              ₹{{ loggedInUser()?.wallet?.holdAmount ?? 0 }}
+            </span>
+          </div>
+
+          <div class="flex justify-between">
+            <span class="text-[var(--text-primary)]">Available Balance</span>
+            <span class="font-medium text-[var(--green-2)]">
+              ₹{{
+                (loggedInUser()?.wallet?.totalAmount ?? 0) -
+                  (loggedInUser()?.wallet?.holdAmount ?? 0)
+              }}
+            </span>
           </div>
         </div>
       </div>
 
-      <!-- Wallet Summary -->
-      <div
-        class="bg-white p-6 rounded-2xl shadow-md border border-primary-superlight flex flex-col justify-between"
-      >
-        <h3 class="text-lg font-semifont-medium text-text-heading mb-4">
-          Wallet
-        </h3>
-        <div class="space-y-3">
-          <div class="flex justify-between">
-            <span class="text-text-secondary">Total Amount</span>
-            <span class="font-medium text-text-primary">₹120.00</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-text-secondary">Hold Amount</span>
-            <span class="font-medium text-accent">₹120.00</span>
-          </div>
-        </div>
-        <div class="flex gap-3 mt-6">
-          <button
-            class="bg-green-2 hover:bg-green-2 text-white font-semifont-medium py-2 px-4 rounded-lg flex-1"
-          >
-            Withdraw
-          </button>
-          <button
-            class="border border-primary-superlight text-primary font-semifont-medium py-2 px-4 rounded-lg hover:bg-primary-superlight flex-1"
-          >
-            View Transactions
-          </button>
-        </div>
+      <div class="flex gap-3 mt-6">
+        <button
+          class="bg-[var(--green-2)] hover:bg-[var(--green-2)] text-white font-medium py-2 px-4 rounded-lg flex-1 shadow-md active:bg-green-2/80"
+          (click)="onClickRequestPayout()"
+        >
+          Withdraw
+        </button>
+        <button
+          class="border border-[var(--primary-superlight)] text-[var(--primary)] font-medium py-2 px-4 rounded-lg hover:bg-[var(--primary-superlight)] flex-1"
+          [routerLink]="['/transactions']"
+          routerLinkActive="router-link-active"
+        >
+          View Transactions
+        </button>
       </div>
     </div>
   </div>
