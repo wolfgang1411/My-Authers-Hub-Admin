@@ -114,6 +114,7 @@ export class Royalties {
         onClose: () => dialog.close(),
         onSubmit: async (data: CreateSale[]) => {
           await this.salesService.createSalesMulti(data);
+          await this.updateRoyaltyList();
           dialog.close();
           Swal.fire({
             icon: 'success',
