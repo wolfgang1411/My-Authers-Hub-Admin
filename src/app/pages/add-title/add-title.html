@@ -15,7 +15,7 @@
   #stepperForm
 >
   @if(!this.titleId) {
-  <mat-step
+  <!-- <mat-step
     [stepControl]="tempForm.controls.publishingType"
     class="!text-accent !p-0"
     label="Choose Format"
@@ -187,8 +187,222 @@
         }
       </div>
     </form>
+  </mat-step> -->
+  @if(!this.titleId) {
+  <mat-step
+    [stepControl]="tempForm.controls.publishingType"
+    class="!text-accent !p-0"
+    label="Choose Format"
+  >
+    <form [formGroup]="tempForm">
+      <div class="flex flex-col gap-8">
+        <!-- ========== STEP 1: Choose Format ========== -->
+        <h3 class="heading self-center !text-[1.6rem] !font-medium">
+          {{ "inwhichformatyouwouldliketouploadthetitle" | translate }}??
+        </h3>
+
+        <div class="grid grid-cols-3 gap-8">
+          <!-- PRINT & EBOOK -->
+          <button
+            type="button"
+            class="btn border-2 !border-primary flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+            [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                tempForm.get('publishingType')?.value === 'PRINT_EBOOK',
+              '!bg-white !text-primary fill-primary !border-primary':
+                tempForm.get('publishingType')?.value !== 'PRINT_EBOOK'
+            }"
+            (click)="
+              tempForm
+                .get('publishingType')
+                ?.setValue(PublishingType.PRINT_EBOOK)
+            "
+          >
+            <svg-icon
+              class="fill-primary"
+              src="images/print-ebook.svg"
+            ></svg-icon>
+            <p class="text-base">{{ "print&ebook" | translate }}</p>
+            <br />
+
+            <ul class="list-disc pl-6 space-y-1 text-start !text-xs">
+              <li>Full Cover (PDF, CMYK) — 20 MB limit</li>
+              <li>
+                Print Interior (PDF/A compliant, embedded fonts) — 10 MB limit
+              </li>
+              <li>Front Cover (JPG/PNG) — 2 MB limit</li>
+              <li>Back Cover (JPG/PNG) — 2 MB limit (optional)</li>
+            </ul>
+          </button>
+
+          <!-- PRINT ONLY -->
+          <button
+            type="button"
+            class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+            [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                tempForm.get('publishingType')?.value === 'ONLY_PRINT',
+              '!bg-white !text-primary fill-primary !border-primary':
+                tempForm.get('publishingType')?.value !== 'ONLY_PRINT'
+            }"
+            (click)="
+              tempForm
+                .get('publishingType')
+                ?.setValue(PublishingType.ONLY_PRINT)
+            "
+          >
+            <svg-icon class="fill-primary" src="images/print.svg"></svg-icon>
+            {{ "printbookonly" | translate }}
+            <br />
+            <ul class="list-disc pl-6 space-y-1 text-start !text-xs">
+              <li>Full Cover (PDF, CMYK) — 20 MB limit</li>
+              <li>
+                Print Interior (PDF/A compliant, embedded fonts) — 10 MB limit
+              </li>
+              <li>Front Cover (JPG/PNG) — 2 MB limit</li>
+              <li>Back Cover (JPG/PNG) — 2 MB limit (optional)</li>
+            </ul>
+          </button>
+
+          <!-- EBOOK ONLY -->
+          <button
+            type="button"
+            class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+            [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                tempForm.get('publishingType')?.value === 'ONLY_EBOOK',
+              '!bg-white !text-primary fill-primary !border-primary':
+                tempForm.get('publishingType')?.value !== 'ONLY_EBOOK'
+            }"
+            (click)="
+              tempForm
+                .get('publishingType')
+                ?.setValue(PublishingType.ONLY_EBOOK)
+            "
+          >
+            <svg-icon class="fill-primary" src="images/ebook.svg"></svg-icon>
+            {{ "ebookonly" | translate }}
+            <br />
+            <ul class="list-disc pl-6 space-y-1 text-start text-xs">
+              <li>
+                Print Interior (PDF/A compliant, embedded fonts) — 10 MB limit
+              </li>
+              <li>Front Cover (JPG/PNG) — 2 MB limit</li>
+              <li>Back Cover (JPG/PNG) — 2 MB limit (optional)</li>
+            </ul>
+          </button>
+        </div>
+
+        <!-- ========== STEP 2: Ask if files are ready ========== -->
+        @if(tempForm.get('publishingType')?.value) {
+        <h3 class="heading self-center !text-[1.6rem] !font-medium">
+          {{ "doyouhaveallfilesreadytoupload" | translate }}??
+        </h3>
+
+        <div class="grid grid-cols-2 gap-8">
+          <!-- YES BUTTON -->
+          <button
+            type="button"
+            class="btn border-2 !border-primary flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+            [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                tempForm.get('hasFiles')?.value === true,
+              '!bg-white !text-primary fill-primary !border-primary':
+                tempForm.get('hasFiles')?.value !== true
+            }"
+            (click)="onSelectDocumentsReady()"
+          >
+            <div class="flex justify-center">
+              <svg-icon
+                class="fill-primary flex w-20 self-end"
+                src="images/file-regular-full.svg"
+              ></svg-icon>
+              <svg-icon
+                class="fill-primary flex w-8 self-end mb-2"
+                src="images/circle-check-solid-full.svg"
+              ></svg-icon>
+            </div>
+            {{ "yesalldocumentsareready" | translate }}
+          </button>
+
+          <!-- NO BUTTON -->
+          <button
+            type="button"
+            class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+            [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                tempForm.get('hasFiles')?.value === false,
+              '!bg-white !text-primary fill-primary !border-primary':
+                tempForm.get('hasFiles')?.value !== false
+            }"
+            (click)="tempForm.get('hasFiles')?.setValue(false)"
+            [routerLink]="['/titles']"
+          >
+            <svg-icon
+              class="fill-primary flex w-20"
+              src="images/file-excel-regular-full.svg"
+            ></svg-icon>
+            {{ "noidonthavefilesready" | translate }}
+          </button>
+        </div>
+        } @if(tempForm.get('hasFiles')?.value === true) {
+        <h3 class="heading self-center !text-[1.6rem] !font-medium mt-10">
+          {{ "choosepublishingtype" | translate }}??
+        </h3>
+
+        <div class="grid grid-cols-2 gap-8" #scrollTarget>
+          <button
+            type="button"
+            class="btn border-2 !border-primary flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+            [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                tempForm.get('printingFormat')?.value === 'publish&print',
+              '!bg-white !text-primary fill-primary !border-primary':
+                tempForm.get('printingFormat')?.value !== 'publish&print'
+            }"
+            (click)="
+              tempForm.controls.printingFormat.patchValue('publish&print')
+            "
+            matStepperNext
+          >
+            <div class="flex justify-center">
+              <svg-icon
+                class="fill-primary flex w-20"
+                src="images/book-solid-full.svg"
+              ></svg-icon>
+              <svg-icon
+                class="fill-primary flex w-20"
+                src="images/print-solid-full.svg"
+              ></svg-icon>
+            </div>
+            {{ "publishprintdistributeandsellrecommended" | translate }}
+          </button>
+
+          <!-- Print Only -->
+          <button
+            type="button"
+            class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+            [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                tempForm.get('printingFormat')?.value === 'printOnly',
+              '!bg-white !text-primary fill-primary !border-primary':
+                tempForm.get('printingFormat')?.value !== 'printOnly'
+            }"
+            (click)="tempForm.controls.printingFormat.setValue('printOnly')"
+            matStepperNext
+          >
+            <svg-icon
+              class="fill-primary flex w-20"
+              src="images/print-solid-full.svg"
+            ></svg-icon>
+            {{ "onlyprinting" | translate }}
+          </button>
+        </div>
+        }
+      </div>
+    </form>
   </mat-step>
-  }
+  } }
 
   <!-- book detail step -->
   <mat-step

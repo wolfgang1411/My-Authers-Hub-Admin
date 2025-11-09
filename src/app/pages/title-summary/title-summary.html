@@ -164,7 +164,7 @@
             <div class="p-4 flex flex-col justify-between h-full">
               <div class="flex items-center justify-between mb-3">
                 <p class="font-medium text-[var(--text-heading)] text-sm">
-                  {{ media.type }}
+                  {{ media.type.replace("_", " ") }}
                 </p>
                 @if (media?.url?.toLowerCase()?.includes('.pdf')) {
                 <mat-icon class="text-[var(--primary)] text-base"
