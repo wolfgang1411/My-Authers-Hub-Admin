@@ -140,6 +140,16 @@ export class Wallet {
             const res = await this.payoutService.requestPayout({
               requestedAmount: val,
             });
+            const user = this.loggedInUser();
+            this.userService.setLoggedInUser({
+              ...user,
+              wallet: user?.wallet
+                ? {
+                    ...user?.wallet,
+                    holdAmount: user.wallet.holdAmount + val,
+                  }
+                : undefined,
+            });
             if (res) {
               Swal.fire({
                 icon: 'success',
