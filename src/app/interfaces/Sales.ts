@@ -40,7 +40,7 @@ export interface EarningFilter {
 
   authorIds?: number[] | number;
 
-  publisherIds?: number[];
+  publisherIds?: number[] | number;
   showPublisherAuthorEarnings?: boolean;
 
   status?: EarningsStatus | EarningsStatus[];

@@ -215,6 +215,121 @@
         </app-list-table>
       </section>
     </mat-tab>
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <span class="text-text-heading font-medium">
+          {{ "publishingpoints" | translate }}
+        </span>
+      </ng-template>
+
+      <section
+        id="publishing-points"
+        class="mt-10 bg-white p-6 rounded-xl shadow"
+      >
+        @if (publishingpoints().length) {
+        <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
+          @for (point of publishingpoints(); track $index) {
+          <div
+            class="group border border-[var(--primary-superlight)] rounded-xl p-4 bg-gradient-to-br from-white to-[var(--light-purple-bg)] hover:shadow-lg hover:scale-[1.02] transition-all"
+          >
+            <!-- Header Row -->
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <div
+                  class="p-2 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)]"
+                >
+                  <mat-icon>redeem</mat-icon>
+                </div>
+                <h5
+                  class="font-medium text-[var(--text-heading)] text-base capitalize"
+                >
+                  {{ point.distributionType.replace("_", " ") }}
+                </h5>
+              </div>
+              <span
+                class="text-[var(--green-2)] text-xs font-medium bg-[var(--light-green-bg)] px-3 py-1 rounded-full border border-[var(--light-green-2)]"
+              >
+                {{ point.availablePoints }} Points
+              </span>
+            </div>
+
+            <!-- Details -->
+            <div class="text-sm text-[var(--text-primary)]">
+              <p>
+                <span class="font-medium text-[var(--text-heading)]">ID:</span>
+                <span
+                  class="ml-2 px-2 py-[2px] rounded bg-[var(--primary-superlight)] text-[var(--primary)] font-medium text-xs"
+                  >{{ point.id }}</span
+                >
+              </p>
+              <p class="mt-2">
+                <span class="font-medium text-[var(--text-heading)]"
+                  >Created:</span
+                >
+                <span class="ml-2 text-xs text-gray-600">{{
+                  point.createdAt | date : "mediumDate"
+                }}</span>
+              </p>
+            </div>
+
+            <!-- Buy Button -->
+            <div class="mt-4 flex justify-end">
+              <button
+                mat-raised-button
+                color="primary"
+                class="!text-xs !py-1.5 !px-4"
+                (click)="buyPoints(point.distributionType)"
+              >
+                Buy More
+              </button>
+            </div>
+          </div>
+          }
+        </div>
+        } @else {
+        <div
+          class="flex flex-col justify-center p-8 bg-[var(--light-purple-bg)] rounded-2xl border border-[var(--primary-light)]"
+        >
+          <!-- Show all 5 Distribution Channels -->
+          <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mt-6">
+            @for (type of distributionType(); track type) {
+            <div
+              class="group border border-[var(--primary-superlight)] rounded-xl p-4 bg-gradient-to-br from-white to-[var(--light-purple-bg)] hover:shadow-lg hover:scale-[1.02] transition-all"
+            >
+              <div class="flex items-center gap-2 mb-3">
+                <div
+                  class="p-2 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)]"
+                >
+                  <mat-icon>storefront</mat-icon>
+                </div>
+                <h5
+                  class="font-medium text-[var(--text-heading)] text-base capitalize"
+                >
+                  {{ type.replace("_", " ") }}
+                </h5>
+              </div>
+
+              <div class="text-sm text-[var(--text-primary)]">
+                <p>No points purchased yet for this channel.</p>
+              </div>
+
+              <div class="mt-4 flex justify-end">
+                <button
+                  mat-raised-button
+                  color="accent"
+                  class="!text-xs !py-1.5 !px-4 !bg-green-2 !text-white focus:bg-green-2/50"
+                  (click)="buyPoints(type)"
+                >
+                  Buy Points
+                </button>
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+        }
+      </section>
+    </mat-tab>
 
     <!-- Published Links -->
     <mat-tab>

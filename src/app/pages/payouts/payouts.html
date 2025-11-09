@@ -1,102 +1,127 @@
-<div class="flex flex-col flex-grow gap-4">
-  <h3 class="heading">
-    {{ "payouts" | translate }}
-  </h3>
-
-  <div class="flex justify-between w-full gap-4">
-    <div
-      class="flex h-[38px] items-center justify-center md:min-w-[480px] min-w-full gap-2"
-    >
-      <input
-        class="input-field outline-none w-full"
-        #input
-        (input)="searchStr.next(input.value)"
-        [placeholder]="'search' | translate"
-      />
-      <button
-        class="btn h-[38px] flex items-center self-end justify-center gap-2"
-        (click)="searchStr.next(input.value)"
-      >
-        <svg-icon
-          src="images/magnifying-glass-solid-full.svg"
-          class="w-4 fill-white flex"
-        ></svg-icon>
-        {{ "search" | translate }}
-      </button>
+<section class="p-6 rounded-xl bg-[var(--surface)] min-h-screen">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h2 class="text-2xl font-semibold text-[var(--text-heading)]">Payouts</h2>
+      <p class="text-[var(--text-secondary)] mt-1">
+        Manage and track your payout requests and payment statuses.
+      </p>
     </div>
 
-    <div class="flex gap-2">
+    <!-- Action Buttons -->
+    <div class="flex gap-3">
       <button
-        matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        class="flex items-center gap-2 bg-[var(--primary-superlight)] text-[var(--primary)] font-medium px-4 py-2 rounded-lg hover:bg-[var(--primary-light)] transition"
       >
-        <mat-icon class="material-icons">filter_list</mat-icon>
-
-        {{ "filter" | translate }}
+        <mat-icon class="text-[var(--primary)]">filter_list</mat-icon>
+        Filter
       </button>
 
-      @if (loggedInUser()?.accessLevel !== "SUPERADMIN" || true) {
+      @if (loggedInUser()?.accessLevel !== 'SUPERADMIN' || true) {
       <button
-        matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
         (click)="onClickRequestPayout()"
+        class="flex items-center gap-2 bg-[var(--primary)] text-white font-medium px-4 py-2 rounded-lg hover:opacity-90 transition"
       >
-        <mat-icon class="material-icons">add</mat-icon>
-
-        {{ "requestpayout" | translate }}
+        <mat-icon>add</mat-icon>
+        Request Payout
       </button>
       }
     </div>
   </div>
-  <app-list-table
-    class="pt-6"
-    [dataSource]="dataSource"
-    [displayedColumns]="displayedColumns"
-    [actionTemplate]="actionButtons"
+
+  <!-- Search Bar -->
+  <div
+    class="flex flex-wrap md:flex-nowrap items-center gap-3 mb-6 bg-white border border-[var(--primary-superlight)] rounded-xl p-3 shadow-sm"
   >
-  </app-list-table>
+    <div class="flex-grow flex items-center gap-3">
+      <mat-icon class="text-[var(--text-secondary)]">search</mat-icon>
+      <input
+        #input
+        type="text"
+        (input)="searchStr.next(input.value)"
+        [placeholder]="'Search payouts...' | translate"
+        class="w-full bg-transparent outline-none text-[var(--text-primary)] placeholder-[var(--text-secondary)] text-sm"
+      />
+    </div>
+    <button
+      (click)="searchStr.next(input.value)"
+      class="bg-[var(--primary)] text-white px-5 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition"
+    >
+      Search
+    </button>
+  </div>
+
+  <!-- List Table -->
+  <div
+    class="bg-white rounded-2xl border border-[var(--primary-superlight)] shadow-md overflow-hidden"
+  >
+    <app-list-table
+      class="pt-4"
+      [dataSource]="dataSource"
+      [displayedColumns]="displayedColumns"
+      [actionTemplate]="actionButtons"
+    >
+    </app-list-table>
+  </div>
+
+  <!-- Action Buttons Template -->
   <ng-template #actionButtons let-element>
-    <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
+    <div class="flex gap-2 items-center">
+      <!-- View -->
       <button
-        class="!bg-primary"
         mat-icon-button
         [routerLink]="['/payouts', element.id]"
+        class="!bg-[var(--primary)] hover:opacity-90 rounded-full p-2"
       >
         <mat-icon class="!text-white">visibility</mat-icon>
       </button>
+
+      <!-- Superadmin Controls -->
       @if (element.status === 'PENDING' && loggedInUser()?.accessLevel ===
       'SUPERADMIN') {
       <ng-container>
         <button
           (click)="onUpdatePayout(element.id, 'APPROVED')"
-          title="Approve Payout"
-          class="!bg-primary"
+          title="Approve"
           mat-icon-button
+          class="!bg-[var(--green-2)] hover:opacity-90 rounded-full p-2"
         >
           <mat-icon class="!text-white">thumb_up</mat-icon>
         </button>
         <button
           (click)="onUpdatePayout(element.id, 'REJECTED')"
-          title="Reject Payout"
-          class="!bg-red-500"
+          title="Reject"
           mat-icon-button
+          class="!bg-red-500 hover:opacity-90 rounded-full p-2"
         >
           <mat-icon class="!text-white">thumb_down</mat-icon>
         </button>
       </ng-container>
-      } @else if(element.status === 'REJECTED') {
-      <button class="!bg-red-500" mat-icon-button disabled>
-        <mat-icon title="Rejected" class="!text-white"> close </mat-icon>
+      } @else if (element.status === 'REJECTED') {
+      <button
+        mat-icon-button
+        disabled
+        class="!bg-red-500 rounded-full p-2 opacity-80"
+      >
+        <mat-icon class="!text-white">close</mat-icon>
       </button>
-      }@else if(element.status === 'PAID') {
-      <button class="!bg-primary" mat-icon-button disabled>
-        <mat-icon title="Paid" class="!text-white"> check </mat-icon>
+      } @else if (element.status === 'PAID') {
+      <button
+        mat-icon-button
+        disabled
+        class="!bg-[var(--primary)] rounded-full p-2 opacity-80"
+      >
+        <mat-icon class="!text-white">check</mat-icon>
       </button>
-      } @else if(element.status === 'PENDING'){
-      <button class="!bg-yellow-500" mat-icon-button disabled>
-        <mat-icon title="Paid" class="!text-white"> hourglass_empty </mat-icon>
+      } @else if (element.status === 'PENDING') {
+      <button
+        mat-icon-button
+        disabled
+        class="!bg-yellow-500 rounded-full p-2 opacity-80"
+      >
+        <mat-icon class="!text-white">hourglass_empty</mat-icon>
       </button>
       }
     </div>
   </ng-template>
-</div>
+</section>

@@ -16,14 +16,7 @@ import { InviteDialog } from '../../components/invite-dialog/invite-dialog';
 
 @Component({
   selector: 'app-payouts',
-  imports: [
-    SharedModule,
-    ListTable,
-    RouterModule,
-    MatIcon,
-    MatButton,
-    MatIconButton,
-  ],
+  imports: [SharedModule, ListTable, RouterModule, MatIcon, MatIconButton],
   templateUrl: './payouts.html',
   styleUrl: './payouts.css',
 })
@@ -55,7 +48,9 @@ export class Payouts implements OnInit {
     'amount',
     'status',
     'user',
-    'account',
+    'emailId',
+    'accountNo',
+    'ifscCode',
     'actions',
   ];
   dataSource = new MatTableDataSource<any>([]);
@@ -85,9 +80,11 @@ export class Payouts implements OnInit {
         return {
           ...payout,
           orderid: '#' + payout.id,
-          user: `${firstName} ${payout.user?.lastName || ''}<br> ${email}`,
-          account: `${accountNo} <br> ${ifscCode}`,
-          amount: payout.requestedAmount + ' INR',
+          user: `${firstName} ${payout.user?.lastName || ''}`,
+          emailId: email,
+          accountNo: accountNo,
+          ifscCode: ifscCode,
+          amount: payout.requestedAmount + ' ' + 'INR',
         };
       }) || [];
   }
@@ -110,8 +107,6 @@ export class Payouts implements OnInit {
       : 'You are about to approve this payout request.';
 
     const confirmButtonText = isReject ? 'Yes, reject it!' : 'Yes, approve it!';
-
-    // Build SweetAlert config
     const swalConfig: any = {
       icon: 'warning',
       title: 'Are you sure?',
