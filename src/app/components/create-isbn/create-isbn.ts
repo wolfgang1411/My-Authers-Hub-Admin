@@ -9,6 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { SharedModule } from '../../modules/shared/shared-module';
 import {
+  FormArray,
   FormControl,
   FormGroup,
   ReactiveFormsModule,
@@ -51,21 +52,26 @@ export class CreateIsbn {
   titleList = signal<Title[] | null>(null);
 
   createIsbnForm = new FormGroup({
-    isbnNumber: new FormControl<string | null>('', [
-      Validators.required,
+    isbnNumber: new FormControl<string | null>(null, [
       Validators.pattern(/^(97(8|9))?\d{9}(\d|X)$/),
     ]),
     type: new FormControl<ISBNType | null>(null, [Validators.required]),
-    titleId: new FormControl<number | null>(null),
+    titleName: new FormControl(''),
+    authorIds: new FormControl([]),
+    publisherId: new FormControl(),
+    noOfPages: new FormControl(),
+    language: new FormControl(''),
+    mrp: new FormControl(),
+    edition: new FormControl(''),
+    temp: new FormArray([new FormGroup({})], {
+      validators: [],
+    }),
   });
 
   ngOnInit() {
+    this.createIsbnForm.controls.temp.at(0).touched;
     if (this.data.isbn) {
-      this.createIsbnForm.patchValue({
-        isbnNumber: this.data.isbn.isbnNumber,
-        type: this.data.isbn.type,
-        titleId: this.data.isbn.title?.[0]?.id,
-      });
+      this.createIsbnForm.patchValue(this.data.isbn);
     }
   }
   async onSubmit() {

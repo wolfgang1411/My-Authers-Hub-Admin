@@ -35,9 +35,12 @@ export class ISBNList {
     private dialog: MatDialog
   ) {}
   displayedColumns: string[] = [
-    'isbnnumber',
-    'titlenamelabel',
-    'createdby',
+    'titlename',
+    'authorname',
+    'publishername',
+    'verso',
+    'language',
+    'status',
     'actions',
   ];
   filter: ISBNFilter = {
@@ -93,20 +96,21 @@ export class ISBNList {
     const isbnList = await this.isbnService.getAllISBN(this.filter);
     this.isbnList.set(isbnList.items);
     this.lastPage.set(Math.ceil(isbnList.totalCount / isbnList.itemsPerPage));
+
     this.dataSource.data = isbnList.items.map((isbn, index) => {
       return {
         ...isbn,
         id: isbn.id,
         isbnnumber: isbn.isbnNumber,
         isbntype: isbn.type,
-        titlenamelabel:
-          isbn.title && isbn.title.length
-            ? `${isbn.title[0].name} (${
-                isbn.title[0].printing?.[0]?.totalPages
-              }) (${isbn.title[0].language}) <br> ${isbn.title[0]?.authors
-                ?.map(({ display_name }) => display_name)
-                .join(',')}`
-            : 'N/A',
+        titlename: isbn.titleName,
+        authorname: isbn.authors
+          .map(({ user: { fullName } }) => fullName)
+          .join(','),
+        publishername: isbn.publisher.name,
+        verso: `<img height='40' width='40'  src=${isbn.bunko} />`,
+        language: isbn.language,
+        status: isbn.status,
         createdby: isbn.admin
           ? isbn.admin.firstName + ' ' + isbn.admin.lastName
           : 'N/A',

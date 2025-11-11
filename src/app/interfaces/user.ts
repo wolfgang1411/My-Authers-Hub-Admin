@@ -8,6 +8,7 @@ export interface User {
   id: number;
   email: string;
   accessLevel: AccessLevel;
+  fullName: string;
   wallet?: Wallet;
   firstName: string;
   lastName: string;

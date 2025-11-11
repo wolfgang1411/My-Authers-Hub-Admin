@@ -1,5 +1,6 @@
 table {
-  @apply w-full border rounded-lg bg-primary-light;
+  @apply w-full border  bg-primary-light;
+  border-radius: 8px;
 }
 
 .mat-mdc-form-field {

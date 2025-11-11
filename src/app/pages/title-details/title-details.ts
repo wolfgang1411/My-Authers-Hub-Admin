@@ -115,7 +115,7 @@ export class TitleDetails {
       });
     });
   }
-  titleStepProgress = computed(() => {
+  titleStepProgress: any = computed(() => {
     const map: { [id: string]: TitleStepProgress } = {};
     const detailsMap = this.titleDetailsMap();
 
