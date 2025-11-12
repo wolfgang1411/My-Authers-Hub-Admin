@@ -58,7 +58,7 @@ export class Sidebar implements OnInit {
       { name: 'Transactions', url: '/transactions', icon: 'receipt_long' },
       { name: 'Payouts', url: '/payouts', icon: 'credit_card' },
       { name: 'Wallet', url: '/wallet', icon: 'credit_card' },
-
+      { name: 'coupon', url: '/coupon', icon: 'local_offer' },
       { name: 'Profile', url: '/profile', icon: 'account_circle' },
       { name: 'Settings', url: '/settings', icon: 'settings' },
     ];

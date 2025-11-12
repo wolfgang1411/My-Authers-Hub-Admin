@@ -1,18 +1,40 @@
-import { Component, signal } from '@angular/core';
+import { Component, computed, Signal, signal } from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { ListTable } from '../../components/list-table/list-table';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { RouterModule } from '@angular/router';
-import { MatButton } from '@angular/material/button';
+import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatTableDataSource } from '@angular/material/table';
 import { IsbnService } from '../../services/isbn-service';
 import { debounceTime, Subject } from 'rxjs';
-import { createIsbn, ISBN, ISBNFilter } from '../../interfaces';
+import {
+  Author,
+  AuthorStatus,
+  createIsbn,
+  ISBN,
+  ISBNFilter,
+  ISBNStatus,
+  Publishers,
+  PublisherStatus,
+  User,
+} from '../../interfaces';
 import { Logger } from '../../services/logger';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { CreateIsbn } from '../../components/create-isbn/create-isbn';
 import Swal from 'sweetalert2';
+import {
+  downloadFile,
+  getFileToBase64,
+  urlToFile,
+} from '../../common/utils/file';
+import { PublisherService } from '../publisher/publisher-service';
+import { AuthorsService } from '../authors/authors-service';
+import { MatOption, MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { StaticValuesService } from '../../services/static-values';
+import { UserService } from '../../services/user';
+import { stat } from 'fs';
 
 @Component({
   selector: 'app-isbn-list',
@@ -24,6 +46,10 @@ import Swal from 'sweetalert2';
     MatButton,
     MatIconModule,
     MatDialogModule,
+    MatOption,
+    MatSelectModule,
+    MatFormFieldModule,
+    MatIconButton,
   ],
   templateUrl: './isbn-list.html',
   styleUrl: './isbn-list.css',
@@ -32,8 +58,17 @@ export class ISBNList {
   constructor(
     private isbnService: IsbnService,
     private logger: Logger,
-    private dialog: MatDialog
-  ) {}
+    private dialog: MatDialog,
+    private publisherService: PublisherService,
+    private authorService: AuthorsService,
+    private staticValService: StaticValuesService,
+    private userService: UserService
+  ) {
+    this.loggedInUser$ = this.userService.loggedInUser$;
+  }
+
+  loggedInUser$!: Signal<User | null>;
+
   displayedColumns: string[] = [
     'titlename',
     'authorname',
@@ -41,13 +76,21 @@ export class ISBNList {
     'verso',
     'language',
     'status',
+    'isbnnumber',
     'actions',
   ];
   filter: ISBNFilter = {
     page: 1,
     itemsPerPage: 30,
     searchStr: '',
+    status: 0 as any,
   };
+
+  isbnStatuses = computed(() => {
+    return Object.keys(
+      this.staticValService.staticValues()?.ISBNStatus || {}
+    ).filter((v) => v !== 'DELETED');
+  });
 
   dataSource = new MatTableDataSource<any>();
   searchStr = new Subject<string>();
@@ -57,33 +100,69 @@ export class ISBNList {
     .subscribe((value) => {
       this.filter.searchStr = value;
       this.filter.page = 1;
-      this.updateISBNList();
+      this.fetchIsbnList();
     });
 
   lastPage = signal(1);
   isbnList = signal<ISBN[]>([]);
   ngOnInit(): void {
-    this.updateISBNList();
+    this.fetchIsbnList();
+    this.fetchAndUpdateAuthorsList();
+    this.fetchAndUpdatePublishersList();
   }
+
+  async fetchAndUpdatePublishersList() {
+    const { items } = await this.publisherService.getPublishers({
+      status: PublisherStatus.Active,
+      itemsPerPage: 1000,
+    });
+    this.publisherList.set(items);
+  }
+
+  async fetchAndUpdateAuthorsList() {
+    const { items } = await this.authorService.getAuthors({
+      itemsPerPage: 1000,
+      status: AuthorStatus.Active,
+    });
+    this.authorsList.set(items);
+  }
+
+  publisherList = signal<Publishers[] | null>(null);
+  authorsList = signal<Author[] | null>(null);
 
   async createIsbn(isbn?: ISBN) {
     const dialogRef = this.dialog.open(CreateIsbn, {
+      maxWidth: '90vw',
       data: {
         isbn,
+        authorsList: this.authorsList(),
+        publishersList: this.publisherList(),
         onSubmit: async (createIsbn: createIsbn) => {
           const response = await this.isbnService.createOrUpdateIsbn({
             ...createIsbn,
             id: isbn?.id,
           });
+          this.isbnList.update((list) => {
+            if (isbn) {
+              list = list.map((item) =>
+                item.id === response.id ? response : item
+              );
+            } else {
+              list.unshift(response);
+            }
+
+            return list;
+          });
+          this.updateISBNList();
           if (response) {
             dialogRef.close();
+            let html = 'The ISBN has been applied';
             Swal.fire({
               title: 'success',
-              text: 'The ISBN number is verified and has been created successfully!',
+              html,
               icon: 'success',
               heightAuto: false,
             });
-            this.updateISBNList();
           }
         },
         onClose: () => {
@@ -92,12 +171,67 @@ export class ISBNList {
       },
     });
   }
-  async updateISBNList() {
-    const isbnList = await this.isbnService.getAllISBN(this.filter);
-    this.isbnList.set(isbnList.items);
-    this.lastPage.set(Math.ceil(isbnList.totalCount / isbnList.itemsPerPage));
 
-    this.dataSource.data = isbnList.items.map((isbn, index) => {
+  async onISBNStatusChange(id: number, status: string) {
+    let html = '';
+    let title = '';
+
+    if (status === 'APPROVED') {
+      html =
+        'The ISBN will be approved. <br> once approved it cannot be changed.';
+      title = 'Are you sure?';
+    } else if (status === 'REJECTED') {
+      html =
+        'The ISBN will be rejected. <br> once rejected it cannot be changed.';
+      title = 'Are you sure?';
+    }
+
+    const { value } = await Swal.fire({
+      icon: 'warning',
+      title,
+      html,
+      showCancelButton: true,
+      confirmButtonText: 'Yes',
+      cancelButtonText: 'No',
+      heightAuto: false,
+      customClass: {
+        confirmButton: status === 'APPROVED' ? '!bg-primary' : '!bg-red-500',
+      },
+    });
+
+    if (!value) return;
+
+    const response = await this.isbnService.createOrUpdateIsbn({
+      id,
+      status,
+    } as any);
+
+    this.isbnList.update((list) => {
+      return list.map((item) => (item.id === response.id ? response : item));
+    });
+    this.updateISBNList();
+  }
+
+  fetchIsbnList() {
+    const filter = { ...this.filter };
+    console.log(filter);
+
+    if (!filter.status) {
+      delete filter.status;
+    }
+    this.isbnService.getAllISBN(filter).then((response) => {
+      this.isbnList.set(response.items);
+      this.lastPage.set(
+        Math.ceil(response.totalCount / this.filter.itemsPerPage)
+      );
+      this.updateISBNList();
+    });
+  }
+
+  updateISBNList() {
+    const isbnList = this.isbnList();
+
+    this.dataSource.data = isbnList.map((isbn, index) => {
       return {
         ...isbn,
         id: isbn.id,
@@ -108,7 +242,7 @@ export class ISBNList {
           .map(({ user: { fullName } }) => fullName)
           .join(','),
         publishername: isbn.publisher.name,
-        verso: `<img height='40' width='40'  src=${isbn.bunko} />`,
+        verso: isbn.edition,
         language: isbn.language,
         status: isbn.status,
         createdby: isbn.admin
@@ -117,29 +251,16 @@ export class ISBNList {
       };
     });
   }
+
   downloadBarCode(isbnNumber: string) {
-    console.log(isbnNumber, 'isbnNumber');
-    const downloadFile = (file: Blob, name: string) => {
-      const blobUrl = URL.createObjectURL(file);
-      fetch(blobUrl)
-        .then((resp) => resp.blob())
-        .then((blob) => {
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.style.display = 'none';
-          a.href = url;
-          a.download = name;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          window.URL.revokeObjectURL(url);
-        })
-        .catch((error) => {
-          this.logger.logError(error);
-        });
-    };
     this.isbnService.downloadBarCode(isbnNumber).then((response: any) => {
       downloadFile(response.body, 'filename');
     });
+  }
+
+  async downloadBunko(isbn: ISBN) {
+    const filename = `bunko-${isbn.id}.png`;
+    const file = await urlToFile(isbn.bunko, filename);
+    downloadFile(file, filename);
   }
 }

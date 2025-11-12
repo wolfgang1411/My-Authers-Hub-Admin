@@ -1,0 +1,123 @@
+<form
+  [formGroup]="addCouponForm"
+  (ngSubmit)="onSubmit()"
+  class="flex flex-col gap-4 p-3"
+>
+  <h2 mat-dialog-title class="text-xl heading !text-primary">
+    {{ data.coupon ? ("updatecoupon" | translate) : ("addcoupon" | translate) }}
+  </h2>
+
+  <mat-dialog-content>
+    <div class="grid grid-cols-2 gap-4">
+      <mat-form-field>
+        <mat-label>{{ "coupon" | translate }}</mat-label>
+        <input formControlName="code" matInput type="text" />
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>{{ "discountvalue" | translate }}</mat-label>
+        <input formControlName="discountValue" matInput type="number" />
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>{{ "discounttype" | translate }}</mat-label>
+        <mat-select formControlName="discountType">
+          @for (discountType of discountTypes() ; track discountType) {
+          <mat-option [value]="discountType">
+            {{ discountType | translate }}
+          </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>{{ "applyon" | translate }}</mat-label>
+        <mat-select formControlName="applyOn">
+          @for (applyOn of applyOnTypes() ; track applyOn) {
+          <mat-option [value]="applyOn">
+            {{ applyOn | translate }}
+          </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="relative">
+        <mat-label>{{ "startdate" | translate }}</mat-label>
+        <input
+          class="opacity-0 w-0 h-0 absolute top-0"
+          formControlName="startDate"
+          matInput
+          [matDatepicker]="picker"
+          (click)="picker.open()"
+        />
+        <input
+          type="text"
+          readonly
+          matInput
+          [value]="addCouponForm.controls.startDate.value | myDate"
+          (click)="picker.open()"
+        />
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field class="relative">
+        <mat-label>{{ "enddate" | translate }}</mat-label>
+        <input
+          class="hidden"
+          formControlName="endDate"
+          matInput
+          [matDatepicker]="endDatePicker"
+        />
+        <input
+          type="text"
+          readonly
+          matInput
+          [value]="addCouponForm.controls.endDate.value | myDate"
+          (click)="endDatePicker.open()"
+        />
+        <mat-datepicker-toggle
+          matSuffix
+          [for]="endDatePicker"
+        ></mat-datepicker-toggle>
+        <mat-datepicker #endDatePicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>{{ "usagelimit" | translate }}</mat-label>
+        <input formControlName="usageLimit" matInput type="number" />
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>{{ "userusagelimit" | translate }}</mat-label>
+        <input formControlName="userUsageLimit" matInput type="number" />
+      </mat-form-field>
+
+      <mat-form-field class="col-span-2">
+        <mat-label>{{ "title" | translate }}</mat-label>
+        <mat-select formControlName="titleId">
+          @for (title of data.titleList ; track title) {
+          <mat-option [value]="title.id">
+            {{ title.name | translate }}
+          </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions>
+    <button
+      (click)="data.onClose()"
+      mat-button
+      matButton="filled"
+      class="!bg-accent"
+      type="button"
+    >
+      {{ "close" | translate }}
+    </button>
+    <button mat-button matButton="filled" class="!bg-primary" type="submit">
+      {{ "confirm" | translate }}
+    </button>
+  </mat-dialog-actions>
+</form>

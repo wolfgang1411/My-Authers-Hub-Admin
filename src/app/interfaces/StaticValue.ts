@@ -362,7 +362,14 @@ export enum ApplyOnType {
   BOTH = 'BOTH',
 }
 
+export enum ISBNStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  DELETED = 'DELETED',
+}
+
 export const StaticValues = {
+  ISBNStatus,
   UserStatus,
   UserAccessLevel,
   LoginMethod,
