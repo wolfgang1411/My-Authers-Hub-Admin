@@ -384,5 +384,17 @@
   "noofpages": " No. of Pages",
   "edition": " Edition",
   "bunko": "Bunko",
-  "barcode": "Bar Code"
+  "barcode": "Bar Code",
+  "coupons": "Coupons",
+  "coupon": "Coupon",
+  "discountvalue": " Discount Value",
+  "startdate/enddate": " Start/End Date",
+  "usedcount": " Used Count",
+  "addcoupon": "Add coupon",
+  "discounttype": "Discount Type",
+  "applyon": "Apply On",
+  "startdate": "Start Date",
+  "enddate": "End Date",
+  "usagelimit": "Usage Limit",
+  "userusagelimit": "User Usage Limit"
 }

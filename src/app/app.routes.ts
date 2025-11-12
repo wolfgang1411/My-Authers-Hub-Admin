@@ -173,6 +173,12 @@ export const routes: Routes = [
     },
   },
   {
+    path: 'coupon',
+    loadComponent: () =>
+      import('./pages/coupon/coupon').then((c) => c.CouponComponent),
+    canActivate: [privateRouteGuard],
+  },
+  {
     path: '',
     redirectTo: '/dashboard',
     pathMatch: 'full',
