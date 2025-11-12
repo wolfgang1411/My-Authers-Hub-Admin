@@ -60,7 +60,7 @@
   </app-list-table>
   <ng-template #actionButtons let-element>
     <div class="flex gap-2 text-sm items-center justify-end lg:flex-wrap">
-      @if (element.image) {
+      @if (element.image && element.status !== 'REJECTED') {
       <button
         class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
         matButton="filled"
@@ -71,7 +71,7 @@
 
         {{ "barcode" | translate }}
       </button>
-      } @if (element.bunko) {
+      } @if (element.bunko && element.status !== 'REJECTED') {
       <button
         class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
         matButton="filled"
