@@ -130,26 +130,35 @@ export class AddAuthor {
   isAllSelected = computed(() => {
     return this.selectedTypes().length >= this.socialMediaArray.length;
   });
-
+  bankInfo: any = null;
+  verifying = false;
+  invalidIFSC = false;
   ifscCodeValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
-      const prefix = this.bankOptions().find(
-        ({ BANK }) => BANK === this.authorBankDetails.controls.name.value
-      )?.BANKCODE;
-      if (!prefix) return null;
-      const value = control.value?.toUpperCase?.().trim?.() || '';
-      if (!value) return null; // skip if empty, let 'required' handle that
-      return value.startsWith(prefix.toUpperCase())
-        ? null
-        : {
-            startsWith: this.translateService.instant(
-              'invalidifscodestartwitherror',
-              {
-                prefix,
-              }
-            ),
-          };
+      const ifscPattern = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+      return ifscPattern.test(control.value) ? null : { invalidIFSC: true };
     };
+  }
+
+  verifyIFSC() {
+    const ifsc = this.authorBankDetails
+      .get('ifsc')
+      ?.value?.trim()
+      .toUpperCase();
+    if (!ifsc) return;
+    this.verifying = true;
+    this.invalidIFSC = false;
+    this.http.get(`https://ifsc.razorpay.com/${ifsc}`).subscribe({
+      next: (res) => {
+        this.bankInfo = res;
+        this.verifying = false;
+      },
+      error: () => {
+        this.invalidIFSC = true;
+        this.verifying = false;
+        this.bankInfo = null;
+      },
+    });
   }
 
   async ngOnInit() {
@@ -381,6 +390,23 @@ export class AddAuthor {
       email: this.authorFormGroup.controls.email.value,
     };
     try {
+      if (
+        this.authorFormGroup.invalid ||
+        this.authorAddressDetails.invalid ||
+        this.authorBankDetails.invalid
+      ) {
+        console.log(this.authorFormGroup.value, 'author form errors');
+        console.log(this.authorAddressDetails.value, 'address form errors');
+        console.log(this.authorBankDetails.value, 'bank form errors');
+        Swal.fire({
+          title: 'error',
+          text: 'Please fill all required fields correctly.',
+          icon: 'error',
+          heightAuto: false,
+        });
+        return;
+      }
+
       if (this.loggedInUser()?.accessLevel === 'SUPERADMIN' || !this.authorId) {
         const response = (await this.authorsService.createAuthor(
           authorData as Author

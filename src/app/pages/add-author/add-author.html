@@ -218,15 +218,23 @@
             required
           />
         </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ "ifsccode" | translate }}</mat-label>
+        <mat-form-field appearance="fill">
+          <mat-label>IFSC Code</mat-label>
           <input
             matInput
             formControlName="ifsc"
-            placeholder="IFSC7877776"
-            required
+            placeholder="e.g. HDFC0001234"
+            (blur)="verifyIFSC()"
           />
+          @if(bankInfo) {
+          <mat-hint> ✅ {{ bankInfo.BANK }} - {{ bankInfo.BRANCH }} </mat-hint>
+          } @if (invalidIFSC){
+          <mat-error>Invalid IFSC Code</mat-error>
+          }
         </mat-form-field>
+        @if (verifying) {
+        <div class="text-sm text-gray-500 mt-2">Verifying IFSC code...</div>
+        }
         <mat-form-field>
           <mat-label>{{ "panCardNo" | translate }}</mat-label>
           <input matInput formControlName="panCardNo" placeholder="" required />
