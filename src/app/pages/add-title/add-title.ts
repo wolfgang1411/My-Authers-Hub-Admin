@@ -1016,6 +1016,12 @@ export class AddTitle {
     }
 
     const titleDetails = this.tempForm.controls.titleDetails?.value;
+    const validAuthors = (titleDetails.authorIds || [])
+      .filter((author: any) => !!author?.id)
+      .map((author: any) => ({
+        id: author.id,
+        displayName: author.displayName || '',
+      }));
     const basicData: TitleCreate = {
       publishingType: this.tempForm.controls.publishingType
         .value as PublishingType,
@@ -1036,13 +1042,7 @@ export class AddTitle {
       edition: titleDetails.edition,
       keywords: titleDetails.keywords,
       isUniqueIdentifier: false,
-      authorIds:
-        titleDetails.authorIds && titleDetails.authorIds.length > 0
-          ? titleDetails.authorIds.map((author: any) => ({
-              id: author.id,
-              displayName: author.displayName || '',
-            }))
-          : [],
+      ...(validAuthors.length > 0 && { authorIds: validAuthors }),
       id: this.titleId,
     } as TitleCreate;
     console.log(titleDetails, 'valuee title');
@@ -1217,24 +1217,40 @@ export class AddTitle {
   }
 
   async onDistributionSubmit() {
-    const selectedDistributions = this.tempForm.controls.distribution.value
-      .filter(({ isSelected }) => isSelected)
-      .map(({ type }) => type as DistributionType);
-    if (
-      this.tempForm.controls.distribution.valid &&
-      selectedDistributions.length
-    ) {
-      await this.titleService.createTitleDistribution(
-        this.titleId,
-        selectedDistributions
-      );
+    const selectedDistributions =
+      this.tempForm.controls.distribution.value
+        ?.filter(({ isSelected }) => isSelected)
+        .map(({ type }) => type as DistributionType) ?? [];
 
+    if (!this.tempForm.controls.distribution.valid) {
       Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: 'Title has been send for approval to admin',
+        icon: 'warning',
+        title: 'Invalid Data',
+        text: 'Please check your form fields before submitting.',
       });
-      this.router.navigate(['/titles']);
+      return;
     }
+
+    if (selectedDistributions.length === 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'No Distribution Selected',
+        text: 'Please select at least one distribution type before proceeding.',
+      });
+      return;
+    }
+
+    await this.titleService.createTitleDistribution(
+      this.titleId,
+      selectedDistributions
+    );
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Success',
+      text: 'Title has been sent for approval to the admin.',
+    });
+
+    this.router.navigate(['/titles']);
   }
 }

@@ -25,7 +25,7 @@ import {
   MatStepperModule,
 } from '@angular/material/stepper';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { debounceTime, map } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -38,9 +38,12 @@ import { PublisherService } from '../publisher/publisher-service';
 import {
   Address,
   BankOption,
+  Cities,
+  Countries,
   createBankDetails,
   Publishers,
   SocialMediaType,
+  States,
   UpdateTicketType,
   User,
 } from '../../interfaces';
@@ -66,6 +69,8 @@ import { UserService } from '../../services/user';
 import { MatIcon } from '@angular/material/icon';
 import { TranslateService } from '@ngx-translate/core';
 import { Back } from '../../components/back/back';
+import { HttpClient } from '@angular/common/http';
+import { City, Country, State } from 'country-state-city';
 @Component({
   selector: 'app-add-publisher',
   imports: [
@@ -118,6 +123,7 @@ export class AddPublisher {
     });
     this.loggedInUser = this.userService.loggedInUser$;
   }
+  private http = inject(HttpClient);
 
   bankOptions = signal<BankOption[]>([]);
   signupCode?: string;
@@ -139,6 +145,9 @@ export class AddPublisher {
   };
   loggedInUser!: Signal<User | null>;
   selectedTypes = signal<string[]>([]);
+  countries!: Countries[];
+  states!: States[];
+  cities!: Cities[];
   isAllSelected = computed(() => {
     return this.selectedTypes().length >= this.socialMediaArray.length;
   });
@@ -153,7 +162,44 @@ export class AddPublisher {
     this.publisherBankDetails.controls.signupCode.patchValue(
       this.signupCode || null
     );
-
+    this.countries = Country.getAllCountries().map((c) => ({
+      name: c.name,
+      isoCode: c.isoCode,
+    }));
+    this.publisherAddressDetails
+      .get('country')
+      ?.valueChanges.subscribe((countryIso) => {
+        if (countryIso) {
+          this.states = State.getStatesOfCountry(countryIso).map((s) => ({
+            name: s.name,
+            isoCode: s.isoCode,
+          }));
+          this.publisherAddressDetails.patchValue({ state: '', city: '' });
+          this.cities = [];
+        }
+      });
+    this.publisherAddressDetails
+      .get('state')
+      ?.valueChanges.subscribe((stateIso) => {
+        const countryIso = this.publisherAddressDetails.get('country')?.value;
+        if (countryIso && stateIso) {
+          this.cities = City.getCitiesOfState(countryIso, stateIso).map(
+            (c) => ({
+              name: c.name,
+            })
+          );
+          this.publisherAddressDetails.patchValue({ city: '' });
+        }
+      });
+    this.publisherAddressDetails
+      .get('pincode')
+      ?.valueChanges.pipe(debounceTime(400))
+      .subscribe((pin) => {
+        const countryIso = this.publisherAddressDetails.get('country')?.value;
+        if (countryIso === 'IN' && pin?.length === 6) {
+          this.lookupByPincode(pin);
+        }
+      });
     this.publisherBankDetails.controls.name.valueChanges.subscribe((v) => {
       this.selectedBankPrefix.set(
         this.bankOptions().find(({ BANK }) => BANK === v)?.BANKCODE || null
@@ -179,6 +225,31 @@ export class AddPublisher {
       this.publisherDetails = response;
       this.prefillForm(response);
     }
+  }
+  lookupByPincode(pin: string) {
+    this.http
+      .get<any[]>(`https://api.postalpincode.in/pincode/${pin}`)
+      .subscribe((res) => {
+        if (res && res[0].Status === 'Success') {
+          const data = res[0].PostOffice?.[0];
+          this.publisherAddressDetails.patchValue({
+            city: data?.District,
+            state: data?.State,
+            country: 'India',
+          });
+        } else {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Invalid Pincode',
+            text: 'Please enter a valid 6-digit pincode.',
+          });
+          this.publisherAddressDetails.patchValue({
+            city: '',
+            state: '',
+            country: '',
+          });
+        }
+      });
   }
   private _formBuilder = inject(FormBuilder);
   stepperOrientation: Observable<StepperOrientation>;

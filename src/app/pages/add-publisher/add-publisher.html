@@ -184,6 +184,42 @@
     <form [formGroup]="publisherAddressDetails">
       <div class="grid-cols-4 grid gap-4 my-4">
         <mat-form-field>
+          <mat-label>{{ "country" | translate }}</mat-label>
+          <mat-select formControlName="country" required>
+            <mat-option value="">
+              {{ "selectcountry" | translate }}
+            </mat-option>
+            @for (item of countries; track $index) {
+
+            <mat-option [value]="item.isoCode">{{ item.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "state" | translate }}</mat-label>
+          <mat-select formControlName="state" required>
+            <mat-option value="">
+              {{ "selectstate" | translate }}
+            </mat-option>
+            @for (item of states; track $index) {
+
+            <mat-option [value]="item.isoCode">{{ item.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "city" | translate }}</mat-label>
+          <mat-select formControlName="city" required>
+            <mat-option value="">
+              {{ "selectcity" | translate }}
+            </mat-option>
+            @for (item of cities; track $index) {
+
+            <mat-option [value]="item.name">{{ item.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
           <mat-label>{{ "address" | translate }}</mat-label>
           <input
             matInput
@@ -192,28 +228,7 @@
             required
           />
         </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ "city" | translate }}</mat-label>
-          <input
-            matInput
-            formControlName="city"
-            placeholder="Ex. 1 Main St, New York, NY"
-            required
-          />
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ "state" | translate }}</mat-label>
-          <input
-            matInput
-            formControlName="state"
-            placeholder="Ex. 1 Main St, New York, NY"
-            required
-          />
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ "country" | translate }}</mat-label>
-          <input matInput formControlName="country" placeholder="" required />
-        </mat-form-field>
+
         <mat-form-field>
           <mat-label>{{ "pincode" | translate }}</mat-label>
           <input matInput formControlName="pincode" placeholder="" required />

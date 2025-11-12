@@ -24,7 +24,7 @@ import {
   MatStepperModule,
 } from '@angular/material/stepper';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { debounceTime, map } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -41,6 +41,9 @@ import {
   BankOption,
   User,
   UpdateTicketType,
+  Countries,
+  States,
+  Cities,
 } from '../../interfaces';
 import { AddressService } from '../../services/address-service';
 import { BankDetailService } from '../../services/bank-detail-service';
@@ -59,6 +62,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MatIcon } from '@angular/material/icon';
 import { UserService } from '../../services/user';
 import { Back } from '../../components/back/back';
+import { Country, State, City } from 'country-state-city';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-add-author',
@@ -100,6 +105,7 @@ export class AddAuthor {
           ?.filter((t: string) => !!t) ?? [];
       this.selectedTypes.set(selected);
     });
+
     const breakpointObserver = inject(BreakpointObserver);
     this.stepperOrientation = breakpointObserver
       .observe('(min-width: 800px)')
@@ -110,6 +116,7 @@ export class AddAuthor {
     });
     this.loggedInUser = this.userService.loggedInUser$;
   }
+  private http = inject(HttpClient);
   authorId?: number;
   signupCode?: string;
   authorDetails?: Author;
@@ -117,7 +124,9 @@ export class AddAuthor {
   bankOptions = signal<BankOption[]>([]);
   selectedTypes = signal<string[]>([]);
   selectedBankPrefix = signal<string | null>(null);
-
+  countries!: Countries[];
+  states!: States[];
+  cities!: Cities[];
   isAllSelected = computed(() => {
     return this.selectedTypes().length >= this.socialMediaArray.length;
   });
@@ -160,6 +169,45 @@ export class AddAuthor {
       );
     });
 
+    this.countries = Country.getAllCountries().map((c) => ({
+      name: c.name,
+      isoCode: c.isoCode,
+    }));
+    this.authorAddressDetails
+      .get('country')
+      ?.valueChanges.subscribe((countryIso) => {
+        if (countryIso) {
+          this.states = State.getStatesOfCountry(countryIso).map((s) => ({
+            name: s.name,
+            isoCode: s.isoCode,
+          }));
+          this.authorAddressDetails.patchValue({ state: '', city: '' });
+          this.cities = [];
+        }
+      });
+    this.authorAddressDetails
+      .get('state')
+      ?.valueChanges.subscribe((stateIso) => {
+        const countryIso = this.authorAddressDetails.get('country')?.value;
+        if (countryIso && stateIso) {
+          this.cities = City.getCitiesOfState(countryIso, stateIso).map(
+            (c) => ({
+              name: c.name,
+            })
+          );
+          this.authorAddressDetails.patchValue({ city: '' });
+        }
+      });
+    this.authorAddressDetails
+      .get('pincode')
+      ?.valueChanges.pipe(debounceTime(400))
+      .subscribe((pin) => {
+        const countryIso = this.authorAddressDetails.get('country')?.value;
+        if (countryIso === 'IN' && pin?.length === 6) {
+          this.lookupByPincode(pin);
+        }
+      });
+
     const { data: bankOptions } =
       await this.bankDetailService.fetchBankOptions();
     this.bankOptions.set(bankOptions);
@@ -175,6 +223,31 @@ export class AddAuthor {
       this.authorDetails = response;
       this.prefillForm(response);
     }
+  }
+  lookupByPincode(pin: string) {
+    this.http
+      .get<any[]>(`https://api.postalpincode.in/pincode/${pin}`)
+      .subscribe((res) => {
+        if (res && res[0].Status === 'Success') {
+          const data = res[0].PostOffice?.[0];
+          this.authorAddressDetails.patchValue({
+            city: data?.District,
+            state: data?.State,
+            country: 'India',
+          });
+        } else {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Invalid Pincode',
+            text: 'Please enter a valid 6-digit pincode.',
+          });
+          this.authorAddressDetails.patchValue({
+            city: '',
+            state: '',
+            country: '',
+          });
+        }
+      });
   }
 
   private _formBuilder = inject(FormBuilder);
@@ -443,17 +516,9 @@ export class AddAuthor {
       Swal.fire({
         title: 'error',
         text: error.message,
-        icon: error,
+        icon: 'error',
         heightAuto: false,
       });
     }
   }
 }
-type socialMediaGroupType = FormGroup<{
-  type: FormControl<SocialMediaType | null>;
-  url: FormControl<string | null>;
-  publisherId: FormControl<number | null>;
-  name: FormControl<string | null>;
-  autherId: FormControl<number | null>;
-  id: FormControl<number | null>;
-}>;

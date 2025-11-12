@@ -248,7 +248,7 @@ export class Authors {
           );
           this.dataSource.data = updatedData;
           Swal.fire({
-            text: 'The publisher has been rejected!',
+            text: 'The author has been approved!',
             icon: 'success',
             title: 'success',
             heightAuto: false,

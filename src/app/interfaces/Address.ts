@@ -9,3 +9,14 @@ export interface Address {
   publisherId?: number;
   signupCode?: string; // Optional country for the address
 }
+export interface Countries {
+  name: string;
+  isoCode: string;
+}
+export interface Cities {
+  name: string;
+}
+export interface States {
+  name: string;
+  isoCode: string;
+}

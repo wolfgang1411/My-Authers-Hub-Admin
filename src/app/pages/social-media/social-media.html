@@ -1,6 +1,6 @@
 <div
   [formGroup]="socialMediaGroup"
-  class="grid grid-cols-3 gap-3 items-center bg-white p-3 rounded-xl shadow-sm border border-gray-100"
+  class="grid grid-cols-2 gap-3 items-center bg-white p-3 rounded-xl shadow-sm border border-gray-100"
 >
   <mat-form-field class="w-full slim-field">
     <mat-label>Select Platform</mat-label>
@@ -45,13 +45,13 @@
       }
     </mat-select>
   </mat-form-field>
-  <mat-form-field>
+  <!-- <mat-form-field>
     <mat-label
       >{{ "username" | translate }} / {{ "userhandle" | translate }} /
       {{ "nameofwebsite" | translate }}</mat-label
     >
     <input matInput formControlName="name" required />
-  </mat-form-field>
+  </mat-form-field> -->
 
   <mat-form-field class="w-full slim-field">
     <mat-label>Profile URL</mat-label>

@@ -26,6 +26,7 @@
     "@ngx-translate/http-loader": "^17.0.0",
     "@ngxmc/datetime-picker": "^20.1.0",
     "angular-svg-icon": "^19.1.1",
+    "country-state-city": "^3.2.1",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "google-libphonenumber": "^3.2.42",

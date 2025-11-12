@@ -379,5 +379,8 @@
   "copies": "Copies",
   "sold": "Sold",
   "msp": "MSP",
-  "verso": "Verso"
+  "verso": "Verso",
+  "selectcountry":"Select Country",
+  "selectcity":"Select City",
+  "selectstate":"Select State"
 }
