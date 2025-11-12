@@ -1,34 +1,27 @@
-<div class="flex flex-col gap-4 w-[480px] max-w-[90vw] p-3">
+<div class="flex flex-col gap-4 w-[800px] max-w-[90vw] p-3">
   <h2 mat-dialog-title class="text-xl heading !text-primary">Create ISBN</h2>
 
   <mat-dialog-content>
-    <form [formGroup]="createIsbnForm" class="flex flex-col gap-4">
-      <mat-form-field class="w-full">
+    <form
+      [ngClass]="{
+      'ng-submitted': isSubmitted(),
+    }"
+      [formGroup]="createIsbnForm"
+      class="grid grid-cols-2 gap-4"
+    >
+      <mat-form-field>
         <mat-label>{{ "isbnnumber" | translate }}</mat-label>
-        <input
-          matInput
-          type="text"
-          formControlName="isbnNumber"
-          required
-          [maxlength]="13"
-          [minlength]="13"
-        />
-        @if(createIsbnForm.get('isbnNumber')?.hasError('required')) {
+        <input matInput type="text" formControlName="isbnNumber" />
+        @if(createIsbnForm.get('isbnNumber')?.hasError('invalid')) {
         <mat-error>
-          {{ "isbn_required" | translate }}
-        </mat-error>
-        } @if(createIsbnForm.get('isbnNumber')?.hasError('pattern')) {
-        <mat-error>
-          {{ "isbn_invalid_format" | translate }}
-        </mat-error>
-        } @if(createIsbnForm.get('isbnNumber')?.hasError('invalidIsbn')) {
-        <mat-error>
-          {{ "isbn_verification_failed" | translate }}
+          {{
+            createIsbnForm.get("isbnNumber")?.getError("invalid") | translate
+          }}
         </mat-error>
         }
       </mat-form-field>
 
-      <mat-form-field class="flex-1">
+      <mat-form-field>
         <mat-label>{{ "selectisbntype" | translate }}</mat-label>
         <mat-select formControlName="type" required>
           <mat-option [value]="null" disabled>{{
@@ -38,14 +31,52 @@
           <mat-option value="EBOOK">{{ "Ebook" | translate }}</mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field class="flex-1">
-        <mat-label>{{ "selecttitle" | translate }}</mat-label>
-        <mat-select formControlName="titleId">
-          <mat-option [value]="null" disabled>{{
-            "selecttitle" | translate
-          }}</mat-option>
-          @for (title of titleList(); track $index) {
-          <mat-option [value]="title.id">{{ title.name }}</mat-option>
+
+      <mat-form-field>
+        <mat-label>{{ "selectpublisher" | translate }}</mat-label>
+        <mat-select formControlName="publisherId" required>
+          @for (publisher of data.publishersList; track publisher.id) {
+          <mat-option [value]="publisher.id">{{ publisher.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>{{ "selectauthor" | translate }}</mat-label>
+        <mat-select formControlName="authorIds" required [multiple]="true">
+          @for (author of data.authorsList; track author.id) {
+          <mat-option [value]="author.id">
+            {{ author.user.fullName }}
+          </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>{{ "titlename" | translate }}</mat-label>
+        <input matInput type="text" formControlName="titleName" />
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>{{ "noofpages" | translate }}</mat-label>
+        <input matInput type="number" formControlName="noOfPages" />
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>{{ "edition" | translate }}</mat-label>
+        <input matInput type="number" formControlName="edition" />
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>{{ "language" | translate }}</mat-label>
+        <mat-select formControlName="language" required>
+          <mat-option [value]="null" disabled>
+            {{ "selectlanguage" | translate }}
+          </mat-option>
+          @for (language of languages(); track $index) {
+          <mat-option [value]="language">
+            {{ language | translate }}
+          </mat-option>
           }
         </mat-select>
       </mat-form-field>

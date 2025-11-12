@@ -14,6 +14,42 @@ const getFileToBase64 = (file: File): Promise<string> => {
   });
 };
 
+const downloadFile = (file: Blob, name: string) => {
+  const blobUrl = URL.createObjectURL(file);
+  fetch(blobUrl)
+    .then((resp) => resp.blob())
+    .then((blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    })
+    .catch((error) => {
+      throw error;
+    });
+};
+
+async function urlToFile(url: string, filename: string) {
+  const response = await fetch(url); // fetch file binary
+  const blob = await response.blob(); // convert response to Blob
+  const type = blob.type || 'application/octet-stream';
+
+  // If filename not given, try to extract from URL
+  if (!filename) {
+    const parts = url.split('/');
+    filename = decodeURIComponent(parts[parts.length - 1].split('?')[0]);
+  }
+
+  // Convert blob to File
+  const file = new File([blob], filename, { type });
+  return file;
+}
+
 async function getFileSizeFromS3Url(url: string): Promise<number | null> {
   try {
     const response = await fetch(url);
@@ -67,4 +103,10 @@ function selectFile(accept = '*/*', multiple = false) {
   });
 }
 
-export { getFileToBase64, getFileSizeFromS3Url, selectFile };
+export {
+  getFileToBase64,
+  getFileSizeFromS3Url,
+  selectFile,
+  urlToFile,
+  downloadFile,
+};

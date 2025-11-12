@@ -24,26 +24,43 @@
         {{ "search" | translate }}
       </button>
     </div>
-    <button
-      class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
-      matButton="filled"
-      matButton
-      (click)="createIsbn()"
-    >
-      <mat-icon class="material-icons">person_add</mat-icon>
-      {{ "createisbn" | translate }}
-    </button>
+    <div class="flex gap-4 items-center">
+      <button
+        class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
+        matButton="filled"
+        matButton
+        (click)="createIsbn()"
+      >
+        <mat-icon class="material-icons">person_add</mat-icon>
+        {{ "createisbn" | translate }}
+      </button>
+    </div>
+  </div>
+
+  <div class="flex justify-end mt-2">
+    <mat-form-field>
+      <mat-select
+        [value]="filter.status"
+        (valueChange)="filter.status = $event; fetchIsbnList()"
+        placeholder="{{ 'status' | translate }}"
+      >
+        <mat-option [value]="0"> {{ "all" | translate }}</mat-option>
+        @for (status of isbnStatuses(); track status) {
+        <mat-option [value]="status">{{ status }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
   </div>
 
   <app-list-table
-    class="pt-6"
     [dataSource]="dataSource"
     [displayedColumns]="displayedColumns"
     [actionTemplate]="actionButtons"
   >
   </app-list-table>
   <ng-template #actionButtons let-element>
-    <div class="flex gap-2 text-sm items-center lg:flex-wrap">
+    <div class="flex gap-2 text-sm items-center justify-end lg:flex-wrap">
+      @if (element.image) {
       <button
         class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
         matButton="filled"
@@ -52,18 +69,42 @@
       >
         <mat-icon class="material-icons">download</mat-icon>
 
-        {{ "downloadbarcode" | translate }}
+        {{ "barcode" | translate }}
       </button>
-      @if (!element.title?.length) {
+      } @if (element.bunko) {
       <button
         class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
         matButton="filled"
         matButton
+        (click)="downloadBunko(element)"
+      >
+        <mat-icon class="material-icons">download</mat-icon>
+
+        {{ "bunko" | translate }}
+      </button>
+      } @if (element.status === 'PENDING') {
+      <button
+        class="!bg-primary flex items-center gap-2 !text-white rounded-full p-2"
+        matIconButton
         (click)="createIsbn(element)"
       >
-        <mat-icon class="material-icons">link</mat-icon>
-
-        {{ "assigntitle" | translate }}
+        <mat-icon class="material-icons">edit</mat-icon>
+      </button>
+      } @if (element.isbnNumber && element.status === 'PENDING' &&
+      loggedInUser$()?.accessLevel === 'SUPERADMIN') {
+      <button
+        class="!bg-green-600 flex items-center gap-2 !text-white rounded-full p-2"
+        matIconButton
+        (click)="onISBNStatusChange(element.id, 'APPROVED')"
+      >
+        <mat-icon class="material-icons">thumb_up</mat-icon>
+      </button>
+      <button
+        class="!bg-red-500 flex items-center gap-2 !text-white rounded-full p-2"
+        matIconButton
+        (click)="onISBNStatusChange(element.id, 'REJECTED')"
+      >
+        <mat-icon class="material-icons">thumb_down</mat-icon>
       </button>
       }
     </div>

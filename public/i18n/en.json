@@ -379,5 +379,10 @@
   "copies": "Copies",
   "sold": "Sold",
   "msp": "MSP",
-  "verso": "Verso"
+  "verso": "Verso",
+  "downloadtitlebunko": "Download title bunko",
+  "noofpages": " No. of Pages",
+  "edition": " Edition",
+  "bunko": "Bunko",
+  "barcode": "Bar Code"
 }
