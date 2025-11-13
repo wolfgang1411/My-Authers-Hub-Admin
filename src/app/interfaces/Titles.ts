@@ -76,7 +76,8 @@ export interface TitlePlatformIdentifier {
   id: number;
   platform: PlatForm;
   type: BookingType;
-  uniqueIdentifier: string;
+  uniqueIdentifier?: string;
+  distributionLink?: string;
 }
 
 export interface TitleMedia extends Media {
@@ -459,7 +460,8 @@ export interface PlatFormIndetifierGroup {
 export interface CreatePlatformIdentifier {
   platform: PlatForm;
   type: BookingType;
-  uniqueIdentifier: string;
+  uniqueIdentifier?: string;
+  distributionLink?: string;
 }
 
 export interface CreateDistributionLink {

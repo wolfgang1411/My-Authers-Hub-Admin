@@ -1,19 +1,58 @@
 <form
   (ngSubmit)="onSubmit()"
   [formGroup]="form"
-  class="flex flex-col gap-4 w-[480px] max-w-[90vw] p-3"
+  class="flex flex-col gap-4 max-w-[90vw] p-3"
 >
   <h1 mat-dialog-title class="text-xl heading !text-primary">
-    {{ "additionaltitledetails" | translate }}
+    {{ "platformdetails" | translate }}
   </h1>
 
   <mat-dialog-content>
     <div class="flex flex-col gap-2">
-      <h2 class="text-xl heading !text-primary !font-medium">
-        {{ "platformuniqueidentifier" | translate }}
-      </h2>
+      <table class="my-table">
+        <tr class="grid grid-cols-7">
+          <th></th>
+          @for (platformIndefier of form.controls.platformIdentifier.controls;
+          track platformIndefier) {
+          <th>
+            {{ platformIndefier.controls.platform.value | translate }}
+          </th>
+          }
+        </tr>
 
-      <ul class="grid grid-cols-2 gap-x-2">
+        <tr class="grid grid-cols-7">
+          <th>
+            {{ "uniqueidentifier" | translate }}
+          </th>
+          @for (platformIndefier of form.controls.platformIdentifier.controls;
+          track platformIndefier) {
+          <td>
+            <input
+              type="text"
+              [formControl]="platformIndefier.controls.uniqueIdentifier"
+              placeholder="SKU,ASIN etc."
+            />
+          </td>
+          }
+        </tr>
+        <tr class="grid grid-cols-7">
+          <th>
+            {{ "distributionlinks" | translate }}
+          </th>
+          @for (platformIndefier of form.controls.platformIdentifier.controls;
+          track platformIndefier) {
+          <td>
+            <input
+              type="text"
+              placeholder="https://amazon..."
+              [formControl]="platformIndefier.controls.distributionLink"
+            />
+          </td>
+          }
+        </tr>
+      </table>
+
+      <!-- <ul class="flex flex-col gap-x-2">
         @for (platformIdentifier of form.controls.platformIdentifier.controls;
         track $index) {
         <li class="overflow-hidden">
@@ -30,7 +69,7 @@
           </mat-form-field>
         </li>
         }
-      </ul>
+      </ul> -->
     </div>
   </mat-dialog-content>
 

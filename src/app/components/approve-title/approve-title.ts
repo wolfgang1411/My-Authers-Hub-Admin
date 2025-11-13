@@ -76,9 +76,22 @@ export class ApproveTitle implements OnInit {
   }
 
   onSubmit() {
-    const platformIdentifier = this.form.value.platformIdentifier?.filter(
-      ({ uniqueIdentifier }) => !!uniqueIdentifier?.length
-    ) as CreatePlatformIdentifier[];
+    const platformIdentifier = (
+      this.form.value.platformIdentifier?.filter(
+        ({ uniqueIdentifier, distributionLink }) =>
+          !!uniqueIdentifier?.length || !!distributionLink?.length
+      ) as CreatePlatformIdentifier[]
+    ).map((v) => {
+      return {
+        ...v,
+        distributionLink: v.distributionLink?.length
+          ? v.distributionLink
+          : undefined,
+        uniqueIdentifier: v.uniqueIdentifier?.length
+          ? v.uniqueIdentifier
+          : undefined,
+      };
+    });
 
     if (this.form.valid) {
       this.data.onSubmit({

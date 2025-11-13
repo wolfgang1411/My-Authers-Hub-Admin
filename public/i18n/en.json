@@ -343,6 +343,7 @@
   "MAH_EBOOK": "MAH Ebook",
   "additionaltitledetails": "Additional Title Details",
   "platformuniqueidentifier": "Platform unique identifier",
+  "uniqueidentifier": "Unique identifier",
   "distributionlinks": "Distribution Links",
   "accountholdername": "Account holder name",
   "raiseaticket": "Raise a ticket",
@@ -380,9 +381,9 @@
   "sold": "Sold",
   "msp": "MSP",
   "verso": "Verso",
-  "selectcountry":"Select Country",
-  "selectcity":"Select City",
-  "selectstate":"Select State",
+  "selectcountry": "Select Country",
+  "selectcity": "Select City",
+  "selectstate": "Select State",
   "downloadtitlebunko": "Download title bunko",
   "noofpages": " No. of Pages",
   "edition": " Edition",
@@ -399,5 +400,6 @@
   "startdate": "Start Date",
   "enddate": "End Date",
   "usagelimit": "Usage Limit",
-  "userusagelimit": "User Usage Limit"
+  "userusagelimit": "User Usage Limit",
+  "platformdetails": "Platform Details"
 }

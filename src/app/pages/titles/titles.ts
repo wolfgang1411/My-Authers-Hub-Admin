@@ -150,6 +150,7 @@ export class Titles {
     }
 
     const dialog = this.matDialog.open(ApproveTitle, {
+      maxWidth: '90vw',
       data: {
         onClose: () => dialog.close(),
         onSubmit: async (data: {

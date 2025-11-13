@@ -1,0 +1,25 @@
+.my-table {
+  border: 1px solid gray;
+  display: flex;
+  flex-direction: column;
+}
+
+.my-table > tr {
+  display: grid;
+}
+
+.my-table > tr:not(:last-child) {
+  border-bottom: 1px solid gray;
+}
+
+.my-table > tr > td,
+.my-table > tr > th {
+  padding: 0.5rem;
+  display: block;
+  white-space: nowrap;
+}
+
+.my-table > tr > td:not(:last-child),
+.my-table > tr > th:not(:last-child) {
+  border-right: 1px solid gray;
+}
