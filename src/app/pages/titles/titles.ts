@@ -151,10 +151,8 @@ export class Titles {
 
     const dialog = this.matDialog.open(ApproveTitle, {
       data: {
-        distribution: title.distribution,
         onClose: () => dialog.close(),
         onSubmit: async (data: {
-          distributionLinks: CreateDistributionLink[];
           platformIdentifier: CreatePlatformIdentifier[];
         }) => {
           try {

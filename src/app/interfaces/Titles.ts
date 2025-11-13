@@ -105,7 +105,6 @@ export interface AuthorTitle {
 }
 
 export interface ApproveTitlePayload {
-  distributionLinks: CreateDistributionLink[];
   platformIdentifier: CreatePlatformIdentifier[];
 }
 
@@ -454,6 +453,7 @@ export interface PlatFormIndetifierGroup {
   uniqueIdentifier: FormControl<string | null>;
   platform: FormControl<PlatForm>;
   type: FormControl<BookingType>;
+  distributionLink: FormControl<string | null>;
 }
 
 export interface CreatePlatformIdentifier {

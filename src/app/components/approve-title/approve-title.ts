@@ -43,24 +43,12 @@ export class ApproveTitle implements OnInit {
 
   form = new FormGroup({
     platformIdentifier: new FormArray<FormGroup<PlatFormIndetifierGroup>>([]),
-    distributionLinks: new FormArray<FormGroup<ApproveTitleGroup>>([]),
   });
 
   ngOnInit(): void {
     const platforms = Object.keys(
       this.staticValueService.staticValues()?.PlatForm || {}
     ) as PlatForm[];
-
-    this.data.distribution.forEach(({ type }) => {
-      this.form.controls.distributionLinks.push(
-        new FormGroup({
-          distributionType: new FormControl(type, {
-            nonNullable: true,
-          }),
-          link: new FormControl(''),
-        })
-      );
-    });
 
     platforms.forEach((platform) => {
       this.form.controls.platformIdentifier.push(
@@ -70,6 +58,7 @@ export class ApproveTitle implements OnInit {
             nonNullable: true,
           }),
           uniqueIdentifier: new FormControl(''),
+          distributionLink: new FormControl(''),
         })
       );
     });
@@ -87,16 +76,12 @@ export class ApproveTitle implements OnInit {
   }
 
   onSubmit() {
-    const distributionLinks = this.form.value.distributionLinks?.filter(
-      ({ link }) => !!link?.length
-    ) as CreateDistributionLink[];
     const platformIdentifier = this.form.value.platformIdentifier?.filter(
       ({ uniqueIdentifier }) => !!uniqueIdentifier?.length
     ) as CreatePlatformIdentifier[];
 
     if (this.form.valid) {
       this.data.onSubmit({
-        distributionLinks,
         platformIdentifier,
       });
     }
@@ -104,10 +89,7 @@ export class ApproveTitle implements OnInit {
 }
 
 interface Inputs {
-  onSubmit: (data: {
-    distributionLinks: CreateDistributionLink[];
-    platformIdentifier: CreatePlatformIdentifier[];
-  }) => void;
+  onSubmit: (data: { platformIdentifier: CreatePlatformIdentifier[] }) => void;
   distribution: TitleDistribution[];
   onClose: () => void;
 }
