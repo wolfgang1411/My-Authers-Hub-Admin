@@ -1,5 +1,6 @@
 import {
   Component,
+  effect,
   EventEmitter,
   inject,
   input,
@@ -30,6 +31,7 @@ import {
   TitleCategory,
   TitleDetailsFormGroup,
   TitleGenre,
+  User,
 } from '../../interfaces';
 import { MatRadioModule } from '@angular/material/radio';
 import { debounceTime } from 'rxjs';
@@ -37,6 +39,7 @@ import { IsbnService } from '../../services/isbn-service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
+import { LanguageService } from '../../services/languages';
 
 @Component({
   selector: 'app-book-details',
@@ -57,8 +60,30 @@ import { MatButtonModule } from '@angular/material/button';
 export class BookDetails {
   constructor(
     private titleService: TitleService,
-    private isbnService: IsbnService
-  ) {}
+    private isbnService: IsbnService,
+    private languageService: LanguageService
+  ) {
+    this.languages = this.languageService.languages$;
+
+    effect(() => {
+      if (this.initialized()) return; // already executed once
+      const publishers = this.publishers();
+      const loggedInUserPublisher = this.loggedInUser()?.publisher;
+
+      console.log({ publishers, loggedInUserPublisher });
+
+      if (publishers && publishers.length && loggedInUserPublisher) {
+        this.titleDetailsGroup().controls.publisher.controls.id.patchValue(
+          loggedInUserPublisher.id
+        );
+        this.onPublisherChange(loggedInUserPublisher.id);
+        this.initialized.set(true); // mark as done
+      }
+    });
+  }
+  private initialized = signal(false);
+
+  loggedInUser = input<User | null>();
 
   titleId = input.required<number | null>();
   publishingType = input.required<PublishingType | string | null>();
@@ -79,20 +104,10 @@ export class BookDetails {
   isbnEbookVerified = signal<boolean | null>(null);
   isISBNEbookErifying = signal(false);
 
-  languages = signal([
-    'English',
-    'Hindi',
-    'Spanish',
-    'French',
-    'German',
-    'Chinese',
-    'Japanese',
-    'Arabic',
-    'Russian',
-    'Portuguese',
-  ]);
+  languages!: Signal<string[] | null>;
 
   async ngOnInit() {
+    this.languageService.fetchAndUpdateLanguages();
     const { items: category } = await this.titleService.getTitleCategory();
     this.TitleCategory.set(category);
 
@@ -205,6 +220,7 @@ export class BookDetails {
 
   onPublisherChange(publisherId: number) {
     const selected = this.publishers().find((p) => p.id === publisherId);
+
     const pubGroup = this.titleDetailsGroup().controls.publisher;
     if (!pubGroup) return;
     const keepSame = pubGroup.controls.keepSame.value;

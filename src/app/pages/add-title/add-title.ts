@@ -4,6 +4,7 @@ import {
   ElementRef,
   inject,
   QueryList,
+  Signal,
   signal,
   ViewChild,
   viewChild,
@@ -63,6 +64,7 @@ import {
   TitlePrintingCostPayload,
   TitleStatus,
   UpdateRoyalty,
+  User,
 } from '../../interfaces';
 import { MatSelectModule } from '@angular/material/select';
 import { PublisherService } from '../publisher/publisher-service';
@@ -83,6 +85,7 @@ import { getFileSizeFromS3Url, getFileToBase64 } from '../../common/utils/file';
 import { TranslateService } from '@ngx-translate/core';
 import { StaticValuesService } from '../../services/static-values';
 import { Back } from '../../components/back/back';
+import { UserService } from '../../services/user';
 
 @Component({
   selector: 'app-add-title',
@@ -119,8 +122,10 @@ export class AddTitle {
     private authorService: AuthorsService,
     private route: ActivatedRoute,
     private router: Router,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    userService: UserService
   ) {
+    this.loggedInUser = userService.loggedInUser$;
     const breakpointObserver = inject(BreakpointObserver);
     this.stepperOrientation = breakpointObserver
       .observe('(min-width: 800px)')
@@ -183,6 +188,7 @@ export class AddTitle {
     ElementRef<HTMLInputElement>
   >;
 
+  loggedInUser!: Signal<User | null>;
   staticValueService = inject(StaticValuesService);
   currentStep = signal<string | null>(null);
   stepperOrientation: Observable<StepperOrientation>;

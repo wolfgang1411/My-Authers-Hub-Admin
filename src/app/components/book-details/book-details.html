@@ -2,6 +2,7 @@
   <div class="mt-4">
     <div>
       <div class="grid-cols-2 grid gap-4 my-4 items-start">
+        @if (publishingType() !== 'ONLY_EBOOK') {
         <div class="grid">
           <div class="w-full">
             <mat-form-field class="!w-full flex">
@@ -45,6 +46,7 @@
             }
           </div>
         </div>
+        } @if (publishingType() !== 'ONLY_PRINT') {
         <div class="grid">
           <div class="w-full">
             <mat-form-field class="!w-full flex">
@@ -87,6 +89,8 @@
             }
           </div>
         </div>
+        }
+
         <mat-form-field>
           <mat-label>{{ "titlename" | translate }}</mat-label>
           <input
@@ -117,7 +121,6 @@
             <mat-label> {{ "language" | translate }} </mat-label>
             <mat-select formControlName="language" required>
               @for (language of languages(); track $index) {
-              <mat-option [value]="language">{{ language }}</mat-option>
               <mat-option [value]="language">{{ language }}</mat-option>
               }
             </mat-select>
@@ -197,6 +200,8 @@
           </mat-select>
         </mat-form-field>
       </div>
+
+      @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
       <div
         class="grid grid-cols-2 gap-4 items-start my-4"
         formGroupName="publisher"
@@ -240,6 +245,8 @@
           </div>
         </div>
       </div>
+      }
+
       <div formArrayName="authorIds" class="grid grid-cols-2 gap-4 my-4">
         @for(item of titleDetailsGroup().controls.authorIds.controls ; track
         'author' + $index){
