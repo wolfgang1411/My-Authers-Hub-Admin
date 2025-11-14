@@ -202,13 +202,11 @@ export class AddPublisher {
       });
     this.publisherBankDetails.controls.name.valueChanges.subscribe((v) => {
       this.selectedBankPrefix.set(
-        this.bankOptions().find(({ BANK }) => BANK === v)?.BANKCODE || null
+        this.bankOptions().find(({ name }) => name === v)?.bankCode || null
       );
     });
 
-    const { data: bankOptions } =
-      await this.bankDetailService.fetchBankOptions();
-    this.bankOptions.set(bankOptions);
+    this.bankOptions.set(this.bankDetailService.fetchBankOptions());
 
     if (this.signupCode) {
       const invite = await this.inviteService.findOne(this.signupCode);
@@ -257,8 +255,8 @@ export class AddPublisher {
   ifscCodeValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const prefix = this.bankOptions().find(
-        ({ BANK }) => BANK === this.publisherBankDetails.controls.name.value
-      )?.BANKCODE;
+        ({ name }) => name === this.publisherBankDetails.controls.name.value
+      )?.bankCode;
       if (!prefix) return null;
       const value = control.value?.toUpperCase?.().trim?.() || '';
       if (!value) return null; // skip if empty, let 'required' handle that
@@ -363,13 +361,15 @@ export class AddPublisher {
       address: publisherDetails.address[0]?.address,
       city: publisherDetails.address[0]?.city,
       state: publisherDetails.address[0]?.state,
-      country: publisherDetails.address[0]?.country,
+      country: this.countries.find(
+        (c) => publisherDetails.address[0]?.country === c.name
+      )?.isoCode,
       pincode: publisherDetails.address[0]?.pincode,
     });
     this.selectedBankPrefix.set(
       this.bankOptions().find(
-        ({ BANK }) => BANK === publisherDetails.bankDetails?.[0]?.name
-      )?.BANKCODE || null
+        ({ name }) => name === publisherDetails.bankDetails?.[0]?.name
+      )?.bankCode || null
     );
     this.publisherBankDetails.patchValue({
       id: publisherDetails.bankDetails?.[0]?.id,

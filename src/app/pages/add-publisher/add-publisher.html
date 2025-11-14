@@ -190,7 +190,6 @@
               {{ "selectcountry" | translate }}
             </mat-option>
             @for (item of countries; track $index) {
-
             <mat-option [value]="item.isoCode">{{ item.name }}</mat-option>
             }
           </mat-select>
@@ -270,7 +269,7 @@
           >
             <mat-option value="">Select Bank</mat-option>
             @for (bank of bankOptions(); track $index) {
-            <mat-option [value]="bank.BANK">{{ bank.BANK }}</mat-option>
+            <mat-option [value]="bank.name">{{ bank.name }}</mat-option>
             }
           </mat-select>
         </mat-form-field>

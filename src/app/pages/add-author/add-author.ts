@@ -174,7 +174,7 @@ export class AddAuthor {
 
     this.authorBankDetails.controls.name.valueChanges.subscribe((v) => {
       this.selectedBankPrefix.set(
-        this.bankOptions().find(({ BANK }) => BANK === v)?.BANKCODE || null
+        this.bankOptions().find(({ name }) => name === v)?.bankCode || null
       );
     });
 
@@ -217,9 +217,7 @@ export class AddAuthor {
         }
       });
 
-    const { data: bankOptions } =
-      await this.bankDetailService.fetchBankOptions();
-    this.bankOptions.set(bankOptions);
+    this.bankOptions.set(this.bankDetailService.fetchBankOptions());
 
     if (this.signupCode) {
       const invite = await this.inviteService.findOne(this.signupCode);
@@ -345,13 +343,15 @@ export class AddAuthor {
       address: authorDetails.address[0]?.address,
       city: authorDetails.address[0]?.city,
       state: authorDetails.address[0]?.state,
-      country: authorDetails.address[0]?.country,
+      country: this.countries.find(
+        ({ name }) => authorDetails.address[0]?.country === name
+      )?.isoCode,
       pincode: authorDetails.address[0]?.pincode,
     });
     this.selectedBankPrefix.set(
       this.bankOptions().find(
-        ({ BANK }) => BANK === authorDetails.bankDetails?.[0]?.name
-      )?.BANKCODE || null
+        ({ name }) => name === authorDetails.bankDetails?.[0]?.name
+      )?.bankCode || null
     );
     this.authorBankDetails.patchValue({
       id: authorDetails.bankDetails?.[0]?.id,
