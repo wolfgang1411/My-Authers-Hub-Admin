@@ -9,8 +9,6 @@ import {
 import {
   FormBuilder,
   Validators,
-  FormsModule,
-  ReactiveFormsModule,
   FormGroup,
   FormArray,
   FormControl,
@@ -50,7 +48,6 @@ import { BankDetailService } from '../../services/bank-detail-service';
 import { AuthorsService } from '../authors/authors-service';
 import Swal from 'sweetalert2';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Authors } from '../authors/authors';
 import { InviteService } from '../../services/invite';
 import {
   socialMediaGroup,
@@ -58,19 +55,16 @@ import {
 } from '../../interfaces/SocialMedia';
 import { SocialMediaService } from '../../services/social-media-service';
 import { SocialMedia } from '../social-media/social-media';
-import { TranslateService } from '@ngx-translate/core';
 import { MatIcon } from '@angular/material/icon';
 import { UserService } from '../../services/user';
 import { Back } from '../../components/back/back';
 import { Country, State, City } from 'country-state-city';
 import { HttpClient } from '@angular/common/http';
-
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 @Component({
   selector: 'app-add-author',
   imports: [
     MatStepperModule,
-    FormsModule,
-    ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
@@ -82,9 +76,11 @@ import { HttpClient } from '@angular/common/http';
     SocialMedia,
     MatIcon,
     Back,
+    FormsModule,
+    ReactiveFormsModule,
   ],
   templateUrl: './add-author.html',
-  styleUrl: './add-author.css',
+  styleUrls: ['./add-author.css'],
 })
 export class AddAuthor {
   constructor(
@@ -95,7 +91,6 @@ export class AddAuthor {
     private inviteService: InviteService,
     private router: Router,
     private socialService: SocialMediaService,
-    private translateService: TranslateService,
     private userService: UserService
   ) {
     effect(() => {
@@ -133,6 +128,8 @@ export class AddAuthor {
   bankInfo: any = null;
   verifying = false;
   invalidIFSC = false;
+  isPrefilling: boolean = false;
+
   ifscCodeValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const ifscPattern = /^[A-Z]{4}0[A-Z0-9]{6}$/;
@@ -228,10 +225,14 @@ export class AddAuthor {
     if (this.authorId) {
       const response = await this.authorsService.getAuthorrById(this.authorId);
       this.authorDetails = response;
+      this.isPrefilling = true;
       this.prefillForm(response);
+      this.isPrefilling = false;
     }
   }
   lookupByPincode(pin: string) {
+    if (this.isPrefilling) return;
+
     this.http
       .get<any[]>(`https://api.postalpincode.in/pincode/${pin}`)
       .subscribe((res) => {
@@ -282,7 +283,6 @@ export class AddAuthor {
     accountType: ['', Validators.required],
     signupCode: <string | null>null,
   });
-
   authorAddressDetails = this._formBuilder.group({
     id: <number | null>null,
     address: ['', Validators.required],
@@ -338,15 +338,46 @@ export class AddAuthor {
       username: authorDetails.username,
       about: authorDetails.about,
     });
+    const addr = authorDetails.address[0];
+
+    const countryIso =
+      this.countries.find(
+        (c) =>
+          addr.country?.toLowerCase() === c.name.toLowerCase() ||
+          addr.country?.toLowerCase() === c.isoCode.toLowerCase()
+      )?.isoCode || '';
+
     this.authorAddressDetails.patchValue({
-      id: authorDetails.address[0]?.id,
-      address: authorDetails.address[0]?.address,
-      city: authorDetails.address[0]?.city,
-      state: authorDetails.address[0]?.state,
-      country: this.countries.find(
-        ({ name }) => authorDetails.address[0]?.country === name
-      )?.isoCode,
-      pincode: authorDetails.address[0]?.pincode,
+      id: addr.id,
+      address: addr.address,
+      country: countryIso,
+    });
+    console.log({ addr }, 'addresss');
+    this.states = State.getStatesOfCountry(countryIso).map((s) => ({
+      name: s.name,
+      isoCode: s.isoCode,
+    }));
+    console.log(this.states, 'states');
+    const stateIso =
+      this.states.find(
+        (s) => s.isoCode.toLowerCase() === addr.state?.toLowerCase()
+      )?.isoCode || '';
+    console.log({ stateIso }, 'stateIso');
+    this.authorAddressDetails.patchValue({
+      state: stateIso,
+    });
+
+    this.cities = City.getCitiesOfState(countryIso, stateIso).map((c) => ({
+      name: c.name,
+    }));
+
+    const cityName =
+      this.cities.find((c) => c.name.toLowerCase() === addr.city?.toLowerCase())
+        ?.name || '';
+
+    this.authorAddressDetails.patchValue({
+      city: cityName,
+      pincode: addr.pincode,
     });
     this.selectedBankPrefix.set(
       this.bankOptions().find(

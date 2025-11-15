@@ -148,6 +148,8 @@ export class AddPublisher {
   countries!: Countries[];
   states!: States[];
   cities!: Cities[];
+  isPrefilling: boolean = false;
+
   isAllSelected = computed(() => {
     return this.selectedTypes().length >= this.socialMediaArray.length;
   });
@@ -221,10 +223,14 @@ export class AddPublisher {
         this.publisherId
       );
       this.publisherDetails = response;
+      this.isPrefilling = true;
       this.prefillForm(response);
+      this.isPrefilling = false;
     }
   }
   lookupByPincode(pin: string) {
+    if (this.isPrefilling) return;
+
     this.http
       .get<any[]>(`https://api.postalpincode.in/pincode/${pin}`)
       .subscribe((res) => {
@@ -252,6 +258,18 @@ export class AddPublisher {
   private _formBuilder = inject(FormBuilder);
   stepperOrientation: Observable<StepperOrientation>;
 
+  panCardValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (!control.value) return null;
+
+      const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+
+      return panRegex.test(control.value.toUpperCase())
+        ? null
+        : { invalidPan: true };
+    };
+  }
+
   ifscCodeValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const prefix = this.bankOptions().find(
@@ -259,7 +277,7 @@ export class AddPublisher {
       )?.bankCode;
       if (!prefix) return null;
       const value = control.value?.toUpperCase?.().trim?.() || '';
-      if (!value) return null; // skip if empty, let 'required' handle that
+      if (!value) return null;
       return value.startsWith(prefix.toUpperCase())
         ? null
         : {
@@ -297,7 +315,7 @@ export class AddPublisher {
     name: ['', [Validators.required]],
     accountNo: ['', [Validators.required]],
     ifsc: ['', [Validators.required, this.ifscCodeValidator()]],
-    panCardNo: ['', Validators.required],
+    panCardNo: ['', Validators.required, this.panCardValidator()],
     accountType: ['', Validators.required],
     signupCode: <string | null>null,
   });
@@ -356,16 +374,48 @@ export class AddPublisher {
       name: publisherDetails.name,
       designation: publisherDetails.designation,
     });
+    const addr = publisherDetails.address[0];
+
+    const countryIso =
+      this.countries.find(
+        (c) =>
+          addr.country?.toLowerCase() === c.name.toLowerCase() ||
+          addr.country?.toLowerCase() === c.isoCode.toLowerCase()
+      )?.isoCode || '';
+
     this.publisherAddressDetails.patchValue({
-      id: publisherDetails.address[0]?.id,
-      address: publisherDetails.address[0]?.address,
-      city: publisherDetails.address[0]?.city,
-      state: publisherDetails.address[0]?.state,
-      country: this.countries.find(
-        (c) => publisherDetails.address[0]?.country === c.name
-      )?.isoCode,
-      pincode: publisherDetails.address[0]?.pincode,
+      id: addr.id,
+      address: addr.address,
+      country: countryIso,
     });
+    console.log({ addr }, 'addresss');
+    this.states = State.getStatesOfCountry(countryIso).map((s) => ({
+      name: s.name,
+      isoCode: s.isoCode,
+    }));
+    console.log(this.states, 'states');
+    const stateIso =
+      this.states.find(
+        (s) => s.isoCode.toLowerCase() === addr.state?.toLowerCase()
+      )?.isoCode || '';
+    console.log({ stateIso }, 'stateIso');
+    this.publisherAddressDetails.patchValue({
+      state: stateIso,
+    });
+
+    this.cities = City.getCitiesOfState(countryIso, stateIso).map((c) => ({
+      name: c.name,
+    }));
+
+    const cityName =
+      this.cities.find((c) => c.name.toLowerCase() === addr.city?.toLowerCase())
+        ?.name || '';
+
+    this.publisherAddressDetails.patchValue({
+      city: cityName,
+      pincode: addr.pincode,
+    });
+
     this.selectedBankPrefix.set(
       this.bankOptions().find(
         ({ name }) => name === publisherDetails.bankDetails?.[0]?.name
@@ -417,6 +467,22 @@ export class AddPublisher {
     } as any;
 
     try {
+      if (
+        this.publisherFormGroup.invalid ||
+        this.publisherAddressDetails.invalid ||
+        this.publisherBankDetails.invalid
+      ) {
+        console.log(this.publisherFormGroup.value, 'author form errors');
+        console.log(this.publisherAddressDetails.value, 'address form errors');
+        console.log(this.publisherBankDetails.value, 'bank form errors');
+        Swal.fire({
+          title: 'error',
+          text: 'Please fill all required fields correctly.',
+          icon: 'error',
+          heightAuto: false,
+        });
+        return;
+      }
       if (
         this.loggedInUser()?.accessLevel === 'SUPERADMIN' ||
         !this.publisherId
