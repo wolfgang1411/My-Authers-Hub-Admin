@@ -23,7 +23,7 @@ import { InviteDialog } from '../../components/invite-dialog/invite-dialog';
 export class Payouts implements OnInit {
   constructor(
     private payoutService: PayoutsService,
-    private userService: UserService,
+    public userService: UserService,
     private matDialog: MatDialog
   ) {
     this.loggedInUser = this.userService.loggedInUser$;

@@ -42,3 +42,7 @@ table tr td:not(:last-child),
 table tr th:not(:last-child) {
   border-right: 1px solid gray;
 }
+
+.active {
+  @apply !bg-primary !text-white;
+}

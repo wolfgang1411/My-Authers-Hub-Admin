@@ -30,24 +30,18 @@ export interface SalesFilter {
 
 export interface EarningFilter {
   itemsPerPage?: number;
-
   page?: number;
   paidBefore?: string;
-
   paidAfter?: string;
-
   titleIds?: number[];
-
   authorIds?: number[] | number;
-
   publisherIds?: number[] | number;
   showPublisherAuthorEarnings?: boolean;
-
   status?: EarningsStatus | EarningsStatus[];
   platforms?: PlatForm | PlatForm[];
-
   channals?: string | string[];
   searchStr?: string;
+  salesType?: SalesType | SalesType[];
 }
 
 export interface CreateSale {
@@ -66,8 +60,8 @@ export interface CreateSaleForm {
     id: FormControl<number | undefined>;
     availableOptions: FormControl<number[] | null | undefined>;
   }>;
-  platform: FormControl<PlatForm | undefined>;
-  amount: FormControl<number | undefined>;
+  platform: FormControl<PlatForm | undefined | null>;
+  amount: FormControl<number | undefined | null>;
   quantity: FormControl<number | undefined>;
   delivery: FormControl<number | undefined>;
   soldAt: FormControl<string | undefined | null>;

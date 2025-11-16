@@ -366,11 +366,9 @@ export interface TitleFormGroup {
   printingFormat: FormControl<string | null | undefined>;
   hasFiles: FormControl<boolean | null | undefined>;
   publishingType: FormControl<PublishingType | null | undefined>;
-
   titleDetails: FormGroup<TitleDetailsFormGroup>;
   printing: FormGroup<PrintingFormGroup>;
   pricing: FormArray<PricingGroup>;
-
   documentMedia: FormArray<FormGroup<TitleMediaGroup>>;
   royalties: FormArray<FormGroup<RoyaltyFormGroup>>;
   distribution: FormArray<FormGroup<TitleDistributionGroup>>;

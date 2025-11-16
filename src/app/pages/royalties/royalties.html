@@ -34,7 +34,7 @@
         <mat-icon class="material-icons">person_add</mat-icon>
         {{ "uploadroyaltieswithcsv" | translate }}
       </button>
-
+      @if (userService.loggedInUser$()?.accessLevel === 'SUPERADMIN') {
       <button
         class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
         matButton="filled"
@@ -44,7 +44,56 @@
         <mat-icon class="material-icons">person_add</mat-icon>
         {{ "addroyalty" | translate }}
       </button>
+      }
     </div>
+  </div>
+  <div class="flex w-full gap-4 mt-4">
+    <button
+      class="btn rounded-md !text-primary"
+      matButton="filled"
+      matButton
+      type="button"
+      [ngClass]="{
+        '!bg-primary !text-white': lastSelectedSaleType === salesTypes.SALE,
+        '!bg-primary-superlight': lastSelectedSaleType !== salesTypes.SALE
+      }"
+      (click)="selectSaleType(salesTypes.SALE)"
+    >
+      <mat-icon>shopping_cart</mat-icon>
+      Sale
+    </button>
+    <button
+      class="btn rounded-md !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white':
+          lastSelectedSaleType === salesTypes.LIVE_SALE,
+        '!bg-primary-superlight': lastSelectedSaleType !== salesTypes.LIVE_SALE
+      }"
+      (click)="selectSaleType(salesTypes.LIVE_SALE)"
+    >
+      <mat-icon>live_tv</mat-icon>
+
+      Live Sale
+    </button>
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white':
+          lastSelectedSaleType === salesTypes.INVENTORY,
+        '!bg-primary-superlight': lastSelectedSaleType !== salesTypes.INVENTORY
+      }"
+      (click)="selectSaleType(salesTypes.INVENTORY)"
+    >
+      <mat-icon>inventory_2</mat-icon>
+
+      Inventory
+    </button>
   </div>
   <app-earning-table [earnings]="earningList()"></app-earning-table>
 </div>

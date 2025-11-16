@@ -401,5 +401,11 @@
   "enddate": "End Date",
   "usagelimit": "Usage Limit",
   "userusagelimit": "User Usage Limit",
-  "platformdetails": "Platform Details"
+  "platformdetails": "Platform Details",
+  "addedAt" : "Added At",
+  "holduntil":" Hold Until",
+  "salesType" :" Sales Type",
+  "SALE":"Sale",
+  "LIVE_SALE":"Live Sale",
+  "INVENTORY":"Inventory"
 }

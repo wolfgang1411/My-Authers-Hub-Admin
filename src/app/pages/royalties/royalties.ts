@@ -37,6 +37,7 @@ import { format, parse } from 'date-fns';
 import { TitleService } from '../titles/title-service';
 import { Earnings } from '../../interfaces/Earnings';
 import { EarningTable } from '../../components/earning-table/earning-table';
+import { UserService } from '../../services/user';
 
 @Component({
   selector: 'app-royalties',
@@ -62,13 +63,13 @@ import { EarningTable } from '../../components/earning-table/earning-table';
 })
 export class Royalties {
   constructor(
-    private royaltyService: RoyaltyService,
     private salesService: SalesService,
     private dialog: MatDialog,
     private renderer2: Renderer2,
     private papa: Papa,
     private logger: Logger,
-    private titleService: TitleService
+    private titleService: TitleService,
+    public userService: UserService
   ) {}
 
   filter: EarningFilter = {
@@ -90,11 +91,20 @@ export class Royalties {
 
   lastPage = signal(1);
   earningList = signal<Earnings[]>([]);
+  lastSelectedSaleType: SalesType | null = SalesType.SALE;
+  salesTypes = SalesType;
   ngOnInit(): void {
+    this.filter = {
+      ...this.filter,
+      salesType: this.lastSelectedSaleType
+        ? [this.lastSelectedSaleType]
+        : [SalesType.SALE],
+    };
     this.updateRoyaltyList();
   }
 
   async updateRoyaltyList() {
+    console.log('Updating royalty list with filter:', this.filter);
     const { items, totalCount, itemsPerPage, page } =
       await this.salesService.fetchEarnings(this.filter);
 
@@ -104,6 +114,14 @@ export class Royalties {
         : items;
     });
     this.lastPage.set(Math.ceil(totalCount / itemsPerPage));
+  }
+  selectSaleType(type: SalesType) {
+    this.lastSelectedSaleType = type;
+    this.filter = {
+      ...this.filter,
+      salesType: [type],
+    };
+    this.updateRoyaltyList();
   }
 
   addRoyalty(data?: Partial<CreateSale & { availableTitles: number[] }>[]) {
@@ -172,18 +190,11 @@ export class Royalties {
   }
 
   onClickUploadCSV() {
-    // Create input
     const input = this.renderer2.createElement('input');
     this.renderer2.setAttribute(input, 'type', 'file');
     this.renderer2.setAttribute(input, 'accept', '.csv');
-
-    // Add to DOM
     this.renderer2.appendChild(document.body, input);
-
-    // Flag to detect if file was selected
     let fileSelected = false;
-
-    // Listen for file change
     const listener = this.renderer2.listen(input, 'change', (event: Event) => {
       const target = event.target as HTMLInputElement;
       const file = target.files?.[0];
@@ -206,11 +217,8 @@ export class Royalties {
             cleanup();
           },
         });
-
-        // Example: this.uploadCSV(file);
       }
 
-      // Clean up after selection or close
       cleanup();
     });
 

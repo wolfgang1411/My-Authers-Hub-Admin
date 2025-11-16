@@ -66,6 +66,7 @@
 
   <!-- Action Buttons Template -->
   <ng-template #actionButtons let-element>
+    @if( loggedInUser()?.accessLevel === 'SUPERADMIN') {
     <div class="flex gap-2 items-center">
       <!-- View -->
       <button
@@ -123,5 +124,6 @@
       </button>
       }
     </div>
+    }
   </ng-template>
 </section>

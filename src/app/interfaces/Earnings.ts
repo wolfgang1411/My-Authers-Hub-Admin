@@ -1,7 +1,5 @@
-import { Booking } from './Booking';
 import { Royalty } from './Royalty';
 import { EarningsStatus, PlatForm } from './StaticValue';
-import { Transaction } from './Transaction';
 
 export interface Earnings {
   id: number;
@@ -9,6 +7,7 @@ export interface Earnings {
   holdUntil: string | null;
   paidAt: string | null;
   platform: PlatForm;
+  quantity: number;
   royalty: Royalty;
   status: EarningsStatus;
   createdAt: Date;

@@ -21,7 +21,9 @@ export class EarningTable {
     'publisher/author',
     'amount',
     'platform',
-    'paidAt/holduntill',
+    'quantity',
+    'addedAt',
+    'holduntil',
   ];
   dataSource = new MatTableDataSource<any>();
 
@@ -37,8 +39,14 @@ export class EarningTable {
           earning.royalty.author?.user.firstName,
         amount: formatCurrency(earning.amount, 'en', '', 'INR'),
         platform: this.translateService.instant(earning.platform),
-        'paidAt/holduntill': (() => {
-          const date = earning.holdUntil || earning.paidAt;
+        quantity: earning.quantity || 0,
+        addedAt: (() => {
+          const date = earning.paidAt;
+          if (!date) return undefined;
+          return format(date, 'dd-MM-yyyy');
+        })(),
+        holduntil: (() => {
+          const date = earning.holdUntil;
           if (!date) return undefined;
           return format(date, 'dd-MM-yyyy');
         })(),
