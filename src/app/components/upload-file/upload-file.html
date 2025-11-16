@@ -1,46 +1,43 @@
- <div
-          class="container"
-          appDragNDrop
-          (fileDropped)="onFileDropped($event)"
-        >
-          <input class="hidden"
-            type="file"
-            #fileDropRef
-            id="fileDropRef"
-            multiple
-            (change)="fileBrowseHandler($event)"
-          />
-          <img src="images/ic-upload-file.svg" alt="Upload Icon" />
-          <h3>Drag and drop file here</h3>
-          <h3>or</h3>
-          <label for="fileDropRef">Browse for file</label>
-        </div>
+<div
+  class="container hover:cursor-pointer"
+  appDragNDrop
+  (fileDropped)="onFileDropped($event)"
+>
+  <input
+    class="hidden"
+    type="file"
+    #fileDropRef
+    id="fileDropRef"
+    multiple
+    (change)="fileBrowseHandler($event)"
+  />
+  <img src="images/ic-upload-file.svg" alt="Upload Icon" />
+  <h3>Drag and drop file here</h3>
+  <h3>or</h3>
+  <label for="fileDropRef">Browse for file</label>
+</div>
 
-        <div class="files-list">
-            @for (file of files; track $index) {
+<div class="files-list">
+  @for (file of files; track $index) {
 
-                <div class="single-file" >
-                  <img
-                    src="images/ic-file.svg"
-                    width="45px"
-                    alt="File Icon"
-                  />
-                  <div class="info">
-                    <h4 class="name">
-                      {{ file.file.name }}
-                    </h4>
-                    <p class="size">
-                      {{ formatBytes(file.file.size) }}
-                    </p>
-                    <app-progress [progress]="file.progress"></app-progress>
-                  </div>
-                  <img
-                    src="images/ic-delete-file.svg"
-                    class="delete"
-                    width="20px"
-                    alt="Delete File"
-                    (click)="deleteFile($index)"
-                  />
-                </div>
-            }
-        </div>
+  <div class="single-file">
+    <img src="images/ic-file.svg" width="45px" alt="File Icon" />
+    <div class="info">
+      <h4 class="name">
+        {{ file.file.name }}
+      </h4>
+      <p class="size">
+        {{ formatBytes(file.file.size) }}
+      </p>
+      <app-progress [progress]="file.progress"></app-progress>
+    </div>
+    <img
+      src="images/ic-delete-file.svg"
+      class="delete"
+      width="20px"
+      alt="Delete File"
+      (click)="deleteFile($index)"
+    />
+  </div>
+  }
+</div>

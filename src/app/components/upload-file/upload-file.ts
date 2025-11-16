@@ -1,31 +1,28 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
-import { DragNDrop } from "../../directives/drag-n-drop";
+import { DragNDrop } from '../../directives/drag-n-drop';
 import { Progress } from '../../components/progress/progress';
 import { Uploadfile } from '../../interfaces';
 @Component({
   selector: 'app-upload-file',
-  imports: [DragNDrop , Progress],
+  imports: [DragNDrop, Progress],
   templateUrl: './upload-file.html',
-  styleUrl: './upload-file.css'
+  styleUrl: './upload-file.css',
 })
 export class UploadFile {
-  @ViewChild('fileDropRef', { static: false }) fileDropEl!: ElementRef<HTMLInputElement>;
+  @ViewChild('fileDropRef', { static: false })
+  fileDropEl!: ElementRef<HTMLInputElement>;
   files: Uploadfile[] = [];
 
   // 🔹 When files are dropped
   onFileDropped(event: FileList | File[]): void {
     this.prepareFilesList(Array.from(event));
   }
-
-  // 🔹 When user selects via browse
- fileBrowseHandler(event: Event): void {
-  const input = event.target as HTMLInputElement;
-  if (input?.files) {
-    this.prepareFilesList(Array.from(input.files));
+  fileBrowseHandler(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input?.files) {
+      this.prepareFilesList(Array.from(input.files));
+    }
   }
-}
-
-  // 🔹 Delete file if not uploading
   deleteFile(index: number): void {
     if (this.files[index].progress < 100) {
       console.log('Upload in progress.');
@@ -33,8 +30,6 @@ export class UploadFile {
     }
     this.files.splice(index, 1);
   }
-
-  // 🔹 Simulate upload progress
   uploadFilesSimulator(index: number): void {
     setTimeout(() => {
       if (index >= this.files.length) {
@@ -59,7 +54,7 @@ export class UploadFile {
     for (const file of files) {
       const uploadFile: Uploadfile = {
         file,
-        progress: 0
+        progress: 0,
       };
       this.files.push(uploadFile);
     }

@@ -467,6 +467,7 @@ export class AddPublisher {
       accountHolderName: publisherDetails.bankDetails?.[0]?.accountHolderName,
       name: publisherDetails.bankDetails?.[0]?.name,
       accountNo: publisherDetails.bankDetails?.[0]?.accountNo,
+      confirmAccountNo: publisherDetails.bankDetails?.[0]?.accountNo,
       ifsc: publisherDetails.bankDetails?.[0]?.ifsc,
       panCardNo: publisherDetails.bankDetails?.[0]?.panCardNo,
       accountType: publisherDetails.bankDetails?.[0]?.accountType,

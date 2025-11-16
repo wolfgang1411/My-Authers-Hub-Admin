@@ -456,6 +456,7 @@ export class AddAuthor {
       id: authorDetails.bankDetails?.[0]?.id,
       name: authorDetails.bankDetails?.[0]?.name,
       accountNo: authorDetails.bankDetails?.[0]?.accountNo,
+      confirmAccountNo: authorDetails.bankDetails?.[0]?.accountNo,
       ifsc: authorDetails.bankDetails?.[0]?.ifsc,
       panCardNo: authorDetails.bankDetails?.[0]?.panCardNo,
       accountType: authorDetails.bankDetails?.[0]?.accountType,
