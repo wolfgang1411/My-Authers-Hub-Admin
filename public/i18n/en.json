@@ -401,5 +401,6 @@
   "enddate": "End Date",
   "usagelimit": "Usage Limit",
   "userusagelimit": "User Usage Limit",
-  "platformdetails": "Platform Details"
+  "platformdetails": "Platform Details",
+  "invalidpincode": "Invalid pincode"
 }

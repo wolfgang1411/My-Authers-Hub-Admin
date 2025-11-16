@@ -20,4 +20,15 @@ export class AddressService {
       throw error;
     }
   }
+
+  async validatePincode(pincode: string, countryCode = 'IN') {
+    try {
+      return await this.server.get<{ valid: boolean }>(
+        `address/verify/${countryCode}/${pincode}`
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
 }
