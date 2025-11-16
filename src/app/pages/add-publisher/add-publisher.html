@@ -226,6 +226,13 @@
         <mat-form-field>
           <mat-label>{{ "pincode" | translate }}</mat-label>
           <input matInput formControlName="pincode" placeholder="" required />
+          @if
+          (publisherAddressDetails.controls.pincode.hasError('invalidPincode'))
+          {
+          <mat-error>
+            {{ "invalidpincode" | translate }}
+          </mat-error>
+          }
         </mat-form-field>
       </div>
     </form>
