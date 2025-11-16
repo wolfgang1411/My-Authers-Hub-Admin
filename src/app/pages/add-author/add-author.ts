@@ -3,6 +3,7 @@ import {
   computed,
   effect,
   inject,
+  OnInit,
   Signal,
   signal,
 } from '@angular/core';
@@ -15,13 +16,14 @@ import {
   ValidatorFn,
   AbstractControl,
   ValidationErrors,
+  AsyncValidatorFn,
 } from '@angular/forms';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import {
   StepperOrientation,
   MatStepperModule,
 } from '@angular/material/stepper';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
@@ -83,7 +85,7 @@ import { TranslateService } from '@ngx-translate/core';
   templateUrl: './add-author.html',
   styleUrls: ['./add-author.css'],
 })
-export class AddAuthor {
+export class AddAuthor implements OnInit {
   constructor(
     private authorsService: AuthorsService,
     private addressService: AddressService,
@@ -150,6 +152,37 @@ export class AddAuthor {
               }
             ),
           };
+    };
+  }
+
+  validatePincode(): AsyncValidatorFn {
+    return async (control) => {
+      const pin = control.value;
+      const country = this.authorAddressDetails.controls.country.value;
+      const isIndia = ['IN', 'INDIA', 'india', 'India', 'in'].includes(
+        country || ''
+      );
+
+      // Skip async validation if field is empty
+      if (!pin || !isIndia) {
+        return null;
+      }
+
+      // Optional: basic length check (India)
+      if (pin?.length !== 6) {
+        return { invalidPincode: true };
+      }
+
+      try {
+        const { valid } = await this.addressService.validatePincode(pin);
+        // Expecting: { valid: boolean } or similar
+        if (valid) {
+          return null; // Valid pincode
+        }
+        return { invalidPincode: true }; // Invalid from API
+      } catch (err) {
+        return { invalidPincode: true }; // API error = invalid
+      }
     };
   }
 
@@ -238,6 +271,14 @@ export class AddAuthor {
     this.authorAddressDetails
       .get('country')
       ?.valueChanges.subscribe((countryIso) => {
+        const isIndia = ['IN', 'INDIA', 'india', 'India', 'in'].includes(
+          countryIso || ''
+        );
+
+        if (!isIndia) {
+          this.authorAddressDetails.controls.pincode.updateValueAndValidity();
+        }
+
         if (countryIso) {
           this.states = State.getStatesOfCountry(countryIso).map((s) => ({
             name: s.name,
@@ -351,7 +392,7 @@ export class AddAuthor {
     city: ['', Validators.required],
     state: ['', Validators.required],
     country: ['', Validators.required],
-    pincode: ['', Validators.required],
+    pincode: ['', [Validators.required], [this.validatePincode()]],
     signupCode: <string | null>null,
   });
   authorSocialMediaGroup = new FormGroup({

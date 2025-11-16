@@ -401,6 +401,7 @@
   "enddate": "End Date",
   "usagelimit": "Usage Limit",
   "userusagelimit": "User Usage Limit",
+  "invalidpincode": "Invalid pincode"
   "platformdetails": "Platform Details",
   "addedAt" : "Added At",
   "holduntil":" Hold Until",

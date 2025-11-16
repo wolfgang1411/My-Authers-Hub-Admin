@@ -18,6 +18,7 @@ import {
   ValidatorFn,
   ValidationErrors,
   AbstractControl,
+  AsyncValidatorFn,
 } from '@angular/forms';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import {
@@ -171,6 +172,7 @@ export class AddPublisher {
     this.publisherAddressDetails
       .get('country')
       ?.valueChanges.subscribe((countryIso) => {
+        this.publisherAddressDetails.controls.pincode.updateValueAndValidity();
         if (countryIso) {
           this.states = State.getStatesOfCountry(countryIso).map((s) => ({
             name: s.name,
@@ -256,6 +258,37 @@ export class AddPublisher {
   // }
   private _formBuilder = inject(FormBuilder);
   stepperOrientation: Observable<StepperOrientation>;
+
+  validatePincode(): AsyncValidatorFn {
+    return async (control) => {
+      const pin = control.value;
+      const country = this.publisherAddressDetails.controls.country.value;
+      const isIndia = ['IN', 'INDIA', 'india', 'India', 'in'].includes(
+        country || ''
+      );
+
+      // Skip async validation if field is empty
+      if (!pin || !isIndia) {
+        return null;
+      }
+
+      // Optional: basic length check (India)
+      if (pin?.length !== 6) {
+        return { invalidPincode: true };
+      }
+
+      try {
+        const { valid } = await this.addressService.validatePincode(pin);
+        // Expecting: { valid: boolean } or similar
+        if (valid) {
+          return null; // Valid pincode
+        }
+        return { invalidPincode: true }; // Invalid from API
+      } catch (err) {
+        return { invalidPincode: true }; // API error = invalid
+      }
+    };
+  }
 
   panCardValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
@@ -360,7 +393,7 @@ export class AddPublisher {
     city: ['', Validators.required],
     state: ['', Validators.required],
     country: ['', Validators.required],
-    pincode: ['', Validators.required],
+    pincode: ['', [Validators.required], [this.validatePincode()]],
     signupCode: <string | null>null,
   });
   publisherSocialMediaGroup = new FormGroup({
