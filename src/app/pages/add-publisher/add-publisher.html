@@ -13,7 +13,7 @@
   [animationDuration]="'500'"
 >
   <mat-step
-    [stepControl]="publisherFormGroup"
+    [stepControl]="step1Form"
     class="!text-accent !p-0"
     label="Fill out your basic details"
   >
@@ -167,12 +167,7 @@
         <app-upload-file></app-upload-file>
       </mat-card>
     </form>
-    <button
-      matButton="filled"
-      class="!bg-primary mt-8"
-      matStepperNext
-      (click)="jumptonext()"
-    >
+    <button matButton="filled" class="!bg-primary mt-8" matStepperNext>
       Next
     </button>
   </mat-step>
@@ -281,6 +276,27 @@
             placeholder="78************56"
             required
           />
+          @if (publisherBankDetails.get('accountNo')?.hasError('required')) {
+          <mat-error> Account number is required </mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Re-enter Account Number</mat-label>
+          <input
+            matInput
+            type="password"
+            formControlName="confirmAccountNo"
+            placeholder="**************"
+            required
+          />
+          @if
+          (publisherBankDetails.get('confirmAccountNo')?.hasError('required')) {
+          <mat-error> Please re-enter your account number </mat-error>
+          }
+          @if(publisherBankDetails.get('confirmAccountNo')?.hasError('notMatching')
+          ){
+          <mat-error> Account numbers do not match </mat-error>
+          }
         </mat-form-field>
         <mat-form-field>
           <mat-label>{{ "ifsccode" | translate }}</mat-label>

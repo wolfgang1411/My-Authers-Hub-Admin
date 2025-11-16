@@ -13,7 +13,7 @@
   [animationDuration]="'500'"
 >
   <mat-step
-    [stepControl]="authorFormGroup"
+    [stepControl]="step1Form"
     class="!text-accent !p-0"
     label="Fill out your basic details"
   >
@@ -198,7 +198,6 @@
             <mat-option [value]="bank.name">{{ bank.name }}</mat-option>
             }
           </mat-select>
-          <!-- <input matInput formControlName="name" placeholder="HDFC" required /> -->
         </mat-form-field>
         <mat-form-field>
           <mat-label>{{ "bankaccnumber" | translate }}</mat-label>
@@ -208,6 +207,27 @@
             placeholder="78************56"
             required
           />
+          @if (authorBankDetails.get('accountNo')?.hasError('required')) {
+          <mat-error> Account number is required </mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Re-enter Account Number</mat-label>
+          <input
+            matInput
+            type="password"
+            formControlName="confirmAccountNo"
+            placeholder="**************"
+            required
+          />
+          @if (authorBankDetails.get('confirmAccountNo')?.hasError('required'))
+          {
+          <mat-error> Please re-enter your account number </mat-error>
+          }
+          @if(authorBankDetails.get('confirmAccountNo')?.hasError('notMatching')
+          ){
+          <mat-error> Account numbers do not match </mat-error>
+          }
         </mat-form-field>
         <mat-form-field>
           <mat-label>{{ "accountholdername" | translate }}</mat-label>
@@ -224,13 +244,13 @@
             matInput
             formControlName="ifsc"
             placeholder="e.g. HDFC0001234"
-            (blur)="verifyIFSC()"
+            required
           />
-          @if(bankInfo) {
+          <!-- @if(bankInfo) {
           <mat-hint> ✅ {{ bankInfo.BANK }} - {{ bankInfo.BRANCH }} </mat-hint>
           } @if (invalidIFSC){
           <mat-error>Invalid IFSC Code</mat-error>
-          }
+          } -->
         </mat-form-field>
         @if (verifying) {
         <div class="text-sm text-gray-500 mt-2">Verifying IFSC code...</div>
@@ -238,6 +258,9 @@
         <mat-form-field>
           <mat-label>{{ "panCardNo" | translate }}</mat-label>
           <input matInput formControlName="panCardNo" placeholder="" required />
+          @if (authorBankDetails.get('panCardNo')?.hasError('invalidPan')) {
+          <mat-error> Enter a valid PAN number (e.g., ABCDE1234F) </mat-error>
+          }
         </mat-form-field>
         <mat-form-field>
           <mat-label>{{ "accountType" | translate }}</mat-label>

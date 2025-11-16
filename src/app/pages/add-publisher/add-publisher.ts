@@ -199,7 +199,7 @@ export class AddPublisher {
       .subscribe((pin) => {
         const countryIso = this.publisherAddressDetails.get('country')?.value;
         if (countryIso === 'IN' && pin?.length === 6) {
-          this.lookupByPincode(pin);
+          // this.lookupByPincode(pin);
         }
       });
     this.publisherBankDetails.controls.name.valueChanges.subscribe((v) => {
@@ -207,7 +207,6 @@ export class AddPublisher {
         this.bankOptions().find(({ name }) => name === v)?.bankCode || null
       );
     });
-
     this.bankOptions.set(this.bankDetailService.fetchBankOptions());
 
     if (this.signupCode) {
@@ -228,33 +227,33 @@ export class AddPublisher {
       this.isPrefilling = false;
     }
   }
-  lookupByPincode(pin: string) {
-    if (this.isPrefilling) return;
+  // lookupByPincode(pin: string) {
+  //   if (this.isPrefilling) return;
 
-    this.http
-      .get<any[]>(`https://api.postalpincode.in/pincode/${pin}`)
-      .subscribe((res) => {
-        if (res && res[0].Status === 'Success') {
-          const data = res[0].PostOffice?.[0];
-          this.publisherAddressDetails.patchValue({
-            city: data?.District,
-            state: data?.State,
-            country: 'India',
-          });
-        } else {
-          Swal.fire({
-            icon: 'warning',
-            title: 'Invalid Pincode',
-            text: 'Please enter a valid 6-digit pincode.',
-          });
-          this.publisherAddressDetails.patchValue({
-            city: '',
-            state: '',
-            country: '',
-          });
-        }
-      });
-  }
+  //   this.http
+  //     .get<any[]>(`https://api.postalpincode.in/pincode/${pin}`)
+  //     .subscribe((res) => {
+  //       if (res && res[0].Status === 'Success') {
+  //         const data = res[0].PostOffice?.[0];
+  //         this.publisherAddressDetails.patchValue({
+  //           city: data?.District,
+  //           state: data?.State,
+  //           country: 'India',
+  //         });
+  //       } else {
+  //         Swal.fire({
+  //           icon: 'warning',
+  //           title: 'Invalid Pincode',
+  //           text: 'Please enter a valid 6-digit pincode.',
+  //         });
+  //         this.publisherAddressDetails.patchValue({
+  //           city: '',
+  //           state: '',
+  //           country: '',
+  //         });
+  //       }
+  //     });
+  // }
   private _formBuilder = inject(FormBuilder);
   stepperOrientation: Observable<StepperOrientation>;
 
@@ -291,6 +290,35 @@ export class AddPublisher {
     };
   }
 
+  accountMatchValidator(): ValidatorFn {
+    return (form: AbstractControl): ValidationErrors | null => {
+      const acc = form.get('accountNo');
+      const confirm = form.get('confirmAccountNo');
+
+      if (!acc || !confirm) return null;
+
+      const confirmErrors = confirm.errors || {};
+
+      if (!confirm.value) {
+        delete confirmErrors['notMatching'];
+        confirm.setErrors(
+          Object.keys(confirmErrors).length ? confirmErrors : null
+        );
+        return null;
+      }
+      if (acc.value !== confirm.value) {
+        confirm.setErrors({ ...confirmErrors, notMatching: true });
+      } else {
+        delete confirmErrors['notMatching'];
+        confirm.setErrors(
+          Object.keys(confirmErrors).length ? confirmErrors : null
+        );
+      }
+
+      return null;
+    };
+  }
+
   publisherFormGroup = this._formBuilder.group({
     id: <number | null>null,
     pocName: ['', Validators.required],
@@ -306,19 +334,25 @@ export class AddPublisher {
 
   selectedBankPrefix = signal<string | null>(null);
 
-  publisherBankDetails = this._formBuilder.group({
-    id: <number | null>null,
-    accountHolderName: [
-      '',
-      [Validators.required, Validators.pattern(/^[A-Za-z\s]+$/)],
-    ],
-    name: ['', [Validators.required]],
-    accountNo: ['', [Validators.required]],
-    ifsc: ['', [Validators.required, this.ifscCodeValidator()]],
-    panCardNo: ['', Validators.required, this.panCardValidator()],
-    accountType: ['', Validators.required],
-    signupCode: <string | null>null,
-  });
+  publisherBankDetails = this._formBuilder.group(
+    {
+      id: <number | null>null,
+      accountHolderName: [
+        '',
+        [Validators.required, Validators.pattern(/^[A-Za-z\s]+$/)],
+      ],
+      name: ['', [Validators.required]],
+      accountNo: ['', [Validators.required]],
+      confirmAccountNo: ['', [Validators.required]],
+      ifsc: ['', [Validators.required, this.ifscCodeValidator()]],
+      panCardNo: ['', [Validators.required, this.panCardValidator()]],
+      accountType: ['', Validators.required],
+      signupCode: <string | null>null,
+    },
+    {
+      validators: [this.accountMatchValidator()],
+    }
+  );
 
   publisherAddressDetails = this._formBuilder.group({
     id: <number | null>null,
@@ -336,14 +370,21 @@ export class AddPublisher {
   });
   createSocialGroup(): FormGroup<SocialMediaGroupType> {
     return new FormGroup<SocialMediaGroupType>({
-      type: new FormControl<SocialMediaType | null>(null),
-      url: new FormControl<string | null>(null),
+      type: new FormControl<SocialMediaType | null>(null, [
+        Validators.required,
+      ]),
+      url: new FormControl<string | null>(null, [Validators.required]),
       publisherId: new FormControl<number | null>(null),
       name: new FormControl<string | null>(null),
       autherId: new FormControl<number | null>(null),
       id: new FormControl<number | null>(null),
     });
   }
+  step1Form = this._formBuilder.group({
+    basic: this.publisherFormGroup,
+    social: this.publisherSocialMediaGroup,
+  });
+
   get socialMediaArray(): FormArray<FormGroup<SocialMediaGroupType>> {
     return this.publisherSocialMediaGroup.get('socialMedia') as FormArray<
       FormGroup<SocialMediaGroupType>
@@ -460,172 +501,191 @@ export class AddPublisher {
     return selectedTypes.length >= allOptions.length;
   }
 
-  async onSubmit() {
-    const publisherData = {
-      ...this.publisherFormGroup.value,
-      pocEmail: this.publisherFormGroup.controls.pocEmail.value,
-    } as any;
+  async handleNewOrSuperAdminSubmission(publisherData: Publishers) {
+    const response = (await this.publisherService.createPublisher(
+      publisherData
+    )) as Publishers;
 
+    if (response && response.id) {
+      const publisherAddressData = {
+        ...this.publisherAddressDetails.value,
+        publisherId: response.id,
+      };
+
+      await this.addressService.createOrUpdateAddress(
+        publisherAddressData as Address
+      );
+      const publisherBankData = {
+        ...this.publisherBankDetails.value,
+        publisherId: response.id,
+      };
+
+      await this.bankDetailService.createOrUpdateBankDetail(
+        publisherBankData as createBankDetails
+      );
+      const socialMediaData = this.socialMediaArray.controls
+        .map((group) => ({
+          ...group.value,
+          publisherId: response.id,
+        }))
+        .filter((item) => item.url?.trim());
+
+      if (socialMediaData.length > 0) {
+        await this.socialService.createOrUpdateSocialMediaLinks(
+          socialMediaData as socialMediaGroup[]
+        );
+      }
+    }
+
+    let html = 'You have successfully created the publisher.';
+
+    if (response?.id) {
+      html = 'You have successfully updated the publisher.';
+    }
+
+    if (this.signupCode) {
+      html = `You have successfully registered as publisher. Please login to continue.`;
+    }
+
+    await Swal.fire({
+      title: 'Success',
+      icon: 'success',
+      html,
+      heightAuto: false,
+    });
+  }
+  async handlePublisherUpdateFlow(publisherData: Publishers) {
+    const sections = [
+      {
+        type: UpdateTicketType.ADDRESS,
+        fields: ['address', 'city', 'state', 'country', 'pincode'],
+      },
+      {
+        type: UpdateTicketType.BANK,
+        fields: [
+          'bankName',
+          'accountNo',
+          'ifsc',
+          'panCardNo',
+          'accountType',
+          'gstNumber',
+        ],
+      },
+      {
+        type: UpdateTicketType.PUBLISHER,
+        fields: ['publisherName', 'publisherEmail'],
+      },
+    ];
+
+    const rawValue = {
+      ...this.publisherAddressDetails.value,
+      ...this.publisherBankDetails.value,
+      ...publisherData,
+      accountHolderName: this.publisherBankDetails.value.accountHolderName,
+      bankName: this.publisherBankDetails.value.name,
+      publisherName: this.publisherFormGroup.value.name,
+      publisherEmail: this.publisherFormGroup.value.email,
+      publisherPocName: this.publisherFormGroup.value.pocName,
+      publisherPocEmail: this.publisherFormGroup.value.pocEmail,
+      publisherPocPhoneNumber: this.publisherFormGroup.value.pocPhoneNumber,
+      publisherDesignation: this.publisherFormGroup.value.designation,
+    };
+
+    for (const section of sections) {
+      const payload: any = { type: section.type };
+      let hasValues = false;
+
+      section.fields.forEach((field: string) => {
+        const value = rawValue[field as keyof typeof rawValue];
+        if (value !== undefined && value !== null && value !== '') {
+          payload[field] = value;
+          hasValues = true;
+        } else {
+          payload[field] = null;
+        }
+      });
+
+      if (hasValues) {
+        await this.userService.raisingTicket(payload);
+      }
+
+      const socialMediaData = this.socialMediaArray.controls
+        .map((group) => ({
+          ...group.value,
+          publisherId: this.publisherId,
+        }))
+        .filter((item) => item.url?.trim());
+
+      if (socialMediaData.length > 0) {
+        await this.socialService.createOrUpdateSocialMediaLinks(
+          socialMediaData as socialMediaGroup[]
+        );
+      }
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Update ticket raised successfully',
+        heightAuto: false,
+      });
+    }
+  }
+
+  async onSubmit() {
     try {
-      if (
+      const invalid =
         this.publisherFormGroup.invalid ||
+        this.publisherSocialMediaGroup.invalid ||
         this.publisherAddressDetails.invalid ||
-        this.publisherBankDetails.invalid
-      ) {
-        console.log(this.publisherFormGroup.value, 'author form errors');
-        console.log(this.publisherAddressDetails.value, 'address form errors');
-        console.log(this.publisherBankDetails.value, 'bank form errors');
-        Swal.fire({
-          title: 'error',
+        this.publisherBankDetails.invalid;
+      if (invalid) {
+        this.publisherFormGroup.markAllAsTouched();
+        this.publisherSocialMediaGroup.markAllAsTouched();
+        this.publisherAddressDetails.markAllAsTouched();
+        this.publisherBankDetails.markAllAsTouched();
+
+        await Swal.fire({
+          title: 'Error',
           text: 'Please fill all required fields correctly.',
+          icon: 'error',
+          heightAuto: false,
+        });
+        console.log(
+          this.publisherFormGroup.value,
+          this.publisherSocialMediaGroup.value,
+          this.publisherAddressDetails.value,
+          this.publisherBankDetails.value
+        );
+        return;
+      }
+      if (this.publisherBankDetails.hasError('accountMismatch')) {
+        await Swal.fire({
+          title: 'Error',
+          text: 'Account numbers do not match.',
           icon: 'error',
           heightAuto: false,
         });
         return;
       }
+      const publisherData = {
+        ...this.publisherFormGroup.value,
+        pocEmail: this.publisherFormGroup.controls.pocEmail.value,
+      } as any;
       if (
         this.loggedInUser()?.accessLevel === 'SUPERADMIN' ||
         !this.publisherId
       ) {
-        const response = (await this.publisherService.createPublisher(
-          publisherData
-        )) as Publishers;
-        if (response && response.id) {
-          const publisherAddressData = {
-            ...this.publisherAddressDetails.value,
-            publisherId: response.id,
-          };
-          await this.addressService.createOrUpdateAddress({
-            ...publisherAddressData,
-            publisherId: response.id,
-          } as Address);
-
-          const publisherBankData = {
-            ...this.publisherBankDetails.value,
-            publisherId: response.id,
-          };
-
-          console.log({ publisherBankData });
-
-          await this.bankDetailService.createOrUpdateBankDetail(
-            publisherBankData as createBankDetails
-          );
-          const socialMediaData = this.socialMediaArray.controls
-            .map((group) => ({
-              ...group.value,
-              publisherId: response.id,
-            }))
-            .filter((item) => item.url?.trim());
-          if (socialMediaData.length > 0) {
-            await this.socialService.createOrUpdateSocialMediaLinks(
-              socialMediaData as socialMediaGroup[]
-            );
-            console.log(socialMediaData, 'social media');
-          }
-        }
-
-        let html = 'You have successfully created the publisher.';
-        if (response.id) {
-          html = 'You have successfully updated the publisher.';
-        }
-
-        if (this.signupCode) {
-          html = `You have successfully registerd as publisher please login to continue`;
-        }
-
-        await Swal.fire({
-          title: 'success',
-          icon: 'success',
-          html,
-          heightAuto: false,
-        });
+        await this.handleNewOrSuperAdminSubmission(publisherData);
       } else {
-        const sections = [
-          {
-            type: UpdateTicketType.ADDRESS,
-            fields: ['address', 'city', 'state', 'country', 'pincode'],
-          },
-          {
-            type: UpdateTicketType.BANK,
-            fields: [
-              'bankName',
-              'accountNo',
-              'ifsc',
-              'panCardNo',
-              'accountType',
-              'gstNumber',
-            ],
-          },
-          {
-            type: UpdateTicketType.PUBLISHER,
-            fields: ['publisherName', 'publisherEmail'],
-          },
-        ];
-        const rawValue = {
-          ...this.publisherAddressDetails.value,
-          ...this.publisherBankDetails.value,
-          ...publisherData,
-          accountHolderName: this.publisherBankDetails.value.accountHolderName,
-          bankName: this.publisherBankDetails.value.name,
-          publisherName: this.publisherFormGroup.value.name,
-          publisherEmail: this.publisherFormGroup.value.email,
-          publisherPocName: this.publisherFormGroup.value.pocName,
-          publisherPocEmail: this.publisherFormGroup.value.pocEmail,
-          publisherPocPhoneNumber: this.publisherFormGroup.value.pocPhoneNumber,
-          publisherDesignation: this.publisherFormGroup.value.designation,
-        };
-
-        for (const section of sections) {
-          const payload: any = { type: section.type };
-          let hasValues = false;
-          section.fields.forEach((field: string) => {
-            const value = rawValue[field as keyof typeof rawValue];
-            if (value !== undefined && value !== null && value !== '') {
-              payload[field as keyof typeof payload] = value;
-              hasValues = true;
-            } else {
-              payload[field as keyof typeof payload] = null;
-            }
-            console.log(payload, 'raising a ticket');
-          });
-          if (hasValues) {
-            await this.userService.raisingTicket(payload);
-          }
-          const socialMediaData = this.socialMediaArray.controls
-            .map((group) => ({
-              ...group.value,
-              publisherId: this.publisherId,
-            }))
-            .filter((item) => item.url?.trim());
-          if (socialMediaData.length > 0) {
-            await this.socialService.createOrUpdateSocialMediaLinks(
-              socialMediaData as socialMediaGroup[]
-            );
-            console.log(socialMediaData, 'social media');
-          }
-          Swal.fire({
-            icon: 'success',
-            text: 'Update ticket raised successfully',
-            title: 'Success',
-            heightAuto: false,
-          });
-        }
+        await this.handlePublisherUpdateFlow(publisherData);
       }
       if (this.signupCode) {
         this.router.navigate(['/login']);
       } else {
         this.router.navigate(['/publisher']);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.log(error);
     }
-  }
-  jumptonext() {
-    console.log(
-      this.publisherAddressDetails.value,
-      'adrdressss',
-      this.publisherFormGroup.value,
-      'publiserrr form'
-    );
   }
 }

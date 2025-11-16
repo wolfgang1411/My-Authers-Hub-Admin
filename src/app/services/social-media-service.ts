@@ -24,6 +24,7 @@ export class SocialMediaService {
                 : 'social-media',
               {
                 ...socialMedia,
+                name: socialMedia.url,
               }
             )
           );

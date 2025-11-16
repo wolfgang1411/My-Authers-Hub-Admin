@@ -61,6 +61,7 @@ import { Back } from '../../components/back/back';
 import { Country, State, City } from 'country-state-city';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
 @Component({
   selector: 'app-add-author',
   imports: [
@@ -91,7 +92,8 @@ export class AddAuthor {
     private inviteService: InviteService,
     private router: Router,
     private socialService: SocialMediaService,
-    private userService: UserService
+    private userService: UserService,
+    private translateService: TranslateService
   ) {
     effect(() => {
       const selected =
@@ -132,8 +134,22 @@ export class AddAuthor {
 
   ifscCodeValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
-      const ifscPattern = /^[A-Z]{4}0[A-Z0-9]{6}$/;
-      return ifscPattern.test(control.value) ? null : { invalidIFSC: true };
+      const prefix = this.bankOptions().find(
+        ({ name }) => name === this.authorBankDetails.controls.name.value
+      )?.bankCode;
+      if (!prefix) return null;
+      const value = control.value?.toUpperCase?.().trim?.() || '';
+      if (!value) return null;
+      return value.startsWith(prefix.toUpperCase())
+        ? null
+        : {
+            startsWith: this.translateService.instant(
+              'invalidifscodestartwitherror',
+              {
+                prefix,
+              }
+            ),
+          };
     };
   }
 
@@ -145,17 +161,57 @@ export class AddAuthor {
     if (!ifsc) return;
     this.verifying = true;
     this.invalidIFSC = false;
-    this.http.get(`https://ifsc.razorpay.com/${ifsc}`).subscribe({
-      next: (res) => {
-        this.bankInfo = res;
-        this.verifying = false;
-      },
-      error: () => {
-        this.invalidIFSC = true;
-        this.verifying = false;
-        this.bankInfo = null;
-      },
-    });
+    // this.http.get(`https://ifsc.razorpay.com/${ifsc}`).subscribe({
+    //   next: (res) => {
+    //     this.bankInfo = res;
+    //     this.verifying = false;
+    //   },
+    //   error: () => {
+    //     this.invalidIFSC = true;
+    //     this.verifying = false;
+    //     this.bankInfo = null;
+    //   },
+    // });
+  }
+
+  panCardValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (!control.value) return null;
+
+      const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+
+      return panRegex.test(control.value.toUpperCase())
+        ? null
+        : { invalidPan: true };
+    };
+  }
+  accountMatchValidator(): ValidatorFn {
+    return (form: AbstractControl): ValidationErrors | null => {
+      const acc = form.get('accountNo');
+      const confirm = form.get('confirmAccountNo');
+
+      if (!acc || !confirm) return null;
+
+      const confirmErrors = confirm.errors || {};
+
+      if (!confirm.value) {
+        delete confirmErrors['notMatching'];
+        confirm.setErrors(
+          Object.keys(confirmErrors).length ? confirmErrors : null
+        );
+        return null;
+      }
+      if (acc.value !== confirm.value) {
+        confirm.setErrors({ ...confirmErrors, notMatching: true });
+      } else {
+        delete confirmErrors['notMatching'];
+        confirm.setErrors(
+          Object.keys(confirmErrors).length ? confirmErrors : null
+        );
+      }
+
+      return null;
+    };
   }
 
   async ngOnInit() {
@@ -210,7 +266,7 @@ export class AddAuthor {
       .subscribe((pin) => {
         const countryIso = this.authorAddressDetails.get('country')?.value;
         if (countryIso === 'IN' && pin?.length === 6) {
-          this.lookupByPincode(pin);
+          // this.lookupByPincode(pin);
         }
       });
 
@@ -230,33 +286,33 @@ export class AddAuthor {
       this.isPrefilling = false;
     }
   }
-  lookupByPincode(pin: string) {
-    if (this.isPrefilling) return;
+  // lookupByPincode(pin: string) {
+  //   if (this.isPrefilling) return;
 
-    this.http
-      .get<any[]>(`https://api.postalpincode.in/pincode/${pin}`)
-      .subscribe((res) => {
-        if (res && res[0].Status === 'Success') {
-          const data = res[0].PostOffice?.[0];
-          this.authorAddressDetails.patchValue({
-            city: data?.District,
-            state: data?.State,
-            country: 'India',
-          });
-        } else {
-          Swal.fire({
-            icon: 'warning',
-            title: 'Invalid Pincode',
-            text: 'Please enter a valid 6-digit pincode.',
-          });
-          this.authorAddressDetails.patchValue({
-            city: '',
-            state: '',
-            country: '',
-          });
-        }
-      });
-  }
+  //   this.http
+  //     .get<any[]>(`https://api.postalpincode.in/pincode/${pin}`)
+  //     .subscribe((res) => {
+  //       if (res && res[0].Status === 'Success') {
+  //         const data = res[0].PostOffice?.[0];
+  //         this.authorAddressDetails.patchValue({
+  //           city: data?.District,
+  //           state: data?.State,
+  //           country: 'India',
+  //         });
+  //       } else {
+  //         Swal.fire({
+  //           icon: 'warning',
+  //           title: 'Invalid Pincode',
+  //           text: 'Please enter a valid 6-digit pincode.',
+  //         });
+  //         this.authorAddressDetails.patchValue({
+  //           city: '',
+  //           state: '',
+  //           country: '',
+  //         });
+  //       }
+  //     });
+  // }
 
   private _formBuilder = inject(FormBuilder);
   stepperOrientation: Observable<StepperOrientation>;
@@ -270,19 +326,25 @@ export class AddAuthor {
     authorImage: [''],
     signupCode: <string | null>null,
   });
-  authorBankDetails = this._formBuilder.group({
-    id: <number | null>null,
-    name: ['', Validators.required],
-    accountHolderName: [
-      '',
-      [Validators.required, Validators.pattern(/^[A-Za-z\s]+$/)],
-    ],
-    accountNo: ['', Validators.required],
-    ifsc: ['', [Validators.required, this.ifscCodeValidator()]],
-    panCardNo: ['', Validators.required],
-    accountType: ['', Validators.required],
-    signupCode: <string | null>null,
-  });
+  authorBankDetails = this._formBuilder.group(
+    {
+      id: <number | null>null,
+      name: ['', Validators.required],
+      accountHolderName: [
+        '',
+        [Validators.required, Validators.pattern(/^[A-Za-z\s]+$/)],
+      ],
+      accountNo: ['', Validators.required],
+      confirmAccountNo: ['', [Validators.required]],
+      ifsc: ['', [Validators.required, this.ifscCodeValidator()]],
+      panCardNo: ['', [Validators.required, this.panCardValidator()]],
+      accountType: ['', Validators.required],
+      signupCode: <string | null>null,
+    },
+    {
+      validators: [this.accountMatchValidator()],
+    }
+  );
   authorAddressDetails = this._formBuilder.group({
     id: <number | null>null,
     address: ['', Validators.required],
@@ -299,14 +361,20 @@ export class AddAuthor {
   });
   createSocialGroup(): FormGroup<SocialMediaGroupType> {
     return new FormGroup<SocialMediaGroupType>({
-      type: new FormControl<SocialMediaType | null>(null),
-      url: new FormControl<string | null>(null),
+      type: new FormControl<SocialMediaType | null>(null, [
+        Validators.required,
+      ]),
+      url: new FormControl<string | null>(null, [Validators.required]),
       publisherId: new FormControl<number | null>(null),
       name: new FormControl<string | null>(null),
       autherId: new FormControl<number | null>(null),
       id: new FormControl<number | null>(null),
     });
   }
+  step1Form = this._formBuilder.group({
+    basic: this.authorFormGroup,
+    social: this.authorSocialMediaGroup,
+  });
   get socialMediaArray(): FormArray<FormGroup<SocialMediaGroupType>> {
     return this.authorSocialMediaGroup.get('socialMedia') as FormArray<
       FormGroup<SocialMediaGroupType>
@@ -414,23 +482,153 @@ export class AddAuthor {
       socialMediaArray.push(group);
     });
   }
+  async handleNewOrSuperAdminAuthorSubmission(authorData: Author) {
+    const response = (await this.authorsService.createAuthor(
+      authorData as Author
+    )) as Author;
+
+    if (response && response.id) {
+      const authorAddressData = {
+        ...this.authorAddressDetails.value,
+        autherId: response.id,
+      };
+      await this.addressService.createOrUpdateAddress(
+        authorAddressData as Address
+      );
+      const authorBankData = {
+        ...this.authorBankDetails.value,
+        autherId: response.id,
+      };
+      await this.bankDetailService.createOrUpdateBankDetail(
+        authorBankData as createBankDetails
+      );
+
+      const socialMediaData = this.socialMediaArray.controls
+        .map((group) => ({
+          ...group.value,
+          autherId: response.id,
+        }))
+        .filter((item) => item.url?.trim());
+
+      if (socialMediaData.length > 0) {
+        await this.socialService.createOrUpdateSocialMediaLinks(
+          socialMediaData as socialMediaGroup[]
+        );
+      }
+    }
+
+    let html = 'You have successfully created author';
+    if (this.authorId) html = 'You have successfully updated author';
+    if (this.signupCode)
+      html =
+        'You have successfully registered as author. Please login to continue';
+
+    await Swal.fire({
+      title: 'Success',
+      icon: 'success',
+      html,
+      heightAuto: false,
+    });
+  }
+  async handleAuthorUpdateFlow(authorData: Author) {
+    const sections = [
+      {
+        type: UpdateTicketType.ADDRESS,
+        fields: ['address', 'city', 'state', 'country', 'pincode'],
+      },
+      {
+        type: UpdateTicketType.BANK,
+        fields: [
+          'bankName',
+          'accountHolderName',
+          'accountNo',
+          'ifsc',
+          'panCardNo',
+          'accountType',
+          'gstNumber',
+        ],
+      },
+      {
+        type: UpdateTicketType.AUTHOR,
+        fields: [
+          'authorName',
+          'authorEmail',
+          'authorContactNumber',
+          'authorAbout',
+          'authorUsername',
+        ],
+      },
+    ];
+
+    const rawValue = {
+      ...this.authorAddressDetails.value,
+      ...this.authorBankDetails.value,
+      ...authorData,
+      authorName: this.authorFormGroup.value.name,
+      authorEmail: this.authorFormGroup.value.email,
+      authorContactNumber: this.authorFormGroup.value.phoneNumber,
+      authorAbout: this.authorFormGroup.value.about,
+      authorUsername: this.authorFormGroup.value.username,
+
+      bankName: this.authorBankDetails.value.name,
+      accountHolderName: this.authorBankDetails.value.accountHolderName,
+    };
+
+    for (const section of sections) {
+      const payload: any = { type: section.type };
+      let hasValues = false;
+
+      section.fields.forEach((field: string) => {
+        const value = rawValue[field as keyof typeof rawValue];
+        if (value !== undefined && value !== null && value !== '') {
+          payload[field] = value;
+          hasValues = true;
+        } else {
+          payload[field] = null;
+        }
+      });
+
+      if (hasValues) {
+        await this.userService.raisingTicket(payload);
+      }
+      const socialMediaData = this.socialMediaArray.controls
+        .map((group) => ({
+          ...group.value,
+          autherId: this.authorId,
+        }))
+        .filter((item) => item.url?.trim());
+
+      if (socialMediaData.length > 0) {
+        await this.socialService.createOrUpdateSocialMediaLinks(
+          socialMediaData as socialMediaGroup[]
+        );
+      }
+
+      await Swal.fire({
+        icon: 'success',
+        text: 'Update ticket raised successfully',
+        title: 'Success',
+        heightAuto: false,
+      });
+    }
+  }
 
   async onSubmit() {
-    const authorData = {
-      ...this.authorFormGroup.value,
-      email: this.authorFormGroup.controls.email.value,
-    };
     try {
-      if (
+      const invalid =
         this.authorFormGroup.invalid ||
+        this.authorSocialMediaGroup.invalid ||
         this.authorAddressDetails.invalid ||
-        this.authorBankDetails.invalid
-      ) {
-        console.log(this.authorFormGroup.value, 'author form errors');
-        console.log(this.authorAddressDetails.value, 'address form errors');
-        console.log(this.authorBankDetails.value, 'bank form errors');
-        Swal.fire({
-          title: 'error',
+        this.authorBankDetails.invalid;
+
+      if (invalid) {
+        this.authorFormGroup.markAllAsTouched();
+        this.authorAddressDetails.markAllAsTouched();
+        this.authorBankDetails.markAllAsTouched();
+        this.authorSocialMediaGroup.markAllAsTouched();
+
+        await Swal.fire({
+          title: 'Error',
           text: 'Please fill all required fields correctly.',
           icon: 'error',
           heightAuto: false,
@@ -438,139 +636,33 @@ export class AddAuthor {
         return;
       }
 
-      if (this.loggedInUser()?.accessLevel === 'SUPERADMIN' || !this.authorId) {
-        const response = (await this.authorsService.createAuthor(
-          authorData as Author
-        )) as Author;
-        if (response && response.id) {
-          const authorAddressData = {
-            ...this.authorAddressDetails.value,
-            autherId: response.id,
-          };
-          await this.addressService.createOrUpdateAddress(
-            authorAddressData as Address
-          );
-
-          const authorBankData = {
-            ...this.authorBankDetails.value,
-            autherId: response.id,
-          };
-          await this.bankDetailService.createOrUpdateBankDetail(
-            authorBankData as createBankDetails
-          );
-          const socialMediaData = this.socialMediaArray.controls
-            .map((group) => ({
-              ...group.value,
-              autherId: response.id,
-            }))
-            .filter((item) => item.url?.trim());
-          if (socialMediaData.length > 0) {
-            await this.socialService.createOrUpdateSocialMediaLinks(
-              socialMediaData as socialMediaGroup[]
-            );
-            console.log(socialMediaData, 'social media');
-          }
-        }
-
-        let html = 'You have successfully created author';
-        if (this.authorId) {
-          html = 'You have successfully updated author';
-        }
-
-        if (this.signupCode) {
-          html =
-            'You have successfully registerd as author please login to continue';
-        }
-
+      if (this.authorBankDetails.hasError('accountMismatch')) {
         await Swal.fire({
-          html,
-          title: 'success',
-          icon: 'success',
+          title: 'Error',
+          text: 'Account numbers do not match.',
+          icon: 'error',
           heightAuto: false,
         });
-      } else {
-        const sections = [
-          {
-            type: UpdateTicketType.ADDRESS,
-            fields: ['address', 'city', 'state', 'country', 'pincode'],
-          },
-          {
-            type: UpdateTicketType.BANK,
-            fields: [
-              'bankName',
-              'accountHolderName',
-              'accountNo',
-              'ifsc',
-              'panCardNo',
-              'accountType',
-              'gstNumber',
-            ],
-          },
-          {
-            type: UpdateTicketType.AUTHOR,
-            fields: [
-              'authorName',
-              'authorEmail',
-              'authorContactNumber',
-              'authorAbout',
-              'authorUsername',
-            ],
-          },
-        ];
-        const rawValue = {
-          ...this.authorAddressDetails.value,
-          ...this.authorAddressDetails.value,
-          ...authorData,
-          accountHolderName: this.authorBankDetails.value.accountHolderName,
-          bankName: this.authorBankDetails.value.name,
-          authorName: this.authorFormGroup.value.name,
-          authorEmail: this.authorFormGroup.value.email,
-          authorContactNumber: this.authorFormGroup.value.phoneNumber,
-          authorAbout: this.authorFormGroup.value.about,
-          authorUsername: this.authorFormGroup.value.username,
-        };
+        return;
+      }
 
-        for (const section of sections) {
-          const payload: any = { type: section.type };
-          let hasValues = false;
-          section.fields.forEach((field: string) => {
-            const value = rawValue[field as keyof typeof rawValue];
-            if (value !== undefined && value !== null && value !== '') {
-              payload[field as keyof typeof payload] = value;
-              hasValues = true;
-            } else {
-              payload[field as keyof typeof payload] = null;
-            }
-            console.log(payload, 'raising a ticket');
-          });
-          if (hasValues) {
-            await this.userService.raisingTicket(payload);
-          }
-          const socialMediaData = this.socialMediaArray.controls
-            .map((group) => ({
-              ...group.value,
-              autherId: this.authorId,
-            }))
-            .filter((item) => item.url?.trim());
-          if (socialMediaData.length > 0) {
-            await this.socialService.createOrUpdateSocialMediaLinks(
-              socialMediaData as socialMediaGroup[]
-            );
-            console.log(socialMediaData, 'social media');
-          }
-          Swal.fire({
-            icon: 'success',
-            text: 'Update ticket raised successfully',
-            title: 'Success',
-            heightAuto: false,
-          });
-        }
+      const authorData = {
+        ...this.authorFormGroup.value,
+        email: this.authorFormGroup.controls.email.value,
+      } as Author;
+
+      if (this.loggedInUser()?.accessLevel === 'SUPERADMIN' || !this.authorId) {
+        await this.handleNewOrSuperAdminAuthorSubmission(authorData);
+      } else {
+        await this.handleAuthorUpdateFlow(authorData);
       }
       if (this.signupCode) {
         this.router.navigate(['/login']);
+      } else {
+        this.router.navigate(['/author']);
       }
     } catch (error: any) {
-      Swal.fire({
+      await Swal.fire({
         title: 'error',
         text: error.message,
         icon: 'error',
