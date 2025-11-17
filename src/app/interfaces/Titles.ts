@@ -25,6 +25,7 @@ export interface Title {
   id: number;
   name: string;
   publishingType: PublishingType;
+  printingOnly: boolean;
   isUniqueIdentifier: boolean;
   publisherDisplay: string;
   subTitle: string;
@@ -149,6 +150,7 @@ export interface TitleCreate {
   tradeCategoryId: number;
   genreId: number;
   keywords: string;
+  printingOnly?: boolean;
   isUniqueIdentifier: false;
   authorIds: [
     {

@@ -544,7 +544,7 @@ export class AddTitle {
 
   prefillFormData(data: Title): void {
     this.tempForm.patchValue({
-      printingFormat: data.publishingType,
+      printingFormat: data.printingOnly ? 'printOnly' : 'publish&print',
       hasFiles: true,
       publishingType: data.publishingType,
       titleDetails: {
@@ -1047,6 +1047,7 @@ export class AddTitle {
       shortDescription: titleDetails.shortDescription,
       edition: titleDetails.edition,
       keywords: titleDetails.keywords,
+      printingOnly: this.tempForm.controls.printingFormat.value === 'printOnly',
       isUniqueIdentifier: false,
       ...(validAuthors.length > 0 && { authorIds: validAuthors }),
       id: this.titleId,
