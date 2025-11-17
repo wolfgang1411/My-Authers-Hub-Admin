@@ -367,7 +367,7 @@
   </mat-step>
 
   <!-- printing details step -->
-  @if(tempForm.controls.printingFormat.value !== 'ebookOnly') {
+  @if(tempForm.controls.publishingType.value !== PublishingType.ONLY_EBOOK) {
   <mat-step
     [stepControl]="tempForm.controls.printing"
     label="Print Details"
@@ -387,7 +387,7 @@
       </button>
     </div>
   </mat-step>
-  }
+  } @if (tempForm.controls.printingFormat.value !== 'printOnly') {
   <mat-step
     [stepControl]="tempForm.controls.pricing"
     label="Pricing"
@@ -452,4 +452,5 @@
       </button>
     </div>
   </mat-step>
+  }
 </mat-stepper>

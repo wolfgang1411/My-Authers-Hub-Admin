@@ -1082,6 +1082,18 @@ export class AddTitle {
         interior?.noOfPages || 0
       );
 
+      if (this.tempForm.controls.printingFormat.value === 'printOnly') {
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Title has been sent for approval to the admin.',
+        }).then(() => {
+          this.router.navigate(['/titles']);
+        });
+
+        return;
+      }
+
       this.stepper()?.next();
     }
   }
@@ -1124,6 +1136,8 @@ export class AddTitle {
 
     console.log({ insideCoverMedia });
 
+    console.log({ printing });
+
     if (printing?.valid) {
       if (printing.controls.insideCover.value && !insideCoverMedia?.valid) {
         Swal.fire({
@@ -1164,6 +1178,17 @@ export class AddTitle {
       );
       printing.controls.id.patchValue(response.id);
       await this.calculatePrintingCost();
+      if (this.tempForm.controls.printingFormat.value === 'printOnly') {
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Title has been sent for approval to the admin.',
+        }).then(() => {
+          this.router.navigate(['/titles']);
+        });
+
+        return;
+      }
       this.stepper()?.next();
     }
   }
@@ -1256,8 +1281,8 @@ export class AddTitle {
       icon: 'success',
       title: 'Success',
       text: 'Title has been sent for approval to the admin.',
+    }).then(() => {
+      this.router.navigate(['/titles']);
     });
-
-    this.router.navigate(['/titles']);
   }
 }

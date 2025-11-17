@@ -139,7 +139,30 @@ export class Titles {
     });
   }
 
-  onClickApprove(title: Title) {
+  async onClickApprove(title: Title) {
+    if (title.printingOnly) {
+      const { value } = await Swal.fire({
+        icon: 'warning',
+        title: this.translateService.instant('areyousure'),
+        html: this.translateService.instant('titleapprovewarning'),
+        showCancelButton: true,
+        confirmButtonText: this.translateService.instant('yes'),
+        cancelButtonText: this.translateService.instant('no'),
+      });
+
+      if (!value) return;
+
+      const response = await this.titleService.approveTitle(title.id, {
+        platformIdentifier: [],
+      });
+      this.titles.update((titles) => {
+        return titles.map((t) => (t.id === response.id ? response : t));
+      });
+      this.mapDataList();
+
+      return;
+    }
+
     if (!title.distribution || !title.distribution.length) {
       Swal.fire({
         icon: 'error',
