@@ -306,6 +306,20 @@ export class AddTitle {
     this.calculatePrintingCost();
     this.addDefaultMediaArray(media);
     this.handelInsideCoverMedia();
+
+    const managePrintISBNRequired = (v?: PublishingType | null) => {
+      if (!v) return;
+      const isAddValidators = v !== PublishingType.ONLY_EBOOK;
+      this.tempForm.controls.titleDetails.controls.isbnPrint[
+        isAddValidators ? 'setValidators' : 'removeValidators'
+      ](Validators.required);
+      this.tempForm.controls.titleDetails.controls.isbnPrint.updateValueAndValidity();
+    };
+
+    managePrintISBNRequired(this.tempForm.controls.publishingType.value);
+    this.tempForm.controls.publishingType.valueChanges.subscribe((v) => {
+      managePrintISBNRequired(v);
+    });
   }
 
   async fetchAndUpdatePublishingPoints() {
@@ -1082,7 +1096,11 @@ export class AddTitle {
         interior?.noOfPages || 0
       );
 
-      if (this.tempForm.controls.printingFormat.value === 'printOnly') {
+      if (
+        this.tempForm.controls.printingFormat.value === 'printOnly' &&
+        this.tempForm.controls.publishingType.value ===
+          PublishingType.ONLY_EBOOK
+      ) {
         Swal.fire({
           icon: 'success',
           title: 'Success',
@@ -1115,10 +1133,6 @@ export class AddTitle {
       await this.titleService.createManyPricing(data, this.titleId);
       const publisher = this.publisherSignal();
       const authors = this.authorsSignal();
-      console.log({
-        publisher,
-        authors,
-      });
 
       if (publisher) {
         this.mapRoyaltiesArray(publisher, authors);

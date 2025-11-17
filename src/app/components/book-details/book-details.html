@@ -17,25 +17,6 @@
                 [maxlength]="13"
                 [minlength]="13"
               />
-              <button
-                mat-stroked-button
-                type="button"
-                matButton="filled"
-                class="!bg-green-600 !text-white !h-[28px] disabled:!bg-gray-500"
-                (click)="verifyIsbnPrint()"
-                [disabled]="
-                  !titleDetailsGroup().get('isbnPrint.isbnNumber')?.valid ||
-                  isVerifying()
-                "
-              >
-                @if (!isVerifying()) { Verify } @else {
-                <mat-progress-spinner
-                  diameter="20"
-                  mode="indeterminate"
-                  class="inline-block align-middle text-white !fill-white"
-                />
-                }
-              </button>
             </mat-form-field>
           </div>
           <div class="text-sm">
@@ -60,7 +41,7 @@
                 [maxlength]="13"
                 [minlength]="13"
               />
-              <button
+              <!-- <button
                 mat-stroked-button
                 type="button"
                 matButton="filled"
@@ -78,7 +59,7 @@
                   class="inline-block align-middle text-white !fill-white"
                 />
                 }
-              </button>
+              </button> -->
             </mat-form-field>
           </div>
           <div class="text-sm">

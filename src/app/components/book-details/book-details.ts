@@ -70,8 +70,6 @@ export class BookDetails {
       const publishers = this.publishers();
       const loggedInUserPublisher = this.loggedInUser()?.publisher;
 
-      console.log({ publishers, loggedInUserPublisher });
-
       if (publishers && publishers.length && loggedInUserPublisher) {
         this.titleDetailsGroup().controls.publisher.controls.id.patchValue(
           loggedInUserPublisher.id
