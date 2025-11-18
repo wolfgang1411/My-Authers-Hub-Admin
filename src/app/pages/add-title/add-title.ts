@@ -307,18 +307,25 @@ export class AddTitle {
     this.addDefaultMediaArray(media);
     this.handelInsideCoverMedia();
 
-    const managePrintISBNRequired = (v?: PublishingType | null) => {
+    const manageISBNRequired = (v?: PublishingType | null) => {
       if (!v) return;
-      const isAddValidators = v !== PublishingType.ONLY_EBOOK;
+
+      const isAddPrintValidators = v !== PublishingType.ONLY_EBOOK;
+      const isAddEbookValidators = v !== PublishingType.ONLY_PRINT;
+
+      this.tempForm.controls.titleDetails.controls.isbnEbook[
+        isAddEbookValidators ? 'setValidators' : 'removeValidators'
+      ](Validators.required);
       this.tempForm.controls.titleDetails.controls.isbnPrint[
-        isAddValidators ? 'setValidators' : 'removeValidators'
+        isAddPrintValidators ? 'setValidators' : 'removeValidators'
       ](Validators.required);
       this.tempForm.controls.titleDetails.controls.isbnPrint.updateValueAndValidity();
+      this.tempForm.controls.titleDetails.controls.isbnEbook.updateValueAndValidity();
     };
 
-    managePrintISBNRequired(this.tempForm.controls.publishingType.value);
+    manageISBNRequired(this.tempForm.controls.publishingType.value);
     this.tempForm.controls.publishingType.valueChanges.subscribe((v) => {
-      managePrintISBNRequired(v);
+      manageISBNRequired(v);
     });
   }
 
