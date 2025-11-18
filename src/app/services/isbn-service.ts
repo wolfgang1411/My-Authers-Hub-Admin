@@ -26,6 +26,19 @@ export class IsbnService {
     }
   }
 
+  async generateEbookISBN(titleName: string) {
+    try {
+      return await this.loader.loadPromise(
+        this.serverService.post<{ code: string }>(`isbn/ebook/generate`, {
+          titleName,
+        })
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
   async getAllISBN(filter: ISBNFilter): Promise<Pagination<ISBN>> {
     try {
       return await this.loader.loadPromise(
