@@ -703,13 +703,6 @@ export class AddAuthor implements OnInit {
       } else {
         this.router.navigate(['/author']);
       }
-    } catch (error: any) {
-      await Swal.fire({
-        title: 'error',
-        text: error.message,
-        icon: 'error',
-        heightAuto: false,
-      });
-    }
+    } catch (error: any) {}
   }
 }
