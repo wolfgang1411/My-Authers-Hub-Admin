@@ -405,6 +405,7 @@
     </mat-tab>
 
     <!-- PRICING & ROYALTY TAB -->
+    @if (titleDetails()?.printingOnly !== true ) {
     <mat-tab label="Pricing & Royalty">
       <div
         class="bg-white border border-[var(--primary-superlight)] rounded-2xl shadow-sm p-6 mb-6 m-6"
@@ -795,5 +796,6 @@
         </div>
       </div>
     </mat-tab>
+    }
   </mat-tab-group>
 </div>

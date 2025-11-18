@@ -102,8 +102,9 @@ export class TitleDetails {
       });
   }
   draftTitles = computed(() =>
-    this.titles().filter((t) => t.status === 'DRAFT' || t.status === 'PENDING')
+    this.titles().filter((t) => t.status === 'DRAFT')
   );
+
   loadDraftTitleDetails() {
     const drafts = this.draftTitles();
     drafts.forEach((t) => {
@@ -165,8 +166,8 @@ export class TitleDetails {
     const frontCover = media.find((m: any) => m.type === 'FRONT_COVER');
     return frontCover ? frontCover.url : null;
   }
-  publishedTitles = computed(() =>
-    this.titles().filter((t) => t.status !== 'DRAFT' && t.status !== 'PENDING')
+  pendingTitles = computed(() =>
+    this.titles().filter((t) => t.status !== 'PENDING')
   );
   deleteTitle(titleId: number) {}
 }

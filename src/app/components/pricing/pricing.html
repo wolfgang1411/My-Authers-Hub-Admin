@@ -4,7 +4,10 @@
       MSP :
       {{ (msp() | currency) || "N/A" }}
     </h2>
-    <p>Sales price and MRP cannot be lower then MSP</p>
+    <p>
+      Sales price and MRP cannot be lower then MSP and Sales Price cannot be
+      greater than MRP.
+    </p>
   </div>
 
   <ul class="pricing-container">
