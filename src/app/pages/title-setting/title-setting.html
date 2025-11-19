@@ -1,0 +1,155 @@
+<div class="w-full max-w-6xl mx-auto p-3">
+  <div class="mb-6">
+    <h1 class="text-3xl font-semibold text-heading">Settings — Lists</h1>
+    <p class="text-sm text-text-secondary mt-1">
+      Manage categories, sub-categories, genres & trade categories
+    </p>
+  </div>
+  <div class="bg-white shadow-md rounded-2xl p-6 border border-gray-100">
+    <form
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+      class="grid grid-cols-1 md:grid-cols-3 gap-4"
+    >
+      <mat-form-field class="w-full">
+        <mat-label>Type</mat-label>
+        <mat-select formControlName="type">
+          @for (t of type; track $index) {
+          <mat-option [value]="t.value">
+            {{ t.label }}
+          </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field class="w-full">
+        <mat-label>Name</mat-label>
+        <input
+          matInput
+          placeholder="e.g. Fiction, Romance, Science"
+          formControlName="name"
+        />
+      </mat-form-field>
+
+      <mat-form-field class="w-full">
+        <mat-label>Parent Category</mat-label>
+        <mat-select formControlName="parentId">
+          <mat-option [value]="null">None</mat-option>
+          @for (p of parentCategories(); track $index) {
+          <mat-option [value]="p.id">
+            {{ p.name }}
+          </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Action Buttons -->
+      <div class="md:col-span-3 flex items-center justify-between mt-3">
+        <!-- Reset -->
+        <button
+          type="button"
+          mat-button
+          matButton="filled"
+          class="text-primary flex items-center gap-1"
+          (click)="resetForm()"
+        >
+          <mat-icon>refresh</mat-icon>
+          Reset
+        </button>
+
+        <!-- Add / Save -->
+        <button
+          type="submit"
+          mat-flat-button
+          color="primary"
+          class="!bg-primary !text-white px-6 py-2 rounded-lg shadow-md"
+          [disabled]="form.invalid"
+        >
+          <mat-icon class="mr-1">
+            {{ editId() ? "save" : "add" }}
+          </mat-icon>
+          {{ editId() ? "Save Changes" : "Add" }}
+        </button>
+      </div>
+    </form>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-10">
+      <mat-form-field class="w-full">
+        <mat-label>Filter by type</mat-label>
+        <mat-select [(ngModel)]="filterType">
+          <mat-option value="">All</mat-option>
+          @for (t of type; track $index) {
+          <mat-option [value]="t.value">{{ t.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field class="w-full">
+        <mat-label>Search name or description</mat-label>
+        <input matInput [(ngModel)]="searchText" />
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+    </div>
+
+    <div class="mt-6 overflow-x-auto">
+      <table mat-table [dataSource]="visibleItems()" class="min-w-full">
+        <ng-container matColumnDef="name">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            class="text-left text-xs uppercase text-text-secondary py-2"
+          >
+            Name
+          </th>
+          <td
+            mat-cell
+            *matCellDef="let item"
+            class="py-3 text-sm text-text-primary"
+          >
+            <div class="font-semibold">{{ item.name }}</div>
+            <div class="text-xs text-text-secondary">{{ item.type }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="description">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            class="text-left text-xs uppercase text-text-secondary py-2"
+          >
+            Description
+          </th>
+          <td mat-cell *matCellDef="let item" class="py-3 text-sm">
+            {{ item.description || "—" }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            class="text-right text-xs uppercase text-text-secondary py-2"
+          >
+            Actions
+          </th>
+          <td mat-cell *matCellDef="let item" class="py-3 text-right">
+            <button mat-icon-button color="primary" (click)="startEdit(item)">
+              <mat-icon>edit</mat-icon>
+            </button>
+
+            <button mat-icon-button color="warn" (click)="deleteItem(item.id)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+      @if(visibleItems().length === 0) {
+
+      <div class="text-center text-text-secondary py-6 text-sm">
+        No records to display.
+      </div>
+      }
+    </div>
+  </div>
+</div>

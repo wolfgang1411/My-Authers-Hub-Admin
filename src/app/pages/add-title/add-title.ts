@@ -1071,8 +1071,14 @@ export class AddTitle {
       subCategoryId: titleDetails.subCategory as number,
       tradeCategoryId: titleDetails.tradeCategory as number,
       genreId: titleDetails.genre as number,
-      publisherDisplay: titleDetails.publisher?.displayName as string,
-      publisherId: titleDetails.publisher?.id as number,
+      publisherDisplay:
+        this.loggedInUser()?.accessLevel === 'PUBLISHER'
+          ? this.loggedInUser()?.publisher?.name
+          : (titleDetails.publisher?.displayName as string),
+      publisherId:
+        this.loggedInUser()?.accessLevel === 'PUBLISHER'
+          ? this.loggedInUser()?.id
+          : (titleDetails.publisher?.id as number),
       name: titleDetails.name as string,
       subTitle: titleDetails.subTitle as string,
       subject: titleDetails.subject as string,

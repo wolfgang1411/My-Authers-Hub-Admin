@@ -33,7 +33,8 @@
         <mat-icon class="material-icons">filter_list</mat-icon>
         {{ "filter" | translate }}
       </button> -->
-      <div class="flex gap-2 pr-2">
+
+      <!-- <div class="flex gap-2 pr-2">
         <mat-form-field
           class="compact-select !bg-surface h-[42px]"
           appearance="outline"
@@ -50,7 +51,7 @@
             }
           </mat-select>
         </mat-form-field>
-      </div>
+      </div> -->
       <button
         matButton
         matButton="filled"
@@ -73,20 +74,112 @@
       </button>
     </div>
   </div>
-  <!-- <div class="flex gap-2">
-    <button class="!bg-primary" matButton="filled">
-      {{ "all" | translate }}
+  <div class="flex w-full gap-4 mt-4">
+    <button
+      class="btn rounded-md !text-primary"
+      matButton="filled"
+      matButton
+      type="button"
+      [ngClass]="{
+        '!bg-primary !text-white': lastSelectedStatus === 'ALL',
+        '!bg-primary-superlight': lastSelectedStatus !== 'ALL'
+      }"
+      (click)="selectStatus('ALL')"
+    >
+      <mat-icon>format_list_bulleted</mat-icon>
+      All
     </button>
-    <button class="!bg-primary" matButton="filled">
-      {{ "active" | translate }}
+    <button
+      class="btn rounded-md !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white': lastSelectedStatus === titleStatus.DRAFT,
+        '!bg-primary-superlight': lastSelectedStatus !== titleStatus.DRAFT
+      }"
+      (click)="selectStatus(titleStatus.DRAFT)"
+    >
+      <mat-icon>drafts</mat-icon>
+
+      DRAFT
     </button>
-    <button class="!bg-primary" matButton="filled">
-      {{ "inactive" | translate }}
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white': lastSelectedStatus === titleStatus.PENDING,
+        '!bg-primary-superlight': lastSelectedStatus !== titleStatus.PENDING
+      }"
+      (click)="selectStatus(titleStatus.PENDING)"
+    >
+      <mat-icon>hourglass_top</mat-icon>
+
+      PENDING
     </button>
-    <button class="!bg-primary" matButton="filled">
-      {{ "dormant" | translate }}
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white': lastSelectedStatus === titleStatus.APPROVED,
+        '!bg-primary-superlight': lastSelectedStatus !== titleStatus.APPROVED
+      }"
+      (click)="selectStatus(titleStatus.APPROVED)"
+    >
+      <mat-icon>check_circle</mat-icon>
+
+      APPROVED
     </button>
-  </div> -->
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white': lastSelectedStatus === titleStatus.REJECTED,
+        '!bg-primary-superlight': lastSelectedStatus !== titleStatus.REJECTED
+      }"
+      (click)="selectStatus(titleStatus.REJECTED)"
+    >
+      <mat-icon>cancel</mat-icon>
+
+      REJECTED
+    </button>
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white': lastSelectedStatus === titleStatus.DELETED,
+        '!bg-primary-superlight': lastSelectedStatus !== titleStatus.DELETED
+      }"
+      (click)="selectStatus(titleStatus.DELETED)"
+    >
+      <mat-icon>delete</mat-icon>
+
+      DELETED
+    </button>
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white': lastSelectedStatus === titleStatus.SUBMITTED,
+        '!bg-primary-superlight': lastSelectedStatus !== titleStatus.SUBMITTED
+      }"
+      (click)="selectStatus(titleStatus.SUBMITTED)"
+    >
+      <mat-icon>send</mat-icon>
+
+      SUBMITTED
+    </button>
+  </div>
 
   <app-list-table
     class="pt-6"

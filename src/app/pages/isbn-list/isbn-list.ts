@@ -92,6 +92,8 @@ export class ISBNList {
     ).filter((v) => v !== 'DELETED');
   });
 
+  lastSelectedStatus: ISBNStatus | 'ALL' = 'ALL';
+  isbnStatusEnum = ISBNStatus;
   dataSource = new MatTableDataSource<any>();
   searchStr = new Subject<string>();
   searchStr$ = this.searchStr
@@ -110,7 +112,22 @@ export class ISBNList {
     this.fetchAndUpdateAuthorsList();
     this.fetchAndUpdatePublishersList();
   }
-
+  selectStatus(status: ISBNStatus | 'ALL') {
+    this.lastSelectedStatus = status;
+    if (status === 'ALL') {
+      this.filter = {
+        ...this.filter,
+        status: undefined,
+      };
+    } else {
+      this.filter = {
+        ...this.filter,
+        page: 1,
+        status: status as ISBNStatus,
+      };
+    }
+    this.fetchIsbnList();
+  }
   async fetchAndUpdatePublishersList() {
     const { items } = await this.publisherService.getPublishers({
       status: PublisherStatus.Active,

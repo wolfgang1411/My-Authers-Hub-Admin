@@ -48,7 +48,8 @@ export class Titles {
     private translateService: TranslateService,
     private matDialog: MatDialog,
     private userService: UserService,
-    private staticValueService: StaticValuesService
+    private staticValueService: StaticValuesService,
+    private translate: TranslateService
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -59,11 +60,21 @@ export class Titles {
     console.log(this.staticValueService.staticValues(), 'Fdafsaf');
 
     return Object.keys(
-      this.staticValueService.staticValues()?.PuplisherStatus || {}
+      this.staticValueService.staticValues()?.TitleStatus || {}
     );
   });
   searchStr = new Subject<string>();
-
+  lastSelectedStatus: TitleStatus | 'ALL' = 'ALL';
+  selectStatus(status: TitleStatus | 'ALL') {
+    this.lastSelectedStatus = status;
+    this.filter = {
+      ...this.filter,
+      page: 1,
+      status: status as TitleStatus,
+    };
+    this.fetchTitleDetails();
+  }
+  titleStatus = TitleStatus;
   test!: Subject<string>;
   titles = signal<Title[]>([]);
   displayedColumns: string[] = [
@@ -73,6 +84,7 @@ export class Titles {
     'isbn',
     'launchdate',
     'status',
+    'SelectedDistrbutions',
     'actions',
   ];
   dataSource = new MatTableDataSource<any>();
@@ -83,7 +95,7 @@ export class Titles {
   };
   fetchTitleDetails() {
     this.titleService
-      .getTitles()
+      .getTitles(this.filter)
       .then(({ items }) => {
         this.titles.set(items);
         this.mapDataList();
@@ -121,6 +133,12 @@ export class Titles {
       launchdate: title.submission_date
         ? format(title.submission_date, 'dd-MM-yyyy')
         : 'N/A',
+      SelectedDistrbutions:
+        title.distribution && title.distribution.length
+          ? title.distribution
+              .map((link) => this.translate.instant(link.type))
+              .join('<br>')
+          : 'N/A',
       actions: '',
     }));
 

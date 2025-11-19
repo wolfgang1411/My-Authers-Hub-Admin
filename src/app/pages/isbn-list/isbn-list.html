@@ -24,7 +24,7 @@
         {{ "search" | translate }}
       </button>
     </div>
-    <div class="flex gap-4 items-center">
+    <div class="flex gap-4 items-center justify-center">
       <button
         class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
         matButton="filled"
@@ -36,20 +36,71 @@
       </button>
     </div>
   </div>
+  <div class="flex w-full gap-4 mt-4">
+    <button
+      class="btn rounded-md !text-primary"
+      matButton="filled"
+      matButton
+      type="button"
+      [ngClass]="{
+        '!bg-primary !text-white': lastSelectedStatus === 'ALL',
+        '!bg-primary-superlight': lastSelectedStatus !== 'ALL'
+      }"
+      (click)="selectStatus('ALL')"
+    >
+      <mat-icon>format_list_bulleted</mat-icon>
+      All
+    </button>
+    <button
+      class="btn rounded-md !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white':
+          lastSelectedStatus === isbnStatusEnum.PENDING,
+        '!bg-primary-superlight': lastSelectedStatus !== isbnStatusEnum.PENDING
+      }"
+      (click)="selectStatus(isbnStatusEnum.PENDING)"
+    >
+      <mat-icon>hourglass_top</mat-icon>
 
-  <div class="flex justify-end mt-2">
-    <mat-form-field>
-      <mat-select
-        [value]="filter.status"
-        (valueChange)="filter.status = $event; fetchIsbnList()"
-        placeholder="{{ 'status' | translate }}"
-      >
-        <mat-option [value]="0"> {{ "all" | translate }}</mat-option>
-        @for (status of isbnStatuses(); track status) {
-        <mat-option [value]="status">{{ status }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
+      PENDING
+    </button>
+
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white':
+          lastSelectedStatus === isbnStatusEnum.APPROVED,
+        '!bg-primary-superlight': lastSelectedStatus !== isbnStatusEnum.APPROVED
+      }"
+      (click)="selectStatus(isbnStatusEnum.APPROVED)"
+    >
+      <mat-icon>check_circle</mat-icon>
+
+      APPROVED
+    </button>
+
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white':
+          lastSelectedStatus === isbnStatusEnum.DELETED,
+        '!bg-primary-superlight': lastSelectedStatus !== isbnStatusEnum.DELETED
+      }"
+      (click)="selectStatus(isbnStatusEnum.DELETED)"
+    >
+      <mat-icon>delete</mat-icon>
+
+      DELETED
+    </button>
   </div>
 
   <app-list-table
@@ -59,7 +110,7 @@
   >
   </app-list-table>
   <ng-template #actionButtons let-element>
-    <div class="flex gap-2 text-sm items-center justify-end lg:flex-wrap">
+    <div class="flex gap-2 text-sm items-center lg:flex-wrap">
       @if (element.image && element.status !== 'REJECTED') {
       <button
         class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"

@@ -61,6 +61,11 @@ export class Sidebar implements OnInit {
       { name: 'coupon', url: '/coupon', icon: 'local_offer' },
       { name: 'Profile', url: '/profile', icon: 'account_circle' },
       { name: 'Settings', url: '/settings', icon: 'settings' },
+      {
+        name: 'TitleSettings',
+        url: '/title-settings',
+        icon: 'settings',
+      },
     ];
   }
   ngOnInit(): void {

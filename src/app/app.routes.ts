@@ -162,6 +162,12 @@ export const routes: Routes = [
     },
   },
   {
+    path: 'title-settings',
+    loadComponent: () =>
+      import('./pages/title-setting/title-setting').then((c) => c.TitleSetting),
+    canActivate: [privateRouteGuard],
+  },
+  {
     path: 'notifications',
     loadComponent: () =>
       import('./pages/notifications/notifications').then(
