@@ -751,6 +751,31 @@ export class AddTitle {
     };
   }
 
+  distributionValidator(): ValidatorFn {
+    return (control) => {
+      const distributions = (
+        control as FormArray<FormGroup<TitleDistributionGroup>>
+      ).value;
+
+      const national = distributions.find(
+        ({ type, isSelected }) =>
+          type === DistributionType.National && isSelected
+      );
+      const hardboundNational = distributions.find(
+        ({ type, isSelected }) =>
+          type === DistributionType.Hardbound_National && isSelected
+      );
+
+      if (!national && !hardboundNational) {
+        return {
+          invalid: 'Either choose national or hardbound national atlest.',
+        };
+      }
+
+      return null;
+    };
+  }
+
   createDistributionOptions(): FormArray<FormGroup<TitleDistributionGroup>> {
     return new FormArray<FormGroup<TitleDistributionGroup>>(
       Object.keys(DistributionType).map(
@@ -764,7 +789,8 @@ export class AddTitle {
             }),
             availablePoints: new FormControl(0, { nonNullable: true }),
           })
-      )
+      ),
+      { validators: [this.distributionValidator()] }
     );
   }
 
