@@ -5,10 +5,17 @@ import { SharedModule } from '../modules/shared/shared-module';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatError } from '@angular/material/input';
 
 @Component({
   selector: 'app-title-distribution',
-  imports: [SharedModule, MatCardModule, MatIconModule, MatButtonModule],
+  imports: [
+    SharedModule,
+    MatCardModule,
+    MatIconModule,
+    MatButtonModule,
+    MatError,
+  ],
   templateUrl: './title-distribution.html',
   styleUrl: './title-distribution.css',
 })
