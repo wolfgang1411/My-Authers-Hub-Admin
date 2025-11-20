@@ -411,5 +411,6 @@
   "INVENTORY": "Inventory",
   "ebookcodegeneratebymah": "Ebook Code Generate by MAH",
   "generateebookisbncode": "Generate Ebook code by MAH",
-  "SelectedDistrbutions" :"Selected Distrbutions"
+  "SelectedDistrbutions" :"Selected Distrbutions",
+  "TitleSettings":"Title Settings"
 }

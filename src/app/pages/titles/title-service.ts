@@ -10,6 +10,7 @@ import {
 } from '../../interfaces';
 import {
   ApproveTitlePayload,
+  createOrUpdateCategory,
   PricingCreate,
   PrintingCreate,
   Title,
@@ -148,10 +149,10 @@ export class TitleService {
       throw error;
     }
   }
-  async getSubcategory(categoryId: number) {
+  async getSubcategory(categoryId?: number) {
     try {
       return await this.server.get<Pagination<TitleCategory>>('category', {
-        parentIds: categoryId,
+        parentIds: categoryId ? categoryId : [],
         type: 'SUBCATEGORY',
       });
     } catch (error) {
@@ -168,6 +169,31 @@ export class TitleService {
       throw error;
     }
   }
+
+  async createOrUpdateCategory(data: createOrUpdateCategory) {
+    try {
+      const method = data.id ? 'patch' : 'post';
+      const url = data.id ? `category/${data.id}` : 'category';
+      return this.loader.loadPromise(
+        this.server[method]<TitleCategory>(url, data)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async deleteCategory(id: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.delete(`category/${id}`)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
   async createTitle(titleDetails: TitleCreate): Promise<Title> {
     try {
       return await this.loader.loadPromise(

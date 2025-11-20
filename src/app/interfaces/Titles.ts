@@ -181,6 +181,24 @@ export interface TitleCategory {
   subTitle: Title[];
   trade: Title[];
 }
+export interface TitleListItem {
+  id: number;
+  name: string;
+  type: TitleCategoryType;
+  parent?: { id: number; name: string } | null;
+  children?: {
+    id: number;
+    name: string;
+    type: TitleCategoryType;
+  }[];
+  description?: string;
+}
+export interface createOrUpdateCategory {
+  name: string;
+  type: TitleCategoryType;
+  parentId?: number;
+  id?: number;
+}
 export interface TitleFilter {
   publisherIds?: number | number[];
   authorIds?: number | number[];
