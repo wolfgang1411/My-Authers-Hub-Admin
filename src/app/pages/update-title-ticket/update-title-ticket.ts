@@ -11,6 +11,7 @@ import { MatTableDataSource } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule, MatIconButton } from '@angular/material/button';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { format } from 'date-fns';
 import Swal from 'sweetalert2';
@@ -29,6 +30,7 @@ import {
   TitleDistributionUpdateTicket,
   UpdateTicketFilter,
 } from '../../interfaces/Titles';
+import { ViewTicketDialog } from '../../components/view-ticket-dialog/view-ticket-dialog';
 
 @Component({
   selector: 'app-update-title-ticket',
@@ -38,6 +40,7 @@ import {
     MatIconModule,
     MatButtonModule,
     MatIconButton,
+    MatDialogModule,
     ListTable,
   ],
   templateUrl: './update-title-ticket.html',
@@ -157,7 +160,8 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
     private titleService: TitleService,
     private translateService: TranslateService,
     private userService: UserService,
-    private router: Router
+    private router: Router,
+    private dialog: MatDialog
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -1303,8 +1307,46 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
   }
 
   onViewTicket(ticket: any): void {
-    if (ticket.ticket?.titleId) {
-      this.router.navigate(['/title', ticket.ticket.titleId]);
+    const tabIndex = this.selectedTabIndex();
+    let ticketType:
+      | 'title'
+      | 'printing'
+      | 'pricing'
+      | 'royalty'
+      | 'media'
+      | 'distribution';
+
+    switch (tabIndex) {
+      case 0:
+        ticketType = 'title';
+        break;
+      case 1:
+        ticketType = 'printing';
+        break;
+      case 2:
+        ticketType = 'pricing';
+        break;
+      case 3:
+        ticketType = 'royalty';
+        break;
+      case 4:
+        ticketType = 'media';
+        break;
+      case 5:
+        ticketType = 'distribution';
+        break;
+      default:
+        ticketType = 'title';
     }
+
+    this.dialog.open(ViewTicketDialog, {
+      width: '90vw',
+      maxWidth: '1200px',
+      maxHeight: '90vh',
+      data: {
+        ticket: ticket.ticket,
+        ticketType: ticketType,
+      },
+    });
   }
 }
