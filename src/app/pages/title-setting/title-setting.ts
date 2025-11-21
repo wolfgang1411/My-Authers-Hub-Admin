@@ -77,9 +77,7 @@ export class TitleSetting {
       value: TitleCategoryType.GENRE,
     },
   ];
-
-  filterType = '';
-  searchText = '';
+  searchText = signal('');
 
   displayedColumns = ['name', 'parent', 'actions'];
   titleCategoryType = TitleCategoryType;
@@ -87,14 +85,27 @@ export class TitleSetting {
   editItemId: number | null = null;
   parentCategories = signal<TitleCategory[]>([]);
   items = signal<TitleListItem[]>([]);
-  genre = signal<TitleGenre[]>([]);
-  categoriesWithChildren = computed(() => {
-    const cats = this.items().filter(
-      (x) => x.type === TitleCategoryType.CATEGORY
+  genre = computed(() => {
+    const q = this.searchText().toLowerCase();
+    return this.items().filter(
+      (x) =>
+        x.type === TitleCategoryType.GENRE && x.name.toLowerCase().includes(q)
     );
+  });
+
+  categoriesWithChildren = computed(() => {
+    const q = this.searchText().toLowerCase();
+
+    const cats = this.items().filter(
+      (x) =>
+        x.type === TitleCategoryType.CATEGORY &&
+        x.name.toLowerCase().includes(q)
+    );
+
     const subs = this.items().filter(
       (x) => x.type === TitleCategoryType.SUBCATEGORY
     );
+
     return cats.map((cat) => ({
       ...cat,
       children: subs.filter((s) => s.parent?.id === cat.id),
@@ -102,13 +113,27 @@ export class TitleSetting {
   });
 
   trade = computed(() => {
-    return this.items().filter((x) => x.type === TitleCategoryType.TRADE);
-  });
-  subCategory = computed(() => {
-    return this.items().filter((x) => x.type === TitleCategoryType.SUBCATEGORY);
+    const q = this.searchText().toLowerCase();
+    return this.items().filter(
+      (x) =>
+        x.type === TitleCategoryType.TRADE && x.name.toLowerCase().includes(q)
+    );
   });
 
-  selectTab(type: TitleCategoryType | 'GENRE' | 'ALL') {
+  subCategory = computed(() => {
+    const q = this.searchText().toLowerCase();
+    return this.items().filter(
+      (x) =>
+        x.type === TitleCategoryType.SUBCATEGORY &&
+        x.name.toLowerCase().includes(q)
+    );
+  });
+  isParentDisabled() {
+    const t = this.form.controls.type.value;
+    return t === TitleCategoryType.TRADE || t === TitleCategoryType.GENRE;
+  }
+
+  selectTab(type: TitleCategoryType | 'ALL') {
     this.lastSelectedTab = type;
     console.log(this.lastSelectedTab, 'selecttabbbb');
   }
@@ -116,7 +141,6 @@ export class TitleSetting {
   async load() {
     const { items: categories } = await this.titleService.getTitleCategory();
     const { items: genres } = await this.titleService.getGenre();
-    this.genre.set(genres);
     const { items: trades } = await this.titleService.getTradeCategory();
     const { items } = await this.titleService.getSubcategory();
 
@@ -172,11 +196,36 @@ export class TitleSetting {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  async deleteItem(id: number, type: TitleCategoryType | 'GENRE') {
-    if (!confirm('Are you sure?')) return;
-    await this.titleService.deleteCategory(id);
+  async deleteItem(id: number, type: TitleCategoryType) {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#00af57',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!',
+      heightAuto: false,
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        if (type === TitleCategoryType.GENRE) {
+          await this.titleService.deleteGenre(id);
+        } else {
+          await this.titleService.deleteCategory(id);
+        }
 
-    this.load();
+        Swal.fire({
+          icon: 'success',
+          title: 'Deleted!',
+          text: 'Your item has been deleted.',
+          heightAuto: false,
+          timer: 1500,
+        });
+
+        // ✅ Refresh after deletion completes
+        await this.load();
+      }
+    });
   }
 
   resetForm() {
@@ -190,42 +239,41 @@ export class TitleSetting {
 
   async onSubmit() {
     if (this.form.invalid) return;
-
     const dto: createOrUpdateCategory = {
       name: this.form.value.name!,
       parentId: (this.form.value.parentId as number) ?? null,
-      type: this.form.value.type!,
+      type: this.form.value.type! as TitleCategoryType,
       id: this.editItemId ?? undefined,
     };
-    const respone = await this.titleService.createOrUpdateCategory(dto);
-    if (respone) {
-      Swal.fire({
-        icon: 'success',
-        title: 'success',
-        text: this.editItemId
-          ? 'Category updated successfully'
-          : 'Category created successfully',
-        showConfirmButton: false,
-        heightAuto: false,
-        timer: 1500,
-      });
+    if (this.form.value.type === TitleCategoryType.GENRE) {
+      const respone = await this.titleService.createOrUpdateGenre(dto);
+      if (respone) {
+        Swal.fire({
+          icon: 'success',
+          title: 'success',
+          text: this.editItemId
+            ? 'Genre updated successfully'
+            : 'Genre created successfully',
+          heightAuto: false,
+          timer: 1500,
+        });
+      }
+    } else {
+      const respone = await this.titleService.createOrUpdateCategory(dto);
+      if (respone) {
+        Swal.fire({
+          icon: 'success',
+          title: 'success',
+          text: this.editItemId
+            ? 'Category updated successfully'
+            : 'Category created successfully',
+
+          heightAuto: false,
+          timer: 1500,
+        });
+      }
     }
     await this.load();
     this.resetForm();
-  }
-
-  visibleItems() {
-    let data = [...this.items()];
-    if (this.filterType) {
-      data = data.filter((x) => x.type === this.filterType);
-    }
-    if (this.searchText.trim()) {
-      const q = this.searchText.toLowerCase();
-      data = data.filter((x) => {
-        const name = (x.name || '').toLowerCase();
-        return name.includes(q);
-      });
-    }
-    return data;
   }
 }
