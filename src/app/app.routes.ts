@@ -48,7 +48,7 @@ export const routes: Routes = [
   {
     path: 'title/:titleId',
     loadComponent: () =>
-      import('./pages/add-title/add-title').then((c) => c.AddTitle),
+      import('./pages/title-form-temp/title-form-temp').then((c) => c.TitleFormTemp),
     canActivate: [privateRouteGuard],
   },
 

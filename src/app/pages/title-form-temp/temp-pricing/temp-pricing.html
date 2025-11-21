@@ -1,0 +1,46 @@
+<div class="flex flex-col gap-4 mt-8">
+  <div>
+    <h2 class="font-medium text-lg">
+      MSP :
+      {{ (msp() | currency) || "N/A" }}
+    </h2>
+    <p>
+      Sales price and MRP cannot be lower then MSP and Sales Price cannot be
+      greater than MRP.
+    </p>
+  </div>
+
+  <ul class="pricing-container">
+    <li class="flex">
+      <span></span>
+      @for (item of pricingControls().controls; track $index) {
+      <span>{{ item.controls.platform.value | translate }}</span>
+      }
+    </li>
+    <li>
+      <span>MRP</span>
+      @for (item of pricingControls().controls; track $index) {
+      <span>
+        <input
+          [formControl]="item.controls.mrp"
+          type="text"
+          [placeholder]="'entermrp' | translate"
+        />
+      </span>
+      }
+    </li>
+    <li>
+      <span>Sales Price</span>
+      @for (item of pricingControls().controls; track $index) {
+      <span>
+        <input
+          [formControl]="item.controls.salesPrice"
+          type="text"
+          [placeholder]="'salesprice' | translate"
+        />
+      </span>
+      }
+    </li>
+  </ul>
+</div>
+

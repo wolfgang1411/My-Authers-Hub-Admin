@@ -1,0 +1,103 @@
+<form [formGroup]="printingGroup()">
+  <div class="mt-4">
+    <div>
+      <div class="grid grid-cols-4 gap-4 items-start">
+        <mat-form-field>
+          <mat-label>{{ "bindingtype" | translate }}</mat-label>
+          <mat-select formControlName="bookBindingsId">
+            @for(item of bindingType(); track $index) {
+            <mat-option [value]="item.id">{{ item.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label> {{ "totalpages" | translate }} </mat-label>
+          <input matInput formControlName="totalPages" />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>
+            {{ "colourpages" | translate }}
+          </mat-label>
+          <input formControlName="colorPages" matInput />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label> {{ "selectcolorpage" | translate }} </mat-label>
+          <mat-select formControlName="isColorPagesRandom">
+            <mat-option [value]="false">{{
+              "continuous" | translate
+            }}</mat-option>
+            <mat-option [value]="true">
+              {{ "random" | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>B/W Pages</mat-label>
+          <input matInput formControlName="bwPages" readonly />
+        </mat-form-field>
+        <div class="flex flex-col">
+          <mat-form-field class="inside-cover">
+            <mat-label>Inside Cover / Duplex Cover</mat-label>
+            <mat-select formControlName="insideCover">
+              <mat-option [value]="true">Yes</mat-option>
+              <mat-option [value]="false">No</mat-option>
+            </mat-select>
+          </mat-form-field>
+          @if (insideCoverMedia()) {
+          <button
+            (click)="onInsideCoverUpload($event)"
+            class="flex items-center text-start text-primary font-medium mt-1"
+          >
+            <mat-icon>upload</mat-icon>
+            <span>
+              {{
+                insideCoverMedia()?.controls?.name?.value ||
+                  "Click to upload inside cover media"
+              }}
+            </span>
+          </button>
+          }
+        </div>
+      </div>
+      <div class="grid grid-cols-4 gap-4 items-start mt-4">
+        <mat-form-field>
+          <mat-label>{{ "laminationtype" | translate }}</mat-label>
+          <mat-select [formControl]="getLaminationControl(printingGroup())">
+            @for (item of getFilteredLaminationTypes(printingGroup()); track
+            $index) {
+            <mat-option [value]="item.id">{{ item.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "papertype" | translate }}</mat-label>
+          <mat-select formControlName="paperType">
+            <mat-option [value]="'WHITE'">{{
+              "whitepaper" | translate
+            }}</mat-option>
+            <mat-option [value]="'OFFWHITE'">{{
+              "offwhitecremepaper" | translate
+            }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "papergsm" | translate }}</mat-label>
+          <mat-select formControlName="paperQuailtyId">
+            @for(item of paperQuality(); track $index) {
+            <mat-option [value]="item.id">{{ item.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "selectsize" | translate }}</mat-label>
+          <mat-select formControlName="sizeCategoryId">
+            @for (item of sizeCategory(); track $index) {
+            <mat-option [value]="item.id">{{ item.size }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+  </div>
+</form>
+

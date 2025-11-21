@@ -1103,7 +1103,7 @@ export class AddTitle {
           : (titleDetails.publisher?.displayName as string),
       publisherId:
         this.loggedInUser()?.accessLevel === 'PUBLISHER'
-          ? this.loggedInUser()?.id
+          ? this.loggedInUser()?.publisher?.id
           : (titleDetails.publisher?.id as number),
       name: titleDetails.name as string,
       subTitle: titleDetails.subTitle as string,
@@ -1300,6 +1300,7 @@ export class AddTitle {
       const res = await this.publisherService.buyPublishingPoints(
         type,
         1,
+        '',
         publisherId
       );
       if (res.status === 'pending' && res.url) {

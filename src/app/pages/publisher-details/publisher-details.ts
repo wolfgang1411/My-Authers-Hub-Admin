@@ -159,6 +159,7 @@ export class PublisherDetails {
       const res = await this.publisherService.buyPublishingPoints(
         type,
         2,
+        '',
         this.publisherId
       );
       if (res) {
