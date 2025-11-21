@@ -3,6 +3,7 @@ import {
   effect,
   ElementRef,
   inject,
+  OnDestroy,
   QueryList,
   Signal,
   signal,
@@ -11,7 +12,7 @@ import {
   ViewChildren,
 } from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { debounceTime, distinctUntilChanged, map, Observable } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map, Observable, Subject, takeUntil } from 'rxjs';
 import { StepperOrientation } from '@angular/cdk/stepper';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import {
@@ -74,12 +75,12 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { PrintingService } from '../../services/printing-service';
-import { TitlePrinting } from '../../components/title-printing/title-printing';
-import { Royalties } from '../../components/royalties/royalties';
+import { TempTitlePrinting } from './temp-title-printing/temp-title-printing';
+import { TempRoyalties } from './temp-royalties/temp-royalties';
 import { TitleService } from '../titles/title-service';
-import { BookDetails } from '../../components/book-details/book-details';
-import { Pricing } from '../../components/pricing/pricing';
-import { TitleDistribution } from '../../title-distribution/title-distribution';
+import { TempBookDetails } from './temp-book-details/temp-book-details';
+import { TempPricing } from './temp-pricing/temp-pricing';
+import { TempTitleDistribution } from './temp-title-distribution/temp-title-distribution';
 import Swal from 'sweetalert2';
 import { getFileSizeFromS3Url, getFileToBase64 } from '../../common/utils/file';
 import { TranslateService } from '@ngx-translate/core';
@@ -88,7 +89,7 @@ import { Back } from '../../components/back/back';
 import { UserService } from '../../services/user';
 
 @Component({
-  selector: 'app-add-title',
+  selector: 'app-title-form-temp',
   providers: [{ provide: MatStepperIntl, useClass: MatStepperIntl }],
   imports: [
     MatRadioModule,
@@ -104,17 +105,21 @@ import { UserService } from '../../services/user';
     MatProgressSpinnerModule,
     RouterModule,
     MatCardModule,
-    TitlePrinting,
-    BookDetails,
-    Pricing,
-    Royalties,
-    TitleDistribution,
+    TempTitlePrinting,
+    TempBookDetails,
+    TempPricing,
+    TempRoyalties,
+    TempTitleDistribution,
     Back,
   ],
-  templateUrl: './add-title.html',
-  styleUrl: './add-title.css',
+  templateUrl: './title-form-temp.html',
+  styleUrl: './title-form-temp.css',
 })
-export class AddTitle {
+export class TitleFormTemp implements OnDestroy {
+  private readonly destroy$ = new Subject<void>();
+  isLoading = signal(false);
+  errorMessage = signal<string | null>(null);
+
   constructor(
     private printingService: PrintingService,
     private titleService: TitleService,
@@ -130,15 +135,19 @@ export class AddTitle {
     this.stepperOrientation = breakpointObserver
       .observe('(min-width: 800px)')
       .pipe(map(({ matches }) => (matches ? 'horizontal' : 'vertical')));
-    this.route.params.subscribe(({ titleId }) => {
-      this.titleId = Number(titleId);
-    });
-    this.route.queryParamMap.subscribe((params) => {
-      const stepParam = params.get('step');
-      if (stepParam) {
-        this.navigateStepperTo(stepParam);
-      }
-    });
+    
+    // Handle route params with proper cleanup
+    this.route.params
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(({ titleId }) => {
+        const parsedId = Number(titleId);
+        // Validate titleId is a valid number
+        this.titleId = isNaN(parsedId) || parsedId <= 0 ? 0 : parsedId;
+        this.isNewTitle = !this.titleId;
+      });
+    
+    // Setup stepper step tracking after component initialization
+    // This will be called in ngOnInit after form is ready
 
     effect(() => {
       const publisher = this.publisherSignal();
@@ -147,16 +156,24 @@ export class AddTitle {
       this.mapRoyaltiesArray(publisher, authors);
     });
   }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
   @ViewChild('scrollTarget') scrollTarget!: ElementRef;
 
   onSelectDocumentsReady() {
     this.tempForm.get('hasFiles')?.setValue(true);
 
+    // Safe null check before accessing nativeElement
     setTimeout(() => {
-      this.scrollTarget.nativeElement.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
+      if (this.scrollTarget?.nativeElement) {
+        this.scrollTarget.nativeElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }
     }, 200);
   }
   private readonly baseOrder = [
@@ -167,21 +184,137 @@ export class AddTitle {
     'royalty',
     'distribution',
   ];
-  private navigateStepperTo(step: string, publishingType?: string): void {
-    const stepOrder =
-      publishingType === 'ONLY_EBOOK'
-        ? this.baseOrder.filter((s) => s !== 'print')
-        : this.baseOrder;
 
-    const index = stepOrder.indexOf(step);
-    const stepperInstance = this.stepper();
-    if (
-      index !== -1 &&
-      stepperInstance &&
-      index < stepperInstance.steps.length
-    ) {
-      setTimeout(() => (stepperInstance.selectedIndex = index), 200);
+  /**
+   * Get the actual step order based on publishing type and whether titleId exists
+   */
+  private getStepOrder(): string[] {
+    const publishingType = this.tempForm.controls.publishingType.value;
+    const hasFormatStep = !this.titleId; // Format step only shows for new titles
+    
+    let stepOrder = publishingType === PublishingType.ONLY_EBOOK
+      ? this.baseOrder.filter((s) => s !== 'print')
+      : this.baseOrder;
+
+    // Add format step at the beginning if it exists
+    if (hasFormatStep) {
+      stepOrder = ['format', ...stepOrder];
     }
+
+    return stepOrder;
+  }
+
+  /**
+   * Get step name from stepper index
+   */
+  private getStepNameFromIndex(index: number): string | null {
+    const stepOrder = this.getStepOrder();
+    if (index >= 0 && index < stepOrder.length) {
+      return stepOrder[index];
+    }
+    return null;
+  }
+
+  /**
+   * Get stepper index from step name
+   */
+  private getIndexFromStepName(stepName: string): number {
+    const stepOrder = this.getStepOrder();
+    return stepOrder.indexOf(stepName);
+  }
+
+  /**
+   * Update query params with current step
+   */
+  private updateStepInQueryParams(stepName: string | null): void {
+    const currentParams = { ...this.route.snapshot.queryParams };
+    
+    if (stepName) {
+      currentParams['step'] = stepName;
+    } else {
+      delete currentParams['step'];
+    }
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: currentParams,
+      queryParamsHandling: 'merge',
+      replaceUrl: true, // Don't add to history
+    });
+  }
+
+  /**
+   * Navigate stepper to a specific step by name
+   */
+  private navigateStepperTo(step: string, publishingType?: string): void {
+    const stepOrder = this.getStepOrder();
+    const index = stepOrder.indexOf(step);
+
+    if (index === -1) {
+      return; // Step not found in current order
+    }
+
+    const stepperInstance = this.stepper();
+    if (stepperInstance && index < stepperInstance.steps.length) {
+      setTimeout(() => {
+        stepperInstance.selectedIndex = index;
+        this.currentStep.set(step);
+        this.updateStepInQueryParams(step);
+      }, 200);
+    }
+  }
+
+  /**
+   * Handle stepper selection change and update query params
+   */
+  private setupStepperStepTracking(): void {
+    // Wait for stepper to be available and form to be initialized
+    setTimeout(() => {
+      const stepperInstance = this.stepper();
+      if (!stepperInstance) {
+        // Retry if stepper not ready yet
+        setTimeout(() => this.setupStepperStepTracking(), 200);
+        return;
+      }
+
+      // Listen to selection change events
+      stepperInstance.selectionChange
+        .pipe(takeUntil(this.destroy$))
+        .subscribe((event) => {
+          const stepName = this.getStepNameFromIndex(event.selectedIndex);
+          if (stepName) {
+            this.currentStep.set(stepName);
+            this.updateStepInQueryParams(stepName);
+          }
+        });
+
+      // Initialize current step from query params or stepper
+      const queryStep = this.route.snapshot.queryParams['step'];
+      if (queryStep && typeof queryStep === 'string') {
+        // Navigate to the step from query params
+        const targetIndex = this.getIndexFromStepName(queryStep);
+        if (targetIndex !== -1 && targetIndex < stepperInstance.steps.length) {
+          stepperInstance.selectedIndex = targetIndex;
+          this.currentStep.set(queryStep);
+        } else {
+          // Invalid step in query params, use current stepper index
+          const currentIndex = stepperInstance.selectedIndex;
+          const stepName = this.getStepNameFromIndex(currentIndex);
+          if (stepName) {
+            this.currentStep.set(stepName);
+            this.updateStepInQueryParams(stepName);
+          }
+        }
+      } else {
+        // No step in query params, set initial step based on current stepper index
+        const currentIndex = stepperInstance.selectedIndex;
+        const stepName = this.getStepNameFromIndex(currentIndex);
+        if (stepName) {
+          this.currentStep.set(stepName);
+          this.updateStepInQueryParams(stepName);
+        }
+      }
+    }, 400);
   }
 
   @ViewChildren('fileInput') fileInputs!: QueryList<
@@ -196,7 +329,8 @@ export class AddTitle {
   laminationTypes!: LaminationType[];
   authorsSignal = signal<Author[]>([]);
   publisherSignal = signal<Publishers | null>(null);
-  titleId!: number;
+  titleId: number = 0;
+  isNewTitle = true;
   publishers = signal<Publishers[]>([]);
   authorsList = signal<Author[]>([]);
   titleDetails = signal<Title | null>(null);
@@ -290,17 +424,41 @@ export class AddTitle {
     this.authorsList.set(authorItems);
 
     this.tempForm.controls.titleDetails.controls.publisher.controls.id.valueChanges
-      .pipe(debounceTime(400), distinctUntilChanged())
+      .pipe(
+        debounceTime(400),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
       .subscribe(() => {
         this.fetchAndUpdatePublishingPoints();
       });
 
     let media: TitleMedia[] = [];
     if (this.titleId) {
-      const response = await this.titleService.getTitleById(this.titleId);
-      this.titleDetails.set(response);
-      this.prefillFormData(response);
-      media = response?.media || [];
+      try {
+        this.isLoading.set(true);
+        const response = await this.titleService.getTitleById(this.titleId);
+        
+        if (!response) {
+          throw new Error('Title not found');
+        }
+        
+        this.titleDetails.set(response);
+        this.prefillFormData(response);
+        media = Array.isArray(response?.media) ? response.media : [];
+      } catch (error) {
+        console.error('Error loading title:', error);
+        Swal.fire({
+          icon: 'error',
+          title: this.translateService.instant('error'),
+          text: this.translateService.instant('errorloadingtitle') || 'Failed to load title. Please try again.',
+        }).then(() => {
+          this.router.navigate(['/titles']);
+        });
+        return;
+      } finally {
+        this.isLoading.set(false);
+      }
     }
 
     this.calculatePrintingCost();
@@ -324,54 +482,72 @@ export class AddTitle {
     };
 
     manageISBNRequired(this.tempForm.controls.publishingType.value);
-    this.tempForm.controls.publishingType.valueChanges.subscribe((v) => {
-      manageISBNRequired(v);
-    });
+    this.tempForm.controls.publishingType.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((v) => {
+        manageISBNRequired(v);
+      });
+
+    // Setup stepper step tracking after everything is initialized
+    this.setupStepperStepTracking();
   }
 
   async fetchAndUpdatePublishingPoints() {
     const publisherId =
       this.tempForm.controls.titleDetails.controls.publisher.controls.id.value;
 
-    if (publisherId) {
-      try {
-        const { items: publishingPoints } =
-          await this.publisherService.fetchPublishingPoints(publisherId);
+    if (!publisherId || isNaN(Number(publisherId))) {
+      return;
+    }
 
+    try {
+      this.isLoading.set(true);
+      this.errorMessage.set(null);
+      
+      const { items: publishingPoints } =
+        await this.publisherService.fetchPublishingPoints(publisherId);
+
+      if (publishingPoints && Array.isArray(publishingPoints)) {
         publishingPoints.forEach(({ distributionType, availablePoints }) => {
           const distributionController =
             this.tempForm.controls.distribution.controls.find(
               ({ controls: { type } }) => type.value === distributionType
             );
 
-          if (distributionController) {
+          if (distributionController && typeof availablePoints === 'number') {
             distributionController.controls.availablePoints.patchValue(
               availablePoints
             );
           }
         });
-      } catch (error) {
-        console.log(error);
       }
+    } catch (error) {
+      console.error('Error fetching publishing points:', error);
+      this.errorMessage.set(
+        this.translateService.instant('errorfetchingpublishingpoints') || 
+        'Failed to fetch publishing points. Please try again.'
+      );
+      // Show user-friendly error
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text: this.errorMessage() || 'An error occurred while fetching publishing points.',
+      });
+    } finally {
+      this.isLoading.set(false);
     }
   }
 
   mapRoyaltiesArray(publisher: Publishers | null, authors: Author[]) {
     const { printing, pricing, royalties } = this.tempForm.controls;
 
-    console.log({
-      publisher,
-      authors,
-      printing,
-      pricing,
-    });
-
     // Early exit if required data is missing
     if (
       !publisher ||
-      !authors?.length ||
-      !printing.valid ||
-      !pricing.valid ||
+      !Array.isArray(authors) ||
+      !authors.length ||
+      !printing?.valid ||
+      !pricing?.valid ||
       !pricing.length
     ) {
       return;
@@ -385,7 +561,9 @@ export class AddTitle {
         this.staticValueService.staticValues()?.PlatForm || {}
       ) as PlatForm[]) || [];
 
-    console.log({ platforms });
+    if (!platforms.length) {
+      return; // No platforms available
+    }
 
     // 🧹 STEP 1: Remove royalties not related to current publisher or authors
     for (let i = royalties.length - 1; i >= 0; i--) {
@@ -413,27 +591,27 @@ export class AddTitle {
           titleId: this.titleId,
           name:
             publisher.name ||
-            `${publisher.user.firstName || ''} ${
-              publisher.user.lastName || ''
-            }`.trim(),
+            `${publisher.user?.firstName || ''} ${
+              publisher.user?.lastName || ''
+            }`.trim() ||
+            'Unknown Publisher',
           platform,
         });
-        console.log({ control });
 
         royalties.push(control);
       } else {
         // ✅ Keep existing values
         const existingValue = control.value;
-        console.log({ existingValue });
 
         control.patchValue({
           publisherId,
           titleId: this.titleId,
           name:
             publisher.name ||
-            `${publisher.user.firstName || ''} ${
-              publisher.user.lastName || ''
-            }`.trim(),
+            `${publisher.user?.firstName || ''} ${
+              publisher.user?.lastName || ''
+            }`.trim() ||
+            'Unknown Publisher',
           platform,
           percentage: existingValue.percentage,
         });
@@ -490,36 +668,12 @@ export class AddTitle {
     });
   }
 
-  // getFieldForPlatform(plataForm: PlatForm) {
-  //   const temp: Partial<Record<PlatForm, RoyalFormGroupAmountField>> = {};
-  //   Object.keys(PlatForm).forEach((ch) => {
-  //     let field: RoyalFormGroupAmountField = 'ebook_mah';
-
-  //     switch (channal) {
-  //       case ChannalType.EBOOK_MAH:
-  //         field = 'ebook_mah';
-  //         break;
-  //       case ChannalType.EBOOK_THIRD_PARTY:
-  //         field = 'ebook_third_party';
-  //         break;
-  //       case ChannalType.PRIME:
-  //         field = 'prime';
-  //         break;
-  //       case ChannalType.PRINT_MAH:
-  //         field = 'print_mah';
-  //         break;
-  //       case ChannalType.PRINT_THIRD_PARTY:
-  //         field = 'print_third_party';
-  //         break;
-  //     }
-
-  //     temp[ch as ChannalType] = field;
-  //   });
-
-  //   return temp[channal] as RoyalFormGroupAmountField;
-  // }
   async calculatePrintingCost() {
     const printGroup = this.tempForm.controls.printing;
+
+    if (!printGroup) {
+      return;
+    }
 
     const {
       bookBindingsId: { value: bookBindingsId },
@@ -533,34 +687,47 @@ export class AddTitle {
       sizeCategoryId: { value: sizeCategoryId },
     } = printGroup.controls;
 
+    // Validate all required fields are numbers
     if (
-      !(
-        colorPages &&
-        totalPages &&
-        paperQuailtyId &&
-        sizeCategoryId &&
-        laminationTypeId &&
-        bookBindingsId
-      )
+      !colorPages ||
+      !totalPages ||
+      !paperQuailtyId ||
+      !sizeCategoryId ||
+      !laminationTypeId ||
+      !bookBindingsId ||
+      isNaN(Number(colorPages)) ||
+      isNaN(Number(totalPages)) ||
+      isNaN(Number(paperQuailtyId)) ||
+      isNaN(Number(sizeCategoryId)) ||
+      isNaN(Number(laminationTypeId)) ||
+      isNaN(Number(bookBindingsId))
     ) {
       return;
     }
 
-    const payload: TitlePrintingCostPayload = {
-      colorPages: +(colorPages ?? 10),
-      bwPages: +(bwPages ?? 10),
-      paperQuailtyId,
-      sizeCategoryId,
-      totalPages: +(totalPages ?? 20),
-      laminationTypeId,
-      isColorPagesRandom: !!isColorPagesRandom,
-      bindingTypeId: bookBindingsId,
-      insideCover: !!insideCover,
-    };
+    try {
+      const payload: TitlePrintingCostPayload = {
+        colorPages: Number(colorPages),
+        bwPages: Number(bwPages) || 0,
+        paperQuailtyId: Number(paperQuailtyId),
+        sizeCategoryId: Number(sizeCategoryId),
+        totalPages: Number(totalPages),
+        laminationTypeId: Number(laminationTypeId),
+        isColorPagesRandom: !!isColorPagesRandom,
+        bindingTypeId: Number(bookBindingsId),
+        insideCover: !!insideCover,
+      };
 
-    const mspController = this.tempForm.controls.printing.controls.msp;
-    const response = await this.printingService.getPrintingPrice(payload);
-    mspController?.patchValue(response.printPerItem);
+      const mspController = this.tempForm.controls.printing.controls.msp;
+      const response = await this.printingService.getPrintingPrice(payload);
+      
+      if (response?.printPerItem && typeof response.printPerItem === 'number') {
+        mspController?.patchValue(response.printPerItem);
+      }
+    } catch (error) {
+      console.error('Error calculating printing cost:', error);
+      // Don't show error to user as this is called frequently during form changes
+    }
   }
 
   prefillFormData(data: Title): void {
@@ -907,7 +1074,10 @@ export class AddTitle {
 
   handelInsideCoverMedia() {
     this.tempForm.controls.printing.controls.insideCover.valueChanges
-      .pipe(debounceTime(400))
+      .pipe(
+        debounceTime(400),
+        takeUntil(this.destroy$)
+      )
       .subscribe(async (insideCover) => {
         const insideCoverControl =
           this.tempForm.controls.documentMedia.controls.find(
@@ -1004,9 +1174,14 @@ export class AddTitle {
 
     let size = 0;
     if (media?.url) {
-      const res = await getFileSizeFromS3Url(media.url);
-      if (res) {
-        size = Number((res / (1024 * 1024)).toFixed(2));
+      try {
+        const res = await getFileSizeFromS3Url(media.url);
+        if (res && typeof res === 'number' && res > 0) {
+          size = Number((res / (1024 * 1024)).toFixed(2));
+        }
+      } catch (error) {
+        console.error('Error getting file size from S3:', error);
+        // Continue with size 0 if we can't get the size
       }
     }
 
@@ -1040,38 +1215,74 @@ export class AddTitle {
     const input = event.target as HTMLInputElement;
     const file = input.files?.item(0);
 
-    if (!file) return;
+    if (!file) {
+      return;
+    }
+
+    // Validate file size
+    if (!file.size || file.size <= 0) {
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text: this.translateService.instant('invalidfile') || 'Invalid file selected.',
+      });
+      return;
+    }
 
     const fileSizeInMB = file.size / (1024 * 1024);
-
     const maxAllowedSize = mediaGroup.controls.maxSize.value;
+
     if (maxAllowedSize && fileSizeInMB > maxAllowedSize) {
-      const errorText = `Maximum allowed size is (${maxAllowedSize} MB) <br> Uploaded file is (${fileSizeInMB} MB)`;
+      const errorText = `Maximum allowed size is (${maxAllowedSize} MB) <br> Uploaded file is (${fileSizeInMB.toFixed(2)} MB)`;
       Swal.fire({
         icon: 'error',
         title: 'Incorrect file size',
         html: errorText,
       });
+      // Reset the input
+      if (input) {
+        input.value = '';
+      }
       return;
     }
 
-    const url = await getFileToBase64(file);
+    try {
+      const url = await getFileToBase64(file);
+      
+      if (!url) {
+        throw new Error('Failed to convert file to base64');
+      }
 
-    mediaGroup.patchValue({
-      url,
-      file,
-      name: file.name,
-    });
+      mediaGroup.patchValue({
+        url,
+        file,
+        name: file.name,
+      });
+    } catch (error) {
+      console.error('Error processing file:', error);
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text: this.translateService.instant('fileuploaderror') || 'Failed to process file. Please try again.',
+      });
+      // Reset the input
+      if (input) {
+        input.value = '';
+      }
+    }
   }
 
   removeFile(index: number) {
-    this.tempForm.controls.documentMedia.at(index).patchValue({
-      file: null,
-      url: null,
-    });
+    const mediaArray = this.tempForm.controls.documentMedia;
+    if (index >= 0 && index < mediaArray.length) {
+      mediaArray.at(index).patchValue({
+        file: null,
+        url: null,
+      });
+    }
   }
 
-  onTitleSubmit() {
+  async onTitleSubmit() {
     if (!this.tempForm.controls.titleDetails.valid) {
       return;
     }
@@ -1118,35 +1329,115 @@ export class AddTitle {
       ...(validAuthors.length > 0 && { authorIds: validAuthors }),
       id: this.titleId,
     } as TitleCreate;
-    console.log(titleDetails, 'valuee title');
-    console.log(basicData, 'basicccccc');
-    console.log(this.tempForm.controls.titleDetails);
+    try {
+      this.isLoading.set(true);
+      this.errorMessage.set(null);
 
-    this.titleService.createTitle(basicData).then((res: { id: number }) => {
-      this.titleId = res.id;
-      this.stepper()?.next();
-    });
+      const res: { id: number } = await this.titleService.createTitle(basicData);
+      
+      if (!res?.id || isNaN(Number(res.id))) {
+        throw new Error('Invalid response from server');
+      }
+
+      this.titleId = Number(res.id);
+      this.isNewTitle = false;
+      
+      // Update URL to include the title ID to prevent creating new title on refresh
+      // When titleId changes, format step disappears, so adjust step if needed
+      const currentStepName = this.currentStep();
+      let targetStep = currentStepName || 'details';
+      
+      // If we were on format step, move to details
+      if (currentStepName === 'format') {
+        targetStep = 'details';
+      }
+      
+      this.router.navigate(['/title', this.titleId], {
+        replaceUrl: true,
+        queryParams: {
+          ...this.route.snapshot.queryParams,
+          step: targetStep,
+        },
+      });
+      
+      const stepperInstance = this.stepper();
+      if (stepperInstance) {
+        stepperInstance.next();
+        // Update step in query params after navigation
+        setTimeout(() => {
+          const newStepName = this.getStepNameFromIndex(stepperInstance.selectedIndex);
+          if (newStepName) {
+            this.currentStep.set(newStepName);
+            this.updateStepInQueryParams(newStepName);
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Error creating title:', error);
+      this.errorMessage.set(
+        this.translateService.instant('errorcreatingtitle') || 
+        'Failed to create title. Please try again.'
+      );
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text: this.errorMessage() || 'An error occurred while creating the title.',
+      });
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
   async onMediaUpload() {
-    if (this.tempForm.controls.documentMedia.valid) {
+    if (!this.tempForm.controls.documentMedia.valid) {
+      return;
+    }
+
+    if (!this.titleId || this.titleId <= 0) {
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text: this.translateService.instant('titleidrequired') || 'Title ID is required. Please save title details first.',
+      });
+      return;
+    }
+
+    try {
+      this.isLoading.set(true);
+      this.errorMessage.set(null);
+
       const mediaToUpload = this.tempForm.controls.documentMedia.value
         .filter(({ file, type }) => file && type)
         .map(({ file, type }) => ({
           file: file as File,
           type: type as TitleMediaType,
         }));
-      const mediaResposne = await this.titleService.uploadMultiMedia(
+
+      if (!mediaToUpload.length) {
+        Swal.fire({
+          icon: 'warning',
+          title: this.translateService.instant('warning'),
+          text: this.translateService.instant('nofilestoupload') || 'No files to upload.',
+        });
+        return;
+      }
+
+      const mediaResponse = await this.titleService.uploadMultiMedia(
         this.titleId,
         mediaToUpload
       );
 
-      const interior = mediaResposne.find(
-        ({ type }) => type === TitleMediaType.INTERIOR
-      );
-      this.tempForm.controls.printing.controls.totalPages.patchValue(
-        interior?.noOfPages || 0
-      );
+      if (mediaResponse && Array.isArray(mediaResponse)) {
+        const interior = mediaResponse.find(
+          ({ type }) => type === TitleMediaType.INTERIOR
+        );
+        
+        if (interior?.noOfPages && typeof interior.noOfPages === 'number') {
+          this.tempForm.controls.printing.controls.totalPages.patchValue(
+            interior.noOfPages
+          );
+        }
+      }
 
       if (
         this.tempForm.controls.printingFormat.value === 'printOnly' &&
@@ -1155,8 +1446,8 @@ export class AddTitle {
       ) {
         Swal.fire({
           icon: 'success',
-          title: 'Success',
-          text: 'Title has been sent for approval to the admin.',
+          title: this.translateService.instant('success'),
+          text: this.translateService.instant('titlesentforapproval') || 'Title has been sent for approval to the admin.',
         }).then(() => {
           this.router.navigate(['/titles']);
         });
@@ -1164,129 +1455,325 @@ export class AddTitle {
         return;
       }
 
-      this.stepper()?.next();
+      const stepperInstance = this.stepper();
+      if (stepperInstance) {
+        stepperInstance.next();
+        // Update step in query params
+        setTimeout(() => {
+          const newStepName = this.getStepNameFromIndex(stepperInstance.selectedIndex);
+          if (newStepName) {
+            this.updateStepInQueryParams(newStepName);
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Error uploading media:', error);
+      this.errorMessage.set(
+        this.translateService.instant('erroruploadingmedia') || 
+        'Failed to upload media files. Please try again.'
+      );
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text: this.errorMessage() || 'An error occurred while uploading media files.',
+      });
+    } finally {
+      this.isLoading.set(false);
     }
   }
 
   async onPricingSubmit() {
     const pricingControls = this.tempForm.controls.pricing;
 
-    if (pricingControls.valid) {
-      const data: PricingCreate[] = pricingControls.controls.map(
-        ({ controls: { platform, id, mrp, salesPrice } }) => ({
-          id: id.value,
-          platform: platform.value,
+    if (!pricingControls.valid) {
+      return;
+    }
+
+    if (!this.titleId || this.titleId <= 0) {
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text: this.translateService.instant('titleidrequired') || 'Title ID is required.',
+      });
+      return;
+    }
+
+    try {
+      this.isLoading.set(true);
+      this.errorMessage.set(null);
+
+      const data: PricingCreate[] = pricingControls.controls
+        .filter(({ controls: { platform, mrp, salesPrice } }) => 
+          platform.value && 
+          mrp.value && 
+          salesPrice.value &&
+          !isNaN(Number(mrp.value)) &&
+          !isNaN(Number(salesPrice.value))
+        )
+        .map(({ controls: { platform, id, mrp, salesPrice } }) => ({
+          id: id.value || undefined,
+          platform: platform.value as string,
           mrp: Number(mrp.value),
           salesPrice: Number(salesPrice.value),
           titleId: Number(this.titleId),
-        })
-      );
+        }));
+
+      if (!data.length) {
+        Swal.fire({
+          icon: 'warning',
+          title: this.translateService.instant('warning'),
+          text: this.translateService.instant('invalidpricingdata') || 'Please provide valid pricing data.',
+        });
+        return;
+      }
 
       await this.titleService.createManyPricing(data, this.titleId);
+      
       const publisher = this.publisherSignal();
       const authors = this.authorsSignal();
 
       if (publisher) {
         this.mapRoyaltiesArray(publisher, authors);
       }
-      this.stepper()?.next();
+      
+      const stepperInstance = this.stepper();
+      if (stepperInstance) {
+        stepperInstance.next();
+        // Update step in query params
+        setTimeout(() => {
+          const newStepName = this.getStepNameFromIndex(stepperInstance.selectedIndex);
+          if (newStepName) {
+            this.updateStepInQueryParams(newStepName);
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Error saving pricing:', error);
+      this.errorMessage.set(
+        this.translateService.instant('errorsavingpricing') || 
+        'Failed to save pricing. Please try again.'
+      );
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text: this.errorMessage() || 'An error occurred while saving pricing.',
+      });
+    } finally {
+      this.isLoading.set(false);
     }
   }
 
   async savePrintingDraft() {
     const printing = this.tempForm.controls.printing;
     const printingDetails = this.tempForm.get('printing')?.value;
+
+    if (!printing?.valid) {
+      return;
+    }
+
+    if (!this.titleId || this.titleId <= 0) {
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text: this.translateService.instant('titleidrequired') || 'Title ID is required.',
+      });
+      return;
+    }
+
     const insideCoverMedia = this.tempForm.controls.documentMedia.controls.find(
       ({ controls: { type } }) => type.value === TitleMediaType.INSIDE_COVER
     );
 
-    console.log({ insideCoverMedia });
+    if (printing.controls.insideCover.value && !insideCoverMedia?.valid) {
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        html: this.translateService.instant('missinginsicovermediaerror'),
+      });
+      return;
+    }
 
-    console.log({ printing });
+    try {
+      this.isLoading.set(true);
+      this.errorMessage.set(null);
 
-    if (printing?.valid) {
-      if (printing.controls.insideCover.value && !insideCoverMedia?.valid) {
-        Swal.fire({
-          icon: 'error',
-          title: this.translateService.instant('error'),
-          html: this.translateService.instant('missinginsicovermediaerror'),
-        });
-        return;
-      }
-
+      // Upload inside cover media if needed
       if (
         insideCoverMedia?.controls?.file?.value &&
         printing.controls.insideCover.value
       ) {
-        await this.titleService.uploadMedia(this.titleId, {
-          file: insideCoverMedia?.controls?.file?.value,
-          type: TitleMediaType.INSIDE_COVER,
-        });
+        try {
+          await this.titleService.uploadMedia(this.titleId, {
+            file: insideCoverMedia.controls.file.value,
+            type: TitleMediaType.INSIDE_COVER,
+          });
+        } catch (uploadError) {
+          console.error('Error uploading inside cover media:', uploadError);
+          // Continue with printing save even if media upload fails
+        }
+      }
+
+      // Validate all required fields
+      if (
+        !printingDetails?.bookBindingsId ||
+        !printingDetails?.laminationTypeId ||
+        !printingDetails?.paperQuailtyId ||
+        !printingDetails?.sizeCategoryId ||
+        isNaN(Number(printingDetails.bookBindingsId)) ||
+        isNaN(Number(printingDetails.laminationTypeId)) ||
+        isNaN(Number(printingDetails.paperQuailtyId)) ||
+        isNaN(Number(printingDetails.sizeCategoryId))
+      ) {
+        throw new Error('Invalid printing details');
       }
 
       const createPrinting: PrintingCreate = {
-        id: printingDetails?.id,
+        id: printingDetails.id || undefined,
         titleId: Number(this.titleId),
-        bindingTypeId: Number(printingDetails?.bookBindingsId),
-        totalPages: printing.controls.totalPages.value,
-        colorPages: Number(printingDetails?.colorPages),
-        laminationTypeId: Number(printingDetails?.laminationTypeId),
-        paperType: printingDetails?.paperType as PaperType,
-        paperQuailtyId: Number(printingDetails?.paperQuailtyId),
-        sizeCategoryId: Number(printingDetails?.sizeCategoryId),
-        customPrintCost: Number(0),
-        insideCover: printingDetails?.insideCover || false,
-        isColorPagesRandom: printingDetails?.isColorPagesRandom || false,
+        bindingTypeId: Number(printingDetails.bookBindingsId),
+        totalPages: printing.controls.totalPages.value || 0,
+        colorPages: Number(printingDetails.colorPages) || 0,
+        laminationTypeId: Number(printingDetails.laminationTypeId),
+        paperType: (printingDetails.paperType as PaperType) || 'WHITE',
+        paperQuailtyId: Number(printingDetails.paperQuailtyId),
+        sizeCategoryId: Number(printingDetails.sizeCategoryId),
+        customPrintCost: 0,
+        insideCover: printingDetails.insideCover || false,
+        isColorPagesRandom: printingDetails.isColorPagesRandom || false,
       };
 
       const response = await this.titleService.createOrUpdatePrinting(
         createPrinting
       );
-      printing.controls.id.patchValue(response.id);
+      
+      if (response?.id) {
+        printing.controls.id.patchValue(response.id);
+      }
+      
       await this.calculatePrintingCost();
+      
       if (this.tempForm.controls.printingFormat.value === 'printOnly') {
         Swal.fire({
           icon: 'success',
-          title: 'Success',
-          text: 'Title has been sent for approval to the admin.',
+          title: this.translateService.instant('success'),
+          text: this.translateService.instant('titlesentforapproval') || 'Title has been sent for approval to the admin.',
         }).then(() => {
           this.router.navigate(['/titles']);
         });
 
         return;
       }
-      this.stepper()?.next();
+      
+      const stepperInstance = this.stepper();
+      if (stepperInstance) {
+        stepperInstance.next();
+        // Update step in query params
+        setTimeout(() => {
+          const newStepName = this.getStepNameFromIndex(stepperInstance.selectedIndex);
+          if (newStepName) {
+            this.updateStepInQueryParams(newStepName);
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Error saving printing draft:', error);
+      this.errorMessage.set(
+        this.translateService.instant('errorsavingprinting') || 
+        'Failed to save printing details. Please try again.'
+      );
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text: this.errorMessage() || 'An error occurred while saving printing details.',
+      });
+    } finally {
+      this.isLoading.set(false);
     }
   }
 
   async saveRoyalties() {
     const royaltiesControl = this.tempForm.controls.royalties;
 
-    if (royaltiesControl.valid) {
-      const royalties: UpdateRoyalty[] = royaltiesControl.controls.map(
-        ({
-          controls: {
-            id: { value: id },
-            authorId: { value: authorId },
-            name: { value: name },
-            percentage: { value: percentage },
-            publisherId: { value: publisherId },
-            platform: { value: platform },
-          },
-        }) => ({
-          id,
-          authorId,
-          platform: platform as PlatForm,
-          percentage: percentage as number,
-          name,
-          publisherId,
-          titleId: this.titleId,
-        })
-      );
+    if (!royaltiesControl.valid) {
+      return;
+    }
+
+    if (!this.titleId || this.titleId <= 0) {
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text: this.translateService.instant('titleidrequired') || 'Title ID is required.',
+      });
+      return;
+    }
+
+    try {
+      this.isLoading.set(true);
+      this.errorMessage.set(null);
+
+      const royalties: UpdateRoyalty[] = royaltiesControl.controls
+        .filter(({ controls: { percentage, platform } }) => 
+          percentage.value !== null && 
+          percentage.value !== undefined &&
+          !isNaN(Number(percentage.value)) &&
+          platform.value
+        )
+        .map(
+          ({
+            controls: {
+              id: { value: id },
+              authorId: { value: authorId },
+              name: { value: name },
+              percentage: { value: percentage },
+              publisherId: { value: publisherId },
+              platform: { value: platform },
+            },
+          }) => ({
+            id: id || undefined,
+            authorId: authorId || undefined,
+            platform: platform as PlatForm,
+            percentage: Number(percentage),
+            name: name || '',
+            publisherId: publisherId || undefined,
+            titleId: this.titleId,
+          })
+        );
+
+      if (!royalties.length) {
+        Swal.fire({
+          icon: 'warning',
+          title: this.translateService.instant('warning'),
+          text: this.translateService.instant('invalidroyaltiesdata') || 'Please provide valid royalties data.',
+        });
+        return;
+      }
 
       await this.titleService.createManyRoyalties(royalties, this.titleId);
 
-      this.stepper()?.next();
+      const stepperInstance = this.stepper();
+      if (stepperInstance) {
+        stepperInstance.next();
+        // Update step in query params
+        setTimeout(() => {
+          const newStepName = this.getStepNameFromIndex(stepperInstance.selectedIndex);
+          if (newStepName) {
+            this.updateStepInQueryParams(newStepName);
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Error saving royalties:', error);
+      this.errorMessage.set(
+        this.translateService.instant('errorsavingroyalties') || 
+        'Failed to save royalties. Please try again.'
+      );
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text: this.errorMessage() || 'An error occurred while saving royalties.',
+      });
+    } finally {
+      this.isLoading.set(false);
     }
   }
 
@@ -1315,40 +1802,69 @@ export class AddTitle {
   }
 
   async onDistributionSubmit() {
-    const selectedDistributions =
-      this.tempForm.controls.distribution.value
-        ?.filter(({ isSelected }) => isSelected)
-        .map(({ type }) => type as DistributionType) ?? [];
-
     if (!this.tempForm.controls.distribution.valid) {
       Swal.fire({
         icon: 'warning',
-        title: 'Invalid Data',
-        text: 'Please check your form fields before submitting.',
+        title: this.translateService.instant('warning'),
+        text: this.translateService.instant('invaliddata') || 'Please check your form fields before submitting.',
       });
       return;
     }
+
+    if (!this.titleId || this.titleId <= 0) {
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text: this.translateService.instant('titleidrequired') || 'Title ID is required.',
+      });
+      return;
+    }
+
+    const selectedDistributions =
+      this.tempForm.controls.distribution.value
+        ?.filter(({ isSelected }) => isSelected)
+        .map(({ type }) => type as DistributionType)
+        .filter((type): type is DistributionType => !!type) ?? [];
 
     if (selectedDistributions.length === 0) {
       Swal.fire({
         icon: 'warning',
-        title: 'No Distribution Selected',
-        text: 'Please select at least one distribution type before proceeding.',
+        title: this.translateService.instant('warning'),
+        text: this.translateService.instant('nodistributionselected') || 'Please select at least one distribution type before proceeding.',
       });
       return;
     }
 
-    await this.titleService.createTitleDistribution(
-      this.titleId,
-      selectedDistributions
-    );
+    try {
+      this.isLoading.set(true);
+      this.errorMessage.set(null);
 
-    Swal.fire({
-      icon: 'success',
-      title: 'Success',
-      text: 'Title has been sent for approval to the admin.',
-    }).then(() => {
-      this.router.navigate(['/titles']);
-    });
+      await this.titleService.createTitleDistribution(
+        this.titleId,
+        selectedDistributions
+      );
+
+      Swal.fire({
+        icon: 'success',
+        title: this.translateService.instant('success'),
+        text: this.translateService.instant('titlesentforapproval') || 'Title has been sent for approval to the admin.',
+      }).then(() => {
+        this.router.navigate(['/titles']);
+      });
+    } catch (error) {
+      console.error('Error submitting distribution:', error);
+      this.errorMessage.set(
+        this.translateService.instant('errorsubmittingdistribution') || 
+        'Failed to submit distribution. Please try again.'
+      );
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text: this.errorMessage() || 'An error occurred while submitting distribution.',
+      });
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 }
+

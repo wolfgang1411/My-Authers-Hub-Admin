@@ -1,0 +1,86 @@
+@if (royaltiesController().length) {
+<div class="flex flex-col gap-4 mt-8">
+  <ul class="royalties-container">
+    <li>
+      <span>{{ "name" | translate }}</span>
+      <span>{{ "royaltytype" | translate }}</span>
+      @for (columns of displayedColumns(); track $index) {
+      <span>{{ columns | translate }}</span>
+      }
+    </li>
+
+    @for (royaltyGroup of (royaltiesController().controls | groupRoyalties);
+    track $index) {
+    <li>
+      <span>{{ royaltyGroup.group.controls.name.value || "N/A" }}</span>
+      <span>
+        {{
+          royaltyGroup.group.controls.publisherId.value ? "PUBLISHER" : "AUTHOR"
+        }}
+      </span>
+
+      @for (column of displayedColumns(); track $index) {
+      <span>
+        @if(royaltyGroup.controls[column]) {
+        <input
+          [formControl]="royaltyGroup.controls[column]"
+          type="number"
+          class="w-0 min-w-full"
+        />
+        }
+      </span>
+      }
+    </li>
+    }
+    <li>
+      <span>{{ "totalroyalties" | translate }}</span>
+      <span></span>
+      @for (column of displayedColumns(); track $index) {
+      <span
+        class="font-medium"
+        [ngClass]="{
+          'bg-red-500 text-white': (totalRoyalties()[column] || 0) > 100
+        }"
+        [title]="royaltiesController().getError('invalid') || ''"
+      >
+        {{ totalRoyalties()[column] || 0 }}
+      </span>
+      }
+    </li>
+  </ul>
+
+  <div class="flex flex-col gap-2">
+    <h2 class="text-lg font-medium">Calculations</h2>
+
+    <ul class="royalties-container">
+      <li class="!grid-cols-8">
+        <span>{{ "name" | translate }}</span>
+        @for (item of displayedColumns(); track $index) {
+        <span>{{ item | translate }}</span>
+        }
+      </li>
+
+      @for (royaltyGroup of (royaltiesController().controls | groupRoyalties);
+      track $index) {
+      <li class="!grid-cols-8">
+        <span class="">{{ royaltyGroup.group.controls.name.value }}</span>
+
+        @for (item of displayedColumns(); track $index) {
+        <span>
+          {{
+            totalRoyaltiesAmount()[
+              royaltyGroup.group.controls.authorId.value
+                ? "author" + royaltyGroup.group.controls.authorId.value
+                : "publisher" + royaltyGroup.group.controls.publisherId.value
+            ]?.[item] || 0
+          }}
+        </span>
+        }
+      </li>
+      }
+    </ul>
+  </div>
+</div>
+
+}
+

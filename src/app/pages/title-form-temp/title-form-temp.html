@@ -1,0 +1,456 @@
+@switch (stepperOrientation | async) { @case ('horizontal') { } @case
+('vertical') { } }
+
+<div class="flex justify-between">
+  <h3 class="heading">
+    {{ "uploadtitle" | translate }}
+  </h3>
+  <app-back></app-back>
+</div>
+<mat-stepper
+  class="example-stepper !my-4"
+  [orientation]="(stepperOrientation | async)!"
+  [linear]="true"
+  [animationDuration]="'500'"
+  #stepperForm
+>
+  @if(!this.titleId) {
+  <mat-step
+    [stepControl]="tempForm.controls.publishingType"
+    class="!text-accent !p-0"
+    label="Choose Format"
+  >
+    <form [formGroup]="tempForm">
+      <div class="flex flex-col gap-8">
+        <!-- ========== STEP 1: Choose Format ========== -->
+        <h3 class="heading self-center !text-[1.6rem] !font-medium">
+          {{ "inwhichformatyouwouldliketouploadthetitle" | translate }}??
+        </h3>
+
+        <div class="grid grid-cols-3 gap-8">
+          <!-- PRINT & EBOOK -->
+          <button
+            type="button"
+            class="btn border-2 !border-primary flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+            [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                tempForm.get('publishingType')?.value === 'PRINT_EBOOK',
+              '!bg-white !text-primary fill-primary !border-primary':
+                tempForm.get('publishingType')?.value !== 'PRINT_EBOOK'
+            }"
+            (click)="
+              tempForm
+                .get('publishingType')
+                ?.setValue(PublishingType.PRINT_EBOOK)
+            "
+          >
+            <svg-icon
+              class="fill-primary"
+              src="images/print-ebook.svg"
+            ></svg-icon>
+            <p class="text-base">{{ "print&ebook" | translate }}</p>
+            <br />
+
+            <ul class="list-disc pl-6 space-y-1 text-start !text-xs">
+              <li>Full Cover (PDF, CMYK) — 20 MB limit</li>
+              <li>
+                Print Interior (PDF/A compliant, embedded fonts) — 10 MB limit
+              </li>
+              <li>Front Cover (JPG/PNG) — 2 MB limit</li>
+              <li>Back Cover (JPG/PNG) — 2 MB limit (optional)</li>
+            </ul>
+          </button>
+
+          <!-- PRINT ONLY -->
+          <button
+            type="button"
+            class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+            [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                tempForm.get('publishingType')?.value === 'ONLY_PRINT',
+              '!bg-white !text-primary fill-primary !border-primary':
+                tempForm.get('publishingType')?.value !== 'ONLY_PRINT'
+            }"
+            (click)="
+              tempForm
+                .get('publishingType')
+                ?.setValue(PublishingType.ONLY_PRINT)
+            "
+          >
+            <svg-icon class="fill-primary" src="images/print.svg"></svg-icon>
+            {{ "printbookonly" | translate }}
+            <br />
+            <ul class="list-disc pl-6 space-y-1 text-start !text-xs">
+              <li>Full Cover (PDF, CMYK) — 20 MB limit</li>
+              <li>
+                Print Interior (PDF/A compliant, embedded fonts) — 10 MB limit
+              </li>
+              <li>Front Cover (JPG/PNG) — 2 MB limit</li>
+              <li>Back Cover (JPG/PNG) — 2 MB limit (optional)</li>
+            </ul>
+          </button>
+
+          <!-- EBOOK ONLY -->
+          <button
+            type="button"
+            class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+            [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                tempForm.get('publishingType')?.value === 'ONLY_EBOOK',
+              '!bg-white !text-primary fill-primary !border-primary':
+                tempForm.get('publishingType')?.value !== 'ONLY_EBOOK'
+            }"
+            (click)="
+              tempForm
+                .get('publishingType')
+                ?.setValue(PublishingType.ONLY_EBOOK)
+            "
+          >
+            <svg-icon class="fill-primary" src="images/ebook.svg"></svg-icon>
+            {{ "ebookonly" | translate }}
+            <br />
+            <ul class="list-disc pl-6 space-y-1 text-start text-xs">
+              <li>
+                Print Interior (PDF/A compliant, embedded fonts) — 10 MB limit
+              </li>
+              <li>Front Cover (JPG/PNG) — 2 MB limit</li>
+              <li>Ms Word File for EBook</li>
+            </ul>
+          </button>
+        </div>
+
+        <!-- ========== STEP 2: Ask if files are ready ========== -->
+        @if(tempForm.get('publishingType')?.value) {
+        <h3 class="heading self-center !text-[1.6rem] !font-medium">
+          {{ "doyouhaveallfilesreadytoupload" | translate }}??
+        </h3>
+
+        <div class="grid grid-cols-2 gap-8">
+          <!-- YES BUTTON -->
+          <button
+            type="button"
+            class="btn border-2 !border-primary flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+            [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                tempForm.get('hasFiles')?.value === true,
+              '!bg-white !text-primary fill-primary !border-primary':
+                tempForm.get('hasFiles')?.value !== true
+            }"
+            (click)="onSelectDocumentsReady()"
+          >
+            <div class="flex justify-center">
+              <svg-icon
+                class="fill-primary flex w-20 self-end"
+                src="images/file-regular-full.svg"
+              ></svg-icon>
+              <svg-icon
+                class="fill-primary flex w-8 self-end mb-2"
+                src="images/circle-check-solid-full.svg"
+              ></svg-icon>
+            </div>
+            {{ "yesalldocumentsareready" | translate }}
+          </button>
+
+          <!-- NO BUTTON -->
+          <button
+            type="button"
+            class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+            [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                tempForm.get('hasFiles')?.value === false,
+              '!bg-white !text-primary fill-primary !border-primary':
+                tempForm.get('hasFiles')?.value !== false
+            }"
+            (click)="tempForm.get('hasFiles')?.setValue(false)"
+            [routerLink]="['/titles']"
+          >
+            <svg-icon
+              class="fill-primary flex w-20"
+              src="images/file-excel-regular-full.svg"
+            ></svg-icon>
+            {{ "noidonthavefilesready" | translate }}
+          </button>
+        </div>
+        } @if(tempForm.get('hasFiles')?.value === true) {
+        <h3 class="heading self-center !text-[1.6rem] !font-medium mt-10">
+          {{ "choosepublishingtype" | translate }}??
+        </h3>
+
+        <div class="grid grid-cols-2 gap-8" #scrollTarget>
+          <button
+            type="button"
+            class="btn border-2 !border-primary flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+            [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                tempForm.get('printingFormat')?.value === 'publish&print',
+              '!bg-white !text-primary fill-primary !border-primary':
+                tempForm.get('printingFormat')?.value !== 'publish&print'
+            }"
+            (click)="
+              tempForm.controls.printingFormat.patchValue('publish&print')
+            "
+            matStepperNext
+          >
+            <div class="flex justify-center">
+              <svg-icon
+                class="fill-primary flex w-20"
+                src="images/book-solid-full.svg"
+              ></svg-icon>
+              <svg-icon
+                class="fill-primary flex w-20"
+                src="images/print-solid-full.svg"
+              ></svg-icon>
+            </div>
+            {{ "publishprintdistributeandsellrecommended" | translate }}
+          </button>
+
+          <!-- Print Only -->
+          <button
+            type="button"
+            class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
+            [ngClass]="{
+              '!bg-primary !text-white !fill-white shadow-lg':
+                tempForm.get('printingFormat')?.value === 'printOnly',
+              '!bg-white !text-primary fill-primary !border-primary':
+                tempForm.get('printingFormat')?.value !== 'printOnly'
+            }"
+            (click)="tempForm.controls.printingFormat.setValue('printOnly')"
+            matStepperNext
+          >
+            <svg-icon
+              class="fill-primary flex w-20"
+              src="images/print-solid-full.svg"
+            ></svg-icon>
+            {{ "onlyprinting" | translate }}
+          </button>
+        </div>
+        }
+      </div>
+    </form>
+  </mat-step>
+  }
+
+  <!-- book detail step -->
+  <mat-step
+    [stepControl]="tempForm.controls.titleDetails"
+    label="Fill the Title Details"
+    [completed]="titleId"
+  >
+    <app-temp-book-details
+      [titleId]="titleId"
+      [titleDetailsGroup]="tempForm.controls.titleDetails"
+      [authorsList]="authorsList()"
+      [publishers]="publishers()"
+      [loggedInUser]="loggedInUser()"
+      [publishingType]="tempForm.controls.publishingType.value || null"
+      (onPublisherChangeChild)="onPublisherChangeChild($event)"
+      (onAuthorChangeChild)="onAuthorChangeChild($event)"
+    >
+    </app-temp-book-details>
+
+    <div class="flex justify-end">
+      <button
+        matButton="filled"
+        class="!bg-primary mt-8"
+        (click)="onTitleSubmit()"
+      >
+        Next
+      </button>
+    </div>
+  </mat-step>
+
+  <!-- media details step -->
+  <mat-step
+    [stepControl]="tempForm.controls.documentMedia"
+    label="Upload Documents"
+    [completed]="tempForm.controls.documentMedia.valid"
+  >
+    <form [formGroup]="tempForm">
+      <div formArrayName="documentMedia" class="grid gap-6">
+        @for(media of tempForm.controls.documentMedia.controls; track $index) {
+        <div
+          [formGroupName]="$index"
+          class="p-4 border rounded-lg shadow-md bg-gray-50 flex justify-between"
+        >
+          <div>
+            <div class="flex flex-col gap-4 items-start">
+              <label class="block font-semibold">
+                {{ getDocumentLabel(media.value.mediaType) }}
+                @if(isRequired(media.get('file'))) {
+                <span class="text-red-500">*</span>
+                }
+              </label>
+              <input
+                #fileInput
+                type="file"
+                class="block w-full text-sm text-gray-600"
+                (change)="onFileSelected($event, media)"
+                [accept]="getAcceptedTypes(media.value.type)"
+                [ngClass]="{
+                  hidden: media.value.url
+                }"
+              />
+              @if( media.value.url) {
+              <span>{{ media.value.name }}</span>
+              }
+              <button
+                matButton="filled"
+                class="px-4 py-2 !bg-primary text-white rounded-lg shadow hover:bg-primary/90 transition"
+                type="button"
+                (click)="fileInputs.get($index)?.nativeElement?.click()"
+              >
+                <mat-icon>upload</mat-icon>
+                Upload
+              </button>
+            </div>
+
+            <p class="text-xs text-gray-500 mt-4">
+              {{ getHelperText(media.value.type || "") }}
+            </p>
+          </div>
+
+          <div class="self-center flex">
+            @if(media.value.url && media.value.type !== 'INTERIOR' &&
+            media.value.mediaType !== 'FULL_COVER' ) {
+            <div class="border rounded p-2 inline-block bg-white shadow-sm">
+              <img
+                [src]="media.value.url"
+                alt="preview"
+                class="h-32 object-contain rounded"
+              />
+            </div>
+            } @if(media.get('url')?.value && (media.get('type')?.value ===
+            'INTERIOR' || media.value.type === 'FULL_COVER')) {
+            <mat-card
+              class="flex !flex-row !items-center !gap-4 p-3 bg-gray-50 shadow-sm rounded-md"
+            >
+              <mat-icon color="warn">picture_as_pdf</mat-icon>
+              <div>
+                <p class="text-sm font-medium text-gray-800">
+                  {{ media.get("name")?.value }}
+                </p>
+                <p class="text-xs text-gray-500">
+                  @if ( (media.get("file")?.value)) {
+                  {{
+                    (media.get("file")?.value?.size || 0) / 1024 / 1024
+                      | number : "1.1-1"
+                  }}
+                  MB } @else if (media.get("size")?.value) {
+                  {{ media.get("size")?.value || 0 }} MB }
+                </p>
+              </div>
+              <button
+                mat-icon-button
+                color="warn"
+                class="!bg-accent"
+                (click)="removeFile($index)"
+                aria-label="Remove PDF"
+              >
+                <mat-icon class="!fill-red">delete</mat-icon>
+              </button>
+            </mat-card>
+            }
+          </div>
+        </div>
+        }
+      </div>
+      <div class="mt-6 flex justify-end">
+        <button
+          (click)="onMediaUpload()"
+          matButton="filled"
+          class="px-6 py-2 !bg-primary text-white rounded-lg shadow"
+        >
+          Next
+        </button>
+      </div>
+    </form>
+  </mat-step>
+
+  <!-- printing details step -->
+  @if(tempForm.controls.publishingType.value !== PublishingType.ONLY_EBOOK) {
+  <mat-step
+    [stepControl]="tempForm.controls.printing"
+    label="Print Details"
+    [completed]="tempForm.controls.printing.controls.id.value"
+  >
+    <app-temp-title-printing
+      [printingGroup]="tempForm.controls.printing"
+      [documentMedia]="tempForm.controls.documentMedia"
+    ></app-temp-title-printing>
+    <div class="flex justify-end">
+      <button
+        class="!bg-primary"
+        matButton="filled"
+        (click)="savePrintingDraft()"
+      >
+        Next
+      </button>
+    </div>
+  </mat-step>
+  } @if (tempForm.controls.printingFormat.value !== 'printOnly') {
+  <mat-step
+    [stepControl]="tempForm.controls.pricing"
+    label="Pricing"
+    [completed]="titleId && tempForm.controls.pricing.valid"
+  >
+    <app-temp-pricing
+      [pricingControls]="tempForm.controls.pricing"
+      [msp]="tempForm.controls.printing.controls.msp.value || 0"
+    ></app-temp-pricing>
+
+    <div class="flex justify-end">
+      <button
+        class="!bg-primary"
+        matButton="filled"
+        (click)="onPricingSubmit()"
+      >
+        Next
+      </button>
+    </div>
+  </mat-step>
+
+  <mat-step
+    [stepControl]="tempForm.controls.royalties"
+    label="Royalty"
+    [completed]="titleId && tempForm.controls.royalties.valid"
+  >
+    <app-temp-royalties
+      [royaltiesController]="tempForm.controls.royalties"
+      [pricingController]="tempForm.controls.pricing"
+      [authors]="authorsSignal()"
+      [publisher]="publisherSignal()"
+    >
+    </app-temp-royalties>
+    <div class="flex justify-end">
+      <button
+        (click)="saveRoyalties()"
+        class="!bg-primary mt-2"
+        matButton="filled"
+      >
+        Next
+      </button>
+    </div>
+  </mat-step>
+
+  <mat-step
+    [stepControl]="tempForm.controls.distribution"
+    label="Distribution"
+    [completed]="titleId && tempForm.controls.distribution.valid"
+  >
+    <app-temp-title-distribution
+      [distributionControl]="tempForm.controls.distribution"
+      (onClickPurchasePoint)="onClickPurchasePoint($event)"
+    ></app-temp-title-distribution>
+    <div class="flex justify-end">
+      <button
+        (click)="onDistributionSubmit()"
+        class="!bg-primary mt-2"
+        matButton="filled"
+      >
+        {{ "uploadtitle" | translate }}
+      </button>
+    </div>
+  </mat-step>
+  }
+</mat-stepper>
+

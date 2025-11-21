@@ -197,6 +197,16 @@
       >
         <mat-icon class="!text-white">visibility</mat-icon>
       </button>
+      @if(loggedInUser()?.accessLevel === 'PUBLISHER' && element.status === 'APPROVED') {
+      <button
+        class="!bg-primary"
+        mat-icon-button
+        [routerLink]="['/title', element.id]"
+        [title]="'raiseupdateticket' | translate"
+      >
+        <mat-icon class="!text-white">support_agent</mat-icon>
+      </button>
+      } @else if(loggedInUser()?.accessLevel !== 'PUBLISHER' || element.status !== 'APPROVED') {
       <button
         class="!bg-primary"
         mat-icon-button
@@ -204,6 +214,7 @@
       >
         <mat-icon class="!text-white">edit</mat-icon>
       </button>
+      }
       @if(loggedInUser()?.accessLevel === 'SUPERADMIN') { @if (element.status
       === 'PENDING') {
       <button
