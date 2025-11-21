@@ -183,11 +183,32 @@ export class TitleService {
     }
   }
 
+  async createOrUpdateGenre(data: createOrUpdateCategory) {
+    try {
+      const method = data.id ? 'patch' : 'post';
+      const url = data.id ? `genre/${data.id}` : 'genre';
+      return this.loader.loadPromise(
+        this.server[method]<TitleCategory>(url, data)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
   async deleteCategory(id: number) {
     try {
       return await this.loader.loadPromise(
         this.server.delete(`category/${id}`)
       );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+  async deleteGenre(id: number) {
+    try {
+      return await this.loader.loadPromise(this.server.delete(`genre/${id}`));
     } catch (error) {
       this.logger.logError(error);
       throw error;

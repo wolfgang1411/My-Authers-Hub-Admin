@@ -14,6 +14,7 @@ import { PrintingCalculator } from '../../components/printing-calculator/printin
 import { MatTabsModule } from '@angular/material/tabs';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { TitleConfigComponent } from '../../components/title-config/title-config';
+import { TitleSetting } from '../title-setting/title-setting';
 
 @Component({
   selector: 'app-settings',
@@ -22,6 +23,7 @@ import { TitleConfigComponent } from '../../components/title-config/title-config
     MatTabsModule,
     SharedModule,
     TitleConfigComponent,
+    TitleSetting,
   ],
   templateUrl: './settings.html',
   styleUrl: './settings.css',
