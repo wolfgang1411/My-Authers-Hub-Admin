@@ -4,7 +4,7 @@ import { Author } from './Authors';
 import { Booking } from './Booking';
 import { ISBN } from './Isbn';
 import { Publishers } from './Publishers';
-import { Royalty, RoyaltyFormGroup } from './Royalty';
+import { Royalty, RoyaltyFormGroup, UpdateRoyalty } from './Royalty';
 import { User } from './user';
 import { Media, TitleMediaGroup } from './Media';
 import {
@@ -495,4 +495,125 @@ export interface TitleDistributionFilter {
   publisherIds?: number | number[];
   titleIds?: number | number[];
   authorIds?: number | number[];
+}
+
+// Update Ticket Interfaces
+export interface TitleUpdateTicket {
+  id: number;
+  titleId: number;
+  userId: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  name?: string;
+  subTitle?: string;
+  isbnPrint?: string;
+  isbnEbook?: string;
+  publishingType?: string;
+  subject?: string;
+  language?: string;
+  longDescription?: string;
+  shortDescription?: string;
+  edition?: string;
+  categoryId?: number;
+  subCategoryId?: number;
+  tradeCategoryId?: number;
+  genreId?: number;
+  keywords?: string;
+  printingOnly?: boolean;
+  authorIds?: any[];
+  title?: Title;
+  user?: User;
+  approvedBy?: User;
+  createdAt: string;
+  updatedAt: string;
+  approveAt?: string;
+}
+
+export interface TitlePrintingUpdateTicket {
+  id: number;
+  titleId: number;
+  userId: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  bindingTypeId?: number;
+  colorPages?: number;
+  isColorPagesRandom?: boolean;
+  insideCover?: boolean;
+  laminationTypeId?: number;
+  paperType?: PaperType;
+  paperQuailtyId?: number;
+  sizeCategoryId?: number;
+  customPrintCost?: number;
+  customDeliveryCharges?: number;
+  title?: Title;
+  user?: User;
+  approvedBy?: User;
+  createdAt: string;
+  updatedAt: string;
+  approvedAt?: string;
+}
+
+export interface PricingUpdateTicket {
+  id: number;
+  titleId: number;
+  userId: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  data: PricingCreate[];
+  title?: Title;
+  user?: User;
+  approvedBy?: User;
+  createdAt: string;
+  updatedAt: string;
+  approvedAt?: string;
+}
+
+export interface RoyaltyUpdateTicket {
+  id: number;
+  titleId: number;
+  userId: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  data: UpdateRoyalty[];
+  title?: Title;
+  user?: User;
+  approvedBy?: User;
+  createdAt: string;
+  updatedAt: string;
+  approvedAt?: string;
+}
+
+export interface TitleMediaUpdateTicket {
+  id: number;
+  titleId: number;
+  userId: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  name: string;
+  type: TitleMediaType;
+  noOfPages: number;
+  title?: Title;
+  user?: User;
+  approvedBy?: User;
+  createdAt: string;
+  updatedAt: string;
+  approvedAt?: string;
+}
+
+export interface TitleDistributionUpdateTicket {
+  id: number;
+  titleId: number;
+  userId: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  distributions: DistributionType[];
+  title?: Title;
+  user?: User;
+  approvedBy?: User;
+  createdAt: string;
+  updatedAt: string;
+  approvedAt?: string;
+}
+
+export interface UpdateTicketFilter {
+  itemsPerPage?: number;
+  page?: number;
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  titleId?: number;
+  userId?: number;
+  searchStr?: string;
 }

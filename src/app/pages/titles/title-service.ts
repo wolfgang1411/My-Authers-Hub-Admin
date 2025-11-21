@@ -18,10 +18,16 @@ import {
   TitleCreate,
   TitleDistribution,
   TitleDistributionFilter,
+  TitleDistributionUpdateTicket,
   TitleFilter,
   TitleGenre,
+  TitleMediaUpdateTicket,
   TitlePricing,
   TitlePrinting,
+  TitlePrintingUpdateTicket,
+  TitleUpdateTicket,
+  PricingUpdateTicket,
+  RoyaltyUpdateTicket,
 } from '../../interfaces/Titles';
 import { Logger } from '../../services/logger';
 import { LoaderService } from '../../services/loader';
@@ -444,6 +450,205 @@ export class TitleService {
         type: data.type,
         autoDeleteOldIfExisit: true,
       });
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  // Update Ticket Methods
+  async getTitleUpdateTickets(filter?: any) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<TitleUpdateTicket>>('title-update-ticket', filter)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async getTitlePrintingUpdateTickets(filter?: any) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<TitlePrintingUpdateTicket>>('title-printing-update-ticket', filter)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async getPricingUpdateTickets(filter?: any) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<PricingUpdateTicket>>('pricing-update-ticket', filter)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async getRoyaltyUpdateTickets(filter?: any) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<RoyaltyUpdateTicket>>('royalty-update-ticket', filter)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async getTitleMediaUpdateTickets(filter?: any) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<TitleMediaUpdateTicket>>('title-media-update-ticket', filter)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async getTitleDistributionUpdateTickets(filter?: any) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<TitleDistributionUpdateTicket>>('title-distribution-update-ticket', filter)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async approveTitleUpdateTicket(id: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get(`title-update-ticket/${id}/approve`)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async rejectTitleUpdateTicket(id: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get(`title-update-ticket/${id}/reject`)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async approveTitlePrintingUpdateTicket(id: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get(`title-printing-update-ticket/${id}/approve`)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async rejectTitlePrintingUpdateTicket(id: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get(`title-printing-update-ticket/${id}/reject`)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async approvePricingUpdateTicket(id: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get(`pricing-update-ticket/${id}/approve`)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async rejectPricingUpdateTicket(id: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get(`pricing-update-ticket/${id}/reject`)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async approveRoyaltyUpdateTicket(id: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get(`royalty-update-ticket/${id}/approve`)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async rejectRoyaltyUpdateTicket(id: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get(`royalty-update-ticket/${id}/reject`)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async approveTitleMediaUpdateTicket(id: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get(`title-media-update-ticket/${id}/approve`)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async rejectTitleMediaUpdateTicket(id: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get(`title-media-update-ticket/${id}/reject`)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async approveTitleDistributionUpdateTicket(id: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get(`title-distribution-update-ticket/${id}/approve`)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async rejectTitleDistributionUpdateTicket(id: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get(`title-distribution-update-ticket/${id}/reject`)
+      );
     } catch (error) {
       this.logger.logError(error);
       throw error;
