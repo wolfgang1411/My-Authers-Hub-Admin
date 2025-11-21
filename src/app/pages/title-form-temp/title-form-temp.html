@@ -254,7 +254,11 @@
         class="!bg-primary mt-8"
         (click)="onTitleSubmit()"
       >
-        Next
+        @if(isRaisingTicket()) {
+          {{ "raiseticket" | translate }}
+        } @else {
+          {{ "next" | translate }}
+        }
       </button>
     </div>
   </mat-step>
@@ -360,7 +364,11 @@
           matButton="filled"
           class="px-6 py-2 !bg-primary text-white rounded-lg shadow"
         >
-          Next
+          @if(isRaisingTicket()) {
+            {{ "raiseticket" | translate }}
+          } @else {
+            {{ "next" | translate }}
+          }
         </button>
       </div>
     </form>
@@ -383,7 +391,11 @@
         matButton="filled"
         (click)="savePrintingDraft()"
       >
-        Next
+        @if(isRaisingTicket()) {
+          {{ "raiseticket" | translate }}
+        } @else {
+          {{ "next" | translate }}
+        }
       </button>
     </div>
   </mat-step>
@@ -404,7 +416,11 @@
         matButton="filled"
         (click)="onPricingSubmit()"
       >
-        Next
+        @if(isRaisingTicket()) {
+          {{ "raiseticket" | translate }}
+        } @else {
+          {{ "next" | translate }}
+        }
       </button>
     </div>
   </mat-step>
@@ -427,7 +443,11 @@
         class="!bg-primary mt-2"
         matButton="filled"
       >
-        Next
+        @if(isRaisingTicket()) {
+          {{ "raiseticket" | translate }}
+        } @else {
+          {{ "next" | translate }}
+        }
       </button>
     </div>
   </mat-step>
@@ -447,7 +467,11 @@
         class="!bg-primary mt-2"
         matButton="filled"
       >
-        {{ "uploadtitle" | translate }}
+        @if(isRaisingTicket()) {
+          {{ "raiseticket" | translate }}
+        } @else {
+          {{ "uploadtitle" | translate }}
+        }
       </button>
     </div>
   </mat-step>

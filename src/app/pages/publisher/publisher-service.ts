@@ -12,6 +12,7 @@ import { Invite } from '../../interfaces/Invite';
 import { Logger } from '../../services/logger';
 import { LoaderService } from '../../services/loader';
 import { Distribution } from '../../interfaces/Distribution';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root',
@@ -35,7 +36,10 @@ export class PublisherService {
         !showLoader
       );
     } catch (error) {
-      this.logger.logError(error);
+      const errorToLog = error instanceof HttpErrorResponse && error.status !== 500 
+        ? error.error 
+        : error;
+      this.logger.logError(errorToLog);
       throw error;
     }
   }
@@ -46,7 +50,10 @@ export class PublisherService {
         this.server.get<Publishers>(`publishers/${id}`)
       );
     } catch (error) {
-      this.logger.logError(error);
+      const errorToLog = error instanceof HttpErrorResponse && error.status !== 500 
+        ? error.error 
+        : error;
+      this.logger.logError(errorToLog);
       throw error;
     }
   }
@@ -60,7 +67,10 @@ export class PublisherService {
         )
       );
     } catch (error) {
-      this.logger.logError(error);
+      const errorToLog = error instanceof HttpErrorResponse && error.status !== 500 
+        ? error.error 
+        : error;
+      this.logger.logError(errorToLog);
       throw error;
     }
   }
@@ -75,7 +85,10 @@ export class PublisherService {
         })
       );
     } catch (error) {
-      this.logger.logError(error);
+      const errorToLog = error instanceof HttpErrorResponse && error.status !== 500 
+        ? error.error 
+        : error;
+      this.logger.logError(errorToLog);
       throw error;
     }
   }
@@ -85,7 +98,10 @@ export class PublisherService {
         this.server.post('publishers/invite', invite)
       );
     } catch (error) {
-      this.logger.logError(error);
+      const errorToLog = error instanceof HttpErrorResponse && error.status !== 500 
+        ? error.error 
+        : error;
+      this.logger.logError(errorToLog);
       throw error;
     }
   }
@@ -100,7 +116,10 @@ export class PublisherService {
         })
       );
     } catch (error) {
-      this.logger.logError(error);
+      const errorToLog = error instanceof HttpErrorResponse && error.status !== 500 
+        ? error.error 
+        : error;
+      this.logger.logError(errorToLog);
       throw error;
     }
   }
@@ -111,7 +130,10 @@ export class PublisherService {
         this.server.post(`publishers/${publisherId}/reject`, {})
       );
     } catch (error) {
-      this.logger.logError(error);
+      const errorToLog = error instanceof HttpErrorResponse && error.status !== 500 
+        ? error.error 
+        : error;
+      this.logger.logError(errorToLog);
       throw error;
     }
   }
@@ -119,6 +141,7 @@ export class PublisherService {
   buyPublishingPoints(
     distributionType: DistributionType,
     points: number,
+    returnUrl:string,
     publisherId?: number
   ) {
     try {
@@ -131,10 +154,14 @@ export class PublisherService {
           distributionType,
           points,
           publisherId,
+          returnUrl
         })
       );
     } catch (error) {
-      this.logger.logError(error);
+      const errorToLog = error instanceof HttpErrorResponse && error.status !== 500 
+        ? error.error 
+        : error;
+      this.logger.logError(errorToLog);
       throw error;
     }
   }
@@ -147,7 +174,10 @@ export class PublisherService {
         })
       );
     } catch (error) {
-      this.logger.logError(error);
+      const errorToLog = error instanceof HttpErrorResponse && error.status !== 500 
+        ? error.error 
+        : error;
+      this.logger.logError(errorToLog);
       throw error;
     }
   }

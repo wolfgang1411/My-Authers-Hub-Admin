@@ -208,6 +208,121 @@ export class TitleService {
     }
   }
 
+  async createTitleUpdateTicket(
+    titleId: number,
+    titleDetails: Partial<TitleCreate>
+  ) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post(`title-update-ticket/title/${titleId}`, titleDetails)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async createTitlePrintingUpdateTicket(
+    titleId: number,
+    printingData: Partial<PrintingCreate>
+  ) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post(`title-printing-update-ticket/title/${titleId}`, printingData)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async createPricingUpdateTicket(
+    titleId: number,
+    pricingData: { data: PricingCreate[] }
+  ) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post(`pricing-update-ticket/title/${titleId}`, pricingData)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async createRoyaltyUpdateTicket(
+    titleId: number,
+    royaltyData: { royalties: UpdateRoyalty[] }
+  ) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post(`royalty-update-ticket/title/${titleId}`, royaltyData)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async createTitleMediaUpdateTicket(
+    titleId: number,
+    mediaData: { keyname: string; type: TitleMediaType }
+  ) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post(`title-media-update-ticket/${titleId}/medias`, mediaData)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async uploadMediaForUpdateTicket(
+    titleId: number,
+    data: { file: File; type: TitleMediaType }
+  ) {
+    try {
+      const { key, url } = await this.s3Service.getS3Url(
+        data.file.name,
+        data.file.type
+      );
+      await this.s3Service.putS3Object(url, data.file);
+      return await this.createTitleMediaUpdateTicket(titleId, {
+        keyname: key,
+        type: data.type,
+      });
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async uploadMultiMediaForUpdateTicket(
+    titleId: number,
+    data: { file: File; type: TitleMediaType }[]
+  ) {
+    return await Promise.all(
+      data.map((d) => this.uploadMediaForUpdateTicket(titleId, d))
+    );
+  }
+
+  async createTitleDistributionUpdateTicket(
+    titleId: number,
+    distributions: DistributionType[]
+  ) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post(`title-distribution-update-ticket/title/${titleId}`, {
+          distributions,
+        })
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
   async createOrUpdatePrinting(data: PrintingCreate) {
     try {
       const method = data.id ? 'patch' : 'post';

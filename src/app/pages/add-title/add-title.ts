@@ -1300,6 +1300,7 @@ export class AddTitle {
       const res = await this.publisherService.buyPublishingPoints(
         type,
         1,
+        '',
         publisherId
       );
       if (res.status === 'pending' && res.url) {

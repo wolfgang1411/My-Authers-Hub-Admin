@@ -1,5 +1,6 @@
 import {
   Component,
+  computed,
   effect,
   ElementRef,
   inject,
@@ -334,6 +335,15 @@ export class TitleFormTemp implements OnDestroy {
   publishers = signal<Publishers[]>([]);
   authorsList = signal<Author[]>([]);
   titleDetails = signal<Title | null>(null);
+
+  // Computed property to check if we should show "Raise Ticket" button
+  isRaisingTicket = computed(() => {
+    return (
+      this.titleId > 0 &&
+      this.titleDetails()?.status === TitleStatus.APPROVED &&
+      this.loggedInUser()?.accessLevel === 'PUBLISHER'
+    );
+  });
 
   private stepper = viewChild<MatStepper>('stepperForm');
 
@@ -1333,25 +1343,64 @@ export class TitleFormTemp implements OnDestroy {
       this.isLoading.set(true);
       this.errorMessage.set(null);
 
-      const res: { id: number } = await this.titleService.createTitle(basicData);
-      
+      // Check if title is approved and user is publisher - create update ticket instead
+      if (
+        this.titleId &&
+        this.titleDetails()?.status === TitleStatus.APPROVED &&
+        this.loggedInUser()?.accessLevel === 'PUBLISHER'
+      ) {
+        // Create update ticket for approved titles when user is publisher
+        await this.titleService.createTitleUpdateTicket(
+          this.titleId,
+          basicData
+        );
+
+        // Show success message
+        Swal.fire({
+          icon: 'success',
+          title: this.translateService.instant('success'),
+          text:
+            this.translateService.instant('updateticketrequestsent') ||
+            'Request has been sent to superadmin for approval.',
+        });
+
+        // Reset form to prefill with actual details
+        try {
+          const response = await this.titleService.getTitleById(this.titleId);
+          if (response) {
+            this.titleDetails.set(response);
+            this.prefillFormData(response);
+          }
+        } catch (reloadError) {
+          console.error('Error reloading title:', reloadError);
+          // Continue even if reload fails
+        }
+
+        return; // Don't proceed with normal update flow
+      }
+
+      // Normal create/update flow for non-approved titles or non-publishers
+      const res: { id: number } = await this.titleService.createTitle(
+        basicData
+      );
+
       if (!res?.id || isNaN(Number(res.id))) {
         throw new Error('Invalid response from server');
       }
 
       this.titleId = Number(res.id);
       this.isNewTitle = false;
-      
+
       // Update URL to include the title ID to prevent creating new title on refresh
       // When titleId changes, format step disappears, so adjust step if needed
       const currentStepName = this.currentStep();
       let targetStep = currentStepName || 'details';
-      
+
       // If we were on format step, move to details
       if (currentStepName === 'format') {
         targetStep = 'details';
       }
-      
+
       this.router.navigate(['/title', this.titleId], {
         replaceUrl: true,
         queryParams: {
@@ -1359,13 +1408,15 @@ export class TitleFormTemp implements OnDestroy {
           step: targetStep,
         },
       });
-      
+
       const stepperInstance = this.stepper();
       if (stepperInstance) {
         stepperInstance.next();
         // Update step in query params after navigation
         setTimeout(() => {
-          const newStepName = this.getStepNameFromIndex(stepperInstance.selectedIndex);
+          const newStepName = this.getStepNameFromIndex(
+            stepperInstance.selectedIndex
+          );
           if (newStepName) {
             this.currentStep.set(newStepName);
             this.updateStepInQueryParams(newStepName);
@@ -1375,13 +1426,15 @@ export class TitleFormTemp implements OnDestroy {
     } catch (error) {
       console.error('Error creating title:', error);
       this.errorMessage.set(
-        this.translateService.instant('errorcreatingtitle') || 
-        'Failed to create title. Please try again.'
+        this.translateService.instant('errorcreatingtitle') ||
+          'Failed to create title. Please try again.'
       );
       Swal.fire({
         icon: 'error',
         title: this.translateService.instant('error'),
-        text: this.errorMessage() || 'An error occurred while creating the title.',
+        text:
+          this.errorMessage() ||
+          'An error occurred while creating the title.',
       });
     } finally {
       this.isLoading.set(false);
@@ -1406,8 +1459,15 @@ export class TitleFormTemp implements OnDestroy {
       this.isLoading.set(true);
       this.errorMessage.set(null);
 
+      // Only upload files that have a new file selected (not already uploaded)
+      // A file is considered "new" if:
+      // 1. There's a file in the form control, AND
+      // 2. Either there's no id (new upload) or there's a file (replacement)
       const mediaToUpload = this.tempForm.controls.documentMedia.value
-        .filter(({ file, type }) => file && type)
+        .filter(({ file, type }) => {
+          // Only include if there's a file and type
+          return file && type;
+        })
         .map(({ file, type }) => ({
           file: file as File,
           type: type as TitleMediaType,
@@ -1422,6 +1482,68 @@ export class TitleFormTemp implements OnDestroy {
         return;
       }
 
+      // Check if raising ticket for approved title
+      if (this.isRaisingTicket()) {
+        // Upload media via update ticket API
+        const mediaResponse = await this.titleService.uploadMultiMediaForUpdateTicket(
+          this.titleId,
+          mediaToUpload
+        );
+
+        if (mediaResponse && Array.isArray(mediaResponse)) {
+          const interior = mediaResponse.find(
+            (item: any) => item?.type === TitleMediaType.INTERIOR
+          ) as any;
+          
+          if (interior?.noOfPages && typeof interior.noOfPages === 'number') {
+            this.tempForm.controls.printing.controls.totalPages.patchValue(
+              interior.noOfPages
+            );
+          }
+
+          // Clear file controls after successful upload to prevent duplicate uploads
+          // Update form with uploaded media data (id, url) and clear file
+          mediaResponse.forEach((uploadedMedia: any) => {
+            const mediaControl = this.tempForm.controls.documentMedia.controls.find(
+              (control) => control.controls.type.value === uploadedMedia.type
+            );
+            
+            if (mediaControl) {
+              mediaControl.patchValue({
+                id: uploadedMedia.id || mediaControl.controls.id.value,
+                url: uploadedMedia.url || mediaControl.controls.url.value,
+                name: uploadedMedia.name || mediaControl.controls.name.value,
+                file: null, // Clear file to prevent duplicate upload
+                noOfPages: uploadedMedia.noOfPages || mediaControl.controls.noOfPages.value,
+              });
+            }
+          });
+        }
+
+        // Show success message
+        Swal.fire({
+          icon: 'success',
+          title: this.translateService.instant('success'),
+          text:
+            this.translateService.instant('updateticketrequestsent') ||
+            'Request has been sent to superadmin for approval.',
+        });
+
+        // Reset form to prefill with actual details
+        try {
+          const response = await this.titleService.getTitleById(this.titleId);
+          if (response) {
+            this.titleDetails.set(response);
+            this.prefillFormData(response);
+          }
+        } catch (reloadError) {
+          console.error('Error reloading title:', reloadError);
+        }
+
+        return; // Don't proceed with normal flow
+      }
+
+      // Normal upload flow
       const mediaResponse = await this.titleService.uploadMultiMedia(
         this.titleId,
         mediaToUpload
@@ -1437,6 +1559,24 @@ export class TitleFormTemp implements OnDestroy {
             interior.noOfPages
           );
         }
+
+        // Clear file controls after successful upload to prevent duplicate uploads
+        // Update form with uploaded media data (id, url) and clear file
+        mediaResponse.forEach((uploadedMedia: any) => {
+          const mediaControl = this.tempForm.controls.documentMedia.controls.find(
+            (control) => control.controls.type.value === uploadedMedia.type
+          );
+          
+          if (mediaControl) {
+            mediaControl.patchValue({
+              id: uploadedMedia.id || mediaControl.controls.id.value,
+              url: uploadedMedia.url || mediaControl.controls.url.value,
+              name: uploadedMedia.name || mediaControl.controls.name.value,
+              file: null, // Clear file to prevent duplicate upload
+              noOfPages: uploadedMedia.noOfPages || mediaControl.controls.noOfPages.value,
+            });
+          }
+        });
       }
 
       if (
@@ -1527,6 +1667,37 @@ export class TitleFormTemp implements OnDestroy {
         return;
       }
 
+      // Check if raising ticket for approved title
+      if (this.isRaisingTicket()) {
+        // Create pricing update ticket
+        await this.titleService.createPricingUpdateTicket(this.titleId, {
+          data,
+        });
+
+        // Show success message
+        Swal.fire({
+          icon: 'success',
+          title: this.translateService.instant('success'),
+          text:
+            this.translateService.instant('updateticketrequestsent') ||
+            'Request has been sent to superadmin for approval.',
+        });
+
+        // Reset form to prefill with actual details
+        try {
+          const response = await this.titleService.getTitleById(this.titleId);
+          if (response) {
+            this.titleDetails.set(response);
+            this.prefillFormData(response);
+          }
+        } catch (reloadError) {
+          console.error('Error reloading title:', reloadError);
+        }
+
+        return; // Don't proceed with normal flow
+      }
+
+      // Normal update flow
       await this.titleService.createManyPricing(data, this.titleId);
       
       const publisher = this.publisherSignal();
@@ -1553,11 +1724,6 @@ export class TitleFormTemp implements OnDestroy {
         this.translateService.instant('errorsavingpricing') || 
         'Failed to save pricing. Please try again.'
       );
-      Swal.fire({
-        icon: 'error',
-        title: this.translateService.instant('error'),
-        text: this.errorMessage() || 'An error occurred while saving pricing.',
-      });
     } finally {
       this.isLoading.set(false);
     }
@@ -1584,32 +1750,54 @@ export class TitleFormTemp implements OnDestroy {
       ({ controls: { type } }) => type.value === TitleMediaType.INSIDE_COVER
     );
 
-    if (printing.controls.insideCover.value && !insideCoverMedia?.valid) {
-      Swal.fire({
-        icon: 'error',
-        title: this.translateService.instant('error'),
-        html: this.translateService.instant('missinginsicovermediaerror'),
-      });
-      return;
+    // Check if inside cover is enabled
+    const isInsideCoverEnabled = printing.controls.insideCover.value;
+    
+    // Check if inside cover already exists in the database (from existing printing data)
+    const existingInsideCover = this.titleDetails()?.printing?.[0]?.insideCover;
+    
+    // Validate: if inside cover is enabled, file or url must exist
+    if (isInsideCoverEnabled) {
+      const hasFile = insideCoverMedia?.controls?.file?.value;
+      const hasUrl = insideCoverMedia?.controls?.url?.value;
+      
+      if (!hasFile && !hasUrl) {
+        Swal.fire({
+          icon: 'error',
+          title: this.translateService.instant('error'),
+          html: this.translateService.instant('missinginsicovermediaerror') || 'Inside cover image is required when inside cover is enabled.',
+        });
+        return;
+      }
     }
 
     try {
       this.isLoading.set(true);
       this.errorMessage.set(null);
 
-      // Upload inside cover media if needed
+      // Upload inside cover media if needed (only if there's a new file to upload)
       if (
-        insideCoverMedia?.controls?.file?.value &&
-        printing.controls.insideCover.value
+        isInsideCoverEnabled &&
+        insideCoverMedia?.controls?.file?.value
       ) {
         try {
           await this.titleService.uploadMedia(this.titleId, {
             file: insideCoverMedia.controls.file.value,
             type: TitleMediaType.INSIDE_COVER,
           });
+          
+          // Clear file after successful upload to prevent duplicate uploads
+          insideCoverMedia.patchValue({
+            file: null,
+          });
         } catch (uploadError) {
           console.error('Error uploading inside cover media:', uploadError);
-          // Continue with printing save even if media upload fails
+          Swal.fire({
+            icon: 'error',
+            title: this.translateService.instant('error'),
+            text: this.translateService.instant('erroruploadingmedia') || 'Failed to upload inside cover media. Please try again.',
+          });
+          return;
         }
       }
 
@@ -1627,7 +1815,9 @@ export class TitleFormTemp implements OnDestroy {
         throw new Error('Invalid printing details');
       }
 
-      const createPrinting: PrintingCreate = {
+      // Build printing data
+      // Only include insideCover if it's being changed (not already true in database)
+      const basePrintingData = {
         id: printingDetails.id || undefined,
         titleId: Number(this.titleId),
         bindingTypeId: Number(printingDetails.bookBindingsId),
@@ -1638,10 +1828,161 @@ export class TitleFormTemp implements OnDestroy {
         paperQuailtyId: Number(printingDetails.paperQuailtyId),
         sizeCategoryId: Number(printingDetails.sizeCategoryId),
         customPrintCost: 0,
-        insideCover: printingDetails.insideCover || false,
         isColorPagesRandom: printingDetails.isColorPagesRandom || false,
       };
 
+      // Check if raising ticket for approved title
+      if (this.isRaisingTicket()) {
+        // For update ticket, use Partial and only include insideCover if it's being changed
+        const updateTicketData: Partial<PrintingCreate> = { ...basePrintingData };
+        
+        // Only include insideCover if it's being changed (not already true in database)
+        if (!existingInsideCover || isInsideCoverEnabled !== existingInsideCover) {
+          updateTicketData.insideCover = isInsideCoverEnabled;
+        }
+        
+        // Create printing update ticket
+        await this.titleService.createTitlePrintingUpdateTicket(
+          this.titleId,
+          updateTicketData
+        );
+
+        // Preserve current pricing values before reloading
+        const currentPricingValues = this.tempForm.controls.pricing.controls.map(
+          (control) => ({
+            id: control.controls.id.value,
+            platform: control.controls.platform.value,
+            mrp: control.controls.mrp.value,
+            salesPrice: control.controls.salesPrice.value,
+          })
+        );
+
+        // Preserve inside cover media state before reloading
+        const currentInsideCoverMedia = insideCoverMedia ? {
+          id: insideCoverMedia.controls.id.value,
+          url: insideCoverMedia.controls.url.value,
+          name: insideCoverMedia.controls.name.value,
+          file: insideCoverMedia.controls.file.value,
+          noOfPages: insideCoverMedia.controls.noOfPages.value,
+          size: insideCoverMedia.controls.size.value,
+        } : null;
+
+        // Show success message
+        Swal.fire({
+          icon: 'success',
+          title: this.translateService.instant('success'),
+          text:
+            this.translateService.instant('updateticketrequestsent') ||
+            'Request has been sent to superadmin for approval.',
+        });
+
+        // Reset form to prefill with actual details
+        try {
+          const response = await this.titleService.getTitleById(this.titleId);
+          if (response) {
+            this.titleDetails.set(response);
+            this.prefillFormData(response);
+            
+            // Update all media controls with data from response
+            if (response.media && Array.isArray(response.media)) {
+              response.media.forEach((mediaItem) => {
+                const mediaControl = this.tempForm.controls.documentMedia.controls.find(
+                  ({ controls: { type } }) => type.value === mediaItem.type
+                );
+                
+                if (mediaControl) {
+                  // Update existing control with response data
+                  mediaControl.patchValue({
+                    id: mediaItem.id || mediaControl.controls.id.value,
+                    url: mediaItem.url || mediaControl.controls.url.value,
+                    name: mediaItem.name || mediaControl.controls.name.value,
+                    noOfPages: mediaItem.noOfPages || mediaControl.controls.noOfPages.value,
+                  });
+                }
+              });
+            }
+            
+            // Ensure inside cover media control exists if insideCover is enabled
+            const isInsideCoverEnabledAfterReload = this.tempForm.controls.printing.controls.insideCover.value;
+            if (isInsideCoverEnabledAfterReload) {
+              let insideCoverMediaControl = this.tempForm.controls.documentMedia.controls.find(
+                ({ controls: { type } }) => type.value === TitleMediaType.INSIDE_COVER
+              );
+              
+              // If inside cover media control doesn't exist, create it
+              if (!insideCoverMediaControl) {
+                const insideCoverMediaFromResponse = response.media?.find(
+                  ({ type }) => type === TitleMediaType.INSIDE_COVER
+                );
+                insideCoverMediaControl = await this.createMedia(
+                  TitleMediaType.INSIDE_COVER,
+                  true,
+                  insideCoverMediaFromResponse
+                );
+                this.tempForm.controls.documentMedia.push(insideCoverMediaControl);
+              } else {
+                // Update existing control with response data if available
+                const insideCoverMediaFromResponse = response.media?.find(
+                  ({ type }) => type === TitleMediaType.INSIDE_COVER
+                );
+                if (insideCoverMediaFromResponse) {
+                  insideCoverMediaControl.patchValue({
+                    id: insideCoverMediaFromResponse.id || insideCoverMediaControl.controls.id.value,
+                    url: insideCoverMediaFromResponse.url || insideCoverMediaControl.controls.url.value,
+                    name: insideCoverMediaFromResponse.name || insideCoverMediaControl.controls.name.value,
+                    noOfPages: insideCoverMediaFromResponse.noOfPages || insideCoverMediaControl.controls.noOfPages.value,
+                  });
+                }
+              }
+              
+              // Restore inside cover media values if they existed before reloading (preserve user input)
+              if (currentInsideCoverMedia && insideCoverMediaControl) {
+                insideCoverMediaControl.patchValue({
+                  id: currentInsideCoverMedia.id || insideCoverMediaControl.controls.id.value,
+                  url: currentInsideCoverMedia.url || insideCoverMediaControl.controls.url.value,
+                  name: currentInsideCoverMedia.name || insideCoverMediaControl.controls.name.value,
+                  file: currentInsideCoverMedia.file || insideCoverMediaControl.controls.file.value,
+                  noOfPages: currentInsideCoverMedia.noOfPages || insideCoverMediaControl.controls.noOfPages.value,
+                  size: currentInsideCoverMedia.size || insideCoverMediaControl.controls.size.value,
+                });
+              }
+            }
+            
+            // Restore pricing values after reloading to prevent them from being cleared
+            if (currentPricingValues.length > 0) {
+              currentPricingValues.forEach((pricingValue) => {
+                const pricingControl = this.tempForm.controls.pricing.controls.find(
+                  (control) => control.controls.platform.value === pricingValue.platform
+                );
+                if (pricingControl && (pricingValue.mrp || pricingValue.salesPrice)) {
+                  pricingControl.patchValue({
+                    id: pricingValue.id,
+                    platform: pricingValue.platform,
+                    mrp: pricingValue.mrp,
+                    salesPrice: pricingValue.salesPrice,
+                  });
+                }
+              });
+            }
+          }
+        } catch (reloadError) {
+          console.error('Error reloading title:', reloadError);
+        }
+
+        return; // Don't proceed with normal flow
+      }
+
+      // Normal update flow
+      // For normal update, always include insideCover (required by interface)
+      // But only include it if it's being changed
+      const createPrinting: PrintingCreate = {
+        ...basePrintingData,
+        // Only include insideCover if it's being changed (not already true in database)
+        insideCover: (!existingInsideCover || isInsideCoverEnabled !== existingInsideCover) 
+          ? isInsideCoverEnabled 
+          : existingInsideCover || false,
+      };
+      
       const response = await this.titleService.createOrUpdatePrinting(
         createPrinting
       );
@@ -1681,11 +2022,6 @@ export class TitleFormTemp implements OnDestroy {
         this.translateService.instant('errorsavingprinting') || 
         'Failed to save printing details. Please try again.'
       );
-      Swal.fire({
-        icon: 'error',
-        title: this.translateService.instant('error'),
-        text: this.errorMessage() || 'An error occurred while saving printing details.',
-      });
     } finally {
       this.isLoading.set(false);
     }
@@ -1748,6 +2084,37 @@ export class TitleFormTemp implements OnDestroy {
         return;
       }
 
+      // Check if raising ticket for approved title
+      if (this.isRaisingTicket()) {
+        // Create royalty update ticket
+        await this.titleService.createRoyaltyUpdateTicket(this.titleId, {
+          royalties,
+        });
+
+        // Show success message
+        Swal.fire({
+          icon: 'success',
+          title: this.translateService.instant('success'),
+          text:
+            this.translateService.instant('updateticketrequestsent') ||
+            'Request has been sent to superadmin for approval.',
+        });
+
+        // Reset form to prefill with actual details
+        try {
+          const response = await this.titleService.getTitleById(this.titleId);
+          if (response) {
+            this.titleDetails.set(response);
+            this.prefillFormData(response);
+          }
+        } catch (reloadError) {
+          console.error('Error reloading title:', reloadError);
+        }
+
+        return; // Don't proceed with normal flow
+      }
+
+      // Normal update flow
       await this.titleService.createManyRoyalties(royalties, this.titleId);
 
       const stepperInstance = this.stepper();
@@ -1767,11 +2134,6 @@ export class TitleFormTemp implements OnDestroy {
         this.translateService.instant('errorsavingroyalties') || 
         'Failed to save royalties. Please try again.'
       );
-      Swal.fire({
-        icon: 'error',
-        title: this.translateService.instant('error'),
-        text: this.errorMessage() || 'An error occurred while saving royalties.',
-      });
     } finally {
       this.isLoading.set(false);
     }
@@ -1787,6 +2149,7 @@ export class TitleFormTemp implements OnDestroy {
       const res = await this.publisherService.buyPublishingPoints(
         type,
         1,
+        `title/${this.titleId}?step=distribution`,
         publisherId
       );
       if (res.status === 'pending' && res.url) {
@@ -1839,6 +2202,38 @@ export class TitleFormTemp implements OnDestroy {
       this.isLoading.set(true);
       this.errorMessage.set(null);
 
+      // Check if raising ticket for approved title
+      if (this.isRaisingTicket()) {
+        // Create distribution update ticket
+        await this.titleService.createTitleDistributionUpdateTicket(
+          this.titleId,
+          selectedDistributions
+        );
+
+        // Show success message
+        Swal.fire({
+          icon: 'success',
+          title: this.translateService.instant('success'),
+          text:
+            this.translateService.instant('updateticketrequestsent') ||
+            'Request has been sent to superadmin for approval.',
+        });
+
+        // Reset form to prefill with actual details
+        try {
+          const response = await this.titleService.getTitleById(this.titleId);
+          if (response) {
+            this.titleDetails.set(response);
+            this.prefillFormData(response);
+          }
+        } catch (reloadError) {
+          console.error('Error reloading title:', reloadError);
+        }
+
+        return; // Don't proceed with normal flow
+      }
+
+      // Normal update flow
       await this.titleService.createTitleDistribution(
         this.titleId,
         selectedDistributions
@@ -1857,11 +2252,6 @@ export class TitleFormTemp implements OnDestroy {
         this.translateService.instant('errorsubmittingdistribution') || 
         'Failed to submit distribution. Please try again.'
       );
-      Swal.fire({
-        icon: 'error',
-        title: this.translateService.instant('error'),
-        text: this.errorMessage() || 'An error occurred while submitting distribution.',
-      });
     } finally {
       this.isLoading.set(false);
     }

@@ -433,5 +433,11 @@
   "enterKeywords": "Enter Keywords",
   "papergsm": "Paper GSM",
   "selectsize": "Select Size",
-  "TitleSettings": "Title Settings"
+  "TitleSettings": "Title Settings",
+  "updateticketrequestsent": "Request has been sent to superadmin for approval.",
+  "updateticketcreated": "Update ticket has been created successfully.",
+  "updateticketfailed": "Failed to create update ticket. Please try again.",
+  "titleapprovedupdateticket": "This title is approved. An update ticket will be created for your changes.",
+  "raiseticket": "Raise Ticket",
+  "next": "Next"
 }
