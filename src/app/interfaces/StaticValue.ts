@@ -179,6 +179,7 @@ export enum TitleCategoryType {
   CATEGORY = 'CATEGORY',
   SUBCATEGORY = 'SUBCATEGORY',
   TRADE = 'TRADE',
+  GENRE = 'GENRE',
 }
 
 export enum TitleGenreStatus {

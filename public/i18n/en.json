@@ -411,7 +411,7 @@
   "INVENTORY": "Inventory",
   "ebookcodegeneratebymah": "Ebook Code Generate by MAH",
   "generateebookisbncode": "Generate Ebook code by MAH",
-  "SelectedDistrbutions" :"Selected Distrbutions",
+  "SelectedDistrbutions": "Selected Distrbutions",
   "raiseupdateticket": "Raise Update Ticket",
   "errorloadingtitle": "Failed to load title. Please try again.",
   "errorfetchingpublishingpoints": "Failed to fetch publishing points. Please try again.",
@@ -432,5 +432,6 @@
   "errorsubmittingdistribution": "Failed to submit distribution. Please try again.",
   "enterKeywords": "Enter Keywords",
   "papergsm": "Paper GSM",
-  "selectsize": "Select Size"
+  "selectsize": "Select Size",
+  "TitleSettings": "Title Settings"
 }
