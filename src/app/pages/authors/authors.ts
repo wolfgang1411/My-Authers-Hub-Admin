@@ -27,9 +27,9 @@ import { ChangePassword } from '../../components/change-password/change-password
 import { AuthService } from '../../services/auth';
 import { TranslateService } from '@ngx-translate/core';
 import { TitleService } from '../titles/title-service';
-import { MatMenuItem, MatMenuModule } from '@angular/material/menu';
-import { TransactionService } from '../../services/transaction';
+import { MatMenuModule } from '@angular/material/menu';
 import { SalesService } from '../../services/sales';
+import { AuthorTitleList } from '../../components/author-title-list/author-title-list';
 
 @Component({
   selector: 'app-authors',
@@ -43,7 +43,7 @@ import { SalesService } from '../../services/sales';
     MatFormFieldModule,
     MatSelectModule,
     MatMenuModule,
-    MatMenuItem,
+    AuthorTitleList,
   ],
   templateUrl: './authors.html',
   styleUrl: './authors.css',
@@ -65,6 +65,7 @@ export class Authors {
   authors = signal<Author[]>([]);
   authorTitles = signal<Record<string, any[]>>({});
   authorBooksSold = signal<Record<string, any[]>>({});
+
   publishers = signal<{ [id: number]: any }>({});
   displayedColumns: string[] = [
     'name',
@@ -92,7 +93,20 @@ export class Authors {
       bookssold: this.booksSoldMenu,
     });
   }
+  expandedAuthorId = signal<number | null>(null);
 
+  toggleExpand(id: number) {
+    if (this.expandedAuthorId() === id) {
+      this.expandedAuthorId.set(null);
+      return;
+    }
+    this.expandedAuthorId.set(id);
+    this.fetchTitlesByAuthor(id);
+  }
+  getAuthorNameById(id: number) {
+    const a = this.authors().find((x) => x.id === id);
+    return a ? a.user.firstName + ' ' + a.user.lastName : '';
+  }
   fetchAuthors(showLoader = true) {
     this.authorService
       .getAuthors(this.filter, showLoader)

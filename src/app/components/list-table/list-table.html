@@ -25,20 +25,6 @@
           context: { $implicit: element, column: column }
         "
       ></ng-container>
-      } @else if (menus()[column]) {
-      <div class="flex items-center gap-2">
-        <span [innerHTML]="element[column] ?? '-'"></span>
-        <button
-          class="!flex"
-          mat-icon-button
-          [matMenuTriggerFor]="menuTemplate"
-          [matMenuTriggerData]="{ element: element, column: column }"
-        >
-          <mat-icon class="!text-gray-600 text-base"
-            >keyboard_arrow_down</mat-icon
-          >
-        </button>
-      </div>
       } @else {
       <div [innerHTML]="element[column] ?? '-'"></div>
       }
@@ -58,12 +44,3 @@
   ></tr>
   <tr class="mat-row" *matNoDataRow></tr>
 </table>
-<mat-menu #menuTemplate="matMenu">
-  <ng-template matMenuContent let-element="element" let-column="column">
-    @if (menus()[column]) {
-    <ng-container
-      *ngTemplateOutlet="menus()[column]; context: { $implicit: element }"
-    ></ng-container>
-    }
-  </ng-template>
-</mat-menu>

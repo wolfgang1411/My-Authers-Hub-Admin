@@ -476,5 +476,7 @@
   "paperquality": "Paper Quality",
   "customprintcost": "Custom Print Cost",
   "customdeliverycharges": "Custom Delivery Charges",
-  "type": "Type"
+  "type": "Type",
+  "copiessold": "Copies Sold",
+  "royaltiesearned/totalsales": "Royalties Earned / Total Sales"
 }

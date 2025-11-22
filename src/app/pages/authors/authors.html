@@ -90,9 +90,17 @@
     [dataSource]="dataSource"
     [displayedColumns]="displayedColumns"
     [actionTemplate]="actionButtons"
-    [rowMenus]="authorRowMenus"
   >
   </app-list-table>
+
+  @for (author of dataSource.data; track author.id) { @if (expandedAuthorId()
+  === author.id) {
+  <tr class="w-full bg-white shadow-lg p-8">
+    <td colspan="100%" class="p-0">
+      <app-author-title-list [authorId]="author.id"></app-author-title-list>
+    </td>
+  </tr>
+  } }
   <ng-template #actionButtons let-element>
     <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
       <button
@@ -155,63 +163,21 @@
       >
         <mat-icon class="!text-white">lock_up</mat-icon>
       </button>
-      }
-    </div>
-  </ng-template>
-  <ng-template #numberOfTitlesMenu let-element>
-    <ul
-      class="min-w-[220px] max-h-[300px] overflow-y-auto p-2 mx-2 rounded-lg shadow-md bg-white flex flex-col"
-      (mouseenter)="fetchTitlesByAuthor(element.id)"
-    >
-      @if (authorTitles()[element.id]) { @for (title of
-      authorTitles()[element.id]; track $index) {
-      <li
-        mat-menu-item
-        class="text-sm w-full text-left px-4 py-2 !list-disc rounded-md hover:!bg-primary-superlight transition"
-        [ngClass]="{
-          'bg-primary-superlight': $index % 2 === 0,
-          'bg-white': $index % 2 !== 0
-        }"
-      >
-        <div class="flex flex-col">
-          <span>{{ title.name }}</span>
-          @if (publishers()[title.publisherId]) {
-          <span class="text-xs text-gray-500">
-            {{ publishers()[title.publisherId].name }}
-          </span>
-          }
-        </div>
-      </li>
-      } } @else {
-      <li class="text-sm opacity-70 px-4 py-2 text-center text-gray-500">
-        Loading...
-      </li>
-      }
-    </ul>
-  </ng-template>
 
-  <ng-template #booksSoldMenu let-element>
-    <ul
-      class="min-w-[220px] max-h-[300px] overflow-y-auto p-2 mx-2 rounded-lg shadow-md bg-white flex flex-col"
-      (mouseenter)="fetchEarningsByAuthor(element.id)"
-    >
-      @if (authorBooksSold()[element.id]) { @for (earning of
-      authorBooksSold()[element.id]; track $index) {
-      <li
-        mat-menu-item
-        class="text-sm w-full text-left px-4 py-2 !list-disc rounded-md hover:!bg-primary-superlight transition"
-        [ngClass]="{
-          'bg-primary-superlight': $index % 2 === 0,
-          'bg-white': $index % 2 !== 0
-        }"
-      >
-        {{ earning.royalty.title.name }}
-      </li>
-      } } @else {
-      <li class="text-sm opacity-70 px-4 py-2 text-center text-gray-500">
-        Loading...
-      </li>
       }
-    </ul>
+      <button
+        class="!bg-primary"
+        mat-icon-button
+        (click)="toggleExpand(element.id)"
+      >
+        <mat-icon class="!text-white">
+          {{
+            expandedAuthorId() === element.id
+              ? "keyboard_arrow_up"
+              : "keyboard_arrow_down"
+          }}
+        </mat-icon>
+      </button>
+    </div>
   </ng-template>
 </div>

@@ -87,6 +87,7 @@ export class PublisherDetails {
     'isbnPrint',
     'isbnEbook',
     'pages',
+    'copiessold',
     'royaltiesearned',
     'authors',
   ];
@@ -235,6 +236,7 @@ export class PublisherDetails {
               ? title.printing[0].totalPages
               : 'N/A',
 
+          copiessold: title.copiesSold,
           royaltiesearned: title.totalSales,
           authors:
             title.authors && title.authors.length

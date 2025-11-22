@@ -26,8 +26,6 @@ import { MatMenuTrigger } from '@angular/material/menu';
     MatTableModule,
     MatSortModule,
     MatIconModule,
-    MatMenuModule,
-    MatMenuTrigger,
   ],
   templateUrl: './list-table.html',
   styleUrl: './list-table.css',
@@ -38,19 +36,7 @@ export class ListTable implements AfterViewInit {
   @Input() dataSource!: MatTableDataSource<any>;
   @Input() actionTemplate!: TemplateRef<any>;
   @Input() cellTemplate?: TemplateRef<any>;
-  private readonly _defaultMenus = signal<Record<string, TemplateRef<any>>>({});
-  @Input() rowMenus!: Signal<Record<string, TemplateRef<any>>>;
   @ViewChild(MatSort) sort!: MatSort;
-  readonly menus = computed(() => {
-    const menusSignal = this.rowMenus ?? this._defaultMenus;
-    return menusSignal();
-  });
-
-  menuTrigger = signal<{ [key: string]: MatMenuTrigger | null }>({});
-  openMenu = signal<{ column: string; id: number | null }>({
-    column: '',
-    id: null,
-  });
 
   ngAfterViewInit() {
     setTimeout(() => {
@@ -68,18 +54,5 @@ export class ListTable implements AfterViewInit {
     ) {
       this.displayedColumns = Object.keys(this.dataSource.data[0]);
     }
-  }
-  toggleMenu(column: string, id: number) {
-    const current = this.openMenu();
-    this.openMenu.set(
-      current.column === column && current.id === id
-        ? { column: '', id: null }
-        : { column, id }
-    );
-  }
-
-  isMenuOpen(column: string, id: number): boolean {
-    const current = this.openMenu();
-    return current.column === column && current.id === id;
   }
 }
