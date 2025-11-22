@@ -754,18 +754,53 @@
                     {{ pid.uniqueIdentifier || "N/A" }}
                   </span>
                 </p>
-                <p>
+                <p class="flex gap-1 items-center">
                   <span class="font-medium text-[var(--text-heading)]">
                     Link:
                   </span>
                   @if(pid.distributionLink) {
-
-                  <a target="_blank" [href]="pid.distributionLink">
-                    {{ pid.distributionLink }}
-                  </a>
+                  <div class="flex items-center gap-1">
+                    <a target="_blank" [href]="pid.distributionLink">
+                      {{ pid.distributionLink }}
+                    </a>
+                    <button
+                      type="button"
+                      (click)="copyDistributionLink(pid.distributionLink)"
+                      title="Copy link"
+                      class="mt-1"
+                    >
+                      <mat-icon class="!text-base">content_copy</mat-icon>
+                    </button>
+                  </div>
                   } @else {
                   <span>N/A</span>
                   }
+                </p>
+                <p>
+                  <span class="font-medium text-[var(--text-heading)]">
+                    Total Sales:
+                  </span>
+
+                  <span>
+                    @if(pid.totalAmount) {
+                    {{ pid.sales }}
+                    } @else {
+                    <span>0</span>
+                    }
+                  </span>
+                </p>
+                <p>
+                  <span class="font-medium text-[var(--text-heading)]">
+                    Total Sales Amount:
+                  </span>
+
+                  <span>
+                    @if(pid.totalAmount) {
+                    {{ pid.totalAmount | currency }}
+                    } @else {
+                    <span>0</span>
+                    }
+                  </span>
                 </p>
               </div>
             </div>

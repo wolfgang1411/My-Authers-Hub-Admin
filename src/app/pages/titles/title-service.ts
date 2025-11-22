@@ -127,10 +127,10 @@ export class TitleService {
   }
 
   // Initialization logic can gp here if needed
-  async getTitleById(id: number) {
+  async getTitleById(id: number, showPlatformSales: boolean = false) {
     try {
       return await this.loader.loadPromise(
-        this.server.get<Title>(`titles/${id}`)
+        this.server.get<Title>(`titles/${id}`, { showPlatformSales })
       );
     } catch (error) {
       console.error(`Error fetching title with id ${id}:`, error);
@@ -255,7 +255,10 @@ export class TitleService {
   ) {
     try {
       return await this.loader.loadPromise(
-        this.server.post(`title-printing-update-ticket/title/${titleId}`, printingData)
+        this.server.post(
+          `title-printing-update-ticket/title/${titleId}`,
+          printingData
+        )
       );
     } catch (error) {
       this.logger.logError(error);
@@ -297,7 +300,10 @@ export class TitleService {
   ) {
     try {
       return await this.loader.loadPromise(
-        this.server.post(`title-media-update-ticket/${titleId}/medias`, mediaData)
+        this.server.post(
+          `title-media-update-ticket/${titleId}/medias`,
+          mediaData
+        )
       );
     } catch (error) {
       this.logger.logError(error);
@@ -481,7 +487,10 @@ export class TitleService {
   async getTitleUpdateTickets(filter?: any) {
     try {
       return await this.loader.loadPromise(
-        this.server.get<Pagination<TitleUpdateTicket>>('title-update-ticket', filter)
+        this.server.get<Pagination<TitleUpdateTicket>>(
+          'title-update-ticket',
+          filter
+        )
       );
     } catch (error) {
       this.logger.logError(error);
@@ -492,7 +501,10 @@ export class TitleService {
   async getTitlePrintingUpdateTickets(filter?: any) {
     try {
       return await this.loader.loadPromise(
-        this.server.get<Pagination<TitlePrintingUpdateTicket>>('title-printing-update-ticket', filter)
+        this.server.get<Pagination<TitlePrintingUpdateTicket>>(
+          'title-printing-update-ticket',
+          filter
+        )
       );
     } catch (error) {
       this.logger.logError(error);
@@ -503,7 +515,10 @@ export class TitleService {
   async getPricingUpdateTickets(filter?: any) {
     try {
       return await this.loader.loadPromise(
-        this.server.get<Pagination<PricingUpdateTicket>>('pricing-update-ticket', filter)
+        this.server.get<Pagination<PricingUpdateTicket>>(
+          'pricing-update-ticket',
+          filter
+        )
       );
     } catch (error) {
       this.logger.logError(error);
@@ -514,7 +529,10 @@ export class TitleService {
   async getRoyaltyUpdateTickets(filter?: any) {
     try {
       return await this.loader.loadPromise(
-        this.server.get<Pagination<RoyaltyUpdateTicket>>('royalty-update-ticket', filter)
+        this.server.get<Pagination<RoyaltyUpdateTicket>>(
+          'royalty-update-ticket',
+          filter
+        )
       );
     } catch (error) {
       this.logger.logError(error);
@@ -525,7 +543,10 @@ export class TitleService {
   async getTitleMediaUpdateTickets(filter?: any) {
     try {
       return await this.loader.loadPromise(
-        this.server.get<Pagination<TitleMediaUpdateTicket>>('title-media-update-ticket', filter)
+        this.server.get<Pagination<TitleMediaUpdateTicket>>(
+          'title-media-update-ticket',
+          filter
+        )
       );
     } catch (error) {
       this.logger.logError(error);
@@ -536,7 +557,10 @@ export class TitleService {
   async getTitleDistributionUpdateTickets(filter?: any) {
     try {
       return await this.loader.loadPromise(
-        this.server.get<Pagination<TitleDistributionUpdateTicket>>('title-distribution-update-ticket', filter)
+        this.server.get<Pagination<TitleDistributionUpdateTicket>>(
+          'title-distribution-update-ticket',
+          filter
+        )
       );
     } catch (error) {
       this.logger.logError(error);
