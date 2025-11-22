@@ -1,0 +1,259 @@
+<div class="p-6 max-w-6xl">
+  <h2 mat-dialog-title class="text-2xl font-bold mb-4">
+    {{ ("viewticket" | translate) || "View Ticket" }}
+  </h2>
+
+  <mat-dialog-content class="mat-typography">
+    @if (getTicketInfo(); as info) {
+    <div class="mb-6 space-y-4">
+      <!-- Ticket Information -->
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <h3 class="text-lg font-semibold mb-3">
+          {{ ("ticketinformation" | translate) || "Ticket Information" }}
+        </h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <span class="text-gray-600 font-medium">
+              {{ ("title" | translate) || "Title" }}:
+            </span>
+            <span class="ml-2">{{ info.title }}</span>
+          </div>
+          <div>
+            <span class="text-gray-600 font-medium">
+              {{ ("publisher" | translate) || "Publisher" }}:
+            </span>
+            <span class="ml-2">{{ info.publisher }}</span>
+          </div>
+          <div>
+            <span class="text-gray-600 font-medium">
+              {{ ("requestedBy" | translate) || "Requested By" }}:
+            </span>
+            <span class="ml-2">{{ info.requestedBy }}</span>
+          </div>
+          <div>
+            <span class="text-gray-600 font-medium">
+              {{ ("status" | translate) || "Status" }}:
+            </span>
+            <span
+              class="ml-2 px-2 py-1 rounded text-sm"
+              [ngClass]="{
+                'bg-yellow-100 text-yellow-800': info.status === 'PENDING',
+                'bg-green-100 text-green-800': info.status === 'APPROVED',
+                'bg-red-100 text-red-800': info.status === 'REJECTED'
+              }"
+            >
+              {{ info.status }}
+            </span>
+          </div>
+          <div>
+            <span class="text-gray-600 font-medium">
+              {{ ("createdAt" | translate) || "Created At" }}:
+            </span>
+            <span class="ml-2">{{ info.createdAt }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Changes Comparison -->
+      @if (data.ticketType === 'pricing') {
+      <!-- Pricing Changes -->
+      <div class="bg-white border rounded-lg p-4">
+        <h3 class="text-lg font-semibold mb-4">
+          {{ ("pricingchanges" | translate) || "Pricing Changes" }}
+        </h3>
+        @if (getPricingData(); as pricingData) {
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase"
+                >
+                  {{ ("platform" | translate) || "Platform" }}
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase"
+                >
+                  {{ ("oldvalue" | translate) || "Old Value" }}
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase"
+                >
+                  {{ ("newvalue" | translate) || "New Value" }}
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              @for (pricing of pricingData; track pricing.platform) {
+              <tr>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  {{ pricing.platform }}
+                </td>
+                <td class="px-4 py-3">
+                  @if (title?.pricing; as oldPricing) { @for (old of oldPricing;
+                  track old.id) { @if (old.platform === pricing.platform) {
+                  <div class="space-y-1">
+                    <div>MRP: {{ old.mrp }}</div>
+                    <div>MSP: {{ old.msp }}</div>
+                    <div>Sales Price: {{ old.salesPrice }}</div>
+                  </div>
+                  } } } @else {
+                  <span class="text-gray-400">N/A</span>
+                  }
+                </td>
+                <td class="px-4 py-3">
+                  <div class="space-y-1">
+                    <div>MRP: {{ pricing.mrp }}</div>
+                    <div>MSP: {{ pricing.msp }}</div>
+                    <div>Sales Price: {{ pricing.salesPrice }}</div>
+                  </div>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        }
+      </div>
+      } @else if (data.ticketType === 'royalty') {
+      <!-- Royalty Changes -->
+      <div class="bg-white border rounded-lg p-4">
+        <h3 class="text-lg font-semibold mb-4">
+          {{ ("royaltychanges" | translate) || "Royalty Changes" }}
+        </h3>
+        @if (getRoyaltyData(); as royaltyData) {
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase"
+                >
+                  {{ ("author" | translate) || "Author" }}
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase"
+                >
+                  {{ ("oldvalue" | translate) || "Old Value" }}
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase"
+                >
+                  {{ ("newvalue" | translate) || "New Value" }}
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              @for (royalty of royaltyData; track $index) {
+              <tr>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  {{ royalty.author?.firstName }} {{ royalty.author?.lastName }}
+                </td>
+                <td class="px-4 py-3">
+                  @if (title?.royalties; as oldRoyalties) { @for (old of
+                  oldRoyalties; track old.id) { @if (old.authorId ===
+                  royalty.authorId) {
+                  <div class="space-y-1">
+                    <div>Percentage: {{ old.percentage }}%</div>
+                  </div>
+                  } } } @else {
+                  <span class="text-gray-400">N/A</span>
+                  }
+                </td>
+                <td class="px-4 py-3">
+                  <div class="space-y-1">
+                    <div>Percentage: {{ royalty.percentage }}%</div>
+                  </div>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        }
+      </div>
+      } @else {
+      <!-- Standard Changes Comparison -->
+      @if (hasChanges()) {
+      <div class="bg-white border rounded-lg p-4">
+        <h3 class="text-lg font-semibold mb-4">
+          {{ ("changes" | translate) || "Changes" }}
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase"
+                >
+                  {{ ("field" | translate) || "Field" }}
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase"
+                >
+                  {{ ("oldvalue" | translate) || "Old Value" }}
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase"
+                >
+                  {{ ("newvalue" | translate) || "New Value" }}
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              @for (change of changes; track change.label) {
+              <tr>
+                <td class="px-4 py-3 whitespace-nowrap font-medium">
+                  {{ change.label }}
+                </td>
+                <td class="px-4 py-3">
+                  <span
+                    class="px-2 py-1 rounded"
+                    [ngClass]="{
+                      'bg-red-100 text-red-800':
+                        formatValue(change.oldValue) !==
+                        formatValue(change.newValue)
+                    }"
+                  >
+                    {{ formatValue(change.oldValue) }}
+                  </span>
+                </td>
+                <td class="px-4 py-3">
+                  <span
+                    class="px-2 py-1 rounded"
+                    [ngClass]="{
+                      'bg-green-100 text-green-800':
+                        formatValue(change.oldValue) !==
+                        formatValue(change.newValue)
+                    }"
+                  >
+                    {{ formatValue(change.newValue) }}
+                  </span>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+      } @else {
+      <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <p class="text-yellow-800">
+          {{ ("nochanges" | translate) || "No changes found" }}
+        </p>
+      </div>
+      } }
+    </div>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="mt-4">
+    <button
+      mat-button
+      (click)="onClose()"
+      class="!bg-gray-200 !text-gray-800 hover:!bg-gray-300"
+    >
+      {{ ("close" | translate) || "Close" }}
+    </button>
+  </mat-dialog-actions>
+</div>

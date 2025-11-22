@@ -48,10 +48,19 @@ export const routes: Routes = [
   {
     path: 'title/:titleId',
     loadComponent: () =>
-      import('./pages/title-form-temp/title-form-temp').then((c) => c.TitleFormTemp),
+      import('./pages/title-form-temp/title-form-temp').then(
+        (c) => c.TitleFormTemp
+      ),
     canActivate: [privateRouteGuard],
   },
-
+  {
+    path: 'title-update-tickets',
+    loadComponent: () =>
+      import('./pages/update-title-ticket/update-title-ticket').then(
+        (c) => c.UpdateTitleTicket
+      ),
+    canActivate: [privateRouteGuard],
+  },
   {
     path: 'titles',
     loadComponent: () => import('./pages/titles/titles').then((c) => c.Titles),

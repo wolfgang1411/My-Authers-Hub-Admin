@@ -56,6 +56,16 @@
         matButton
         matButton="filled"
         class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        [routerLink]="['/title-update-tickets']"
+        routerLinkActive="router-link-active"
+      >
+        <mat-icon class="material-icons">support_agent</mat-icon>
+        {{ "updatetickets" | translate }}
+      </button>
+      <button
+        matButton
+        matButton="filled"
+        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
         [routerLink]="['/title', 0]"
         routerLinkActive="router-link-active"
       >
@@ -197,7 +207,8 @@
       >
         <mat-icon class="!text-white">visibility</mat-icon>
       </button>
-      @if(loggedInUser()?.accessLevel === 'PUBLISHER' && element.status === 'APPROVED') {
+      @if(loggedInUser()?.accessLevel === 'PUBLISHER' && element.status ===
+      'APPROVED') {
       <button
         class="!bg-primary"
         mat-icon-button
@@ -206,7 +217,8 @@
       >
         <mat-icon class="!text-white">support_agent</mat-icon>
       </button>
-      } @else if(loggedInUser()?.accessLevel !== 'PUBLISHER' || element.status !== 'APPROVED') {
+      } @else if(loggedInUser()?.accessLevel !== 'PUBLISHER' || element.status
+      !== 'APPROVED') {
       <button
         class="!bg-primary"
         mat-icon-button
@@ -214,8 +226,7 @@
       >
         <mat-icon class="!text-white">edit</mat-icon>
       </button>
-      }
-      @if(loggedInUser()?.accessLevel === 'SUPERADMIN') { @if (element.status
+      } @if(loggedInUser()?.accessLevel === 'SUPERADMIN') { @if (element.status
       === 'PENDING') {
       <button
         (click)="onClickApprove(element)"
