@@ -46,7 +46,6 @@ import { stat } from 'fs';
     MatButton,
     MatIconModule,
     MatDialogModule,
-    MatOption,
     MatSelectModule,
     MatFormFieldModule,
     MatIconButton,

@@ -411,7 +411,6 @@
   "INVENTORY": "Inventory",
   "ebookcodegeneratebymah": "Ebook Code Generate by MAH",
   "generateebookisbncode": "Generate Ebook code by MAH",
-  "SelectedDistrbutions": "Selected Distrbutions",
   "raiseupdateticket": "Raise Update Ticket",
   "errorloadingtitle": "Failed to load title. Please try again.",
   "errorfetchingpublishingpoints": "Failed to fetch publishing points. Please try again.",
@@ -433,13 +432,12 @@
   "enterKeywords": "Enter Keywords",
   "papergsm": "Paper GSM",
   "selectsize": "Select Size",
-  "TitleSettings": "Title Settings",
   "updateticketrequestsent": "Request has been sent to superadmin for approval.",
   "updateticketcreated": "Update ticket has been created successfully.",
   "updateticketfailed": "Failed to create update ticket. Please try again.",
   "titleapprovedupdateticket": "This title is approved. An update ticket will be created for your changes.",
   "raiseticket": "Raise Ticket",
-  "next": "Next"
+  "next": "Next",
   "SelectedDistrbutions" :"Selected Distrbutions",
   "TitleSettings":"Title Settings",
   "titlesettings":"Title Settings"
