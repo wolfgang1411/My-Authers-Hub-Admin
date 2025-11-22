@@ -77,6 +77,20 @@ export class Payouts implements OnInit {
           payout.user.publisher?.bankDetails?.[0]?.ifsc ||
           payout.user.auther?.bankDetails?.[0]?.ifsc;
 
+        const status = (() => {
+          switch (payout.status) {
+            case 'PAID':
+              return 'Added to wallet';
+            case 'PENDING':
+              return 'On Hold';
+            case 'APPROVED':
+              return 'Approved';
+            case 'REJECTED':
+              return 'Rejected';
+          }
+          return 'Pending';
+        })();
+
         return {
           ...payout,
           orderid: '#' + payout.id,
@@ -85,6 +99,7 @@ export class Payouts implements OnInit {
           accountNo: accountNo,
           ifscCode: ifscCode,
           amount: payout.requestedAmount + ' ' + 'INR',
+          status,
         };
       }) || [];
   }
