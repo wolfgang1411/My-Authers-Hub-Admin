@@ -102,7 +102,6 @@ export class TitleSummary {
     return royalties.reduce((sum, r) => sum + (r.percentage || 0), 0);
   }
 
-<<<<<<< Updated upstream
   getPriceByPlatform(platform: PlatForm): any | null {
     const prices = this.titleDetails()?.pricing ?? [];
     return prices.find((p: any) => p.platform === platform) || null;
@@ -119,7 +118,8 @@ export class TitleSummary {
     if (!price || !price.salesPrice) return 0;
 
     return (percentage / 100) * price.salesPrice;
-=======
+  }
+
   async copyDistributionLink(link: string): Promise<void> {
     try {
       await navigator.clipboard.writeText(link);
@@ -144,6 +144,5 @@ export class TitleSummary {
         position: 'top-end',
       });
     }
->>>>>>> Stashed changes
   }
 }
