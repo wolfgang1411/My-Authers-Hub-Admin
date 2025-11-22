@@ -416,236 +416,232 @@
           Pricing & Royalty
         </h3>
 
-        <div>
-          <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
-            @for (price of titleDetails()?.pricing; track $index) {
-            <div
-              class="group border border-[var(--primary-superlight)] rounded-xl p-4 bg-gradient-to-br from-white to-[var(--light-purple-bg)] hover:shadow-lg hover:scale-[1.02] transition-all"
-            >
-              <!-- Header Row -->
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2">
-                  <div
-                    class="p-2 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)]"
-                  >
-                    <mat-icon>storefront</mat-icon>
-                  </div>
-                  <h5
-                    class="font-medium text-[var(--text-heading)] text-base uppercase tracking-wide"
-                  >
-                    {{ price.platform }}
-                  </h5>
-                </div>
-
-                <span
-                  class="text-[var(--green-2)] text-xs font-medium bg-[var(--light-green-bg)] px-3 py-1 rounded-full border border-[var(--light-green-2)]"
-                >
-                  {{ price.status }}
-                </span>
-              </div>
-
-              <!-- Pricing Details -->
-              <div class="text-sm text-[var(--text-primary)] space-y-1">
-                <p>
-                  <span class="font-medium text-[var(--text-heading)]"
-                    >MRP:</span
-                  >
-                  <span class="ml-2 text-[var(--primary)] font-semibold">
-                    ₹{{ price.mrp }}
-                  </span>
-                </p>
-
-                <p>
-                  <span class="font-medium text-[var(--text-heading)]"
-                    >Sales Price:</span
-                  >
-                  <span class="ml-2 text-[var(--green-2)] font-semibold">
-                    ₹{{ price.salesPrice }}
-                  </span>
-                </p>
-
-                <p>
-                  <span class="font-medium text-[var(--text-heading)]"
-                    >MSP:</span
-                  >
-                  <span class="ml-2 text-[var(--primary)] font-medium">
-                    ₹{{ price.msp }}
-                  </span>
-                </p>
-
-                <p>
-                  <span class="font-medium text-[var(--text-heading)]"
-                    >Delivery Charges:</span
-                  >
-                  <span class="ml-2 text-[var(--text-secondary)] font-medium">
-                    ₹{{ price.deliveryCharges }}
-                  </span>
-                </p>
-              </div>
-
-              <!-- Visual Line -->
-              <div
-                class="relative h-[2px] bg-[var(--primary-superlight)] rounded-full overflow-hidden mt-3"
-              >
+        <!-- Cards grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          @for (platform of platforms(); track platform) {
+          <div
+            class="group relative border border-[var(--primary-superlight)] rounded-2xl p-5 bg-gradient-to-br from-white to-[var(--light-purple-bg)] hover:shadow-lg transition-all flex flex-col"
+            [attr.aria-labelledby]="'card-' + platform + '-title'"
+          >
+            <!-- HEADER -->
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center gap-3">
                 <div
-                  class="absolute top-0 left-0 h-[2px] bg-[var(--primary)] transition-all duration-500"
-                  [style.width]="(price.salesPrice / price.mrp) * 100 + '%'"
-                ></div>
-              </div>
-
-              <!-- Footer -->
-              <div class="flex justify-between items-center mt-3">
-                <p class="text-xs text-[var(--text-secondary)] italic">
-                  Margin after discount:
-                </p>
-                <p class="text-xs text-[var(--primary)] font-semibold">
-                  {{ (100 - (price.salesPrice / price.mrp) * 100).toFixed(1) }}%
-                </p>
-              </div>
-            </div>
-            }
-          </div>
-        </div>
-
-        <!-- Modern Royalty Section -->
-        <div
-          class="bg-gradient-to-r from-[var(--primary-superlight)] via-[var(--light-purple-bg)] to-white p-6 rounded-2xl shadow-md border border-[var(--primary-light)] my-6"
-        >
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-3">
-              <div
-                class="p-3 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)] shadow-inner"
-              >
-                <mat-icon>percent</mat-icon>
-              </div>
-              <div>
-                <h3 class="text-xl font-medium text-[var(--primary)]">
-                  Royalty Breakdown
-                </h3>
-                <p class="text-[var(--text-primary)] text-sm">
-                  Publisher and author splits per platform
-                </p>
-              </div>
-            </div>
-          </div>
-
-          @if (titleDetails()?.royalties?.length) {
-          <div class="space-y-6 grid grid-cols-3 gap-4">
-            @for (platform of platforms(); track platform) { @if
-            (getRoyaltyByPlatform(platform).length) {
-            <div
-              class="bg-white border border-[var(--primary-superlight)] rounded-2xl shadow-md hover:shadow-lg transition-all p-5"
-            >
-              <!-- Platform Header -->
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2">
-                  <div
-                    class="p-2 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)]"
-                  >
-                    <mat-icon>storefront</mat-icon>
-                  </div>
+                  class="p-3 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)] shadow-inner"
+                >
+                  <mat-icon>storefront</mat-icon>
+                </div>
+                <div>
                   <h4
-                    class="font-medium text-[var(--text-heading)] uppercase tracking-wide"
+                    id="card-{{ platform }}-title"
+                    class="font-semibold text-[var(--text-heading)] uppercase tracking-wide"
                   >
                     {{ platform }}
                   </h4>
+                  <p class="text-xs text-[var(--text-secondary)] mt-0.5">
+                    Platform overview
+                  </p>
                 </div>
-                <p
-                  class="text-xs font-medium text-[var(--text-primary)] italic"
+              </div>
+
+              <div class="text-right">
+                <span
+                  class="text-[var(--green-2)] text-xs font-medium bg-[var(--light-green-bg)] px-3 py-1 rounded-full border border-[var(--light-green-2)]"
                 >
-                  Total: {{ getTotalRoyalty(platform) }}%
+                  {{ getPriceByPlatform(platform)?.status || "INACTIVE" }}
+                </span>
+                <p class="text-xs text-[var(--text-primary)] italic mt-1">
+                  Total:
+                  <span class="font-semibold"
+                    >{{ getTotalRoyalty(platform) }}%</span
+                  >
                 </p>
               </div>
+            </div>
 
-              <!-- Table -->
-              <div class="overflow-x-auto">
-                <table
-                  class="w-full text-sm border-collapse rounded-lg shadow-sm overflow-hidden"
+            <!-- CONTENT SECTION WITH FIXED HEIGHT -->
+            <div class="flex flex-col gap-4 md:gap-6 min-h-[220px]">
+              <!-- LEFT: Pricing block -->
+              <div class="w-full">
+                <div class="text-sm text-[var(--text-primary)] space-y-2">
+                  <div class="flex justify-between">
+                    <span class="font-medium text-[var(--text-heading)]"
+                      >MRP:</span
+                    >
+                    <span class="font-semibold text-[var(--primary)]"
+                      >₹{{ getPriceByPlatform(platform)?.mrp ?? "N/A" }}</span
+                    >
+                  </div>
+
+                  <div class="flex justify-between">
+                    <span class="font-medium text-[var(--text-heading)]"
+                      >Sales Price:</span
+                    >
+                    <span class="font-semibold text-[var(--green-2)]"
+                      >₹{{
+                        getPriceByPlatform(platform)?.salesPrice ?? "N/A"
+                      }}</span
+                    >
+                  </div>
+
+                  <div class="flex justify-between">
+                    <span class="font-medium text-[var(--text-heading)]"
+                      >MSP:</span
+                    >
+                    <span class="font-medium text-[var(--primary)]"
+                      >₹{{ getPriceByPlatform(platform)?.msp ?? "N/A" }}</span
+                    >
+                  </div>
+
+                  <div class="flex justify-between">
+                    <span class="font-medium text-[var(--text-heading)]"
+                      >Delivery Charges:</span
+                    >
+                    <span class="text-[var(--text-secondary)] font-medium"
+                      >₹{{
+                        getPriceByPlatform(platform)?.deliveryCharges ?? "N/A"
+                      }}</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <!-- RIGHT: Royalty section -->
+              <div class="w-full flex flex-col">
+                <!-- Title -->
+                <div class="flex items-center gap-3 mb-3">
+                  <div
+                    class="p-2 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)]"
+                  >
+                    <mat-icon>percent</mat-icon>
+                  </div>
+
+                  <div class="flex-1">
+                    <p class="text-[var(--text-heading)] font-medium">
+                      Royalty Breakdown
+                    </p>
+                    <p class="text-xs text-[var(--text-secondary)]">
+                      Publisher & author splits
+                    </p>
+                  </div>
+
+                  <div class="text-xs font-semibold text-[var(--primary)]">
+                    Total: {{ getTotalRoyalty(platform) }}%
+                  </div>
+                </div>
+
+                <!-- Table -->
+                <div
+                  class="bg-white min-h-[110px] overflow-y-auto rounded-lg border border-[var(--primary-superlight)] shadow-sm overflow-hidden"
                 >
-                  <thead>
-                    <tr
-                      class="bg-[var(--primary-superlight)] text-[var(--text-heading)]"
-                    >
-                      <th class="py-2 px-4 text-left !font-medium">Name</th>
-                      <th class="py-2 px-4 text-left !font-medium">Type</th>
-                      <th class="py-2 px-4 text-right !font-medium">
-                        Royalty (%)
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <!-- Publisher -->
+                  <!-- Header -->
+                  <div
+                    class="grid grid-cols-14 px-3 py-2 bg-[var(--primary-superlight)] text-[var(--text-heading)] font-medium text-sm"
+                  >
+                    <div class="col-span-5">Name</div>
+                    <div class="col-span-3 text-center">Role</div>
+                    <div class="col-span-3 text-right">(%)</div>
+                    <div class="col-span-3 text-right">(₹)</div>
+                  </div>
+
+                  <div
+                    class="divide-y divide-[var(--primary-superlight)] border border-b-[var(--primary-superlight)]"
+                  >
+                    <!-- Publisher row -->
                     @if (getPublisherRoyalty(platform)) {
-                    <tr
-                      class="border-b border-[var(--primary-superlight)] hover:bg-[var(--light-purple-bg)] transition"
+                    <div
+                      class="grid grid-cols-14 px-3 py-2 hover:bg-[var(--light-purple-bg)] transition"
                     >
-                      <td
-                        class="py-2 px-4 font-medium text-[var(--text-heading)]"
+                      <div
+                        class="col-span-5 font-medium text-[var(--text-heading)]"
                       >
                         {{ getPublisherName() }}
-                      </td>
-                      <td class="py-2 px-4 text-[var(--text-primary)]">
+                      </div>
+
+                      <div
+                        class="col-span-3 text-center text-xs text-[var(--text-primary)]"
+                      >
                         Publisher
-                      </td>
-                      <td
-                        class="py-2 px-4 text-right font-medium text-[var(--primary)]"
+                      </div>
+
+                      <div
+                        class="col-span-3 text-right font-semibold text-[var(--primary)]"
                       >
                         {{ getPublisherRoyalty(platform)?.percentage }}%
-                      </td>
-                    </tr>
+                      </div>
+
+                      <div
+                        class="col-span-3 text-right text-xs text-[var(--primary)]"
+                      >
+                        ₹{{
+                          getRoyaltyAmount(
+                            platform,
+                            getPublisherRoyalty(platform)?.percentage
+                          ) | number : "1.0-2"
+                        }}
+                      </div>
+                    </div>
                     }
 
-                    <!-- Authors -->
+                    <!-- Author rows -->
                     @for (r of getAuthorRoyalties(platform); track $index) {
-                    <tr
-                      class="border-b border-[var(--primary-superlight)] hover:bg-[var(--light-purple-bg)] transition"
+                    <div
+                      class="grid grid-cols-14 px-3 py-2 hover:bg-[var(--light-purple-bg)] transition"
                     >
-                      <td
-                        class="py-2 px-4 font-medium text-[var(--text-heading)]"
+                      <div
+                        class="col-span-5 font-medium text-[var(--text-heading)]"
                       >
                         {{ getAuthorName(r.authorId) }}
-                      </td>
-                      <td class="py-2 px-4 text-[var(--text-primary)]">
+                      </div>
+
+                      <div
+                        class="col-span-3 text-center text-xs text-[var(--text-primary)]"
+                      >
                         Author
-                      </td>
-                      <td
-                        class="py-2 px-4 text-right font-medium text-[var(--green-2)]"
+                      </div>
+
+                      <div
+                        class="col-span-3 text-right font-semibold text-[var(--green-2)]"
                       >
                         {{ r.percentage }}%
-                      </td>
-                    </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
+                      </div>
 
-              <!-- Visual Split -->
-              <div
-                class="relative h-2 bg-[var(--primary-superlight)] rounded-full overflow-hidden mt-3"
-              >
-                <div
-                  class="absolute top-0 left-0 h-2 bg-[var(--green-2)] transition-all duration-500"
-                  [style.width]="getTotalRoyalty(platform) + '%'"
-                ></div>
+                      <div
+                        class="col-span-3 text-right text-xs text-[var(--green-2)]"
+                      >
+                        ₹{{
+                          getRoyaltyAmount(platform, r.percentage)
+                            | number : "1.0-2"
+                        }}
+                      </div>
+                    </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- Royalty Bar -->
+                <div class="mt-4">
+                  <p class="text-xs text-[var(--text-secondary)] mb-1">
+                    % Royalty Distribution (Total
+                    {{ getTotalRoyalty(platform) }}%)
+                  </p>
+
+                  <div
+                    class="relative h-2 bg-[var(--primary-superlight)] rounded-full overflow-hidden"
+                  >
+                    <div
+                      class="absolute top-0 left-0 h-2 bg-[var(--green-2)] transition-all duration-500"
+                      [style.width]="getTotalRoyalty(platform) + '%'"
+                    ></div>
+                  </div>
+                </div>
               </div>
             </div>
-            } }
-          </div>
-          } @else {
-          <div
-            class="flex flex-col items-center justify-center py-10 bg-[var(--light-purple-bg)] rounded-2xl border border-[var(--primary-light)]"
-          >
-            <mat-icon class="text-[var(--primary)] text-5xl mb-3"
-              >percent</mat-icon
-            >
-            <p class="text-[var(--text-primary)] text-sm">
-              No royalty data available for this title.
-            </p>
           </div>
           }
         </div>
       </div>
     </mat-tab>
+
     <mat-tab label="Distribution">
       <div class="m-6">
         <div
@@ -701,11 +697,9 @@
           </div>
         </div>
 
-        <!-- Platform Identifiers Card -->
         <div
           class="bg-white border border-[var(--primary-superlight)] rounded-2xl p-6 shadow-md hover:shadow-lg transition-all"
         >
-          <!-- Header -->
           <div class="flex items-center gap-3 mb-4">
             <div
               class="p-3 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)] shadow-inner"
@@ -722,7 +716,6 @@
             </div>
           </div>
 
-          <!-- Table or Cards -->
           @if (titleDetails()?.titlePlatformIdentifier?.length) {
           <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
             @for (pid of titleDetails()?.titlePlatformIdentifier; track $index)
@@ -730,7 +723,6 @@
             <div
               class="group border border-[var(--primary-superlight)] rounded-xl p-4 bg-gradient-to-br from-white to-[var(--light-purple-bg)] hover:shadow-lg hover:scale-[1.02] transition-all"
             >
-              <!-- Header Row -->
               <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-2">
                   <div
@@ -749,7 +741,6 @@
                 </span>
               </div>
 
-              <!-- Details -->
               <div
                 class="flex flex-col gap-1 text-sm text-[var(--text-primary)]"
               >
@@ -781,7 +772,6 @@
             }
           </div>
           } @else {
-          <!-- Empty State -->
           <div
             class="flex flex-col items-center justify-center py-8 bg-[var(--light-purple-bg)] rounded-2xl border border-[var(--primary-light)]"
           >

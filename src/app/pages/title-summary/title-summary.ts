@@ -97,4 +97,22 @@ export class TitleSummary {
     const royalties = this.getRoyaltyByPlatform(platform);
     return royalties.reduce((sum, r) => sum + (r.percentage || 0), 0);
   }
+
+  getPriceByPlatform(platform: PlatForm): any | null {
+    const prices = this.titleDetails()?.pricing ?? [];
+    return prices.find((p: any) => p.platform === platform) || null;
+  }
+
+  getMarginForPlatform(platform: PlatForm): string {
+    const p = this.getPriceByPlatform(platform);
+    if (!p || !p.mrp || !p.salesPrice) return 'N/A';
+    const margin = 100 - (p.salesPrice / p.mrp) * 100;
+    return margin.toFixed(1) + '%';
+  }
+  getRoyaltyAmount(platform: PlatForm, percentage: number): number {
+    const price = this.getPriceByPlatform(platform);
+    if (!price || !price.salesPrice) return 0;
+
+    return (percentage / 100) * price.salesPrice;
+  }
 }
