@@ -185,11 +185,11 @@
         </mat-form-field>
       </div>
 
-      @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
       <div
         class="grid grid-cols-2 gap-4 items-start my-4"
         formGroupName="publisher"
       >
+        @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
         <mat-form-field>
           <mat-label>Select Publisher</mat-label>
           <mat-select
@@ -206,6 +206,7 @@
             }
           </mat-select>
         </mat-form-field>
+        }
         <div class="flex flex-col">
           <mat-form-field>
             <mat-label>{{ "displaynameforpublisher" | translate }}</mat-label>
@@ -229,7 +230,6 @@
           </div>
         </div>
       </div>
-      }
 
       <div formArrayName="authorIds" class="grid grid-cols-2 gap-4 my-4">
         @for(item of titleDetailsGroup().controls.authorIds.controls ; track
@@ -333,4 +333,3 @@
     </div>
   </div>
 </form>
-
