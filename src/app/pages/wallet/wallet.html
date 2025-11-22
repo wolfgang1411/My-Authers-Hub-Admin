@@ -166,10 +166,14 @@
       </div>
       } @else {
       <div
-        class="text-center p-6 border border-[var(--primary-superlight)] rounded-xl text-[var(--text-primary)]"
+        class="text-center p-6 border border-[var(--primary-superlight)] rounded-xl text-[var(--text-primary)] flex flex-col items-center justify-center gap-2"
       >
-        No recent earnings available.
+        <div class="rounded-full p-2 flex items-center bg-primary-superlight">
+          <mat-icon class="text-primary">info</mat-icon>
+        </div>
+        <span>No recent earnings available.</span>
       </div>
+
       }
     </div>
 
@@ -211,7 +215,7 @@
 
       <div class="flex gap-3 mt-6">
         <button
-          class="bg-[var(--green-2)] hover:bg-[var(--green-2)] text-white font-medium py-2 px-4 rounded-lg flex-1 shadow-md active:bg-green-2/80"
+          class="bg-[var(--green-2)] hover:bg-green-2/80 text-white font-medium py-2 px-4 rounded-lg flex-1 shadow-md active:bg-green-2/80"
           (click)="onClickRequestPayout()"
         >
           Withdraw

@@ -27,6 +27,7 @@ import { InviteDialog } from '../../components/invite-dialog/invite-dialog';
     CommonModule,
     RouterLink,
     MatDialogModule,
+    MatIconModule,
   ],
   templateUrl: './wallet.html',
   styleUrl: './wallet.css',
