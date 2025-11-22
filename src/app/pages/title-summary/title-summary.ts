@@ -18,7 +18,7 @@ import {
 import { PlatForm, Title } from '../../interfaces';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule, MatIconButton } from '@angular/material/button';
+import { MatButtonModule } from '@angular/material/button';
 import { SafeUrlPipe } from '../../pipes/safe-url-pipe';
 import { StaticValuesService } from '../../services/static-values';
 import Swal from 'sweetalert2';
@@ -31,7 +31,6 @@ import Swal from 'sweetalert2';
     MatTabsModule,
     MatIconModule,
     MatButtonModule,
-    MatIconButton,
     NgClass,
     CommonModule,
     SafeUrlPipe,
@@ -102,7 +101,6 @@ export class TitleSummary {
     return royalties.reduce((sum, r) => sum + (r.percentage || 0), 0);
   }
 
-<<<<<<< Updated upstream
   getPriceByPlatform(platform: PlatForm): any | null {
     const prices = this.titleDetails()?.pricing ?? [];
     return prices.find((p: any) => p.platform === platform) || null;
@@ -119,7 +117,7 @@ export class TitleSummary {
     if (!price || !price.salesPrice) return 0;
 
     return (percentage / 100) * price.salesPrice;
-=======
+  }
   async copyDistributionLink(link: string): Promise<void> {
     try {
       await navigator.clipboard.writeText(link);
@@ -144,6 +142,5 @@ export class TitleSummary {
         position: 'top-end',
       });
     }
->>>>>>> Stashed changes
   }
 }
