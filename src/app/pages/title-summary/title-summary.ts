@@ -118,6 +118,8 @@ export class TitleSummary {
 
     return (percentage / 100) * price.salesPrice;
   }
+
+  }
   async copyDistributionLink(link: string): Promise<void> {
     try {
       await navigator.clipboard.writeText(link);
