@@ -18,8 +18,10 @@ import {
 import { PlatForm, Title } from '../../interfaces';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule, MatIconButton } from '@angular/material/button';
 import { SafeUrlPipe } from '../../pipes/safe-url-pipe';
 import { StaticValuesService } from '../../services/static-values';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-title-summary',
@@ -28,6 +30,8 @@ import { StaticValuesService } from '../../services/static-values';
     UpperCasePipe,
     MatTabsModule,
     MatIconModule,
+    MatButtonModule,
+    MatIconButton,
     NgClass,
     CommonModule,
     SafeUrlPipe,
@@ -53,7 +57,7 @@ export class TitleSummary {
   }
 
   fetchTitleDetails() {
-    this.titleService.getTitleById(this.titleId).then((res) => {
+    this.titleService.getTitleById(this.titleId, true).then((res) => {
       this.titleDetails.set(res);
     });
   }
@@ -98,6 +102,7 @@ export class TitleSummary {
     return royalties.reduce((sum, r) => sum + (r.percentage || 0), 0);
   }
 
+<<<<<<< Updated upstream
   getPriceByPlatform(platform: PlatForm): any | null {
     const prices = this.titleDetails()?.pricing ?? [];
     return prices.find((p: any) => p.platform === platform) || null;
@@ -114,5 +119,31 @@ export class TitleSummary {
     if (!price || !price.salesPrice) return 0;
 
     return (percentage / 100) * price.salesPrice;
+=======
+  async copyDistributionLink(link: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(link);
+      Swal.fire({
+        icon: 'success',
+        title: 'Copied!',
+        text: 'Distribution link copied to clipboard',
+        timer: 2000,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end',
+      });
+    } catch (error) {
+      console.error('Failed to copy link:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to copy link to clipboard',
+        timer: 2000,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end',
+      });
+    }
+>>>>>>> Stashed changes
   }
 }

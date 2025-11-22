@@ -77,6 +77,8 @@ export interface TitlePlatformIdentifier {
   id: number;
   platform: PlatForm;
   type: BookingType;
+  sales: number;
+  totalAmount: number;
   uniqueIdentifier?: string;
   distributionLink?: string;
 }
