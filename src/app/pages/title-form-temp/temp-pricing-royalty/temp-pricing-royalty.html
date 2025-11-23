@@ -1,54 +1,233 @@
 <div class="flex flex-col gap-8 mt-8">
   <!-- ========== PRICING SECTION ========== -->
-  <div class="flex flex-col gap-4 mt-8">
-    <div>
-      <h2 class="font-medium text-lg">
-        MSP :
-        {{ (msp() | currency) || "N/A" }}
+  <div class="flex flex-col gap-6 mt-8">
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="text-2xl font-semibold text-gray-800">
+        {{ "pricing" | translate }}
       </h2>
-      <h2 class="font-medium text-lg">
-        Printing Price :
-        {{ (printingPrice() | currency) || "N/A" }}
-      </h2>
-      <p>
-        Sales price and MRP cannot be lower than MSP and Sales Price cannot be
-        greater than MRP. Note: MSP is {{ ebookMsp() }} for ebook platforms
-        (MAH_EBOOK, KINDLE, GOOGLE_PLAY) and calculated for other platforms.
-      </p>
     </div>
 
-    <ul class="pricing-container">
-      <li class="flex">
-        <span></span>
-        @for (item of pricingControls().controls; track $index) {
-        <span>{{ item.controls.platform.value | translate }}</span>
-        }
-      </li>
-      <li>
-        <span>MRP</span>
-        @for (item of pricingControls().controls; track $index) {
-        <span>
-          <input
-            [formControl]="item.controls.mrp"
-            type="text"
-            [placeholder]="'entermrp' | translate"
-          />
-        </span>
-        }
-      </li>
-      <li>
-        <span>Sales Price</span>
-        @for (item of pricingControls().controls; track $index) {
-        <span>
-          <input
-            [formControl]="item.controls.salesPrice"
-            type="text"
-            [placeholder]="'salesprice' | translate"
-          />
-        </span>
-        }
-      </li>
-    </ul>
+    <!-- MSP and Printing Price Info Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div
+        class="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4 shadow-sm"
+      >
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-blue-700 mb-1">MSP</p>
+            <p class="text-xs text-blue-600 mb-2">Minimum Selling Price</p>
+            <p class="text-2xl font-bold text-blue-800">
+              {{ (msp() | currency) || "N/A" }}
+            </p>
+          </div>
+          <div class="text-blue-400">
+            <svg
+              class="w-12 h-12"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4 shadow-sm"
+      >
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-green-700 mb-1">
+              Printing Price
+            </p>
+            <p class="text-xs text-green-600 mb-2">Cost per unit</p>
+            <p class="text-2xl font-bold text-green-800">
+              {{ (printingPrice() | currency) || "N/A" }}
+            </p>
+          </div>
+          <div class="text-green-400">
+            <svg
+              class="w-12 h-12"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              ></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Alert -->
+    <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg
+            class="h-5 w-5 text-amber-400"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <div class="flex items-center gap-2 mb-1">
+            <span
+              class="font-semibold text-amber-900 text-base flex items-center gap-2"
+            >
+              <svg
+                class="w-4 h-4 text-amber-500"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              Pricing Rules
+            </span>
+          </div>
+          <ul class="list-disc ml-5 text-sm text-amber-700 space-y-1">
+            <li>
+              Sales Price and MRP
+              <span class="font-semibold">cannot be lower than MSP</span>.
+            </li>
+            <li>
+              Sales Price
+              <span class="font-semibold">cannot be greater than MRP</span>.
+            </li>
+          </ul>
+          <div class="text-xs text-amber-600 mt-2 flex items-center gap-1">
+            <svg
+              class="w-3 h-3 text-amber-400"
+              fill="currentColor"
+              viewBox="0 0 16 16"
+            >
+              <circle cx="8" cy="8" r="8" />
+            </svg>
+            <span>
+              <span class="font-medium">Note:</span>
+              MSP is
+              <span class="font-semibold">{{ ebookMsp() | currency }}</span> for
+              ebook platforms (<span class="font-mono"
+                >MAH_EBOOK, KINDLE, GOOGLE_PLAY</span
+              >) and is <span class="font-semibold">calculated</span> for other
+              platforms.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pricing Table -->
+    <div
+      class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden"
+    >
+      <ul class="pricing-container">
+        <li class="pricing-header">
+          <span class="font-semibold text-gray-700">Platform</span>
+          @for (item of pricingControls().controls; track $index) {
+          <span class="font-semibold text-gray-700 text-center">
+            {{ item.controls.platform.value | translate }}
+          </span>
+          }
+        </li>
+        <li class="pricing-row">
+          <span class="font-medium text-gray-700 flex items-center gap-2">
+            <svg
+              class="w-4 h-4 text-gray-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+              />
+            </svg>
+            MRP
+          </span>
+          @for (item of pricingControls().controls; track $index) {
+          <span class="pricing-input-wrapper">
+            <input
+              [formControl]="item.controls.mrp"
+              type="number"
+              min="0"
+              step="0.01"
+              [placeholder]="'entermrp' | translate"
+              class="pricing-input"
+              [ngClass]="{
+                'border-red-300 bg-red-50':
+                  item.controls.mrp.invalid && item.controls.mrp.touched
+              }"
+            />
+            @if ( item.controls.mrp.invalid && item.controls.mrp.touched ) {
+            <span class="error-icon" title="Invalid MRP"> ⚠️ </span>
+            }
+          </span>
+          }
+        </li>
+        <li class="pricing-row pricing-row-sales">
+          <span class="font-medium text-gray-700 flex items-center gap-2">
+            <svg
+              class="w-4 h-4 text-green-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+              />
+            </svg>
+            Sales Price
+          </span>
+          @for (item of pricingControls().controls; track $index) {
+          <span class="pricing-input-wrapper">
+            <input
+              [formControl]="item.controls.salesPrice"
+              type="number"
+              min="0"
+              step="0.01"
+              [placeholder]="'salesprice' | translate"
+              class="pricing-input"
+              [ngClass]="{
+                'border-red-300 bg-red-50':
+                  item.controls.salesPrice.invalid &&
+                  item.controls.salesPrice.touched
+              }"
+            />
+            @if ( item.controls.salesPrice.invalid &&
+            item.controls.salesPrice.touched ) {
+            <span class="error-icon" title="Invalid Sales Price"> ⚠️ </span>
+            }
+          </span>
+          }
+        </li>
+      </ul>
+    </div>
   </div>
 
   <!-- ========== ROYALTY SECTION ========== -->

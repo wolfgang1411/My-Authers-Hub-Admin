@@ -168,6 +168,14 @@ export class TitleFormTemp implements OnDestroy {
 
       this.mapRoyaltiesArray(publisher, authors);
     });
+
+    // Watch for static values changes and ensure pricing array has all platforms
+    effect(() => {
+      const staticValues = this.staticValueService.staticValues();
+      if (staticValues?.PlatForm) {
+        this.ensurePricingArrayHasAllPlatforms();
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -523,6 +531,18 @@ export class TitleFormTemp implements OnDestroy {
   });
 
   async ngOnInit() {
+    // Ensure static values are loaded first
+    if (!this.staticValueService.staticValues()) {
+      try {
+        await this.staticValueService.fetchAndUpdateStaticValues();
+      } catch (error) {
+        console.error('Error loading static values:', error);
+      }
+    }
+
+    // Ensure pricing array has all platforms after static values are loaded
+    this.ensurePricingArrayHasAllPlatforms();
+
     const { items: bindingTypes } = await this.printingService.getBindingType();
     this.bindingType = bindingTypes;
 
@@ -555,6 +575,10 @@ export class TitleFormTemp implements OnDestroy {
         }
 
         this.titleDetails.set(response);
+
+        // Ensure pricing array has all platforms before pre-filling
+        this.ensurePricingArrayHasAllPlatforms();
+
         this.prefillFormData(response);
         media = Array.isArray(response?.media) ? response.media : [];
       } catch (error) {
@@ -998,10 +1022,13 @@ export class TitleFormTemp implements OnDestroy {
   }
 
   updatePricingArray(pricing?: TitlePricing[]) {
+    // Ensure pricing array has all platforms before updating
+    this.ensurePricingArrayHasAllPlatforms();
+
     pricing?.forEach(({ platform, id, mrp, salesPrice }) => {
-      const pricingControl = this.tempForm.controls['pricing'].controls?.filter(
+      const pricingControl = this.tempForm.controls['pricing'].controls?.find(
         ({ controls }) => controls.platform.value === platform
-      )[0];
+      );
 
       if (pricingControl) {
         pricingControl.patchValue({
@@ -1010,6 +1037,22 @@ export class TitleFormTemp implements OnDestroy {
           mrp,
           salesPrice,
         });
+      } else {
+        // If control doesn't exist, create it
+        const newControl = new FormGroup({
+          id: new FormControl<number | null | undefined>(id || null),
+          platform: new FormControl<string>(platform, Validators.required),
+          salesPrice: new FormControl<number | null | undefined>(
+            salesPrice || null,
+            Validators.required
+          ),
+          mrp: new FormControl<number | null | undefined>(mrp || null, [
+            Validators.required,
+            this.mrpValidator() as ValidatorFn,
+          ]),
+        }) as PricingGroup;
+
+        this.tempForm.controls.pricing.push(newControl);
       }
     });
   }
@@ -1167,8 +1210,18 @@ export class TitleFormTemp implements OnDestroy {
   }
 
   createPricingArrayTemp(): FormArray<PricingGroup> {
+    const platforms = Object.keys(
+      this.staticValueService.staticValues()?.PlatForm || {}
+    );
+
+    // If no platforms available yet, return empty array
+    // It will be initialized later when static values load
+    if (!platforms.length) {
+      return new FormArray<PricingGroup>([]);
+    }
+
     return new FormArray(
-      Object.keys(this.staticValueService.staticValues()?.PlatForm || {}).map(
+      platforms.map(
         (platform) =>
           new FormGroup({
             id: new FormControl<number | null | undefined>(null),
@@ -1184,6 +1237,45 @@ export class TitleFormTemp implements OnDestroy {
           }) as PricingGroup
       )
     );
+  }
+
+  /**
+   * Ensure pricing array has all platforms
+   * Call this when static values become available
+   */
+  private ensurePricingArrayHasAllPlatforms(): void {
+    const platforms = Object.keys(
+      this.staticValueService.staticValues()?.PlatForm || {}
+    );
+
+    if (!platforms.length) {
+      return; // Static values not loaded yet
+    }
+
+    const pricingArray = this.tempForm.controls.pricing;
+    const existingPlatforms = pricingArray.controls.map(
+      (control) => control.controls.platform.value
+    );
+
+    // Add missing platforms
+    platforms.forEach((platform) => {
+      if (!existingPlatforms.includes(platform)) {
+        const newControl = new FormGroup({
+          id: new FormControl<number | null | undefined>(null),
+          platform: new FormControl<string>(platform, Validators.required),
+          salesPrice: new FormControl<number | null | undefined>(
+            null,
+            Validators.required
+          ),
+          mrp: new FormControl<number | null | undefined>(null, [
+            Validators.required,
+            this.mrpValidator() as ValidatorFn,
+          ]),
+        }) as PricingGroup;
+
+        pricingArray.push(newControl);
+      }
+    });
   }
 
   createTitleDetailsGroup(): FormGroup<TitleDetailsFormGroup> {
