@@ -91,6 +91,26 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     // Initialize author percentage controls from existing royalties
     this.initializeAuthorPercentageControls();
 
+    // Watch FormArray changes to detect when royalties are added
+    // This is crucial for detecting when royalties are prefilled from server
+    this.royaltiesController()
+      .valueChanges.pipe(debounceTime(200), takeUntil(this.destroy$))
+      .subscribe(() => {
+        // When royalties change, recalculate publisher percentage
+        const publisher = this.publisher();
+        const authors = this.authors();
+        const authorControls = this.authorPercentageControls();
+
+        if (
+          publisher &&
+          (authors.length === 0 ||
+            authors.every((author) => authorControls.has(author.id)))
+        ) {
+          // Recalculate publisher percentage when royalties change
+          this.calculatePublisherPercentage();
+        }
+      });
+
     // Setup effect to watch for author changes and re-initialize controls
     effect(() => {
       const authors = this.authors();
@@ -110,11 +130,58 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       }
     });
 
-    // Initial sync
+    // Setup effect to watch for royalties, authors, and publisher changes
+    // This ensures publisher percentage is set when royalties are prefilled from server
+    effect(() => {
+      const royalties = this.royaltiesController();
+      const authors = this.authors();
+      const publisher = this.publisher();
+
+      // Only calculate if we have publisher and at least authors or royalties
+      if (publisher && (authors?.length > 0 || royalties?.length > 0)) {
+        // Check if author percentage controls are initialized
+        const authorControls = this.authorPercentageControls();
+        const hasAllAuthorControls =
+          authors.length === 0 ||
+          authors.every((author) => authorControls.has(author.id));
+
+        // If author controls are ready (or no authors), calculate publisher percentage
+        if (hasAllAuthorControls) {
+          // Use setTimeout to ensure this runs after all initialization is complete
+          setTimeout(() => {
+            this.calculatePublisherPercentage();
+          }, 150);
+        }
+      }
+    });
+
+    // Initial sync - use longer timeout to ensure all data is loaded
+    // This handles the case where royalties are prefilled before component initializes
     setTimeout(() => {
-      this.syncAuthorPercentagesToRoyalties();
-      this.calculatePublisherPercentage();
-    }, 100);
+      const publisher = this.publisher();
+      const authors = this.authors();
+      const royalties = this.royaltiesController();
+
+      if (publisher && royalties.length > 0) {
+        // Re-initialize author controls if needed (in case royalties were set before init)
+        if (authors.length > 0) {
+          const authorControls = this.authorPercentageControls();
+          const hasAllAuthorControls = authors.every((author) =>
+            authorControls.has(author.id)
+          );
+          if (!hasAllAuthorControls) {
+            this.initializeAuthorPercentageControls();
+          }
+        }
+
+        this.syncAuthorPercentagesToRoyalties();
+        this.calculatePublisherPercentage();
+        // Trigger royalty amount calculation after initial sync
+        setTimeout(() => {
+          this.updateRoyaltyAmounts();
+        }, 600);
+      }
+    }, 500);
   }
 
   /**
@@ -173,25 +240,48 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
 
     this.authorPercentageControls.set(controls);
 
-    // If authors exist but no royalties initialized yet, trigger initial sync
-    if (authors.length > 0) {
-      const hasAnyRoyalties = this.royaltiesController().controls.some(
-        (r) => r.controls.authorId.value || r.controls.publisherId.value
-      );
+    // Always trigger calculation after initializing controls
+    // This ensures publisher percentage is set even when royalties are prefilled
+    const publisher = this.publisher();
+    const hasAnyRoyalties = this.royaltiesController().controls.some(
+      (r) => r.controls.authorId.value || r.controls.publisherId.value
+    );
 
+    if (authors.length > 0) {
       if (!hasAnyRoyalties) {
         // No royalties exist yet, initialize them
         setTimeout(() => {
           this.syncAuthorPercentagesToRoyalties();
           this.calculatePublisherPercentage();
+          // Trigger royalty amount calculation
+          setTimeout(() => {
+            this.updateRoyaltyAmounts();
+          }, 300);
         }, 200);
       } else {
-        // Royalties exist, just sync the author percentages to ensure consistency
+        // Royalties exist (prefilled from server), sync and calculate publisher percentage
+        // Use longer timeout to ensure all data is loaded
         setTimeout(() => {
           this.syncAuthorPercentagesToRoyalties();
+          // Always recalculate publisher percentage based on author percentages
+          // This ensures it's set correctly even when royalties are prefilled
           this.calculatePublisherPercentage();
-        }, 100);
+          // Trigger royalty amount calculation
+          setTimeout(() => {
+            this.updateRoyaltyAmounts();
+          }, 400);
+        }, 300);
       }
+    } else if (publisher) {
+      // If no authors but publisher exists, still calculate publisher percentage
+      // This handles edge case where publisher should get 100%
+      setTimeout(() => {
+        this.calculatePublisherPercentage();
+        // Trigger royalty amount calculation
+        setTimeout(() => {
+          this.updateRoyaltyAmounts();
+        }, 400);
+      }, 300);
     }
   }
 
@@ -245,6 +335,11 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
         }
       });
     });
+
+    // Manually trigger royalty amount calculation since we update with emitEvent: false
+    setTimeout(() => {
+      this.updateRoyaltyAmounts();
+    }, 100);
   }
 
   /**
@@ -252,6 +347,11 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
    * Publisher gets: 100 - sum of all author percentages
    */
   private calculatePublisherPercentage(): void {
+    const publisher = this.publisher();
+    if (!publisher) {
+      return; // No publisher, nothing to calculate
+    }
+
     const authorControls = this.authorPercentageControls();
     let totalAuthorPercentage = 0;
 
@@ -266,48 +366,54 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     this.publisherPercentage.set(publisherPercentage);
 
     // Sync publisher percentage to all platform royalties
-    const publisher = this.publisher();
-    if (publisher) {
-      const platforms = this.displayedColumns();
+    const platforms = this.displayedColumns();
 
-      platforms.forEach((platform) => {
-        let royaltyControl = this.royaltiesController().controls.find(
-          (r) =>
-            r.controls.publisherId.value === publisher.id &&
-            r.controls.platform.value === platform
-        );
-
-        if (!royaltyControl) {
-          // Create new royalty control if it doesn't exist
-          royaltyControl = new FormGroup<RoyaltyFormGroup>({
-            id: new FormControl<number | null>(null),
-            name: new FormControl<string | null>(
-              publisher.name ||
-                `${publisher.user?.firstName || ''} ${
-                  publisher.user?.lastName || ''
-                }`.trim() ||
-                'Unknown Publisher'
-            ),
-            authorId: new FormControl<number | null>(null),
-            publisherId: new FormControl<number | null>(publisher.id),
-            platform: new FormControl<PlatForm | null>(platform),
-            percentage: new FormControl<number | null>(publisherPercentage, [
-              Validators.required,
-            ]),
-            titleId: new FormControl<number | null>(
-              this.royaltiesController().at(0)?.controls.titleId.value || null
-            ),
-          });
-
-          this.royaltiesController().push(royaltyControl);
-        } else {
-          // Update existing control
-          royaltyControl.controls.percentage.patchValue(publisherPercentage, {
-            emitEvent: false,
-          });
-        }
-      });
+    if (platforms.length === 0) {
+      return; // No platforms available yet
     }
+
+    platforms.forEach((platform) => {
+      let royaltyControl = this.royaltiesController().controls.find(
+        (r) =>
+          r.controls.publisherId.value === publisher.id &&
+          r.controls.platform.value === platform
+      );
+
+      if (!royaltyControl) {
+        // Create new royalty control if it doesn't exist
+        royaltyControl = new FormGroup<RoyaltyFormGroup>({
+          id: new FormControl<number | null>(null),
+          name: new FormControl<string | null>(
+            publisher.name ||
+              `${publisher.user?.firstName || ''} ${
+                publisher.user?.lastName || ''
+              }`.trim() ||
+              'Unknown Publisher'
+          ),
+          authorId: new FormControl<number | null>(null),
+          publisherId: new FormControl<number | null>(publisher.id),
+          platform: new FormControl<PlatForm | null>(platform),
+          percentage: new FormControl<number | null>(publisherPercentage, [
+            Validators.required,
+          ]),
+          titleId: new FormControl<number | null>(
+            this.royaltiesController().at(0)?.controls.titleId.value || null
+          ),
+        });
+
+        this.royaltiesController().push(royaltyControl);
+      } else {
+        // Update existing control - always update to ensure it matches calculated value
+        royaltyControl.controls.percentage.patchValue(publisherPercentage, {
+          emitEvent: false,
+        });
+      }
+    });
+
+    // Manually trigger royalty amount calculation since we update with emitEvent: false
+    setTimeout(() => {
+      this.updateRoyaltyAmounts();
+    }, 100);
   }
 
   /**
@@ -354,50 +460,64 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
 
   /**
    * Calculate royalty amount per person per platform
+   * Can be called manually or via subscription
    */
   private calculateRoyaltyAmountPerPerson(): void {
+    // Setup subscription for automatic updates when form values change
     combineLatest([
       this.royaltiesController().valueChanges,
       this.pricingControls().valueChanges,
     ])
       .pipe(debounceTime(400), takeUntil(this.destroy$))
-      .subscribe(([data]) => {
-        const temp: Record<string, Partial<Record<PlatForm, number>>> = {};
-
-        // Ebook platforms: MAH_EBOOK, KINDLE, GOOGLE_PLAY
-        const ebookPlatforms: PlatForm[] = [
-          PlatForm.MAH_EBOOK,
-          PlatForm.KINDLE,
-          PlatForm.GOOGLE_PLAY,
-        ];
-
-        data.forEach(({ authorId, publisherId, percentage, platform }) => {
-          const key = authorId
-            ? 'author' + authorId
-            : 'publisher' + publisherId;
-
-          if (!temp[key]) {
-            temp[key] = {};
-          }
-
-          const salesPrice = this.pricingControls().controls.find(
-            ({ controls }) => controls.platform.value === platform
-          )?.controls.salesPrice?.value;
-
-          // For ebook platforms, don't subtract printing cost
-          // For other platforms, subtract printing cost
-          const isEbookPlatform = ebookPlatforms.includes(platform as PlatForm);
-          const printingCost = isEbookPlatform ? 0 : this.printingPrice() || 0;
-
-          temp[key][platform as PlatForm] = Number(
-            percentage && salesPrice
-              ? ((salesPrice - printingCost) * (percentage / 100)).toFixed(2)
-              : 0
-          );
-        });
-
-        this.totalRoyaltiesAmount.set(temp);
+      .subscribe(() => {
+        this.updateRoyaltyAmounts();
       });
+
+    // Also calculate immediately on initialization
+    setTimeout(() => {
+      this.updateRoyaltyAmounts();
+    }, 500);
+  }
+
+  /**
+   * Manually calculate and update royalty amounts
+   * This is called when royalties are updated with emitEvent: false
+   */
+  private updateRoyaltyAmounts(): void {
+    const data = this.royaltiesController().value;
+    const temp: Record<string, Partial<Record<PlatForm, number>>> = {};
+
+    // Ebook platforms: MAH_EBOOK, KINDLE, GOOGLE_PLAY
+    const ebookPlatforms: PlatForm[] = [
+      PlatForm.MAH_EBOOK,
+      PlatForm.KINDLE,
+      PlatForm.GOOGLE_PLAY,
+    ];
+
+    data.forEach(({ authorId, publisherId, percentage, platform }) => {
+      const key = authorId ? 'author' + authorId : 'publisher' + publisherId;
+
+      if (!temp[key]) {
+        temp[key] = {};
+      }
+
+      const salesPrice = this.pricingControls().controls.find(
+        ({ controls }) => controls.platform.value === platform
+      )?.controls.salesPrice?.value;
+
+      // For ebook platforms, don't subtract printing cost
+      // For other platforms, subtract printing cost
+      const isEbookPlatform = ebookPlatforms.includes(platform as PlatForm);
+      const printingCost = isEbookPlatform ? 0 : this.printingPrice() || 0;
+
+      temp[key][platform as PlatForm] = Number(
+        percentage && salesPrice
+          ? ((salesPrice - printingCost) * (percentage / 100)).toFixed(2)
+          : 0
+      );
+    });
+
+    this.totalRoyaltiesAmount.set(temp);
   }
 
   /**
@@ -448,6 +568,10 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
               }
               this.syncAuthorPercentagesToRoyalties();
               this.calculatePublisherPercentage();
+              // Manually trigger royalty amount calculation since we update with emitEvent: false
+              setTimeout(() => {
+                this.updateRoyaltyAmounts();
+              }, 100);
             });
         }
 
