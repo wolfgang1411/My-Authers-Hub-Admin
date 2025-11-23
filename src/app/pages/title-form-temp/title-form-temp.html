@@ -255,9 +255,9 @@
         (click)="onTitleSubmit()"
       >
         @if(isRaisingTicket()) {
-          {{ "raiseticket" | translate }}
+        {{ "raiseticket" | translate }}
         } @else {
-          {{ "next" | translate }}
+        {{ "next" | translate }}
         }
       </button>
     </div>
@@ -365,9 +365,9 @@
           class="px-6 py-2 !bg-primary text-white rounded-lg shadow"
         >
           @if(isRaisingTicket()) {
-            {{ "raiseticket" | translate }}
+          {{ "raiseticket" | translate }}
           } @else {
-            {{ "next" | translate }}
+          {{ "next" | translate }}
           }
         </button>
       </div>
@@ -392,9 +392,9 @@
         (click)="savePrintingDraft()"
       >
         @if(isRaisingTicket()) {
-          {{ "raiseticket" | translate }}
+        {{ "raiseticket" | translate }}
         } @else {
-          {{ "next" | translate }}
+        {{ "next" | translate }}
         }
       </button>
     </div>
@@ -408,6 +408,9 @@
     <app-temp-pricing
       [pricingControls]="tempForm.controls.pricing"
       [msp]="tempForm.controls.printing.controls.msp.value || 0"
+      [printingPrice]="
+        tempForm.controls.printing.controls.printingPrice.value || null
+      "
     ></app-temp-pricing>
 
     <div class="flex justify-end">
@@ -417,9 +420,9 @@
         (click)="onPricingSubmit()"
       >
         @if(isRaisingTicket()) {
-          {{ "raiseticket" | translate }}
+        {{ "raiseticket" | translate }}
         } @else {
-          {{ "next" | translate }}
+        {{ "next" | translate }}
         }
       </button>
     </div>
@@ -435,6 +438,9 @@
       [pricingController]="tempForm.controls.pricing"
       [authors]="authorsSignal()"
       [publisher]="publisherSignal()"
+      [printingPrice]="
+        tempForm.controls.printing.controls.printingPrice.value || null
+      "
     >
     </app-temp-royalties>
     <div class="flex justify-end">
@@ -444,9 +450,9 @@
         matButton="filled"
       >
         @if(isRaisingTicket()) {
-          {{ "raiseticket" | translate }}
+        {{ "raiseticket" | translate }}
         } @else {
-          {{ "next" | translate }}
+        {{ "next" | translate }}
         }
       </button>
     </div>
@@ -468,13 +474,12 @@
         matButton="filled"
       >
         @if(isRaisingTicket()) {
-          {{ "raiseticket" | translate }}
+        {{ "raiseticket" | translate }}
         } @else {
-          {{ "uploadtitle" | translate }}
+        {{ "uploadtitle" | translate }}
         }
       </button>
     </div>
   </mat-step>
   }
 </mat-stepper>
-

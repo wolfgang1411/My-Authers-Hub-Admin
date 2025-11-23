@@ -12,5 +12,5 @@ import { SharedModule } from '../../../modules/shared/shared-module';
 export class TempPricing {
   pricingControls = input.required<FormArray<PricingGroup>>();
   msp = input.required<number>();
+  printingPrice = input.required<number | null>();
 }
-

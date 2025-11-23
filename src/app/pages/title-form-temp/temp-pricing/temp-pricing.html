@@ -4,6 +4,10 @@
       MSP :
       {{ (msp() | currency) || "N/A" }}
     </h2>
+    <h2 class="font-medium text-lg">
+      Printing Price :
+      {{ (printingPrice() | currency) || "N/A" }}
+    </h2>
     <p>
       Sales price and MRP cannot be lower then MSP and Sales Price cannot be
       greater than MRP.
@@ -43,4 +47,3 @@
     </li>
   </ul>
 </div>
-

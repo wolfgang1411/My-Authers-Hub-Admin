@@ -1,4 +1,11 @@
-import { Component, computed, input, OnDestroy, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  input,
+  OnDestroy,
+  OnInit,
+  signal,
+} from '@angular/core';
 import {
   FormArray,
   FormGroup,
@@ -7,7 +14,12 @@ import {
 } from '@angular/forms';
 import { SharedModule } from '../../../modules/shared/shared-module';
 import { MatIconModule } from '@angular/material/icon';
-import { Author, PlatForm, PricingGroup, Publishers } from '../../../interfaces';
+import {
+  Author,
+  PlatForm,
+  PricingGroup,
+  Publishers,
+} from '../../../interfaces';
 import { MatTableModule } from '@angular/material/table';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
@@ -41,6 +53,7 @@ export class TempRoyalties implements OnInit, OnDestroy {
   pricingController = input.required<FormArray<PricingGroup>>();
   authors = input.required<Author[]>();
   publisher = input.required<Publishers | null>();
+  printingPrice = input.required<number | null>();
 
   displayedColumns = computed(() => {
     return Object.keys(
@@ -73,10 +86,7 @@ export class TempRoyalties implements OnInit, OnDestroy {
 
   calculateTotalRoyalties() {
     this.royaltiesController()
-      .valueChanges.pipe(
-        debounceTime(400),
-        takeUntil(this.destroy$)
-      )
+      .valueChanges.pipe(debounceTime(400), takeUntil(this.destroy$))
       .subscribe((data) => {
         const temp: Partial<Record<PlatForm, number>> = {};
         Object.keys(this.staticValueService.staticValues()?.PlatForm || {}).map(
@@ -96,10 +106,7 @@ export class TempRoyalties implements OnInit, OnDestroy {
       this.royaltiesController().valueChanges,
       this.pricingController().valueChanges,
     ])
-      .pipe(
-        debounceTime(400),
-        takeUntil(this.destroy$)
-      )
+      .pipe(debounceTime(400), takeUntil(this.destroy$))
       .subscribe(([data]) => {
         const temp: Record<string, Partial<Record<PlatForm, number>>> = {};
 
@@ -118,7 +125,12 @@ export class TempRoyalties implements OnInit, OnDestroy {
           )?.controls.salesPrice?.value;
 
           temp[key][platform as PlatForm] = Number(
-            percentage ? (salesPrice * (percentage / 100)).toFixed(2) : 0
+            percentage
+              ? (
+                  (salesPrice - (this.printingPrice() || 0)) *
+                  (percentage / 100)
+                ).toFixed(2)
+              : 0
           );
         });
 
@@ -131,4 +143,3 @@ export class TempRoyalties implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 }
-
