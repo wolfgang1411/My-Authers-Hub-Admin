@@ -837,11 +837,14 @@ export class TitleFormTemp implements OnDestroy {
       };
 
       const mspController = this.tempForm.controls.printing.controls.msp;
+      const printingPrice =
+        this.tempForm.controls.printing.controls.printingPrice;
       const response = await this.printingService.getPrintingPrice(payload);
 
       if (response?.printPerItem && typeof response.printPerItem === 'number') {
         // Use emitEvent: false to prevent triggering valueChanges and causing infinite loop
-        mspController?.patchValue(response.printPerItem, { emitEvent: false });
+        mspController?.patchValue(response.msp, { emitEvent: false });
+        printingPrice?.patchValue(response.printPerItem, { emitEvent: false });
       }
     } catch (error) {
       console.error('Error calculating printing cost:', error);
@@ -1227,6 +1230,7 @@ export class TitleFormTemp implements OnDestroy {
       paperQuailtyId: new FormControl<number | null>(null, Validators.required),
       sizeCategoryId: new FormControl<number | null>(null, Validators.required),
       msp: new FormControl<number | null>(null),
+      printingPrice: new FormControl<number | null>(null),
     });
   }
 

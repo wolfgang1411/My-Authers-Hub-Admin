@@ -319,6 +319,7 @@ export interface TitlePrintingCostResponse {
   deliveryWeight: number;
   deliveryWeightPerItem: number;
   printPerItem: number;
+  msp: number;
 }
 
 export interface CreateBindingType {
@@ -440,6 +441,7 @@ export interface PrintingFormGroup {
   paperType: FormControl<string>;
   paperQuailtyId: FormControl<number | null>;
   sizeCategoryId: FormControl<number | null>;
+  printingPrice: FormControl<number | null>;
   msp: FormControl<number | null>;
 }
 
