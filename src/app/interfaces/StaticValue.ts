@@ -369,6 +369,8 @@ export enum ISBNStatus {
   DELETED = 'DELETED',
 }
 
+export const EBOOK_MSP = '69';
+
 export const StaticValues = {
   ISBNStatus,
   UserStatus,
@@ -428,4 +430,5 @@ export const StaticValues = {
   ApplyOnType,
   PuplisherStatus,
   SalesType,
+  EBOOK_MSP,
 } as const;
