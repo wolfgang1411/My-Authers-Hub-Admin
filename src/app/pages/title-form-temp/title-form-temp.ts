@@ -90,6 +90,7 @@ import { TempRoyalties } from './temp-royalties/temp-royalties';
 import { TitleService } from '../titles/title-service';
 import { TempBookDetails } from './temp-book-details/temp-book-details';
 import { TempPricing } from './temp-pricing/temp-pricing';
+import { TempPricingRoyalty } from './temp-pricing-royalty/temp-pricing-royalty';
 import { TempTitleDistribution } from './temp-title-distribution/temp-title-distribution';
 import Swal from 'sweetalert2';
 import { getFileSizeFromS3Url, getFileToBase64 } from '../../common/utils/file';
@@ -119,6 +120,7 @@ import { UserService } from '../../services/user';
     TempBookDetails,
     TempPricing,
     TempRoyalties,
+    TempPricingRoyalty,
     TempTitleDistribution,
     Back,
   ],
@@ -166,6 +168,14 @@ export class TitleFormTemp implements OnDestroy {
 
       this.mapRoyaltiesArray(publisher, authors);
     });
+
+    // Watch for static values changes and ensure pricing array has all platforms
+    effect(() => {
+      const staticValues = this.staticValueService.staticValues();
+      if (staticValues?.PlatForm) {
+        this.ensurePricingArrayHasAllPlatforms();
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -191,8 +201,7 @@ export class TitleFormTemp implements OnDestroy {
     'details',
     'documents',
     'print',
-    'pricing',
-    'royalty',
+    'pricing', // Now includes both pricing and royalty
     'distribution',
   ];
 
@@ -522,6 +531,18 @@ export class TitleFormTemp implements OnDestroy {
   });
 
   async ngOnInit() {
+    // Ensure static values are loaded first
+    if (!this.staticValueService.staticValues()) {
+      try {
+        await this.staticValueService.fetchAndUpdateStaticValues();
+      } catch (error) {
+        console.error('Error loading static values:', error);
+      }
+    }
+
+    // Ensure pricing array has all platforms after static values are loaded
+    this.ensurePricingArrayHasAllPlatforms();
+
     const { items: bindingTypes } = await this.printingService.getBindingType();
     this.bindingType = bindingTypes;
 
@@ -554,6 +575,10 @@ export class TitleFormTemp implements OnDestroy {
         }
 
         this.titleDetails.set(response);
+
+        // Ensure pricing array has all platforms before pre-filling
+        this.ensurePricingArrayHasAllPlatforms();
+
         this.prefillFormData(response);
         media = Array.isArray(response?.media) ? response.media : [];
       } catch (error) {
@@ -997,10 +1022,13 @@ export class TitleFormTemp implements OnDestroy {
   }
 
   updatePricingArray(pricing?: TitlePricing[]) {
+    // Ensure pricing array has all platforms before updating
+    this.ensurePricingArrayHasAllPlatforms();
+
     pricing?.forEach(({ platform, id, mrp, salesPrice }) => {
-      const pricingControl = this.tempForm.controls['pricing'].controls?.filter(
+      const pricingControl = this.tempForm.controls['pricing'].controls?.find(
         ({ controls }) => controls.platform.value === platform
-      )[0];
+      );
 
       if (pricingControl) {
         pricingControl.patchValue({
@@ -1009,6 +1037,22 @@ export class TitleFormTemp implements OnDestroy {
           mrp,
           salesPrice,
         });
+      } else {
+        // If control doesn't exist, create it
+        const newControl = new FormGroup({
+          id: new FormControl<number | null | undefined>(id || null),
+          platform: new FormControl<string>(platform, Validators.required),
+          salesPrice: new FormControl<number | null | undefined>(
+            salesPrice || null,
+            Validators.required
+          ),
+          mrp: new FormControl<number | null | undefined>(mrp || null, [
+            Validators.required,
+            this.mrpValidator() as ValidatorFn,
+          ]),
+        }) as PricingGroup;
+
+        this.tempForm.controls.pricing.push(newControl);
       }
     });
   }
@@ -1166,8 +1210,18 @@ export class TitleFormTemp implements OnDestroy {
   }
 
   createPricingArrayTemp(): FormArray<PricingGroup> {
+    const platforms = Object.keys(
+      this.staticValueService.staticValues()?.PlatForm || {}
+    );
+
+    // If no platforms available yet, return empty array
+    // It will be initialized later when static values load
+    if (!platforms.length) {
+      return new FormArray<PricingGroup>([]);
+    }
+
     return new FormArray(
-      Object.keys(this.staticValueService.staticValues()?.PlatForm || {}).map(
+      platforms.map(
         (platform) =>
           new FormGroup({
             id: new FormControl<number | null | undefined>(null),
@@ -1183,6 +1237,45 @@ export class TitleFormTemp implements OnDestroy {
           }) as PricingGroup
       )
     );
+  }
+
+  /**
+   * Ensure pricing array has all platforms
+   * Call this when static values become available
+   */
+  private ensurePricingArrayHasAllPlatforms(): void {
+    const platforms = Object.keys(
+      this.staticValueService.staticValues()?.PlatForm || {}
+    );
+
+    if (!platforms.length) {
+      return; // Static values not loaded yet
+    }
+
+    const pricingArray = this.tempForm.controls.pricing;
+    const existingPlatforms = pricingArray.controls.map(
+      (control) => control.controls.platform.value
+    );
+
+    // Add missing platforms
+    platforms.forEach((platform) => {
+      if (!existingPlatforms.includes(platform)) {
+        const newControl = new FormGroup({
+          id: new FormControl<number | null | undefined>(null),
+          platform: new FormControl<string>(platform, Validators.required),
+          salesPrice: new FormControl<number | null | undefined>(
+            null,
+            Validators.required
+          ),
+          mrp: new FormControl<number | null | undefined>(null, [
+            Validators.required,
+            this.mrpValidator() as ValidatorFn,
+          ]),
+        }) as PricingGroup;
+
+        pricingArray.push(newControl);
+      }
+    });
   }
 
   createTitleDetailsGroup(): FormGroup<TitleDetailsFormGroup> {
@@ -1972,6 +2065,183 @@ export class TitleFormTemp implements OnDestroy {
       this.errorMessage.set(
         this.translateService.instant('errorsavingpricing') ||
           'Failed to save pricing. Please try again.'
+      );
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  /**
+   * Combined submit handler for pricing and royalties
+   * Saves both pricing and royalties together
+   */
+  async onPricingAndRoyaltySubmit() {
+    const pricingControls = this.tempForm.controls.pricing;
+    const royaltiesControl = this.tempForm.controls.royalties;
+
+    // Validate both forms
+    if (!pricingControls.valid) {
+      Swal.fire({
+        icon: 'warning',
+        title: this.translateService.instant('warning'),
+        text:
+          this.translateService.instant('invalidpricingdata') ||
+          'Please check pricing fields.',
+      });
+      return;
+    }
+
+    if (!royaltiesControl.valid) {
+      Swal.fire({
+        icon: 'warning',
+        title: this.translateService.instant('warning'),
+        text:
+          this.translateService.instant('invalidroyaltiesdata') ||
+          'Please check royalty fields.',
+      });
+      return;
+    }
+
+    if (!this.titleId || this.titleId <= 0) {
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text:
+          this.translateService.instant('titleidrequired') ||
+          'Title ID is required.',
+      });
+      return;
+    }
+
+    try {
+      this.isLoading.set(true);
+      this.errorMessage.set(null);
+
+      // Prepare pricing data
+      const pricingData: PricingCreate[] = pricingControls.controls
+        .filter(
+          ({ controls: { platform, mrp, salesPrice } }) =>
+            platform.value &&
+            mrp.value &&
+            salesPrice.value &&
+            !isNaN(Number(mrp.value)) &&
+            !isNaN(Number(salesPrice.value))
+        )
+        .map(({ controls: { platform, id, mrp, salesPrice } }) => ({
+          id: id.value || undefined,
+          platform: platform.value as string,
+          mrp: Number(mrp.value),
+          salesPrice: Number(salesPrice.value),
+          titleId: Number(this.titleId),
+        }));
+
+      if (!pricingData.length) {
+        Swal.fire({
+          icon: 'warning',
+          title: this.translateService.instant('warning'),
+          text:
+            this.translateService.instant('invalidpricingdata') ||
+            'Please provide valid pricing data.',
+        });
+        return;
+      }
+
+      // Prepare royalties data
+      // The royalties form already has the correct structure (one entry per platform per author/publisher)
+      // We just need to filter and map it correctly
+      const royalties: UpdateRoyalty[] = royaltiesControl.controls
+        .filter(
+          ({ controls: { percentage, platform } }) =>
+            percentage.value !== null &&
+            percentage.value !== undefined &&
+            !isNaN(Number(percentage.value)) &&
+            platform.value
+        )
+        .map(
+          ({
+            controls: {
+              id: { value: id },
+              authorId: { value: authorId },
+              name: { value: name },
+              percentage: { value: percentage },
+              publisherId: { value: publisherId },
+              platform: { value: platform },
+            },
+          }) => ({
+            id: id || undefined,
+            authorId: authorId || undefined,
+            platform: platform as PlatForm,
+            percentage: Number(percentage),
+            name: name || '',
+            publisherId: publisherId || undefined,
+            titleId: this.titleId,
+          })
+        );
+
+      if (!royalties.length) {
+        Swal.fire({
+          icon: 'warning',
+          title: this.translateService.instant('warning'),
+          text:
+            this.translateService.instant('invalidroyaltiesdata') ||
+            'Please provide valid royalties data.',
+        });
+        return;
+      }
+
+      // Check if raising ticket for approved title
+      if (this.isRaisingTicket()) {
+        // Create pricing update ticket
+        await this.titleService.createPricingUpdateTicket(this.titleId, {
+          data: pricingData,
+        });
+
+        // Create royalty update ticket
+        await this.titleService.createRoyaltyUpdateTicket(this.titleId, {
+          royalties,
+        });
+
+        // Show success message
+        Swal.fire({
+          icon: 'success',
+          title: this.translateService.instant('success'),
+          text:
+            this.translateService.instant('updateticketrequestsent') ||
+            'Request has been sent to superadmin for approval.',
+        });
+
+        // Reset form to prefill with actual details
+        try {
+          const response = await this.titleService.getTitleById(this.titleId);
+          if (response) {
+            this.titleDetails.set(response);
+            this.prefillFormData(response);
+          }
+        } catch (reloadError) {
+          console.error('Error reloading title:', reloadError);
+        }
+
+        return; // Don't proceed with normal flow
+      }
+
+      // Normal update flow - save both pricing and royalties
+      await this.titleService.createManyPricing(pricingData, this.titleId);
+      await this.titleService.createManyRoyalties(royalties, this.titleId);
+
+      // Refresh royalties array after save to ensure consistency
+      const publisher = this.publisherSignal();
+      const authors = this.authorsSignal();
+      if (publisher) {
+        this.mapRoyaltiesArray(publisher, authors);
+      }
+
+      // Move to next step after successful submission
+      this.goToNextStep();
+    } catch (error) {
+      console.error('Error saving pricing and royalties:', error);
+      this.errorMessage.set(
+        this.translateService.instant('errorsavingpricing') ||
+          'Failed to save pricing and royalties. Please try again.'
       );
     } finally {
       this.isLoading.set(false);
