@@ -7,7 +7,7 @@ import { RouterModule } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
 import { Subject } from 'rxjs';
 import { MatTableDataSource } from '@angular/material/table';
-import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import Swal from 'sweetalert2';
 import { UserService } from '../../services/user';
 import { User } from '../../interfaces';
@@ -49,8 +49,7 @@ export class Payouts implements OnInit {
     'status',
     'user',
     'emailId',
-    'accountNo',
-    'ifscCode',
+    'bankdetails',
     'actions',
   ];
   dataSource = new MatTableDataSource<any>([]);
@@ -68,6 +67,13 @@ export class Payouts implements OnInit {
           payout.user.auther?.email ||
           payout.user.email ||
           '';
+        const accountName =
+          payout.user.publisher?.bankDetails?.[0]?.accountHolderName ||
+          payout.user.auther?.bankDetails?.[0]?.accountHolderName;
+
+        const bankName =
+          payout.user.publisher?.bankDetails?.[0]?.name ||
+          payout.user.auther?.bankDetails?.[0]?.name;
 
         const accountNo =
           payout.user.publisher?.bankDetails?.[0]?.accountNo ||
@@ -96,8 +102,8 @@ export class Payouts implements OnInit {
           orderid: '#' + payout.id,
           user: `${firstName} ${payout.user?.lastName || ''}`,
           emailId: email,
-          accountNo: accountNo,
-          ifscCode: ifscCode,
+          bankdetails: `Account Holder Name : ${accountName} <br> Bank Name : ${bankName} <br> Account No : ${accountNo} <br> IFSC Code : ${ifscCode}<br>
+          `,
           amount: payout.requestedAmount + ' ' + 'INR',
           status,
         };
@@ -163,10 +169,8 @@ export class Payouts implements OnInit {
       const temp = this.payouts()?.map((payout) =>
         payout.id === id ? res : payout
       );
-
       this.payouts.set(temp || []);
       this.setDataSource();
-
       Swal.fire({
         icon: 'success',
         title: 'Success',
@@ -187,7 +191,6 @@ export class Payouts implements OnInit {
       });
       return;
     }
-
     const availableAmount = wallet.totalAmount - wallet.holdAmount;
     if (availableAmount <= 0) {
       Swal.fire({
@@ -205,11 +208,12 @@ export class Payouts implements OnInit {
         onClose: () => dialog.close(),
         onSave: async (val: string | number) => {
           val = Number(val);
-          if (!val || val <= 0 || val > availableAmount) {
+
+          if (!val || val < 150 || val > availableAmount) {
             Swal.fire({
               icon: 'error',
               title: 'Error',
-              text: 'Invalid value',
+              text: `Invalid value. Minimum amount is 150 INR.`,
             });
             return;
           }
@@ -218,15 +222,23 @@ export class Payouts implements OnInit {
             const res = await this.payoutService.requestPayout({
               requestedAmount: val,
             });
-            const temp = [res, ...(this.payouts() || [])];
-            this.payouts.set(temp);
-            this.setDataSource();
-
-            Swal.fire({
-              icon: 'success',
-              title: 'Requested',
-              text: 'Payout request has been sent to admin for approval',
+            const user = this.loggedInUser();
+            this.userService.setLoggedInUser({
+              ...user,
+              wallet: user?.wallet
+                ? {
+                    ...user?.wallet,
+                    holdAmount: user.wallet.holdAmount + val,
+                  }
+                : undefined,
             });
+            if (res) {
+              Swal.fire({
+                icon: 'success',
+                title: 'Requested',
+                text: 'Withdrawal request has been sent to admin for approval',
+              });
+            }
             dialog.close();
           } catch (error) {
             console.log(error);

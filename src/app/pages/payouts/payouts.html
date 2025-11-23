@@ -1,14 +1,11 @@
 <section class="p-6 rounded-xl bg-[var(--surface)] min-h-screen">
-  <!-- Header -->
   <div class="flex justify-between items-center mb-8">
     <div>
-      <h2 class="text-2xl font-semibold text-[var(--text-heading)]">Payouts</h2>
+      <h2 class="text-2xl font-medium text-[var(--text-heading)]">Payouts</h2>
       <p class="text-[var(--text-secondary)] mt-1">
         Manage and track your payout requests and payment statuses.
       </p>
     </div>
-
-    <!-- Action Buttons -->
     <div class="flex gap-3">
       <button
         class="flex items-center gap-2 bg-[var(--primary-superlight)] text-[var(--primary)] font-medium px-4 py-2 rounded-lg hover:bg-[var(--primary-light)] transition"
@@ -50,8 +47,6 @@
       Search
     </button>
   </div>
-
-  <!-- List Table -->
   <div
     class="bg-white rounded-2xl border border-[var(--primary-superlight)] shadow-md overflow-hidden"
   >
@@ -76,8 +71,6 @@
       >
         <mat-icon class="!text-white">visibility</mat-icon>
       </button>
-
-      <!-- Superadmin Controls -->
       @if (element.status === 'PENDING' && loggedInUser()?.accessLevel ===
       'SUPERADMIN') {
       <ng-container>
