@@ -138,6 +138,7 @@ export class TitleFormTemp implements OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private translateService: TranslateService,
+    private staticValuesService: StaticValuesService,
     userService: UserService
   ) {
     this.loggedInUser = userService.loggedInUser$;
@@ -1012,17 +1013,52 @@ export class TitleFormTemp implements OnDestroy {
     });
   }
 
+  /**
+   * Get MSP for a specific platform
+   * For MAH_EBOOK, KINDLE, GOOGLE_PLAY platforms, MSP is fixed at 69
+   * For other platforms, use the calculated MSP from printing cost
+   * @param platform - The platform type
+   * @returns The MSP value for the platform
+   */
+  getMspForPlatform(platform: PlatForm | null | undefined): number {
+    if (!platform) {
+      // Fallback to calculated MSP if platform is not available
+      return Number(this.tempForm.controls.printing.controls.msp?.value) || 0;
+    }
+
+    // Fixed MSP for ebook platforms
+    const ebookPlatforms: PlatForm[] = [
+      PlatForm.MAH_EBOOK,
+      PlatForm.KINDLE,
+      PlatForm.GOOGLE_PLAY,
+    ];
+
+    if (ebookPlatforms.includes(platform)) {
+      return Number(this.staticValuesService.staticValues()?.EBOOK_MSP);
+    }
+
+    // Use calculated MSP for other platforms
+    return Number(this.tempForm.controls.printing.controls.msp?.value) || 0;
+  }
+
   mrpValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       if (!control.parent) {
         return null; // parent not ready yet
       }
 
-      const msp = Number(this.tempForm.controls.printing.controls.msp?.value);
+      // Get platform from parent form group
+      const platform = control.parent.get('platform')?.value as
+        | PlatForm
+        | null
+        | undefined;
+      const platformMsp = this.getMspForPlatform(platform);
       const mrp = Number(control.value);
 
-      return msp !== null && mrp < msp
-        ? { invalid: 'MRP cannot be lower than MSP' }
+      return platformMsp !== null && platformMsp > 0 && mrp < platformMsp
+        ? {
+            invalid: `MRP cannot be lower than MSP (${platformMsp.toFixed(2)})`,
+          }
         : null;
     };
   }
@@ -1033,18 +1069,25 @@ export class TitleFormTemp implements OnDestroy {
         return null; // parent not ready yet
       }
 
-      const msp = Number(this.tempForm.controls.printing.controls.msp?.value);
+      // Get platform from parent form group
+      const platform = control.parent.get('platform')?.value as
+        | PlatForm
+        | null
+        | undefined;
+      const platformMsp = this.getMspForPlatform(platform);
       const mrp = control.parent.get('mrp')?.value;
       const salesPrice = control.value;
 
-      if (salesPrice < msp) {
+      if (platformMsp > 0 && salesPrice < platformMsp) {
         return {
-          invalid: 'Sales price cannot be lower then MSP',
+          invalid: `Sales price cannot be lower than MSP (${platformMsp.toFixed(
+            2
+          )})`,
         };
       }
       if (salesPrice > mrp) {
         return {
-          invalid: 'Sales price cannot be higher then MRP',
+          invalid: 'Sales price cannot be higher than MRP',
         };
       }
       return null;

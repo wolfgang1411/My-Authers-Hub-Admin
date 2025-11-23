@@ -9,8 +9,9 @@
       {{ (printingPrice() | currency) || "N/A" }}
     </h2>
     <p>
-      Sales price and MRP cannot be lower then MSP and Sales Price cannot be
-      greater than MRP.
+      Sales price and MRP cannot be lower than MSP and Sales Price cannot be
+      greater than MRP. Note: MSP is {{ ebookMsp() }} for ebook platforms
+      (MAH_EBOOK, KINDLE, GOOGLE_PLAY) and calculated for other platforms.
     </p>
   </div>
 

@@ -110,6 +110,13 @@ export class TempRoyalties implements OnInit, OnDestroy {
       .subscribe(([data]) => {
         const temp: Record<string, Partial<Record<PlatForm, number>>> = {};
 
+        // Ebook platforms: MAH_EBOOK, KINDLE, GOOGLE_PLAY
+        const ebookPlatforms: PlatForm[] = [
+          PlatForm.MAH_EBOOK,
+          PlatForm.KINDLE,
+          PlatForm.GOOGLE_PLAY,
+        ];
+
         data.forEach(({ authorId, publisherId, percentage, platform }) => {
           const key = authorId
             ? 'author' + authorId
@@ -124,12 +131,14 @@ export class TempRoyalties implements OnInit, OnDestroy {
             ({ controls }) => controls.platform.value === platform
           )?.controls.salesPrice?.value;
 
+          // For ebook platforms, don't subtract printing cost
+          // For other platforms, subtract printing cost
+          const isEbookPlatform = ebookPlatforms.includes(platform as PlatForm);
+          const printingCost = isEbookPlatform ? 0 : (this.printingPrice() || 0);
+
           temp[key][platform as PlatForm] = Number(
             percentage
-              ? (
-                  (salesPrice - (this.printingPrice() || 0)) *
-                  (percentage / 100)
-                ).toFixed(2)
+              ? ((salesPrice - printingCost) * (percentage / 100)).toFixed(2)
               : 0
           );
         });
