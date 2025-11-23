@@ -90,6 +90,7 @@ import { TempRoyalties } from './temp-royalties/temp-royalties';
 import { TitleService } from '../titles/title-service';
 import { TempBookDetails } from './temp-book-details/temp-book-details';
 import { TempPricing } from './temp-pricing/temp-pricing';
+import { TempPricingRoyalty } from './temp-pricing-royalty/temp-pricing-royalty';
 import { TempTitleDistribution } from './temp-title-distribution/temp-title-distribution';
 import Swal from 'sweetalert2';
 import { getFileSizeFromS3Url, getFileToBase64 } from '../../common/utils/file';
@@ -119,6 +120,7 @@ import { UserService } from '../../services/user';
     TempBookDetails,
     TempPricing,
     TempRoyalties,
+    TempPricingRoyalty,
     TempTitleDistribution,
     Back,
   ],
@@ -191,8 +193,7 @@ export class TitleFormTemp implements OnDestroy {
     'details',
     'documents',
     'print',
-    'pricing',
-    'royalty',
+    'pricing', // Now includes both pricing and royalty
     'distribution',
   ];
 
@@ -1972,6 +1973,183 @@ export class TitleFormTemp implements OnDestroy {
       this.errorMessage.set(
         this.translateService.instant('errorsavingpricing') ||
           'Failed to save pricing. Please try again.'
+      );
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  /**
+   * Combined submit handler for pricing and royalties
+   * Saves both pricing and royalties together
+   */
+  async onPricingAndRoyaltySubmit() {
+    const pricingControls = this.tempForm.controls.pricing;
+    const royaltiesControl = this.tempForm.controls.royalties;
+
+    // Validate both forms
+    if (!pricingControls.valid) {
+      Swal.fire({
+        icon: 'warning',
+        title: this.translateService.instant('warning'),
+        text:
+          this.translateService.instant('invalidpricingdata') ||
+          'Please check pricing fields.',
+      });
+      return;
+    }
+
+    if (!royaltiesControl.valid) {
+      Swal.fire({
+        icon: 'warning',
+        title: this.translateService.instant('warning'),
+        text:
+          this.translateService.instant('invalidroyaltiesdata') ||
+          'Please check royalty fields.',
+      });
+      return;
+    }
+
+    if (!this.titleId || this.titleId <= 0) {
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text:
+          this.translateService.instant('titleidrequired') ||
+          'Title ID is required.',
+      });
+      return;
+    }
+
+    try {
+      this.isLoading.set(true);
+      this.errorMessage.set(null);
+
+      // Prepare pricing data
+      const pricingData: PricingCreate[] = pricingControls.controls
+        .filter(
+          ({ controls: { platform, mrp, salesPrice } }) =>
+            platform.value &&
+            mrp.value &&
+            salesPrice.value &&
+            !isNaN(Number(mrp.value)) &&
+            !isNaN(Number(salesPrice.value))
+        )
+        .map(({ controls: { platform, id, mrp, salesPrice } }) => ({
+          id: id.value || undefined,
+          platform: platform.value as string,
+          mrp: Number(mrp.value),
+          salesPrice: Number(salesPrice.value),
+          titleId: Number(this.titleId),
+        }));
+
+      if (!pricingData.length) {
+        Swal.fire({
+          icon: 'warning',
+          title: this.translateService.instant('warning'),
+          text:
+            this.translateService.instant('invalidpricingdata') ||
+            'Please provide valid pricing data.',
+        });
+        return;
+      }
+
+      // Prepare royalties data
+      // The royalties form already has the correct structure (one entry per platform per author/publisher)
+      // We just need to filter and map it correctly
+      const royalties: UpdateRoyalty[] = royaltiesControl.controls
+        .filter(
+          ({ controls: { percentage, platform } }) =>
+            percentage.value !== null &&
+            percentage.value !== undefined &&
+            !isNaN(Number(percentage.value)) &&
+            platform.value
+        )
+        .map(
+          ({
+            controls: {
+              id: { value: id },
+              authorId: { value: authorId },
+              name: { value: name },
+              percentage: { value: percentage },
+              publisherId: { value: publisherId },
+              platform: { value: platform },
+            },
+          }) => ({
+            id: id || undefined,
+            authorId: authorId || undefined,
+            platform: platform as PlatForm,
+            percentage: Number(percentage),
+            name: name || '',
+            publisherId: publisherId || undefined,
+            titleId: this.titleId,
+          })
+        );
+
+      if (!royalties.length) {
+        Swal.fire({
+          icon: 'warning',
+          title: this.translateService.instant('warning'),
+          text:
+            this.translateService.instant('invalidroyaltiesdata') ||
+            'Please provide valid royalties data.',
+        });
+        return;
+      }
+
+      // Check if raising ticket for approved title
+      if (this.isRaisingTicket()) {
+        // Create pricing update ticket
+        await this.titleService.createPricingUpdateTicket(this.titleId, {
+          data: pricingData,
+        });
+
+        // Create royalty update ticket
+        await this.titleService.createRoyaltyUpdateTicket(this.titleId, {
+          royalties,
+        });
+
+        // Show success message
+        Swal.fire({
+          icon: 'success',
+          title: this.translateService.instant('success'),
+          text:
+            this.translateService.instant('updateticketrequestsent') ||
+            'Request has been sent to superadmin for approval.',
+        });
+
+        // Reset form to prefill with actual details
+        try {
+          const response = await this.titleService.getTitleById(this.titleId);
+          if (response) {
+            this.titleDetails.set(response);
+            this.prefillFormData(response);
+          }
+        } catch (reloadError) {
+          console.error('Error reloading title:', reloadError);
+        }
+
+        return; // Don't proceed with normal flow
+      }
+
+      // Normal update flow - save both pricing and royalties
+      await this.titleService.createManyPricing(pricingData, this.titleId);
+      await this.titleService.createManyRoyalties(royalties, this.titleId);
+
+      // Refresh royalties array after save to ensure consistency
+      const publisher = this.publisherSignal();
+      const authors = this.authorsSignal();
+      if (publisher) {
+        this.mapRoyaltiesArray(publisher, authors);
+      }
+
+      // Move to next step after successful submission
+      this.goToNextStep();
+    } catch (error) {
+      console.error('Error saving pricing and royalties:', error);
+      this.errorMessage.set(
+        this.translateService.instant('errorsavingpricing') ||
+          'Failed to save pricing and royalties. Please try again.'
       );
     } finally {
       this.isLoading.set(false);

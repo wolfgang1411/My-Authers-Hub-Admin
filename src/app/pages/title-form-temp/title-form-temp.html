@@ -402,52 +402,25 @@
   } @if (tempForm.controls.printingFormat.value !== 'printOnly') {
   <mat-step
     [stepControl]="tempForm.controls.pricing"
-    label="Pricing"
-    [completed]="titleId && tempForm.controls.pricing.valid"
+    label="Pricing & Royalty"
+    [completed]="titleId && tempForm.controls.pricing.valid && tempForm.controls.royalties.valid"
   >
-    <app-temp-pricing
+    <app-temp-pricing-royalty
       [pricingControls]="tempForm.controls.pricing"
       [msp]="tempForm.controls.printing.controls.msp.value || 0"
       [printingPrice]="
         tempForm.controls.printing.controls.printingPrice.value || null
       "
-    ></app-temp-pricing>
+      [royaltiesController]="tempForm.controls.royalties"
+      [authors]="authorsSignal()"
+      [publisher]="publisherSignal()"
+    ></app-temp-pricing-royalty>
 
-    <div class="flex justify-end">
+    <div class="flex justify-end mt-6">
       <button
         class="!bg-primary"
         matButton="filled"
-        (click)="onPricingSubmit()"
-      >
-        @if(isRaisingTicket()) {
-        {{ "raiseticket" | translate }}
-        } @else {
-        {{ "next" | translate }}
-        }
-      </button>
-    </div>
-  </mat-step>
-
-  <mat-step
-    [stepControl]="tempForm.controls.royalties"
-    label="Royalty"
-    [completed]="titleId && tempForm.controls.royalties.valid"
-  >
-    <app-temp-royalties
-      [royaltiesController]="tempForm.controls.royalties"
-      [pricingController]="tempForm.controls.pricing"
-      [authors]="authorsSignal()"
-      [publisher]="publisherSignal()"
-      [printingPrice]="
-        tempForm.controls.printing.controls.printingPrice.value || null
-      "
-    >
-    </app-temp-royalties>
-    <div class="flex justify-end">
-      <button
-        (click)="saveRoyalties()"
-        class="!bg-primary mt-2"
-        matButton="filled"
+        (click)="onPricingAndRoyaltySubmit()"
       >
         @if(isRaisingTicket()) {
         {{ "raiseticket" | translate }}
