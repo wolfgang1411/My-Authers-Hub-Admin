@@ -31,7 +31,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { PrintingService } from '../../../services/printing-service';
-import { combineLatest, debounceTime, Subject, takeUntil } from 'rxjs';
+import {
+  combineLatest,
+  debounceTime,
+  startWith,
+  Subject,
+  takeUntil,
+} from 'rxjs';
 import { getFileToBase64, selectFile } from '../../../common/utils/file';
 @Component({
   selector: 'app-temp-title-printing',
@@ -78,8 +84,8 @@ export class TempTitlePrinting implements OnDestroy {
 
     this.handleBlackAndWhitePages();
 
-    this.documentMedia().valueChanges
-      .pipe(takeUntil(this.destroy$))
+    this.documentMedia()
+      .valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe((controls) => {
         const insideCover = this.documentMedia().controls.find(
           ({ controls: { type } }) => type.value === TitleMediaType.INSIDE_COVER
@@ -94,24 +100,55 @@ export class TempTitlePrinting implements OnDestroy {
     this.destroy$.complete();
   }
 
+  /**
+   * Handle black and white pages calculation
+   * Calculates bwPages = totalPages - colorPages
+   * Works with disabled controls by using startWith to get initial values
+   */
   handleBlackAndWhitePages() {
     const colorPagesControl = this.printingGroup()['controls']['colorPages'];
     const totalPagesControl = this.printingGroup()['controls']['totalPages'];
     const blackAndWhitePagesControl =
       this.printingGroup()['controls']['bwPages'];
+
+    // Calculate initial value
+    this.calculateBwPages(
+      colorPagesControl,
+      totalPagesControl,
+      blackAndWhitePagesControl
+    );
+
+    // Listen to changes in colorPages and totalPages
+    // Use startWith to get initial values (important for disabled controls)
     combineLatest([
-      colorPagesControl.valueChanges,
-      totalPagesControl.valueChanges,
+      colorPagesControl.valueChanges.pipe(startWith(colorPagesControl.value)),
+      totalPagesControl.valueChanges.pipe(startWith(totalPagesControl.value)),
     ])
       .pipe(
-        debounceTime(400),
+        debounceTime(100), // Reduced debounce for better responsiveness
         takeUntil(this.destroy$)
       )
       .subscribe(([colorPages, totalPages]) => {
-        blackAndWhitePagesControl.patchValue(
-          (Number(totalPages) || 0) - (Number(colorPages) || 0)
+        this.calculateBwPages(
+          colorPagesControl,
+          totalPagesControl,
+          blackAndWhitePagesControl
         );
       });
+  }
+
+  /**
+   * Calculate and set black and white pages
+   */
+  private calculateBwPages(
+    colorPagesControl: FormControl,
+    totalPagesControl: FormControl,
+    bwPagesControl: FormControl
+  ): void {
+    const totalPages = Number(totalPagesControl.value || 0);
+    const colorPages = Number(colorPagesControl.value || 0);
+    const bwPages = Math.max(0, totalPages - colorPages);
+    bwPagesControl.patchValue(bwPages, { emitEvent: false });
   }
 
   openFileDialog() {
@@ -162,4 +199,3 @@ export class TempTitlePrinting implements OnDestroy {
     return URL.createObjectURL(file);
   }
 }
-

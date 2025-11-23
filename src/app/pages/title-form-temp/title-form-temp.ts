@@ -14,10 +14,12 @@ import {
 } from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
 import {
+  combineLatest,
   debounceTime,
   distinctUntilChanged,
   map,
   Observable,
+  startWith,
   Subject,
   takeUntil,
 } from 'rxjs';
@@ -369,6 +371,16 @@ export class TitleFormTemp implements OnDestroy {
           if (stepName) {
             this.currentStep.set(stepName);
             this.updateStepInQueryParams(stepName);
+
+            // Calculate MSP when moving to pricing step
+            // This ensures MSP is calculated even if it wasn't calculated earlier
+            if (stepName === 'pricing') {
+              setTimeout(() => {
+                // Force calculation when moving to pricing step
+                // This handles cases where fields were filled but calculation didn't trigger
+                this.calculatePrintingCost();
+              }, 200);
+            }
           }
         });
 
@@ -380,6 +392,14 @@ export class TitleFormTemp implements OnDestroy {
         if (targetIndex !== -1 && targetIndex < stepperInstance.steps.length) {
           stepperInstance.selectedIndex = targetIndex;
           this.currentStep.set(queryStep);
+
+          // Calculate MSP if navigating to pricing step
+          if (queryStep === 'pricing') {
+            setTimeout(() => {
+              // Force calculation when navigating to pricing from query params
+              this.calculatePrintingCost();
+            }, 300);
+          }
         } else {
           // Invalid step in query params, use current stepper index
           const currentIndex = stepperInstance.selectedIndex;
@@ -781,15 +801,20 @@ export class TitleFormTemp implements OnDestroy {
     } = printGroup.controls;
 
     // Validate all required fields are numbers
+    // Note: colorPages can be 0, so we check for null/undefined separately
     if (
-      !colorPages ||
-      !totalPages ||
+      colorPages === null ||
+      colorPages === undefined ||
+      totalPages === null ||
+      totalPages === undefined ||
       !paperQuailtyId ||
       !sizeCategoryId ||
       !laminationTypeId ||
       !bookBindingsId ||
       isNaN(Number(colorPages)) ||
       isNaN(Number(totalPages)) ||
+      Number(colorPages) < 0 ||
+      Number(totalPages) <= 0 ||
       isNaN(Number(paperQuailtyId)) ||
       isNaN(Number(sizeCategoryId)) ||
       isNaN(Number(laminationTypeId)) ||
@@ -815,7 +840,8 @@ export class TitleFormTemp implements OnDestroy {
       const response = await this.printingService.getPrintingPrice(payload);
 
       if (response?.printPerItem && typeof response.printPerItem === 'number') {
-        mspController?.patchValue(response.printPerItem);
+        // Use emitEvent: false to prevent triggering valueChanges and causing infinite loop
+        mspController?.patchValue(response.printPerItem, { emitEvent: false });
       }
     } catch (error) {
       console.error('Error calculating printing cost:', error);
@@ -904,6 +930,13 @@ export class TitleFormTemp implements OnDestroy {
       this.tempForm.controls.printing.controls.totalPages.patchValue(
         interior.noOfPages || 0
       );
+      // Auto-calculate black and white pages and MSP after a small delay to ensure form state is updated
+      setTimeout(() => {
+        this.calculateBlackAndWhitePages();
+        // Recalculate printing cost (MSP) when totalPages changes
+        // This will calculate if all required fields are available
+        this.calculatePrintingCost();
+      }, 100);
     }
 
     data.royalties?.forEach((d) => {
@@ -1034,6 +1067,26 @@ export class TitleFormTemp implements OnDestroy {
 
       return null;
     };
+  }
+
+  /**
+   * Calculate and set black and white pages based on total pages and color pages
+   * Formula: bwPages = totalPages - colorPages
+   */
+  private calculateBlackAndWhitePages(): void {
+    const totalPagesControl =
+      this.tempForm.controls.printing.controls.totalPages;
+    const colorPagesControl =
+      this.tempForm.controls.printing.controls.colorPages;
+    const bwPagesControl = this.tempForm.controls.printing.controls.bwPages;
+
+    const totalPages = Number(totalPagesControl.value || 0);
+    const colorPages = Number(colorPagesControl.value || 0);
+
+    if (totalPages > 0) {
+      const bwPages = Math.max(0, totalPages - colorPages);
+      bwPagesControl.patchValue(bwPages, { emitEvent: false });
+    }
   }
 
   createDistributionOptions(): FormArray<FormGroup<TitleDistributionGroup>> {
@@ -1189,6 +1242,45 @@ export class TitleFormTemp implements OnDestroy {
             );
           }
         }
+      });
+
+    // Subscribe to specific printing field changes to recalculate MSP
+    // Only subscribe to fields that affect cost calculation, not the entire form
+    // This prevents infinite loops when MSP is updated
+    const printingControls = this.tempForm.controls.printing.controls;
+
+    combineLatest([
+      printingControls.totalPages.valueChanges.pipe(
+        startWith(printingControls.totalPages.value)
+      ),
+      printingControls.colorPages.valueChanges.pipe(
+        startWith(printingControls.colorPages.value)
+      ),
+      printingControls.bwPages.valueChanges.pipe(
+        startWith(printingControls.bwPages.value)
+      ),
+      printingControls.bookBindingsId.valueChanges.pipe(
+        startWith(printingControls.bookBindingsId.value)
+      ),
+      printingControls.laminationTypeId.valueChanges.pipe(
+        startWith(printingControls.laminationTypeId.value)
+      ),
+      printingControls.paperQuailtyId.valueChanges.pipe(
+        startWith(printingControls.paperQuailtyId.value)
+      ),
+      printingControls.sizeCategoryId.valueChanges.pipe(
+        startWith(printingControls.sizeCategoryId.value)
+      ),
+      printingControls.insideCover.valueChanges.pipe(
+        startWith(printingControls.insideCover.value)
+      ),
+      printingControls.isColorPagesRandom.valueChanges.pipe(
+        startWith(printingControls.isColorPagesRandom.value)
+      ),
+    ])
+      .pipe(debounceTime(500), takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.calculatePrintingCost();
       });
   }
 
@@ -1563,6 +1655,13 @@ export class TitleFormTemp implements OnDestroy {
             this.tempForm.controls.printing.controls.totalPages.patchValue(
               interior.noOfPages
             );
+            // Auto-calculate black and white pages and MSP after a small delay to ensure form state is updated
+            setTimeout(() => {
+              this.calculateBlackAndWhitePages();
+              // Recalculate printing cost (MSP) when totalPages changes
+              // This will calculate if all required fields are available
+              this.calculatePrintingCost();
+            }, 100);
           }
 
           // Clear file controls after successful upload to prevent duplicate uploads
@@ -1641,6 +1740,13 @@ export class TitleFormTemp implements OnDestroy {
           this.tempForm.controls.printing.controls.totalPages.patchValue(
             interior.noOfPages
           );
+          // Auto-calculate black and white pages and MSP after a small delay to ensure form state is updated
+          setTimeout(() => {
+            this.calculateBlackAndWhitePages();
+            // Recalculate printing cost (MSP) when totalPages changes
+            // This will calculate if all required fields are available
+            this.calculatePrintingCost();
+          }, 100);
         }
 
         // Clear file controls after successful upload to prevent duplicate uploads
@@ -2303,19 +2409,25 @@ export class TitleFormTemp implements OnDestroy {
       return;
     }
 
-    const selectedDistributions =
+    // Get selected distributions and remove already existing ones
+    const existingTypes =
+      this.titleDetails()?.distribution?.map((d) => d.type) ?? [];
+    const distributionsToCreate =
       this.tempForm.controls.distribution.value
-        ?.filter(({ isSelected }) => isSelected)
+        ?.filter(
+          ({ isSelected, type }) =>
+            isSelected && type && !existingTypes.includes(type)
+        )
         .map(({ type }) => type as DistributionType)
         .filter((type): type is DistributionType => !!type) ?? [];
 
-    if (selectedDistributions.length === 0) {
+    if (distributionsToCreate.length === 0) {
       Swal.fire({
         icon: 'warning',
         title: this.translateService.instant('warning'),
         text:
           this.translateService.instant('nodistributionselected') ||
-          'Please select at least one distribution type before proceeding.',
+          'Please select at least one new distribution type before proceeding.',
       });
       return;
     }
@@ -2329,7 +2441,7 @@ export class TitleFormTemp implements OnDestroy {
         // Create distribution update ticket
         await this.titleService.createTitleDistributionUpdateTicket(
           this.titleId,
-          selectedDistributions
+          distributionsToCreate
         );
 
         // Show success message
@@ -2355,10 +2467,10 @@ export class TitleFormTemp implements OnDestroy {
         return; // Don't proceed with normal flow
       }
 
-      // Normal update flow
+      // Normal update flow - only create new distributions
       await this.titleService.createTitleDistribution(
         this.titleId,
-        selectedDistributions
+        distributionsToCreate
       );
 
       Swal.fire({
