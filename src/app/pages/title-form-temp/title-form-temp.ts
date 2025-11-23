@@ -975,6 +975,10 @@ export class TitleFormTemp implements OnDestroy {
         disTypeControl.controls.id.patchValue(id);
       }
     });
+
+    // Update distribution validation after pre-filling
+    // This ensures validation passes if distributions already exist
+    this.tempForm.controls.distribution.updateValueAndValidity();
   }
 
   minWordsValidator(minWords: number): ValidatorFn {
@@ -1046,6 +1050,14 @@ export class TitleFormTemp implements OnDestroy {
 
   distributionValidator(): ValidatorFn {
     return (control) => {
+      // Check if distributions already exist for this title
+      // If they exist, validation passes (user doesn't need to select again)
+      const existingDistributions = this.titleDetails()?.distribution ?? [];
+      if (existingDistributions.length > 0) {
+        return null; // Validation passes if distributions already exist
+      }
+
+      // Only validate if no distributions exist yet
       const distributions = (
         control as FormArray<FormGroup<TitleDistributionGroup>>
       ).value;
@@ -2421,7 +2433,10 @@ export class TitleFormTemp implements OnDestroy {
         .map(({ type }) => type as DistributionType)
         .filter((type): type is DistributionType => !!type) ?? [];
 
-    if (distributionsToCreate.length === 0) {
+    if (
+      distributionsToCreate.length === 0 &&
+      !this.titleDetails()?.distribution?.length
+    ) {
       Swal.fire({
         icon: 'warning',
         title: this.translateService.instant('warning'),
@@ -2467,11 +2482,13 @@ export class TitleFormTemp implements OnDestroy {
         return; // Don't proceed with normal flow
       }
 
-      // Normal update flow - only create new distributions
-      await this.titleService.createTitleDistribution(
-        this.titleId,
-        distributionsToCreate
-      );
+      if (distributionsToCreate.length > 0) {
+        // Normal update flow - only create new distributions
+        await this.titleService.createTitleDistribution(
+          this.titleId,
+          distributionsToCreate
+        );
+      }
 
       Swal.fire({
         icon: 'success',
