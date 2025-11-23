@@ -13,7 +13,14 @@ import {
   ViewChildren,
 } from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { debounceTime, distinctUntilChanged, map, Observable, Subject, takeUntil } from 'rxjs';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  Observable,
+  Subject,
+  takeUntil,
+} from 'rxjs';
 import { StepperOrientation } from '@angular/cdk/stepper';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import {
@@ -136,7 +143,7 @@ export class TitleFormTemp implements OnDestroy {
     this.stepperOrientation = breakpointObserver
       .observe('(min-width: 800px)')
       .pipe(map(({ matches }) => (matches ? 'horizontal' : 'vertical')));
-    
+
     // Handle route params with proper cleanup
     this.route.params
       .pipe(takeUntil(this.destroy$))
@@ -146,7 +153,7 @@ export class TitleFormTemp implements OnDestroy {
         this.titleId = isNaN(parsedId) || parsedId <= 0 ? 0 : parsedId;
         this.isNewTitle = !this.titleId;
       });
-    
+
     // Setup stepper step tracking after component initialization
     // This will be called in ngOnInit after form is ready
 
@@ -192,10 +199,11 @@ export class TitleFormTemp implements OnDestroy {
   private getStepOrder(): string[] {
     const publishingType = this.tempForm.controls.publishingType.value;
     const hasFormatStep = !this.titleId; // Format step only shows for new titles
-    
-    let stepOrder = publishingType === PublishingType.ONLY_EBOOK
-      ? this.baseOrder.filter((s) => s !== 'print')
-      : this.baseOrder;
+
+    let stepOrder =
+      publishingType === PublishingType.ONLY_EBOOK
+        ? this.baseOrder.filter((s) => s !== 'print')
+        : this.baseOrder;
 
     // Add format step at the beginning if it exists
     if (hasFormatStep) {
@@ -229,7 +237,7 @@ export class TitleFormTemp implements OnDestroy {
    */
   private updateStepInQueryParams(stepName: string | null): void {
     const currentParams = { ...this.route.snapshot.queryParams };
-    
+
     if (stepName) {
       currentParams['step'] = stepName;
     } else {
@@ -242,6 +250,81 @@ export class TitleFormTemp implements OnDestroy {
       queryParamsHandling: 'merge',
       replaceUrl: true, // Don't add to history
     });
+  }
+
+  /**
+   * Move to next step after successful submission
+   * Only moves if not raising a ticket
+   */
+  private goToNextStep(): void {
+    // Don't move to next step when raising a ticket
+    if (this.isRaisingTicket()) {
+      return;
+    }
+
+    const stepperInstance = this.stepper();
+    if (!stepperInstance) {
+      return;
+    }
+
+    const currentIndex = stepperInstance.selectedIndex;
+    const totalSteps = stepperInstance.steps.length;
+
+    // Check if we can move to next step
+    if (currentIndex >= totalSteps - 1) {
+      return;
+    }
+
+    // Use setTimeout to ensure stepper is ready and form state is updated
+    setTimeout(() => {
+      try {
+        // Ensure current step is marked as completed if it has a stepControl
+        if (currentIndex >= 0 && currentIndex < stepperInstance.steps.length) {
+          const currentStep = stepperInstance.steps.toArray()[currentIndex];
+          if (currentStep?.stepControl) {
+            // Mark as touched and ensure it's valid
+            currentStep.stepControl.markAllAsTouched();
+            // If still invalid, mark as completed anyway since we've saved
+            if (!currentStep.stepControl.valid) {
+              // Force the step to be completed by directly setting selectedIndex
+              const nextIndex = currentIndex + 1;
+              stepperInstance.selectedIndex = nextIndex;
+              const newStepName = this.getStepNameFromIndex(nextIndex);
+              if (newStepName) {
+                this.currentStep.set(newStepName);
+                this.updateStepInQueryParams(newStepName);
+              }
+              return;
+            }
+          }
+        }
+
+        // Move to next step using next() method
+        stepperInstance.next();
+
+        // Update step signal and query params after stepper updates
+        setTimeout(() => {
+          const newIndex = stepperInstance.selectedIndex;
+          const newStepName = this.getStepNameFromIndex(newIndex);
+          if (newStepName && newIndex !== currentIndex) {
+            this.currentStep.set(newStepName);
+            this.updateStepInQueryParams(newStepName);
+          }
+        }, 100);
+      } catch (error) {
+        console.error('Error moving to next step:', error);
+        // Fallback: try direct index set
+        const nextIndex = currentIndex + 1;
+        if (nextIndex < totalSteps) {
+          stepperInstance.selectedIndex = nextIndex;
+          const newStepName = this.getStepNameFromIndex(nextIndex);
+          if (newStepName) {
+            this.currentStep.set(newStepName);
+            this.updateStepInQueryParams(newStepName);
+          }
+        }
+      }
+    }, 100);
   }
 
   /**
@@ -434,11 +517,7 @@ export class TitleFormTemp implements OnDestroy {
     this.authorsList.set(authorItems);
 
     this.tempForm.controls.titleDetails.controls.publisher.controls.id.valueChanges
-      .pipe(
-        debounceTime(400),
-        distinctUntilChanged(),
-        takeUntil(this.destroy$)
-      )
+      .pipe(debounceTime(400), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe(() => {
         this.fetchAndUpdatePublishingPoints();
       });
@@ -448,11 +527,11 @@ export class TitleFormTemp implements OnDestroy {
       try {
         this.isLoading.set(true);
         const response = await this.titleService.getTitleById(this.titleId);
-        
+
         if (!response) {
           throw new Error('Title not found');
         }
-        
+
         this.titleDetails.set(response);
         this.prefillFormData(response);
         media = Array.isArray(response?.media) ? response.media : [];
@@ -461,7 +540,9 @@ export class TitleFormTemp implements OnDestroy {
         Swal.fire({
           icon: 'error',
           title: this.translateService.instant('error'),
-          text: this.translateService.instant('errorloadingtitle') || 'Failed to load title. Please try again.',
+          text:
+            this.translateService.instant('errorloadingtitle') ||
+            'Failed to load title. Please try again.',
         }).then(() => {
           this.router.navigate(['/titles']);
         });
@@ -513,7 +594,7 @@ export class TitleFormTemp implements OnDestroy {
     try {
       this.isLoading.set(true);
       this.errorMessage.set(null);
-      
+
       const { items: publishingPoints } =
         await this.publisherService.fetchPublishingPoints(publisherId);
 
@@ -534,14 +615,16 @@ export class TitleFormTemp implements OnDestroy {
     } catch (error) {
       console.error('Error fetching publishing points:', error);
       this.errorMessage.set(
-        this.translateService.instant('errorfetchingpublishingpoints') || 
-        'Failed to fetch publishing points. Please try again.'
+        this.translateService.instant('errorfetchingpublishingpoints') ||
+          'Failed to fetch publishing points. Please try again.'
       );
       // Show user-friendly error
       Swal.fire({
         icon: 'error',
         title: this.translateService.instant('error'),
-        text: this.errorMessage() || 'An error occurred while fetching publishing points.',
+        text:
+          this.errorMessage() ||
+          'An error occurred while fetching publishing points.',
       });
     } finally {
       this.isLoading.set(false);
@@ -730,7 +813,7 @@ export class TitleFormTemp implements OnDestroy {
 
       const mspController = this.tempForm.controls.printing.controls.msp;
       const response = await this.printingService.getPrintingPrice(payload);
-      
+
       if (response?.printPerItem && typeof response.printPerItem === 'number') {
         mspController?.patchValue(response.printPerItem);
       }
@@ -1084,10 +1167,7 @@ export class TitleFormTemp implements OnDestroy {
 
   handelInsideCoverMedia() {
     this.tempForm.controls.printing.controls.insideCover.valueChanges
-      .pipe(
-        debounceTime(400),
-        takeUntil(this.destroy$)
-      )
+      .pipe(debounceTime(400), takeUntil(this.destroy$))
       .subscribe(async (insideCover) => {
         const insideCoverControl =
           this.tempForm.controls.documentMedia.controls.find(
@@ -1234,7 +1314,9 @@ export class TitleFormTemp implements OnDestroy {
       Swal.fire({
         icon: 'error',
         title: this.translateService.instant('error'),
-        text: this.translateService.instant('invalidfile') || 'Invalid file selected.',
+        text:
+          this.translateService.instant('invalidfile') ||
+          'Invalid file selected.',
       });
       return;
     }
@@ -1243,7 +1325,9 @@ export class TitleFormTemp implements OnDestroy {
     const maxAllowedSize = mediaGroup.controls.maxSize.value;
 
     if (maxAllowedSize && fileSizeInMB > maxAllowedSize) {
-      const errorText = `Maximum allowed size is (${maxAllowedSize} MB) <br> Uploaded file is (${fileSizeInMB.toFixed(2)} MB)`;
+      const errorText = `Maximum allowed size is (${maxAllowedSize} MB) <br> Uploaded file is (${fileSizeInMB.toFixed(
+        2
+      )} MB)`;
       Swal.fire({
         icon: 'error',
         title: 'Incorrect file size',
@@ -1258,7 +1342,7 @@ export class TitleFormTemp implements OnDestroy {
 
     try {
       const url = await getFileToBase64(file);
-      
+
       if (!url) {
         throw new Error('Failed to convert file to base64');
       }
@@ -1273,7 +1357,9 @@ export class TitleFormTemp implements OnDestroy {
       Swal.fire({
         icon: 'error',
         title: this.translateService.instant('error'),
-        text: this.translateService.instant('fileuploaderror') || 'Failed to process file. Please try again.',
+        text:
+          this.translateService.instant('fileuploaderror') ||
+          'Failed to process file. Please try again.',
       });
       // Reset the input
       if (input) {
@@ -1401,6 +1487,7 @@ export class TitleFormTemp implements OnDestroy {
         targetStep = 'details';
       }
 
+      // Update URL with titleId and current step
       this.router.navigate(['/title', this.titleId], {
         replaceUrl: true,
         queryParams: {
@@ -1409,33 +1496,16 @@ export class TitleFormTemp implements OnDestroy {
         },
       });
 
-      const stepperInstance = this.stepper();
-      if (stepperInstance) {
-        stepperInstance.next();
-        // Update step in query params after navigation
-        setTimeout(() => {
-          const newStepName = this.getStepNameFromIndex(
-            stepperInstance.selectedIndex
-          );
-          if (newStepName) {
-            this.currentStep.set(newStepName);
-            this.updateStepInQueryParams(newStepName);
-          }
-        }, 100);
-      }
+      // Move to next step after URL update completes
+      setTimeout(() => {
+        this.goToNextStep();
+      }, 150);
     } catch (error) {
       console.error('Error creating title:', error);
       this.errorMessage.set(
         this.translateService.instant('errorcreatingtitle') ||
           'Failed to create title. Please try again.'
       );
-      Swal.fire({
-        icon: 'error',
-        title: this.translateService.instant('error'),
-        text:
-          this.errorMessage() ||
-          'An error occurred while creating the title.',
-      });
     } finally {
       this.isLoading.set(false);
     }
@@ -1450,7 +1520,9 @@ export class TitleFormTemp implements OnDestroy {
       Swal.fire({
         icon: 'error',
         title: this.translateService.instant('error'),
-        text: this.translateService.instant('titleidrequired') || 'Title ID is required. Please save title details first.',
+        text:
+          this.translateService.instant('titleidrequired') ||
+          'Title ID is required. Please save title details first.',
       });
       return;
     }
@@ -1473,28 +1545,20 @@ export class TitleFormTemp implements OnDestroy {
           type: type as TitleMediaType,
         }));
 
-      if (!mediaToUpload.length) {
-        Swal.fire({
-          icon: 'warning',
-          title: this.translateService.instant('warning'),
-          text: this.translateService.instant('nofilestoupload') || 'No files to upload.',
-        });
-        return;
-      }
-
       // Check if raising ticket for approved title
       if (this.isRaisingTicket()) {
         // Upload media via update ticket API
-        const mediaResponse = await this.titleService.uploadMultiMediaForUpdateTicket(
-          this.titleId,
-          mediaToUpload
-        );
+        const mediaResponse =
+          await this.titleService.uploadMultiMediaForUpdateTicket(
+            this.titleId,
+            mediaToUpload
+          );
 
         if (mediaResponse && Array.isArray(mediaResponse)) {
           const interior = mediaResponse.find(
             (item: any) => item?.type === TitleMediaType.INTERIOR
           ) as any;
-          
+
           if (interior?.noOfPages && typeof interior.noOfPages === 'number') {
             this.tempForm.controls.printing.controls.totalPages.patchValue(
               interior.noOfPages
@@ -1504,20 +1568,39 @@ export class TitleFormTemp implements OnDestroy {
           // Clear file controls after successful upload to prevent duplicate uploads
           // Update form with uploaded media data (id, url) and clear file
           mediaResponse.forEach((uploadedMedia: any) => {
-            const mediaControl = this.tempForm.controls.documentMedia.controls.find(
-              (control) => control.controls.type.value === uploadedMedia.type
-            );
-            
+            const mediaControl =
+              this.tempForm.controls.documentMedia.controls.find(
+                (control) => control.controls.type.value === uploadedMedia.type
+              );
+
             if (mediaControl) {
+              const hasId = uploadedMedia.id || mediaControl.controls.id.value;
+              // Update validators: if id exists, file is not required
+              if (hasId) {
+                mediaControl.controls.file.removeValidators(
+                  Validators.required
+                );
+              }
+
               mediaControl.patchValue({
-                id: uploadedMedia.id || mediaControl.controls.id.value,
+                id: hasId,
                 url: uploadedMedia.url || mediaControl.controls.url.value,
                 name: uploadedMedia.name || mediaControl.controls.name.value,
                 file: null, // Clear file to prevent duplicate upload
-                noOfPages: uploadedMedia.noOfPages || mediaControl.controls.noOfPages.value,
+                noOfPages:
+                  uploadedMedia.noOfPages ||
+                  mediaControl.controls.noOfPages.value,
               });
+
+              // Update validity after patching
+              if (hasId) {
+                mediaControl.controls.file.updateValueAndValidity();
+              }
             }
           });
+
+          // Ensure form array is valid after updates
+          this.tempForm.controls.documentMedia.updateValueAndValidity();
         }
 
         // Show success message
@@ -1553,7 +1636,7 @@ export class TitleFormTemp implements OnDestroy {
         const interior = mediaResponse.find(
           ({ type }) => type === TitleMediaType.INTERIOR
         );
-        
+
         if (interior?.noOfPages && typeof interior.noOfPages === 'number') {
           this.tempForm.controls.printing.controls.totalPages.patchValue(
             interior.noOfPages
@@ -1563,20 +1646,37 @@ export class TitleFormTemp implements OnDestroy {
         // Clear file controls after successful upload to prevent duplicate uploads
         // Update form with uploaded media data (id, url) and clear file
         mediaResponse.forEach((uploadedMedia: any) => {
-          const mediaControl = this.tempForm.controls.documentMedia.controls.find(
-            (control) => control.controls.type.value === uploadedMedia.type
-          );
-          
+          const mediaControl =
+            this.tempForm.controls.documentMedia.controls.find(
+              (control) => control.controls.type.value === uploadedMedia.type
+            );
+
           if (mediaControl) {
+            const hasId = uploadedMedia.id || mediaControl.controls.id.value;
+            // Update validators: if id exists, file is not required
+            if (hasId) {
+              mediaControl.controls.file.removeValidators(Validators.required);
+            }
+
             mediaControl.patchValue({
-              id: uploadedMedia.id || mediaControl.controls.id.value,
+              id: hasId,
               url: uploadedMedia.url || mediaControl.controls.url.value,
               name: uploadedMedia.name || mediaControl.controls.name.value,
               file: null, // Clear file to prevent duplicate upload
-              noOfPages: uploadedMedia.noOfPages || mediaControl.controls.noOfPages.value,
+              noOfPages:
+                uploadedMedia.noOfPages ||
+                mediaControl.controls.noOfPages.value,
             });
+
+            // Update validity after patching
+            if (hasId) {
+              mediaControl.controls.file.updateValueAndValidity();
+            }
           }
         });
+
+        // Ensure form array is valid after updates
+        this.tempForm.controls.documentMedia.updateValueAndValidity();
       }
 
       if (
@@ -1587,7 +1687,9 @@ export class TitleFormTemp implements OnDestroy {
         Swal.fire({
           icon: 'success',
           title: this.translateService.instant('success'),
-          text: this.translateService.instant('titlesentforapproval') || 'Title has been sent for approval to the admin.',
+          text:
+            this.translateService.instant('titlesentforapproval') ||
+            'Title has been sent for approval to the admin.',
         }).then(() => {
           this.router.navigate(['/titles']);
         });
@@ -1595,28 +1697,14 @@ export class TitleFormTemp implements OnDestroy {
         return;
       }
 
-      const stepperInstance = this.stepper();
-      if (stepperInstance) {
-        stepperInstance.next();
-        // Update step in query params
-        setTimeout(() => {
-          const newStepName = this.getStepNameFromIndex(stepperInstance.selectedIndex);
-          if (newStepName) {
-            this.updateStepInQueryParams(newStepName);
-          }
-        }, 100);
-      }
+      // Move to next step after successful submission
+      this.goToNextStep();
     } catch (error) {
       console.error('Error uploading media:', error);
       this.errorMessage.set(
-        this.translateService.instant('erroruploadingmedia') || 
-        'Failed to upload media files. Please try again.'
+        this.translateService.instant('erroruploadingmedia') ||
+          'Failed to upload media files. Please try again.'
       );
-      Swal.fire({
-        icon: 'error',
-        title: this.translateService.instant('error'),
-        text: this.errorMessage() || 'An error occurred while uploading media files.',
-      });
     } finally {
       this.isLoading.set(false);
     }
@@ -1633,7 +1721,9 @@ export class TitleFormTemp implements OnDestroy {
       Swal.fire({
         icon: 'error',
         title: this.translateService.instant('error'),
-        text: this.translateService.instant('titleidrequired') || 'Title ID is required.',
+        text:
+          this.translateService.instant('titleidrequired') ||
+          'Title ID is required.',
       });
       return;
     }
@@ -1643,12 +1733,13 @@ export class TitleFormTemp implements OnDestroy {
       this.errorMessage.set(null);
 
       const data: PricingCreate[] = pricingControls.controls
-        .filter(({ controls: { platform, mrp, salesPrice } }) => 
-          platform.value && 
-          mrp.value && 
-          salesPrice.value &&
-          !isNaN(Number(mrp.value)) &&
-          !isNaN(Number(salesPrice.value))
+        .filter(
+          ({ controls: { platform, mrp, salesPrice } }) =>
+            platform.value &&
+            mrp.value &&
+            salesPrice.value &&
+            !isNaN(Number(mrp.value)) &&
+            !isNaN(Number(salesPrice.value))
         )
         .map(({ controls: { platform, id, mrp, salesPrice } }) => ({
           id: id.value || undefined,
@@ -1662,7 +1753,9 @@ export class TitleFormTemp implements OnDestroy {
         Swal.fire({
           icon: 'warning',
           title: this.translateService.instant('warning'),
-          text: this.translateService.instant('invalidpricingdata') || 'Please provide valid pricing data.',
+          text:
+            this.translateService.instant('invalidpricingdata') ||
+            'Please provide valid pricing data.',
         });
         return;
       }
@@ -1699,30 +1792,21 @@ export class TitleFormTemp implements OnDestroy {
 
       // Normal update flow
       await this.titleService.createManyPricing(data, this.titleId);
-      
+
       const publisher = this.publisherSignal();
       const authors = this.authorsSignal();
 
       if (publisher) {
         this.mapRoyaltiesArray(publisher, authors);
       }
-      
-      const stepperInstance = this.stepper();
-      if (stepperInstance) {
-        stepperInstance.next();
-        // Update step in query params
-        setTimeout(() => {
-          const newStepName = this.getStepNameFromIndex(stepperInstance.selectedIndex);
-          if (newStepName) {
-            this.updateStepInQueryParams(newStepName);
-          }
-        }, 100);
-      }
+
+      // Move to next step after successful submission
+      this.goToNextStep();
     } catch (error) {
       console.error('Error saving pricing:', error);
       this.errorMessage.set(
-        this.translateService.instant('errorsavingpricing') || 
-        'Failed to save pricing. Please try again.'
+        this.translateService.instant('errorsavingpricing') ||
+          'Failed to save pricing. Please try again.'
       );
     } finally {
       this.isLoading.set(false);
@@ -1741,7 +1825,9 @@ export class TitleFormTemp implements OnDestroy {
       Swal.fire({
         icon: 'error',
         title: this.translateService.instant('error'),
-        text: this.translateService.instant('titleidrequired') || 'Title ID is required.',
+        text:
+          this.translateService.instant('titleidrequired') ||
+          'Title ID is required.',
       });
       return;
     }
@@ -1752,20 +1838,22 @@ export class TitleFormTemp implements OnDestroy {
 
     // Check if inside cover is enabled
     const isInsideCoverEnabled = printing.controls.insideCover.value;
-    
+
     // Check if inside cover already exists in the database (from existing printing data)
     const existingInsideCover = this.titleDetails()?.printing?.[0]?.insideCover;
-    
+
     // Validate: if inside cover is enabled, file or url must exist
     if (isInsideCoverEnabled) {
       const hasFile = insideCoverMedia?.controls?.file?.value;
       const hasUrl = insideCoverMedia?.controls?.url?.value;
-      
+
       if (!hasFile && !hasUrl) {
         Swal.fire({
           icon: 'error',
           title: this.translateService.instant('error'),
-          html: this.translateService.instant('missinginsicovermediaerror') || 'Inside cover image is required when inside cover is enabled.',
+          html:
+            this.translateService.instant('missinginsicovermediaerror') ||
+            'Inside cover image is required when inside cover is enabled.',
         });
         return;
       }
@@ -1776,16 +1864,13 @@ export class TitleFormTemp implements OnDestroy {
       this.errorMessage.set(null);
 
       // Upload inside cover media if needed (only if there's a new file to upload)
-      if (
-        isInsideCoverEnabled &&
-        insideCoverMedia?.controls?.file?.value
-      ) {
+      if (isInsideCoverEnabled && insideCoverMedia?.controls?.file?.value) {
         try {
           await this.titleService.uploadMedia(this.titleId, {
             file: insideCoverMedia.controls.file.value,
             type: TitleMediaType.INSIDE_COVER,
           });
-          
+
           // Clear file after successful upload to prevent duplicate uploads
           insideCoverMedia.patchValue({
             file: null,
@@ -1795,7 +1880,9 @@ export class TitleFormTemp implements OnDestroy {
           Swal.fire({
             icon: 'error',
             title: this.translateService.instant('error'),
-            text: this.translateService.instant('erroruploadingmedia') || 'Failed to upload inside cover media. Please try again.',
+            text:
+              this.translateService.instant('erroruploadingmedia') ||
+              'Failed to upload inside cover media. Please try again.',
           });
           return;
         }
@@ -1834,13 +1921,18 @@ export class TitleFormTemp implements OnDestroy {
       // Check if raising ticket for approved title
       if (this.isRaisingTicket()) {
         // For update ticket, use Partial and only include insideCover if it's being changed
-        const updateTicketData: Partial<PrintingCreate> = { ...basePrintingData };
-        
+        const updateTicketData: Partial<PrintingCreate> = {
+          ...basePrintingData,
+        };
+
         // Only include insideCover if it's being changed (not already true in database)
-        if (!existingInsideCover || isInsideCoverEnabled !== existingInsideCover) {
+        if (
+          !existingInsideCover ||
+          isInsideCoverEnabled !== existingInsideCover
+        ) {
           updateTicketData.insideCover = isInsideCoverEnabled;
         }
-        
+
         // Create printing update ticket
         await this.titleService.createTitlePrintingUpdateTicket(
           this.titleId,
@@ -1848,24 +1940,25 @@ export class TitleFormTemp implements OnDestroy {
         );
 
         // Preserve current pricing values before reloading
-        const currentPricingValues = this.tempForm.controls.pricing.controls.map(
-          (control) => ({
+        const currentPricingValues =
+          this.tempForm.controls.pricing.controls.map((control) => ({
             id: control.controls.id.value,
             platform: control.controls.platform.value,
             mrp: control.controls.mrp.value,
             salesPrice: control.controls.salesPrice.value,
-          })
-        );
+          }));
 
         // Preserve inside cover media state before reloading
-        const currentInsideCoverMedia = insideCoverMedia ? {
-          id: insideCoverMedia.controls.id.value,
-          url: insideCoverMedia.controls.url.value,
-          name: insideCoverMedia.controls.name.value,
-          file: insideCoverMedia.controls.file.value,
-          noOfPages: insideCoverMedia.controls.noOfPages.value,
-          size: insideCoverMedia.controls.size.value,
-        } : null;
+        const currentInsideCoverMedia = insideCoverMedia
+          ? {
+              id: insideCoverMedia.controls.id.value,
+              url: insideCoverMedia.controls.url.value,
+              name: insideCoverMedia.controls.name.value,
+              file: insideCoverMedia.controls.file.value,
+              noOfPages: insideCoverMedia.controls.noOfPages.value,
+              size: insideCoverMedia.controls.size.value,
+            }
+          : null;
 
         // Show success message
         Swal.fire({
@@ -1882,33 +1975,39 @@ export class TitleFormTemp implements OnDestroy {
           if (response) {
             this.titleDetails.set(response);
             this.prefillFormData(response);
-            
+
             // Update all media controls with data from response
             if (response.media && Array.isArray(response.media)) {
               response.media.forEach((mediaItem) => {
-                const mediaControl = this.tempForm.controls.documentMedia.controls.find(
-                  ({ controls: { type } }) => type.value === mediaItem.type
-                );
-                
+                const mediaControl =
+                  this.tempForm.controls.documentMedia.controls.find(
+                    ({ controls: { type } }) => type.value === mediaItem.type
+                  );
+
                 if (mediaControl) {
                   // Update existing control with response data
                   mediaControl.patchValue({
                     id: mediaItem.id || mediaControl.controls.id.value,
                     url: mediaItem.url || mediaControl.controls.url.value,
                     name: mediaItem.name || mediaControl.controls.name.value,
-                    noOfPages: mediaItem.noOfPages || mediaControl.controls.noOfPages.value,
+                    noOfPages:
+                      mediaItem.noOfPages ||
+                      mediaControl.controls.noOfPages.value,
                   });
                 }
               });
             }
-            
+
             // Ensure inside cover media control exists if insideCover is enabled
-            const isInsideCoverEnabledAfterReload = this.tempForm.controls.printing.controls.insideCover.value;
+            const isInsideCoverEnabledAfterReload =
+              this.tempForm.controls.printing.controls.insideCover.value;
             if (isInsideCoverEnabledAfterReload) {
-              let insideCoverMediaControl = this.tempForm.controls.documentMedia.controls.find(
-                ({ controls: { type } }) => type.value === TitleMediaType.INSIDE_COVER
-              );
-              
+              let insideCoverMediaControl =
+                this.tempForm.controls.documentMedia.controls.find(
+                  ({ controls: { type } }) =>
+                    type.value === TitleMediaType.INSIDE_COVER
+                );
+
               // If inside cover media control doesn't exist, create it
               if (!insideCoverMediaControl) {
                 const insideCoverMediaFromResponse = response.media?.find(
@@ -1919,7 +2018,9 @@ export class TitleFormTemp implements OnDestroy {
                   true,
                   insideCoverMediaFromResponse
                 );
-                this.tempForm.controls.documentMedia.push(insideCoverMediaControl);
+                this.tempForm.controls.documentMedia.push(
+                  insideCoverMediaControl
+                );
               } else {
                 // Update existing control with response data if available
                 const insideCoverMediaFromResponse = response.media?.find(
@@ -1927,34 +2028,59 @@ export class TitleFormTemp implements OnDestroy {
                 );
                 if (insideCoverMediaFromResponse) {
                   insideCoverMediaControl.patchValue({
-                    id: insideCoverMediaFromResponse.id || insideCoverMediaControl.controls.id.value,
-                    url: insideCoverMediaFromResponse.url || insideCoverMediaControl.controls.url.value,
-                    name: insideCoverMediaFromResponse.name || insideCoverMediaControl.controls.name.value,
-                    noOfPages: insideCoverMediaFromResponse.noOfPages || insideCoverMediaControl.controls.noOfPages.value,
+                    id:
+                      insideCoverMediaFromResponse.id ||
+                      insideCoverMediaControl.controls.id.value,
+                    url:
+                      insideCoverMediaFromResponse.url ||
+                      insideCoverMediaControl.controls.url.value,
+                    name:
+                      insideCoverMediaFromResponse.name ||
+                      insideCoverMediaControl.controls.name.value,
+                    noOfPages:
+                      insideCoverMediaFromResponse.noOfPages ||
+                      insideCoverMediaControl.controls.noOfPages.value,
                   });
                 }
               }
-              
+
               // Restore inside cover media values if they existed before reloading (preserve user input)
               if (currentInsideCoverMedia && insideCoverMediaControl) {
                 insideCoverMediaControl.patchValue({
-                  id: currentInsideCoverMedia.id || insideCoverMediaControl.controls.id.value,
-                  url: currentInsideCoverMedia.url || insideCoverMediaControl.controls.url.value,
-                  name: currentInsideCoverMedia.name || insideCoverMediaControl.controls.name.value,
-                  file: currentInsideCoverMedia.file || insideCoverMediaControl.controls.file.value,
-                  noOfPages: currentInsideCoverMedia.noOfPages || insideCoverMediaControl.controls.noOfPages.value,
-                  size: currentInsideCoverMedia.size || insideCoverMediaControl.controls.size.value,
+                  id:
+                    currentInsideCoverMedia.id ||
+                    insideCoverMediaControl.controls.id.value,
+                  url:
+                    currentInsideCoverMedia.url ||
+                    insideCoverMediaControl.controls.url.value,
+                  name:
+                    currentInsideCoverMedia.name ||
+                    insideCoverMediaControl.controls.name.value,
+                  file:
+                    currentInsideCoverMedia.file ||
+                    insideCoverMediaControl.controls.file.value,
+                  noOfPages:
+                    currentInsideCoverMedia.noOfPages ||
+                    insideCoverMediaControl.controls.noOfPages.value,
+                  size:
+                    currentInsideCoverMedia.size ||
+                    insideCoverMediaControl.controls.size.value,
                 });
               }
             }
-            
+
             // Restore pricing values after reloading to prevent them from being cleared
             if (currentPricingValues.length > 0) {
               currentPricingValues.forEach((pricingValue) => {
-                const pricingControl = this.tempForm.controls.pricing.controls.find(
-                  (control) => control.controls.platform.value === pricingValue.platform
-                );
-                if (pricingControl && (pricingValue.mrp || pricingValue.salesPrice)) {
+                const pricingControl =
+                  this.tempForm.controls.pricing.controls.find(
+                    (control) =>
+                      control.controls.platform.value === pricingValue.platform
+                  );
+                if (
+                  pricingControl &&
+                  (pricingValue.mrp || pricingValue.salesPrice)
+                ) {
                   pricingControl.patchValue({
                     id: pricingValue.id,
                     platform: pricingValue.platform,
@@ -1978,49 +2104,43 @@ export class TitleFormTemp implements OnDestroy {
       const createPrinting: PrintingCreate = {
         ...basePrintingData,
         // Only include insideCover if it's being changed (not already true in database)
-        insideCover: (!existingInsideCover || isInsideCoverEnabled !== existingInsideCover) 
-          ? isInsideCoverEnabled 
-          : existingInsideCover || false,
+        insideCover:
+          !existingInsideCover || isInsideCoverEnabled !== existingInsideCover
+            ? isInsideCoverEnabled
+            : existingInsideCover || false,
       };
-      
+
       const response = await this.titleService.createOrUpdatePrinting(
         createPrinting
       );
-      
+
       if (response?.id) {
         printing.controls.id.patchValue(response.id);
       }
-      
+
       await this.calculatePrintingCost();
-      
+
       if (this.tempForm.controls.printingFormat.value === 'printOnly') {
         Swal.fire({
           icon: 'success',
           title: this.translateService.instant('success'),
-          text: this.translateService.instant('titlesentforapproval') || 'Title has been sent for approval to the admin.',
+          text:
+            this.translateService.instant('titlesentforapproval') ||
+            'Title has been sent for approval to the admin.',
         }).then(() => {
           this.router.navigate(['/titles']);
         });
 
         return;
       }
-      
-      const stepperInstance = this.stepper();
-      if (stepperInstance) {
-        stepperInstance.next();
-        // Update step in query params
-        setTimeout(() => {
-          const newStepName = this.getStepNameFromIndex(stepperInstance.selectedIndex);
-          if (newStepName) {
-            this.updateStepInQueryParams(newStepName);
-          }
-        }, 100);
-      }
+
+      // Move to next step after successful submission
+      this.goToNextStep();
     } catch (error) {
       console.error('Error saving printing draft:', error);
       this.errorMessage.set(
-        this.translateService.instant('errorsavingprinting') || 
-        'Failed to save printing details. Please try again.'
+        this.translateService.instant('errorsavingprinting') ||
+          'Failed to save printing details. Please try again.'
       );
     } finally {
       this.isLoading.set(false);
@@ -2038,7 +2158,9 @@ export class TitleFormTemp implements OnDestroy {
       Swal.fire({
         icon: 'error',
         title: this.translateService.instant('error'),
-        text: this.translateService.instant('titleidrequired') || 'Title ID is required.',
+        text:
+          this.translateService.instant('titleidrequired') ||
+          'Title ID is required.',
       });
       return;
     }
@@ -2048,11 +2170,12 @@ export class TitleFormTemp implements OnDestroy {
       this.errorMessage.set(null);
 
       const royalties: UpdateRoyalty[] = royaltiesControl.controls
-        .filter(({ controls: { percentage, platform } }) => 
-          percentage.value !== null && 
-          percentage.value !== undefined &&
-          !isNaN(Number(percentage.value)) &&
-          platform.value
+        .filter(
+          ({ controls: { percentage, platform } }) =>
+            percentage.value !== null &&
+            percentage.value !== undefined &&
+            !isNaN(Number(percentage.value)) &&
+            platform.value
         )
         .map(
           ({
@@ -2079,7 +2202,9 @@ export class TitleFormTemp implements OnDestroy {
         Swal.fire({
           icon: 'warning',
           title: this.translateService.instant('warning'),
-          text: this.translateService.instant('invalidroyaltiesdata') || 'Please provide valid royalties data.',
+          text:
+            this.translateService.instant('invalidroyaltiesdata') ||
+            'Please provide valid royalties data.',
         });
         return;
       }
@@ -2117,22 +2242,13 @@ export class TitleFormTemp implements OnDestroy {
       // Normal update flow
       await this.titleService.createManyRoyalties(royalties, this.titleId);
 
-      const stepperInstance = this.stepper();
-      if (stepperInstance) {
-        stepperInstance.next();
-        // Update step in query params
-        setTimeout(() => {
-          const newStepName = this.getStepNameFromIndex(stepperInstance.selectedIndex);
-          if (newStepName) {
-            this.updateStepInQueryParams(newStepName);
-          }
-        }, 100);
-      }
+      // Move to next step after successful submission
+      this.goToNextStep();
     } catch (error) {
       console.error('Error saving royalties:', error);
       this.errorMessage.set(
-        this.translateService.instant('errorsavingroyalties') || 
-        'Failed to save royalties. Please try again.'
+        this.translateService.instant('errorsavingroyalties') ||
+          'Failed to save royalties. Please try again.'
       );
     } finally {
       this.isLoading.set(false);
@@ -2169,7 +2285,9 @@ export class TitleFormTemp implements OnDestroy {
       Swal.fire({
         icon: 'warning',
         title: this.translateService.instant('warning'),
-        text: this.translateService.instant('invaliddata') || 'Please check your form fields before submitting.',
+        text:
+          this.translateService.instant('invaliddata') ||
+          'Please check your form fields before submitting.',
       });
       return;
     }
@@ -2178,7 +2296,9 @@ export class TitleFormTemp implements OnDestroy {
       Swal.fire({
         icon: 'error',
         title: this.translateService.instant('error'),
-        text: this.translateService.instant('titleidrequired') || 'Title ID is required.',
+        text:
+          this.translateService.instant('titleidrequired') ||
+          'Title ID is required.',
       });
       return;
     }
@@ -2193,7 +2313,9 @@ export class TitleFormTemp implements OnDestroy {
       Swal.fire({
         icon: 'warning',
         title: this.translateService.instant('warning'),
-        text: this.translateService.instant('nodistributionselected') || 'Please select at least one distribution type before proceeding.',
+        text:
+          this.translateService.instant('nodistributionselected') ||
+          'Please select at least one distribution type before proceeding.',
       });
       return;
     }
@@ -2242,19 +2364,20 @@ export class TitleFormTemp implements OnDestroy {
       Swal.fire({
         icon: 'success',
         title: this.translateService.instant('success'),
-        text: this.translateService.instant('titlesentforapproval') || 'Title has been sent for approval to the admin.',
+        text:
+          this.translateService.instant('titlesentforapproval') ||
+          'Title has been sent for approval to the admin.',
       }).then(() => {
         this.router.navigate(['/titles']);
       });
     } catch (error) {
       console.error('Error submitting distribution:', error);
       this.errorMessage.set(
-        this.translateService.instant('errorsubmittingdistribution') || 
-        'Failed to submit distribution. Please try again.'
+        this.translateService.instant('errorsubmittingdistribution') ||
+          'Failed to submit distribution. Please try again.'
       );
     } finally {
       this.isLoading.set(false);
     }
   }
 }
-
