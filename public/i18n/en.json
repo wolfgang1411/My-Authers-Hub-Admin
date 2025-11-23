@@ -478,5 +478,6 @@
   "customdeliverycharges": "Custom Delivery Charges",
   "type": "Type",
   "copiessold": "Copies Sold",
-  "royaltiesearned/totalsales": "Royalties Earned / Total Sales"
+  "royaltiesearned/totalsales": "Royalties Earned / Total Sales",
+  "SelectedDistrbutions": "Selected Distrbutions"
 }

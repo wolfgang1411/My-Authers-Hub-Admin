@@ -128,11 +128,12 @@ export class Wallet {
         onClose: () => dialog.close(),
         onSave: async (val: string | number) => {
           val = Number(val);
-          if (!val || val <= 0 || val > availableAmount) {
+
+          if (!val || val < 150 || val > availableAmount) {
             Swal.fire({
               icon: 'error',
               title: 'Error',
-              text: 'Invalid value',
+              text: `Invalid value. Minimum amount is 150 INR.`,
             });
             return;
           }

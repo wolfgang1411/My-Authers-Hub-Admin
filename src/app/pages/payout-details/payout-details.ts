@@ -5,12 +5,13 @@ import { User } from '../../interfaces';
 import { ActivatedRoute } from '@angular/router';
 import { Payout } from '../../interfaces/Payout';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { MatList, MatListItem } from '@angular/material/list';
 import { MyDatePipe } from '../../pipes/my-date-pipe';
+import { MatIconModule } from '@angular/material/icon';
+import { Back } from 'src/app/components/back/back';
 
 @Component({
   selector: 'app-payout-details',
-  imports: [SharedModule, MatList, MatListItem, MyDatePipe],
+  imports: [SharedModule, MatIconModule, MyDatePipe, Back],
   templateUrl: './payout-details.html',
   styleUrl: './payout-details.css',
 })
