@@ -918,16 +918,26 @@ export class TitleFormTemp implements OnDestroy {
 
       printing: {
         id: data.printing?.[0]?.id,
-        bookBindingsId: data.printing?.[0]?.bindingType.id,
+        bookBindingsId:
+          data.printing?.[0]?.bindingType.id ||
+          this.tempForm.value.printing?.bookBindingsId,
         totalPages: data.printing?.[0]?.totalPages || 0,
         colorPages: data.printing?.[0]?.colorPages || 0,
         isColorPagesRandom: data.printing?.[0]?.isColorPagesRandom,
         bwPages: data.printing?.[0]?.bwPages,
-        insideCover: data.printing?.[0]?.insideCover,
-        laminationTypeId: data.printing?.[0]?.laminationType.id,
-        paperType: data.printing?.[0]?.paperType,
-        paperQuailtyId: data.printing?.[0]?.paperQuailty.id,
-        sizeCategoryId: data.printing?.[0]?.sizeCategory.id,
+        insideCover: data.printing?.[0]?.insideCover || false,
+        laminationTypeId:
+          data.printing?.[0]?.laminationType.id ||
+          this.tempForm.value.printing?.laminationTypeId,
+        paperType:
+          data.printing?.[0]?.paperType ||
+          this.tempForm.value.printing?.paperType,
+        paperQuailtyId:
+          data.printing?.[0]?.paperQuailty.id ||
+          this.tempForm.value.printing?.paperQuailtyId,
+        sizeCategoryId:
+          data.printing?.[0]?.sizeCategory.id ||
+          this.tempForm.value.printing?.sizeCategoryId,
         msp: data.printing?.[0]?.printCost,
       },
     });
