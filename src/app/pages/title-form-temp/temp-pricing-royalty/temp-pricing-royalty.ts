@@ -2,9 +2,12 @@ import {
   Component,
   computed,
   effect,
+  inject,
+  Injector,
   input,
   OnDestroy,
   OnInit,
+  runInInjectionContext,
   signal,
 } from '@angular/core';
 import {
@@ -22,6 +25,7 @@ import {
   PlatForm,
   PricingGroup,
   Publishers,
+  AccessLevel,
 } from '../../../interfaces';
 import { MatInputModule } from '@angular/material/input';
 import { RoyaltyFormGroup } from '../../../interfaces/Royalty';
@@ -42,6 +46,7 @@ import { StaticValuesService } from '../../../services/static-values';
 })
 export class TempPricingRoyalty implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
+  private readonly injector = inject(Injector);
 
   constructor(private staticValueService: StaticValuesService) {}
 
@@ -49,6 +54,8 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
   pricingControls = input.required<FormArray<PricingGroup>>();
   msp = input.required<number>();
   printingPrice = input.required<number | null>();
+  customPrintCost = input<number | null>(null);
+  accessLevel = input<AccessLevel | null>(null);
 
   // Royalty inputs
   royaltiesController =
@@ -112,47 +119,50 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       });
 
     // Setup effect to watch for author changes and re-initialize controls
-    effect(() => {
-      const authors = this.authors();
-      if (authors && authors.length > 0) {
-        // Check if controls need to be initialized or updated
-        const currentControls = this.authorPercentageControls();
-        const authorIds = new Set(authors.map((a) => a.id));
-        const controlIds = new Set(currentControls.keys());
+    // Use runInInjectionContext to allow effect() to be called in ngOnInit
+    runInInjectionContext(this.injector, () => {
+      effect(() => {
+        const authors = this.authors();
+        if (authors && authors.length > 0) {
+          // Check if controls need to be initialized or updated
+          const currentControls = this.authorPercentageControls();
+          const authorIds = new Set(authors.map((a) => a.id));
+          const controlIds = new Set(currentControls.keys());
 
-        // If authors changed, re-initialize
-        if (
-          authorIds.size !== controlIds.size ||
-          !Array.from(authorIds).every((id) => controlIds.has(id))
-        ) {
-          this.initializeAuthorPercentageControls();
+          // If authors changed, re-initialize
+          if (
+            authorIds.size !== controlIds.size ||
+            !Array.from(authorIds).every((id) => controlIds.has(id))
+          ) {
+            this.initializeAuthorPercentageControls();
+          }
         }
-      }
-    });
+      });
 
-    // Setup effect to watch for royalties, authors, and publisher changes
-    // This ensures publisher percentage is set when royalties are prefilled from server
-    effect(() => {
-      const royalties = this.royaltiesController();
-      const authors = this.authors();
-      const publisher = this.publisher();
+      // Setup effect to watch for royalties, authors, and publisher changes
+      // This ensures publisher percentage is set when royalties are prefilled from server
+      effect(() => {
+        const royalties = this.royaltiesController();
+        const authors = this.authors();
+        const publisher = this.publisher();
 
-      // Only calculate if we have publisher and at least authors or royalties
-      if (publisher && (authors?.length > 0 || royalties?.length > 0)) {
-        // Check if author percentage controls are initialized
-        const authorControls = this.authorPercentageControls();
-        const hasAllAuthorControls =
-          authors.length === 0 ||
-          authors.every((author) => authorControls.has(author.id));
+        // Only calculate if we have publisher and at least authors or royalties
+        if (publisher && (authors?.length > 0 || royalties?.length > 0)) {
+          // Check if author percentage controls are initialized
+          const authorControls = this.authorPercentageControls();
+          const hasAllAuthorControls =
+            authors.length === 0 ||
+            authors.every((author) => authorControls.has(author.id));
 
-        // If author controls are ready (or no authors), calculate publisher percentage
-        if (hasAllAuthorControls) {
-          // Use setTimeout to ensure this runs after all initialization is complete
-          setTimeout(() => {
-            this.calculatePublisherPercentage();
-          }, 150);
+          // If author controls are ready (or no authors), calculate publisher percentage
+          if (hasAllAuthorControls) {
+            // Use setTimeout to ensure this runs after all initialization is complete
+            setTimeout(() => {
+              this.calculatePublisherPercentage();
+            }, 150);
+          }
         }
-      }
+      });
     });
 
     // Initial sync - use longer timeout to ensure all data is loaded
@@ -575,10 +585,13 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
             });
         }
 
-        // Add to map
+        // Add to map - defer signal update to avoid writing during template rendering
         const newControls = new Map(controls);
         newControls.set(authorId, control);
-        this.authorPercentageControls.set(newControls);
+        // Use setTimeout to defer signal update until after current render cycle
+        setTimeout(() => {
+          this.authorPercentageControls.set(newControls);
+        }, 0);
       } else {
         // Author not found, return a temporary control
         control = new FormControl<number | null>(null);

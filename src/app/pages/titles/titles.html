@@ -217,8 +217,8 @@
       >
         <mat-icon class="!text-white">support_agent</mat-icon>
       </button>
-      } @else if(loggedInUser()?.accessLevel !== 'PUBLISHER' || element.status
-      !== 'APPROVED') {
+      } @else if(loggedInUser()?.accessLevel !== 'PUBLISHER' &&
+      loggedInUser()?.accessLevel !== 'AUTHER') {
       <button
         class="!bg-primary"
         mat-icon-button

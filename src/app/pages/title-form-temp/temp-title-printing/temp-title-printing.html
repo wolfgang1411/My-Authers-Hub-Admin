@@ -97,6 +97,29 @@
           </mat-select>
         </mat-form-field>
       </div>
+      @if (showCustomPrintCost()) {
+      <div class="mt-4">
+        <mat-form-field>
+          <mat-label>{{ "customPrintCost" | translate }}</mat-label>
+          <input
+            matInput
+            type="number"
+            formControlName="customPrintCost"
+            [min]="printingGroup().controls.printingPrice.value || 0"
+          />
+          @if (
+            printingGroup().controls.customPrintCost.hasError('minPrintCost')
+          ) {
+          <mat-error>
+            {{
+              "customPrintCostCannotBeLowerThanActualPrintCost" | translate
+            }}
+            ({{ printingGroup().controls.printingPrice.value | number: "1.2-2" }})
+          </mat-error>
+          }
+        </mat-form-field>
+      </div>
+      }
     </div>
   </div>
 </form>

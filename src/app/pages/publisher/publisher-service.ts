@@ -107,12 +107,14 @@ export class PublisherService {
   }
   async approvePublisher(
     distributionData: Distribution[],
-    publisherId: number
+    publisherId: number,
+    allowCustomPrintingPrice?: boolean
   ) {
     try {
       return await this.loader.loadPromise(
         this.server.post(`publishers/${publisherId}/approve`, {
           data: distributionData,
+          allowCustomPrintingPrice: allowCustomPrintingPrice || false,
         })
       );
     } catch (error) {

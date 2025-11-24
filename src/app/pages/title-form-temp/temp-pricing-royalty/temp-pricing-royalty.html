@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-8 mt-8"> 
+<div class="flex flex-col gap-8 mt-8">
   <!-- ========== PRICING SECTION ========== -->
   <div class="flex flex-col gap-6 mt-8">
     <div class="flex items-center justify-between mb-2">
@@ -38,11 +38,12 @@
         </div>
       </div>
 
+      <!-- Printing Price Card - Always shown -->
       <div
         class="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4 shadow-sm"
       >
         <div class="flex items-center justify-between">
-          <div>
+          <div class="flex-1">
             <p class="text-sm font-medium text-green-700 mb-1">
               Printing Price
             </p>
@@ -50,6 +51,17 @@
             <p class="text-2xl font-bold text-green-800">
               {{ (printingPrice() | currency) || "N/A" }}
             </p>
+            <!-- Show custom printing price for publisher and superadmin -->
+            @if ( (accessLevel() === 'PUBLISHER' || accessLevel() ===
+            'SUPERADMIN') && customPrintCost() !== null && customPrintCost() !==
+            undefined ) {
+            <div class="mt-2 pt-2 border-t border-green-300">
+              <p class="text-xs text-green-600 mb-1">Custom Printing Price</p>
+              <p class="text-lg font-semibold text-green-800">
+                {{ customPrintCost() | currency }}
+              </p>
+            </div>
+            }
           </div>
           <div class="text-green-400">
             <svg

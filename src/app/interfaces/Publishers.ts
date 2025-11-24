@@ -22,6 +22,7 @@ export interface Publishers {
   noOfAuthors: number;
   status: PublisherStatus;
   socialMedias: socialMediaGroup[];
+  allowCustomPrintingPrice?: boolean;
 }
 
 export interface CreatePublisher {

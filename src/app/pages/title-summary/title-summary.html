@@ -375,6 +375,24 @@
               </p>
             </div>
 
+            <!-- Print Cost - Show based on user role -->
+            @if (loggedInUser()?.accessLevel === 'AUTHER') {
+            <!-- Authors: Show only custom print price if available -->
+            @if (p?.customPrintCost) {
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--green-2)] text-base"
+                >payments</mat-icon
+              >
+              <p>
+                <label class="font-medium">Print Cost : </label>
+                <span class="text-[var(--green-2)] font-medium">{{
+                  p?.customPrintCost | currency : "INR"
+                }}</span>
+              </p>
+            </div>
+            }
+            } @else {
+            <!-- Superadmins and Publishers: Show both actual and custom print price -->
             <div class="flex items-center gap-2">
               <mat-icon class="text-[var(--green-2)] text-base"
                 >payments</mat-icon
@@ -386,6 +404,20 @@
                 }}</span>
               </p>
             </div>
+            @if (p?.customPrintCost) {
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--green-2)] text-base"
+                >payments</mat-icon
+              >
+              <p>
+                <label class="font-medium">Custom Print Cost : </label>
+                <span class="text-[var(--green-2)] font-medium">{{
+                  p?.customPrintCost | currency : "INR"
+                }}</span>
+              </p>
+            </div>
+            }
+            }
           </div>
         </div>
         } @else {

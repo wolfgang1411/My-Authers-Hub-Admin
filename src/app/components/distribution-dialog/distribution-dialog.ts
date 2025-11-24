@@ -17,6 +17,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { Distribution } from '../../interfaces/Distribution';
 import { DiscountType, DistributionType } from '../../interfaces';
@@ -29,6 +30,7 @@ import { DiscountType, DistributionType } from '../../interfaces';
     MatFormFieldModule,
     MatSelectModule,
     MatInputModule,
+    MatCheckboxModule,
     MatDialogContent,
     MatDialogActions,
     MatButtonModule,
@@ -47,6 +49,7 @@ export class DistributionDialog {
           this.createDistribution(type as DistributionType, null)
         )
       ),
+      allowCustomPrintingPrice: this.fb.control<boolean>(false),
     });
   }
 
@@ -79,12 +82,13 @@ export class DistributionDialog {
             amount: amount.value,
             distributionType: distributionType.value,
           })
-        )
+        ),
+        this.form.value.allowCustomPrintingPrice || false
       );
     }
   }
 }
 interface Inputs {
   onClose: () => void;
-  onSubmit: (payload: Distribution[]) => void;
+  onSubmit: (payload: Distribution[], allowCustomPrintingPrice?: boolean) => void;
 }

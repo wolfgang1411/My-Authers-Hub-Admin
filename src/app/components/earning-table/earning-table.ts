@@ -19,6 +19,8 @@ export class EarningTable {
   displayedColumns: string[] = [
     'title',
     'publisher/author',
+    'royaltyAmount',
+    'customPrintMargin',
     'amount',
     'platform',
     'quantity',
@@ -31,26 +33,45 @@ export class EarningTable {
     effect(async () => {
       const earnings = this.earnings();
 
-      const mappedData = earnings?.map((earning) => ({
-        ...earning,
-        title: earning.royalty.title.name,
-        'publisher/author':
-          earning.royalty.publisher?.name ||
-          earning.royalty.author?.user.firstName,
-        amount: formatCurrency(earning.amount, 'en', '', 'INR'),
-        platform: this.translateService.instant(earning.platform),
-        quantity: earning.quantity || 0,
-        addedAt: (() => {
-          const date = earning.paidAt;
-          if (!date) return undefined;
-          return format(date, 'dd-MM-yyyy');
-        })(),
-        holduntil: (() => {
-          const date = earning.holdUntil;
-          if (!date) return undefined;
-          return format(date, 'dd-MM-yyyy');
-        })(),
-      }));
+      const mappedData = earnings?.map((earning) => {
+        // Calculate custom print margin if this is a publisher earning and printing details exist
+        let customPrintMargin = 0;
+        const isPublisherEarning = earning.royalty.publisher && !earning.royalty.author;
+        const printing = earning.royalty.title.printing?.[0];
+        
+        if (isPublisherEarning && printing) {
+          const printCost = Number(printing.printCost) || 0;
+          const customPrintCost = printing.customPrintCost ? Number(printing.customPrintCost) : null;
+          
+          if (customPrintCost !== null && customPrintCost > printCost) {
+            // Calculate margin per item and multiply by quantity
+            customPrintMargin = (customPrintCost - printCost) * (earning.quantity || 1);
+          }
+        }
+
+        return {
+          ...earning,
+          title: earning.royalty.title.name,
+          'publisher/author':
+            earning.royalty.publisher?.name ||
+            earning.royalty.author?.user.firstName,
+          amount: formatCurrency(earning.amount, 'en', '', 'INR'),
+          customPrintMargin: customPrintMargin > 0 ? formatCurrency(customPrintMargin, 'en', '', 'INR') : '-',
+          royaltyAmount: formatCurrency(earning.amount - customPrintMargin, 'en', '', 'INR'),
+          platform: this.translateService.instant(earning.platform),
+          quantity: earning.quantity || 0,
+          addedAt: (() => {
+            const date = earning.paidAt;
+            if (!date) return undefined;
+            return format(date, 'dd-MM-yyyy');
+          })(),
+          holduntil: (() => {
+            const date = earning.holdUntil;
+            if (!date) return undefined;
+            return format(date, 'dd-MM-yyyy');
+          })(),
+        };
+      });
 
       this.dataSource.data = mappedData || [];
     });

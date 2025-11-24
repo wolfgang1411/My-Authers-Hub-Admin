@@ -21,6 +21,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { SafeUrlPipe } from '../../pipes/safe-url-pipe';
 import { StaticValuesService } from '../../services/static-values';
+import { UserService } from '../../services/user';
+import { User } from '../../interfaces';
+import { Signal } from '@angular/core';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -42,12 +45,16 @@ import Swal from 'sweetalert2';
 export class TitleSummary {
   titleId!: number;
   titleDetails = signal<Title | null>(null);
+  loggedInUser!: Signal<User | null>;
 
   constructor(
     private route: ActivatedRoute,
     private titleService: TitleService,
-    private staticValueService: StaticValuesService
-  ) {}
+    private staticValueService: StaticValuesService,
+    private userService: UserService
+  ) {
+    this.loggedInUser = this.userService.loggedInUser$;
+  }
   ngOnInit() {
     this.route.params.subscribe(({ titleId }) => {
       this.titleId = Number(titleId);

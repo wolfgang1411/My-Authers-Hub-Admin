@@ -384,6 +384,10 @@
     <app-temp-title-printing
       [printingGroup]="tempForm.controls.printing"
       [documentMedia]="tempForm.controls.documentMedia"
+      [allowCustomPrintingPrice]="
+        loggedInUser()?.accessLevel === 'PUBLISHER' &&
+        loggedInUser()?.publisher?.allowCustomPrintingPrice === true
+      "
     ></app-temp-title-printing>
     <div class="flex justify-end">
       <button
@@ -403,7 +407,11 @@
   <mat-step
     [stepControl]="tempForm.controls.pricing"
     label="Pricing & Royalty"
-    [completed]="titleId && tempForm.controls.pricing.valid && tempForm.controls.royalties.valid"
+    [completed]="
+      titleId &&
+      tempForm.controls.pricing.valid &&
+      tempForm.controls.royalties.valid
+    "
   >
     <app-temp-pricing-royalty
       [pricingControls]="tempForm.controls.pricing"
@@ -411,6 +419,10 @@
       [printingPrice]="
         tempForm.controls.printing.controls.printingPrice.value || null
       "
+      [customPrintCost]="
+        tempForm.controls.printing.controls.customPrintCost.value || null
+      "
+      [accessLevel]="loggedInUser()?.accessLevel || null"
       [royaltiesController]="tempForm.controls.royalties"
       [authors]="authorsSignal()"
       [publisher]="publisherSignal()"

@@ -311,6 +311,7 @@ export interface TitlePrintingCostPayload {
   insideCover?: boolean;
   bwPages?: number;
   quantity?: number;
+  customPrintCost?: number;
 }
 
 export interface TitlePrintingCostResponse {
@@ -318,7 +319,8 @@ export interface TitlePrintingCostResponse {
   deliveryCost: number;
   deliveryWeight: number;
   deliveryWeightPerItem: number;
-  printPerItem: number;
+  printPerItem: number; // Actual calculated print price
+  customPrintCost: number | null; // Custom print cost if provided
   msp: number;
 }
 
@@ -367,7 +369,7 @@ export interface PrintingCreate {
   paperType: PaperType;
   paperQuailtyId: number;
   sizeCategoryId: number;
-  customPrintCost: number;
+  customPrintCost?: number;
   insideCover: boolean;
   isColorPagesRandom: boolean;
 }
@@ -443,6 +445,7 @@ export interface PrintingFormGroup {
   sizeCategoryId: FormControl<number | null>;
   printingPrice: FormControl<number | null>;
   msp: FormControl<number | null>;
+  customPrintCost: FormControl<number | null>;
 }
 
 // 🏷️ TitleDetails group (now using subgroups)

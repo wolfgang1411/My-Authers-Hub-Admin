@@ -7,6 +7,7 @@ import {
   Signal,
   signal,
   viewChild,
+  effect,
 } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -66,10 +67,14 @@ export class TempTitlePrinting implements OnDestroy {
 
   printingGroup = input.required<FormGroup<PrintingFormGroup>>();
   documentMedia = input.required<FormArray<FormGroup<TitleMediaGroup>>>();
+  allowCustomPrintingPrice = input<boolean>(false);
 
   fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
   insideCoverMedia = signal<FormGroup<TitleMediaGroup> | null>(null);
+
+  // Computed to check if custom printing price field should be shown
+  showCustomPrintCost = computed(() => this.allowCustomPrintingPrice());
 
   async ngOnInit() {
     const { items: laminations } =
@@ -83,6 +88,7 @@ export class TempTitlePrinting implements OnDestroy {
     this.sizeCategory.set(sizes.sort((a, b) => a.id - b.id));
 
     this.handleBlackAndWhitePages();
+    this.setupCustomPrintCostValidation();
 
     this.documentMedia()
       .valueChanges.pipe(takeUntil(this.destroy$))
@@ -93,6 +99,63 @@ export class TempTitlePrinting implements OnDestroy {
 
         this.insideCoverMedia.set(insideCover || null);
       });
+  }
+
+  /**
+   * Setup validation for customPrintCost to ensure it's not lower than actual printing cost
+   */
+  private setupCustomPrintCostValidation(): void {
+    const customPrintCostControl =
+      this.printingGroup().controls.customPrintCost;
+    const printingPriceControl = this.printingGroup().controls.printingPrice;
+
+    // Watch for changes in printingPrice and validate customPrintCost
+    printingPriceControl.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.validateCustomPrintCost();
+      });
+
+    // Watch for changes in customPrintCost
+    customPrintCostControl.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.validateCustomPrintCost();
+      });
+  }
+
+  /**
+   * Validate that customPrintCost is not lower than actual printing cost
+   */
+  private validateCustomPrintCost(): void {
+    const customPrintCostControl =
+      this.printingGroup().controls.customPrintCost;
+    const printingPriceControl = this.printingGroup().controls.printingPrice;
+
+    const customPrintCost = customPrintCostControl.value;
+    const actualPrintCost = printingPriceControl.value;
+
+    if (
+      customPrintCost !== null &&
+      customPrintCost !== undefined &&
+      actualPrintCost !== null &&
+      actualPrintCost !== undefined &&
+      customPrintCost < actualPrintCost
+    ) {
+      customPrintCostControl.setErrors({
+        minPrintCost: {
+          actualPrintCost,
+          customPrintCost,
+        },
+      });
+    } else if (customPrintCostControl.hasError('minPrintCost')) {
+      // Clear error if validation passes
+      const errors = { ...customPrintCostControl.errors };
+      delete errors['minPrintCost'];
+      customPrintCostControl.setErrors(
+        Object.keys(errors).length > 0 ? errors : null
+      );
+    }
   }
 
   ngOnDestroy(): void {

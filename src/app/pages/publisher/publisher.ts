@@ -148,11 +148,15 @@ export class Publisher implements OnInit {
   openDistributionDialog(publisherId: number) {
     const dialogRef = this.dialog.open(DistributionDialog, {
       data: {
-        onSubmit: async (distributionData: Distribution[]) => {
+        onSubmit: async (
+          distributionData: Distribution[],
+          allowCustomPrintingPrice?: boolean
+        ) => {
           console.log(distributionData, 'distrubittton dta');
           const response = await this.publisherService.approvePublisher(
             distributionData,
-            publisherId
+            publisherId,
+            allowCustomPrintingPrice
           );
           if (response) {
             const updatedData = this.dataSource.data.map((item) =>
