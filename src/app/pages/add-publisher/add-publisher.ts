@@ -72,6 +72,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Back } from '../../components/back/back';
 import { HttpClient } from '@angular/common/http';
 import { City, Country, State } from 'country-state-city';
+import md5 from 'md5';
 @Component({
   selector: 'app-add-publisher',
   imports: [
@@ -704,6 +705,9 @@ export class AddPublisher {
       const publisherData = {
         ...this.publisherFormGroup.value,
         pocEmail: this.publisherFormGroup.controls.pocEmail.value,
+        userPassword: this.publisherFormGroup.controls.userPassword.value
+          ? md5(this.publisherFormGroup.controls.userPassword.value)
+          : undefined,
       } as any;
       if (
         this.loggedInUser()?.accessLevel === 'SUPERADMIN' ||
