@@ -629,12 +629,15 @@ export class TitleFormTemp implements OnDestroy {
       this.tempForm.controls.titleDetails.controls.isbnEbook.updateValueAndValidity();
     };
 
-    manageISBNRequired(this.tempForm.controls.publishingType.value);
+    // Set up subscription first
     this.tempForm.controls.publishingType.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe((v) => {
         manageISBNRequired(v);
       });
+
+    // Then call it with current value to ensure validators are set correctly
+    manageISBNRequired(this.tempForm.controls.publishingType.value);
 
     // Setup stepper step tracking after everything is initialized
     this.setupStepperStepTracking();
