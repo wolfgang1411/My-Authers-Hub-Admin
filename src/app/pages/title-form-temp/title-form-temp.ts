@@ -1333,7 +1333,7 @@ export class TitleFormTemp implements OnDestroy {
       subTitle: new FormControl<string>(''),
       longDescription: new FormControl<string>('', [
         Validators.required,
-        this.minWordsValidator(20),
+        this.minWordsValidator(40),
       ]),
       shortDescription: new FormControl<string>('', Validators.required),
       edition: new FormControl<number | null>(null),
