@@ -7,6 +7,7 @@ import { ListTable } from '../list-table/list-table';
 import { TranslateService } from '@ngx-translate/core';
 import { formatCurrency } from '@angular/common';
 import { format } from 'date-fns';
+import { PlatForm } from '../../interfaces';
 
 @Component({
   selector: 'app-earning-table',
@@ -34,18 +35,33 @@ export class EarningTable {
       const earnings = this.earnings();
 
       const mappedData = earnings?.map((earning) => {
+        // Check if this is an ebook platform
+        const ebookPlatforms: PlatForm[] = [
+          PlatForm.MAH_EBOOK,
+          PlatForm.KINDLE,
+          PlatForm.GOOGLE_PLAY,
+        ];
+        const isEbookPlatform = ebookPlatforms.includes(
+          earning.platform as PlatForm
+        );
+
         // Calculate custom print margin if this is a publisher earning and printing details exist
+        // Only for print platforms (not ebook platforms)
         let customPrintMargin = 0;
-        const isPublisherEarning = earning.royalty.publisher && !earning.royalty.author;
+        const isPublisherEarning =
+          earning.royalty.publisher && !earning.royalty.author;
         const printing = earning.royalty.title.printing?.[0];
-        
-        if (isPublisherEarning && printing) {
+
+        if (!isEbookPlatform && isPublisherEarning && printing) {
           const printCost = Number(printing.printCost) || 0;
-          const customPrintCost = printing.customPrintCost ? Number(printing.customPrintCost) : null;
-          
+          const customPrintCost = printing.customPrintCost
+            ? Number(printing.customPrintCost)
+            : null;
+
           if (customPrintCost !== null && customPrintCost > printCost) {
             // Calculate margin per item and multiply by quantity
-            customPrintMargin = (customPrintCost - printCost) * (earning.quantity || 1);
+            customPrintMargin =
+              (customPrintCost - printCost) * (earning.quantity || 1);
           }
         }
 
@@ -56,8 +72,19 @@ export class EarningTable {
             earning.royalty.publisher?.name ||
             earning.royalty.author?.user.firstName,
           amount: formatCurrency(earning.amount, 'en', '', 'INR'),
-          customPrintMargin: customPrintMargin > 0 ? formatCurrency(customPrintMargin, 'en', '', 'INR') : '-',
-          royaltyAmount: formatCurrency(earning.amount - customPrintMargin, 'en', '', 'INR'),
+          customPrintMargin: isEbookPlatform
+            ? '-'
+            : customPrintMargin > 0
+            ? formatCurrency(customPrintMargin, 'en', '', 'INR')
+            : '-',
+          royaltyAmount: isEbookPlatform
+            ? formatCurrency(earning.amount, 'en', '', 'INR')
+            : formatCurrency(
+                earning.amount - customPrintMargin,
+                'en',
+                '',
+                'INR'
+              ),
           platform: this.translateService.instant(earning.platform),
           quantity: earning.quantity || 0,
           addedAt: (() => {

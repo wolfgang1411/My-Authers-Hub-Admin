@@ -127,6 +127,19 @@ export class TitleSummary {
     const price = this.getPriceByPlatform(platform);
     if (!price || !price.salesPrice) return 0;
 
+    // Ebook platforms: MAH_EBOOK, KINDLE, GOOGLE_PLAY - ignore printing costs
+    const ebookPlatforms: PlatForm[] = [
+      PlatForm.MAH_EBOOK,
+      PlatForm.KINDLE,
+      PlatForm.GOOGLE_PLAY,
+    ];
+    const isEbookPlatform = ebookPlatforms.includes(platform);
+
+    // For ebook platforms, calculate without subtracting print cost
+    if (isEbookPlatform) {
+      return (percentage / 100) * price.salesPrice;
+    }
+
     const printing = this.titleDetails()?.printing?.[0];
     if (!printing) {
       // If no printing details, calculate without subtracting print cost
@@ -166,6 +179,17 @@ export class TitleSummary {
   }
 
   getPublisherMargin(platform: PlatForm): number {
+    // Ebook platforms don't have printing costs, so no margin
+    const ebookPlatforms: PlatForm[] = [
+      PlatForm.MAH_EBOOK,
+      PlatForm.KINDLE,
+      PlatForm.GOOGLE_PLAY,
+    ];
+    const isEbookPlatform = ebookPlatforms.includes(platform);
+    if (isEbookPlatform) {
+      return 0;
+    }
+
     const printing = this.titleDetails()?.printing?.[0];
     if (!printing) return 0;
 
