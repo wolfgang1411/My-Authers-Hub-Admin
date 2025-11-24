@@ -62,14 +62,11 @@ export class Publisher implements OnInit {
     private staticValueService: StaticValuesService,
     private userService: UserService,
     private authService: AuthService,
-    private translateService: TranslateService,
-    private router: Router
+    private translateService: TranslateService
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
-
   loggedInUser!: Signal<User | null>;
-
   publisherDBStatus = computed(() => {
     console.log(this.staticValueService.staticValues(), 'Fdafsaf');
 
@@ -77,13 +74,11 @@ export class Publisher implements OnInit {
       this.staticValueService.staticValues()?.PuplisherStatus || {}
     );
   });
-
   searchStr = new Subject<string>();
   PublisherStatus = PublisherStatus;
   test!: Subject<string>;
   publishers = signal<Publishers[]>([]);
   dataSource = new MatTableDataSource<any>();
-
   displayedColumns: string[] = [
     'name',
     'nooftitles',
@@ -126,7 +121,6 @@ export class Publisher implements OnInit {
           delete (filtrCol as any).id;
           if (!existingData) this.displayedColumns = Object.keys(filtrCol);
         }
-
         console.log('Mapped publishers:', mapped);
       })
       .catch((error) => {
@@ -136,7 +130,7 @@ export class Publisher implements OnInit {
 
   ngOnInit(): void {
     this.fetchPublishers();
-    this.searchStr.pipe(debounceTime(400)).subscribe((value) => {
+    this.searchStr.pipe(debounceTime(200)).subscribe((value) => {
       this.filter.page = 1;
       this.filter.searchStr = value;
       if (!value?.length) {

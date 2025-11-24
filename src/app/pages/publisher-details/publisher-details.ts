@@ -302,6 +302,7 @@ export class PublisherDetails {
   }
   applyFilter(event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
+    console.log(filterValue, 'filterrrr');
     this.bookPublishData.filter = filterValue.trim().toLowerCase();
   }
   applyAuthorFilter(event: Event) {

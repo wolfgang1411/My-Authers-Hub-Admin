@@ -87,6 +87,56 @@ export class TempTitlePrinting implements OnDestroy {
     const { items: sizes } = await this.printingService.getSizeCategory();
     this.sizeCategory.set(sizes.sort((a, b) => a.id - b.id));
 
+    const defaultBindingType = this.bindingType().find(
+      ({ name }) => name === 'Paperback'
+    )?.id;
+
+    const defaultLaminationType = this.laminationTypes().find(
+      ({ name }) => name == 'Matte'
+    )?.id;
+
+    const defaultPaperQuanlity = this.paperQuality().find(
+      ({ name }) => name == '80 GSM'
+    )?.id;
+
+    const defaultSizeCategory = this.sizeCategory().find(
+      ({ size }) => size == '5.5*8.5'
+    )?.id;
+
+    if (
+      !this.printingGroup().controls.bookBindingsId.value &&
+      defaultBindingType
+    ) {
+      this.printingGroup().controls.bookBindingsId.setValue(defaultBindingType);
+    }
+
+    if (
+      !this.printingGroup().controls.laminationTypeId.value &&
+      defaultLaminationType
+    ) {
+      this.printingGroup().controls.laminationTypeId.setValue(
+        defaultLaminationType
+      );
+    }
+
+    if (
+      !this.printingGroup().controls.paperQuailtyId.value &&
+      defaultPaperQuanlity
+    ) {
+      this.printingGroup().controls.paperQuailtyId.setValue(
+        defaultPaperQuanlity
+      );
+    }
+
+    if (
+      !this.printingGroup().controls.sizeCategoryId.value &&
+      defaultSizeCategory
+    ) {
+      this.printingGroup().controls.sizeCategoryId.setValue(
+        defaultSizeCategory
+      );
+    }
+
     this.handleBlackAndWhitePages();
     this.setupCustomPrintCostValidation();
 
