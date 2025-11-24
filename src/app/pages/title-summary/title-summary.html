@@ -607,9 +607,20 @@
                         ₹{{
                           getRoyaltyAmount(
                             platform,
-                            getPublisherRoyalty(platform)?.percentage
+                            getPublisherRoyalty(platform)?.percentage,
+                            true
                           ) | number : "1.0-2"
                         }}
+                        @if (
+                          (loggedInUser()?.accessLevel === 'SUPERADMIN' ||
+                            loggedInUser()?.accessLevel === 'PUBLISHER') &&
+                          getPublisherMargin(platform) > 0
+                        ) {
+                        <span class="text-[var(--green-2)] text-xs ml-1"
+                          >(+₹{{ getPublisherMargin(platform) | number : "1.0-2" }}
+                          margin)</span
+                        >
+                        }
                       </div>
                     </div>
                     }
@@ -641,7 +652,7 @@
                         class="col-span-3 text-right text-xs text-[var(--green-2)]"
                       >
                         ₹{{
-                          getRoyaltyAmount(platform, r.percentage)
+                          getRoyaltyAmount(platform, r.percentage, false)
                             | number : "1.0-2"
                         }}
                       </div>

@@ -119,11 +119,66 @@ export class TitleSummary {
     const margin = 100 - (p.salesPrice / p.mrp) * 100;
     return margin.toFixed(1) + '%';
   }
-  getRoyaltyAmount(platform: PlatForm, percentage: number): number {
+  getRoyaltyAmount(
+    platform: PlatForm,
+    percentage: number,
+    isPublisher: boolean = false
+  ): number {
     const price = this.getPriceByPlatform(platform);
     if (!price || !price.salesPrice) return 0;
 
-    return (percentage / 100) * price.salesPrice;
+    const printing = this.titleDetails()?.printing?.[0];
+    if (!printing) {
+      // If no printing details, calculate without subtracting print cost
+      return (percentage / 100) * price.salesPrice;
+    }
+
+    const actualPrintCost = Number(printing.printCost) || 0;
+    const customPrintCost = printing.customPrintCost
+      ? Number(printing.customPrintCost)
+      : null;
+
+    const isAuthorViewer = this.loggedInUser()?.accessLevel === 'AUTHER';
+
+    if (isPublisher) {
+      // For publisher: use actual print cost for base calculation
+      const baseAmount =
+        (percentage / 100) * (price.salesPrice - actualPrintCost);
+
+      // Add margin (customPrintCost - actualPrintCost) if customPrintCost exists and is greater
+      // This margin goes directly to publisher royalty in addition to their percentage
+      // But don't show the margin to authors
+      if (
+        !isAuthorViewer &&
+        customPrintCost &&
+        customPrintCost > actualPrintCost
+      ) {
+        const margin = customPrintCost - actualPrintCost;
+        return baseAmount + margin;
+      }
+
+      return baseAmount;
+    } else {
+      // For authors: use customPrintCost if available, otherwise use actualPrintCost
+      const printCostToUse = customPrintCost || actualPrintCost;
+      return (percentage / 100) * (price.salesPrice - printCostToUse);
+    }
+  }
+
+  getPublisherMargin(platform: PlatForm): number {
+    const printing = this.titleDetails()?.printing?.[0];
+    if (!printing) return 0;
+
+    const actualPrintCost = Number(printing.printCost) || 0;
+    const customPrintCost = printing.customPrintCost
+      ? Number(printing.customPrintCost)
+      : null;
+
+    if (customPrintCost && customPrintCost > actualPrintCost) {
+      return customPrintCost - actualPrintCost;
+    }
+
+    return 0;
   }
 
   async copyDistributionLink(link: string): Promise<void> {
