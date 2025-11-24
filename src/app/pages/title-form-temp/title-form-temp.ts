@@ -163,7 +163,18 @@ export class TitleFormTemp implements OnDestroy {
     // This will be called in ngOnInit after form is ready
 
     effect(() => {
-      const publisher = this.publisherSignal();
+      let publisher = this.publisherSignal();
+
+      // If publisher is not set but user is a publisher, set it from logged in user
+      if (
+        !publisher &&
+        this.loggedInUser()?.accessLevel === 'PUBLISHER' &&
+        this.loggedInUser()?.publisher
+      ) {
+        this.publisherSignal.set(this.loggedInUser()?.publisher as Publishers);
+        publisher = this.loggedInUser()?.publisher as Publishers;
+      }
+
       const authors = this.authorsSignal();
 
       this.mapRoyaltiesArray(publisher, authors);
@@ -681,10 +692,10 @@ export class TitleFormTemp implements OnDestroy {
     const { printing, pricing, royalties } = this.tempForm.controls;
 
     // Early exit if required data is missing
+    // Allow publisher royalties even without authors (publisher should get 100% in that case)
     if (
       !publisher ||
       !Array.isArray(authors) ||
-      !authors.length ||
       !printing?.valid ||
       !pricing?.valid ||
       !pricing.length
@@ -1763,6 +1774,15 @@ export class TitleFormTemp implements OnDestroy {
       this.titleId = Number(res.id);
       this.isNewTitle = false;
 
+      // Ensure publisher is set for publisher users after title creation
+      if (
+        !this.publisherSignal() &&
+        this.loggedInUser()?.accessLevel === 'PUBLISHER' &&
+        this.loggedInUser()?.publisher
+      ) {
+        this.publisherSignal.set(this.loggedInUser()?.publisher as Publishers);
+      }
+
       // Update URL to include the title ID to prevent creating new title on refresh
       // When titleId changes, format step disappears, so adjust step if needed
       const currentStepName = this.currentStep();
@@ -2093,7 +2113,18 @@ export class TitleFormTemp implements OnDestroy {
       // Normal update flow
       await this.titleService.createManyPricing(data, this.titleId);
 
-      const publisher = this.publisherSignal();
+      // Ensure publisher is set for publisher users
+      let publisher = this.publisherSignal();
+      if (
+        !publisher &&
+        this.loggedInUser()?.accessLevel === 'PUBLISHER' &&
+        this.loggedInUser()?.publisher
+      ) {
+        // Set publisher from logged in user if not already set
+        this.publisherSignal.set(this.loggedInUser()?.publisher as Publishers);
+        publisher = this.loggedInUser()?.publisher as Publishers;
+      }
+
       const authors = this.authorsSignal();
 
       if (publisher) {
@@ -2270,8 +2301,19 @@ export class TitleFormTemp implements OnDestroy {
       await this.titleService.createManyPricing(pricingData, this.titleId);
       await this.titleService.createManyRoyalties(royalties, this.titleId);
 
+      // Ensure publisher is set for publisher users
+      let publisher = this.publisherSignal();
+      if (
+        !publisher &&
+        this.loggedInUser()?.accessLevel === 'PUBLISHER' &&
+        this.loggedInUser()?.publisher
+      ) {
+        // Set publisher from logged in user if not already set
+        this.publisherSignal.set(this.loggedInUser()?.publisher as Publishers);
+        publisher = this.loggedInUser()?.publisher as Publishers;
+      }
+
       // Refresh royalties array after save to ensure consistency
-      const publisher = this.publisherSignal();
       const authors = this.authorsSignal();
       if (publisher) {
         this.mapRoyaltiesArray(publisher, authors);
