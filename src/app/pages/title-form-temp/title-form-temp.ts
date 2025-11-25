@@ -1352,16 +1352,24 @@ export class TitleFormTemp implements OnDestroy {
     }
 
     const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
+    const isOnlyPrint = publishingType === PublishingType.ONLY_PRINT;
     const ebookPlatforms: PlatForm[] = [
       PlatForm.MAH_EBOOK,
       PlatForm.KINDLE,
       PlatForm.GOOGLE_PLAY,
+    ];
+    const printPlatforms: PlatForm[] = [
+      PlatForm.AMAZON,
+      PlatForm.FLIPKART,
+      PlatForm.MAH_PRINT,
     ];
 
     pricingArray.controls.forEach((control) => {
       const platform = control.controls.platform.value as PlatForm | null;
       const isEbookPlatform =
         platform && ebookPlatforms.includes(platform as PlatForm);
+      const isPrintPlatform =
+        platform && printPlatforms.includes(platform as PlatForm);
 
       if (isOnlyEbook) {
         // For ebook-only titles, remove validators from non-ebook platforms
@@ -1384,8 +1392,29 @@ export class TitleFormTemp implements OnDestroy {
           });
           control.controls.mrp.updateValueAndValidity({ emitEvent: false });
         }
+      } else if (isOnlyPrint) {
+        // For print-only titles, remove validators from non-print platforms
+        if (!isPrintPlatform) {
+          control.controls.salesPrice.clearValidators();
+          control.controls.mrp.clearValidators();
+          control.controls.salesPrice.updateValueAndValidity({
+            emitEvent: false,
+          });
+          control.controls.mrp.updateValueAndValidity({ emitEvent: false });
+        } else {
+          // Ensure print platforms have validators
+          control.controls.salesPrice.setValidators(Validators.required);
+          control.controls.mrp.setValidators([
+            Validators.required,
+            this.mrpValidator() as ValidatorFn,
+          ]);
+          control.controls.salesPrice.updateValueAndValidity({
+            emitEvent: false,
+          });
+          control.controls.mrp.updateValueAndValidity({ emitEvent: false });
+        }
       } else {
-        // For non-ebook-only titles, ensure all platforms have validators
+        // For PRINT_EBOOK, ensure all platforms have validators
         control.controls.salesPrice.setValidators(Validators.required);
         control.controls.mrp.setValidators([
           Validators.required,
@@ -2126,17 +2155,28 @@ export class TitleFormTemp implements OnDestroy {
 
       const publishingType = this.tempForm.controls.publishingType.value;
       const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
+      const isOnlyPrint = publishingType === PublishingType.ONLY_PRINT;
       const ebookPlatforms: PlatForm[] = [
         PlatForm.MAH_EBOOK,
         PlatForm.KINDLE,
         PlatForm.GOOGLE_PLAY,
       ];
+      const printPlatforms: PlatForm[] = [
+        PlatForm.AMAZON,
+        PlatForm.FLIPKART,
+        PlatForm.MAH_PRINT,
+      ];
 
-      // For ebook-only titles, filter to only check ebook platform controls
+      // Filter controls based on publishing type
       const controlsToCheck = isOnlyEbook
         ? pricingControls.controls.filter((control) => {
             const platform = control.controls.platform.value as PlatForm | null;
             return platform && ebookPlatforms.includes(platform);
+          })
+        : isOnlyPrint
+        ? pricingControls.controls.filter((control) => {
+            const platform = control.controls.platform.value as PlatForm | null;
+            return platform && printPlatforms.includes(platform);
           })
         : pricingControls.controls;
 
@@ -2159,9 +2199,12 @@ export class TitleFormTemp implements OnDestroy {
             return false;
           }
 
-          // For ebook-only titles, double-check platform is valid
+          // Double-check platform is valid based on publishing type
           if (isOnlyEbook) {
             return ebookPlatforms.includes(platform.value as PlatForm);
+          }
+          if (isOnlyPrint) {
+            return printPlatforms.includes(platform.value as PlatForm);
           }
 
           return true;
@@ -2209,6 +2252,18 @@ export class TitleFormTemp implements OnDestroy {
             errorMessage =
               this.translateService.instant('invalidebookpricingdata') ||
               'Please provide valid pricing data for at least one ebook platform (MAH_EBOOK, KINDLE, or GOOGLE_PLAY).';
+          }
+        } else if (isOnlyPrint) {
+          if (missingPlatforms.length > 0) {
+            errorMessage =
+              this.translateService.instant('invalidprintpricingdata') ||
+              `Please provide valid pricing data (MRP and Sales Price) for at least one print platform. Missing data for: ${missingPlatforms.join(
+                ', '
+              )}`;
+          } else {
+            errorMessage =
+              this.translateService.instant('invalidprintpricingdata') ||
+              'Please provide valid pricing data for at least one print platform (AMAZON, FLIPKART, or MAH_PRINT).';
           }
         } else {
           if (missingPlatforms.length > 0) {
@@ -2321,10 +2376,16 @@ export class TitleFormTemp implements OnDestroy {
     // Validate both forms - check only relevant platforms
     const publishingType = this.tempForm.controls.publishingType.value;
     const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
+    const isOnlyPrint = publishingType === PublishingType.ONLY_PRINT;
     const ebookPlatforms: PlatForm[] = [
       PlatForm.MAH_EBOOK,
       PlatForm.KINDLE,
       PlatForm.GOOGLE_PLAY,
+    ];
+    const printPlatforms: PlatForm[] = [
+      PlatForm.AMAZON,
+      PlatForm.FLIPKART,
+      PlatForm.MAH_PRINT,
     ];
 
     // Check validity only for relevant platforms
@@ -2332,6 +2393,11 @@ export class TitleFormTemp implements OnDestroy {
       ? pricingControls.controls.filter((control) => {
           const platform = control.controls.platform.value as PlatForm | null;
           return platform && ebookPlatforms.includes(platform);
+        })
+      : isOnlyPrint
+      ? pricingControls.controls.filter((control) => {
+          const platform = control.controls.platform.value as PlatForm | null;
+          return platform && printPlatforms.includes(platform);
         })
       : pricingControls.controls;
 
@@ -2379,17 +2445,28 @@ export class TitleFormTemp implements OnDestroy {
       // Prepare pricing data
       const publishingType = this.tempForm.controls.publishingType.value;
       const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
+      const isOnlyPrint = publishingType === PublishingType.ONLY_PRINT;
       const ebookPlatforms: PlatForm[] = [
         PlatForm.MAH_EBOOK,
         PlatForm.KINDLE,
         PlatForm.GOOGLE_PLAY,
       ];
+      const printPlatforms: PlatForm[] = [
+        PlatForm.AMAZON,
+        PlatForm.FLIPKART,
+        PlatForm.MAH_PRINT,
+      ];
 
-      // For ebook-only titles, filter to only check ebook platform controls
+      // Filter controls based on publishing type
       const controlsToCheck = isOnlyEbook
         ? pricingControls.controls.filter((control) => {
             const platform = control.controls.platform.value as PlatForm | null;
             return platform && ebookPlatforms.includes(platform);
+          })
+        : isOnlyPrint
+        ? pricingControls.controls.filter((control) => {
+            const platform = control.controls.platform.value as PlatForm | null;
+            return platform && printPlatforms.includes(platform);
           })
         : pricingControls.controls;
 
@@ -2412,9 +2489,12 @@ export class TitleFormTemp implements OnDestroy {
             return false;
           }
 
-          // For ebook-only titles, double-check platform is valid
+          // Double-check platform is valid based on publishing type
           if (isOnlyEbook) {
             return ebookPlatforms.includes(platform.value as PlatForm);
+          }
+          if (isOnlyPrint) {
+            return printPlatforms.includes(platform.value as PlatForm);
           }
 
           return true;
@@ -2463,6 +2543,18 @@ export class TitleFormTemp implements OnDestroy {
               this.translateService.instant('invalidebookpricingdata') ||
               'Please provide valid pricing data for at least one ebook platform (MAH_EBOOK, KINDLE, or GOOGLE_PLAY).';
           }
+        } else if (isOnlyPrint) {
+          if (missingPlatforms.length > 0) {
+            errorMessage =
+              this.translateService.instant('invalidprintpricingdata') ||
+              `Please provide valid pricing data (MRP and Sales Price) for at least one print platform. Missing data for: ${missingPlatforms.join(
+                ', '
+              )}`;
+          } else {
+            errorMessage =
+              this.translateService.instant('invalidprintpricingdata') ||
+              'Please provide valid pricing data for at least one print platform (AMAZON, FLIPKART, or MAH_PRINT).';
+          }
         } else {
           if (missingPlatforms.length > 0) {
             errorMessage =
@@ -2488,11 +2580,16 @@ export class TitleFormTemp implements OnDestroy {
       // Prepare royalties data
       // The royalties form already has the correct structure (one entry per platform per author/publisher)
       // We just need to filter and map it correctly
-      // For ebook-only titles, filter to only check ebook platform controls
+      // Filter to only check relevant platform controls based on publishing type
       const royaltiesControlsToCheck = isOnlyEbook
         ? royaltiesControl.controls.filter((control) => {
             const platform = control.controls.platform.value as PlatForm | null;
             return platform && ebookPlatforms.includes(platform);
+          })
+        : isOnlyPrint
+        ? royaltiesControl.controls.filter((control) => {
+            const platform = control.controls.platform.value as PlatForm | null;
+            return platform && printPlatforms.includes(platform);
           })
         : royaltiesControl.controls;
 
@@ -2517,9 +2614,12 @@ export class TitleFormTemp implements OnDestroy {
             return false;
           }
 
-          // For ebook-only titles, double-check platform is valid
+          // Double-check platform is valid based on publishing type
           if (isOnlyEbook) {
             return ebookPlatforms.includes(platform.value as PlatForm);
+          }
+          if (isOnlyPrint) {
+            return printPlatforms.includes(platform.value as PlatForm);
           }
 
           return true;
@@ -2603,6 +2703,18 @@ export class TitleFormTemp implements OnDestroy {
             errorMessage =
               this.translateService.instant('invalidebookroyaltiesdata') ||
               'Please provide valid royalties data for at least one ebook platform (MAH_EBOOK, KINDLE, or GOOGLE_PLAY).';
+          }
+        } else if (isOnlyPrint) {
+          if (missingPlatforms.length > 0) {
+            errorMessage =
+              this.translateService.instant('invalidprintroyaltiesdata') ||
+              `Please provide valid royalties data (percentage between 0-100%) for at least one print platform. Missing data for: ${missingPlatforms.join(
+                ', '
+              )}`;
+          } else {
+            errorMessage =
+              this.translateService.instant('invalidprintroyaltiesdata') ||
+              'Please provide valid royalties data for at least one print platform (AMAZON, FLIPKART, or MAH_PRINT).';
           }
         } else {
           if (missingPlatforms.length > 0) {

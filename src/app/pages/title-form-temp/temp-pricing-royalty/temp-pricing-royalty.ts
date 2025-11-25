@@ -54,6 +54,12 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     PlatForm.GOOGLE_PLAY,
   ];
   private readonly ebookPlatformSet = new Set<PlatForm>(this.ebookPlatforms);
+  private readonly printPlatforms: PlatForm[] = [
+    PlatForm.AMAZON,
+    PlatForm.FLIPKART,
+    PlatForm.MAH_PRINT,
+  ];
+  private readonly printPlatformSet = new Set<PlatForm>(this.printPlatforms);
   protected readonly PublishingType = PublishingType;
 
   constructor(private staticValueService: StaticValuesService) {}
@@ -82,12 +88,23 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       this.staticValueService.staticValues()?.PlatForm || {}
     ) as PlatForm[];
 
-    if (this.publishingType() === PublishingType.ONLY_EBOOK) {
+    const publishingType = this.publishingType();
+    
+    if (publishingType === PublishingType.ONLY_EBOOK) {
+      // For ebook-only titles, only show ebook platforms
       return platforms.filter((platform) =>
         this.ebookPlatformSet.has(platform)
       );
     }
+    
+    if (publishingType === PublishingType.ONLY_PRINT) {
+      // For print-only titles, only show print platforms (exclude ebook platforms)
+      return platforms.filter((platform) =>
+        this.printPlatformSet.has(platform)
+      );
+    }
 
+    // For PRINT_EBOOK, show all platforms
     return platforms;
   });
 
