@@ -634,10 +634,14 @@ export class TitleFormTemp implements OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe((v) => {
         manageISBNRequired(v);
+        this.updatePricingValidatorsForPublishingType(v);
       });
 
     // Then call it with current value to ensure validators are set correctly
     manageISBNRequired(this.tempForm.controls.publishingType.value);
+    this.updatePricingValidatorsForPublishingType(
+      this.tempForm.controls.publishingType.value
+    );
 
     // Setup stepper step tracking after everything is initialized
     this.setupStepperStepTracking();
@@ -1326,6 +1330,71 @@ export class TitleFormTemp implements OnDestroy {
         }) as PricingGroup;
 
         pricingArray.push(newControl);
+      }
+    });
+
+    // Update validators based on current publishing type
+    this.updatePricingValidatorsForPublishingType(
+      this.tempForm.controls.publishingType.value
+    );
+  }
+
+  /**
+   * Update pricing validators based on publishing type
+   * For ebook-only titles, remove required validators from non-ebook platforms
+   */
+  private updatePricingValidatorsForPublishingType(
+    publishingType: PublishingType | null | undefined
+  ): void {
+    const pricingArray = this.tempForm.controls.pricing;
+    if (!pricingArray || pricingArray.length === 0) {
+      return;
+    }
+
+    const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
+    const ebookPlatforms: PlatForm[] = [
+      PlatForm.MAH_EBOOK,
+      PlatForm.KINDLE,
+      PlatForm.GOOGLE_PLAY,
+    ];
+
+    pricingArray.controls.forEach((control) => {
+      const platform = control.controls.platform.value as PlatForm | null;
+      const isEbookPlatform =
+        platform && ebookPlatforms.includes(platform as PlatForm);
+
+      if (isOnlyEbook) {
+        // For ebook-only titles, remove validators from non-ebook platforms
+        if (!isEbookPlatform) {
+          control.controls.salesPrice.clearValidators();
+          control.controls.mrp.clearValidators();
+          control.controls.salesPrice.updateValueAndValidity({
+            emitEvent: false,
+          });
+          control.controls.mrp.updateValueAndValidity({ emitEvent: false });
+        } else {
+          // Ensure ebook platforms have validators
+          control.controls.salesPrice.setValidators(Validators.required);
+          control.controls.mrp.setValidators([
+            Validators.required,
+            this.mrpValidator() as ValidatorFn,
+          ]);
+          control.controls.salesPrice.updateValueAndValidity({
+            emitEvent: false,
+          });
+          control.controls.mrp.updateValueAndValidity({ emitEvent: false });
+        }
+      } else {
+        // For non-ebook-only titles, ensure all platforms have validators
+        control.controls.salesPrice.setValidators(Validators.required);
+        control.controls.mrp.setValidators([
+          Validators.required,
+          this.mrpValidator() as ValidatorFn,
+        ]);
+        control.controls.salesPrice.updateValueAndValidity({
+          emitEvent: false,
+        });
+        control.controls.mrp.updateValueAndValidity({ emitEvent: false });
       }
     });
   }
@@ -2055,15 +2124,48 @@ export class TitleFormTemp implements OnDestroy {
       this.isLoading.set(true);
       this.errorMessage.set(null);
 
-      const data: PricingCreate[] = pricingControls.controls
-        .filter(
-          ({ controls: { platform, mrp, salesPrice } }) =>
-            platform.value &&
-            mrp.value &&
-            salesPrice.value &&
-            !isNaN(Number(mrp.value)) &&
-            !isNaN(Number(salesPrice.value))
-        )
+      const publishingType = this.tempForm.controls.publishingType.value;
+      const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
+      const ebookPlatforms: PlatForm[] = [
+        PlatForm.MAH_EBOOK,
+        PlatForm.KINDLE,
+        PlatForm.GOOGLE_PLAY,
+      ];
+
+      // For ebook-only titles, filter to only check ebook platform controls
+      const controlsToCheck = isOnlyEbook
+        ? pricingControls.controls.filter((control) => {
+            const platform = control.controls.platform.value as PlatForm | null;
+            return platform && ebookPlatforms.includes(platform);
+          })
+        : pricingControls.controls;
+
+      const data: PricingCreate[] = controlsToCheck
+        .filter(({ controls: { platform, mrp, salesPrice } }) => {
+          // Basic validation - check if all required fields have valid values
+          if (
+            !platform.value ||
+            mrp.value === null ||
+            mrp.value === undefined ||
+            mrp.value === '' ||
+            salesPrice.value === null ||
+            salesPrice.value === undefined ||
+            salesPrice.value === '' ||
+            isNaN(Number(mrp.value)) ||
+            isNaN(Number(salesPrice.value)) ||
+            Number(mrp.value) <= 0 ||
+            Number(salesPrice.value) <= 0
+          ) {
+            return false;
+          }
+
+          // For ebook-only titles, double-check platform is valid
+          if (isOnlyEbook) {
+            return ebookPlatforms.includes(platform.value as PlatForm);
+          }
+
+          return true;
+        })
         .map(({ controls: { platform, id, mrp, salesPrice } }) => ({
           id: id.value || undefined,
           platform: platform.value as string,
@@ -2073,12 +2175,59 @@ export class TitleFormTemp implements OnDestroy {
         }));
 
       if (!data.length) {
+        // Check which platforms are missing data for better error message
+        const missingPlatforms: string[] = [];
+        controlsToCheck.forEach((control) => {
+          const { platform, mrp, salesPrice } = control.controls;
+          const hasValidData =
+            platform.value &&
+            mrp.value !== null &&
+            mrp.value !== undefined &&
+            mrp.value !== '' &&
+            salesPrice.value !== null &&
+            salesPrice.value !== undefined &&
+            salesPrice.value !== '' &&
+            !isNaN(Number(mrp.value)) &&
+            !isNaN(Number(salesPrice.value)) &&
+            Number(mrp.value) > 0 &&
+            Number(salesPrice.value) > 0;
+
+          if (!hasValidData && platform.value) {
+            missingPlatforms.push(platform.value as string);
+          }
+        });
+
+        let errorMessage: string;
+        if (isOnlyEbook) {
+          if (missingPlatforms.length > 0) {
+            errorMessage =
+              this.translateService.instant('invalidebookpricingdata') ||
+              `Please provide valid pricing data (MRP and Sales Price) for at least one ebook platform. Missing data for: ${missingPlatforms.join(
+                ', '
+              )}`;
+          } else {
+            errorMessage =
+              this.translateService.instant('invalidebookpricingdata') ||
+              'Please provide valid pricing data for at least one ebook platform (MAH_EBOOK, KINDLE, or GOOGLE_PLAY).';
+          }
+        } else {
+          if (missingPlatforms.length > 0) {
+            errorMessage =
+              this.translateService.instant('invalidpricingdata') ||
+              `Please provide valid pricing data (MRP and Sales Price) for all platforms. Missing data for: ${missingPlatforms.join(
+                ', '
+              )}`;
+          } else {
+            errorMessage =
+              this.translateService.instant('invalidpricingdata') ||
+              'Please provide valid pricing data.';
+          }
+        }
+
         Swal.fire({
           icon: 'warning',
           title: this.translateService.instant('warning'),
-          text:
-            this.translateService.instant('invalidpricingdata') ||
-            'Please provide valid pricing data.',
+          text: errorMessage,
         });
         return;
       }
@@ -2136,12 +2285,26 @@ export class TitleFormTemp implements OnDestroy {
 
       // Move to next step after successful submission
       this.goToNextStep();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving pricing:', error);
-      this.errorMessage.set(
+      let errorMessage =
         this.translateService.instant('errorsavingpricing') ||
-          'Failed to save pricing. Please try again.'
-      );
+        'Failed to save pricing. Please try again.';
+
+      // Show more specific error message from API if available
+      if (error?.error?.message) {
+        errorMessage = error.error.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text: errorMessage,
+      });
+
+      this.errorMessage.set(errorMessage);
     } finally {
       this.isLoading.set(false);
     }
@@ -2155,8 +2318,28 @@ export class TitleFormTemp implements OnDestroy {
     const pricingControls = this.tempForm.controls.pricing;
     const royaltiesControl = this.tempForm.controls.royalties;
 
-    // Validate both forms
-    if (!pricingControls.valid) {
+    // Validate both forms - check only relevant platforms
+    const publishingType = this.tempForm.controls.publishingType.value;
+    const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
+    const ebookPlatforms: PlatForm[] = [
+      PlatForm.MAH_EBOOK,
+      PlatForm.KINDLE,
+      PlatForm.GOOGLE_PLAY,
+    ];
+
+    // Check validity only for relevant platforms
+    const relevantControls = isOnlyEbook
+      ? pricingControls.controls.filter((control) => {
+          const platform = control.controls.platform.value as PlatForm | null;
+          return platform && ebookPlatforms.includes(platform);
+        })
+      : pricingControls.controls;
+
+    const hasInvalidRelevantControl = relevantControls.some(
+      (control) => !control.valid
+    );
+
+    if (hasInvalidRelevantControl) {
       Swal.fire({
         icon: 'warning',
         title: this.translateService.instant('warning'),
@@ -2194,15 +2377,48 @@ export class TitleFormTemp implements OnDestroy {
       this.errorMessage.set(null);
 
       // Prepare pricing data
-      const pricingData: PricingCreate[] = pricingControls.controls
-        .filter(
-          ({ controls: { platform, mrp, salesPrice } }) =>
-            platform.value &&
-            mrp.value &&
-            salesPrice.value &&
-            !isNaN(Number(mrp.value)) &&
-            !isNaN(Number(salesPrice.value))
-        )
+      const publishingType = this.tempForm.controls.publishingType.value;
+      const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
+      const ebookPlatforms: PlatForm[] = [
+        PlatForm.MAH_EBOOK,
+        PlatForm.KINDLE,
+        PlatForm.GOOGLE_PLAY,
+      ];
+
+      // For ebook-only titles, filter to only check ebook platform controls
+      const controlsToCheck = isOnlyEbook
+        ? pricingControls.controls.filter((control) => {
+            const platform = control.controls.platform.value as PlatForm | null;
+            return platform && ebookPlatforms.includes(platform);
+          })
+        : pricingControls.controls;
+
+      const pricingData: PricingCreate[] = controlsToCheck
+        .filter(({ controls: { platform, mrp, salesPrice } }) => {
+          // Basic validation - check if all required fields have valid values
+          if (
+            !platform.value ||
+            mrp.value === null ||
+            mrp.value === undefined ||
+            mrp.value === '' ||
+            salesPrice.value === null ||
+            salesPrice.value === undefined ||
+            salesPrice.value === '' ||
+            isNaN(Number(mrp.value)) ||
+            isNaN(Number(salesPrice.value)) ||
+            Number(mrp.value) <= 0 ||
+            Number(salesPrice.value) <= 0
+          ) {
+            return false;
+          }
+
+          // For ebook-only titles, double-check platform is valid
+          if (isOnlyEbook) {
+            return ebookPlatforms.includes(platform.value as PlatForm);
+          }
+
+          return true;
+        })
         .map(({ controls: { platform, id, mrp, salesPrice } }) => ({
           id: id.value || undefined,
           platform: platform.value as string,
@@ -2212,12 +2428,59 @@ export class TitleFormTemp implements OnDestroy {
         }));
 
       if (!pricingData.length) {
+        // Check which platforms are missing data for better error message
+        const missingPlatforms: string[] = [];
+        controlsToCheck.forEach((control) => {
+          const { platform, mrp, salesPrice } = control.controls;
+          const hasValidData =
+            platform.value &&
+            mrp.value !== null &&
+            mrp.value !== undefined &&
+            mrp.value !== '' &&
+            salesPrice.value !== null &&
+            salesPrice.value !== undefined &&
+            salesPrice.value !== '' &&
+            !isNaN(Number(mrp.value)) &&
+            !isNaN(Number(salesPrice.value)) &&
+            Number(mrp.value) > 0 &&
+            Number(salesPrice.value) > 0;
+
+          if (!hasValidData && platform.value) {
+            missingPlatforms.push(platform.value as string);
+          }
+        });
+
+        let errorMessage: string;
+        if (isOnlyEbook) {
+          if (missingPlatforms.length > 0) {
+            errorMessage =
+              this.translateService.instant('invalidebookpricingdata') ||
+              `Please provide valid pricing data (MRP and Sales Price) for at least one ebook platform. Missing data for: ${missingPlatforms.join(
+                ', '
+              )}`;
+          } else {
+            errorMessage =
+              this.translateService.instant('invalidebookpricingdata') ||
+              'Please provide valid pricing data for at least one ebook platform (MAH_EBOOK, KINDLE, or GOOGLE_PLAY).';
+          }
+        } else {
+          if (missingPlatforms.length > 0) {
+            errorMessage =
+              this.translateService.instant('invalidpricingdata') ||
+              `Please provide valid pricing data (MRP and Sales Price) for all platforms. Missing data for: ${missingPlatforms.join(
+                ', '
+              )}`;
+          } else {
+            errorMessage =
+              this.translateService.instant('invalidpricingdata') ||
+              'Please provide valid pricing data.';
+          }
+        }
+
         Swal.fire({
           icon: 'warning',
           title: this.translateService.instant('warning'),
-          text:
-            this.translateService.instant('invalidpricingdata') ||
-            'Please provide valid pricing data.',
+          text: errorMessage,
         });
         return;
       }
@@ -2225,15 +2488,43 @@ export class TitleFormTemp implements OnDestroy {
       // Prepare royalties data
       // The royalties form already has the correct structure (one entry per platform per author/publisher)
       // We just need to filter and map it correctly
-      const royalties: UpdateRoyalty[] = royaltiesControl.controls
-        .filter(
-          ({ controls: { percentage, platform } }) =>
-            percentage.value !== null &&
-            percentage.value !== undefined &&
-            !isNaN(Number(percentage.value)) &&
-            platform.value
-        )
-        .map(
+      // For ebook-only titles, filter to only check ebook platform controls
+      const royaltiesControlsToCheck = isOnlyEbook
+        ? royaltiesControl.controls.filter((control) => {
+            const platform = control.controls.platform.value as PlatForm | null;
+            return platform && ebookPlatforms.includes(platform);
+          })
+        : royaltiesControl.controls;
+
+      // Map and filter royalties, then deduplicate by (authorId/publisherId, platform)
+      const royaltiesMap = new Map<string, UpdateRoyalty>();
+
+      royaltiesControlsToCheck
+        .filter(({ controls: { percentage, platform } }) => {
+          const rawPercentage = percentage.value;
+          const hasValue =
+            rawPercentage !== null && rawPercentage !== undefined;
+          const numericPercentage = Number(rawPercentage);
+
+          // Basic validation - check if percentage is valid
+          if (
+            !platform.value ||
+            !hasValue ||
+            isNaN(numericPercentage) ||
+            numericPercentage < 0 ||
+            numericPercentage > 100
+          ) {
+            return false;
+          }
+
+          // For ebook-only titles, double-check platform is valid
+          if (isOnlyEbook) {
+            return ebookPlatforms.includes(platform.value as PlatForm);
+          }
+
+          return true;
+        })
+        .forEach(
           ({
             controls: {
               id: { value: id },
@@ -2243,24 +2534,94 @@ export class TitleFormTemp implements OnDestroy {
               publisherId: { value: publisherId },
               platform: { value: platform },
             },
-          }) => ({
-            id: id || undefined,
-            authorId: authorId || undefined,
-            platform: platform as PlatForm,
-            percentage: Number(percentage),
-            name: name || '',
-            publisherId: publisherId || undefined,
-            titleId: this.titleId,
-          })
+          }) => {
+            // Create unique key: authorId/publisherId + platform
+            const key = authorId
+              ? `author_${authorId}_${platform}`
+              : `publisher_${publisherId}_${platform}`;
+
+            const royalty: UpdateRoyalty = {
+              id: id || undefined,
+              authorId: authorId || undefined,
+              platform: platform as PlatForm,
+              percentage: Number(percentage),
+              name: name || '',
+              publisherId: publisherId || undefined,
+              titleId: this.titleId,
+            };
+
+            // Deduplicate: keep entry with ID if available, otherwise keep the last occurrence
+            const existing = royaltiesMap.get(key);
+            if (!existing) {
+              // No existing entry, add it
+              royaltiesMap.set(key, royalty);
+            } else if (id && !existing.id) {
+              // Current has ID, existing doesn't - replace
+              royaltiesMap.set(key, royalty);
+            } else if (!id && existing.id) {
+              // Existing has ID, current doesn't - keep existing
+              // Do nothing
+            } else {
+              // Both have ID or both don't - keep the last one (current)
+              royaltiesMap.set(key, royalty);
+            }
+          }
         );
 
+      const royalties: UpdateRoyalty[] = Array.from(royaltiesMap.values());
+
       if (!royalties.length) {
+        // Check which platforms are missing data for better error message
+        const missingPlatforms: string[] = [];
+        royaltiesControlsToCheck.forEach((control) => {
+          const { percentage, platform } = control.controls;
+          const rawPercentage = percentage.value;
+          const hasValue =
+            rawPercentage !== null && rawPercentage !== undefined;
+          const numericPercentage = Number(rawPercentage);
+          const hasValidData =
+            platform.value &&
+            hasValue &&
+            !isNaN(numericPercentage) &&
+            numericPercentage >= 0 &&
+            numericPercentage <= 100;
+
+          if (!hasValidData && platform.value) {
+            missingPlatforms.push(platform.value as string);
+          }
+        });
+
+        let errorMessage: string;
+        if (isOnlyEbook) {
+          if (missingPlatforms.length > 0) {
+            errorMessage =
+              this.translateService.instant('invalidebookroyaltiesdata') ||
+              `Please provide valid royalties data (percentage between 0-100%) for at least one ebook platform. Missing data for: ${missingPlatforms.join(
+                ', '
+              )}`;
+          } else {
+            errorMessage =
+              this.translateService.instant('invalidebookroyaltiesdata') ||
+              'Please provide valid royalties data for at least one ebook platform (MAH_EBOOK, KINDLE, or GOOGLE_PLAY).';
+          }
+        } else {
+          if (missingPlatforms.length > 0) {
+            errorMessage =
+              this.translateService.instant('invalidroyaltiesdata') ||
+              `Please provide valid royalties data (percentage between 0-100%) for all platforms. Missing data for: ${missingPlatforms.join(
+                ', '
+              )}`;
+          } else {
+            errorMessage =
+              this.translateService.instant('invalidroyaltiesdata') ||
+              'Please provide valid royalties data.';
+          }
+        }
+
         Swal.fire({
           icon: 'warning',
           title: this.translateService.instant('warning'),
-          text:
-            this.translateService.instant('invalidroyaltiesdata') ||
-            'Please provide valid royalties data.',
+          text: errorMessage,
         });
         return;
       }
@@ -2324,12 +2685,26 @@ export class TitleFormTemp implements OnDestroy {
 
       // Move to next step after successful submission
       this.goToNextStep();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving pricing and royalties:', error);
-      this.errorMessage.set(
+      let errorMessage =
         this.translateService.instant('errorsavingpricing') ||
-          'Failed to save pricing and royalties. Please try again.'
-      );
+        'Failed to save pricing and royalties. Please try again.';
+
+      // Show more specific error message from API if available
+      if (error?.error?.message) {
+        errorMessage = error.error.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text: errorMessage,
+      });
+
+      this.errorMessage.set(errorMessage);
     } finally {
       this.isLoading.set(false);
     }
