@@ -17,6 +17,7 @@ import {
   DistributionType,
   PlatForm,
   PlatFormIndetifierGroup,
+  PublishingType,
   TitleDistribution,
 } from '../../interfaces';
 import { StaticValuesService } from '../../services/static-values';
@@ -45,10 +46,49 @@ export class ApproveTitle implements OnInit {
     platformIdentifier: new FormArray<FormGroup<PlatFormIndetifierGroup>>([]),
   });
 
+  get gridStyle(): { [key: string]: string } {
+    const columnCount = this.form.controls.platformIdentifier.controls.length + 1;
+    return {
+      'grid-template-columns': `repeat(${columnCount}, minmax(0, 1fr))`,
+    };
+  }
+
   ngOnInit(): void {
-    const platforms = Object.keys(
+    const allPlatforms = Object.keys(
       this.staticValueService.staticValues()?.PlatForm || {}
     ) as PlatForm[];
+
+    // Filter platforms based on publishing type
+    const publishingType = this.data.publishingType;
+    const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
+    const isOnlyPrint = publishingType === PublishingType.ONLY_PRINT;
+
+    const ebookPlatforms: PlatForm[] = [
+      PlatForm.MAH_EBOOK,
+      PlatForm.KINDLE,
+      PlatForm.GOOGLE_PLAY,
+    ];
+    const printPlatforms: PlatForm[] = [
+      PlatForm.AMAZON,
+      PlatForm.FLIPKART,
+      PlatForm.MAH_PRINT,
+    ];
+
+    let platforms: PlatForm[];
+    if (isOnlyEbook) {
+      // For ebook-only titles, only show ebook platforms
+      platforms = allPlatforms.filter((platform) =>
+        ebookPlatforms.includes(platform)
+      );
+    } else if (isOnlyPrint) {
+      // For print-only titles, only show print platforms
+      platforms = allPlatforms.filter((platform) =>
+        printPlatforms.includes(platform)
+      );
+    } else {
+      // For PRINT_EBOOK, show all platforms
+      platforms = allPlatforms;
+    }
 
     platforms.forEach((platform) => {
       this.form.controls.platformIdentifier.push(
@@ -105,4 +145,5 @@ interface Inputs {
   onSubmit: (data: { platformIdentifier: CreatePlatformIdentifier[] }) => void;
   distribution: TitleDistribution[];
   onClose: () => void;
+  publishingType?: PublishingType;
 }
