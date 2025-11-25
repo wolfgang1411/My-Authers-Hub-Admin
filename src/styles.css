@@ -94,11 +94,11 @@ body {
   @apply h-full w-full;
 }
 html {
-  background-color: white !important;
+  background-color: var(--background, #f4faf6);
 }
 body {
   color: var(--text-primary);
-  background-color: white !important;
+  background-color: var(--background, #f4faf6);
 }
 .input-field {
   @apply w-full h-[38px] px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
@@ -121,6 +121,7 @@ input::placeholder {
 select::placeholder {
   @apply text-text-placeholder;
 }
+
 
 .icon {
   @apply w-full h-full block fill-inherit;
@@ -165,6 +166,43 @@ select::placeholder {
 
 .mat-stepper-horizontal-line {
   @apply !m-0;
+}
+
+/* Make stepper background transparent or match background */
+::ng-deep .mat-horizontal-stepper,
+::ng-deep .mat-stepper-horizontal,
+::ng-deep .mat-stepper-container,
+::ng-deep .mat-stepper-horizontal-container,
+::ng-deep mat-stepper,
+::ng-deep mat-horizontal-stepper {
+  background-color: transparent !important;
+  --mat-sys-surface: transparent !important;
+}
+
+::ng-deep .mat-step-header,
+::ng-deep .mat-horizontal-stepper-header,
+::ng-deep .mat-step-header-container {
+  background-color: transparent !important;
+}
+
+::ng-deep .mat-horizontal-stepper-header-container {
+  background-color: transparent !important;
+}
+
+::ng-deep .mat-horizontal-content-container,
+::ng-deep .mat-stepper-horizontal-content {
+  background-color: transparent !important;
+}
+
+::ng-deep .mat-step-content,
+::ng-deep .mat-step-body {
+  background-color: transparent !important;
+}
+
+/* Alternative: match background color instead of transparent */
+::ng-deep .mat-horizontal-stepper.example-stepper,
+::ng-deep mat-stepper.example-stepper {
+  background-color: var(--background, #f4faf6) !important;
 }
 input:focus-visible {
   outline: none;
@@ -293,8 +331,71 @@ mat-label {
   --mat-sys-surface-container: white !important;
 }
 
-::ng-deep .mat-mdc-form-field {
-  --mat-sys-surface: white !important;
+/* Make Material input fields have visible primary background - more specific selectors */
+::ng-deep .mat-mdc-form-field,
+::ng-deep mat-form-field.mat-mdc-form-field {
+  --mat-sys-surface: rgba(61, 26, 93, 0.1) !important;
+  background-color: rgba(61, 26, 93, 0.1) !important;
+}
+
+/* Make Material input fields have visible primary background */
+::ng-deep .mat-mdc-text-field-wrapper,
+::ng-deep .mat-mdc-form-field .mat-mdc-text-field-wrapper,
+::ng-deep mat-form-field .mat-mdc-text-field-wrapper {
+  background-color: rgba(61, 26, 93, 0.1) !important;
+  border-radius: 4px;
+}
+
+/* Target the actual text field input area */
+::ng-deep .mdc-text-field,
+::ng-deep .mat-mdc-form-field .mdc-text-field,
+::ng-deep mat-form-field .mdc-text-field {
+  background-color: rgba(61, 26, 93, 0.1) !important;
+}
+
+::ng-deep .mdc-text-field--outlined .mdc-notched-outline,
+::ng-deep .mat-mdc-form-field .mdc-text-field--outlined .mdc-notched-outline {
+  background-color: rgba(61, 26, 93, 0.1) !important;
+}
+
+::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__leading,
+::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__notch,
+::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__trailing,
+::ng-deep .mat-mdc-form-field .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__leading,
+::ng-deep .mat-mdc-form-field .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__notch,
+::ng-deep .mat-mdc-form-field .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__trailing {
+  border-color: rgba(61, 26, 93, 0.3) !important;
+  border-width: 1.5px !important;
+}
+
+::ng-deep .mdc-text-field--filled,
+::ng-deep .mat-mdc-form-field .mdc-text-field--filled {
+  background-color: rgba(61, 26, 93, 0.1) !important;
+}
+
+::ng-deep .mdc-text-field--filled .mdc-line-ripple::before {
+  border-bottom-color: var(--primary, #3d1a5d) !important;
+}
+
+/* Focus state with primary color - more visible */
+::ng-deep .mdc-text-field--focused .mdc-notched-outline__leading,
+::ng-deep .mdc-text-field--focused .mdc-notched-outline__notch,
+::ng-deep .mdc-text-field--focused .mdc-notched-outline__trailing,
+::ng-deep .mat-mdc-form-field .mdc-text-field--focused .mdc-notched-outline__leading,
+::ng-deep .mat-mdc-form-field .mdc-text-field--focused .mdc-notched-outline__notch,
+::ng-deep .mat-mdc-form-field .mdc-text-field--focused .mdc-notched-outline__trailing {
+  border-color: var(--primary, #3d1a5d) !important;
+  border-width: 2px !important;
+}
+
+/* Hover state for better visibility */
+::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover .mdc-notched-outline__leading,
+::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover .mdc-notched-outline__notch,
+::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover .mdc-notched-outline__trailing,
+::ng-deep .mat-mdc-form-field .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover .mdc-notched-outline__leading,
+::ng-deep .mat-mdc-form-field .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover .mdc-notched-outline__notch,
+::ng-deep .mat-mdc-form-field .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover .mdc-notched-outline__trailing {
+  border-color: rgba(61, 26, 93, 0.5) !important;
 }
 
 ::ng-deep .mat-mdc-select-panel {
@@ -339,6 +440,9 @@ mat-label {
   --mat-sys-surface: white;
   --mat-sys-on-surface: #0d0d0d;
   --mat-sys-surface-container: white;
+  --mat-sys-surface-variant: rgba(61, 26, 93, 0.1);
+  --mat-form-field-filled-container-color: rgba(61, 26, 93, 0.1);
+  --mat-stepper-container-color: transparent;
   --mat-sys-surface-container-high: white;
   --mat-sys-surface-container-highest: white;
   --mat-sys-primary: #3d1a5d;

@@ -59,10 +59,13 @@ html {
   --mat-sys-surface-container: #f5f5f5;
   --mat-sys-surface-container-high: #ffffff;
   --mat-sys-surface-container-highest: #ffffff;
+  --mat-sys-surface-variant: rgba(61, 26, 93, 0.1);
   --mat-sys-primary: #3d1a5d;
   --mat-sys-on-primary: white;
   --mat-sys-primary-container: #ebe3f7;
   --mat-sys-on-primary-container: #3d1a5d;
+  --mat-form-field-filled-container-color: rgba(61, 26, 93, 0.1);
+  --mat-stepper-container-color: transparent;
 }
 
 body {
@@ -74,7 +77,7 @@ body {
   // Set a default background, font and text colors for the application using
   // Angular Material's system-level CSS variables. Learn more about these
   // variables at https://material.angular.dev/guide/system-variables
-  background-color: var(--mat-sys-surface, white) !important;
+  background-color: var(--background, #f4faf6);
   color: var(--mat-sys-on-surface, #0d0d0d) !important;
   font: var(--mat-sys-body-medium);
 
