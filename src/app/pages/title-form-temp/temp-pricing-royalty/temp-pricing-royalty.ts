@@ -89,14 +89,14 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     ) as PlatForm[];
 
     const publishingType = this.publishingType();
-    
+
     if (publishingType === PublishingType.ONLY_EBOOK) {
       // For ebook-only titles, only show ebook platforms
       return platforms.filter((platform) =>
         this.ebookPlatformSet.has(platform)
       );
     }
-    
+
     if (publishingType === PublishingType.ONLY_PRINT) {
       // For print-only titles, only show print platforms (exclude ebook platforms)
       return platforms.filter((platform) =>

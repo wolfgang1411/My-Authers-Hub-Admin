@@ -20,11 +20,13 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import {
+  Author,
   BookBindings,
   LaminationType,
   PaperQuailty,
   PrintingFormGroup,
   SizeCategory,
+  TitleDetailsFormGroup,
   TitleMediaGroup,
   TitleMediaType,
 } from '../../../interfaces';
@@ -68,6 +70,8 @@ export class TempTitlePrinting implements OnDestroy {
   printingGroup = input.required<FormGroup<PrintingFormGroup>>();
   documentMedia = input.required<FormArray<FormGroup<TitleMediaGroup>>>();
   allowCustomPrintingPrice = input<boolean>(false);
+  titleDetailsGroup = input<FormGroup<TitleDetailsFormGroup> | null>(null);
+  authors = input<Author[]>([]);
 
   fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 

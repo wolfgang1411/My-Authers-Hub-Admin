@@ -122,7 +122,6 @@ select::placeholder {
   @apply text-text-placeholder;
 }
 
-
 .icon {
   @apply w-full h-full block fill-inherit;
 }
@@ -228,6 +227,66 @@ mat-label {
 }
 .mdc-switch--selected .mdc-switch__track::after {
   @apply !bg-primary;
+}
+
+/* Global Angular Material form field error state styling - Red border when invalid and touched */
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined
+  .mdc-notched-outline__leading,
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined
+  .mdc-notched-outline__notch,
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined
+  .mdc-notched-outline__trailing {
+  border-color: #f44336 !important;
+  border-width: 2px !important;
+}
+
+/* Error state for focused invalid fields */
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--focused
+  .mdc-notched-outline__leading,
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--focused
+  .mdc-notched-outline__notch,
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--focused
+  .mdc-notched-outline__trailing {
+  border-color: #f44336 !important;
+  border-width: 2px !important;
+}
+
+/* Error state for filled appearance */
+::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mdc-text-field--filled {
+  background-color: rgba(244, 67, 54, 0.04) !important;
+}
+
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--filled
+  .mdc-line-ripple::before {
+  border-bottom-color: #f44336 !important;
+}
+
+/* Error state for select fields */
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined
+  .mdc-notched-outline {
+  border-color: #f44336 !important;
+}
+
+/* Ensure error color is set globally */
+:root {
+  --mdc-theme-error: #f44336;
+  --mat-form-field-error-text-color: #f44336;
 }
 
 .mdc-text-field--outlined:not(.mdc-text-field--disabled)
@@ -358,12 +417,27 @@ mat-label {
   background-color: rgba(61, 26, 93, 0.1) !important;
 }
 
-::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__leading,
-::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__notch,
-::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__trailing,
-::ng-deep .mat-mdc-form-field .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__leading,
-::ng-deep .mat-mdc-form-field .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__notch,
-::ng-deep .mat-mdc-form-field .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__trailing {
+::ng-deep
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled)
+  .mdc-notched-outline__leading,
+::ng-deep
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled)
+  .mdc-notched-outline__notch,
+::ng-deep
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled)
+  .mdc-notched-outline__trailing,
+::ng-deep
+  .mat-mdc-form-field
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled)
+  .mdc-notched-outline__leading,
+::ng-deep
+  .mat-mdc-form-field
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled)
+  .mdc-notched-outline__notch,
+::ng-deep
+  .mat-mdc-form-field
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled)
+  .mdc-notched-outline__trailing {
   border-color: rgba(61, 26, 93, 0.3) !important;
   border-width: 1.5px !important;
 }
@@ -381,20 +455,44 @@ mat-label {
 ::ng-deep .mdc-text-field--focused .mdc-notched-outline__leading,
 ::ng-deep .mdc-text-field--focused .mdc-notched-outline__notch,
 ::ng-deep .mdc-text-field--focused .mdc-notched-outline__trailing,
-::ng-deep .mat-mdc-form-field .mdc-text-field--focused .mdc-notched-outline__leading,
-::ng-deep .mat-mdc-form-field .mdc-text-field--focused .mdc-notched-outline__notch,
-::ng-deep .mat-mdc-form-field .mdc-text-field--focused .mdc-notched-outline__trailing {
+::ng-deep
+  .mat-mdc-form-field
+  .mdc-text-field--focused
+  .mdc-notched-outline__leading,
+::ng-deep
+  .mat-mdc-form-field
+  .mdc-text-field--focused
+  .mdc-notched-outline__notch,
+::ng-deep
+  .mat-mdc-form-field
+  .mdc-text-field--focused
+  .mdc-notched-outline__trailing {
   border-color: var(--primary, #3d1a5d) !important;
   border-width: 2px !important;
 }
 
 /* Hover state for better visibility */
-::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover .mdc-notched-outline__leading,
-::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover .mdc-notched-outline__notch,
-::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover .mdc-notched-outline__trailing,
-::ng-deep .mat-mdc-form-field .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover .mdc-notched-outline__leading,
-::ng-deep .mat-mdc-form-field .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover .mdc-notched-outline__notch,
-::ng-deep .mat-mdc-form-field .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover .mdc-notched-outline__trailing {
+::ng-deep
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover
+  .mdc-notched-outline__leading,
+::ng-deep
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover
+  .mdc-notched-outline__notch,
+::ng-deep
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover
+  .mdc-notched-outline__trailing,
+::ng-deep
+  .mat-mdc-form-field
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover
+  .mdc-notched-outline__leading,
+::ng-deep
+  .mat-mdc-form-field
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover
+  .mdc-notched-outline__notch,
+::ng-deep
+  .mat-mdc-form-field
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover
+  .mdc-notched-outline__trailing {
   border-color: rgba(61, 26, 93, 0.5) !important;
 }
 

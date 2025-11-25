@@ -279,6 +279,7 @@ export class BookDetails {
         name: new FormControl<string | null>(null),
         keepSame: new FormControl<boolean>(true),
         displayName: new FormControl<string | null>(null),
+        authorPrintPrice: new FormControl<number | null | undefined>(null),
       }) as FormGroup<AuthorFormGroup>
     );
   }

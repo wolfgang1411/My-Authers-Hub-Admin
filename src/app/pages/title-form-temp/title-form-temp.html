@@ -388,6 +388,8 @@
         loggedInUser()?.accessLevel === 'PUBLISHER' &&
         loggedInUser()?.publisher?.allowCustomPrintingPrice === true
       "
+      [titleDetailsGroup]="tempForm.controls.titleDetails"
+      [authors]="authorsSignal()"
     ></app-temp-title-printing>
     <div class="flex justify-end">
       <button

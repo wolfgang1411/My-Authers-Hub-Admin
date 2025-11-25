@@ -478,6 +478,10 @@ export class TitleFormTemp implements OnDestroy {
     const current = this.authorsSignal();
     if (!current.some((a) => a.id === author.id)) {
       this.authorsSignal.set([...current, author]);
+      // Update validators for newly added author
+      setTimeout(() => {
+        this.updateAuthorPrintPriceValidators();
+      }, 100);
     }
   }
 
@@ -912,11 +916,30 @@ export class TitleFormTemp implements OnDestroy {
             emitEvent: false,
           });
         }
+        // Update author print price validators after printing cost changes
+        this.updateAuthorPrintPriceValidators();
       }
     } catch (error) {
       console.error('Error calculating printing cost:', error);
       // Don't show error to user as this is called frequently during form changes
     }
+  }
+
+  /**
+   * Update validators for all author print price controls
+   * Should be called when printing cost changes
+   */
+  private updateAuthorPrintPriceValidators(): void {
+    const authorIds = this.tempForm.controls.titleDetails.controls.authorIds;
+    authorIds.controls.forEach((authorControl) => {
+      const authorPrintPriceControl = authorControl.controls.authorPrintPrice;
+      if (authorPrintPriceControl) {
+        authorPrintPriceControl.setValidators([
+          this.authorPrintPriceValidator(),
+        ]);
+        authorPrintPriceControl.updateValueAndValidity({ emitEvent: false });
+      }
+    });
   }
 
   prefillFormData(data: Title): void {
@@ -994,13 +1017,16 @@ export class TitleFormTemp implements OnDestroy {
     this.authorsSignal.set(data.authors?.map(({ author }) => author) || []);
     this.publisherSignal.set(data.publisher);
 
-    data.authors?.forEach(({ author, display_name }) => {
+    data.authors?.forEach(({ author, display_name, authorPrintPrice }) => {
       this.tempForm.controls.titleDetails.controls.authorIds.push(
         new FormGroup<AuthorFormGroup>({
           id: new FormControl<number | null>(author.id),
           name: new FormControl<string>(author.name),
           keepSame: new FormControl<boolean>(author.name === display_name),
           displayName: new FormControl<string>(display_name),
+          authorPrintPrice: new FormControl<number | null>(
+            authorPrintPrice ?? null
+          ),
         })
       );
     });
@@ -1192,6 +1218,83 @@ export class TitleFormTemp implements OnDestroy {
       }
       return null;
     };
+  }
+
+  authorPrintPriceValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      // Allow empty values - this is an optional field
+      if (
+        !control.value ||
+        control.value === null ||
+        control.value === '' ||
+        control.value === undefined
+      ) {
+        return null;
+      }
+
+      const authorPrintPrice = Number(control.value);
+      // If not a valid number or negative, let other validators handle it
+      if (isNaN(authorPrintPrice) || authorPrintPrice < 0) {
+        return null;
+      }
+
+      // Only validate if printing cost is available
+      // If printing cost is not available yet, don't validate (allow the value)
+      const customPrintCost =
+        this.tempForm.controls.printing.controls.customPrintCost.value;
+      const printingPrice =
+        this.tempForm.controls.printing.controls.printingPrice.value;
+
+      // Use custom print cost if available, otherwise use actual printing price
+      const minPrintingCost =
+        customPrintCost !== null && customPrintCost !== undefined
+          ? Number(customPrintCost)
+          : printingPrice !== null && printingPrice !== undefined
+          ? Number(printingPrice)
+          : null;
+
+      // Only validate if we have a valid printing cost
+      // If printing cost is not available yet, don't fail validation
+      if (
+        minPrintingCost !== null &&
+        !isNaN(minPrintingCost) &&
+        minPrintingCost > 0
+      ) {
+        if (authorPrintPrice < minPrintingCost) {
+          return {
+            invalid: `Author print price cannot be lower than printing cost (${minPrintingCost.toFixed(
+              2
+            )})`,
+          };
+        }
+      }
+
+      // If printing cost is not available, don't validate (allow the value)
+      // This prevents validation errors when printing cost hasn't been calculated yet
+      return null;
+    };
+  }
+
+  /**
+   * Log form validation errors for debugging
+   */
+  private logFormValidationErrors(
+    formGroup: FormGroup | FormArray | AbstractControl
+  ): void {
+    if (formGroup instanceof FormGroup || formGroup instanceof FormArray) {
+      Object.keys(formGroup.controls).forEach((key) => {
+        const control = formGroup.get(key);
+        if (control) {
+          if (control instanceof FormGroup || control instanceof FormArray) {
+            this.logFormValidationErrors(control);
+          } else if (control.invalid && control.errors) {
+            console.error(`Validation error in ${key}:`, control.errors);
+          }
+        }
+      });
+    } else if (formGroup.invalid && formGroup.errors) {
+      console.error('Validation error:', formGroup.errors);
+    }
   }
 
   distributionValidator(): ValidatorFn {
@@ -1467,6 +1570,7 @@ export class TitleFormTemp implements OnDestroy {
           name: new FormControl<string>(''),
           keepSame: new FormControl<boolean>(true),
           displayName: new FormControl<string>(''),
+          authorPrintPrice: new FormControl<number | null>(null),
         }),
       ]),
       isbnPrint: new FormControl<string | null>(null, {
@@ -1587,6 +1691,8 @@ export class TitleFormTemp implements OnDestroy {
       .pipe(debounceTime(500), takeUntil(this.destroy$))
       .subscribe(() => {
         this.calculatePrintingCost();
+        // Update author print price validators when printing cost changes
+        this.updateAuthorPrintPriceValidators();
       });
   }
 
@@ -1777,7 +1883,12 @@ export class TitleFormTemp implements OnDestroy {
   }
 
   async onTitleSubmit() {
+    // Mark all fields as touched to show validation errors
     if (!this.tempForm.controls.titleDetails.valid) {
+      this.tempForm.controls.titleDetails.markAllAsTouched();
+
+      // Log validation errors for debugging
+      this.logFormValidationErrors(this.tempForm.controls.titleDetails);
       return;
     }
 
@@ -1787,6 +1898,12 @@ export class TitleFormTemp implements OnDestroy {
       .map((author: any) => ({
         id: author.id,
         displayName: author.displayName || '',
+        authorPrintPrice:
+          author.authorPrintPrice !== null &&
+          author.authorPrintPrice !== undefined &&
+          !isNaN(Number(author.authorPrintPrice))
+            ? Number(author.authorPrintPrice)
+            : undefined,
       }));
     const basicData: TitleCreate = {
       publishingType: this.tempForm.controls.publishingType
@@ -2970,6 +3087,37 @@ export class TitleFormTemp implements OnDestroy {
           updateTicketData.customPrintCost = customPrintCostValue;
         }
 
+        // Collect author print prices from form
+        const authorPrintPrices: Array<{
+          authorId: number;
+          authorPrintPrice?: number | null;
+        }> = [];
+        if (this.tempForm.controls.titleDetails.controls.authorIds) {
+          this.tempForm.controls.titleDetails.controls.authorIds.controls.forEach(
+            (authorControl) => {
+              const authorId = authorControl.controls.id.value;
+              const authorPrintPrice =
+                authorControl.controls.authorPrintPrice.value;
+              if (authorId) {
+                authorPrintPrices.push({
+                  authorId,
+                  authorPrintPrice:
+                    authorPrintPrice !== null &&
+                    authorPrintPrice !== undefined &&
+                    !isNaN(Number(authorPrintPrice))
+                      ? Number(authorPrintPrice)
+                      : null,
+                });
+              }
+            }
+          );
+        }
+
+        // Include author print prices if any
+        if (authorPrintPrices.length > 0) {
+          updateTicketData.authorPrintPrices = authorPrintPrices;
+        }
+
         // Create printing update ticket
         await this.titleService.createTitlePrintingUpdateTicket(
           this.titleId,
@@ -3135,6 +3283,32 @@ export class TitleFormTemp implements OnDestroy {
         return; // Don't proceed with normal flow
       }
 
+      // Collect author print prices from form
+      const authorPrintPrices: Array<{
+        authorId: number;
+        authorPrintPrice?: number | null;
+      }> = [];
+      if (this.tempForm.controls.titleDetails.controls.authorIds) {
+        this.tempForm.controls.titleDetails.controls.authorIds.controls.forEach(
+          (authorControl) => {
+            const authorId = authorControl.controls.id.value;
+            const authorPrintPrice =
+              authorControl.controls.authorPrintPrice.value;
+            if (authorId) {
+              authorPrintPrices.push({
+                authorId,
+                authorPrintPrice:
+                  authorPrintPrice !== null &&
+                  authorPrintPrice !== undefined &&
+                  !isNaN(Number(authorPrintPrice))
+                    ? Number(authorPrintPrice)
+                    : null,
+              });
+            }
+          }
+        );
+      }
+
       // Normal update flow
       // For normal update, always include insideCover (required by interface)
       // But only include it if it's being changed
@@ -3148,6 +3322,10 @@ export class TitleFormTemp implements OnDestroy {
         // Include customPrintCost if it has a value
         ...(customPrintCostValue !== undefined && {
           customPrintCost: customPrintCostValue,
+        }),
+        // Include author print prices if any
+        ...(authorPrintPrices.length > 0 && {
+          authorPrintPrices,
         }),
       };
 
