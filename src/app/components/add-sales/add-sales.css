@@ -46,3 +46,33 @@ table tr th:not(:last-child) {
 .active {
   @apply !bg-primary !text-white;
 }
+
+/* Fix Material form field label positioning */
+::ng-deep .mat-mdc-form-field {
+  display: block;
+}
+
+::ng-deep .mat-mdc-form-field .mat-mdc-text-field-wrapper {
+  padding-bottom: 0;
+}
+
+::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  margin-top: 4px;
+}
+
+::ng-deep .mat-mdc-form-field-hint-wrapper,
+::ng-deep .mat-mdc-form-field-error-wrapper {
+  padding: 0;
+}
+
+/* Ensure form fields don't overflow */
+::ng-deep .mat-mdc-form-field .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex {
+  min-height: 56px;
+}
+
+/* Fix grid layout for inventory - ensure all fields stay in one row on large screens */
+@media (min-width: 768px) {
+  .grid-cols-1.md\:grid-cols-4 > * {
+    min-width: 0;
+  }
+}
