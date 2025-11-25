@@ -36,7 +36,7 @@ $custom-purple-palette: (
     A200: rgba(black, 0.87),
     A400: white,
     A700: white,
-  )
+  ),
 );
 
 $custom-purple-theme: mat.m2-define-palette($custom-purple-palette, 800);
@@ -52,7 +52,7 @@ html {
       density: 0,
     )
   );
-  
+
   // Ensure Material 3 system variables have proper values
   --mat-sys-surface: white;
   --mat-sys-on-surface: #0d0d0d;
@@ -66,6 +66,12 @@ html {
   --mat-sys-on-primary-container: #3d1a5d;
   --mat-form-field-filled-container-color: rgba(61, 26, 93, 0.1);
   --mat-stepper-container-color: transparent;
+
+  // Error color variables for form fields
+  --mdc-theme-error: #dc2626;
+  --mat-form-field-error-text-color: #dc2626;
+  --mat-sys-error: #dc2626;
+  --mat-sys-on-error: white;
 }
 
 body {
@@ -96,12 +102,12 @@ body {
     --mat-sys-surface: white !important;
     background-color: white !important;
   }
-  
+
   .mat-mdc-card {
     --mat-sys-surface-container: white !important;
     background-color: white !important;
   }
-  
+
   .mat-mdc-button.mat-primary,
   .mat-mdc-raised-button.mat-primary,
   .mat-mdc-unelevated-button.mat-primary {
