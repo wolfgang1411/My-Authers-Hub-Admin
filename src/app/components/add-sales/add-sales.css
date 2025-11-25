@@ -143,3 +143,16 @@ table tr th:not(:last-child) {
     flex-wrap: nowrap !important;
   }
 }
+
+/* Material theme now uses custom purple, but ensure buttons use it correctly */
+::ng-deep .mat-mdc-raised-button.mat-primary,
+::ng-deep .mat-mdc-raised-button[color="primary"] {
+  background-color: var(--mat-sys-primary, var(--primary, #3d1a5d)) !important;
+  color: var(--mat-sys-on-primary, white) !important;
+}
+
+::ng-deep .mat-mdc-raised-button.mat-primary:hover,
+::ng-deep .mat-mdc-raised-button[color="primary"]:hover {
+  background-color: var(--mat-sys-primary-container, var(--primary, #3d1a5d)) !important;
+  color: var(--mat-sys-on-primary-container, white) !important;
+}

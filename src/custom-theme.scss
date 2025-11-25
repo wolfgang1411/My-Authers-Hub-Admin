@@ -5,17 +5,64 @@
 // custom components at https://material.angular.dev/guide/theming
 @use "@angular/material" as mat;
 
+// Define custom purple palette based on primary color #3d1a5d
+$custom-purple-palette: (
+  50: #ebe3f7,
+  100: #ceb8ef,
+  200: #b18ce7,
+  300: #9460df,
+  400: #7f3fd7,
+  500: #6a1ecf,
+  600: #5d1ab8,
+  700: #4d1a9e,
+  800: #3d1a5d,
+  900: #2d1a3d,
+  A100: #ceb8ef,
+  A200: #b18ce7,
+  A400: #7f3fd7,
+  A700: #4d1a9e,
+  contrast: (
+    50: rgba(black, 0.87),
+    100: rgba(black, 0.87),
+    200: rgba(black, 0.87),
+    300: white,
+    400: white,
+    500: white,
+    600: white,
+    700: white,
+    800: white,
+    900: white,
+    A100: rgba(black, 0.87),
+    A200: rgba(black, 0.87),
+    A400: white,
+    A700: white,
+  )
+);
+
+$custom-purple-theme: mat.m2-define-palette($custom-purple-palette, 800);
+
 html {
   @include mat.theme(
     (
       color: (
-        primary: mat.$azure-palette,
+        primary: $custom-purple-theme,
         tertiary: mat.$blue-palette,
       ),
       typography: Roboto,
       density: 0,
     )
   );
+  
+  // Ensure Material 3 system variables have proper values
+  --mat-sys-surface: white;
+  --mat-sys-on-surface: #4a4a4a;
+  --mat-sys-surface-container: #f5f5f5;
+  --mat-sys-surface-container-high: #ffffff;
+  --mat-sys-surface-container-highest: #ffffff;
+  --mat-sys-primary: #3d1a5d;
+  --mat-sys-on-primary: white;
+  --mat-sys-primary-container: #ebe3f7;
+  --mat-sys-on-primary-container: #3d1a5d;
 }
 
 body {
@@ -27,10 +74,37 @@ body {
   // Set a default background, font and text colors for the application using
   // Angular Material's system-level CSS variables. Learn more about these
   // variables at https://material.angular.dev/guide/system-variables
-  background-color: var(--mat-sys-surface);
-  color: var(--mat-sys-on-surface);
+  background-color: var(--mat-sys-surface, white) !important;
+  color: var(--mat-sys-on-surface, #4a4a4a) !important;
   font: var(--mat-sys-body-medium);
 
   // Reset the user agent margin.
   margin: 0;
+}
+
+// Ensure all Material surfaces have proper backgrounds
+::ng-deep {
+  .mat-mdc-dialog-container,
+  .mdc-dialog__container,
+  .mdc-dialog,
+  .mat-mdc-dialog-surface,
+  .mdc-dialog__surface {
+    --mdc-dialog-container-color: white !important;
+    --mat-sys-surface: white !important;
+    background-color: white !important;
+  }
+  
+  .mat-mdc-card {
+    --mat-sys-surface-container: white !important;
+    background-color: white !important;
+  }
+  
+  .mat-mdc-button.mat-primary,
+  .mat-mdc-raised-button.mat-primary,
+  .mat-mdc-unelevated-button.mat-primary {
+    --mdc-filled-button-container-color: #3d1a5d !important;
+    --mdc-filled-button-label-text-color: white !important;
+    background-color: #3d1a5d !important;
+    color: white !important;
+  }
 }
