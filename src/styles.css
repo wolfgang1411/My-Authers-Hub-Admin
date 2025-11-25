@@ -21,7 +21,7 @@
   --background: #f4faf6;
   --surface: #f2f0ff;
 
-  --text-primary: #4a4a4a;
+  --text-primary: #0d0d0d;
   --text-secondary: #a3a3a3;
   --text-heading: #3d1a5d;
   --text-placeholder: #afafaf;
@@ -337,7 +337,7 @@ mat-label {
 /* Ensure Material theme variables are set globally */
 :root {
   --mat-sys-surface: white;
-  --mat-sys-on-surface: #4a4a4a;
+  --mat-sys-on-surface: #0d0d0d;
   --mat-sys-surface-container: white;
   --mat-sys-surface-container-high: white;
   --mat-sys-surface-container-highest: white;

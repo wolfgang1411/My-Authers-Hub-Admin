@@ -55,7 +55,7 @@ html {
   
   // Ensure Material 3 system variables have proper values
   --mat-sys-surface: white;
-  --mat-sys-on-surface: #4a4a4a;
+  --mat-sys-on-surface: #0d0d0d;
   --mat-sys-surface-container: #f5f5f5;
   --mat-sys-surface-container-high: #ffffff;
   --mat-sys-surface-container-highest: #ffffff;
@@ -75,7 +75,7 @@ body {
   // Angular Material's system-level CSS variables. Learn more about these
   // variables at https://material.angular.dev/guide/system-variables
   background-color: var(--mat-sys-surface, white) !important;
-  color: var(--mat-sys-on-surface, #4a4a4a) !important;
+  color: var(--mat-sys-on-surface, #0d0d0d) !important;
   font: var(--mat-sys-body-medium);
 
   // Reset the user agent margin.
