@@ -57,22 +57,89 @@ table tr th:not(:last-child) {
 }
 
 ::ng-deep .mat-mdc-form-field-subscript-wrapper {
-  margin-top: 4px;
+  margin-top: 2px;
+  position: absolute;
+  top: 100%;
 }
 
 ::ng-deep .mat-mdc-form-field-hint-wrapper,
 ::ng-deep .mat-mdc-form-field-error-wrapper {
   padding: 0;
+  font-size: 11px;
 }
 
-/* Ensure form fields don't overflow */
+/* Make form fields more compact */
 ::ng-deep .mat-mdc-form-field .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex {
-  min-height: 56px;
+  min-height: 48px;
+  align-items: center;
 }
 
-/* Fix grid layout for inventory - ensure all fields stay in one row on large screens */
-@media (min-width: 768px) {
-  .grid-cols-1.md\:grid-cols-4 > * {
-    min-width: 0;
+::ng-deep .mat-mdc-form-field .mat-mdc-form-field-infix {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  min-height: 48px;
+}
+
+::ng-deep .mat-mdc-form-field .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mat-mdc-form-field-infix {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+/* Remove label space and adjust for placeholder-only fields */
+::ng-deep .mat-mdc-form-field .mat-mdc-text-field-wrapper {
+  margin-top: 0;
+}
+
+::ng-deep .mat-mdc-form-field .mat-mdc-form-field-infix {
+  border-top: 0;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+/* Ensure placeholder shows properly */
+::ng-deep .mat-mdc-select-placeholder {
+  color: rgba(0, 0, 0, 0.6) !important;
+  opacity: 1 !important;
+}
+
+::ng-deep .mat-mdc-input-element::placeholder {
+  color: rgba(0, 0, 0, 0.6) !important;
+  opacity: 1 !important;
+}
+
+/* Adjust icon positioning */
+::ng-deep .mat-mdc-form-field .mat-icon[matPrefix] {
+  margin-right: 8px;
+  margin-left: 0;
+}
+
+/* Compact select trigger */
+::ng-deep .mat-mdc-select-trigger {
+  padding: 0;
+}
+
+/* Compact select and input */
+::ng-deep .mat-mdc-select-value {
+  font-size: 14px;
+}
+
+::ng-deep .mat-mdc-input-element {
+  font-size: 14px;
+}
+
+/* Ensure fields stay in one line */
+::ng-deep .mat-mdc-form-field-wrapper {
+  margin-bottom: 0;
+}
+
+/* Keep form fields compact and in one line */
+::ng-deep .mat-mdc-form-field {
+  margin-bottom: 0;
+}
+
+/* Ensure flex container keeps items in one line on larger screens */
+@media (min-width: 1024px) {
+  .flex-wrap {
+    flex-wrap: nowrap !important;
   }
 }

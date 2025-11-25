@@ -106,6 +106,64 @@ export class AddSales implements OnInit {
 
   titles = signal<Title[] | null>(null);
 
+  // Signal to track form array changes for reactivity
+  private salesArrayUpdateTrigger = signal(0);
+
+  // Summary calculations
+  totalQuantity = computed(() => {
+    // Read trigger to make computed reactive
+    this.salesArrayUpdateTrigger();
+
+    return this.form.controls.salesArray.controls.reduce((sum, group) => {
+      const qty = group.controls.quantity.value || 0;
+      return sum + Number(qty);
+    }, 0);
+  });
+
+  salesSummary = computed(() => {
+    // Read trigger to make computed reactive
+    this.salesArrayUpdateTrigger();
+
+    const summary: { type: SalesType; count: number }[] = [];
+    const typeMap = new Map<SalesType, number>();
+
+    this.form.controls.salesArray.controls.forEach((group) => {
+      const type = group.controls.type.value;
+      if (type) {
+        typeMap.set(type, (typeMap.get(type) || 0) + 1);
+      }
+    });
+
+    typeMap.forEach((count, type) => {
+      summary.push({ type, count });
+    });
+
+    return summary;
+  });
+
+  totalAmount = computed(() => {
+    // Read trigger to make computed reactive
+    this.salesArrayUpdateTrigger();
+
+    return this.form.controls.salesArray.controls.reduce((sum, group) => {
+      // Only count amount for INVENTORY sales where amount is provided
+      if (
+        group.controls.type.value === 'INVENTORY' &&
+        group.controls.amount.value
+      ) {
+        const amount = Number(group.controls.amount.value) || 0;
+        const qty = Number(group.controls.quantity.value) || 1;
+        return sum + amount * qty;
+      }
+      return sum;
+    }, 0);
+  });
+
+  // Method to trigger summary update
+  private updateSummary() {
+    this.salesArrayUpdateTrigger.update((v) => v + 1);
+  }
+
   ngOnInit() {
     if (this.data.defaultTitles) {
       // Filter out titles where printingOnly is true
@@ -122,6 +180,23 @@ export class AddSales implements OnInit {
     }
 
     this.fetchAndUpdateTitle();
+
+    // Subscribe to form array changes to update summary
+    this.form.controls.salesArray.valueChanges.subscribe(() => {
+      this.updateSummary();
+    });
+
+    // Subscribe to quantity and amount changes in existing form groups
+    this.form.controls.salesArray.controls.forEach((group) => {
+      group.controls.quantity.valueChanges.subscribe(() => {
+        this.updateSummary();
+      });
+      if (group.controls.amount) {
+        group.controls.amount.valueChanges.subscribe(() => {
+          this.updateSummary();
+        });
+      }
+    });
   }
   selectSaleType(type: SalesType) {
     this.lastSelectedSaleType = type;
@@ -133,6 +208,7 @@ export class AddSales implements OnInit {
     data?: Partial<CreateSale & { availableTitles: number[] }>
   ) {
     this.form.controls.salesArray.push(this.createSalesGroup(type, data));
+    this.updateSummary();
   }
   addMoreSales() {
     if (!this.lastSelectedSaleType) {
@@ -343,7 +419,22 @@ export class AddSales implements OnInit {
       }
     });
 
+    // Subscribe to quantity and amount changes for this new group
+    group.controls.quantity.valueChanges.subscribe(() => {
+      this.updateSummary();
+    });
+    if (group.controls.amount) {
+      group.controls.amount.valueChanges.subscribe(() => {
+        this.updateSummary();
+      });
+    }
+
     return group;
+  }
+
+  removeSale(index: number) {
+    this.form.controls.salesArray.removeAt(index);
+    this.updateSummary();
   }
 
   onSubmit() {
