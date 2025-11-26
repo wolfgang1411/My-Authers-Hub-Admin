@@ -480,6 +480,9 @@
   "copiessold": "Copies Sold",
   "royaltiesearned/totalsales": "Royalties Earned / Total Sales",
   "SelectedDistrbutions": "Selected Distrbutions",
+<<<<<<< HEAD
+  "allowCustomPrintingPrice": " Allow Custom Printing Price"
+=======
   "customPrintCostCannotBeLowerThanActualPrintCost": "Custom print cost cannot be lower than actual print cost",
   "authorroyalties": "Author Royalties",
   "printingPrice": "Printing Price",
@@ -520,4 +523,5 @@
   "royaltyAmountCalculations": "Royalty Amount Calculations",
   "calculations": "Calculations",
   "selectPublisher": "Select Publisher"
+>>>>>>> 92a294b976f29838118cd5fa3192781a816ed41e
 }
