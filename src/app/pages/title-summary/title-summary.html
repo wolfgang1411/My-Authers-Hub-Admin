@@ -166,13 +166,38 @@
                 <p class="font-medium text-[var(--text-heading)] text-sm">
                   {{ media.type.replace("_", " ") }}
                 </p>
-                @if (media?.url?.toLowerCase()?.includes('.pdf')) {
+                @if (media?.type === 'MANUSCRIPT') {
+                <mat-icon class="text-[var(--primary)] text-base"
+                  >description</mat-icon
+                >
+                } @else if (media?.url?.toLowerCase()?.includes('.pdf')) {
                 <mat-icon class="text-[var(--primary)] text-base"
                   >picture_as_pdf</mat-icon
                 >
                 }
               </div>
-              @if (media.url && media.url.toLowerCase().includes('.pdf')) {
+              
+              <!-- 📄 MANUSCRIPT Document -->
+              @if (media.type === 'MANUSCRIPT' && media.url) {
+              <div
+                class="h-48 flex flex-col items-center justify-center bg-gradient-to-br from-[var(--light-purple-bg)] to-[var(--primary-superlight)] rounded-lg border border-[var(--primary-light)]"
+              >
+                <mat-icon class="text-[var(--primary)] text-5xl mb-3"
+                  >description</mat-icon
+                >
+                <a
+                  [href]="media.url"
+                  [download]="media.name"
+                  class="bg-[var(--primary)] text-white text-sm px-4 py-2 rounded-md shadow hover:bg-[var(--purple)] transition flex items-center gap-2"
+                >
+                  <mat-icon class="text-base">download</mat-icon>
+                  Download
+                </a>
+              </div>
+              }
+              
+              <!-- 📄 PDF Preview -->
+              @else if (media.url && media.url.toLowerCase().includes('.pdf')) {
               <div
                 class="relative bg-white rounded-lg border border-[var(--primary-superlight)] overflow-hidden"
               >
@@ -235,13 +260,6 @@
               </div>
               }
 
-              <!-- 📄 File Name -->
-              <p
-                class="mt-3 text-xs text-[var(--text-primary)] truncate text-center"
-                title="{{ media.name }}"
-              >
-                {{ media.name || "Untitled File" }}
-              </p>
             </div>
           </div>
           }

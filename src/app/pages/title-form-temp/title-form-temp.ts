@@ -503,6 +503,8 @@ export class TitleFormTemp implements OnDestroy {
         return 'Upload Back Cover (Optional)';
       case 'INSIDE_COVER':
         return 'Upload Inside Cover';
+      case 'MANUSCRIPT':
+        return 'Upload Manuscript (DOCX)';
       default:
         return 'Upload File';
     }
@@ -518,6 +520,8 @@ export class TitleFormTemp implements OnDestroy {
         return 'JPG or PNG, max 2MB';
       case 'BackCover':
         return 'Optional: JPG or PNG, max 2MB';
+      case 'MANUSCRIPT':
+        return 'DOCX or DOC, max 50MB (Required for ebook types)';
       default:
         return '';
     }
@@ -526,6 +530,8 @@ export class TitleFormTemp implements OnDestroy {
   getAcceptedTypes(mediaType: TitleMediaType | undefined): string {
     if (mediaType === 'INTERIOR' || mediaType === 'FULL_COVER')
       return 'application/pdf';
+    if (mediaType === 'MANUSCRIPT')
+      return '.docx,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword';
     return 'image/*';
   }
 
@@ -614,7 +620,7 @@ export class TitleFormTemp implements OnDestroy {
     }
 
     this.calculatePrintingCost();
-    this.addDefaultMediaArray(media);
+    await this.addDefaultMediaArray(media);
     this.handelInsideCoverMedia();
 
     const manageISBNRequired = (v?: PublishingType | null) => {
@@ -636,9 +642,10 @@ export class TitleFormTemp implements OnDestroy {
     // Set up subscription first
     this.tempForm.controls.publishingType.valueChanges
       .pipe(takeUntil(this.destroy$))
-      .subscribe((v) => {
+      .subscribe(async (v) => {
         manageISBNRequired(v);
         this.updatePricingValidatorsForPublishingType(v);
+        await this.manageManuscriptMedia(v);
       });
 
     // Then call it with current value to ensure validators are set correctly
@@ -646,6 +653,9 @@ export class TitleFormTemp implements OnDestroy {
     this.updatePricingValidatorsForPublishingType(
       this.tempForm.controls.publishingType.value
     );
+    // Initialize MANUSCRIPT media based on current publishing type
+    // Note: This is called after addDefaultMediaArray completes to ensure proper initialization
+    await this.manageManuscriptMedia(this.tempForm.controls.publishingType.value);
 
     // Setup stepper step tracking after everything is initialized
     this.setupStepperStepTracking();
@@ -1625,6 +1635,57 @@ export class TitleFormTemp implements OnDestroy {
     });
   }
 
+  async manageManuscriptMedia(publishingType: PublishingType | null | undefined) {
+    // Find all MANUSCRIPT controls to handle duplicates
+    const manuscriptControls = this.tempForm.controls.documentMedia.controls.filter(
+      ({ controls: { mediaType } }) => mediaType.value === 'MANUSCRIPT'
+    );
+
+    const isEbookType =
+      publishingType === PublishingType.ONLY_EBOOK ||
+      publishingType === PublishingType.PRINT_EBOOK;
+
+    if (isEbookType) {
+      // Remove any duplicate MANUSCRIPT controls first
+      if (manuscriptControls.length > 1) {
+        // Keep the first one, remove the rest
+        for (let i = manuscriptControls.length - 1; i > 0; i--) {
+          const index = this.tempForm.controls.documentMedia.controls.indexOf(manuscriptControls[i]);
+          if (index >= 0) {
+            this.tempForm.controls.documentMedia.removeAt(index);
+          }
+        }
+      }
+
+      // Add MANUSCRIPT if it doesn't exist
+      if (manuscriptControls.length === 0) {
+        const existingManuscript = this.titleDetails()?.media?.find(
+          ({ type }) => type === 'MANUSCRIPT'
+        );
+        this.tempForm.controls.documentMedia.push(
+          await this.createMedia(
+            TitleMediaType.MANUSCRIPT,
+            true,
+            existingManuscript
+          )
+        );
+      }
+    } else {
+      // Remove all MANUSCRIPT controls for non-ebook types
+      if (manuscriptControls.length > 0) {
+        // Remove from end to avoid index shifting issues
+        for (let i = manuscriptControls.length - 1; i >= 0; i--) {
+          const index = this.tempForm.controls.documentMedia.controls.findIndex(
+            ({ controls }) => controls.mediaType.value === 'MANUSCRIPT'
+          );
+          if (index >= 0) {
+            this.tempForm.controls.documentMedia.removeAt(index);
+          }
+        }
+      }
+    }
+  }
+
   handelInsideCoverMedia() {
     this.tempForm.controls.printing.controls.insideCover.valueChanges
       .pipe(debounceTime(400), takeUntil(this.destroy$))
@@ -1733,6 +1794,9 @@ export class TitleFormTemp implements OnDestroy {
       );
     }
 
+    // Note: MANUSCRIPT is handled by manageManuscriptMedia() method
+    // to avoid duplication when publishing type changes
+
     if (this.tempForm.controls.printing.controls.insideCover.value) {
       mediaArrayControl.push(
         await this.createMedia(
@@ -1763,6 +1827,10 @@ export class TitleFormTemp implements OnDestroy {
       case 'FRONT_COVER':
       case 'INSIDE_COVER':
         maxSize = 2;
+        break;
+      case 'MANUSCRIPT':
+        maxSize = 50;
+        format.push('.docx', '.doc');
         break;
     }
 

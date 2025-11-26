@@ -141,6 +141,7 @@ export enum TitleMediaType {
   FRONT_COVER = 'FRONT_COVER',
   BACK_COVER = 'BACK_COVER',
   INSIDE_COVER = 'INSIDE_COVER',
+  MANUSCRIPT = 'MANUSCRIPT',
 }
 
 export enum TitleStatus {

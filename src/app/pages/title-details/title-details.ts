@@ -129,6 +129,13 @@ export class TitleDetails {
         'INTERIOR',
         'INSIDE_COVER',
       ];
+      // Add MANUSCRIPT for ebook types
+      if (
+        details.publishingType === 'ONLY_EBOOK' ||
+        details.publishingType === 'PRINT_EBOOK'
+      ) {
+        requiredMediaTypes.push('MANUSCRIPT');
+      }
       const media = details.media || [];
       const availableMediaTypes = media.map((m: any) => m.type);
       const hasAllRequiredMedia = requiredMediaTypes.every((type) =>

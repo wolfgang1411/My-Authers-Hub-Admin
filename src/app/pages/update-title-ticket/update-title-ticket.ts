@@ -728,6 +728,8 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
             return 'Front Cover';
           case 'BACK_COVER':
             return 'Back Cover';
+          case 'MANUSCRIPT':
+            return 'Manuscript';
           case 'FULL_COVER':
             return 'Full Cover';
           case 'INTERIOR':

@@ -315,7 +315,7 @@
 
           <div class="self-center flex">
             @if(media.value.url && media.value.type !== 'INTERIOR' &&
-            media.value.mediaType !== 'FULL_COVER' ) {
+            media.value.mediaType !== 'FULL_COVER' && media.value.type !== 'MANUSCRIPT') {
             <div class="border rounded p-2 inline-block bg-white shadow-sm">
               <img
                 [src]="media.value.url"
@@ -324,11 +324,17 @@
               />
             </div>
             } @if(media.get('url')?.value && (media.get('type')?.value ===
-            'INTERIOR' || media.value.type === 'FULL_COVER')) {
+            'INTERIOR' || media.value.type === 'FULL_COVER' || media.value.type === 'MANUSCRIPT')) {
             <mat-card
               class="flex !flex-row !items-center !gap-4 p-3 bg-gray-50 shadow-sm rounded-md"
             >
-              <mat-icon color="warn">picture_as_pdf</mat-icon>
+              <mat-icon color="warn">
+                @if(media.value.type === 'MANUSCRIPT') {
+                  description
+                } @else {
+                  picture_as_pdf
+                }
+              </mat-icon>
               <div>
                 <p class="text-sm font-medium text-gray-800">
                   {{ media.get("name")?.value }}
@@ -348,7 +354,7 @@
                 color="warn"
                 class="!bg-accent"
                 (click)="removeFile($index)"
-                aria-label="Remove PDF"
+                [attr.aria-label]="media.value.type === 'MANUSCRIPT' ? 'Remove Document' : 'Remove PDF'"
               >
                 <mat-icon class="!fill-red">delete</mat-icon>
               </button>
