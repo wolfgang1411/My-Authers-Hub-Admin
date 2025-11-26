@@ -479,5 +479,6 @@
   "type": "Type",
   "copiessold": "Copies Sold",
   "royaltiesearned/totalsales": "Royalties Earned / Total Sales",
-  "SelectedDistrbutions": "Selected Distrbutions"
+  "SelectedDistrbutions": "Selected Distrbutions",
+  "allowCustomPrintingPrice": " Allow Custom Printing Price"
 }
