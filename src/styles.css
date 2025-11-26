@@ -21,7 +21,7 @@
   --background: #f4faf6;
   --surface: #f2f0ff;
 
-  --text-primary: #4a4a4a;
+  --text-primary: #0d0d0d;
   --text-secondary: #a3a3a3;
   --text-heading: #3d1a5d;
   --text-placeholder: #afafaf;
@@ -93,8 +93,12 @@ html,
 body {
   @apply h-full w-full;
 }
+html {
+  background-color: var(--background, #f4faf6);
+}
 body {
   color: var(--text-primary);
+  background-color: var(--background, #f4faf6);
 }
 .input-field {
   @apply w-full h-[38px] px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
@@ -162,6 +166,43 @@ select::placeholder {
 .mat-stepper-horizontal-line {
   @apply !m-0;
 }
+
+/* Make stepper background transparent or match background */
+::ng-deep .mat-horizontal-stepper,
+::ng-deep .mat-stepper-horizontal,
+::ng-deep .mat-stepper-container,
+::ng-deep .mat-stepper-horizontal-container,
+::ng-deep mat-stepper,
+::ng-deep mat-horizontal-stepper {
+  background-color: transparent !important;
+  --mat-sys-surface: transparent !important;
+}
+
+::ng-deep .mat-step-header,
+::ng-deep .mat-horizontal-stepper-header,
+::ng-deep .mat-step-header-container {
+  background-color: transparent !important;
+}
+
+::ng-deep .mat-horizontal-stepper-header-container {
+  background-color: transparent !important;
+}
+
+::ng-deep .mat-horizontal-content-container,
+::ng-deep .mat-stepper-horizontal-content {
+  background-color: transparent !important;
+}
+
+::ng-deep .mat-step-content,
+::ng-deep .mat-step-body {
+  background-color: transparent !important;
+}
+
+/* Alternative: match background color instead of transparent */
+::ng-deep .mat-horizontal-stepper.example-stepper,
+::ng-deep mat-stepper.example-stepper {
+  background-color: var(--background, #f4faf6) !important;
+}
 input:focus-visible {
   outline: none;
   box-shadow: none;
@@ -186,6 +227,93 @@ mat-label {
 }
 .mdc-switch--selected .mdc-switch__track::after {
   @apply !bg-primary;
+}
+
+/* Global Angular Material form field error state styling - Red border when invalid and touched */
+/* Outlined form fields - invalid state */
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined
+  .mdc-notched-outline__leading,
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined
+  .mdc-notched-outline__notch,
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined
+  .mdc-notched-outline__trailing {
+  border-color: #dc2626 !important;
+  border-width: 2px !important;
+}
+
+/* Error state for focused invalid fields */
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--focused
+  .mdc-notched-outline__leading,
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--focused
+  .mdc-notched-outline__notch,
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--focused
+  .mdc-notched-outline__trailing {
+  border-color: #dc2626 !important;
+  border-width: 2px !important;
+}
+
+/* Error state for filled appearance */
+::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mdc-text-field--filled {
+  background-color: rgba(220, 38, 38, 0.04) !important;
+}
+
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--filled
+  .mdc-line-ripple::before {
+  border-bottom-color: #dc2626 !important;
+  border-bottom-width: 2px !important;
+}
+
+/* Error state for select fields */
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined
+  .mdc-notched-outline {
+  border-color: #dc2626 !important;
+}
+
+/* Ensure error color is set globally */
+:root {
+  --mdc-theme-error: #dc2626;
+  --mat-form-field-error-text-color: #dc2626;
+  --mat-sys-error: #dc2626;
+}
+
+/* Additional specificity to override theme defaults - invalid touched fields */
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid.mat-form-field-touched
+  .mdc-text-field--outlined
+  .mdc-notched-outline__leading,
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid.mat-form-field-touched
+  .mdc-text-field--outlined
+  .mdc-notched-outline__notch,
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid.mat-form-field-touched
+  .mdc-text-field--outlined
+  .mdc-notched-outline__trailing {
+  border-color: #dc2626 !important;
+  border-width: 2px !important;
+}
+
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid.mat-form-field-touched
+  .mdc-text-field--outlined
+  .mdc-notched-outline {
+  border-color: #dc2626 !important;
 }
 
 .mdc-text-field--outlined:not(.mdc-text-field--disabled)
@@ -260,4 +388,235 @@ mat-label {
 
 ::ng-deep .custom-stepper .mat-stepper-horizontal-line {
   display: none !important; /* We use our own Tailwind line */
+}
+
+/* Fix Material dialog background color */
+::ng-deep .mat-mdc-dialog-container,
+::ng-deep .mdc-dialog__container,
+::ng-deep .mdc-dialog {
+  background-color: white !important;
+  --mdc-dialog-container-color: white !important;
+  --mat-sys-surface: white !important;
+}
+
+::ng-deep .mat-mdc-dialog-surface,
+::ng-deep .mdc-dialog__surface {
+  background-color: white !important;
+  --mdc-dialog-container-color: white !important;
+  --mat-sys-surface: white !important;
+}
+
+::ng-deep .cdk-overlay-pane {
+  --mdc-dialog-container-color: white !important;
+  --mat-sys-surface: white !important;
+}
+
+/* Ensure all Material components have proper backgrounds */
+::ng-deep .mat-mdc-card {
+  background-color: white !important;
+  --mat-sys-surface-container: white !important;
+}
+
+/* Make Material input fields have visible primary background - more specific selectors */
+::ng-deep .mat-mdc-form-field,
+::ng-deep mat-form-field.mat-mdc-form-field {
+  --mat-sys-surface: rgba(61, 26, 93, 0.1) !important;
+  background-color: rgba(61, 26, 93, 0.1) !important;
+}
+
+/* Make Material input fields have visible primary background */
+::ng-deep .mat-mdc-text-field-wrapper,
+::ng-deep .mat-mdc-form-field .mat-mdc-text-field-wrapper,
+::ng-deep mat-form-field .mat-mdc-text-field-wrapper {
+  background-color: rgba(61, 26, 93, 0.1) !important;
+  border-radius: 4px;
+}
+
+/* Target the actual text field input area */
+::ng-deep .mdc-text-field,
+::ng-deep .mat-mdc-form-field .mdc-text-field,
+::ng-deep mat-form-field .mdc-text-field {
+  background-color: rgba(61, 26, 93, 0.1) !important;
+}
+
+::ng-deep .mdc-text-field--outlined .mdc-notched-outline,
+::ng-deep .mat-mdc-form-field .mdc-text-field--outlined .mdc-notched-outline {
+  background-color: rgba(61, 26, 93, 0.1) !important;
+}
+
+/* General border styling - exclude invalid fields */
+::ng-deep
+  .mat-mdc-form-field:not(.mat-form-field-invalid)
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled)
+  .mdc-notched-outline__leading,
+::ng-deep
+  .mat-mdc-form-field:not(.mat-form-field-invalid)
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled)
+  .mdc-notched-outline__notch,
+::ng-deep
+  .mat-mdc-form-field:not(.mat-form-field-invalid)
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled)
+  .mdc-notched-outline__trailing {
+  border-color: rgba(61, 26, 93, 0.3) !important;
+  border-width: 1.5px !important;
+}
+
+::ng-deep .mdc-text-field--filled,
+::ng-deep .mat-mdc-form-field .mdc-text-field--filled {
+  background-color: rgba(61, 26, 93, 0.1) !important;
+}
+
+::ng-deep .mdc-text-field--filled .mdc-line-ripple::before {
+  border-bottom-color: var(--primary, #3d1a5d) !important;
+}
+
+/* Focus state with primary color - more visible - exclude invalid fields */
+::ng-deep
+  .mat-mdc-form-field:not(.mat-form-field-invalid)
+  .mdc-text-field--focused
+  .mdc-notched-outline__leading,
+::ng-deep
+  .mat-mdc-form-field:not(.mat-form-field-invalid)
+  .mdc-text-field--focused
+  .mdc-notched-outline__notch,
+::ng-deep
+  .mat-mdc-form-field:not(.mat-form-field-invalid)
+  .mdc-text-field--focused
+  .mdc-notched-outline__trailing {
+  border-color: var(--primary, #3d1a5d) !important;
+  border-width: 2px !important;
+}
+
+/* Hover state for better visibility */
+/* Hover state - exclude invalid fields */
+::ng-deep
+  .mat-mdc-form-field:not(.mat-form-field-invalid)
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover
+  .mdc-notched-outline__leading,
+::ng-deep
+  .mat-mdc-form-field:not(.mat-form-field-invalid)
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover
+  .mdc-notched-outline__notch,
+::ng-deep
+  .mat-mdc-form-field:not(.mat-form-field-invalid)
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover
+  .mdc-notched-outline__trailing {
+  border-color: rgba(61, 26, 93, 0.5) !important;
+}
+
+/* CRITICAL: Error state styles - must come after all general field styling to override */
+/* Invalid form fields - red border with maximum specificity */
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined
+  .mdc-notched-outline__leading,
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined
+  .mdc-notched-outline__notch,
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined
+  .mdc-notched-outline__trailing,
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined
+  .mdc-notched-outline {
+  border-color: #dc2626 !important;
+  border-width: 2px !important;
+}
+
+/* Invalid and focused - ensure red border stays */
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined.mdc-text-field--focused
+  .mdc-notched-outline__leading,
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined.mdc-text-field--focused
+  .mdc-notched-outline__notch,
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined.mdc-text-field--focused
+  .mdc-notched-outline__trailing,
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined.mdc-text-field--focused
+  .mdc-notched-outline {
+  border-color: #dc2626 !important;
+  border-width: 2px !important;
+}
+
+/* Invalid and hovered - ensure red border stays */
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined:hover
+  .mdc-notched-outline__leading,
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined:hover
+  .mdc-notched-outline__notch,
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined:hover
+  .mdc-notched-outline__trailing,
+::ng-deep
+  .mat-mdc-form-field.mat-form-field-invalid
+  .mdc-text-field--outlined:hover
+  .mdc-notched-outline {
+  border-color: #dc2626 !important;
+  border-width: 2px !important;
+}
+
+::ng-deep .mat-mdc-select-panel {
+  background-color: white !important;
+  --mat-sys-surface-container-high: white !important;
+}
+
+/* Fix Material button primary color */
+::ng-deep .mat-mdc-button.mat-primary,
+::ng-deep .mat-mdc-raised-button.mat-primary,
+::ng-deep .mat-mdc-unelevated-button.mat-primary,
+::ng-deep .mat-mdc-button[color="primary"],
+::ng-deep .mat-mdc-raised-button[color="primary"],
+::ng-deep .mat-mdc-unelevated-button[color="primary"] {
+  --mdc-filled-button-container-color: #3d1a5d !important;
+  --mdc-filled-button-label-text-color: white !important;
+  --mdc-outlined-button-label-text-color: #3d1a5d !important;
+  background-color: #3d1a5d !important;
+  color: white !important;
+}
+
+::ng-deep .mat-mdc-button.mat-primary:hover,
+::ng-deep .mat-mdc-raised-button.mat-primary:hover,
+::ng-deep .mat-mdc-unelevated-button.mat-primary:hover {
+  --mdc-filled-button-container-color: #4d1a9e !important;
+  background-color: #4d1a9e !important;
+}
+
+/* Catch-all for any transparent Material surfaces */
+::ng-deep [class*="mat-"],
+::ng-deep [class*="mdc-"] {
+  &[style*="background: transparent"],
+  &[style*="background-color: transparent"],
+  &[style*="background:rgba(0,0,0,0)"],
+  &[style*="background-color:rgba(0,0,0,0)"] {
+    background-color: white !important;
+  }
+}
+
+/* Ensure Material theme variables are set globally */
+:root {
+  --mat-sys-surface: white;
+  --mat-sys-on-surface: #0d0d0d;
+  --mat-sys-surface-container: white;
+  --mat-sys-surface-variant: rgba(61, 26, 93, 0.1);
+  --mat-form-field-filled-container-color: rgba(61, 26, 93, 0.1);
+  --mat-stepper-container-color: transparent;
+  --mat-sys-surface-container-high: white;
+  --mat-sys-surface-container-highest: white;
+  --mat-sys-primary: #3d1a5d;
+  --mat-sys-on-primary: white;
+  --mat-sys-primary-container: #ebe3f7;
+  --mat-sys-on-primary-container: #3d1a5d;
 }

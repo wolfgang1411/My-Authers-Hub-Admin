@@ -194,6 +194,7 @@ export class Titles {
       maxWidth: '90vw',
       data: {
         onClose: () => dialog.close(),
+        publishingType: title.publishingType,
         onSubmit: async (data: {
           platformIdentifier: CreatePlatformIdentifier[];
         }) => {

@@ -18,6 +18,7 @@ import {
   CreateSale,
   CreateSaleForm,
   PlatForm,
+  PublishingType,
   SalesType,
   Title,
 } from '../../interfaces';
@@ -28,6 +29,9 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { StaticValuesService } from '../../services/static-values';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   NgxMatDatepickerActions,
   NgxMatDatepickerApply,
@@ -58,8 +62,11 @@ export class TitleFilterBySale implements PipeTransform {
     ReactiveFormsModule,
     MatSelectModule,
     MatInputModule,
+    MatFormFieldModule,
     TitleFilterBySale,
     MatButtonModule,
+    MatCardModule,
+    MatTooltipModule,
     NgxMatDatepickerActions,
     NgxMatDatepickerApply,
     NgxMatDatepickerCancel,
@@ -99,9 +106,71 @@ export class AddSales implements OnInit {
 
   titles = signal<Title[] | null>(null);
 
+  // Signal to track form array changes for reactivity
+  private salesArrayUpdateTrigger = signal(0);
+
+  // Summary calculations
+  totalQuantity = computed(() => {
+    // Read trigger to make computed reactive
+    this.salesArrayUpdateTrigger();
+
+    return this.form.controls.salesArray.controls.reduce((sum, group) => {
+      const qty = group.controls.quantity.value || 0;
+      return sum + Number(qty);
+    }, 0);
+  });
+
+  salesSummary = computed(() => {
+    // Read trigger to make computed reactive
+    this.salesArrayUpdateTrigger();
+
+    const summary: { type: SalesType; count: number }[] = [];
+    const typeMap = new Map<SalesType, number>();
+
+    this.form.controls.salesArray.controls.forEach((group) => {
+      const type = group.controls.type.value;
+      if (type) {
+        typeMap.set(type, (typeMap.get(type) || 0) + 1);
+      }
+    });
+
+    typeMap.forEach((count, type) => {
+      summary.push({ type, count });
+    });
+
+    return summary;
+  });
+
+  totalAmount = computed(() => {
+    // Read trigger to make computed reactive
+    this.salesArrayUpdateTrigger();
+
+    return this.form.controls.salesArray.controls.reduce((sum, group) => {
+      // Only count amount for INVENTORY sales where amount is provided
+      if (
+        group.controls.type.value === 'INVENTORY' &&
+        group.controls.amount.value
+      ) {
+        const amount = Number(group.controls.amount.value) || 0;
+        const qty = Number(group.controls.quantity.value) || 1;
+        return sum + amount * qty;
+      }
+      return sum;
+    }, 0);
+  });
+
+  // Method to trigger summary update
+  private updateSummary() {
+    this.salesArrayUpdateTrigger.update((v) => v + 1);
+  }
+
   ngOnInit() {
     if (this.data.defaultTitles) {
-      this.titles.set(this.data.defaultTitles);
+      // Filter out titles where printingOnly is true
+      const filteredTitles = this.data.defaultTitles.filter(
+        (title) => !title.printingOnly
+      );
+      this.titles.set(filteredTitles);
     }
 
     if (this.data.data?.length) {
@@ -111,6 +180,23 @@ export class AddSales implements OnInit {
     }
 
     this.fetchAndUpdateTitle();
+
+    // Subscribe to form array changes to update summary
+    this.form.controls.salesArray.valueChanges.subscribe(() => {
+      this.updateSummary();
+    });
+
+    // Subscribe to quantity and amount changes in existing form groups
+    this.form.controls.salesArray.controls.forEach((group) => {
+      group.controls.quantity.valueChanges.subscribe(() => {
+        this.updateSummary();
+      });
+      if (group.controls.amount) {
+        group.controls.amount.valueChanges.subscribe(() => {
+          this.updateSummary();
+        });
+      }
+    });
   }
   selectSaleType(type: SalesType) {
     this.lastSelectedSaleType = type;
@@ -122,6 +208,7 @@ export class AddSales implements OnInit {
     data?: Partial<CreateSale & { availableTitles: number[] }>
   ) {
     this.form.controls.salesArray.push(this.createSalesGroup(type, data));
+    this.updateSummary();
   }
   addMoreSales() {
     if (!this.lastSelectedSaleType) {
@@ -140,8 +227,11 @@ export class AddSales implements OnInit {
     try {
       const { items } = await this.titleService.getTitles({ searchStr: str });
 
+      // Filter out titles where printingOnly is true
+      const filteredItems = items.filter((title) => !title.printingOnly);
+
       this.titles.update((titles) => {
-        const result = [...(titles || []), ...items].reduce(
+        const result = [...(titles || []), ...filteredItems].reduce(
           (a, b) => (a.map(({ id }) => id).includes(b.id) ? a : [...a, b]),
           Array<Title>()
         );
@@ -152,18 +242,81 @@ export class AddSales implements OnInit {
     }
   }
 
-  updateAmountBasedOnPlatform(group: FormGroup, platform: string) {
-    const saleType = group.get('type')?.value;
-    if (saleType === 'INVENTORY') return;
-
-    const titleId = group.get('title.id')?.value;
-    if (!titleId || !platform) return;
+  getAvailablePlatformsForTitle(
+    titleId: number | null | undefined
+  ): PlatForm[] {
+    if (!titleId) return [];
 
     const title = this.titles()?.find((t) => t.id === Number(titleId));
-    if (!title) return;
+    if (!title) return [];
+
+    const publishingType = title.publishingType;
+    const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
+    const isOnlyPrint = publishingType === PublishingType.ONLY_PRINT;
+
+    const ebookPlatforms: PlatForm[] = [
+      PlatForm.MAH_EBOOK,
+      PlatForm.KINDLE,
+      PlatForm.GOOGLE_PLAY,
+    ];
+    const printPlatforms: PlatForm[] = [
+      PlatForm.AMAZON,
+      PlatForm.FLIPKART,
+      PlatForm.MAH_PRINT,
+    ];
+
+    // Get platforms that have pricing data
+    const availablePlatforms = title.pricing
+      ?.map((p) => p.platform)
+      .filter((platform) => platform !== null && platform !== undefined) as
+      | PlatForm[]
+      | undefined;
+
+    if (!availablePlatforms || !availablePlatforms.length) return [];
+
+    // Filter based on publishing type
+    if (isOnlyEbook) {
+      return availablePlatforms.filter((platform) =>
+        ebookPlatforms.includes(platform)
+      );
+    } else if (isOnlyPrint) {
+      return availablePlatforms.filter((platform) =>
+        printPlatforms.includes(platform)
+      );
+    }
+
+    // For PRINT_EBOOK, return all available platforms
+    return availablePlatforms;
+  }
+
+  updateAmountBasedOnPlatform(group: FormGroup, platform: string) {
+    const saleType = group.get('type')?.value;
+    const titleId = group.get('title.id')?.value;
+
+    if (!titleId || !platform) {
+      group.get('amount')?.patchValue(null);
+      return;
+    }
+
+    const title = this.titles()?.find((t) => t.id === Number(titleId));
+    if (!title) {
+      group.get('amount')?.patchValue(null);
+      return;
+    }
 
     const p = title.pricing?.find((x) => x.platform === platform);
-    if (!p) return;
+    if (!p) {
+      group.get('amount')?.patchValue(null);
+      return;
+    }
+
+    // For INVENTORY, allow manual entry, otherwise auto-fill from pricing
+    if (saleType === 'INVENTORY') {
+      // Don't auto-fill for inventory, but ensure field is enabled
+      return;
+    }
+
+    // Auto-fill amount from pricing
     group.get('amount')?.patchValue(p.salesPrice);
   }
   createSalesGroup(
@@ -202,8 +355,8 @@ export class AddSales implements OnInit {
         nonNullable: true,
       }),
 
-      amount: new FormControl(data?.amount, {
-        validators: [Validators.required, Validators.min(1)],
+      amount: new FormControl(data?.amount || null, {
+        validators: [],
         nonNullable: true,
       }),
 
@@ -222,16 +375,66 @@ export class AddSales implements OnInit {
         { nonNullable: false }
       ),
     });
+    // Update amount validators based on sale type
+    group.get('type')?.valueChanges.subscribe((saleType) => {
+      const amountControl = group.get('amount');
+      if (saleType === 'INVENTORY') {
+        amountControl?.setValidators([Validators.required, Validators.min(0)]);
+      } else {
+        amountControl?.setValidators([]);
+        amountControl?.patchValue(null);
+      }
+      amountControl?.updateValueAndValidity();
+    });
+
+    // Initialize validators based on initial type
+    const initialType = group.get('type')?.value;
+    if (initialType === 'INVENTORY') {
+      group
+        .get('amount')
+        ?.setValidators([Validators.required, Validators.min(0)]);
+      group.get('amount')?.updateValueAndValidity();
+    }
+
     group.get('title.id')?.valueChanges.subscribe(() => {
       group.patchValue({ platform: null, amount: null });
+      // Update platform control validators based on available platforms
+      const availablePlatforms = this.getAvailablePlatformsForTitle(
+        group.get('title.id')?.value
+      );
+      if (!availablePlatforms.length) {
+        group.get('platform')?.setValidators([]);
+      } else {
+        group.get('platform')?.setValidators([Validators.required]);
+      }
+      group.get('platform')?.updateValueAndValidity();
     });
     group.get('platform')?.valueChanges.subscribe((platform) => {
-      if (platform) {
+      // Only update amount for non-INVENTORY sales (auto-calculate)
+      const saleType = group.get('type')?.value;
+      if (platform && saleType !== 'INVENTORY') {
         this.updateAmountBasedOnPlatform(group, platform);
+      } else if (!platform) {
+        group.patchValue({ amount: null });
       }
     });
 
+    // Subscribe to quantity and amount changes for this new group
+    group.controls.quantity.valueChanges.subscribe(() => {
+      this.updateSummary();
+    });
+    if (group.controls.amount) {
+      group.controls.amount.valueChanges.subscribe(() => {
+        this.updateSummary();
+      });
+    }
+
     return group;
+  }
+
+  removeSale(index: number) {
+    this.form.controls.salesArray.removeAt(index);
+    this.updateSummary();
   }
 
   onSubmit() {
@@ -248,8 +451,7 @@ export class AddSales implements OnInit {
             type,
           },
         }) => {
-          return {
-            amount: Number(amount.value),
+          const saleData: CreateSale = {
             delivery: Number(delivery.value) || 0,
             quantity: Number(quantity.value) || 1,
             titleId: Number(title.value.id),
@@ -257,6 +459,13 @@ export class AddSales implements OnInit {
             platform: platform.value as PlatForm,
             type: type.value as SalesType,
           };
+
+          // Only include amount for INVENTORY sales
+          if (type.value === 'INVENTORY' && amount.value) {
+            saleData.amount = Number(amount.value);
+          }
+
+          return saleData;
         }
       );
 

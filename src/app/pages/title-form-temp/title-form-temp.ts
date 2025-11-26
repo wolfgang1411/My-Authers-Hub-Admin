@@ -478,6 +478,10 @@ export class TitleFormTemp implements OnDestroy {
     const current = this.authorsSignal();
     if (!current.some((a) => a.id === author.id)) {
       this.authorsSignal.set([...current, author]);
+      // Update validators for newly added author
+      setTimeout(() => {
+        this.updateAuthorPrintPriceValidators();
+      }, 100);
     }
   }
 
@@ -629,12 +633,19 @@ export class TitleFormTemp implements OnDestroy {
       this.tempForm.controls.titleDetails.controls.isbnEbook.updateValueAndValidity();
     };
 
-    manageISBNRequired(this.tempForm.controls.publishingType.value);
+    // Set up subscription first
     this.tempForm.controls.publishingType.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe((v) => {
         manageISBNRequired(v);
+        this.updatePricingValidatorsForPublishingType(v);
       });
+
+    // Then call it with current value to ensure validators are set correctly
+    manageISBNRequired(this.tempForm.controls.publishingType.value);
+    this.updatePricingValidatorsForPublishingType(
+      this.tempForm.controls.publishingType.value
+    );
 
     // Setup stepper step tracking after everything is initialized
     this.setupStepperStepTracking();
@@ -905,11 +916,30 @@ export class TitleFormTemp implements OnDestroy {
             emitEvent: false,
           });
         }
+        // Update author print price validators after printing cost changes
+        this.updateAuthorPrintPriceValidators();
       }
     } catch (error) {
       console.error('Error calculating printing cost:', error);
       // Don't show error to user as this is called frequently during form changes
     }
+  }
+
+  /**
+   * Update validators for all author print price controls
+   * Should be called when printing cost changes
+   */
+  private updateAuthorPrintPriceValidators(): void {
+    const authorIds = this.tempForm.controls.titleDetails.controls.authorIds;
+    authorIds.controls.forEach((authorControl) => {
+      const authorPrintPriceControl = authorControl.controls.authorPrintPrice;
+      if (authorPrintPriceControl) {
+        authorPrintPriceControl.setValidators([
+          this.authorPrintPriceValidator(),
+        ]);
+        authorPrintPriceControl.updateValueAndValidity({ emitEvent: false });
+      }
+    });
   }
 
   prefillFormData(data: Title): void {
@@ -987,13 +1017,16 @@ export class TitleFormTemp implements OnDestroy {
     this.authorsSignal.set(data.authors?.map(({ author }) => author) || []);
     this.publisherSignal.set(data.publisher);
 
-    data.authors?.forEach(({ author, display_name }) => {
+    data.authors?.forEach(({ author, display_name, authorPrintPrice }) => {
       this.tempForm.controls.titleDetails.controls.authorIds.push(
         new FormGroup<AuthorFormGroup>({
           id: new FormControl<number | null>(author.id),
           name: new FormControl<string>(author.name),
           keepSame: new FormControl<boolean>(author.name === display_name),
           displayName: new FormControl<string>(display_name),
+          authorPrintPrice: new FormControl<number | null>(
+            authorPrintPrice ?? null
+          ),
         })
       );
     });
@@ -1187,6 +1220,83 @@ export class TitleFormTemp implements OnDestroy {
     };
   }
 
+  authorPrintPriceValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      // Allow empty values - this is an optional field
+      if (
+        !control.value ||
+        control.value === null ||
+        control.value === '' ||
+        control.value === undefined
+      ) {
+        return null;
+      }
+
+      const authorPrintPrice = Number(control.value);
+      // If not a valid number or negative, let other validators handle it
+      if (isNaN(authorPrintPrice) || authorPrintPrice < 0) {
+        return null;
+      }
+
+      // Only validate if printing cost is available
+      // If printing cost is not available yet, don't validate (allow the value)
+      const customPrintCost =
+        this.tempForm.controls.printing.controls.customPrintCost.value;
+      const printingPrice =
+        this.tempForm.controls.printing.controls.printingPrice.value;
+
+      // Use custom print cost if available, otherwise use actual printing price
+      const minPrintingCost =
+        customPrintCost !== null && customPrintCost !== undefined
+          ? Number(customPrintCost)
+          : printingPrice !== null && printingPrice !== undefined
+          ? Number(printingPrice)
+          : null;
+
+      // Only validate if we have a valid printing cost
+      // If printing cost is not available yet, don't fail validation
+      if (
+        minPrintingCost !== null &&
+        !isNaN(minPrintingCost) &&
+        minPrintingCost > 0
+      ) {
+        if (authorPrintPrice < minPrintingCost) {
+          return {
+            invalid: `Author print price cannot be lower than printing cost (${minPrintingCost.toFixed(
+              2
+            )})`,
+          };
+        }
+      }
+
+      // If printing cost is not available, don't validate (allow the value)
+      // This prevents validation errors when printing cost hasn't been calculated yet
+      return null;
+    };
+  }
+
+  /**
+   * Log form validation errors for debugging
+   */
+  private logFormValidationErrors(
+    formGroup: FormGroup | FormArray | AbstractControl
+  ): void {
+    if (formGroup instanceof FormGroup || formGroup instanceof FormArray) {
+      Object.keys(formGroup.controls).forEach((key) => {
+        const control = formGroup.get(key);
+        if (control) {
+          if (control instanceof FormGroup || control instanceof FormArray) {
+            this.logFormValidationErrors(control);
+          } else if (control.invalid && control.errors) {
+            console.error(`Validation error in ${key}:`, control.errors);
+          }
+        }
+      });
+    } else if (formGroup.invalid && formGroup.errors) {
+      console.error('Validation error:', formGroup.errors);
+    }
+  }
+
   distributionValidator(): ValidatorFn {
     return (control) => {
       // Check if distributions already exist for this title
@@ -1325,6 +1435,100 @@ export class TitleFormTemp implements OnDestroy {
         pricingArray.push(newControl);
       }
     });
+
+    // Update validators based on current publishing type
+    this.updatePricingValidatorsForPublishingType(
+      this.tempForm.controls.publishingType.value
+    );
+  }
+
+  /**
+   * Update pricing validators based on publishing type
+   * For ebook-only titles, remove required validators from non-ebook platforms
+   */
+  private updatePricingValidatorsForPublishingType(
+    publishingType: PublishingType | null | undefined
+  ): void {
+    const pricingArray = this.tempForm.controls.pricing;
+    if (!pricingArray || pricingArray.length === 0) {
+      return;
+    }
+
+    const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
+    const isOnlyPrint = publishingType === PublishingType.ONLY_PRINT;
+    const ebookPlatforms: PlatForm[] = [
+      PlatForm.MAH_EBOOK,
+      PlatForm.KINDLE,
+      PlatForm.GOOGLE_PLAY,
+    ];
+    const printPlatforms: PlatForm[] = [
+      PlatForm.AMAZON,
+      PlatForm.FLIPKART,
+      PlatForm.MAH_PRINT,
+    ];
+
+    pricingArray.controls.forEach((control) => {
+      const platform = control.controls.platform.value as PlatForm | null;
+      const isEbookPlatform =
+        platform && ebookPlatforms.includes(platform as PlatForm);
+      const isPrintPlatform =
+        platform && printPlatforms.includes(platform as PlatForm);
+
+      if (isOnlyEbook) {
+        // For ebook-only titles, remove validators from non-ebook platforms
+        if (!isEbookPlatform) {
+          control.controls.salesPrice.clearValidators();
+          control.controls.mrp.clearValidators();
+          control.controls.salesPrice.updateValueAndValidity({
+            emitEvent: false,
+          });
+          control.controls.mrp.updateValueAndValidity({ emitEvent: false });
+        } else {
+          // Ensure ebook platforms have validators
+          control.controls.salesPrice.setValidators(Validators.required);
+          control.controls.mrp.setValidators([
+            Validators.required,
+            this.mrpValidator() as ValidatorFn,
+          ]);
+          control.controls.salesPrice.updateValueAndValidity({
+            emitEvent: false,
+          });
+          control.controls.mrp.updateValueAndValidity({ emitEvent: false });
+        }
+      } else if (isOnlyPrint) {
+        // For print-only titles, remove validators from non-print platforms
+        if (!isPrintPlatform) {
+          control.controls.salesPrice.clearValidators();
+          control.controls.mrp.clearValidators();
+          control.controls.salesPrice.updateValueAndValidity({
+            emitEvent: false,
+          });
+          control.controls.mrp.updateValueAndValidity({ emitEvent: false });
+        } else {
+          // Ensure print platforms have validators
+          control.controls.salesPrice.setValidators(Validators.required);
+          control.controls.mrp.setValidators([
+            Validators.required,
+            this.mrpValidator() as ValidatorFn,
+          ]);
+          control.controls.salesPrice.updateValueAndValidity({
+            emitEvent: false,
+          });
+          control.controls.mrp.updateValueAndValidity({ emitEvent: false });
+        }
+      } else {
+        // For PRINT_EBOOK, ensure all platforms have validators
+        control.controls.salesPrice.setValidators(Validators.required);
+        control.controls.mrp.setValidators([
+          Validators.required,
+          this.mrpValidator() as ValidatorFn,
+        ]);
+        control.controls.salesPrice.updateValueAndValidity({
+          emitEvent: false,
+        });
+        control.controls.mrp.updateValueAndValidity({ emitEvent: false });
+      }
+    });
   }
 
   createTitleDetailsGroup(): FormGroup<TitleDetailsFormGroup> {
@@ -1333,7 +1537,7 @@ export class TitleFormTemp implements OnDestroy {
       subTitle: new FormControl<string>(''),
       longDescription: new FormControl<string>('', [
         Validators.required,
-        this.minWordsValidator(20),
+        this.minWordsValidator(40),
       ]),
       shortDescription: new FormControl<string>('', Validators.required),
       edition: new FormControl<number | null>(null),
@@ -1366,6 +1570,7 @@ export class TitleFormTemp implements OnDestroy {
           name: new FormControl<string>(''),
           keepSame: new FormControl<boolean>(true),
           displayName: new FormControl<string>(''),
+          authorPrintPrice: new FormControl<number | null>(null),
         }),
       ]),
       isbnPrint: new FormControl<string | null>(null, {
@@ -1486,6 +1691,8 @@ export class TitleFormTemp implements OnDestroy {
       .pipe(debounceTime(500), takeUntil(this.destroy$))
       .subscribe(() => {
         this.calculatePrintingCost();
+        // Update author print price validators when printing cost changes
+        this.updateAuthorPrintPriceValidators();
       });
   }
 
@@ -1676,7 +1883,12 @@ export class TitleFormTemp implements OnDestroy {
   }
 
   async onTitleSubmit() {
+    // Mark all fields as touched to show validation errors
     if (!this.tempForm.controls.titleDetails.valid) {
+      this.tempForm.controls.titleDetails.markAllAsTouched();
+
+      // Log validation errors for debugging
+      this.logFormValidationErrors(this.tempForm.controls.titleDetails);
       return;
     }
 
@@ -1686,6 +1898,12 @@ export class TitleFormTemp implements OnDestroy {
       .map((author: any) => ({
         id: author.id,
         displayName: author.displayName || '',
+        authorPrintPrice:
+          author.authorPrintPrice !== null &&
+          author.authorPrintPrice !== undefined &&
+          !isNaN(Number(author.authorPrintPrice))
+            ? Number(author.authorPrintPrice)
+            : undefined,
       }));
     const basicData: TitleCreate = {
       publishingType: this.tempForm.controls.publishingType
@@ -2052,15 +2270,62 @@ export class TitleFormTemp implements OnDestroy {
       this.isLoading.set(true);
       this.errorMessage.set(null);
 
-      const data: PricingCreate[] = pricingControls.controls
-        .filter(
-          ({ controls: { platform, mrp, salesPrice } }) =>
-            platform.value &&
-            mrp.value &&
-            salesPrice.value &&
-            !isNaN(Number(mrp.value)) &&
-            !isNaN(Number(salesPrice.value))
-        )
+      const publishingType = this.tempForm.controls.publishingType.value;
+      const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
+      const isOnlyPrint = publishingType === PublishingType.ONLY_PRINT;
+      const ebookPlatforms: PlatForm[] = [
+        PlatForm.MAH_EBOOK,
+        PlatForm.KINDLE,
+        PlatForm.GOOGLE_PLAY,
+      ];
+      const printPlatforms: PlatForm[] = [
+        PlatForm.AMAZON,
+        PlatForm.FLIPKART,
+        PlatForm.MAH_PRINT,
+      ];
+
+      // Filter controls based on publishing type
+      const controlsToCheck = isOnlyEbook
+        ? pricingControls.controls.filter((control) => {
+            const platform = control.controls.platform.value as PlatForm | null;
+            return platform && ebookPlatforms.includes(platform);
+          })
+        : isOnlyPrint
+        ? pricingControls.controls.filter((control) => {
+            const platform = control.controls.platform.value as PlatForm | null;
+            return platform && printPlatforms.includes(platform);
+          })
+        : pricingControls.controls;
+
+      const data: PricingCreate[] = controlsToCheck
+        .filter(({ controls: { platform, mrp, salesPrice } }) => {
+          // Basic validation - check if all required fields have valid values
+          if (
+            !platform.value ||
+            mrp.value === null ||
+            mrp.value === undefined ||
+            mrp.value === '' ||
+            salesPrice.value === null ||
+            salesPrice.value === undefined ||
+            salesPrice.value === '' ||
+            isNaN(Number(mrp.value)) ||
+            isNaN(Number(salesPrice.value)) ||
+            Number(mrp.value) <= 0 ||
+            Number(salesPrice.value) <= 0
+          ) {
+            return false;
+          }
+
+          // Double-check platform is valid based on publishing type
+          if (isOnlyEbook) {
+            return ebookPlatforms.includes(platform.value as PlatForm);
+          }
+          if (isOnlyPrint) {
+            return printPlatforms.includes(platform.value as PlatForm);
+          }
+
+          return true;
+        })
         .map(({ controls: { platform, id, mrp, salesPrice } }) => ({
           id: id.value || undefined,
           platform: platform.value as string,
@@ -2070,12 +2335,71 @@ export class TitleFormTemp implements OnDestroy {
         }));
 
       if (!data.length) {
+        // Check which platforms are missing data for better error message
+        const missingPlatforms: string[] = [];
+        controlsToCheck.forEach((control) => {
+          const { platform, mrp, salesPrice } = control.controls;
+          const hasValidData =
+            platform.value &&
+            mrp.value !== null &&
+            mrp.value !== undefined &&
+            mrp.value !== '' &&
+            salesPrice.value !== null &&
+            salesPrice.value !== undefined &&
+            salesPrice.value !== '' &&
+            !isNaN(Number(mrp.value)) &&
+            !isNaN(Number(salesPrice.value)) &&
+            Number(mrp.value) > 0 &&
+            Number(salesPrice.value) > 0;
+
+          if (!hasValidData && platform.value) {
+            missingPlatforms.push(platform.value as string);
+          }
+        });
+
+        let errorMessage: string;
+        if (isOnlyEbook) {
+          if (missingPlatforms.length > 0) {
+            errorMessage =
+              this.translateService.instant('invalidebookpricingdata') ||
+              `Please provide valid pricing data (MRP and Sales Price) for at least one ebook platform. Missing data for: ${missingPlatforms.join(
+                ', '
+              )}`;
+          } else {
+            errorMessage =
+              this.translateService.instant('invalidebookpricingdata') ||
+              'Please provide valid pricing data for at least one ebook platform (MAH_EBOOK, KINDLE, or GOOGLE_PLAY).';
+          }
+        } else if (isOnlyPrint) {
+          if (missingPlatforms.length > 0) {
+            errorMessage =
+              this.translateService.instant('invalidprintpricingdata') ||
+              `Please provide valid pricing data (MRP and Sales Price) for at least one print platform. Missing data for: ${missingPlatforms.join(
+                ', '
+              )}`;
+          } else {
+            errorMessage =
+              this.translateService.instant('invalidprintpricingdata') ||
+              'Please provide valid pricing data for at least one print platform (AMAZON, FLIPKART, or MAH_PRINT).';
+          }
+        } else {
+          if (missingPlatforms.length > 0) {
+            errorMessage =
+              this.translateService.instant('invalidpricingdata') ||
+              `Please provide valid pricing data (MRP and Sales Price) for all platforms. Missing data for: ${missingPlatforms.join(
+                ', '
+              )}`;
+          } else {
+            errorMessage =
+              this.translateService.instant('invalidpricingdata') ||
+              'Please provide valid pricing data.';
+          }
+        }
+
         Swal.fire({
           icon: 'warning',
           title: this.translateService.instant('warning'),
-          text:
-            this.translateService.instant('invalidpricingdata') ||
-            'Please provide valid pricing data.',
+          text: errorMessage,
         });
         return;
       }
@@ -2133,12 +2457,26 @@ export class TitleFormTemp implements OnDestroy {
 
       // Move to next step after successful submission
       this.goToNextStep();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving pricing:', error);
-      this.errorMessage.set(
+      let errorMessage =
         this.translateService.instant('errorsavingpricing') ||
-          'Failed to save pricing. Please try again.'
-      );
+        'Failed to save pricing. Please try again.';
+
+      // Show more specific error message from API if available
+      if (error?.error?.message) {
+        errorMessage = error.error.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text: errorMessage,
+      });
+
+      this.errorMessage.set(errorMessage);
     } finally {
       this.isLoading.set(false);
     }
@@ -2152,8 +2490,39 @@ export class TitleFormTemp implements OnDestroy {
     const pricingControls = this.tempForm.controls.pricing;
     const royaltiesControl = this.tempForm.controls.royalties;
 
-    // Validate both forms
-    if (!pricingControls.valid) {
+    // Validate both forms - check only relevant platforms
+    const publishingType = this.tempForm.controls.publishingType.value;
+    const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
+    const isOnlyPrint = publishingType === PublishingType.ONLY_PRINT;
+    const ebookPlatforms: PlatForm[] = [
+      PlatForm.MAH_EBOOK,
+      PlatForm.KINDLE,
+      PlatForm.GOOGLE_PLAY,
+    ];
+    const printPlatforms: PlatForm[] = [
+      PlatForm.AMAZON,
+      PlatForm.FLIPKART,
+      PlatForm.MAH_PRINT,
+    ];
+
+    // Check validity only for relevant platforms
+    const relevantControls = isOnlyEbook
+      ? pricingControls.controls.filter((control) => {
+          const platform = control.controls.platform.value as PlatForm | null;
+          return platform && ebookPlatforms.includes(platform);
+        })
+      : isOnlyPrint
+      ? pricingControls.controls.filter((control) => {
+          const platform = control.controls.platform.value as PlatForm | null;
+          return platform && printPlatforms.includes(platform);
+        })
+      : pricingControls.controls;
+
+    const hasInvalidRelevantControl = relevantControls.some(
+      (control) => !control.valid
+    );
+
+    if (hasInvalidRelevantControl) {
       Swal.fire({
         icon: 'warning',
         title: this.translateService.instant('warning'),
@@ -2191,15 +2560,62 @@ export class TitleFormTemp implements OnDestroy {
       this.errorMessage.set(null);
 
       // Prepare pricing data
-      const pricingData: PricingCreate[] = pricingControls.controls
-        .filter(
-          ({ controls: { platform, mrp, salesPrice } }) =>
-            platform.value &&
-            mrp.value &&
-            salesPrice.value &&
-            !isNaN(Number(mrp.value)) &&
-            !isNaN(Number(salesPrice.value))
-        )
+      const publishingType = this.tempForm.controls.publishingType.value;
+      const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
+      const isOnlyPrint = publishingType === PublishingType.ONLY_PRINT;
+      const ebookPlatforms: PlatForm[] = [
+        PlatForm.MAH_EBOOK,
+        PlatForm.KINDLE,
+        PlatForm.GOOGLE_PLAY,
+      ];
+      const printPlatforms: PlatForm[] = [
+        PlatForm.AMAZON,
+        PlatForm.FLIPKART,
+        PlatForm.MAH_PRINT,
+      ];
+
+      // Filter controls based on publishing type
+      const controlsToCheck = isOnlyEbook
+        ? pricingControls.controls.filter((control) => {
+            const platform = control.controls.platform.value as PlatForm | null;
+            return platform && ebookPlatforms.includes(platform);
+          })
+        : isOnlyPrint
+        ? pricingControls.controls.filter((control) => {
+            const platform = control.controls.platform.value as PlatForm | null;
+            return platform && printPlatforms.includes(platform);
+          })
+        : pricingControls.controls;
+
+      const pricingData: PricingCreate[] = controlsToCheck
+        .filter(({ controls: { platform, mrp, salesPrice } }) => {
+          // Basic validation - check if all required fields have valid values
+          if (
+            !platform.value ||
+            mrp.value === null ||
+            mrp.value === undefined ||
+            mrp.value === '' ||
+            salesPrice.value === null ||
+            salesPrice.value === undefined ||
+            salesPrice.value === '' ||
+            isNaN(Number(mrp.value)) ||
+            isNaN(Number(salesPrice.value)) ||
+            Number(mrp.value) <= 0 ||
+            Number(salesPrice.value) <= 0
+          ) {
+            return false;
+          }
+
+          // Double-check platform is valid based on publishing type
+          if (isOnlyEbook) {
+            return ebookPlatforms.includes(platform.value as PlatForm);
+          }
+          if (isOnlyPrint) {
+            return printPlatforms.includes(platform.value as PlatForm);
+          }
+
+          return true;
+        })
         .map(({ controls: { platform, id, mrp, salesPrice } }) => ({
           id: id.value || undefined,
           platform: platform.value as string,
@@ -2209,12 +2625,71 @@ export class TitleFormTemp implements OnDestroy {
         }));
 
       if (!pricingData.length) {
+        // Check which platforms are missing data for better error message
+        const missingPlatforms: string[] = [];
+        controlsToCheck.forEach((control) => {
+          const { platform, mrp, salesPrice } = control.controls;
+          const hasValidData =
+            platform.value &&
+            mrp.value !== null &&
+            mrp.value !== undefined &&
+            mrp.value !== '' &&
+            salesPrice.value !== null &&
+            salesPrice.value !== undefined &&
+            salesPrice.value !== '' &&
+            !isNaN(Number(mrp.value)) &&
+            !isNaN(Number(salesPrice.value)) &&
+            Number(mrp.value) > 0 &&
+            Number(salesPrice.value) > 0;
+
+          if (!hasValidData && platform.value) {
+            missingPlatforms.push(platform.value as string);
+          }
+        });
+
+        let errorMessage: string;
+        if (isOnlyEbook) {
+          if (missingPlatforms.length > 0) {
+            errorMessage =
+              this.translateService.instant('invalidebookpricingdata') ||
+              `Please provide valid pricing data (MRP and Sales Price) for at least one ebook platform. Missing data for: ${missingPlatforms.join(
+                ', '
+              )}`;
+          } else {
+            errorMessage =
+              this.translateService.instant('invalidebookpricingdata') ||
+              'Please provide valid pricing data for at least one ebook platform (MAH_EBOOK, KINDLE, or GOOGLE_PLAY).';
+          }
+        } else if (isOnlyPrint) {
+          if (missingPlatforms.length > 0) {
+            errorMessage =
+              this.translateService.instant('invalidprintpricingdata') ||
+              `Please provide valid pricing data (MRP and Sales Price) for at least one print platform. Missing data for: ${missingPlatforms.join(
+                ', '
+              )}`;
+          } else {
+            errorMessage =
+              this.translateService.instant('invalidprintpricingdata') ||
+              'Please provide valid pricing data for at least one print platform (AMAZON, FLIPKART, or MAH_PRINT).';
+          }
+        } else {
+          if (missingPlatforms.length > 0) {
+            errorMessage =
+              this.translateService.instant('invalidpricingdata') ||
+              `Please provide valid pricing data (MRP and Sales Price) for all platforms. Missing data for: ${missingPlatforms.join(
+                ', '
+              )}`;
+          } else {
+            errorMessage =
+              this.translateService.instant('invalidpricingdata') ||
+              'Please provide valid pricing data.';
+          }
+        }
+
         Swal.fire({
           icon: 'warning',
           title: this.translateService.instant('warning'),
-          text:
-            this.translateService.instant('invalidpricingdata') ||
-            'Please provide valid pricing data.',
+          text: errorMessage,
         });
         return;
       }
@@ -2222,15 +2697,51 @@ export class TitleFormTemp implements OnDestroy {
       // Prepare royalties data
       // The royalties form already has the correct structure (one entry per platform per author/publisher)
       // We just need to filter and map it correctly
-      const royalties: UpdateRoyalty[] = royaltiesControl.controls
-        .filter(
-          ({ controls: { percentage, platform } }) =>
-            percentage.value !== null &&
-            percentage.value !== undefined &&
-            !isNaN(Number(percentage.value)) &&
-            platform.value
-        )
-        .map(
+      // Filter to only check relevant platform controls based on publishing type
+      const royaltiesControlsToCheck = isOnlyEbook
+        ? royaltiesControl.controls.filter((control) => {
+            const platform = control.controls.platform.value as PlatForm | null;
+            return platform && ebookPlatforms.includes(platform);
+          })
+        : isOnlyPrint
+        ? royaltiesControl.controls.filter((control) => {
+            const platform = control.controls.platform.value as PlatForm | null;
+            return platform && printPlatforms.includes(platform);
+          })
+        : royaltiesControl.controls;
+
+      // Map and filter royalties, then deduplicate by (authorId/publisherId, platform)
+      const royaltiesMap = new Map<string, UpdateRoyalty>();
+
+      royaltiesControlsToCheck
+        .filter(({ controls: { percentage, platform } }) => {
+          const rawPercentage = percentage.value;
+          const hasValue =
+            rawPercentage !== null && rawPercentage !== undefined;
+          const numericPercentage = Number(rawPercentage);
+
+          // Basic validation - check if percentage is valid
+          if (
+            !platform.value ||
+            !hasValue ||
+            isNaN(numericPercentage) ||
+            numericPercentage < 0 ||
+            numericPercentage > 100
+          ) {
+            return false;
+          }
+
+          // Double-check platform is valid based on publishing type
+          if (isOnlyEbook) {
+            return ebookPlatforms.includes(platform.value as PlatForm);
+          }
+          if (isOnlyPrint) {
+            return printPlatforms.includes(platform.value as PlatForm);
+          }
+
+          return true;
+        })
+        .forEach(
           ({
             controls: {
               id: { value: id },
@@ -2240,24 +2751,106 @@ export class TitleFormTemp implements OnDestroy {
               publisherId: { value: publisherId },
               platform: { value: platform },
             },
-          }) => ({
-            id: id || undefined,
-            authorId: authorId || undefined,
-            platform: platform as PlatForm,
-            percentage: Number(percentage),
-            name: name || '',
-            publisherId: publisherId || undefined,
-            titleId: this.titleId,
-          })
+          }) => {
+            // Create unique key: authorId/publisherId + platform
+            const key = authorId
+              ? `author_${authorId}_${platform}`
+              : `publisher_${publisherId}_${platform}`;
+
+            const royalty: UpdateRoyalty = {
+              id: id || undefined,
+              authorId: authorId || undefined,
+              platform: platform as PlatForm,
+              percentage: Number(percentage),
+              name: name || '',
+              publisherId: publisherId || undefined,
+              titleId: this.titleId,
+            };
+
+            // Deduplicate: keep entry with ID if available, otherwise keep the last occurrence
+            const existing = royaltiesMap.get(key);
+            if (!existing) {
+              // No existing entry, add it
+              royaltiesMap.set(key, royalty);
+            } else if (id && !existing.id) {
+              // Current has ID, existing doesn't - replace
+              royaltiesMap.set(key, royalty);
+            } else if (!id && existing.id) {
+              // Existing has ID, current doesn't - keep existing
+              // Do nothing
+            } else {
+              // Both have ID or both don't - keep the last one (current)
+              royaltiesMap.set(key, royalty);
+            }
+          }
         );
 
+      const royalties: UpdateRoyalty[] = Array.from(royaltiesMap.values());
+
       if (!royalties.length) {
+        // Check which platforms are missing data for better error message
+        const missingPlatforms: string[] = [];
+        royaltiesControlsToCheck.forEach((control) => {
+          const { percentage, platform } = control.controls;
+          const rawPercentage = percentage.value;
+          const hasValue =
+            rawPercentage !== null && rawPercentage !== undefined;
+          const numericPercentage = Number(rawPercentage);
+          const hasValidData =
+            platform.value &&
+            hasValue &&
+            !isNaN(numericPercentage) &&
+            numericPercentage >= 0 &&
+            numericPercentage <= 100;
+
+          if (!hasValidData && platform.value) {
+            missingPlatforms.push(platform.value as string);
+          }
+        });
+
+        let errorMessage: string;
+        if (isOnlyEbook) {
+          if (missingPlatforms.length > 0) {
+            errorMessage =
+              this.translateService.instant('invalidebookroyaltiesdata') ||
+              `Please provide valid royalties data (percentage between 0-100%) for at least one ebook platform. Missing data for: ${missingPlatforms.join(
+                ', '
+              )}`;
+          } else {
+            errorMessage =
+              this.translateService.instant('invalidebookroyaltiesdata') ||
+              'Please provide valid royalties data for at least one ebook platform (MAH_EBOOK, KINDLE, or GOOGLE_PLAY).';
+          }
+        } else if (isOnlyPrint) {
+          if (missingPlatforms.length > 0) {
+            errorMessage =
+              this.translateService.instant('invalidprintroyaltiesdata') ||
+              `Please provide valid royalties data (percentage between 0-100%) for at least one print platform. Missing data for: ${missingPlatforms.join(
+                ', '
+              )}`;
+          } else {
+            errorMessage =
+              this.translateService.instant('invalidprintroyaltiesdata') ||
+              'Please provide valid royalties data for at least one print platform (AMAZON, FLIPKART, or MAH_PRINT).';
+          }
+        } else {
+          if (missingPlatforms.length > 0) {
+            errorMessage =
+              this.translateService.instant('invalidroyaltiesdata') ||
+              `Please provide valid royalties data (percentage between 0-100%) for all platforms. Missing data for: ${missingPlatforms.join(
+                ', '
+              )}`;
+          } else {
+            errorMessage =
+              this.translateService.instant('invalidroyaltiesdata') ||
+              'Please provide valid royalties data.';
+          }
+        }
+
         Swal.fire({
           icon: 'warning',
           title: this.translateService.instant('warning'),
-          text:
-            this.translateService.instant('invalidroyaltiesdata') ||
-            'Please provide valid royalties data.',
+          text: errorMessage,
         });
         return;
       }
@@ -2321,12 +2914,26 @@ export class TitleFormTemp implements OnDestroy {
 
       // Move to next step after successful submission
       this.goToNextStep();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving pricing and royalties:', error);
-      this.errorMessage.set(
+      let errorMessage =
         this.translateService.instant('errorsavingpricing') ||
-          'Failed to save pricing and royalties. Please try again.'
-      );
+        'Failed to save pricing and royalties. Please try again.';
+
+      // Show more specific error message from API if available
+      if (error?.error?.message) {
+        errorMessage = error.error.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error'),
+        text: errorMessage,
+      });
+
+      this.errorMessage.set(errorMessage);
     } finally {
       this.isLoading.set(false);
     }
@@ -2478,6 +3085,37 @@ export class TitleFormTemp implements OnDestroy {
         // Include customPrintCost if it has a value
         if (customPrintCostValue !== undefined) {
           updateTicketData.customPrintCost = customPrintCostValue;
+        }
+
+        // Collect author print prices from form
+        const authorPrintPrices: Array<{
+          authorId: number;
+          authorPrintPrice?: number | null;
+        }> = [];
+        if (this.tempForm.controls.titleDetails.controls.authorIds) {
+          this.tempForm.controls.titleDetails.controls.authorIds.controls.forEach(
+            (authorControl) => {
+              const authorId = authorControl.controls.id.value;
+              const authorPrintPrice =
+                authorControl.controls.authorPrintPrice.value;
+              if (authorId) {
+                authorPrintPrices.push({
+                  authorId,
+                  authorPrintPrice:
+                    authorPrintPrice !== null &&
+                    authorPrintPrice !== undefined &&
+                    !isNaN(Number(authorPrintPrice))
+                      ? Number(authorPrintPrice)
+                      : null,
+                });
+              }
+            }
+          );
+        }
+
+        // Include author print prices if any
+        if (authorPrintPrices.length > 0) {
+          updateTicketData.authorPrintPrices = authorPrintPrices;
         }
 
         // Create printing update ticket
@@ -2645,6 +3283,32 @@ export class TitleFormTemp implements OnDestroy {
         return; // Don't proceed with normal flow
       }
 
+      // Collect author print prices from form
+      const authorPrintPrices: Array<{
+        authorId: number;
+        authorPrintPrice?: number | null;
+      }> = [];
+      if (this.tempForm.controls.titleDetails.controls.authorIds) {
+        this.tempForm.controls.titleDetails.controls.authorIds.controls.forEach(
+          (authorControl) => {
+            const authorId = authorControl.controls.id.value;
+            const authorPrintPrice =
+              authorControl.controls.authorPrintPrice.value;
+            if (authorId) {
+              authorPrintPrices.push({
+                authorId,
+                authorPrintPrice:
+                  authorPrintPrice !== null &&
+                  authorPrintPrice !== undefined &&
+                  !isNaN(Number(authorPrintPrice))
+                    ? Number(authorPrintPrice)
+                    : null,
+              });
+            }
+          }
+        );
+      }
+
       // Normal update flow
       // For normal update, always include insideCover (required by interface)
       // But only include it if it's being changed
@@ -2658,6 +3322,10 @@ export class TitleFormTemp implements OnDestroy {
         // Include customPrintCost if it has a value
         ...(customPrintCostValue !== undefined && {
           customPrintCost: customPrintCostValue,
+        }),
+        // Include author print prices if any
+        ...(authorPrintPrices.length > 0 && {
+          authorPrintPrices,
         }),
       };
 

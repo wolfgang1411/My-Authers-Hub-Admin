@@ -26,6 +26,7 @@ import {
   PricingGroup,
   Publishers,
   AccessLevel,
+  PublishingType,
 } from '../../../interfaces';
 import { MatInputModule } from '@angular/material/input';
 import { RoyaltyFormGroup } from '../../../interfaces/Royalty';
@@ -47,6 +48,19 @@ import { StaticValuesService } from '../../../services/static-values';
 export class TempPricingRoyalty implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   private readonly injector = inject(Injector);
+  private readonly ebookPlatforms: PlatForm[] = [
+    PlatForm.MAH_EBOOK,
+    PlatForm.KINDLE,
+    PlatForm.GOOGLE_PLAY,
+  ];
+  private readonly ebookPlatformSet = new Set<PlatForm>(this.ebookPlatforms);
+  private readonly printPlatforms: PlatForm[] = [
+    PlatForm.AMAZON,
+    PlatForm.FLIPKART,
+    PlatForm.MAH_PRINT,
+  ];
+  private readonly printPlatformSet = new Set<PlatForm>(this.printPlatforms);
+  protected readonly PublishingType = PublishingType;
 
   constructor(private staticValueService: StaticValuesService) {}
 
@@ -56,6 +70,7 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
   printingPrice = input.required<number | null>();
   customPrintCost = input<number | null>(null);
   accessLevel = input<AccessLevel | null>(null);
+  publishingType = input<PublishingType | null>(null);
 
   // Royalty inputs
   royaltiesController =
@@ -69,9 +84,28 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
   });
 
   displayedColumns = computed(() => {
-    return Object.keys(
+    const platforms = Object.keys(
       this.staticValueService.staticValues()?.PlatForm || {}
     ) as PlatForm[];
+
+    const publishingType = this.publishingType();
+
+    if (publishingType === PublishingType.ONLY_EBOOK) {
+      // For ebook-only titles, only show ebook platforms
+      return platforms.filter((platform) =>
+        this.ebookPlatformSet.has(platform)
+      );
+    }
+
+    if (publishingType === PublishingType.ONLY_PRINT) {
+      // For print-only titles, only show print platforms (exclude ebook platforms)
+      return platforms.filter((platform) =>
+        this.printPlatformSet.has(platform)
+      );
+    }
+
+    // For PRINT_EBOOK, show all platforms
+    return platforms;
   });
 
   // Author percentage form controls (one per author)
@@ -497,13 +531,6 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     const data = this.royaltiesController().value;
     const temp: Record<string, Partial<Record<PlatForm, number>>> = {};
 
-    // Ebook platforms: MAH_EBOOK, KINDLE, GOOGLE_PLAY
-    const ebookPlatforms: PlatForm[] = [
-      PlatForm.MAH_EBOOK,
-      PlatForm.KINDLE,
-      PlatForm.GOOGLE_PLAY,
-    ];
-
     data.forEach(({ authorId, publisherId, percentage, platform }) => {
       const key = authorId ? 'author' + authorId : 'publisher' + publisherId;
 
@@ -517,7 +544,7 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
 
       // For ebook platforms, don't subtract printing cost
       // For other platforms, subtract printing cost
-      const isEbookPlatform = ebookPlatforms.includes(platform as PlatForm);
+      const isEbookPlatform = this.isEbookPlatform(platform as PlatForm);
       const printingCost = isEbookPlatform ? 0 : this.printingPrice() || 0;
 
       temp[key][platform as PlatForm] = Number(
@@ -618,5 +645,33 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * Filter pricing controls to only show platforms relevant to the publishing type
+   */
+  visiblePricingControls(): PricingGroup[] {
+    const allowedPlatforms = this.displayedColumns();
+
+    if (!allowedPlatforms.length) {
+      return this.pricingControls().controls;
+    }
+
+    const allowedSet = new Set<PlatForm>(allowedPlatforms);
+
+    return this.pricingControls().controls.filter((control) => {
+      const platform = control.controls.platform.value as PlatForm | null;
+      if (!platform) {
+        return true;
+      }
+      return allowedSet.has(platform);
+    });
+  }
+
+  private isEbookPlatform(platform: PlatForm | null | undefined): boolean {
+    if (!platform) {
+      return false;
+    }
+    return this.ebookPlatformSet.has(platform);
   }
 }

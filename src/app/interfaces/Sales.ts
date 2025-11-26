@@ -48,7 +48,7 @@ export interface CreateSale {
   type: SalesType;
   titleId: number;
   platform: PlatForm;
-  amount: number;
+  amount?: number;
   quantity: number;
   delivery?: number;
   soldAt?: string;

@@ -388,6 +388,8 @@
         loggedInUser()?.accessLevel === 'PUBLISHER' &&
         loggedInUser()?.publisher?.allowCustomPrintingPrice === true
       "
+      [titleDetailsGroup]="tempForm.controls.titleDetails"
+      [authors]="authorsSignal()"
     ></app-temp-title-printing>
     <div class="flex justify-end">
       <button
@@ -426,6 +428,7 @@
       [royaltiesController]="tempForm.controls.royalties"
       [authors]="authorsSignal()"
       [publisher]="publisherSignal()"
+      [publishingType]="tempForm.controls.publishingType.value || null"
     ></app-temp-pricing-royalty>
 
     <div class="flex justify-end mt-6">

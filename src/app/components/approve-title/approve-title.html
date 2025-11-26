@@ -10,7 +10,7 @@
   <mat-dialog-content>
     <div class="flex flex-col gap-2">
       <table class="my-table">
-        <tr class="grid grid-cols-7">
+        <tr class="grid" [ngStyle]="gridStyle">
           <th></th>
           @for (platformIndefier of form.controls.platformIdentifier.controls;
           track platformIndefier) {
@@ -20,7 +20,7 @@
           }
         </tr>
 
-        <tr class="grid grid-cols-7">
+        <tr class="grid" [ngStyle]="gridStyle">
           <th>
             {{ "uniqueidentifier" | translate }}
           </th>
@@ -35,7 +35,7 @@
           </td>
           }
         </tr>
-        <tr class="grid grid-cols-7">
+        <tr class="grid" [ngStyle]="gridStyle">
           <th>
             {{ "distributionlinks" | translate }}
           </th>
