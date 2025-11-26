@@ -8,7 +8,7 @@ export interface Media {
   type: string;
   file: File;
   noOfPages?: number;
-  mediaType: TitleMediaType;
+  mediaType?: TitleMediaType;
 }
 
 export interface TitleMediaGroup {

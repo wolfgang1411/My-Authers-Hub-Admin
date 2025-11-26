@@ -21,6 +21,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { ListTable } from '../../components/list-table/list-table';
 import { MatInputModule } from '@angular/material/input';
 import { PublisherService } from '../publisher/publisher-service';
+import { SafeUrlPipe } from 'src/app/pipes/safe-url-pipe';
 
 @Component({
   selector: 'app-author-details',
@@ -32,6 +33,7 @@ import { PublisherService } from '../publisher/publisher-service';
     MatFormFieldModule,
     ListTable,
     MatInputModule,
+    SafeUrlPipe,
   ],
   templateUrl: './author-details.html',
   styleUrl: './author-details.css',

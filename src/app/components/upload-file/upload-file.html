@@ -1,43 +1,46 @@
 <div
-  class="container hover:cursor-pointer"
-  appDragNDrop
-  (fileDropped)="onFileDropped($event)"
+  class="relative w-32 h-32 rounded-full overflow-hidden border shadow flex justify-center items-center"
 >
-  <input
-    class="hidden"
-    type="file"
-    #fileDropRef
-    id="fileDropRef"
-    multiple
-    (change)="fileBrowseHandler($event)"
+  <!-- 🔥 Image Preview -->
+  @if (previewUrl() && !isLoading()) {
+  <img
+    [src]="previewUrl() ?? '' | safeUrl"
+    class="w-full h-full object-cover"
   />
-  <img src="images/ic-upload-file.svg" alt="Upload Icon" />
-  <h3>Drag and drop file here</h3>
-  <h3>or</h3>
-  <label for="fileDropRef">Browse for file</label>
-</div>
+  }
+  <!-- 🔥 Placeholder when no image -->
+  @if (!previewUrl() && !isLoading()) {
+  <img
+    src="images/user-solid-full.svg"
+    class="w-[50px] h-[50px] opacity-60 object-contain"
+  />
+  }
 
-<div class="files-list">
-  @for (file of files; track $index) {
-
-  <div class="single-file">
-    <img src="images/ic-file.svg" width="45px" alt="File Icon" />
-    <div class="info">
-      <h4 class="name">
-        {{ file.file.name }}
-      </h4>
-      <p class="size">
-        {{ formatBytes(file.file.size) }}
-      </p>
-      <app-progress [progress]="file.progress"></app-progress>
-    </div>
-    <img
-      src="images/ic-delete-file.svg"
-      class="delete"
-      width="20px"
-      alt="Delete File"
-      (click)="deleteFile($index)"
-    />
+  <!-- ⏳ Loader -->
+  @if (isLoading()) {
+  <div class="flex flex-col items-center gap-2">
+    <mat-progress-spinner
+      mode="indeterminate"
+      diameter="30"
+    ></mat-progress-spinner>
+    <small class="text-xs text-gray-500">Uploading...</small>
   </div>
   }
+
+  <!-- Upload Button -->
+  <button
+    type="button"
+    class="absolute bottom-3 right-5 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center"
+    (click)="onClickUpdateImage()"
+  >
+    <mat-icon>camera_alt</mat-icon>
+  </button>
+
+  <input
+    type="file"
+    #fileInput
+    accept="image/*"
+    class="hidden"
+    (change)="onUpload($event)"
+  />
 </div>

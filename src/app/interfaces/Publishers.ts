@@ -1,6 +1,7 @@
 import { Address } from './Address';
 import { Author } from './Authors';
 import { BankDetails } from './BankDetails';
+import { Media } from './Media';
 import { socialMediaGroup } from './SocialMedia';
 import { DistributionType, PublisherStatus } from './StaticValue';
 import { Title } from './Titles';
@@ -16,6 +17,7 @@ export interface Publishers {
   address: Address[];
   bankDetails?: BankDetails[]; // Optional attachments related to the publisher
   user: User;
+  medias: Media[];
   titles: Title[];
   authers: Author[];
   noOfTitles: number;

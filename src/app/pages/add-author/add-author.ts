@@ -44,6 +44,7 @@ import {
   Countries,
   States,
   Cities,
+  Media,
 } from '../../interfaces';
 import { AddressService } from '../../services/address-service';
 import { BankDetailService } from '../../services/bank-detail-service';
@@ -133,6 +134,7 @@ export class AddAuthor implements OnInit {
   verifying = false;
   invalidIFSC = false;
   isPrefilling: boolean = false;
+  mediaToDeleteId: number | null = null;
 
   ifscCodeValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
@@ -327,6 +329,27 @@ export class AddAuthor implements OnInit {
       this.isPrefilling = false;
     }
   }
+  get mediasArray() {
+    return this.authorFormGroup.get('medias') as FormArray;
+  }
+
+  onMediaAdded(newMedia: Media) {
+    const existing = this.mediasArray.value[0];
+
+    if (existing?.id) {
+      this.mediaToDeleteId = existing.id;
+    }
+    this.mediasArray.setControl(
+      0,
+      this._formBuilder.control({
+        ...newMedia,
+        id: 0,
+        url: '',
+      })
+    );
+
+    console.log('🆕 New media selected', this.mediasArray.value[0]);
+  }
   // lookupByPincode(pin: string) {
   //   if (this.isPrefilling) return;
 
@@ -364,7 +387,9 @@ export class AddAuthor implements OnInit {
     phoneNumber: ['', Validators.required],
     username: ['', Validators.required],
     about: ['', Validators.required],
+    password: [''],
     authorImage: [''],
+    medias: this._formBuilder.array<Media>([]),
     signupCode: <string | null>null,
   });
   authorBankDetails = this._formBuilder.group(
@@ -523,6 +548,11 @@ export class AddAuthor implements OnInit {
 
       socialMediaArray.push(group);
     });
+    const mediaList = authorDetails.medias as Media[];
+    this.mediasArray.clear();
+    if (mediaList?.length > 0) {
+      this.mediasArray.push(this._formBuilder.control(mediaList[0]));
+    }
   }
   async handleNewOrSuperAdminAuthorSubmission(authorData: Author) {
     const response = (await this.authorsService.createAuthor(
@@ -556,6 +586,17 @@ export class AddAuthor implements OnInit {
         await this.socialService.createOrUpdateSocialMediaLinks(
           socialMediaData as socialMediaGroup[]
         );
+      }
+      const media = this.mediasArray.value[0];
+      if (this.mediaToDeleteId && media?.file) {
+        await this.authorsService.removeImage(this.mediaToDeleteId);
+        console.log('🗑 Old image deleted');
+
+        await this.authorsService.updateMyImage(media.file, response.id);
+        console.log('⬆ New image uploaded');
+      } else if (!this.mediaToDeleteId && media?.file) {
+        await this.authorsService.updateMyImage(media.file, response.id);
+        console.log('📤 New image uploaded (no old media existed)');
       }
     }
 
@@ -644,6 +685,23 @@ export class AddAuthor implements OnInit {
         await this.socialService.createOrUpdateSocialMediaLinks(
           socialMediaData as socialMediaGroup[]
         );
+      }
+      const media = this.mediasArray.value[0];
+      if (this.mediaToDeleteId && media?.file) {
+        await this.authorsService.removeImage(this.mediaToDeleteId);
+        console.log('🗑 Old image deleted');
+
+        await this.authorsService.updateMyImage(
+          media.file,
+          this.authorId as number
+        );
+        console.log('⬆ New image uploaded');
+      } else if (!this.mediaToDeleteId && media?.file) {
+        await this.authorsService.updateMyImage(
+          media.file,
+          this.authorId as number
+        );
+        console.log('📤 New image uploaded (no old media existed)');
       }
 
       await Swal.fire({

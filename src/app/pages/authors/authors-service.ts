@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Server } from '../../services/server';
-import { Pagination } from '../../interfaces';
+import { AuthorMediaType, Media, Pagination } from '../../interfaces';
 import { Author, AuthorFilter, AuthorStatus } from '../../interfaces';
 import { Logger } from '../../services/logger';
 import { LoaderService } from '../../services/loader';
+import { S3Service } from 'src/app/services/s3';
 
 @Injectable({
   providedIn: 'root',
@@ -12,7 +13,8 @@ export class AuthorsService {
   constructor(
     private server: Server,
     private logger: Logger,
-    private loader: LoaderService
+    private loader: LoaderService,
+    private s3upload: S3Service
   ) {}
 
   async sendInviteLink(email: string) {
@@ -124,6 +126,47 @@ export class AuthorsService {
     } catch (error) {
       this.logger.logError(error);
       throw error;
+    }
+  }
+  uploadAuthorImage(
+    file: File,
+    authorId: number
+  ): Promise<{ id: number; url: string }> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const { name } = await this.s3upload.uploadMedia(file);
+        const media = await this.server.post<Media>(
+          `author-media/${authorId}/medias`,
+          {
+            keyname: name,
+            mime: file.type,
+            type: AuthorMediaType.IMAGE,
+          }
+        );
+        resolve(media);
+      } catch (error) {
+        this.logger.logError(error);
+        reject(error);
+      }
+    });
+  }
+  async updateMyImage(file: File, authorId: number) {
+    try {
+      const media = await this.uploadAuthorImage(file, authorId);
+      return media;
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+  async removeImage(mediaId: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.delete(`author-media/medias/${mediaId}`)
+      );
+    } catch (error) {
+      throw error;
+      this.logger.logError(error);
     }
   }
 }

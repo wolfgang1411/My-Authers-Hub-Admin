@@ -17,156 +17,124 @@
     class="!text-accent !p-0"
     label="Fill out your basic details"
   >
-    <form [formGroup]="publisherFormGroup">
-      <div class="grid-cols-4 grid gap-4 my-4">
-        <mat-form-field>
-          <mat-label>{{ "companyname" | translate }}</mat-label>
-          <input
-            matInput
-            placeholder="Company Name Pvt Ltd"
-            formControlName="name"
-            required
-          />
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ "emailidofficial" | translate }}</mat-label>
-          <input
-            matInput
-            placeholder="abc@gmail.com"
-            formControlName="email"
-            required
-          />
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ "pocname" | translate }}</mat-label>
-          <input
-            matInput
-            placeholder="First name Last Name"
-            formControlName="pocName"
-            required
-          />
-        </mat-form-field>
-        <mat-form-field appearance="fill">
-          <mat-label>Phone Number</mat-label>
-          <input
-            matInput
-            type="tel"
-            placeholder="+91 1234567890"
-            formControlName="pocPhoneNumber"
-            required
-          />
-          @if(publisherFormGroup.get('pocPhoneNumber')?.hasError('required')) {
-          <mat-error> Phone number is required </mat-error>
-          } @if(publisherFormGroup.get('pocPhoneNumber')?.hasError('pattern')) {
+    <div class="mx-auto py-6 space-y-10">
+      <form [formGroup]="publisherFormGroup">
+        <div class="bg-white shadow-sm border rounded-xl px-6 py-8">
+          <div class="flex flex-col md:flex-row gap-10">
+            <div class="flex flex-col items-center shrink-0">
+              <app-upload-file
+                [prefillMedia]="mediasArray.value[0] ?? null"
+                (mediaAdded)="onMediaAdded($event)"
+              ></app-upload-file>
+              <p
+                class="mt-2 text-[11px] text-gray-500 text-center leading-tight"
+              >
+                Upload Company Logo / Profile Image <br />
+                Recommended 300×300px – Max 2MB <br />
+                JPG · PNG · GIF Supported
+              </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+              <mat-form-field class="w-full">
+                <mat-label>Company Name</mat-label>
+                <input
+                  matInput
+                  formControlName="name"
+                  placeholder="Santosh Printing Press"
+                />
+              </mat-form-field>
 
-          <mat-error> Enter a valid 10-digit mobile number </mat-error>
-          }
-        </mat-form-field>
-        <!-- <div class="bg-">
-          <span>{{ "poccontactnumber" | translate }}</span>
-          <ngx-intl-tel-input
-            required
-            [cssClass]="'custom-tel-input'"
-            [preferredCountries]="[
-              inputData.CountryISO.UnitedStates,
-              inputData.CountryISO.UnitedKingdom,
-              inputData.CountryISO.Denmark
-            ]"
-            [enableAutoCountrySelect]="true"
-            [enablePlaceholder]="true"
-            [searchCountryFlag]="true"
-            [searchCountryField]="[
-              inputData.SearchCountryField.Iso2,
-              inputData.SearchCountryField.Name
-            ]"
-            [selectFirstCountry]="false"
-            [selectedCountryISO]="inputData.CountryISO.India"
-            [maxLength]="15"
-            [phoneValidation]="true"
-            customPlaceholder="Mobile No"
-            name="Phone Number"
-            formControlName="pocPhoneNumber"
-            required
-          ></ngx-intl-tel-input>
-        </div> -->
-        <mat-form-field>
-          <mat-label>{{ "pocemailid" | translate }}</mat-label>
-          <input
-            matInput
-            placeholder="xyz@gmail.com"
-            formControlName="pocEmail"
-            required
-          />
-        </mat-form-field>
-        @if( publisherFormGroup.get('id')?.value === null ||
-        publisherFormGroup.get('id')?.value === undefined ) {
+              <mat-form-field class="w-full">
+                <mat-label>Email (Official)</mat-label>
+                <input
+                  matInput
+                  formControlName="email"
+                  placeholder="abc@gmail.com"
+                />
+              </mat-form-field>
 
-        <mat-form-field>
-          <mat-label>{{ "createpassword" | translate }}</mat-label>
-          <input
-            matInput
-            type="password"
-            placeholder="********"
-            formControlName="userPassword"
-            required
-          />
-        </mat-form-field>
-        }
-        <mat-form-field>
-          <mat-label>{{ "pocdesignation" | translate }}</mat-label>
-          <input
-            matInput
-            placeholder="xyz"
-            formControlName="designation"
-            required
-          />
-        </mat-form-field>
-      </div>
-    </form>
-    <form [formGroup]="publisherSocialMediaGroup">
-      <div formArrayName="socialMedia" class="flex flex-col gap-4 my-4">
+              <mat-form-field class="w-full">
+                <mat-label>Contact Person Name</mat-label>
+                <input
+                  matInput
+                  formControlName="pocName"
+                  placeholder="Santosh"
+                />
+              </mat-form-field>
+
+              <mat-form-field class="w-full">
+                <mat-label>Phone Number</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  formControlName="pocPhoneNumber"
+                  placeholder="9876543210"
+                />
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Contact Person Email</mat-label>
+                <input
+                  matInput
+                  formControlName="pocEmail"
+                  placeholder="person@gmail.com"
+                />
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Designation</mat-label>
+                <input
+                  matInput
+                  formControlName="designation"
+                  placeholder="Printer"
+                />
+              </mat-form-field>
+              @if(publisherFormGroup.get('id')?.value===null){
+              <mat-form-field>
+                <mat-label>Create Password</mat-label>
+                <input
+                  type="password"
+                  matInput
+                  formControlName="userPassword"
+                /> </mat-form-field
+              >}
+            </div>
+          </div>
+        </div>
+      </form>
+      <div class="bg-white shadow-sm border rounded-xl px-6 py-8">
         <div class="flex justify-between items-center">
-          <h3>
-            {{ "addsocialmedialinks" | translate }}
-          </h3>
+          <h2 class="text-lg font-semibold">Add Social Media Links</h2>
+
           <button
-            matButton
-            matButton="filled"
-            class="!bg-primary disabled:opacity-40"
-            (click)="this.addSocialMedia()"
+            mat-raised-button
+            color="primary"
+            (click)="addSocialMedia()"
             [disabled]="isAllSelected()"
+            class="!px-4 flex gap-1 items-center"
           >
-            <mat-icon class="material-icons">add_circle_outline</mat-icon>
-            {{ "addmore" | translate }}
+            <mat-icon>add</mat-icon> Add More
           </button>
         </div>
-        @for (group of publisherSocialMediaGroup.controls.socialMedia.controls;
-        track $index) {
-        <div [formGroupName]="$index">
-          <app-social-media
-            [socialMediaGroup]="group"
-            [socialMediaArray]="socialMediaArray"
-            [index]="$index"
-          ></app-social-media>
-        </div>
-        }
+
+        <form [formGroup]="publisherSocialMediaGroup" class="mt-6">
+          <div formArrayName="socialMedia" class="space-y-4">
+            @for (group of
+            publisherSocialMediaGroup.controls.socialMedia.controls; track
+            $index) {
+            <div
+              class="bg-gray-50 border rounded-lg p-4"
+              [formGroupName]="$index"
+            >
+              <app-social-media
+                [socialMediaGroup]="group"
+                [socialMediaArray]="socialMediaArray"
+                [index]="$index"
+              ></app-social-media>
+            </div>
+            }
+          </div>
+        </form>
       </div>
-    </form>
-    <form [formGroup]="publisherFormGroup">
-      <mat-card class="example-card !gap-4" appearance="outlined">
-        <mat-card-header class="flex flex-col gap-2">
-          <mat-card-title class="!text-primary text-left !font-medium">{{
-            "uploadlogo" | translate
-          }}</mat-card-title>
-          <mat-card-subtitle class="text-"
-            >{{
-              "imagesizeshouldbelessthan2MB" | translate
-            }}.</mat-card-subtitle
-          >
-        </mat-card-header>
-        <app-upload-file></app-upload-file>
-      </mat-card>
-    </form>
+    </div>
     <button matButton="filled" class="!bg-primary mt-8" matStepperNext>
       Next
     </button>
