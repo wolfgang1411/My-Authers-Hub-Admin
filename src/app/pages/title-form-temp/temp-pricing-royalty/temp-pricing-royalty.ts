@@ -27,11 +27,14 @@ import {
   Publishers,
   AccessLevel,
   PublishingType,
+  Platform,
 } from '../../../interfaces';
 import { MatInputModule } from '@angular/material/input';
 import { RoyaltyFormGroup } from '../../../interfaces/Royalty';
 import { combineLatest, debounceTime, Subject, takeUntil } from 'rxjs';
 import { StaticValuesService } from '../../../services/static-values';
+import { PlatformService } from '../../../services/platform';
+import { RoyaltyService } from '../../../services/royalty-service';
 
 @Component({
   selector: 'app-temp-pricing-royalty',
@@ -48,21 +51,13 @@ import { StaticValuesService } from '../../../services/static-values';
 export class TempPricingRoyalty implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   private readonly injector = inject(Injector);
-  private readonly ebookPlatforms: PlatForm[] = [
-    PlatForm.MAH_EBOOK,
-    PlatForm.KINDLE,
-    PlatForm.GOOGLE_PLAY,
-  ];
-  private readonly ebookPlatformSet = new Set<PlatForm>(this.ebookPlatforms);
-  private readonly printPlatforms: PlatForm[] = [
-    PlatForm.AMAZON,
-    PlatForm.FLIPKART,
-    PlatForm.MAH_PRINT,
-  ];
-  private readonly printPlatformSet = new Set<PlatForm>(this.printPlatforms);
   protected readonly PublishingType = PublishingType;
 
-  constructor(private staticValueService: StaticValuesService) {}
+  constructor(
+    private staticValueService: StaticValuesService,
+    private platformService: PlatformService,
+    private royaltyService: RoyaltyService
+  ) {}
 
   // Pricing inputs
   pricingControls = input.required<FormArray<PricingGroup>>();
@@ -84,28 +79,25 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
   });
 
   displayedColumns = computed(() => {
-    const platforms = Object.keys(
-      this.staticValueService.staticValues()?.PlatForm || {}
-    ) as PlatForm[];
-
+    const allPlatforms = this.platformService.platforms();
     const publishingType = this.publishingType();
+
+    if (!allPlatforms.length) {
+      return [];
+    }
 
     if (publishingType === PublishingType.ONLY_EBOOK) {
       // For ebook-only titles, only show ebook platforms
-      return platforms.filter((platform) =>
-        this.ebookPlatformSet.has(platform)
-      );
+      return allPlatforms.filter((p) => p.type === 'EBOOK').map((p) => p.name);
     }
 
     if (publishingType === PublishingType.ONLY_PRINT) {
-      // For print-only titles, only show print platforms (exclude ebook platforms)
-      return platforms.filter((platform) =>
-        this.printPlatformSet.has(platform)
-      );
+      // For print-only titles, only show print platforms
+      return allPlatforms.filter((p) => p.type === 'PRINT').map((p) => p.name);
     }
 
     // For PRINT_EBOOK, show all platforms
-    return platforms;
+    return allPlatforms.map((p) => p.name);
   });
 
   // Author percentage form controls (one per author)
@@ -116,15 +108,25 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
   // Publisher percentage (calculated automatically)
   publisherPercentage = signal<number>(0);
 
-  // Total royalties per platform
-  totalRoyalties = signal<Partial<Record<PlatForm, number>>>({});
+  // Total royalties per platform (using platform names)
+  totalRoyalties = signal<Partial<Record<string, number>>>({});
 
-  // Royalty amount calculations
+  // Royalty amount calculations (using platform names)
   totalRoyaltiesAmount = signal<
-    Record<string, Partial<Record<PlatForm, number>> | undefined>
+    Record<string, Partial<Record<string, number>> | undefined>
   >({});
 
-  ngOnInit() {
+  // Extra margin from custom print cost (only for publishers on print platforms)
+  publisherExtraMargin = signal<Partial<Record<string, number>>>({});
+
+  async ngOnInit() {
+    // Fetch platforms from API
+    try {
+      await this.platformService.fetchPlatforms();
+    } catch (error) {
+      console.error('Failed to fetch platforms:', error);
+    }
+
     // Setup reactive calculations first
     this.calculateTotalRoyalties();
     this.calculateRoyaltyAmountPerPerson();
@@ -361,7 +363,7 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
             ),
             authorId: new FormControl<number | null>(author.id),
             publisherId: new FormControl<number | null>(null),
-            platform: new FormControl<PlatForm | null>(platform),
+            platform: new FormControl<string | null>(platform),
             percentage: new FormControl<number | null>(percentage as number, [
               Validators.required,
             ]),
@@ -436,7 +438,7 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
           ),
           authorId: new FormControl<number | null>(null),
           publisherId: new FormControl<number | null>(publisher.id),
-          platform: new FormControl<PlatForm | null>(platform),
+          platform: new FormControl<string | null>(platform),
           percentage: new FormControl<number | null>(publisherPercentage, [
             Validators.required,
           ]),
@@ -467,12 +469,11 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     this.royaltiesController()
       .valueChanges.pipe(debounceTime(400), takeUntil(this.destroy$))
       .subscribe((data) => {
-        const temp: Partial<Record<PlatForm, number>> = {};
-        Object.keys(
-          this.staticValueService.staticValues()?.PlatForm || {}
-        ).forEach((platform) => {
-          temp[platform as PlatForm] = data
-            .filter((d) => d.platform === platform)
+        const temp: Partial<Record<string, number>> = {};
+        const platforms = this.platformService.platforms();
+        platforms.forEach((platform) => {
+          temp[platform.name] = data
+            .filter((d) => d.platform === platform.name)
             .reduce((a, { percentage }) => a + (percentage || 0), 0);
         });
         this.totalRoyalties.set(temp);
@@ -508,14 +509,33 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
    */
   private calculateRoyaltyAmountPerPerson(): void {
     // Setup subscription for automatic updates when form values change
+    // Increased debounce time to reduce API calls
+    // Also watch for changes in printingPrice and customPrintCost
     combineLatest([
       this.royaltiesController().valueChanges,
       this.pricingControls().valueChanges,
     ])
-      .pipe(debounceTime(400), takeUntil(this.destroy$))
+      .pipe(debounceTime(600), takeUntil(this.destroy$))
       .subscribe(() => {
         this.updateRoyaltyAmounts();
       });
+
+    // Watch for changes in printing price or custom print cost
+    // Use effect to watch signal changes
+    runInInjectionContext(this.injector, () => {
+      effect(() => {
+        // Access signals to trigger effect
+        const printingPrice = this.printingPrice();
+        const customPrintCost = this.customPrintCost();
+        
+        // Recalculate royalties when printing costs change
+        if (printingPrice !== null || customPrintCost !== null) {
+          setTimeout(() => {
+            this.updateRoyaltyAmounts();
+          }, 300);
+        }
+      });
+    });
 
     // Also calculate immediately on initialization
     setTimeout(() => {
@@ -524,14 +544,157 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
   }
 
   /**
-   * Manually calculate and update royalty amounts
+   * Manually calculate and update royalty amounts using centralized API
    * This is called when royalties are updated with emitEvent: false
    */
-  private updateRoyaltyAmounts(): void {
+  private async updateRoyaltyAmounts(): Promise<void> {
     const data = this.royaltiesController().value;
-    const temp: Record<string, Partial<Record<PlatForm, number>>> = {};
+    const pricingData = this.pricingControls().value;
+
+    // Group by platform: collect price and all unique percentages
+    const platformMap = new Map<
+      string,
+      { price: number; percentages: Set<string> }
+    >();
+
+    // First, collect all platforms and their MRP (not salesPrice, we need MRP for calculation)
+    pricingData.forEach((pricing) => {
+      if (!pricing.platform || !pricing.mrp) return;
+
+      const platform = pricing.platform;
+      const mrp = pricing.mrp; // Use MRP for calculation
+
+      if (!platformMap.has(platform)) {
+        platformMap.set(platform, {
+          price: mrp,
+          percentages: new Set(),
+        });
+      } else {
+        platformMap.get(platform)!.price = mrp;
+      }
+    });
+
+    // Collect all percentages for each platform
+    data.forEach(({ percentage, platform }) => {
+      if (!platform || percentage === null || percentage === undefined) return;
+
+      const platformData = platformMap.get(platform);
+      if (platformData) {
+        platformData.percentages.add(percentage.toString());
+      }
+    });
+
+    // Prepare API request - one item per platform with all percentages
+    const apiItems: Array<{
+      platform: string;
+      price: number;
+      division: string[];
+    }> = [];
+
+    platformMap.forEach((platformData, platform) => {
+      if (platformData.percentages.size > 0) {
+        apiItems.push({
+          platform,
+          price: platformData.price,
+          division: Array.from(platformData.percentages).sort(),
+        });
+      }
+    });
+
+    if (apiItems.length === 0) {
+      this.totalRoyaltiesAmount.set({});
+      return;
+    }
+
+    try {
+      // Call centralized API with actual printing price (not custom)
+      // Custom print cost margin is calculated separately for display
+      const response = await this.royaltyService.calculateRoyalties({
+        items: apiItems,
+        printingPrice: this.printingPrice() || 0, // Use actual print cost for calculations
+      });
+
+      // Create a map: platform -> divisionValue (percentage -> amount)
+      const platformDivisionMap = new Map<string, Record<string, number>>();
+      response.divisionValue.forEach((item) => {
+        platformDivisionMap.set(item.platform, item.divisionValue);
+      });
+
+      // Map API response back to our structure
+      const temp: Record<string, Partial<Record<string, number>>> = {};
+      const extraMargin: Partial<Record<string, number>> = {};
+
+      // Calculate extra margin for publishers from custom print cost
+      const actualPrintCost = this.printingPrice() || 0;
+      const customPrint = this.customPrintCost();
+      const publisherId = this.publisher()?.id;
+
+      // Calculate extra margin per platform (only for print platforms)
+      const printPlatforms = this.displayedColumns().filter(
+        (platform) => !this.isEbookPlatform(platform)
+      );
+      
+      if (
+        publisherId &&
+        customPrint !== null &&
+        customPrint !== undefined &&
+        customPrint > actualPrintCost
+      ) {
+        const marginPerUnit = customPrint - actualPrintCost;
+        printPlatforms.forEach((platform) => {
+          extraMargin[platform] = marginPerUnit;
+        });
+      }
+
+      data.forEach(({ authorId, publisherId: royaltyPublisherId, percentage, platform }) => {
+        if (!platform || percentage === null || percentage === undefined)
+          return;
+
+        const key = authorId ? 'author' + authorId : 'publisher' + royaltyPublisherId;
+
+        if (!temp[key]) {
+          temp[key] = {};
+        }
+
+        const divisionValue = platformDivisionMap.get(platform);
+        let baseAmount = 0;
+        if (divisionValue) {
+          baseAmount = divisionValue[percentage.toString()] || 0;
+        }
+
+        // Add extra margin to publisher's royalty amount for print platforms
+        if (
+          royaltyPublisherId &&
+          publisherId === royaltyPublisherId &&
+          !this.isEbookPlatform(platform) &&
+          extraMargin[platform]
+        ) {
+          // Extra margin is a flat amount per unit (not percentage-based)
+          temp[key][platform] = baseAmount + (extraMargin[platform] || 0);
+        } else {
+          temp[key][platform] = baseAmount;
+        }
+      });
+
+      this.totalRoyaltiesAmount.set(temp);
+      this.publisherExtraMargin.set(extraMargin);
+    } catch (error) {
+      console.error('Failed to calculate royalties:', error);
+      // Fallback to local calculation on error
+      this.updateRoyaltyAmountsLocal();
+    }
+  }
+
+  /**
+   * Fallback local calculation if API fails
+   */
+  private updateRoyaltyAmountsLocal(): void {
+    const data = this.royaltiesController().value;
+    const temp: Record<string, Partial<Record<string, number>>> = {};
 
     data.forEach(({ authorId, publisherId, percentage, platform }) => {
+      if (!platform) return;
+
       const key = authorId ? 'author' + authorId : 'publisher' + publisherId;
 
       if (!temp[key]) {
@@ -542,12 +705,10 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
         ({ controls }) => controls.platform.value === platform
       )?.controls.salesPrice?.value;
 
-      // For ebook platforms, don't subtract printing cost
-      // For other platforms, subtract printing cost
-      const isEbookPlatform = this.isEbookPlatform(platform as PlatForm);
+      const isEbookPlatform = this.isEbookPlatform(platform);
       const printingCost = isEbookPlatform ? 0 : this.printingPrice() || 0;
 
-      temp[key][platform as PlatForm] = Number(
+      temp[key][platform] = Number(
         percentage && salesPrice
           ? ((salesPrice - printingCost) * (percentage / 100)).toFixed(2)
           : 0
@@ -657,10 +818,10 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       return this.pricingControls().controls;
     }
 
-    const allowedSet = new Set<PlatForm>(allowedPlatforms);
+    const allowedSet = new Set<string>(allowedPlatforms);
 
     return this.pricingControls().controls.filter((control) => {
-      const platform = control.controls.platform.value as PlatForm | null;
+      const platform = control.controls.platform.value as string | null;
       if (!platform) {
         return true;
       }
@@ -668,10 +829,11 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     });
   }
 
-  private isEbookPlatform(platform: PlatForm | null | undefined): boolean {
+  isEbookPlatform(platform: string | null | undefined): boolean {
     if (!platform) {
       return false;
     }
-    return this.ebookPlatformSet.has(platform);
+    const platformData = this.platformService.getPlatformByName(platform);
+    return platformData?.type === 'EBOOK';
   }
 }

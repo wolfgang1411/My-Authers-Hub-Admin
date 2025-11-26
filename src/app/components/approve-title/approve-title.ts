@@ -21,6 +21,7 @@ import {
   TitleDistribution,
 } from '../../interfaces';
 import { StaticValuesService } from '../../services/static-values';
+import { PlatformService } from '../../services/platform';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 
@@ -40,6 +41,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 })
 export class ApproveTitle implements OnInit {
   staticValueService = inject(StaticValuesService);
+  platformService = inject(PlatformService);
   data = inject<Inputs>(MAT_DIALOG_DATA);
 
   form = new FormGroup({
@@ -49,42 +51,26 @@ export class ApproveTitle implements OnInit {
   get gridStyle(): { [key: string]: string } {
     const columnCount = this.form.controls.platformIdentifier.controls.length + 1;
     return {
-      'grid-template-columns': `repeat(${columnCount}, minmax(0, 1fr))`,
+      'grid-template-columns': `180px repeat(${columnCount - 1}, minmax(150px, 1fr))`,
+      'min-width': 'max-content',
     };
   }
 
   ngOnInit(): void {
-    const allPlatforms = Object.keys(
-      this.staticValueService.staticValues()?.PlatForm || {}
-    ) as PlatForm[];
+    const allPlatforms = this.platformService.platforms();
 
     // Filter platforms based on publishing type
     const publishingType = this.data.publishingType;
     const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
     const isOnlyPrint = publishingType === PublishingType.ONLY_PRINT;
 
-    const ebookPlatforms: PlatForm[] = [
-      PlatForm.MAH_EBOOK,
-      PlatForm.KINDLE,
-      PlatForm.GOOGLE_PLAY,
-    ];
-    const printPlatforms: PlatForm[] = [
-      PlatForm.AMAZON,
-      PlatForm.FLIPKART,
-      PlatForm.MAH_PRINT,
-    ];
-
-    let platforms: PlatForm[];
+    let platforms: typeof allPlatforms;
     if (isOnlyEbook) {
       // For ebook-only titles, only show ebook platforms
-      platforms = allPlatforms.filter((platform) =>
-        ebookPlatforms.includes(platform)
-      );
+      platforms = allPlatforms.filter((p) => p.type === 'EBOOK');
     } else if (isOnlyPrint) {
       // For print-only titles, only show print platforms
-      platforms = allPlatforms.filter((platform) =>
-        printPlatforms.includes(platform)
-      );
+      platforms = allPlatforms.filter((p) => p.type === 'PRINT');
     } else {
       // For PRINT_EBOOK, show all platforms
       platforms = allPlatforms;
@@ -93,26 +79,20 @@ export class ApproveTitle implements OnInit {
     platforms.forEach((platform) => {
       this.form.controls.platformIdentifier.push(
         new FormGroup({
-          platform: new FormControl(platform, { nonNullable: true }),
-          type: new FormControl(this.getPlatformType(platform), {
+          platform: new FormControl<string | null | undefined>(platform.name),
+          type: new FormControl(this.getPlatformType(platform.name), {
             nonNullable: true,
           }),
-          uniqueIdentifier: new FormControl(''),
-          distributionLink: new FormControl(''),
+          uniqueIdentifier: new FormControl<string | null>(''),
+          distributionLink: new FormControl<string | null>(''),
         })
       );
     });
   }
 
-  getPlatformType(platform: PlatForm): BookingType {
-    switch (platform) {
-      case PlatForm.GOOGLE_PLAY:
-      case PlatForm.KINDLE:
-      case PlatForm.MAH_EBOOK:
-        return BookingType.EBOOK;
-      default:
-        return BookingType.PRINT;
-    }
+  getPlatformType(platformName: string): BookingType {
+    const platform = this.platformService.getPlatformByName(platformName);
+    return platform?.type || BookingType.PRINT;
   }
 
   onSubmit() {

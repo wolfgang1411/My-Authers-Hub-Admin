@@ -194,7 +194,7 @@
         </h3>
       </div>
 
-      <div class="overflow-x-auto">
+      <div class="overflow-x-auto -mx-4 px-4">
         <ul class="pricing-container">
           <li class="pricing-header">
             <span class="font-semibold text-gray-800 flex items-center gap-2">
@@ -524,13 +524,13 @@
     @if (displayedColumns().length > 0 && visiblePricingControls().length > 0) {
     <div class="flex flex-col gap-2 mt-4">
       <h3 class="text-lg font-medium">Royalty Amount Calculations</h3>
-      <div class="overflow-x-auto">
+      <div class="overflow-x-auto -mx-4 px-4">
         <table class="min-w-full border-collapse border border-gray-300">
           <thead>
             <tr class="bg-gray-100">
-              <th class="border border-gray-300 px-4 py-2 text-left">Name</th>
+              <th class="border border-gray-300 px-4 py-2 text-left sticky left-0 bg-gray-100 z-10">Name</th>
               @for (platform of displayedColumns(); track platform) {
-              <th class="border border-gray-300 px-4 py-2 text-center">
+              <th class="border border-gray-300 px-4 py-2 text-center min-w-[140px]">
                 {{ platform | translate }}
               </th>
               }
@@ -539,21 +539,21 @@
           <tbody>
             @for (author of authors(); track author.id) {
             <tr>
-              <td class="border border-gray-300 px-4 py-2 font-medium">
+              <td class="border border-gray-300 px-4 py-2 font-medium sticky left-0 bg-white z-10">
                 {{
                   author.name ||
                     author.user?.firstName + " " + author.user?.lastName
                 }}
               </td>
               @for (platform of displayedColumns(); track platform) {
-              <td class="border border-gray-300 px-4 py-2 text-center">
+              <td class="border border-gray-300 px-4 py-2 text-center min-w-[140px]">
                 {{ (totalRoyaltiesAmount()['author' + author.id]?.[platform] || 0) | currency }}
               </td>
               }
             </tr>
             } @if (publisher()) {
             <tr class="bg-blue-50">
-              <td class="border border-gray-300 px-4 py-2 font-medium">
+              <td class="border border-gray-300 px-4 py-2 font-medium sticky left-0 bg-blue-50 z-10">
                 {{
                   publisher()?.name ||
                     publisher()?.user?.firstName +
@@ -564,9 +564,20 @@
               </td>
               @for (platform of displayedColumns(); track platform) {
               <td
-                class="border border-gray-300 px-4 py-2 text-center font-medium"
+                class="border border-gray-300 px-4 py-2 text-center font-medium min-w-[140px]"
               >
+                @if (!isEbookPlatform(platform) && publisherExtraMargin()[platform]) {
+                <div class="flex flex-col gap-1">
+                  <div class="font-semibold text-blue-700">
+                    {{ (totalRoyaltiesAmount()['publisher' + publisher()?.id]?.[platform] || 0) | currency }}
+                  </div>
+                  <div class="text-xs text-green-600 font-medium">
+                    (includes {{ (publisherExtraMargin()[platform] || 0) | currency }} custom print margin)
+                  </div>
+                </div>
+                } @else {
                 {{ (totalRoyaltiesAmount()['publisher' + publisher()?.id]?.[platform] || 0) | currency }}
+                }
               </td>
               }
             </tr>

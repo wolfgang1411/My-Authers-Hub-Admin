@@ -486,13 +486,13 @@ export interface TitleDetailsFormGroup {
 
 export interface PlatFormIndetifierGroup {
   uniqueIdentifier: FormControl<string | null>;
-  platform: FormControl<PlatForm>;
+  platform: FormControl<string | null | undefined>;
   type: FormControl<BookingType>;
   distributionLink: FormControl<string | null>;
 }
 
 export interface CreatePlatformIdentifier {
-  platform: PlatForm;
+  platform: string;
   type: BookingType;
   uniqueIdentifier?: string;
   distributionLink?: string;

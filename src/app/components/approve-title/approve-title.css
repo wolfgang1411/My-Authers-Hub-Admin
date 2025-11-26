@@ -2,10 +2,14 @@
   border: 1px solid gray;
   display: flex;
   flex-direction: column;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  min-width: 100%;
 }
 
 .my-table > tr {
   display: grid;
+  min-width: max-content; /* Ensure grid doesn't shrink below content */
 }
 
 .my-table > tr:not(:last-child) {
@@ -17,9 +21,38 @@
   padding: 0.5rem;
   display: block;
   white-space: nowrap;
+  min-width: 150px; /* Minimum width for platform columns */
+}
+
+/* Sticky first column for better scrolling UX */
+.my-table > tr > th:first-child,
+.my-table > tr > td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background-color: inherit;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+  min-width: 180px; /* Wider first column for labels */
 }
 
 .my-table > tr > td:not(:last-child),
 .my-table > tr > th:not(:last-child) {
   border-right: 1px solid gray;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .my-table {
+    overflow-x: scroll;
+  }
+
+  .my-table > tr > td,
+  .my-table > tr > th {
+    min-width: 120px;
+  }
+
+  .my-table > tr > th:first-child,
+  .my-table > tr > td:first-child {
+    min-width: 150px;
+  }
 }
