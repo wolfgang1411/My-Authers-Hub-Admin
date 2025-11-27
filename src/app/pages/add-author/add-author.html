@@ -79,8 +79,13 @@
               @if(authorFormGroup.get('id')?.value===null){
               <mat-form-field class="w-full">
                 <mat-label>Create Password</mat-label>
-                <input matInput type="password" formControlName="password" />
+                <input
+                  matInput
+                  type="password"
+                  formControlName="userPassword"
+                />
               </mat-form-field>
+
               }
 
               <mat-form-field class="md:col-span-3 w-full">

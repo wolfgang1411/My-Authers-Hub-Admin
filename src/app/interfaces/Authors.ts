@@ -26,6 +26,7 @@ export interface Author {
   publishers: Publisher[];
   Royalty: Royalty[];
   signupCode?: string;
+  userPassword?: string;
   user: User;
   socialMedias: socialMediaGroup[];
   noOfTitles: number;

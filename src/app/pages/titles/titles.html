@@ -52,6 +52,8 @@
           </mat-select>
         </mat-form-field>
       </div> -->
+      @if (loggedInUser()?.accessLevel !== 'AUTHER') {
+
       <button
         matButton
         matButton="filled"
@@ -82,6 +84,7 @@
         <mat-icon>menu_book</mat-icon>
         {{ "mytitles" | translate }}
       </button>
+      }
     </div>
   </div>
   <div class="flex w-full gap-4 mt-4">
@@ -207,27 +210,26 @@
       >
         <mat-icon class="!text-white">visibility</mat-icon>
       </button>
-      @if(loggedInUser()?.accessLevel === 'PUBLISHER') {
-        @if(element.status === 'APPROVED') {
-          <button
-            class="!bg-primary"
-            mat-icon-button
-            [routerLink]="['/title', element.id]"
-            [title]="'raiseupdateticket' | translate"
-          >
-            <mat-icon class="!text-white">support_agent</mat-icon>
-          </button>
-        } @else if(element.status !== 'REJECTED') {
-          <button
-            class="!bg-primary"
-            mat-icon-button
-            [routerLink]="['/title', element.id]"
-            [title]="'edit' | translate"
-          >
-            <mat-icon class="!text-white">edit</mat-icon>
-          </button>
-        }
-      } @else if(loggedInUser()?.accessLevel !== 'PUBLISHER' &&
+      @if(loggedInUser()?.accessLevel === 'PUBLISHER') { @if(element.status ===
+      'APPROVED') {
+      <button
+        class="!bg-primary"
+        mat-icon-button
+        [routerLink]="['/title', element.id]"
+        [title]="'raiseupdateticket' | translate"
+      >
+        <mat-icon class="!text-white">support_agent</mat-icon>
+      </button>
+      } @else if(element.status !== 'REJECTED') {
+      <button
+        class="!bg-primary"
+        mat-icon-button
+        [routerLink]="['/title', element.id]"
+        [title]="'edit' | translate"
+      >
+        <mat-icon class="!text-white">edit</mat-icon>
+      </button>
+      } } @else if(loggedInUser()?.accessLevel !== 'PUBLISHER' &&
       loggedInUser()?.accessLevel !== 'AUTHER') {
       <button
         class="!bg-primary"

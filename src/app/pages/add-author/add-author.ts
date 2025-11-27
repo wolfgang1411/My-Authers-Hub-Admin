@@ -65,6 +65,8 @@ import { Country, State, City } from 'country-state-city';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
+import md5 from 'md5';
+
 @Component({
   selector: 'app-add-author',
   imports: [
@@ -322,6 +324,8 @@ export class AddAuthor implements OnInit {
     }
 
     if (this.authorId) {
+      this.authorFormGroup.controls.userPassword.disable();
+
       const response = await this.authorsService.getAuthorrById(this.authorId);
       this.authorDetails = response;
       this.isPrefilling = true;
@@ -387,7 +391,7 @@ export class AddAuthor implements OnInit {
     phoneNumber: ['', Validators.required],
     username: ['', Validators.required],
     about: ['', Validators.required],
-    password: [''],
+    userPassword: ['', [Validators.required, Validators.minLength(8)]],
     authorImage: [''],
     medias: this._formBuilder.array<Media>([], Validators.required),
     signupCode: <string | null>null,
@@ -749,6 +753,9 @@ export class AddAuthor implements OnInit {
       const authorData = {
         ...this.authorFormGroup.value,
         email: this.authorFormGroup.controls.email.value,
+        userPassword: this.authorFormGroup.controls.userPassword.value
+          ? md5(this.authorFormGroup.controls.userPassword.value)
+          : undefined,
       } as Author;
 
       if (this.loggedInUser()?.accessLevel === 'SUPERADMIN' || !this.authorId) {
