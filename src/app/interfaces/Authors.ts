@@ -17,7 +17,7 @@ export interface Author {
   profileLink?: string; // Optional link to the author's profile
   username: string;
   about: string;
-  authorMedia: Media[];
+  medias: Media[];
   bankDetails?: BankDetails[];
   totalEarning: number;
   links: string[];

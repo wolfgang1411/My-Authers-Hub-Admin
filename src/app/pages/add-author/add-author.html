@@ -17,100 +17,125 @@
     class="!text-accent !p-0"
     label="Fill out your basic details"
   >
-    <form [formGroup]="authorFormGroup">
-      <div class="grid-cols-4 grid gap-4 my-4">
-        <mat-form-field>
-          <mat-label>{{ "authorname" | translate }}</mat-label>
-          <input
-            matInput
-            [placeholder]="'authorname' | translate"
-            formControlName="name"
-            required
-          />
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ "emailid" | translate }}</mat-label>
-          <input
-            matInput
-            placeholder="abc@gmail.com"
-            formControlName="email"
-            required
-          />
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ "username" | translate }}</mat-label>
-          <input
-            matInput
-            placeholder="username"
-            formControlName="username"
-            required
-          />
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ "poccontactnumber" | translate }}</mat-label>
-          <input
-            matInput
-            placeholder="+91-########33"
-            formControlName="phoneNumber"
-            required
-          />
-        </mat-form-field>
-      </div>
-      <mat-form-field class="!flex w-full">
-        <mat-label>{{ "about" | translate }}</mat-label>
-        <textarea
-          matInput
-          placeholder="xyz"
-          formControlName="about"
-          required
-          rows="4"
-        ></textarea>
-      </mat-form-field>
-    </form>
-    <form [formGroup]="authorSocialMediaGroup">
-      <div formArrayName="socialMedia" class="flex flex-col gap-4 my-4">
+    <div class="mx-auto py-6 space-y-10">
+      <!-- 🔷 AUTHOR DETAILS -->
+      <form [formGroup]="authorFormGroup">
+        <div class="bg-white shadow-sm border rounded-xl px-6 py-8">
+          <div class="flex flex-col md:flex-row gap-10">
+            <!-- ⬅ Profile Image Upload -->
+            <div class="flex flex-col items-center shrink-0">
+              <app-upload-file
+                [prefillMedia]="mediasArray.value[0] ?? null"
+                (mediaAdded)="onMediaAdded($event)"
+              ></app-upload-file>
+
+              <p
+                class="mt-2 text-[11px] text-gray-500 text-center leading-tight"
+              >
+                Upload Author Profile Image <br />
+                Recommended 300×300px – Max 2MB <br />
+                JPG · PNG · GIF Supported
+              </p>
+            </div>
+
+            <!-- 🔹 Author Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+              <mat-form-field class="w-full">
+                <mat-label>{{ "authorname" | translate }}</mat-label>
+                <input
+                  matInput
+                  placeholder="Author Name"
+                  formControlName="name"
+                />
+              </mat-form-field>
+
+              <mat-form-field class="w-full">
+                <mat-label>{{ "emailid" | translate }}</mat-label>
+                <input
+                  matInput
+                  placeholder="author@gmail.com"
+                  formControlName="email"
+                />
+              </mat-form-field>
+
+              <mat-form-field class="w-full">
+                <mat-label>{{ "username" | translate }}</mat-label>
+                <input
+                  matInput
+                  placeholder="username"
+                  formControlName="username"
+                />
+              </mat-form-field>
+
+              <mat-form-field class="w-full">
+                <mat-label>{{ "poccontactnumber" | translate }}</mat-label>
+                <input
+                  matInput
+                  placeholder="+91-9876543210"
+                  formControlName="phoneNumber"
+                />
+              </mat-form-field>
+
+              @if(authorFormGroup.get('id')?.value===null){
+              <mat-form-field class="w-full">
+                <mat-label>Create Password</mat-label>
+                <input matInput type="password" formControlName="password" />
+              </mat-form-field>
+              }
+
+              <mat-form-field class="md:col-span-3 w-full">
+                <mat-label>{{ "about" | translate }}</mat-label>
+                <textarea
+                  matInput
+                  formControlName="about"
+                  rows="4"
+                  placeholder="Short biography..."
+                ></textarea>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <!-- 🔷 SOCIAL MEDIA LINKS -->
+      <div class="bg-white shadow-sm border rounded-xl px-6 py-8">
         <div class="flex justify-between items-center">
-          <h3>
+          <h2 class="text-lg font-semibold">
             {{ "addsocialmedialinks" | translate }}
-          </h3>
+          </h2>
+
           <button
-            matButton
-            matButton="filled"
-            class="!bg-primary disabled:opacity-40"
-            (click)="this.addSocialMedia()"
+            mat-raised-button
+            color="primary"
+            (click)="addSocialMedia()"
             [disabled]="isAllSelected()"
+            class="!px-4 flex gap-1 items-center"
           >
-            <mat-icon class="material-icons">add_circle_outline</mat-icon>
+            <mat-icon>add</mat-icon>
             {{ "addmore" | translate }}
           </button>
         </div>
-        @for (group of authorSocialMediaGroup.controls.socialMedia.controls;
-        track $index) {
-        <div [formGroupName]="$index">
-          <app-social-media
-            [socialMediaGroup]="group"
-            [socialMediaArray]="socialMediaArray"
-            [index]="$index"
-          ></app-social-media>
-        </div>
-        }
+
+        <form [formGroup]="authorSocialMediaGroup" class="mt-6">
+          <div formArrayName="socialMedia" class="space-y-4">
+            @for (group of authorSocialMediaGroup.controls.socialMedia.controls;
+            track $index) {
+            <div
+              class="bg-gray-50 border rounded-lg p-4"
+              [formGroupName]="$index"
+            >
+              <app-social-media
+                [socialMediaGroup]="group"
+                [socialMediaArray]="socialMediaArray"
+                [index]="$index"
+              ></app-social-media>
+            </div>
+            }
+          </div>
+        </form>
       </div>
-    </form>
-    <form [formGroup]="authorFormGroup">
-      <mat-card class="example-card !gap-4" appearance="outlined">
-        <mat-card-header class="flex flex-col gap-2">
-          <mat-card-title class="!text-primary text-left !font-medium">{{
-            "uploadauthorsimage" | translate
-          }}</mat-card-title>
-          <mat-card-subtitle class="text-"
-            >{{
-              "imagesizeshouldbelessthan2MB" | translate
-            }}.</mat-card-subtitle
-          >
-        </mat-card-header>
-        <app-upload-file></app-upload-file>
-      </mat-card>
-    </form>
+    </div>
+
     <button matButton="filled" class="!bg-primary mt-8" matStepperNext>
       Next
     </button>

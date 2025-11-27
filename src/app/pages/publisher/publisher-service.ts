@@ -2,7 +2,9 @@ import { Injectable } from '@angular/core';
 import { Server } from '../../services/server';
 import {
   DistributionType,
+  Media,
   PublisherFilter,
+  PublisherMediaType,
   Publishers,
   PublisherStatus,
   PublishingPoints,
@@ -13,6 +15,7 @@ import { Logger } from '../../services/logger';
 import { LoaderService } from '../../services/loader';
 import { Distribution } from '../../interfaces/Distribution';
 import { HttpErrorResponse } from '@angular/common/http';
+import { S3Service } from 'src/app/services/s3';
 
 @Injectable({
   providedIn: 'root',
@@ -21,7 +24,8 @@ export class PublisherService {
   constructor(
     private server: Server,
     private logger: Logger,
-    private loader: LoaderService
+    private loader: LoaderService,
+    private s3Upload: S3Service
   ) {}
 
   async getPublishers(filter?: PublisherFilter, showLoader = true) {
@@ -36,9 +40,10 @@ export class PublisherService {
         !showLoader
       );
     } catch (error) {
-      const errorToLog = error instanceof HttpErrorResponse && error.status !== 500 
-        ? error.error 
-        : error;
+      const errorToLog =
+        error instanceof HttpErrorResponse && error.status !== 500
+          ? error.error
+          : error;
       this.logger.logError(errorToLog);
       throw error;
     }
@@ -50,9 +55,10 @@ export class PublisherService {
         this.server.get<Publishers>(`publishers/${id}`)
       );
     } catch (error) {
-      const errorToLog = error instanceof HttpErrorResponse && error.status !== 500 
-        ? error.error 
-        : error;
+      const errorToLog =
+        error instanceof HttpErrorResponse && error.status !== 500
+          ? error.error
+          : error;
       this.logger.logError(errorToLog);
       throw error;
     }
@@ -67,9 +73,10 @@ export class PublisherService {
         )
       );
     } catch (error) {
-      const errorToLog = error instanceof HttpErrorResponse && error.status !== 500 
-        ? error.error 
-        : error;
+      const errorToLog =
+        error instanceof HttpErrorResponse && error.status !== 500
+          ? error.error
+          : error;
       this.logger.logError(errorToLog);
       throw error;
     }
@@ -85,9 +92,10 @@ export class PublisherService {
         })
       );
     } catch (error) {
-      const errorToLog = error instanceof HttpErrorResponse && error.status !== 500 
-        ? error.error 
-        : error;
+      const errorToLog =
+        error instanceof HttpErrorResponse && error.status !== 500
+          ? error.error
+          : error;
       this.logger.logError(errorToLog);
       throw error;
     }
@@ -98,9 +106,10 @@ export class PublisherService {
         this.server.post('publishers/invite', invite)
       );
     } catch (error) {
-      const errorToLog = error instanceof HttpErrorResponse && error.status !== 500 
-        ? error.error 
-        : error;
+      const errorToLog =
+        error instanceof HttpErrorResponse && error.status !== 500
+          ? error.error
+          : error;
       this.logger.logError(errorToLog);
       throw error;
     }
@@ -118,9 +127,10 @@ export class PublisherService {
         })
       );
     } catch (error) {
-      const errorToLog = error instanceof HttpErrorResponse && error.status !== 500 
-        ? error.error 
-        : error;
+      const errorToLog =
+        error instanceof HttpErrorResponse && error.status !== 500
+          ? error.error
+          : error;
       this.logger.logError(errorToLog);
       throw error;
     }
@@ -132,9 +142,10 @@ export class PublisherService {
         this.server.post(`publishers/${publisherId}/reject`, {})
       );
     } catch (error) {
-      const errorToLog = error instanceof HttpErrorResponse && error.status !== 500 
-        ? error.error 
-        : error;
+      const errorToLog =
+        error instanceof HttpErrorResponse && error.status !== 500
+          ? error.error
+          : error;
       this.logger.logError(errorToLog);
       throw error;
     }
@@ -143,7 +154,7 @@ export class PublisherService {
   buyPublishingPoints(
     distributionType: DistributionType,
     points: number,
-    returnUrl:string,
+    returnUrl: string,
     publisherId?: number
   ) {
     try {
@@ -156,13 +167,14 @@ export class PublisherService {
           distributionType,
           points,
           publisherId,
-          returnUrl
+          returnUrl,
         })
       );
     } catch (error) {
-      const errorToLog = error instanceof HttpErrorResponse && error.status !== 500 
-        ? error.error 
-        : error;
+      const errorToLog =
+        error instanceof HttpErrorResponse && error.status !== 500
+          ? error.error
+          : error;
       this.logger.logError(errorToLog);
       throw error;
     }
@@ -176,11 +188,53 @@ export class PublisherService {
         })
       );
     } catch (error) {
-      const errorToLog = error instanceof HttpErrorResponse && error.status !== 500 
-        ? error.error 
-        : error;
+      const errorToLog =
+        error instanceof HttpErrorResponse && error.status !== 500
+          ? error.error
+          : error;
       this.logger.logError(errorToLog);
       throw error;
+    }
+  }
+  uploadPublisherImage(
+    file: File,
+    publisherId: number
+  ): Promise<{ id: number; url: string }> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const { name } = await this.s3Upload.uploadMedia(file);
+        const media = await this.server.post<Media>(
+          `publisher-media/${publisherId}/medias`,
+          {
+            keyname: name,
+            mime: file.type,
+            type: PublisherMediaType.LOGO,
+          }
+        );
+        resolve(media);
+      } catch (error) {
+        this.logger.logError(error);
+        reject(error);
+      }
+    });
+  }
+  async updateMyImage(file: File, publisherId: number) {
+    try {
+      const media = await this.uploadPublisherImage(file, publisherId);
+      return media;
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+  async removeImage(mediaId: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.delete(`publisher-media/medias/${mediaId}`)
+      );
+    } catch (error) {
+      throw error;
+      this.logger.logError(error);
     }
   }
 }

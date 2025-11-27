@@ -42,6 +42,7 @@ import {
   Cities,
   Countries,
   createBankDetails,
+  Media,
   Publishers,
   SocialMediaType,
   States,
@@ -151,7 +152,7 @@ export class AddPublisher {
   states!: States[];
   cities!: Cities[];
   isPrefilling: boolean = false;
-
+  mediaToDeleteId: number | null = null;
   isAllSelected = computed(() => {
     return this.selectedTypes().length >= this.socialMediaArray.length;
   });
@@ -361,13 +362,12 @@ export class AddPublisher {
     email: ['', [Validators.required, Validators.email]],
     name: ['', Validators.required],
     designation: ['', Validators.required],
-    logo: [''],
+    medias: this._formBuilder.array<Media>([]),
     userPassword: ['', [Validators.required, Validators.minLength(8)]],
     signupCode: <string | null>null,
   });
 
   selectedBankPrefix = signal<string | null>(null);
-
   publisherBankDetails = this._formBuilder.group(
     {
       id: <number | null>null,
@@ -424,6 +424,28 @@ export class AddPublisher {
       FormGroup<SocialMediaGroupType>
     >;
   }
+  get mediasArray() {
+    return this.publisherFormGroup.get('medias') as FormArray;
+  }
+
+  onMediaAdded(newMedia: Media) {
+    const existing = this.mediasArray.value[0];
+
+    if (existing?.id) {
+      this.mediaToDeleteId = existing.id;
+    }
+    this.mediasArray.setControl(
+      0,
+      this._formBuilder.control({
+        ...newMedia,
+        id: 0,
+        url: '',
+      })
+    );
+
+    console.log('🆕 New media selected', this.mediasArray.value[0]);
+  }
+
   addSocialMedia() {
     this.socialMediaArray.push(
       new FormGroup<SocialMediaGroupType>({
@@ -525,6 +547,12 @@ export class AddPublisher {
       });
       socialMediaArray.push(group);
     });
+    const mediaList = publisherDetails.medias as Media[];
+    this.mediasArray.clear();
+    if (mediaList?.length > 0) {
+      this.mediasArray.push(this._formBuilder.control(mediaList[0]));
+    }
+    console.log(this.publisherFormGroup.value, 'prefillll');
   }
   get isAllSocialMediaSelected(): boolean {
     const allOptions = this.socialMediaArray ?? [];
@@ -569,6 +597,17 @@ export class AddPublisher {
         await this.socialService.createOrUpdateSocialMediaLinks(
           socialMediaData as socialMediaGroup[]
         );
+      }
+      const media = this.mediasArray.value[0];
+      if (this.mediaToDeleteId && media?.file) {
+        await this.publisherService.removeImage(this.mediaToDeleteId);
+        console.log('🗑 Old image deleted');
+
+        await this.publisherService.updateMyImage(media.file, response.id);
+        console.log('⬆ New image uploaded');
+      } else if (!this.mediaToDeleteId && media?.file) {
+        await this.publisherService.updateMyImage(media.file, response.id);
+        console.log('📤 New image uploaded (no old media existed)');
       }
     }
 
@@ -656,6 +695,23 @@ export class AddPublisher {
           socialMediaData as socialMediaGroup[]
         );
       }
+      const media = this.mediasArray.value[0];
+      if (this.mediaToDeleteId && media?.file) {
+        await this.publisherService.removeImage(this.mediaToDeleteId);
+        console.log('🗑 Old image deleted');
+
+        await this.publisherService.updateMyImage(
+          media.file,
+          this.publisherId as number
+        );
+        console.log('⬆ New image uploaded');
+      } else if (!this.mediaToDeleteId && media?.file) {
+        await this.publisherService.updateMyImage(
+          media.file,
+          this.publisherId as number
+        );
+        console.log('📤 New image uploaded (no old media existed)');
+      }
 
       await Swal.fire({
         icon: 'success',
@@ -678,7 +734,6 @@ export class AddPublisher {
         this.publisherSocialMediaGroup.markAllAsTouched();
         this.publisherAddressDetails.markAllAsTouched();
         this.publisherBankDetails.markAllAsTouched();
-
         await Swal.fire({
           title: 'Error',
           text: 'Please fill all required fields correctly.',

@@ -25,6 +25,7 @@ import Swal from 'sweetalert2';
 import { MatIconModule } from '@angular/material/icon';
 import { StaticValuesService } from '../../services/static-values';
 import { MatButtonModule } from '@angular/material/button';
+import { SafeUrlPipe } from 'src/app/pipes/safe-url-pipe';
 @Component({
   selector: 'app-publisher-details',
   imports: [
@@ -37,6 +38,7 @@ import { MatButtonModule } from '@angular/material/button';
     ListTable,
     MatIconModule,
     MatButtonModule,
+    SafeUrlPipe,
   ],
   templateUrl: './publisher-details.html',
   styleUrl: './publisher-details.css',
