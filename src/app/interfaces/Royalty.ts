@@ -52,6 +52,6 @@ export interface RoyaltyFormGroup {
   titleId: FormControl<number | null | undefined>;
   authorId: FormControl<number | null | undefined>;
   publisherId: FormControl<number | null | undefined>;
-  platform: FormControl<PlatForm | null | undefined>;
+  platform: FormControl<string | null | undefined>;
   percentage: FormControl<number | null | undefined>;
 }

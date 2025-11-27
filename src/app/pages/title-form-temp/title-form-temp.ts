@@ -98,6 +98,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { StaticValuesService } from '../../services/static-values';
 import { Back } from '../../components/back/back';
 import { UserService } from '../../services/user';
+import { PlatformService } from '../../services/platform';
 
 @Component({
   selector: 'app-title-form-temp',
@@ -446,6 +447,7 @@ export class TitleFormTemp implements OnDestroy {
 
   loggedInUser!: Signal<User | null>;
   staticValueService = inject(StaticValuesService);
+  platformService = inject(PlatformService);
   currentStep = signal<string | null>(null);
   stepperOrientation: Observable<StepperOrientation>;
   bindingType!: BookBindings[];
@@ -1115,36 +1117,34 @@ export class TitleFormTemp implements OnDestroy {
 
   updatePricingArray(pricing?: TitlePricing[]) {
     // Ensure pricing array has all platforms before updating
+    // This prevents duplicate controllers
     this.ensurePricingArrayHasAllPlatforms();
 
-    pricing?.forEach(({ platform, id, mrp, salesPrice }) => {
+    if (!pricing || pricing.length === 0) {
+      return;
+    }
+
+    pricing.forEach(({ platform, id, mrp, salesPrice }) => {
+      // Find existing control by platform name
+      // ensurePricingArrayHasAllPlatforms should have already created all necessary controls
       const pricingControl = this.tempForm.controls['pricing'].controls?.find(
         ({ controls }) => controls.platform.value === platform
       );
 
       if (pricingControl) {
+        // Update existing control values
         pricingControl.patchValue({
           id,
           platform,
           mrp,
           salesPrice,
-        });
+        }, { emitEvent: false });
       } else {
-        // If control doesn't exist, create it
-        const newControl = new FormGroup({
-          id: new FormControl<number | null | undefined>(id || null),
-          platform: new FormControl<string>(platform, Validators.required),
-          salesPrice: new FormControl<number | null | undefined>(
-            salesPrice || null,
-            Validators.required
-          ),
-          mrp: new FormControl<number | null | undefined>(mrp || null, [
-            Validators.required,
-            this.mrpValidator() as ValidatorFn,
-          ]),
-        }) as PricingGroup;
-
-        this.tempForm.controls.pricing.push(newControl);
+        // This should not happen if ensurePricingArrayHasAllPlatforms worked correctly
+        // Log warning for debugging
+        console.warn(
+          `Platform "${platform}" control not found after ensurePricingArrayHasAllPlatforms. Platform may not exist in available platforms.`
+        );
       }
     });
   }
@@ -1156,25 +1156,38 @@ export class TitleFormTemp implements OnDestroy {
    * @param platform - The platform type
    * @returns The MSP value for the platform
    */
-  getMspForPlatform(platform: PlatForm | null | undefined): number {
+  getMspForPlatform(platform: string | null | undefined): number {
     if (!platform) {
       // Fallback to calculated MSP if platform is not available
       return Number(this.tempForm.controls.printing.controls.msp?.value) || 0;
     }
 
     // Fixed MSP for ebook platforms
-    const ebookPlatforms: PlatForm[] = [
-      PlatForm.MAH_EBOOK,
-      PlatForm.KINDLE,
-      PlatForm.GOOGLE_PLAY,
-    ];
-
-    if (ebookPlatforms.includes(platform)) {
+    const platformData = this.platformService.getPlatformByName(platform);
+    if (platformData && platformData.type === 'EBOOK') {
       return Number(this.staticValuesService.staticValues()?.EBOOK_MSP);
     }
 
     // Use calculated MSP for other platforms
     return Number(this.tempForm.controls.printing.controls.msp?.value) || 0;
+  }
+
+  /**
+   * Helper method to check if a platform is ebook
+   */
+  private isEbookPlatform(platformName: string | null | undefined): boolean {
+    if (!platformName) return false;
+    const platformData = this.platformService.getPlatformByName(platformName);
+    return platformData?.type === 'EBOOK';
+  }
+
+  /**
+   * Helper method to check if a platform is print
+   */
+  private isPrintPlatform(platformName: string | null | undefined): boolean {
+    if (!platformName) return false;
+    const platformData = this.platformService.getPlatformByName(platformName);
+    return platformData?.type === 'PRINT';
   }
 
   mrpValidator(): ValidatorFn {
@@ -1410,28 +1423,32 @@ export class TitleFormTemp implements OnDestroy {
 
   /**
    * Ensure pricing array has all platforms
-   * Call this when static values become available
+   * Call this when platforms become available
+   * Prevents duplicate platform controls
    */
   private ensurePricingArrayHasAllPlatforms(): void {
-    const platforms = Object.keys(
-      this.staticValueService.staticValues()?.PlatForm || {}
-    );
+    const platforms = this.platformService.platforms();
 
     if (!platforms.length) {
-      return; // Static values not loaded yet
+      return; // Platforms not loaded yet
     }
 
     const pricingArray = this.tempForm.controls.pricing;
-    const existingPlatforms = pricingArray.controls.map(
-      (control) => control.controls.platform.value
+    
+    // Create a Set of existing platform names for faster lookup
+    const existingPlatforms = new Set(
+      pricingArray.controls
+        .map((control) => control.controls.platform.value)
+        .filter((platform): platform is string => platform !== null && platform !== undefined)
     );
 
-    // Add missing platforms
+    // Add missing platforms only
     platforms.forEach((platform) => {
-      if (!existingPlatforms.includes(platform)) {
+      // Check if platform already exists - don't create duplicate
+      if (!existingPlatforms.has(platform.name)) {
         const newControl = new FormGroup({
           id: new FormControl<number | null | undefined>(null),
-          platform: new FormControl<string>(platform, Validators.required),
+          platform: new FormControl<string>(platform.name, Validators.required),
           salesPrice: new FormControl<number | null | undefined>(
             null,
             Validators.required
@@ -1443,6 +1460,8 @@ export class TitleFormTemp implements OnDestroy {
         }) as PricingGroup;
 
         pricingArray.push(newControl);
+        // Add to set to prevent duplicates if method is called multiple times
+        existingPlatforms.add(platform.name);
       }
     });
 
@@ -1466,23 +1485,11 @@ export class TitleFormTemp implements OnDestroy {
 
     const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
     const isOnlyPrint = publishingType === PublishingType.ONLY_PRINT;
-    const ebookPlatforms: PlatForm[] = [
-      PlatForm.MAH_EBOOK,
-      PlatForm.KINDLE,
-      PlatForm.GOOGLE_PLAY,
-    ];
-    const printPlatforms: PlatForm[] = [
-      PlatForm.AMAZON,
-      PlatForm.FLIPKART,
-      PlatForm.MAH_PRINT,
-    ];
 
     pricingArray.controls.forEach((control) => {
-      const platform = control.controls.platform.value as PlatForm | null;
-      const isEbookPlatform =
-        platform && ebookPlatforms.includes(platform as PlatForm);
-      const isPrintPlatform =
-        platform && printPlatforms.includes(platform as PlatForm);
+      const platformName = control.controls.platform.value as string | null;
+      const isEbookPlatform = this.isEbookPlatform(platformName);
+      const isPrintPlatform = this.isPrintPlatform(platformName);
 
       if (isOnlyEbook) {
         // For ebook-only titles, remove validators from non-ebook platforms
@@ -2361,12 +2368,12 @@ export class TitleFormTemp implements OnDestroy {
       const controlsToCheck = isOnlyEbook
         ? pricingControls.controls.filter((control) => {
             const platform = control.controls.platform.value as PlatForm | null;
-            return platform && ebookPlatforms.includes(platform);
+            return this.isEbookPlatform(platform as string);
           })
         : isOnlyPrint
         ? pricingControls.controls.filter((control) => {
             const platform = control.controls.platform.value as PlatForm | null;
-            return platform && printPlatforms.includes(platform);
+            return this.isPrintPlatform(platform as string);
           })
         : pricingControls.controls;
 
@@ -2391,10 +2398,10 @@ export class TitleFormTemp implements OnDestroy {
 
           // Double-check platform is valid based on publishing type
           if (isOnlyEbook) {
-            return ebookPlatforms.includes(platform.value as PlatForm);
+            return this.isEbookPlatform(platform.value as string);
           }
           if (isOnlyPrint) {
-            return printPlatforms.includes(platform.value as PlatForm);
+            return this.isPrintPlatform(platform.value as string);
           }
 
           return true;
@@ -2567,27 +2574,16 @@ export class TitleFormTemp implements OnDestroy {
     const publishingType = this.tempForm.controls.publishingType.value;
     const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
     const isOnlyPrint = publishingType === PublishingType.ONLY_PRINT;
-    const ebookPlatforms: PlatForm[] = [
-      PlatForm.MAH_EBOOK,
-      PlatForm.KINDLE,
-      PlatForm.GOOGLE_PLAY,
-    ];
-    const printPlatforms: PlatForm[] = [
-      PlatForm.AMAZON,
-      PlatForm.FLIPKART,
-      PlatForm.MAH_PRINT,
-    ];
-
     // Check validity only for relevant platforms
     const relevantControls = isOnlyEbook
       ? pricingControls.controls.filter((control) => {
-          const platform = control.controls.platform.value as PlatForm | null;
-          return platform && ebookPlatforms.includes(platform);
+          const platformName = control.controls.platform.value as string | null;
+          return this.isEbookPlatform(platformName);
         })
       : isOnlyPrint
       ? pricingControls.controls.filter((control) => {
-          const platform = control.controls.platform.value as PlatForm | null;
-          return platform && printPlatforms.includes(platform);
+          const platformName = control.controls.platform.value as string | null;
+          return this.isPrintPlatform(platformName);
         })
       : pricingControls.controls;
 
@@ -2651,12 +2647,12 @@ export class TitleFormTemp implements OnDestroy {
       const controlsToCheck = isOnlyEbook
         ? pricingControls.controls.filter((control) => {
             const platform = control.controls.platform.value as PlatForm | null;
-            return platform && ebookPlatforms.includes(platform);
+            return this.isEbookPlatform(platform as string);
           })
         : isOnlyPrint
         ? pricingControls.controls.filter((control) => {
             const platform = control.controls.platform.value as PlatForm | null;
-            return platform && printPlatforms.includes(platform);
+            return this.isPrintPlatform(platform as string);
           })
         : pricingControls.controls;
 
@@ -2681,10 +2677,10 @@ export class TitleFormTemp implements OnDestroy {
 
           // Double-check platform is valid based on publishing type
           if (isOnlyEbook) {
-            return ebookPlatforms.includes(platform.value as PlatForm);
+            return this.isEbookPlatform(platform.value as string);
           }
           if (isOnlyPrint) {
-            return printPlatforms.includes(platform.value as PlatForm);
+            return this.isPrintPlatform(platform.value as string);
           }
 
           return true;
@@ -2774,12 +2770,12 @@ export class TitleFormTemp implements OnDestroy {
       const royaltiesControlsToCheck = isOnlyEbook
         ? royaltiesControl.controls.filter((control) => {
             const platform = control.controls.platform.value as PlatForm | null;
-            return platform && ebookPlatforms.includes(platform);
+            return this.isEbookPlatform(platform as string);
           })
         : isOnlyPrint
         ? royaltiesControl.controls.filter((control) => {
             const platform = control.controls.platform.value as PlatForm | null;
-            return platform && printPlatforms.includes(platform);
+            return this.isPrintPlatform(platform as string);
           })
         : royaltiesControl.controls;
 
@@ -2806,10 +2802,10 @@ export class TitleFormTemp implements OnDestroy {
 
           // Double-check platform is valid based on publishing type
           if (isOnlyEbook) {
-            return ebookPlatforms.includes(platform.value as PlatForm);
+            return this.isEbookPlatform(platform.value as string);
           }
           if (isOnlyPrint) {
-            return printPlatforms.includes(platform.value as PlatForm);
+            return this.isPrintPlatform(platform.value as string);
           }
 
           return true;

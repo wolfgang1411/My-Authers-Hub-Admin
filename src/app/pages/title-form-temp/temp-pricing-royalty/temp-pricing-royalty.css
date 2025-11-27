@@ -5,6 +5,9 @@
   display: flex;
   flex-direction: column;
   min-width: 100%;
+  /* Enable horizontal scrolling for many platforms */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .pricing-container > li {
@@ -12,6 +15,16 @@
   grid-template-columns: 220px repeat(auto-fit, minmax(160px, 1fr));
   gap: 0;
   transition: background-color 0.2s ease;
+  min-width: max-content; /* Ensure grid doesn't shrink below content */
+}
+
+/* Sticky first column for better scrolling UX */
+.pricing-container > li > span:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background-color: inherit;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
 }
 
 .pricing-header {
@@ -123,8 +136,14 @@
 }
 
 @media (max-width: 768px) {
+  .pricing-container {
+    /* Force horizontal scroll on mobile for many platforms */
+    overflow-x: scroll;
+  }
+
   .pricing-container > li {
     grid-template-columns: 150px repeat(auto-fit, minmax(120px, 1fr));
+    min-width: max-content;
   }
 
   .pricing-input {
@@ -137,6 +156,13 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 0.25rem;
+  }
+}
+
+/* Handle many platforms - ensure minimum column width */
+@media (min-width: 1400px) {
+  .pricing-container > li {
+    grid-template-columns: 240px repeat(auto-fit, minmax(180px, 1fr));
   }
 }
 

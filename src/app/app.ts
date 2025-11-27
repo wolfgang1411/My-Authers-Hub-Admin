@@ -13,6 +13,7 @@ import { LayoutService } from './services/layout';
 import { Loader } from './components/loader/loader';
 import { NotificationService } from './services/notifications';
 import { StaticValuesService } from './services/static-values';
+import { PlatformService } from './services/platform';
 
 @Component({
   selector: 'app-root',
@@ -28,7 +29,8 @@ export class App {
     private layoutService: LayoutService,
     router: Router,
     private notificationService: NotificationService,
-    private staticValuesService: StaticValuesService
+    private staticValuesService: StaticValuesService,
+    private platformService: PlatformService
   ) {
     this.hydrateToken();
     router.events.subscribe((ev) => {
@@ -51,6 +53,7 @@ export class App {
         const token = this.authService.getAuthToken().access_token;
         if (token) {
           this.staticValuesService.fetchAndUpdateStaticValues();
+          this.platformService.fetchPlatforms();
           this.notificationService.fetchInitialNotifications({
             popupSuperadmin: false,
             itemsPerPage: this.notificationService.itemsPerPage(),
