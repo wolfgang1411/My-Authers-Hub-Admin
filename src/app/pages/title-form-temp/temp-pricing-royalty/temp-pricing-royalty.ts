@@ -408,8 +408,16 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       }
     });
 
-    const publisherPercentage = Math.max(0, 100 - totalAuthorPercentage);
-    this.publisherPercentage.set(publisherPercentage);
+    // Round to avoid floating point precision issues
+    // If authors total 100% or more, publisher gets exactly 0%
+    const roundedTotalAuthor = Math.round(totalAuthorPercentage * 100) / 100;
+    const publisherPercentage =
+      roundedTotalAuthor >= 100
+        ? 0
+        : Math.max(0, Math.round((100 - roundedTotalAuthor) * 100) / 100);
+    // Round to whole number for display consistency
+    const roundedPublisherPercentage = Math.round(publisherPercentage);
+    this.publisherPercentage.set(roundedPublisherPercentage);
 
     // Sync publisher percentage to all platform royalties
     const platforms = this.displayedColumns();
@@ -425,6 +433,9 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
           r.controls.platform.value === platform
       );
 
+      // Use rounded publisher percentage from signal to avoid precision issues
+      const roundedPublisherPercentage = Math.round(this.publisherPercentage());
+
       if (!royaltyControl) {
         // Create new royalty control if it doesn't exist
         royaltyControl = new FormGroup<RoyaltyFormGroup>({
@@ -439,9 +450,10 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
           authorId: new FormControl<number | null>(null),
           publisherId: new FormControl<number | null>(publisher.id),
           platform: new FormControl<string | null>(platform),
-          percentage: new FormControl<number | null>(publisherPercentage, [
-            Validators.required,
-          ]),
+          percentage: new FormControl<number | null>(
+            roundedPublisherPercentage,
+            [Validators.required]
+          ),
           titleId: new FormControl<number | null>(
             this.royaltiesController().at(0)?.controls.titleId.value || null
           ),
@@ -450,9 +462,12 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
         this.royaltiesController().push(royaltyControl);
       } else {
         // Update existing control - always update to ensure it matches calculated value
-        royaltyControl.controls.percentage.patchValue(publisherPercentage, {
-          emitEvent: false,
-        });
+        royaltyControl.controls.percentage.patchValue(
+          roundedPublisherPercentage,
+          {
+            emitEvent: false,
+          }
+        );
       }
     });
 
@@ -472,9 +487,11 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
         const temp: Partial<Record<string, number>> = {};
         const platforms = this.platformService.platforms();
         platforms.forEach((platform) => {
-          temp[platform.name] = data
+          // Round to 2 decimal places to avoid floating point precision issues
+          const total = data
             .filter((d) => d.platform === platform.name)
             .reduce((a, { percentage }) => a + (percentage || 0), 0);
+          temp[platform.name] = Math.round(total * 100) / 100;
         });
         this.totalRoyalties.set(temp);
         this.validateTotalRoyalties();
@@ -483,11 +500,14 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
 
   /**
    * Validate that total royalties don't exceed 100% per platform
+   * Uses a small tolerance (0.01) to account for floating point precision issues
    */
   private validateTotalRoyalties(): void {
     Object.keys(this.totalRoyalties()).forEach((key) => {
       const val = (this.totalRoyalties() as any)[key] as number;
-      if (val > 100) {
+      // Use tolerance of 0.01 to account for floating point precision issues
+      // This allows for values like 100.005 to be considered valid (rounded to 100.01)
+      if (val > 100.01) {
         this.royaltiesController().setErrors({
           ...this.royaltiesController().errors,
           invalid: `Royalties for ${key} cannot be higher than 100%`,
@@ -527,7 +547,7 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
         // Access signals to trigger effect
         const printingPrice = this.printingPrice();
         const customPrintCost = this.customPrintCost();
-        
+
         // Recalculate royalties when printing costs change
         if (printingPrice !== null || customPrintCost !== null) {
           setTimeout(() => {
@@ -633,7 +653,7 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       const printPlatforms = this.displayedColumns().filter(
         (platform) => !this.isEbookPlatform(platform)
       );
-      
+
       if (
         publisherId &&
         customPrint !== null &&
@@ -646,35 +666,44 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
         });
       }
 
-      data.forEach(({ authorId, publisherId: royaltyPublisherId, percentage, platform }) => {
-        if (!platform || percentage === null || percentage === undefined)
-          return;
+      data.forEach(
+        ({
+          authorId,
+          publisherId: royaltyPublisherId,
+          percentage,
+          platform,
+        }) => {
+          if (!platform || percentage === null || percentage === undefined)
+            return;
 
-        const key = authorId ? 'author' + authorId : 'publisher' + royaltyPublisherId;
+          const key = authorId
+            ? 'author' + authorId
+            : 'publisher' + royaltyPublisherId;
 
-        if (!temp[key]) {
-          temp[key] = {};
+          if (!temp[key]) {
+            temp[key] = {};
+          }
+
+          const divisionValue = platformDivisionMap.get(platform);
+          let baseAmount = 0;
+          if (divisionValue) {
+            baseAmount = divisionValue[percentage.toString()] || 0;
+          }
+
+          // Add extra margin to publisher's royalty amount for print platforms
+          if (
+            royaltyPublisherId &&
+            publisherId === royaltyPublisherId &&
+            !this.isEbookPlatform(platform) &&
+            extraMargin[platform]
+          ) {
+            // Extra margin is a flat amount per unit (not percentage-based)
+            temp[key][platform] = baseAmount + (extraMargin[platform] || 0);
+          } else {
+            temp[key][platform] = baseAmount;
+          }
         }
-
-        const divisionValue = platformDivisionMap.get(platform);
-        let baseAmount = 0;
-        if (divisionValue) {
-          baseAmount = divisionValue[percentage.toString()] || 0;
-        }
-
-        // Add extra margin to publisher's royalty amount for print platforms
-        if (
-          royaltyPublisherId &&
-          publisherId === royaltyPublisherId &&
-          !this.isEbookPlatform(platform) &&
-          extraMargin[platform]
-        ) {
-          // Extra margin is a flat amount per unit (not percentage-based)
-          temp[key][platform] = baseAmount + (extraMargin[platform] || 0);
-        } else {
-          temp[key][platform] = baseAmount;
-        }
-      });
+      );
 
       this.totalRoyaltiesAmount.set(temp);
       this.publisherExtraMargin.set(extraMargin);

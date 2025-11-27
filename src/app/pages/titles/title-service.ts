@@ -472,11 +472,14 @@ export class TitleService {
         data.file.type
       );
       await this.s3Service.putS3Object(url, data.file);
-      return await this.server.post<Media>(`title-media/${titleId}/medias`, {
-        keyname: key,
-        type: data.type,
-        autoDeleteOldIfExisit: true,
-      });
+      return await this.loader.loadPromise(
+        this.server.post<Media>(`title-media/${titleId}/medias`, {
+          keyname: key,
+          type: data.type,
+          autoDeleteOldIfExisit: true,
+        }),
+        'upload-media'
+      );
     } catch (error) {
       this.logger.logError(error);
       throw error;
