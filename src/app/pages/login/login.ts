@@ -30,6 +30,7 @@ export class Login {
         username: this.loginForm.value.username,
         password: this.loginForm.value.password,
       });
+      console.log(this.loginForm.value.password, 'passworddddddd');
       const userId = this.authService.setAuthToken(authResponse);
       if (userId) {
         const user = await this.authService.whoAmI();

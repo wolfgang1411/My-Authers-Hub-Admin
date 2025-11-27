@@ -520,5 +520,7 @@
   "total": "Total:",
   "royaltyAmountCalculations": "Royalty Amount Calculations",
   "calculations": "Calculations",
-  "selectPublisher": "Select Publisher"
+  "selectPublisher": "Select Publisher",
+  "royaltyAmount":"Royalty Amount",
+  "customPrintMargin":"Custom Print Margin"
 }

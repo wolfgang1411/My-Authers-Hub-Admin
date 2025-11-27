@@ -10,25 +10,15 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
-import { RoyaltyService } from '../../services/royalty-service';
 import {
-  BookingType,
-  CreateRoyalty,
   CreateSale,
   EarningFilter,
-  PlatForm,
-  Royalty,
-  RoyaltyFilter,
   SalesCsvData,
   SalesType,
   Title,
 } from '../../interfaces';
 import { debounceTime, Subject } from 'rxjs';
-import { AuthorsService } from '../authors/authors-service';
-import { PublisherService } from '../publisher/publisher-service';
-import { AddRoyalty } from '../../components/add-royalty/add-royalty';
 import Swal from 'sweetalert2';
-import { RoyaltyTable } from '../../components/royalty-table/royalty-table';
 import { AddSales } from '../../components/add-sales/add-sales';
 import { SalesService } from '../../services/sales';
 import { Papa } from 'ngx-papaparse';

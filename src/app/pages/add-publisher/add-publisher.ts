@@ -568,6 +568,7 @@ export class AddPublisher {
     const response = (await this.publisherService.createPublisher(
       publisherData
     )) as Publishers;
+    this.publisherId = response.id;
 
     if (response && response.id) {
       const publisherAddressData = {

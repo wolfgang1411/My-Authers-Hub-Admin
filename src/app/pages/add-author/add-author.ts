@@ -336,9 +336,8 @@ export class AddAuthor implements OnInit {
   onMediaAdded(newMedia: Media) {
     const existing = this.mediasArray.value[0];
 
-    if (existing?.id) {
-      this.mediaToDeleteId = existing.id;
-    }
+    if (existing?.id) this.mediaToDeleteId = existing.id;
+
     this.mediasArray.setControl(
       0,
       this._formBuilder.control({
@@ -348,6 +347,7 @@ export class AddAuthor implements OnInit {
       })
     );
 
+    this.authorFormGroup.get('medias')?.updateValueAndValidity(); // 🔥 enable next
     console.log('🆕 New media selected', this.mediasArray.value[0]);
   }
   // lookupByPincode(pin: string) {
@@ -389,7 +389,7 @@ export class AddAuthor implements OnInit {
     about: ['', Validators.required],
     password: [''],
     authorImage: [''],
-    medias: this._formBuilder.array<Media>([]),
+    medias: this._formBuilder.array<Media>([], Validators.required),
     signupCode: <string | null>null,
   });
   authorBankDetails = this._formBuilder.group(
@@ -558,7 +558,7 @@ export class AddAuthor implements OnInit {
     const response = (await this.authorsService.createAuthor(
       authorData as Author
     )) as Author;
-
+    this.authorId = response.id;
     if (response && response.id) {
       const authorAddressData = {
         ...this.authorAddressDetails.value,
