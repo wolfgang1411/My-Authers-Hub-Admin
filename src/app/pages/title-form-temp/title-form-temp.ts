@@ -119,8 +119,6 @@ import { PlatformService } from '../../services/platform';
     MatCardModule,
     TempTitlePrinting,
     TempBookDetails,
-    TempPricing,
-    TempRoyalties,
     TempPricingRoyalty,
     TempTitleDistribution,
     Back,
