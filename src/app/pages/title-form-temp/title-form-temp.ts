@@ -118,8 +118,6 @@ import { UserService } from '../../services/user';
     MatCardModule,
     TempTitlePrinting,
     TempBookDetails,
-    TempPricing,
-    TempRoyalties,
     TempPricingRoyalty,
     TempTitleDistribution,
     Back,
@@ -655,7 +653,9 @@ export class TitleFormTemp implements OnDestroy {
     );
     // Initialize MANUSCRIPT media based on current publishing type
     // Note: This is called after addDefaultMediaArray completes to ensure proper initialization
-    await this.manageManuscriptMedia(this.tempForm.controls.publishingType.value);
+    await this.manageManuscriptMedia(
+      this.tempForm.controls.publishingType.value
+    );
 
     // Setup stepper step tracking after everything is initialized
     this.setupStepperStepTracking();
@@ -1635,11 +1635,14 @@ export class TitleFormTemp implements OnDestroy {
     });
   }
 
-  async manageManuscriptMedia(publishingType: PublishingType | null | undefined) {
+  async manageManuscriptMedia(
+    publishingType: PublishingType | null | undefined
+  ) {
     // Find all MANUSCRIPT controls to handle duplicates
-    const manuscriptControls = this.tempForm.controls.documentMedia.controls.filter(
-      ({ controls: { mediaType } }) => mediaType.value === 'MANUSCRIPT'
-    );
+    const manuscriptControls =
+      this.tempForm.controls.documentMedia.controls.filter(
+        ({ controls: { mediaType } }) => mediaType.value === 'MANUSCRIPT'
+      );
 
     const isEbookType =
       publishingType === PublishingType.ONLY_EBOOK ||
@@ -1650,7 +1653,9 @@ export class TitleFormTemp implements OnDestroy {
       if (manuscriptControls.length > 1) {
         // Keep the first one, remove the rest
         for (let i = manuscriptControls.length - 1; i > 0; i--) {
-          const index = this.tempForm.controls.documentMedia.controls.indexOf(manuscriptControls[i]);
+          const index = this.tempForm.controls.documentMedia.controls.indexOf(
+            manuscriptControls[i]
+          );
           if (index >= 0) {
             this.tempForm.controls.documentMedia.removeAt(index);
           }
