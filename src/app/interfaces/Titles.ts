@@ -295,7 +295,6 @@ export interface SizeCategory {
   size: string;
   width: number;
   length: number;
-  price: number;
   type: SizeCategoryType;
   packetPrice: number;
   weightMultiplayer: number;
@@ -304,7 +303,6 @@ export interface SizeCategory {
     id: number;
     name: string;
     category: string;
-    price: number;
     packetPrice: number;
     weightMultiplayer: number;
     insideCoverPrice: number;
@@ -360,7 +358,6 @@ export interface UpdatePaperQualityType extends CreatePaperQualityType {
 export interface CreateSizeType {
   width: number;
   length: number;
-  price: number;
   weightMultiplayer: number;
   packetPrice: number;
   type: string;
@@ -379,6 +376,7 @@ export interface PrintingCreate {
   laminationTypeId: number;
   paperType: PaperType;
   paperQuailtyId: number;
+  sizeId: number;
   sizeCategoryId: number;
   customPrintCost?: number;
   insideCover: boolean;
@@ -563,6 +561,7 @@ export interface TitlePrintingUpdateTicket {
   laminationTypeId?: number;
   paperType?: PaperType;
   paperQuailtyId?: number;
+  sizeId?: number;
   sizeCategoryId?: number;
   customPrintCost?: number;
   customDeliveryCharges?: number;

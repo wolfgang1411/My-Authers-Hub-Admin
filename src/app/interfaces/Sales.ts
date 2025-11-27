@@ -1,10 +1,11 @@
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormArray, FormControl, FormGroup } from '@angular/forms';
 import {
   BookingType,
   EarningsStatus,
   PlatForm,
   SalesType,
 } from './StaticValue';
+import { Platform } from './Platform';
 
 export interface SalesFilter {
   itemsPerPage?: number;
@@ -61,6 +62,7 @@ export interface CreateSaleForm {
     availableOptions: FormControl<number[] | null | undefined>;
   }>;
   platform: FormControl<PlatForm | undefined | null>;
+  platformOptions: FormArray<FormControl<Platform>>;
   amount: FormControl<number | undefined | null>;
   quantity: FormControl<number | undefined>;
   delivery: FormControl<number | undefined>;

@@ -22,12 +22,14 @@ import {
   SalesType,
   Title,
 } from '../../interfaces';
+import { Platform } from '../../interfaces/Platform';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { TitleService } from '../../pages/titles/title-service';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { StaticValuesService } from '../../services/static-values';
+import { PlatformService } from '../../services/platform';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -82,7 +84,8 @@ export class TitleFilterBySale implements PipeTransform {
 export class AddSales implements OnInit {
   constructor(
     private titleService: TitleService,
-    private staticValueService: StaticValuesService
+    private staticValueService: StaticValuesService,
+    private platformService: PlatformService
   ) {}
 
   data = inject<Inputs>(MAT_DIALOG_DATA);
@@ -98,13 +101,58 @@ export class AddSales implements OnInit {
     ) as SalesType[];
   });
 
-  platforms = computed(() => {
-    return Object.keys(
-      this.staticValueService.staticValues()?.PlatForm || {}
-    ) as PlatForm[];
-  });
+  platforms = signal<Platform[]>([]);
 
   titles = signal<Title[] | null>(null);
+
+  // Computed map of available platforms by titleId (kept for backward compatibility if needed)
+  availablePlatformsByTitle = computed(() => {
+    const allPlatforms = this.platforms();
+    const titles = this.titles();
+    const map = new Map<number, Platform[]>();
+
+    if (!allPlatforms || allPlatforms.length === 0 || !titles) {
+      return map;
+    }
+
+    titles.forEach((title) => {
+      const publishingType = title.publishingType;
+      const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
+      const isOnlyPrint = publishingType === PublishingType.ONLY_PRINT;
+
+      // Get platforms that have pricing data for this title
+      const pricingPlatformNames = title.pricing
+        ?.map((p) => p.platform)
+        .filter((platform) => platform !== null && platform !== undefined) as
+        | string[]
+        | undefined;
+
+      if (!pricingPlatformNames || !pricingPlatformNames.length) {
+        map.set(title.id, []);
+        return;
+      }
+
+      // Filter platforms that have pricing and match the publishing type
+      let filteredPlatforms = allPlatforms.filter((platform) =>
+        pricingPlatformNames.includes(platform.name)
+      );
+
+      // Filter based on publishing type
+      if (isOnlyEbook) {
+        filteredPlatforms = filteredPlatforms.filter(
+          (platform) => platform.isEbookPlatform
+        );
+      } else if (isOnlyPrint) {
+        filteredPlatforms = filteredPlatforms.filter(
+          (platform) => !platform.isEbookPlatform
+        );
+      }
+
+      map.set(title.id, filteredPlatforms);
+    });
+
+    return map;
+  });
 
   // Signal to track form array changes for reactivity
   private salesArrayUpdateTrigger = signal(0);
@@ -164,7 +212,37 @@ export class AddSales implements OnInit {
     this.salesArrayUpdateTrigger.update((v) => v + 1);
   }
 
-  ngOnInit() {
+  async ngOnInit() {
+    // Fetch platforms from API first - use a loader key to make it visible
+    try {
+      console.log('Fetching platforms...');
+      const fetchedPlatforms = await this.platformService.fetchPlatforms();
+      this.platforms.set(fetchedPlatforms);
+      console.log(
+        'Platforms fetched successfully:',
+        fetchedPlatforms.length,
+        'platforms'
+      );
+      // Update platformOptions for all existing groups after fetch
+      await this.updateAllGroupsPlatformOptions();
+    } catch (error) {
+      console.error('Failed to fetch platforms:', error);
+      // Try to use platforms from service if already cached
+      const cachedPlatforms = this.platformService.platforms();
+      if (cachedPlatforms && cachedPlatforms.length > 0) {
+        this.platforms.set(cachedPlatforms);
+        console.log(
+          'Using cached platforms:',
+          cachedPlatforms.length,
+          'platforms'
+        );
+        // Update platformOptions for all existing groups after using cached
+        await this.updateAllGroupsPlatformOptions();
+      } else {
+        console.warn('No platforms available - neither fetched nor cached');
+      }
+    }
+
     if (this.data.defaultTitles) {
       // Filter out titles where printingOnly is true
       const filteredTitles = this.data.defaultTitles.filter(
@@ -242,51 +320,67 @@ export class AddSales implements OnInit {
     }
   }
 
-  getAvailablePlatformsForTitle(
+  /**
+   * Update platformOptions for a group based on titleId
+   */
+  private async updatePlatformOptionsForGroup(
+    group: FormGroup<CreateSaleForm>,
     titleId: number | null | undefined
-  ): PlatForm[] {
-    if (!titleId) return [];
+  ): Promise<void> {
+    const platformOptionsArray = group.get('platformOptions') as FormArray<
+      FormControl<Platform>
+    >;
 
-    const title = this.titles()?.find((t) => t.id === Number(titleId));
-    if (!title) return [];
-
-    const publishingType = title.publishingType;
-    const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
-    const isOnlyPrint = publishingType === PublishingType.ONLY_PRINT;
-
-    const ebookPlatforms: PlatForm[] = [
-      PlatForm.MAH_EBOOK,
-      PlatForm.KINDLE,
-      PlatForm.GOOGLE_PLAY,
-    ];
-    const printPlatforms: PlatForm[] = [
-      PlatForm.AMAZON,
-      PlatForm.FLIPKART,
-      PlatForm.MAH_PRINT,
-    ];
-
-    // Get platforms that have pricing data
-    const availablePlatforms = title.pricing
-      ?.map((p) => p.platform)
-      .filter((platform) => platform !== null && platform !== undefined) as
-      | PlatForm[]
-      | undefined;
-
-    if (!availablePlatforms || !availablePlatforms.length) return [];
-
-    // Filter based on publishing type
-    if (isOnlyEbook) {
-      return availablePlatforms.filter((platform) =>
-        ebookPlatforms.includes(platform)
-      );
-    } else if (isOnlyPrint) {
-      return availablePlatforms.filter((platform) =>
-        printPlatforms.includes(platform)
-      );
+    // Clear existing options
+    while (platformOptionsArray.length > 0) {
+      platformOptionsArray.removeAt(0);
     }
 
-    // For PRINT_EBOOK, return all available platforms
-    return availablePlatforms;
+    if (!titleId) {
+      return;
+    }
+
+    const allPlatforms = this.platforms();
+    if (!allPlatforms || allPlatforms.length === 0) {
+      return;
+    }
+
+    // Find title in local cache first
+    let title = this.titles()?.find((t) => t.id === Number(titleId));
+    const ebooPlatofrm = allPlatforms.filter(
+      ({ isEbookPlatform }) => isEbookPlatform
+    );
+    const printPlatforms = allPlatforms.filter(
+      ({ isEbookPlatform }) => !isEbookPlatform
+    );
+
+    [
+      ...ebooPlatofrm.filter(
+        () => title?.publishingType !== PublishingType.ONLY_PRINT
+      ),
+      ...printPlatforms.filter(
+        () => title?.publishingType !== PublishingType.ONLY_EBOOK
+      ),
+    ].forEach((p) => {
+      platformOptionsArray.push(
+        new FormControl<Platform>(p, { nonNullable: true })
+      );
+    });
+  }
+
+  /**
+   * Update platformOptions for all existing groups
+   */
+  private async updateAllGroupsPlatformOptions(): Promise<void> {
+    const promises = this.form.controls.salesArray.controls.map(
+      async (group) => {
+        const titleId = group.get('title.id')?.value;
+        if (titleId) {
+          await this.updatePlatformOptionsForGroup(group, titleId);
+        }
+      }
+    );
+    await Promise.all(promises);
   }
 
   updateAmountBasedOnPlatform(group: FormGroup, platform: string) {
@@ -321,7 +415,8 @@ export class AddSales implements OnInit {
   }
   createSalesGroup(
     type?: SalesType,
-    data?: Partial<CreateSale & { availableTitles: number[] }>
+    data?: Partial<CreateSale & { availableTitles: number[] }>,
+    groupIndex?: number
   ) {
     let selectedTitle = data?.titleId;
 
@@ -354,6 +449,8 @@ export class AddSales implements OnInit {
         validators: [Validators.required],
         nonNullable: true,
       }),
+
+      platformOptions: new FormArray<FormControl<Platform>>([]),
 
       amount: new FormControl(data?.amount || null, {
         validators: [],
@@ -396,19 +493,30 @@ export class AddSales implements OnInit {
       group.get('amount')?.updateValueAndValidity();
     }
 
-    group.get('title.id')?.valueChanges.subscribe(() => {
+    // Subscribe to title changes and update platformOptions
+    group.get('title.id')?.valueChanges.subscribe(async (titleId) => {
       group.patchValue({ platform: null, amount: null });
+
+      // Calculate and set platformOptions
+      await this.updatePlatformOptionsForGroup(group, titleId);
+
       // Update platform control validators based on available platforms
-      const availablePlatforms = this.getAvailablePlatformsForTitle(
-        group.get('title.id')?.value
-      );
-      if (!availablePlatforms.length) {
+      const platformOptionsArray = group.get('platformOptions') as FormArray<
+        FormControl<Platform>
+      >;
+      if (!platformOptionsArray || platformOptionsArray.length === 0) {
         group.get('platform')?.setValidators([]);
       } else {
         group.get('platform')?.setValidators([Validators.required]);
       }
       group.get('platform')?.updateValueAndValidity();
     });
+
+    // Initialize platformOptions if title is already set
+    const initialTitleId = group.get('title.id')?.value;
+    if (initialTitleId) {
+      this.updatePlatformOptionsForGroup(group, initialTitleId);
+    }
     group.get('platform')?.valueChanges.subscribe((platform) => {
       // Only update amount for non-INVENTORY sales (auto-calculate)
       const saleType = group.get('type')?.value;

@@ -1164,7 +1164,7 @@ export class TitleFormTemp implements OnDestroy {
 
     // Fixed MSP for ebook platforms
     const platformData = this.platformService.getPlatformByName(platform);
-    if (platformData && platformData.type === 'EBOOK') {
+    if (platformData && platformData.isEbookPlatform) {
       return Number(this.staticValuesService.staticValues()?.EBOOK_MSP);
     }
 
@@ -1178,7 +1178,7 @@ export class TitleFormTemp implements OnDestroy {
   private isEbookPlatform(platformName: string | null | undefined): boolean {
     if (!platformName) return false;
     const platformData = this.platformService.getPlatformByName(platformName);
-    return platformData?.type === 'EBOOK';
+    return platformData?.isEbookPlatform ?? false;
   }
 
   /**
@@ -1187,7 +1187,7 @@ export class TitleFormTemp implements OnDestroy {
   private isPrintPlatform(platformName: string | null | undefined): boolean {
     if (!platformName) return false;
     const platformData = this.platformService.getPlatformByName(platformName);
-    return platformData?.type === 'PRINT';
+    return !(platformData?.isEbookPlatform ?? false);
   }
 
   mrpValidator(): ValidatorFn {
@@ -3097,6 +3097,17 @@ export class TitleFormTemp implements OnDestroy {
         throw new Error('Invalid printing details');
       }
 
+      // Get the Size ID from the form control (form control is named sizeCategoryId but contains Size ID)
+      const sizeId = Number(printingDetails.sizeCategoryId);
+      
+      // Fetch the Size to get its sizeCategoryId
+      const selectedSize = await this.printingService.getSizeById(sizeId);
+      if (!selectedSize || !selectedSize.sizeCategory?.id) {
+        throw new Error('Invalid size or size category not found');
+      }
+      
+      const sizeCategoryId = selectedSize.sizeCategory.id;
+
       // Build printing data
       // Only include insideCover if it's being changed (not already true in database)
       const canUseCustomPrintCost =
@@ -3127,7 +3138,8 @@ export class TitleFormTemp implements OnDestroy {
         laminationTypeId: Number(printingDetails.laminationTypeId),
         paperType: (printingDetails.paperType as PaperType) || 'WHITE',
         paperQuailtyId: Number(printingDetails.paperQuailtyId),
-        sizeCategoryId: Number(printingDetails.sizeCategoryId),
+        sizeId: sizeId,
+        sizeCategoryId: sizeCategoryId,
         isColorPagesRandom: printingDetails.isColorPagesRandom || false,
       };
 

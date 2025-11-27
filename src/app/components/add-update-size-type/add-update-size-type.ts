@@ -41,7 +41,6 @@ export class AddUpdateSizeType {
     id: new FormControl<number | null | undefined>(null),
     width: new FormControl<number | null>(null, [Validators.required]),
     length: new FormControl<number | null>(null, [Validators.required]),
-    price: new FormControl<number | null>(null, [Validators.required]),
     weightMultiplayer: new FormControl<number | null>(null, [
       Validators.required,
     ]),
@@ -67,7 +66,6 @@ export class AddUpdateSizeType {
         id: data?.id,
         length: data?.length,
         packetPrice: data?.packetPrice,
-        price: data?.price,
         type: 'A',
         width: data?.width,
         weightMultiplayer: data?.weightMultiplayer,
@@ -83,7 +81,6 @@ export class AddUpdateSizeType {
         length: Number(this.form.controls.length.value) as number,
         width: Number(this.form.controls.width.value) as number,
         packetPrice: this.form.controls.packetPrice.value as number,
-        price: this.form.controls.price.value as number,
         type: 'A',
         weightMultiplayer: this.form.controls.weightMultiplayer.value as number,
       });

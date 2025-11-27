@@ -88,12 +88,12 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
 
     if (publishingType === PublishingType.ONLY_EBOOK) {
       // For ebook-only titles, only show ebook platforms
-      return allPlatforms.filter((p) => p.type === 'EBOOK').map((p) => p.name);
+      return allPlatforms.filter((p) => p.isEbookPlatform).map((p) => p.name);
     }
 
     if (publishingType === PublishingType.ONLY_PRINT) {
       // For print-only titles, only show print platforms
-      return allPlatforms.filter((p) => p.type === 'PRINT').map((p) => p.name);
+      return allPlatforms.filter((p) => !p.isEbookPlatform).map((p) => p.name);
     }
 
     // For PRINT_EBOOK, show all platforms
@@ -863,6 +863,6 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       return false;
     }
     const platformData = this.platformService.getPlatformByName(platform);
-    return platformData?.type === 'EBOOK';
+    return platformData?.isEbookPlatform ?? false;
   }
 }

@@ -67,10 +67,10 @@ export class ApproveTitle implements OnInit {
     let platforms: typeof allPlatforms;
     if (isOnlyEbook) {
       // For ebook-only titles, only show ebook platforms
-      platforms = allPlatforms.filter((p) => p.type === 'EBOOK');
+      platforms = allPlatforms.filter((p) => p.isEbookPlatform);
     } else if (isOnlyPrint) {
       // For print-only titles, only show print platforms
-      platforms = allPlatforms.filter((p) => p.type === 'PRINT');
+      platforms = allPlatforms.filter((p) => !p.isEbookPlatform);
     } else {
       // For PRINT_EBOOK, show all platforms
       platforms = allPlatforms;

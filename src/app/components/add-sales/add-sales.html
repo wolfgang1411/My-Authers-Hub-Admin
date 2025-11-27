@@ -101,12 +101,16 @@
                 placeholder="Select Platform"
               >
                 <mat-option [value]="null" disabled>Select platform</mat-option>
-                @for (platform of
-                getAvailablePlatformsForTitle(saleGroup.controls.title.controls.id.value);
-                track platform) {
-                <mat-option [value]="platform">{{
-                  platform | translate
+                @if (platforms().length > 0) { @for (platformControl of
+                saleGroup.controls.platformOptions.controls; track
+                platformControl.value.id) {
+                <mat-option [value]="platformControl.value.name">{{
+                  platformControl.value.name | translate
                 }}</mat-option>
+                } } @else {
+                <mat-option [value]="null" disabled
+                  >Loading platforms...</mat-option
+                >
                 }
               </mat-select>
               @if (saleGroup.controls.platform.hasError('required') &&

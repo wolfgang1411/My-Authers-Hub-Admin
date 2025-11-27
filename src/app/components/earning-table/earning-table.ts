@@ -85,7 +85,11 @@ export class EarningTable {
                 '',
                 'INR'
               ),
-          platform: this.translateService.instant(earning.platform),
+          platform: this.translateService.instant(
+            typeof earning.platform === 'string' 
+              ? earning.platform 
+              : (earning.platform as any)?.name || earning.platform || ''
+          ),
           quantity: earning.quantity || 0,
           addedAt: (() => {
             const date = earning.paidAt;

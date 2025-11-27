@@ -20,8 +20,10 @@ export class PlatformService {
    */
   async fetchPlatforms(): Promise<Platform[]> {
     try {
+      // Use a specific loader key to make the network call visible
       const platforms = await this.loaderService.loadPromise(
-        this.serverService.get<Platform[]>('platforms')
+        this.serverService.get<Platform[]>('platforms'),
+        'fetch-platforms'
       );
       this.platforms.set(platforms);
       return platforms;
@@ -42,14 +44,14 @@ export class PlatformService {
    * Get ebook platforms
    */
   getEbookPlatforms(): Platform[] {
-    return this.getPlatformsByType(BookingType.EBOOK);
+    return this.platforms().filter((p) => p.isEbookPlatform);
   }
 
   /**
    * Get print platforms
    */
   getPrintPlatforms(): Platform[] {
-    return this.getPlatformsByType(BookingType.PRINT);
+    return this.platforms().filter((p) => !p.isEbookPlatform);
   }
 
   /**
