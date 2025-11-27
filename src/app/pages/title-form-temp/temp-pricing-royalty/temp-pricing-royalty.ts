@@ -60,6 +60,10 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
   ) {}
 
   // Pricing inputs
+  authorAmountControls = signal<Map<number, FormControl<number | null>>>(
+    new Map()
+  );
+  publisherTotalAmount = signal<number>(0);
   pricingControls = input.required<FormArray<PricingGroup>>();
   msp = input.required<number>();
   printingPrice = input.required<number | null>();
@@ -115,7 +119,6 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
   totalRoyaltiesAmount = signal<
     Record<string, Partial<Record<string, number>> | undefined>
   >({});
-
   // Extra margin from custom print cost (only for publishers on print platforms)
   publisherExtraMargin = signal<Partial<Record<string, number>>>({});
 
@@ -235,53 +238,69 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
    * One control per author
    * Uses the first platform's percentage value if multiple exist
    */
+
+  getAuthorAmountControl(authorId: number): FormControl<number | null> {
+    const control = this.authorAmountControls().get(authorId);
+    return control ?? new FormControl<number | null>(0); // prevent undefined issue
+  }
+
   private initializeAuthorPercentageControls(): void {
     const authors = this.authors();
     const controls = new Map<number, FormControl<number | null>>();
-
-    // Get existing author percentages from royalties (use first platform as reference)
     authors.forEach((author) => {
-      // Find first royalty entry for this author (any platform)
+      // get % initial value
       const existingRoyalty = this.royaltiesController().controls.find(
         (r) =>
           r.controls.authorId.value === author.id &&
-          r.controls.platform.value &&
-          r.controls.percentage.value !== null &&
-          r.controls.percentage.value !== undefined
+          r.controls.percentage.value != null
       );
 
-      // Use the percentage from first platform found, or default to 100 if none exists
-      const initialValue =
-        existingRoyalty?.controls.percentage.value !== null &&
-        existingRoyalty?.controls.percentage.value !== undefined
-          ? existingRoyalty.controls.percentage.value
-          : 100;
+      const percent = existingRoyalty?.controls.percentage.value ?? 0;
 
-      // Round to whole number
-      const roundedInitialValue = Math.round(initialValue);
-
-      const control = new FormControl<number | null>(roundedInitialValue, [
+      // Create % control
+      const percentControl = new FormControl(Math.round(percent), [
         Validators.required,
         Validators.min(0),
         Validators.max(100),
       ]);
 
-      // Subscribe to changes and sync to all platforms
-      // Round values to whole numbers on change
-      control.valueChanges
+      // Create Amount Control (NEW)
+      const amountControl = new FormControl<number | null>(null);
+
+      /** % → Amount auto update */
+      percentControl.valueChanges
         .pipe(debounceTime(300), takeUntil(this.destroy$))
-        .subscribe((value) => {
-          if (value !== null && !isNaN(Number(value))) {
-            const roundedValue = Math.round(Number(value));
-            if (roundedValue !== value) {
-              control.patchValue(roundedValue, { emitEvent: false });
-            }
+        .subscribe((v) => {
+          if (v != null) {
+            const total = this.getTotalRevenue();
+            const amountCalc = (v / 100) * total;
+            amountControl.patchValue(amountCalc, { emitEvent: false });
+            this.syncAuthorPercentagesToRoyalties();
+            this.calculatePublisherPercentage();
           }
-          this.syncAuthorPercentagesToRoyalties();
-          this.calculatePublisherPercentage();
         });
 
-      controls.set(author.id, control);
+      /** Amount → % auto update */
+      amountControl.valueChanges
+        .pipe(debounceTime(300), takeUntil(this.destroy$))
+        .subscribe((v) => {
+          const total = this.getTotalRevenue();
+          if (total > 0 && v) {
+            const percCalc = (v / total) * 100;
+            percentControl.patchValue(Math.round(percCalc), {
+              emitEvent: false,
+            });
+            this.syncAuthorPercentagesToRoyalties();
+            this.calculatePublisherPercentage();
+          }
+        });
+
+      controls.set(author.id, percentControl);
+
+      // 🔥 store new amount controls
+      const amt = this.authorAmountControls();
+      amt.set(author.id, amountControl);
+      this.authorAmountControls.set(amt);
     });
 
     this.authorPercentageControls.set(controls);
@@ -470,6 +489,10 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
         );
       }
     });
+    // Auto convert % → ₹ amount for publisher
+    const total = this.getTotalRevenue();
+    const publisherAmount = (this.publisherPercentage() / 100) * total;
+    this.publisherTotalAmount.set(publisherAmount);
 
     // Manually trigger royalty amount calculation since we update with emitEvent: false
     setTimeout(() => {
@@ -864,5 +887,43 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     }
     const platformData = this.platformService.getPlatformByName(platform);
     return platformData?.type === 'EBOOK';
+  }
+  getTotalRevenue(): number {
+    let revenue = 0;
+    const pricing = this.pricingControls().value;
+    pricing.forEach((p) => (revenue += Number(p?.mrp ?? 0)));
+    return revenue;
+  }
+  // % changed → calculate amount
+  onAuthorPercentChanged(authorId: number, event: any) {
+    const percent = Number(event.target.value);
+    const amount = this.getTotalRevenue() * (percent / 100);
+
+    const amtControl = this.authorAmountControls().get(authorId);
+    if (amtControl) amtControl.setValue(amount, { emitEvent: false });
+
+    this.syncAuthorPercentagesToRoyalties();
+    this.calculatePublisherPercentage();
+    this.publisherTotalAmount.set(
+      (this.publisherPercentage() / 100) * this.getTotalRevenue()
+    );
+    this.updateRoyaltyAmounts();
+  }
+
+  // ₹ changed → calculate %
+  onAuthorAmountChanged(authorId: number, event: any) {
+    const amount = Number(event.target.value);
+    const total = this.getTotalRevenue();
+    const percent = total ? (amount / total) * 100 : 0;
+
+    const percentControl = this.getAuthorPercentageControl(authorId);
+    percentControl.setValue(Math.round(percent), { emitEvent: false });
+
+    this.syncAuthorPercentagesToRoyalties();
+    this.calculatePublisherPercentage();
+    this.publisherTotalAmount.set(
+      (this.publisherPercentage() / 100) * this.getTotalRevenue()
+    );
+    this.updateRoyaltyAmounts();
   }
 }

@@ -425,10 +425,9 @@
                   author.user?.firstName + " " + author.user?.lastName
               }}
             </label>
-            <p class="text-xs text-gray-500">
-              Percentage applied to all platforms
-            </p>
           </div>
+
+          <!-- % Input -->
           <div class="w-32 flex items-center gap-1">
             <input
               [formControl]="getAuthorPercentageControl(author.id)"
@@ -436,15 +435,25 @@
               min="0"
               max="100"
               step="1"
-              placeholder="0"
-              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              (keydown)="
-                $event.key === '.' || $event.key === ','
-                  ? $event.preventDefault()
-                  : null
-              "
+              class="w-full px-3 py-2 border rounded-md"
+              placeholder="%"
+              (input)="onAuthorPercentChanged(author.id, $event)"
             />
-            <span class="text-sm text-gray-600">%</span>
+            <span class="text-sm">%</span>
+          </div>
+
+          <!-- Absolute ₹ Amount Input -->
+          <div class="w-40 flex items-center gap-1">
+            <input
+              [formControl]="getAuthorAmountControl(author.id)"
+              type="number"
+              min="0"
+              step="0.01"
+              class="w-full px-3 py-2 border rounded-md"
+              placeholder="₹ Amount"
+              (input)="onAuthorAmountChanged(author.id, $event)"
+            />
+            <span class="text-sm">₹</span>
           </div>
         </div>
         }
@@ -462,19 +471,23 @@
               publisher()?.name ||
                 publisher()?.user?.firstName + " " + publisher()?.user?.lastName
             }}
-            <span class="text-sm font-normal text-gray-600"
-              >({{ "publisher" | translate }})</span
-            >
+            <span class="text-sm text-gray-600">(Publisher)</span>
           </h3>
-          <p class="text-xs text-gray-500 mt-1">
-            Automatically calculated: 100% - Total Author Percentages
+          <p class="text-xs text-gray-500">
+            Auto Adjusts based on Author entries
           </p>
         </div>
-        <div class="text-right">
-          <div class="text-2xl font-bold text-blue-600">
+
+        <div class="flex gap-3 items-center">
+          <!-- Publisher % Auto Filled -->
+          <div class="text-xl font-bold text-blue-700">
             {{ publisherPercentage() | number : "1.2-2" }}%
           </div>
-          <p class="text-xs text-gray-500">Applied to all platforms</p>
+
+          <!-- Auto Amount (Calculated from total revenue) -->
+          <div class="text-base text-green-600">
+            ₹ {{ publisherTotalAmount() | number : "1.2-2" }}
+          </div>
         </div>
       </div>
     </div>
@@ -528,9 +541,15 @@
         <table class="min-w-full border-collapse border border-gray-300">
           <thead>
             <tr class="bg-gray-100">
-              <th class="border border-gray-300 px-4 py-2 text-left sticky left-0 bg-gray-100 z-10">Name</th>
+              <th
+                class="border border-gray-300 px-4 py-2 text-left sticky left-0 bg-gray-100 z-10"
+              >
+                Name
+              </th>
               @for (platform of displayedColumns(); track platform) {
-              <th class="border border-gray-300 px-4 py-2 text-center min-w-[140px]">
+              <th
+                class="border border-gray-300 px-4 py-2 text-center min-w-[140px]"
+              >
                 {{ platform | translate }}
               </th>
               }
@@ -539,21 +558,27 @@
           <tbody>
             @for (author of authors(); track author.id) {
             <tr>
-              <td class="border border-gray-300 px-4 py-2 font-medium sticky left-0 bg-white z-10">
+              <td
+                class="border border-gray-300 px-4 py-2 font-medium sticky left-0 bg-white z-10"
+              >
                 {{
                   author.name ||
                     author.user?.firstName + " " + author.user?.lastName
                 }}
               </td>
               @for (platform of displayedColumns(); track platform) {
-              <td class="border border-gray-300 px-4 py-2 text-center min-w-[140px]">
+              <td
+                class="border border-gray-300 px-4 py-2 text-center min-w-[140px]"
+              >
                 {{ (totalRoyaltiesAmount()['author' + author.id]?.[platform] || 0) | currency }}
               </td>
               }
             </tr>
             } @if (publisher()) {
             <tr class="bg-blue-50">
-              <td class="border border-gray-300 px-4 py-2 font-medium sticky left-0 bg-blue-50 z-10">
+              <td
+                class="border border-gray-300 px-4 py-2 font-medium sticky left-0 bg-blue-50 z-10"
+              >
                 {{
                   publisher()?.name ||
                     publisher()?.user?.firstName +
@@ -566,13 +591,16 @@
               <td
                 class="border border-gray-300 px-4 py-2 text-center font-medium min-w-[140px]"
               >
-                @if (!isEbookPlatform(platform) && publisherExtraMargin()[platform]) {
+                @if (!isEbookPlatform(platform) &&
+                publisherExtraMargin()[platform]) {
                 <div class="flex flex-col gap-1">
                   <div class="font-semibold text-blue-700">
                     {{ (totalRoyaltiesAmount()['publisher' + publisher()?.id]?.[platform] || 0) | currency }}
                   </div>
                   <div class="text-xs text-green-600 font-medium">
-                    (includes {{ (publisherExtraMargin()[platform] || 0) | currency }} custom print margin)
+                    (includes
+                    {{ publisherExtraMargin()[platform] || 0 | currency }}
+                    custom print margin)
                   </div>
                 </div>
                 } @else {
