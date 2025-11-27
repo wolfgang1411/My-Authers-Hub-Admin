@@ -300,6 +300,15 @@ export interface SizeCategory {
   packetPrice: number;
   weightMultiplayer: number;
   TitlePrinting: TitlePrinting[];
+  sizeCategory?: {
+    id: number;
+    name: string;
+    category: string;
+    price: number;
+    packetPrice: number;
+    weightMultiplayer: number;
+    insideCoverPrice: number;
+  };
 }
 
 export interface TitlePrintingCostPayload {

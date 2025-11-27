@@ -65,6 +65,9 @@ export class TempTitlePrinting implements OnDestroy {
   laminationTypes = signal<LaminationType[]>([]);
   paperQuality = signal<PaperQuailty[]>([]);
   sizeCategory = signal<SizeCategory[]>([]);
+  allBindingTypes = signal<BookBindings[]>([]);
+  allLaminationTypes = signal<LaminationType[]>([]);
+  allPaperQualities = signal<PaperQuailty[]>([]);
   loadingPrice: boolean = false;
 
   printingGroup = input.required<FormGroup<PrintingFormGroup>>();
@@ -81,15 +84,28 @@ export class TempTitlePrinting implements OnDestroy {
   showCustomPrintCost = computed(() => this.allowCustomPrintingPrice());
 
   async ngOnInit() {
-    const { items: laminations } =
-      await this.printingService.getLaminationType();
-    this.laminationTypes.set(laminations);
-    const { items: binding } = await this.printingService.getBindingType();
-    this.bindingType.set(binding);
-    const { items: quality } = await this.printingService.getAllPaperTypes();
-    this.paperQuality.set(quality);
+    // Load all sizes first
     const { items: sizes } = await this.printingService.getSizeCategory();
     this.sizeCategory.set(sizes.sort((a, b) => a.id - b.id));
+
+    // Load all items initially (for fallback)
+    const { items: laminations } =
+      await this.printingService.getLaminationType();
+    this.allLaminationTypes.set(laminations);
+    const { items: binding } = await this.printingService.getBindingType();
+    this.allBindingTypes.set(binding);
+    const { items: quality } = await this.printingService.getAllPaperTypes();
+    this.allPaperQualities.set(quality);
+
+    // Set up listener for size changes
+    this.printingGroup()
+      .controls.sizeCategoryId.valueChanges.pipe(
+        startWith(this.printingGroup().controls.sizeCategoryId.value),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(async (sizeId) => {
+        await this.loadOptionsBySize(sizeId);
+      });
 
     const defaultBindingType = this.bindingType().find(
       ({ name }) => name === 'Paperback'
@@ -139,6 +155,17 @@ export class TempTitlePrinting implements OnDestroy {
       this.printingGroup().controls.sizeCategoryId.setValue(
         defaultSizeCategory
       );
+    }
+
+    // Load options for initial size if set
+    const initialSizeId = this.printingGroup().controls.sizeCategoryId.value;
+    if (initialSizeId) {
+      await this.loadOptionsBySize(initialSizeId);
+    } else {
+      // If no size selected, show all options
+      this.bindingType.set(this.allBindingTypes());
+      this.laminationTypes.set(this.allLaminationTypes());
+      this.paperQuality.set(this.allPaperQualities());
     }
 
     this.handleBlackAndWhitePages();
@@ -314,5 +341,74 @@ export class TempTitlePrinting implements OnDestroy {
   urlFromFile(file: File | null | undefined): string {
     if (!file) return '';
     return URL.createObjectURL(file);
+  }
+
+  /**
+   * Load binding types, lamination types, and paper qualities based on selected size
+   */
+  private async loadOptionsBySize(sizeId: number | null): Promise<void> {
+    if (!sizeId) {
+      // If no size selected, show all options
+      this.bindingType.set(this.allBindingTypes());
+      this.laminationTypes.set(this.allLaminationTypes());
+      this.paperQuality.set(this.allPaperQualities());
+      return;
+    }
+
+    try {
+      // Fetch the size to get its sizeCategoryId
+      const selectedSize = await this.printingService.getSizeById(sizeId);
+      if (!selectedSize || !selectedSize.sizeCategory?.id) {
+        // Fallback to all options if size category not found
+        this.bindingType.set(this.allBindingTypes());
+        this.laminationTypes.set(this.allLaminationTypes());
+        this.paperQuality.set(this.allPaperQualities());
+        return;
+      }
+
+      const sizeCategoryId = selectedSize.sizeCategory.id;
+
+      // Fetch filtered options by size category
+      const [bindings, laminations, qualities] = await Promise.all([
+        this.printingService.getBindingTypesBySizeCategoryId(sizeCategoryId),
+        this.printingService.getLaminationTypesBySizeCategoryId(sizeCategoryId),
+        this.printingService.getPaperQualitiesBySizeCategoryId(sizeCategoryId),
+      ]);
+
+      this.bindingType.set(bindings);
+      this.laminationTypes.set(laminations);
+      this.paperQuality.set(qualities);
+
+      // Reset selections if current selection is not in filtered list
+      const currentBindingId =
+        this.printingGroup().controls.bookBindingsId.value;
+      if (currentBindingId && !bindings.find((b) => b.id === currentBindingId)) {
+        this.printingGroup().controls.bookBindingsId.setValue(null);
+      }
+
+      const currentLaminationId =
+        this.printingGroup().controls.laminationTypeId.value;
+      if (
+        currentLaminationId &&
+        !laminations.find((l) => l.id === currentLaminationId)
+      ) {
+        this.printingGroup().controls.laminationTypeId.setValue(null);
+      }
+
+      const currentPaperQualityId =
+        this.printingGroup().controls.paperQuailtyId.value;
+      if (
+        currentPaperQualityId &&
+        !qualities.find((q) => q.id === currentPaperQualityId)
+      ) {
+        this.printingGroup().controls.paperQuailtyId.setValue(null);
+      }
+    } catch (error) {
+      console.error('Error loading options by size:', error);
+      // Fallback to all options on error
+      this.bindingType.set(this.allBindingTypes());
+      this.laminationTypes.set(this.allLaminationTypes());
+      this.paperQuality.set(this.allPaperQualities());
+    }
   }
 }

@@ -61,6 +61,44 @@ export class PrintingService {
       throw error;
     }
   }
+  async getSizeById(sizeId: number) {
+    try {
+      return await this.serverService.get<SizeCategory>(`size/${sizeId}`);
+    } catch (error) {
+      console.error('Error fetching size by id:', error);
+      throw error;
+    }
+  }
+  async getBindingTypesBySizeCategoryId(sizeCategoryId: number) {
+    try {
+      return await this.serverService.get<BookBindings[]>(
+        `size-category/${sizeCategoryId}/binding-types`
+      );
+    } catch (error) {
+      console.error('Error fetching binding types by size category:', error);
+      throw error;
+    }
+  }
+  async getLaminationTypesBySizeCategoryId(sizeCategoryId: number) {
+    try {
+      return await this.serverService.get<LaminationType[]>(
+        `size-category/${sizeCategoryId}/lamination-types`
+      );
+    } catch (error) {
+      console.error('Error fetching lamination types by size category:', error);
+      throw error;
+    }
+  }
+  async getPaperQualitiesBySizeCategoryId(sizeCategoryId: number) {
+    try {
+      return await this.serverService.get<PaperQuailty[]>(
+        `size-category/${sizeCategoryId}/paper-qualities`
+      );
+    } catch (error) {
+      console.error('Error fetching paper qualities by size category:', error);
+      throw error;
+    }
+  }
   async getPrintingPrice(
     printingGroup: TitlePrintingCostPayload
   ): Promise<TitlePrintingCostResponse> {
