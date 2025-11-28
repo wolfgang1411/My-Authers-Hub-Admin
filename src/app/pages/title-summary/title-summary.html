@@ -455,7 +455,10 @@
     </mat-tab>
 
     <!-- PRICING & ROYALTY TAB -->
-    @if (titleDetails()?.printingOnly !== true ) {
+    @if (
+      titleDetails()?.printingOnly !== true &&
+      loggedInUser()?.accessLevel !== 'AUTHER'
+    ) {
     <mat-tab label="Pricing & Royalty">
       <div
         class="bg-white border border-[var(--primary-superlight)] rounded-2xl shadow-sm p-6 mb-6 m-6"
@@ -466,9 +469,10 @@
           Pricing & Royalty
         </h3>
 
+        @if (platformsWithData().length > 0) {
         <!-- Cards grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          @for (platform of platforms(); track platform) {
+          @for (platform of platformsWithData(); track platform) {
           <div
             class="group relative border border-[var(--primary-superlight)] rounded-2xl p-5 bg-gradient-to-br from-white to-[var(--light-purple-bg)] hover:shadow-lg transition-all flex flex-col"
             [attr.aria-labelledby]="'card-' + platform + '-title'"
@@ -626,7 +630,9 @@
                           getRoyaltyAmount(
                             platform,
                             getPublisherRoyalty(platform)?.percentage,
-                            true
+                            true,
+                            null,
+                            getPublisherRoyalty(platform)?.publisherId
                           ) | number : "1.0-2"
                         }}
                         @if (
@@ -670,7 +676,7 @@
                         class="col-span-3 text-right text-xs text-[var(--green-2)]"
                       >
                         ₹{{
-                          getRoyaltyAmount(platform, r.percentage, false)
+                          getRoyaltyAmount(platform, r.percentage, false, r.authorId)
                             | number : "1.0-2"
                         }}
                       </div>
@@ -700,6 +706,19 @@
           </div>
           }
         </div>
+        } @else {
+        <!-- Empty State -->
+        <div
+          class="flex flex-col items-center justify-center py-12 bg-[var(--light-purple-bg)] rounded-2xl border border-[var(--primary-light)]"
+        >
+          <mat-icon class="text-[var(--primary)] text-5xl mb-3"
+            >payments</mat-icon
+          >
+          <p class="text-[var(--text-primary)] text-sm">
+            No pricing data available for this title.
+          </p>
+        </div>
+        }
       </div>
     </mat-tab>
 

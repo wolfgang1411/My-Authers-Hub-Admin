@@ -25,6 +25,7 @@ import { UserService } from '../../services/user';
 import { User } from '../../interfaces';
 import { Signal } from '@angular/core';
 import Swal from 'sweetalert2';
+import { RoyaltyService } from '../../services/royalty-service';
 
 @Component({
   selector: 'app-title-summary',
@@ -46,12 +47,14 @@ export class TitleSummary {
   titleId!: number;
   titleDetails = signal<Title | null>(null);
   loggedInUser!: Signal<User | null>;
+  royaltyAmountsCache = signal<Map<string, number>>(new Map());
 
   constructor(
     private route: ActivatedRoute,
     private titleService: TitleService,
     private staticValueService: StaticValuesService,
-    private userService: UserService
+    private userService: UserService,
+    private royaltyService: RoyaltyService
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -62,10 +65,109 @@ export class TitleSummary {
     });
   }
 
-  fetchTitleDetails() {
-    this.titleService.getTitleById(this.titleId, true).then((res) => {
-      this.titleDetails.set(res);
+  async fetchTitleDetails() {
+    const res = await this.titleService.getTitleById(this.titleId, true);
+    this.titleDetails.set(res);
+    await this.calculateAllRoyaltyAmounts();
+  }
+
+  async calculateAllRoyaltyAmounts() {
+    const title = this.titleDetails();
+    if (!title) return;
+
+    const pricing = title.pricing ?? [];
+    const royalties = title.royalties ?? [];
+    const printing = title.printing?.[0];
+    const printingPrice = printing ? Number(printing.printCost) || 0 : 0;
+
+    // Group royalties by platform
+    const royaltiesByPlatform = new Map<string, any[]>();
+    royalties.forEach((r: any) => {
+      const platformName =
+        typeof r.platform === 'string'
+          ? r.platform
+          : r.platform?.name || null;
+      if (platformName) {
+        if (!royaltiesByPlatform.has(platformName)) {
+          royaltiesByPlatform.set(platformName, []);
+        }
+        royaltiesByPlatform.get(platformName)!.push(r);
+      }
     });
+
+    // Prepare items for API call - only include platforms with royalties
+    const items = pricing
+      .map((p: any) => {
+        const platformRoyalties = royaltiesByPlatform.get(p.platform) || [];
+        if (platformRoyalties.length === 0) return null;
+        
+        const percentages = platformRoyalties.map((r: any) =>
+          String(r.percentage || 0)
+        );
+        return {
+          platform: p.platform,
+          price: p.mrp || p.salesPrice || 0,
+          division: percentages,
+        };
+      })
+      .filter((item): item is { platform: string; price: number; division: string[] } => item !== null);
+
+    if (items.length === 0) {
+      this.royaltyAmountsCache.set(new Map());
+      return;
+    }
+
+    try {
+      const response = await this.royaltyService.calculateRoyalties({
+        items,
+        printingPrice,
+      });
+
+      // Cache the results
+      const cache = new Map<string, number>();
+      response.divisionValue.forEach((item) => {
+        const platformRoyalties = royaltiesByPlatform.get(item.platform) || [];
+        platformRoyalties.forEach((r: any) => {
+          const percentage = String(r.percentage || 0);
+          const amount = item.divisionValue[percentage] || 0;
+          const key = `${item.platform}_${r.authorId || r.publisherId}_${percentage}`;
+          cache.set(key, amount);
+        });
+      });
+
+      // Also handle publisher margin for print platforms
+      if (printing && printing.customPrintCost) {
+        const customPrintCost = Number(printing.customPrintCost);
+        const actualPrintCost = Number(printing.printCost) || 0;
+        if (customPrintCost > actualPrintCost) {
+          const margin = customPrintCost - actualPrintCost;
+          // Add margin to publisher royalties for print platforms
+          pricing.forEach((p: any) => {
+            const platformRoyalties = royaltiesByPlatform.get(p.platform) || [];
+            platformRoyalties
+              .filter((r: any) => r.publisherId)
+              .forEach((r: any) => {
+                const percentage = String(r.percentage || 0);
+                const key = `${p.platform}_${r.publisherId}_${percentage}`;
+                const existingAmount = cache.get(key) || 0;
+                // Check if it's a print platform (not ebook)
+                const ebookPlatforms = [
+                  'MAH_EBOOK',
+                  'KINDLE',
+                  'GOOGLE_PLAY',
+                ];
+                if (!ebookPlatforms.includes(p.platform)) {
+                  cache.set(key, existingAmount + margin);
+                }
+              });
+          });
+        }
+      }
+
+      this.royaltyAmountsCache.set(cache);
+    } catch (error) {
+      console.error('Error calculating royalty amounts:', error);
+    }
   }
 
   frontCoverUrl(): string | null {
@@ -78,9 +180,50 @@ export class TitleSummary {
       this.staticValueService.staticValues()?.PlatForm || {}
     ) as PlatForm[];
   });
+
+  platformsWithData = computed(() => {
+    const pricing = this.titleDetails()?.pricing ?? [];
+    const royalties = this.titleDetails()?.royalties ?? [];
+    
+    // Get unique platforms from pricing data (platform is a string)
+    const platformsFromPricing = new Set(
+      pricing.map((p: any) => p.platform).filter(Boolean)
+    );
+    
+    // Get unique platforms from royalties data (platform is an object with name property)
+    const platformsFromRoyalties = new Set(
+      royalties
+        .map((r: any) => {
+          // Handle both cases: platform as string or platform as object with name
+          if (typeof r.platform === 'string') {
+            return r.platform;
+          } else if (r.platform && typeof r.platform === 'object' && r.platform.name) {
+            return r.platform.name;
+          }
+          return null;
+        })
+        .filter((p: any) => p !== null && p !== undefined)
+    );
+    
+    // Combine both sets and convert to array
+    const allPlatformsWithData = new Set([
+      ...Array.from(platformsFromPricing),
+      ...Array.from(platformsFromRoyalties),
+    ]);
+    
+    return Array.from(allPlatformsWithData) as PlatForm[];
+  });
   getRoyaltyByPlatform(platform: PlatForm) {
     const royalties = this.titleDetails()?.royalties ?? [];
-    return royalties.filter((r) => r.platform === platform);
+    return royalties.filter((r: any) => {
+      // Handle both cases: platform as string or platform as object with name
+      if (typeof r.platform === 'string') {
+        return r.platform === platform;
+      } else if (r.platform && typeof r.platform === 'object' && r.platform.name) {
+        return r.platform.name === platform;
+      }
+      return false;
+    });
   }
 
   getPublisherRoyalty(platform: PlatForm): any | null {
@@ -122,60 +265,24 @@ export class TitleSummary {
   getRoyaltyAmount(
     platform: PlatForm,
     percentage: number,
-    isPublisher: boolean = false
+    isPublisher: boolean = false,
+    authorId?: number | null,
+    publisherId?: number | null
   ): number {
-    const price = this.getPriceByPlatform(platform);
-    if (!price || !price.salesPrice) return 0;
-
-    // Ebook platforms: MAH_EBOOK, KINDLE, GOOGLE_PLAY - ignore printing costs
-    const ebookPlatforms: PlatForm[] = [
-      PlatForm.MAH_EBOOK,
-      PlatForm.KINDLE,
-      PlatForm.GOOGLE_PLAY,
-    ];
-    const isEbookPlatform = ebookPlatforms.includes(platform);
-
-    // For ebook platforms, calculate without subtracting print cost
-    if (isEbookPlatform) {
-      return (percentage / 100) * price.salesPrice;
-    }
-
-    const printing = this.titleDetails()?.printing?.[0];
-    if (!printing) {
-      // If no printing details, calculate without subtracting print cost
-      return (percentage / 100) * price.salesPrice;
-    }
-
-    const actualPrintCost = Number(printing.printCost) || 0;
-    const customPrintCost = printing.customPrintCost
-      ? Number(printing.customPrintCost)
-      : null;
-
-    const isAuthorViewer = this.loggedInUser()?.accessLevel === 'AUTHER';
-
-    if (isPublisher) {
-      // For publisher: use actual print cost for base calculation
-      const baseAmount =
-        (percentage / 100) * (price.salesPrice - actualPrintCost);
-
-      // Add margin (customPrintCost - actualPrintCost) if customPrintCost exists and is greater
-      // This margin goes directly to publisher royalty in addition to their percentage
-      // But don't show the margin to authors
-      if (
-        !isAuthorViewer &&
-        customPrintCost &&
-        customPrintCost > actualPrintCost
-      ) {
-        const margin = customPrintCost - actualPrintCost;
-        return baseAmount + margin;
+    // Get from cache if available
+    const cache = this.royaltyAmountsCache();
+    const id = isPublisher ? publisherId : authorId;
+    if (id) {
+      // Use String() to ensure consistent format matching the cache key
+      const key = `${platform}_${id}_${String(percentage)}`;
+      const cachedAmount = cache.get(key);
+      if (cachedAmount !== undefined) {
+        return cachedAmount;
       }
-
-      return baseAmount;
-    } else {
-      // For authors: use customPrintCost if available, otherwise use actualPrintCost
-      const printCostToUse = customPrintCost || actualPrintCost;
-      return (percentage / 100) * (price.salesPrice - printCostToUse);
     }
+
+    // Fallback to 0 if not in cache (calculation might still be in progress)
+    return 0;
   }
 
   getPublisherMargin(platform: PlatForm): number {
