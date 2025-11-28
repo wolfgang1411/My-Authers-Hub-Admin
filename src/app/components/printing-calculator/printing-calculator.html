@@ -7,7 +7,7 @@
     <h2 class="text-lg font-medium mb-2 text-text-primary">
       Basic Information
     </h2>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <!-- Total Pages -->
       <mat-form-field class="w-full">
         <mat-label>{{ "totalpages" | translate }}</mat-label>
@@ -18,12 +18,6 @@
       <mat-form-field class="w-full">
         <mat-label>{{ "colourpages" | translate }}</mat-label>
         <input matInput type="number" formControlName="colorPages" />
-      </mat-form-field>
-
-      <!-- Quantity -->
-      <mat-form-field class="w-full">
-        <mat-label>{{ "quantity" | translate }}</mat-label>
-        <input matInput type="number" formControlName="quantity" />
       </mat-form-field>
     </div>
   </div>

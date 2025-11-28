@@ -1,4 +1,11 @@
-import { Component, effect, OnInit, signal, Signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  OnInit,
+  signal,
+  Signal,
+} from '@angular/core';
 import { UserService } from '../../services/user';
 import {
   BookBindings,
@@ -44,13 +51,25 @@ export class Settings implements OnInit {
 
     effect(() => {
       const user = this.user();
-      if (user && user.accessLevel !== 'SUPERADMIN') {
+      if (
+        user &&
+        user.accessLevel !== 'SUPERADMIN' &&
+        user.accessLevel !== 'PUBLISHER'
+      ) {
         this.router.navigateByUrl('/');
       }
     });
   }
 
   user!: Signal<User | null>;
+
+  isSuperAdmin = computed(() => {
+    return this.user()?.accessLevel === 'SUPERADMIN';
+  });
+
+  isPublisher = computed(() => {
+    return this.user()?.accessLevel === 'PUBLISHER';
+  });
 
   async ngOnInit() {
     await this.fetchInitialData();
@@ -75,14 +94,21 @@ export class Settings implements OnInit {
     const { items: laminations } = await this.printService.getLaminationType({
       itemsPerPage: 200,
     });
-    const { val: marginPercent } =
-      await this.settingService.fetchMarginPercent();
+
+    // Only fetch margin percent for super admins
+    if (this.isSuperAdmin()) {
+      const { val: marginPercent } =
+        await this.settingService.fetchMarginPercent();
+      this.marginPercent.set(Number(marginPercent));
+    } else {
+      // Set to null for publishers - they cannot see or modify it
+      this.marginPercent.set(null);
+    }
 
     this.bindingTypes.set(bindingTypes);
     this.paperQualityTypes.set(paperQuality);
     this.sizeTypes.set(sizes);
     this.laminationTypes.set(laminations);
-    this.marginPercent.set(Number(marginPercent));
   }
 
   onPaperQualityTypesUpdae({
@@ -145,6 +171,9 @@ export class Settings implements OnInit {
   }
 
   onMarginPercentUpdate(value: number) {
-    this.marginPercent.set(value);
+    // Only allow updates if user is super admin
+    if (this.isSuperAdmin()) {
+      this.marginPercent.set(value);
+    }
   }
 }

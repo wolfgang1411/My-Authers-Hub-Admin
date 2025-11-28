@@ -4,6 +4,8 @@ import {
   output,
   signal,
   ChangeDetectionStrategy,
+  OnInit,
+  OnDestroy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
@@ -19,7 +21,7 @@ import { SettingsService } from '../../../services/settings';
 import { Size, CreateSize, UpdateSize } from '../../../interfaces';
 import Swal from 'sweetalert2';
 import { TranslateService } from '@ngx-translate/core';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil, Subject } from 'rxjs';
 
 @Component({
   selector: 'app-size-manager',
@@ -39,7 +41,9 @@ import { firstValueFrom } from 'rxjs';
   styleUrl: './size-manager.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SizeManager {
+export class SizeManager implements OnInit, OnDestroy {
+  private readonly destroy$ = new Subject<void>();
+
   sizeCategoryId = input.required<number>();
   sizes = input.required<Size[]>();
   onUpdate = output<void>();
@@ -49,7 +53,7 @@ export class SizeManager {
   editingId = signal<number | null>(null);
 
   form = new FormGroup({
-    size: new FormControl<string>('', [Validators.required]),
+    size: new FormControl<string>(''), // Auto-generated, no validation needed
     width: new FormControl<number | null>(null, [Validators.required, Validators.min(0)]),
     length: new FormControl<number | null>(null, [Validators.required, Validators.min(0)]),
   });
@@ -58,6 +62,39 @@ export class SizeManager {
     private settingsService: SettingsService,
     private translateService: TranslateService
   ) {}
+
+  ngOnInit(): void {
+    // Watch for width and length changes to auto-generate size
+    this.form.controls.width.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.generateSize();
+      });
+
+    this.form.controls.length.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.generateSize();
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  /**
+   * Generate size string from width and length
+   */
+  private generateSize(): void {
+    const width = this.form.controls.width.value;
+    const length = this.form.controls.length.value;
+    
+    if (width !== null && width !== undefined && length !== null && length !== undefined) {
+      const generatedSize = `${width}*${length}`;
+      this.form.controls.size.setValue(generatedSize, { emitEvent: false });
+    }
+  }
 
   startAdding() {
     this.isAdding.set(true);
@@ -70,16 +107,27 @@ export class SizeManager {
   }
 
   async save() {
-    if (this.form.invalid) {
+    // Validate width and length (size is auto-generated)
+    if (this.form.controls.width.invalid || this.form.controls.length.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
-    const formValue = this.form.value;
+    const width = this.form.controls.width.value;
+    const length = this.form.controls.length.value;
+    
+    if (!width || !length) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    // Auto-generate size from width and length
+    const generatedSize = `${width}*${length}`;
+
     const sizeData: CreateSize = {
-      size: formValue.size!,
-      width: formValue.width!,
-      length: formValue.length!,
+      size: generatedSize,
+      width: width,
+      length: length,
       sizeCategoryId: this.sizeCategoryId(),
     };
 
@@ -106,10 +154,11 @@ export class SizeManager {
   startEditing(size: Size) {
     this.editingId.set(size.id);
     this.form.patchValue({
-      size: size.size,
       width: size.width,
       length: size.length,
     });
+    // Generate size from width and length
+    this.generateSize();
   }
 
   cancelEditing() {
@@ -118,17 +167,28 @@ export class SizeManager {
   }
 
   async update(size: Size) {
-    if (this.form.invalid) {
+    // Validate width and length (size is auto-generated)
+    if (this.form.controls.width.invalid || this.form.controls.length.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
-    const formValue = this.form.value;
+    const width = this.form.controls.width.value;
+    const length = this.form.controls.length.value;
+    
+    if (!width || !length) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    // Auto-generate size from width and length
+    const generatedSize = `${width}*${length}`;
+
     const updateData: UpdateSize = {
       id: size.id,
-      size: formValue.size!,
-      width: formValue.width!,
-      length: formValue.length!,
+      size: generatedSize,
+      width: width,
+      length: length,
       sizeCategoryId: this.sizeCategoryId(),
     };
 

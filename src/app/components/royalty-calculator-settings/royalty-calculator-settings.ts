@@ -26,6 +26,7 @@ import { PlatformService } from '../../services/platform';
 import { Platform } from '../../interfaces/Platform';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { PlatformDialog } from '../platform-dialog/platform-dialog';
+import { UserService } from '../../services/user';
 
 type RoyaltyItemForm = FormGroup<{
   platform: FormControl<string>;
@@ -46,9 +47,13 @@ export class RoyaltyCalculatorSettings implements OnInit {
   private readonly royaltyService = inject(RoyaltyService);
   private readonly platformService = inject(PlatformService);
   private readonly dialog = inject(MatDialog);
+  private readonly userService = inject(UserService);
 
   protected readonly platforms = computed(() =>
     this.platformService.platforms()
+  );
+  protected readonly isSuperAdmin = computed(() =>
+    this.userService.loggedInUser$()?.accessLevel === 'SUPERADMIN'
   );
   protected readonly resultDivision = signal<
     CalculateRoyaltiesResponse['divisionValue']

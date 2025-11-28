@@ -101,27 +101,27 @@ export class PrintingCalculator implements OnInit, OnDestroy {
   allPaperQualityTypes = signal<PaperQuailty[]>([]);
 
   form = new FormGroup({
-    bindingTypeId: new FormControl(null, {
+    bindingTypeId: new FormControl<number | null>(null, {
       validators: [Validators.required],
     }),
-    quantity: new FormControl(1, [Validators.required]),
-    colorPages: new FormControl(0, {
+    quantity: new FormControl<number>(1, [Validators.required]),
+    colorPages: new FormControl<number>(0, {
       validators: [Validators.required],
     }),
-    laminationTypeId: new FormControl(null, {
+    laminationTypeId: new FormControl<number | null>(null, {
       validators: [Validators.required],
     }),
-    paperQuailtyId: new FormControl(null, {
+    paperQuailtyId: new FormControl<number | null>(null, {
       validators: [Validators.required],
     }),
-    sizeCategoryId: new FormControl(null, {
+    sizeCategoryId: new FormControl<number | null>(null, {
       validators: [Validators.required],
     }),
-    totalPages: new FormControl(null, {
+    totalPages: new FormControl<number | null>(null, {
       validators: [Validators.required],
     }),
-    insideCover: new FormControl(false, {}),
-    isColorPagesRandom: new FormControl(false, {}),
+    insideCover: new FormControl<boolean>(false, {}),
+    isColorPagesRandom: new FormControl<boolean>(false, {}),
   });
 
   calculation = signal<TitlePrintingCostResponse | null>(null);
@@ -153,9 +153,22 @@ export class PrintingCalculator implements OnInit, OnDestroy {
   ) {
     // Watch for input changes and update all* signals
     effect(() => {
+      // Watch sizeTypes to set default when available
+      const sizes = this.sizeTypes();
+      
       this.allBindingTypes.set(this.bindingTypes());
       this.allLaminationTypes.set(this.laminationTypes());
       this.allPaperQualityTypes.set(this.paperQualityTypes());
+
+      // Set default size to 5.5*8.5 if not already set and sizeTypes are available
+      if (!this.form.controls.sizeCategoryId.value && sizes.length > 0) {
+        const defaultSize = sizes.find((s) => s.size === '5.5*8.5');
+        if (defaultSize) {
+          // Set the default size - emitEvent: true so valueChanges fires and loads options
+          this.form.controls.sizeCategoryId.setValue(defaultSize.id);
+          return; // Exit early to avoid reloading with the same value
+        }
+      }
 
       // Reload filtered options if size category is selected
       const sizeCategoryId = this.form.controls.sizeCategoryId.value;
@@ -175,6 +188,17 @@ export class PrintingCalculator implements OnInit, OnDestroy {
     this.allBindingTypes.set(this.bindingTypes());
     this.allLaminationTypes.set(this.laminationTypes());
     this.allPaperQualityTypes.set(this.paperQualityTypes());
+
+    // Set default quantity to 1 (hidden field)
+    this.form.controls.quantity.setValue(1);
+
+    // Set default size to 5.5*8.5 if not already set and sizeTypes are available
+    if (!this.form.controls.sizeCategoryId.value && this.sizeTypes().length > 0) {
+      const defaultSize = this.sizeTypes().find((s) => s.size === '5.5*8.5');
+      if (defaultSize) {
+        this.form.controls.sizeCategoryId.setValue(defaultSize.id);
+      }
+    }
 
     // Set up listener for size category changes
     this.form.controls.sizeCategoryId.valueChanges
@@ -288,6 +312,10 @@ export class PrintingCalculator implements OnInit, OnDestroy {
       ) {
         this.form.controls.paperQuailtyId.setValue(null);
       }
+
+      // Set default values after filtered options are loaded
+      // Always call to ensure defaults are set if values are null
+      this.setDefaultValues();
     } catch (error) {
       console.error('Error loading options by size:', error);
       // Fallback to all options on error
@@ -297,10 +325,49 @@ export class PrintingCalculator implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Set default values for binding type, paper quality, and lamination type
+   */
+  private setDefaultValues(): void {
+    // Set default binding type to Paperback
+    if (!this.form.controls.bindingTypeId.value) {
+      const defaultBinding = this.filteredBindingTypes().find(
+        (b) => b.name === 'Paperback'
+      );
+      if (defaultBinding) {
+        this.form.controls.bindingTypeId.setValue(defaultBinding.id);
+      }
+    }
+
+    // Set default paper quality to 80 GSM
+    if (!this.form.controls.paperQuailtyId.value) {
+      const defaultPaper = this.filteredPaperQualityTypes().find(
+        (p) => p.name === '80 GSM'
+      );
+      if (defaultPaper) {
+        this.form.controls.paperQuailtyId.setValue(defaultPaper.id);
+      }
+    }
+
+    // Set default lamination type to Matte
+    if (!this.form.controls.laminationTypeId.value) {
+      const defaultLamination = this.filteredLaminationTypes().find(
+        (l) => l.name === 'Matte'
+      );
+      if (defaultLamination) {
+        this.form.controls.laminationTypeId.setValue(defaultLamination.id);
+      }
+    }
+  }
+
   async updatePrice() {
+    // Always ensure quantity is 1
+    this.form.controls.quantity.setValue(1, { emitEvent: false });
+    
     if (this.form.valid) {
+      const formValue = { ...this.form.value, quantity: 1 };
       const res = await this.settingService.fetchPrintingCost(
-        this.form.value as any
+        formValue as any
       );
       this.calculation.set(res);
     }
@@ -347,6 +414,10 @@ export class PrintingCalculator implements OnInit, OnDestroy {
   updateRate(moduleType: ModuleType) {
     switch (moduleType) {
       case 'marginPercent':
+        // Only allow super admins to update margin percent
+        if (!this.isSuperAdmin()) {
+          return;
+        }
         const marginPercentDialog = this.matDialog.open(InviteDialog, {
           data: {
             onSave: async (val: any) => {
