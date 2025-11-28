@@ -45,6 +45,7 @@ import {
   States,
   Cities,
   Media,
+  AuthorStatus,
 } from '../../interfaces';
 import { AddressService } from '../../services/address-service';
 import { BankDetailService } from '../../services/bank-detail-service';
@@ -121,7 +122,7 @@ export class AddAuthor implements OnInit {
   private http = inject(HttpClient);
   authorId?: number;
   signupCode?: string;
-  authorDetails?: Author;
+  authorDetails = signal<Author | undefined>(undefined);
   loggedInUser!: Signal<User | null>;
   bankOptions = signal<BankOption[]>([]);
   selectedTypes = signal<string[]>([]);
@@ -129,8 +130,15 @@ export class AddAuthor implements OnInit {
   countries!: Countries[];
   states!: States[];
   cities!: Cities[];
+  AuthorStatus = AuthorStatus; // Expose AuthorStatus enum to template
   isAllSelected = computed(() => {
     return this.selectedTypes().length >= this.socialMediaArray.length;
+  });
+  canRaiseTicket = computed(() => {
+    if (!this.authorId || !this.authorDetails()) {
+      return true; // New author or no author details, can submit normally
+    }
+    return this.authorDetails()?.status !== AuthorStatus.Pending;
   });
   bankInfo: any = null;
   verifying = false;
@@ -327,7 +335,7 @@ export class AddAuthor implements OnInit {
       this.authorFormGroup.controls.userPassword.disable();
 
       const response = await this.authorsService.getAuthorrById(this.authorId);
-      this.authorDetails = response;
+      this.authorDetails.set(response);
       this.isPrefilling = true;
       this.prefillForm(response);
       this.isPrefilling = false;
@@ -655,6 +663,8 @@ export class AddAuthor implements OnInit {
       accountHolderName: this.authorBankDetails.value.accountHolderName,
     };
 
+    let ticketsRaised = false;
+
     for (const section of sections) {
       const payload: any = { type: section.type };
       let hasValues = false;
@@ -671,37 +681,42 @@ export class AddAuthor implements OnInit {
 
       if (hasValues) {
         await this.userService.raisingTicket(payload);
+        ticketsRaised = true;
       }
-      const socialMediaData = this.socialMediaArray.controls
-        .map((group) => ({
-          ...group.value,
-          autherId: this.authorId,
-        }))
-        .filter((item) => item.type && item.url?.trim());
+    }
 
-      if (socialMediaData.length > 0) {
-        await this.socialService.createOrUpdateSocialMediaLinks(
-          socialMediaData as socialMediaGroup[]
-        );
-      }
-      const media = this.mediaControl.value;
-      if (this.mediaToDeleteId && media?.file) {
-        await this.authorsService.removeImage(this.mediaToDeleteId);
-        console.log('🗑 Old image deleted');
+    const socialMediaData = this.socialMediaArray.controls
+      .map((group) => ({
+        ...group.value,
+        autherId: this.authorId,
+      }))
+      .filter((item) => item.type && item.url?.trim());
 
-        await this.authorsService.updateMyImage(
-          media.file,
-          this.authorId as number
-        );
-        console.log('⬆ New image uploaded');
-      } else if (!this.mediaToDeleteId && media?.file) {
-        await this.authorsService.updateMyImage(
-          media.file,
-          this.authorId as number
-        );
-        console.log('📤 New image uploaded (no old media existed)');
-      }
+    if (socialMediaData.length > 0) {
+      await this.socialService.createOrUpdateSocialMediaLinks(
+        socialMediaData as socialMediaGroup[]
+      );
+    }
 
+    const media = this.mediaControl.value;
+    if (this.mediaToDeleteId && media?.file) {
+      await this.authorsService.removeImage(this.mediaToDeleteId);
+      console.log('🗑 Old image deleted');
+
+      await this.authorsService.updateMyImage(
+        media.file,
+        this.authorId as number
+      );
+      console.log('⬆ New image uploaded');
+    } else if (!this.mediaToDeleteId && media?.file) {
+      await this.authorsService.updateMyImage(
+        media.file,
+        this.authorId as number
+      );
+      console.log('📤 New image uploaded (no old media existed)');
+    }
+
+    if (ticketsRaised) {
       await Swal.fire({
         icon: 'success',
         text: 'Update ticket raised successfully',
@@ -774,6 +789,7 @@ export class AddAuthor implements OnInit {
 
       const authorData = {
         ...this.authorFormGroup.value,
+        id: this.authorId || this.authorFormGroup.value.id,
         email: this.authorFormGroup.controls.email.value,
         userPassword: this.authorFormGroup.controls.userPassword.value
           ? md5(this.authorFormGroup.controls.userPassword.value)
@@ -783,7 +799,13 @@ export class AddAuthor implements OnInit {
       if (this.loggedInUser()?.accessLevel === 'SUPERADMIN' || !this.authorId) {
         await this.handleNewOrSuperAdminAuthorSubmission(authorData);
       } else {
-        await this.handleAuthorUpdateFlow(authorData);
+        // If author status is Pending, allow direct update (like titles)
+        // Otherwise, raise update ticket
+        if (this.authorDetails()?.status === AuthorStatus.Pending) {
+          await this.handleNewOrSuperAdminAuthorSubmission(authorData);
+        } else {
+          await this.handleAuthorUpdateFlow(authorData);
+        }
       }
       if (this.signupCode) {
         this.router.navigate(['/login']);

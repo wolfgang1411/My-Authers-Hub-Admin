@@ -312,7 +312,7 @@
         </mat-form-field>
       </div>
     </form>
-    <div class="flex flex-row gap-2">
+    <div class="flex flex-row gap-2 justify-end">
       <button class="!bg-primary mt-8 !text-white" matButton matStepperPrevious>
         Back
       </button>
@@ -322,9 +322,13 @@
         (click)="onSubmit()"
       >
         {{
-          loggedInUser()?.accessLevel === "SUPERADMIN" || !this.authorId
-            ? ("submit" | translate)
-            : ("raiseaticket" | translate)
+          !this.authorId
+            ? ("create" | translate)
+            : (loggedInUser()?.accessLevel === "SUPERADMIN"
+                ? ("update" | translate)
+                : (authorDetails()?.status === AuthorStatus.Pending
+                    ? ("update" | translate)
+                    : ("raiseaticket" | translate)))
         }}
       </button>
     </div>
