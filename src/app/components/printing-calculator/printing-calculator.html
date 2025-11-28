@@ -34,49 +34,7 @@
       Customization Options
     </h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Binding Type -->
-      <div class="flex gap-2 items-center">
-        <mat-form-field class="flex-1">
-          <mat-label>{{ "bindingtype" | translate }}</mat-label>
-          <mat-select formControlName="bindingTypeId">
-            @for (type of bindingTypes(); track type.id) {
-            <mat-option [value]="type.id">{{ type.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <button
-          type="button"
-          mat-button
-          matButton="filled"
-          class="!bg-primary"
-          (click)="updateRate('bidingType')"
-        >
-          {{ "updaterate" | translate }}
-        </button>
-      </div>
-
-      <!-- Paper Quality -->
-      <div class="flex gap-2 items-center">
-        <mat-form-field class="flex-1">
-          <mat-label>{{ "papertype" | translate }}</mat-label>
-          <mat-select formControlName="paperQuailtyId">
-            @for (paper of paperQualityTypes(); track paper.id) {
-            <mat-option [value]="paper.id">{{ paper.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <button
-          type="button"
-          mat-button
-          matButton="filled"
-          class="!bg-primary"
-          (click)="updateRate('paperQualityType')"
-        >
-          {{ "updaterate" | translate }}
-        </button>
-      </div>
-
-      <!-- Size Category -->
+      <!-- Size Category - First -->
       <div class="flex gap-2 items-center">
         <mat-form-field class="flex-1">
           <mat-label>{{ "sizecategory" | translate }}</mat-label>
@@ -97,12 +55,54 @@
         </button>
       </div>
 
+      <!-- Binding Type -->
+      <div class="flex gap-2 items-center">
+        <mat-form-field class="flex-1">
+          <mat-label>{{ "bindingtype" | translate }}</mat-label>
+          <mat-select formControlName="bindingTypeId" [disabled]="!isSizeCategorySelected()">
+            @for (type of filteredBindingTypes(); track type.id) {
+            <mat-option [value]="type.id">{{ type.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <button
+          type="button"
+          mat-button
+          matButton="filled"
+          class="!bg-primary"
+          (click)="updateRate('bidingType')"
+        >
+          {{ "updaterate" | translate }}
+        </button>
+      </div>
+
+      <!-- Paper Quality -->
+      <div class="flex gap-2 items-center">
+        <mat-form-field class="flex-1">
+          <mat-label>{{ "papertype" | translate }}</mat-label>
+          <mat-select formControlName="paperQuailtyId" [disabled]="!isSizeCategorySelected()">
+            @for (paper of filteredPaperQualityTypes(); track paper.id) {
+            <mat-option [value]="paper.id">{{ paper.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <button
+          type="button"
+          mat-button
+          matButton="filled"
+          class="!bg-primary"
+          (click)="updateRate('paperQualityType')"
+        >
+          {{ "updaterate" | translate }}
+        </button>
+      </div>
+
       <!-- Lamination Type -->
       <div class="flex gap-2 items-center">
         <mat-form-field class="flex-1">
           <mat-label>{{ "laminationtype" | translate }}</mat-label>
-          <mat-select formControlName="laminationTypeId">
-            @for (lamination of laminationTypes(); track lamination.id) {
+          <mat-select formControlName="laminationTypeId" [disabled]="!isSizeCategorySelected()">
+            @for (lamination of filteredLaminationTypes(); track lamination.id) {
             <mat-option [value]="lamination.id">{{
               lamination.name
             }}</mat-option>

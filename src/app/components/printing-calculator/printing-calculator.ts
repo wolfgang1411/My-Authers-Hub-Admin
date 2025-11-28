@@ -1,4 +1,4 @@
-import { Component, input, OnInit, output, signal } from '@angular/core';
+import { Component, computed, effect, input, OnInit, OnDestroy, output, signal } from '@angular/core';
 import {
   BookBindings,
   LaminationType,
@@ -18,13 +18,14 @@ import {
   Validators,
 } from '@angular/forms';
 import { SettingsService } from '../../services/settings';
+import { PrintingService } from '../../services/printing-service';
 import { CommonModule } from '@angular/common';
 import { MatFormField, MatInput, MatLabel } from '@angular/material/input';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonModule } from '@angular/material/button';
-import { debounceTime, firstValueFrom } from 'rxjs';
+import { debounceTime, firstValueFrom, startWith, Subject, takeUntil } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { AddUpdatePaperQuality } from '../add-update-paper-quality/add-update-paper-quality';
 import { AddUpdateBindingType } from '../add-update-binding-type/add-update-binding-type';
@@ -57,12 +58,8 @@ type ModuleType =
   templateUrl: './printing-calculator.html',
   styleUrl: './printing-calculator.css',
 })
-export class PrintingCalculator implements OnInit {
-  constructor(
-    private settingService: SettingsService,
-    private matDialog: MatDialog,
-    private translateServie: TranslateService
-  ) {}
+export class PrintingCalculator implements OnInit, OnDestroy {
+  private readonly destroy$ = new Subject<void>();
 
   bindingTypes = input.required<BookBindings[]>();
   paperQualityTypes = input.required<PaperQuailty[]>();
@@ -75,6 +72,16 @@ export class PrintingCalculator implements OnInit {
   onSizeTypesUpdate = output<{ data: SizeCategory; isNew: boolean }>();
   onLaminationTypesUpdate = output<{ data: LaminationType; isNew: boolean }>();
   onInsideCoverPriceUpdate = output<number>();
+
+  // Filtered options based on selected size category
+  filteredBindingTypes = signal<BookBindings[]>([]);
+  filteredLaminationTypes = signal<LaminationType[]>([]);
+  filteredPaperQualityTypes = signal<PaperQuailty[]>([]);
+  
+  // Store all options for fallback
+  allBindingTypes = signal<BookBindings[]>([]);
+  allLaminationTypes = signal<LaminationType[]>([]);
+  allPaperQualityTypes = signal<PaperQuailty[]>([]);
 
   form = new FormGroup({
     bindingTypeId: new FormControl(null, {
@@ -101,10 +108,146 @@ export class PrintingCalculator implements OnInit {
   });
 
   calculation = signal<TitlePrintingCostResponse | null>(null);
-  ngOnInit(): void {
-    this.form.valueChanges.pipe(debounceTime(600)).subscribe(() => {
+  
+  // Computed to check if size category is selected
+  isSizeCategorySelected = computed(() => {
+    return !!this.form.controls.sizeCategoryId.value;
+  });
+  
+  constructor(
+    private settingService: SettingsService,
+    private printingService: PrintingService,
+    private matDialog: MatDialog,
+    private translateServie: TranslateService
+  ) {
+    // Watch for input changes and update all* signals
+    effect(() => {
+      this.allBindingTypes.set(this.bindingTypes());
+      this.allLaminationTypes.set(this.laminationTypes());
+      this.allPaperQualityTypes.set(this.paperQualityTypes());
+      
+      // Reload filtered options if size category is selected
+      const sizeCategoryId = this.form.controls.sizeCategoryId.value;
+      if (sizeCategoryId) {
+        this.loadOptionsBySizeCategory(sizeCategoryId);
+      } else {
+        // If no size selected, show all options
+        this.filteredBindingTypes.set(this.allBindingTypes());
+        this.filteredLaminationTypes.set(this.allLaminationTypes());
+        this.filteredPaperQualityTypes.set(this.allPaperQualityTypes());
+      }
+    });
+  }
+  
+  async ngOnInit(): Promise<void> {
+    // Initialize all options from inputs
+    this.allBindingTypes.set(this.bindingTypes());
+    this.allLaminationTypes.set(this.laminationTypes());
+    this.allPaperQualityTypes.set(this.paperQualityTypes());
+
+    // Set up listener for size category changes
+    this.form.controls.sizeCategoryId.valueChanges
+      .pipe(
+        startWith(this.form.controls.sizeCategoryId.value),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(async (sizeCategoryId) => {
+        await this.loadOptionsBySizeCategory(sizeCategoryId);
+      });
+
+    // Load options for initial size category if set
+    const initialSizeCategoryId = this.form.controls.sizeCategoryId.value;
+    if (initialSizeCategoryId) {
+      await this.loadOptionsBySizeCategory(initialSizeCategoryId);
+    } else {
+      // If no size selected, show all options
+      this.filteredBindingTypes.set(this.allBindingTypes());
+      this.filteredLaminationTypes.set(this.allLaminationTypes());
+      this.filteredPaperQualityTypes.set(this.allPaperQualityTypes());
+    }
+
+    this.form.valueChanges.pipe(debounceTime(600), takeUntil(this.destroy$)).subscribe(() => {
       this.updatePrice();
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  /**
+   * Update field states based on size category selection
+   */
+  private updateFieldStates(sizeCategoryId: number | null): void {
+    if (!sizeCategoryId) {
+      // Disable fields when no size category is selected
+      this.form.controls.bindingTypeId.disable();
+      this.form.controls.laminationTypeId.disable();
+      this.form.controls.paperQuailtyId.disable();
+    } else {
+      // Enable fields when size category is selected
+      this.form.controls.bindingTypeId.enable();
+      this.form.controls.laminationTypeId.enable();
+      this.form.controls.paperQuailtyId.enable();
+    }
+  }
+
+  /**
+   * Load binding types, lamination types, and paper qualities based on selected size category
+   */
+  private async loadOptionsBySizeCategory(sizeCategoryId: number | null): Promise<void> {
+    // Update field states
+    this.updateFieldStates(sizeCategoryId);
+    
+    if (!sizeCategoryId) {
+      // If no size selected, show all options
+      this.filteredBindingTypes.set(this.allBindingTypes());
+      this.filteredLaminationTypes.set(this.allLaminationTypes());
+      this.filteredPaperQualityTypes.set(this.allPaperQualityTypes());
+      return;
+    }
+
+    try {
+      // Fetch filtered options by size category
+      const [bindings, laminations, qualities] = await Promise.all([
+        this.printingService.getBindingTypesBySizeCategoryId(sizeCategoryId),
+        this.printingService.getLaminationTypesBySizeCategoryId(sizeCategoryId),
+        this.printingService.getPaperQualitiesBySizeCategoryId(sizeCategoryId),
+      ]);
+
+      this.filteredBindingTypes.set(bindings);
+      this.filteredLaminationTypes.set(laminations);
+      this.filteredPaperQualityTypes.set(qualities);
+
+      // Reset selections if current selection is not in filtered list
+      const currentBindingId = this.form.controls.bindingTypeId.value;
+      if (currentBindingId && !bindings.find((b) => b.id === currentBindingId)) {
+        this.form.controls.bindingTypeId.setValue(null);
+      }
+
+      const currentLaminationId = this.form.controls.laminationTypeId.value;
+      if (
+        currentLaminationId &&
+        !laminations.find((l) => l.id === currentLaminationId)
+      ) {
+        this.form.controls.laminationTypeId.setValue(null);
+      }
+
+      const currentPaperQualityId = this.form.controls.paperQuailtyId.value;
+      if (
+        currentPaperQualityId &&
+        !qualities.find((q) => q.id === currentPaperQualityId)
+      ) {
+        this.form.controls.paperQuailtyId.setValue(null);
+      }
+    } catch (error) {
+      console.error('Error loading options by size category:', error);
+      // Fallback to all options on error
+      this.filteredBindingTypes.set(this.allBindingTypes());
+      this.filteredLaminationTypes.set(this.allLaminationTypes());
+      this.filteredPaperQualityTypes.set(this.allPaperQualityTypes());
+    }
   }
 
   async updatePrice() {
@@ -214,8 +357,8 @@ export class PrintingCalculator implements OnInit {
       case 'laminationType':
         const laminationDialog = this.matDialog.open(AddUpdateLaminationType, {
           data: {
-            laminationTypes: this.laminationTypes(),
-            defaultValue: this.laminationTypes().filter(
+            laminationTypes: this.allLaminationTypes(),
+            defaultValue: this.allLaminationTypes().filter(
               ({ id }) => id == this.form.controls.laminationTypeId.value
             )[0],
             onClose: () => laminationDialog.close(),
@@ -246,8 +389,8 @@ export class PrintingCalculator implements OnInit {
       case 'bidingType':
         const bindingDialog = this.matDialog.open(AddUpdateBindingType, {
           data: {
-            bindingTypes: this.bindingTypes(),
-            defaultValue: this.bindingTypes().filter(
+            bindingTypes: this.allBindingTypes(),
+            defaultValue: this.allBindingTypes().filter(
               ({ id }) => id == this.form.controls.bindingTypeId.value
             )[0],
             onClose: () => bindingDialog.close(),
@@ -278,8 +421,8 @@ export class PrintingCalculator implements OnInit {
       case 'paperQualityType':
         const qualityDialog = this.matDialog.open(AddUpdatePaperQuality, {
           data: {
-            paperQualityTypes: this.paperQualityTypes(),
-            defaultValue: this.paperQualityTypes().filter(
+            paperQualityTypes: this.allPaperQualityTypes(),
+            defaultValue: this.allPaperQualityTypes().filter(
               ({ id }) => id == this.form.controls.paperQuailtyId.value
             )[0],
             onClose: () => qualityDialog.close(),
