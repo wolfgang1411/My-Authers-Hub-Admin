@@ -6,6 +6,8 @@ import {
   FormGroup,
   ReactiveFormsModule,
   Validators,
+  AbstractControl,
+  ValidationErrors,
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import {
@@ -18,9 +20,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatIconModule } from '@angular/material/icon';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { Distribution } from '../../interfaces/Distribution';
-import { DiscountType, DistributionType } from '../../interfaces';
+import { DistributionType } from '../../interfaces';
 
 @Component({
   selector: 'app-distribution-dialog',
@@ -35,6 +38,7 @@ import { DiscountType, DistributionType } from '../../interfaces';
     MatDialogActions,
     MatButtonModule,
     MatDialogTitle,
+    MatIconModule,
   ],
   templateUrl: './distribution-dialog.html',
   styleUrl: './distribution-dialog.css',
@@ -54,15 +58,34 @@ export class DistributionDialog {
   }
 
   createDistribution(type: DistributionType, amount: number | null) {
-    console.log({ type });
-
     return this.fb.group({
       distributionType: this.fb.control<DistributionType | null>({
         value: type,
         disabled: true,
       }),
-      amount: this.fb.control<number | null>(amount, Validators.required),
+      amount: this.fb.control<number | null>(
+        amount,
+        [
+          Validators.required,
+          Validators.min(0),
+          this.positiveNumberValidator,
+        ]
+      ),
     });
+  }
+
+  private positiveNumberValidator(
+    control: AbstractControl
+  ): ValidationErrors | null {
+    const value = control.value;
+    if (value === null || value === undefined || value === '') {
+      return null; // Let required validator handle empty values
+    }
+    const numValue = Number(value);
+    if (isNaN(numValue) || numValue < 0) {
+      return { positiveNumber: true };
+    }
+    return null;
   }
 
   get distributions(): FormArray<
@@ -79,12 +102,18 @@ export class DistributionDialog {
       this.data.onSubmit(
         this.distributions.controls.map(
           ({ controls: { amount, distributionType } }) => ({
-            amount: amount.value,
+            amount: Number(amount.value),
             distributionType: distributionType.value,
           })
         ),
         this.form.value.allowCustomPrintingPrice || false
       );
+    } else {
+      // Mark all fields as touched to show validation errors
+      this.form.markAllAsTouched();
+      this.distributions.controls.forEach((group) => {
+        group.markAllAsTouched();
+      });
     }
   }
 }

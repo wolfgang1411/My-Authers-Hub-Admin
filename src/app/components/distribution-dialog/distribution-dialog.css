@@ -1,0 +1,399 @@
+/* Material Dialog container overrides */
+::ng-deep .cdk-overlay-pane.mat-mdc-dialog-panel {
+  max-width: 95vw !important;
+  min-width: 700px !important;
+}
+
+.distribution-dialog-container {
+  display: flex;
+  flex-direction: column;
+  width: auto;
+  min-width: 700px;
+  max-width: 95vw;
+  padding: 0;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.dialog-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #e0e0e0;
+  background: white;
+}
+
+.dialog-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.dialog-content {
+  padding: 24px;
+  max-height: 70vh;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.distribution-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.distribution-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+}
+
+.distribution-table {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 600px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  width: 100%;
+  gap: 0;
+  min-width: 0;
+}
+
+.table-header {
+  background: #f5f7fa;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.table-body {
+  background: white;
+}
+
+.table-cell {
+  padding: 8px;
+  border-right: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.table-cell:last-child {
+  border-right: none;
+}
+
+.header-cell {
+  background: #f5f7fa;
+  font-weight: 600;
+  text-align: center;
+  justify-content: center;
+  padding: 12px 8px;
+  min-height: 60px;
+  align-items: center;
+}
+
+.distribution-type-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  text-transform: capitalize;
+  letter-spacing: 0.3px;
+  text-align: center;
+  word-break: break-word;
+}
+
+.value-cell {
+  padding: 8px;
+  background: white;
+  justify-content: center;
+  align-items: flex-start;
+  padding-bottom: 8px;
+  min-height: 60px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.amount-field {
+  width: 100%;
+  max-width: 150px;
+}
+
+
+.checkbox-section {
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  margin-top: 4px;
+}
+
+.custom-checkbox {
+  width: 100%;
+}
+
+.checkbox-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.87);
+  margin-left: 8px;
+}
+
+.dialog-actions {
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background: #fafafa;
+}
+
+.cancel-button {
+  background-color: #f5f5f5 !important;
+  color: #333 !important;
+  padding: 10px 24px !important;
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  transition: all 0.2s ease !important;
+  border: 1px solid #e0e0e0 !important;
+}
+
+.cancel-button:hover {
+  background-color: #eeeeee !important;
+  border-color: #d0d0d0 !important;
+}
+
+.confirm-button {
+  background-color: var(--primary) !important;
+  color: white !important;
+  padding: 10px 24px !important;
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.confirm-button:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(61, 26, 93, 0.3);
+}
+
+.confirm-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Material form field overrides */
+::ng-deep .distribution-dialog-container .mat-mdc-form-field {
+  margin-bottom: 0;
+  width: 100%;
+  display: block;
+}
+
+/* Hide error messages completely */
+::ng-deep .distribution-dialog-container .mat-mdc-form-field-subscript-wrapper {
+  display: none !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Red border for invalid fields */
+::ng-deep .distribution-dialog-container .field-invalid .mat-mdc-form-field-outline,
+::ng-deep .distribution-dialog-container .field-invalid .mat-mdc-form-field-outline-thick {
+  color: #f44336 !important;
+  border-color: #f44336 !important;
+}
+
+::ng-deep .distribution-dialog-container .field-invalid .mat-mdc-text-field-input {
+  color: #f44336;
+}
+
+::ng-deep .distribution-dialog-container .mat-mdc-form-field .mat-mdc-text-field-wrapper {
+  background-color: white;
+}
+
+::ng-deep .distribution-dialog-container .mat-mdc-form-field-appearance-outline .mat-mdc-text-field-wrapper {
+  padding: 0;
+}
+
+/* Ensure outline border has proper spacing from icon */
+::ng-deep .distribution-dialog-container .mat-mdc-form-field-appearance-outline .mat-mdc-form-field-outline-start {
+  padding-left: 0 !important;
+}
+
+::ng-deep .distribution-dialog-container .mat-mdc-form-field-appearance-outline .mat-mdc-form-field-infix {
+  padding: 16px !important;
+  min-height: 44px;
+}
+
+::ng-deep .distribution-dialog-container .mat-mdc-form-field .mat-mdc-form-field-infix {
+  min-width: 0;
+}
+
+/* Input field styling - no icon, more space */
+::ng-deep .distribution-dialog-container .amount-field .mat-mdc-form-field-infix {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  min-height: 40px;
+}
+
+/* Fix outline border when no label - remove the center line and notch */
+::ng-deep .distribution-dialog-container .amount-field.mat-form-field-appearance-outline .mat-mdc-form-field-infix {
+  border-top: none !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+::ng-deep .distribution-dialog-container .amount-field.mat-form-field-appearance-outline .mat-mdc-form-field-infix .mat-mdc-input-element {
+  padding: 0;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+/* Ensure form field wrapper doesn't restrict width */
+::ng-deep .distribution-dialog-container .amount-field .mat-mdc-text-field-wrapper {
+  width: 100%;
+  max-width: 150px;
+}
+
+/* Hide the notch (center divider) when no label */
+::ng-deep .distribution-dialog-container .amount-field .mdc-notched-outline__notch {
+  display: none !important;
+  border: none !important;
+}
+
+/* Placeholder styling */
+::ng-deep .distribution-dialog-container .amount-field .mat-mdc-input-element::placeholder {
+  color: rgba(0, 0, 0, 0.5);
+  opacity: 1;
+}
+
+/* Hide all error messages */
+::ng-deep .distribution-dialog-container .mat-mdc-form-field-error-wrapper {
+  display: none !important;
+}
+
+::ng-deep .distribution-dialog-container .mat-mdc-form-field-error {
+  display: none !important;
+}
+
+/* Ensure subscript wrapper doesn't overlap input */
+::ng-deep .distribution-dialog-container .mat-mdc-form-field-subscript-wrapper {
+  position: relative !important;
+  margin-top: 4px !important;
+  height: auto !important;
+  padding: 0 !important;
+}
+
+/* Error state styling */
+.value-cell.error {
+  background: #ffebee;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .distribution-dialog-container {
+    min-width: 95vw;
+    max-width: 95vw;
+  }
+
+  ::ng-deep .cdk-overlay-pane.mat-mdc-dialog-panel {
+    min-width: 95vw !important;
+  }
+
+  .distribution-table {
+    min-width: 500px;
+  }
+
+  .table-row {
+    grid-template-columns: repeat(5, minmax(90px, 1fr));
+  }
+
+  .table-cell {
+    padding: 12px 8px;
+  }
+
+  .header-cell {
+    padding: 12px 8px;
+  }
+
+  .distribution-type-name {
+    font-size: 11px;
+  }
+
+  .dialog-header {
+    padding: 14px 20px;
+  }
+
+  .dialog-content {
+    padding: 16px;
+  }
+
+  .dialog-actions {
+    padding: 12px 20px;
+    flex-direction: column-reverse;
+  }
+
+  .cancel-button,
+  .confirm-button {
+    width: 100%;
+  }
+
+  .dialog-title {
+    font-size: 16px;
+  }
+}
+
+/* Scrollbar styling for dialog content */
+.dialog-content::-webkit-scrollbar,
+.distribution-table-wrapper::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.dialog-content::-webkit-scrollbar-track,
+.distribution-table-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.dialog-content::-webkit-scrollbar-thumb,
+.distribution-table-wrapper::-webkit-scrollbar-thumb {
+  background: #bdbdbd;
+  border-radius: 3px;
+}
+
+.dialog-content::-webkit-scrollbar-thumb:hover,
+.distribution-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #9e9e9e;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.distribution-table {
+  animation: fadeIn 0.3s ease-out;
+}

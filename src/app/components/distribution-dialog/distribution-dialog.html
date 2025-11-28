@@ -1,51 +1,74 @@
-<div class="flex flex-col gap-4 w-[480px] max-w-[90vw] p-3">
-  <h2 mat-dialog-title class="text-xl heading !text-primary">
-    Manage Distribution Types
-  </h2>
+<div class="distribution-dialog-container">
+  <div class="dialog-header">
+    <h2 mat-dialog-title class="dialog-title">
+      Manage Distribution Types
+    </h2>
+  </div>
 
-  <mat-dialog-content>
-    <form [formGroup]="form" class="flex flex-col gap-4">
-      <div formArrayName="distributions" class="flex flex-col gap-4">
-        @for(dist of distributions.controls ;track $index){
-        <div [formGroupName]="$index" class="grid grid-cols-2 gap-3">
-          <mat-form-field>
-            <input
-              matInput
-              type="text"
-              [value]="dist.controls.distributionType.value | translate"
-              required
-              disabled
-            />
-          </mat-form-field>
+  <mat-dialog-content class="dialog-content">
+    <form [formGroup]="form" class="distribution-form">
+      <div class="distribution-table-wrapper">
+        <div class="distribution-table">
+          <div formArrayName="distributions">
+            <!-- Header Row -->
+            <div class="table-row table-header">
+              @for(dist of distributions.controls; track $index){
+              <div class="table-cell header-cell">
+                <span class="distribution-type-name">
+                  {{ dist.controls.distributionType.value | translate }}
+                </span>
+              </div>
+              }
+            </div>
 
-          <mat-form-field class="w-full">
-            <mat-label>Amount</mat-label>
-            <input matInput type="number" formControlName="amount" required />
-          </mat-form-field>
+            <!-- Values Row -->
+            <div class="table-row table-body">
+              @for(dist of distributions.controls; track $index){
+              <div [formGroupName]="$index" class="table-cell value-cell">
+                <mat-form-field 
+                  class="amount-field" 
+                  appearance="outline"
+                  [class.field-invalid]="dist.controls.amount.invalid && dist.controls.amount.touched">
+                  <input
+                    matInput
+                    type="number"
+                    formControlName="amount"
+                    required
+                    min="0"
+                    step="0.01"
+                    placeholder="₹ 0.00"
+                  />
+                </mat-form-field>
+              </div>
+              }
+            </div>
+          </div>
         </div>
-        }
       </div>
 
-      <mat-checkbox formControlName="allowCustomPrintingPrice">
-        {{ "allowCustomPrintingPrice" | translate }}
-      </mat-checkbox>
+      <div class="checkbox-section">
+        <mat-checkbox formControlName="allowCustomPrintingPrice" class="custom-checkbox">
+          <span class="checkbox-label">{{ "allowCustomPrintingPrice" | translate }}</span>
+        </mat-checkbox>
+      </div>
     </form>
   </mat-dialog-content>
 
-  <mat-dialog-actions>
+  <mat-dialog-actions class="dialog-actions">
     <button
       (click)="data.onClose()"
       mat-button
-      matButton="filled"
-      class="!bg-accent"
+      class="cancel-button"
+      type="button"
     >
       {{ "close" | translate }}
     </button>
     <button
       (click)="onSubmit()"
       mat-button
-      matButton="filled"
-      class="!bg-primary"
+      class="confirm-button"
+      [disabled]="!form.valid"
+      type="button"
     >
       {{ "confirm" | translate }}
     </button>
