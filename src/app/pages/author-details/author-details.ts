@@ -214,7 +214,7 @@ export class AuthorDetails {
         earning.royalty.publisher?.name ||
         earning.royalty.author?.user.firstName,
       amount: formatCurrency(earning.amount, 'en', '', 'INR'),
-      platform: this.translateService.instant(earning.platform),
+      platform: this.translateService.instant(earning.platform.name),
       'paidAt/holduntill': (() => {
         const date = earning.holdUntil || earning.paidAt;
         if (!date) return '-';

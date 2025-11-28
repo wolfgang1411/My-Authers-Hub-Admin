@@ -40,11 +40,13 @@
     }
 
     <!-- Profile Button -->
-    <div
+    <button
+      [routerLink]="['/profile']"
+      routerLinkActive="router-link-active"
       class="flex items-center gap-2 bg-primary text-white px-3 py-2 rounded-full cursor-pointer hover:bg-primary-dark transition"
     >
       <mat-icon class="text-white text-sm">person</mat-icon>
       <span class="text-sm font-medium">{{ "Profile" | translate }}</span>
-    </div>
+    </button>
   </div>
 </header>

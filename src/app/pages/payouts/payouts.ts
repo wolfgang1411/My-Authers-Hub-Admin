@@ -105,7 +105,8 @@ export class Payouts implements OnInit {
           bankdetails: `Account Holder Name : ${accountName} <br> Bank Name : ${bankName} <br> Account No : ${accountNo} <br> IFSC Code : ${ifscCode}<br>
           `,
           amount: payout.requestedAmount + ' ' + 'INR',
-          status,
+          status, // Display string for table
+          payoutStatus: payout.status, // Original status for logic checks
         };
       }) || [];
   }

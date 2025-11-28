@@ -71,8 +71,7 @@
       >
         <mat-icon class="!text-white">visibility</mat-icon>
       </button>
-      @if (element.status === 'PENDING' && loggedInUser()?.accessLevel ===
-      'SUPERADMIN') {
+      @if (element.payoutStatus === 'PENDING') {
       <ng-container>
         <button
           (click)="onUpdatePayout(element.id, 'APPROVED')"
@@ -91,7 +90,7 @@
           <mat-icon class="!text-white">thumb_down</mat-icon>
         </button>
       </ng-container>
-      } @else if (element.status === 'REJECTED') {
+      } @else if (element.payoutStatus === 'REJECTED') {
       <button
         mat-icon-button
         disabled
@@ -99,7 +98,7 @@
       >
         <mat-icon class="!text-white">close</mat-icon>
       </button>
-      } @else if (element.status === 'PAID') {
+      } @else if (element.payoutStatus === 'PAID') {
       <button
         mat-icon-button
         disabled
@@ -107,13 +106,13 @@
       >
         <mat-icon class="!text-white">check</mat-icon>
       </button>
-      } @else if (element.status === 'PENDING') {
+      } @else if (element.payoutStatus === 'APPROVED') {
       <button
         mat-icon-button
         disabled
-        class="!bg-yellow-500 rounded-full p-2 opacity-80"
+        class="!bg-[var(--green-2)] rounded-full p-2 opacity-80"
       >
-        <mat-icon class="!text-white">hourglass_empty</mat-icon>
+        <mat-icon class="!text-white">check_circle</mat-icon>
       </button>
       }
     </div>

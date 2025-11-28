@@ -16,6 +16,7 @@ import { MatListModule } from '@angular/material/list';
 import { BreakpointObserver, LayoutModule } from '@angular/cdk/layout';
 import { MatButtonModule } from '@angular/material/button';
 import { AuthService } from '../../../services/auth';
+import { UserService } from '../../../services/user';
 
 @Component({
   selector: 'app-sidebar',
@@ -35,7 +36,8 @@ export class Sidebar implements OnInit {
   constructor(
     private layoutService: LayoutService,
     @Inject(AuthService) private authService: AuthService,
-    private observer: BreakpointObserver
+    private observer: BreakpointObserver,
+    private userService: UserService
   ) {
     this.isSidemenuOpen = layoutService.isSidemenuOpen$;
     this.showHeader = layoutService.showHeader$;
@@ -47,7 +49,7 @@ export class Sidebar implements OnInit {
   mode: 'side' | 'over' = 'side';
 
   sidebarMenu() {
-    return [
+    const menuItems = [
       { name: 'Dashboard', url: '/dashboard', icon: 'dashboard' },
       { name: 'Publishers', url: '/publisher', icon: 'people' },
       { name: 'Authors', url: '/author', icon: 'edit' },
@@ -59,9 +61,24 @@ export class Sidebar implements OnInit {
       { name: 'Payouts', url: '/payouts', icon: 'credit_card' },
       { name: 'Wallet', url: '/wallet', icon: 'credit_card' },
       { name: 'coupon', url: '/coupon', icon: 'local_offer' },
-      { name: 'Profile', url: '/profile', icon: 'account_circle' },
       { name: 'Settings', url: '/settings', icon: 'settings' },
     ];
+
+    const loggedInUser = this.userService.loggedInUser$();
+    const accessLevel = loggedInUser?.accessLevel;
+
+    // Filter menu items based on access level
+    return menuItems.filter(item => {
+      // Hide Wallet for superadmin
+      if (accessLevel === 'SUPERADMIN' && item.name === 'Wallet') {
+        return false;
+      }
+      // Hide Payouts for publisher and author (only show for superadmin)
+      if ((accessLevel === 'PUBLISHER' || accessLevel === 'AUTHER') && item.name === 'Payouts') {
+        return false;
+      }
+      return true;
+    });
   }
   ngOnInit(): void {
     //   {

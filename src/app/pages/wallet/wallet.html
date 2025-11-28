@@ -117,7 +117,7 @@
             <div class="text-sm text-[var(--text-primary)] mt-1">
               Platform:
               <span class="text-[var(--primary)] font-medium">
-                {{ e.platform }}
+                {{ e.platform.name }}
               </span>
               •
               <span
@@ -219,10 +219,10 @@
         </button>
         <button
           class="border border-[var(--primary-superlight)] text-[var(--primary)] font-medium py-2 px-4 rounded-lg hover:bg-[var(--primary-superlight)] flex-1"
-          [routerLink]="['/transactions']"
+          [routerLink]="['/payouts']"
           routerLinkActive="router-link-active"
         >
-          View Transactions
+          View Requests
         </button>
       </div>
     </div>

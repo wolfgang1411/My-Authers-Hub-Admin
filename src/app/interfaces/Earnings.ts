@@ -1,12 +1,13 @@
 import { Royalty } from './Royalty';
-import { EarningsStatus, PlatForm } from './StaticValue';
+import { EarningsStatus } from './StaticValue';
+import { Platform } from './Platform';
 
 export interface Earnings {
   id: number;
   amount: number;
   holdUntil: string | null;
   paidAt: string | null;
-  platform: PlatForm;
+  platform: Platform;
   quantity: number;
   royalty: Royalty;
   status: EarningsStatus;

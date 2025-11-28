@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
+import { RouterModule } from '@angular/router';
 import { Notification } from '../notification/notification';
 @Component({
   selector: 'app-header',
@@ -15,6 +16,7 @@ import { Notification } from '../notification/notification';
     MatBadgeModule,
     MatMenuModule,
     MatButtonModule,
+    RouterModule,
     Notification,
   ],
   templateUrl: './header.html',

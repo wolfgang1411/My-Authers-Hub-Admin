@@ -42,7 +42,7 @@ export class EarningTable {
           PlatForm.GOOGLE_PLAY,
         ];
         const isEbookPlatform = ebookPlatforms.includes(
-          earning.platform as PlatForm
+          earning.platform.name as PlatForm
         );
 
         // Calculate custom print margin if this is a publisher earning and printing details exist
@@ -86,8 +86,8 @@ export class EarningTable {
                 'INR'
               ),
           platform: this.translateService.instant(
-            typeof earning.platform === 'string' 
-              ? earning.platform 
+            typeof earning.platform === 'string'
+              ? earning.platform
               : (earning.platform as any)?.name || earning.platform || ''
           ),
           quantity: earning.quantity || 0,
