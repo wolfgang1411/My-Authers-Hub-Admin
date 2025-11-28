@@ -48,14 +48,6 @@ export class ApproveTitle implements OnInit {
     platformIdentifier: new FormArray<FormGroup<PlatFormIndetifierGroup>>([]),
   });
 
-  get gridStyle(): { [key: string]: string } {
-    const columnCount = this.form.controls.platformIdentifier.controls.length + 1;
-    return {
-      'grid-template-columns': `180px repeat(${columnCount - 1}, minmax(150px, 1fr))`,
-      'min-width': 'max-content',
-    };
-  }
-
   ngOnInit(): void {
     const allPlatforms = this.platformService.platforms();
 

@@ -191,7 +191,9 @@ export class Titles {
     }
 
     const dialog = this.matDialog.open(ApproveTitle, {
-      maxWidth: '90vw',
+      maxWidth: '95vw',
+      width: '90vw',
+      maxHeight: '90vh',
       data: {
         onClose: () => dialog.close(),
         publishingType: title.publishingType,
