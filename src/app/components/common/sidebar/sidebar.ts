@@ -68,13 +68,24 @@ export class Sidebar implements OnInit {
     const accessLevel = loggedInUser?.accessLevel;
 
     // Filter menu items based on access level
-    return menuItems.filter(item => {
+    return menuItems.filter((item) => {
       // Hide Wallet for superadmin
       if (accessLevel === 'SUPERADMIN' && item.name === 'Wallet') {
         return false;
       }
       // Hide Payouts for publisher and author (only show for superadmin)
-      if ((accessLevel === 'PUBLISHER' || accessLevel === 'AUTHER') && item.name === 'Payouts') {
+      if (
+        (accessLevel === 'PUBLISHER' || accessLevel === 'AUTHER') &&
+        item.name === 'Payouts'
+      ) {
+        return false;
+      }
+      // Hide Transactions for non-superadmin (only show for superadmin)
+      if (accessLevel !== 'SUPERADMIN' && item.name === 'Transactions') {
+        return false;
+      }
+      // Hide Bookings for non-superadmin (only show for superadmin)
+      if (accessLevel !== 'SUPERADMIN' && item.name === 'Bookings') {
         return false;
       }
       return true;
