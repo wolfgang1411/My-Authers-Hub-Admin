@@ -25,6 +25,7 @@ export interface Publishers {
   status: PublisherStatus;
   socialMedias: socialMediaGroup[];
   allowCustomPrintingPrice?: boolean;
+  allowAuthorCopyPrice?: boolean;
 }
 
 export interface CreatePublisher {

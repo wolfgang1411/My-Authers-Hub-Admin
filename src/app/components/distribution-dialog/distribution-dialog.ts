@@ -54,6 +54,7 @@ export class DistributionDialog {
         )
       ),
       allowCustomPrintingPrice: this.fb.control<boolean>(false),
+      allowAuthorCopyPrice: this.fb.control<boolean>(false),
     });
   }
 
@@ -106,7 +107,8 @@ export class DistributionDialog {
             distributionType: distributionType.value,
           })
         ),
-        this.form.value.allowCustomPrintingPrice || false
+        this.form.value.allowCustomPrintingPrice || false,
+        this.form.value.allowAuthorCopyPrice || false
       );
     } else {
       // Mark all fields as touched to show validation errors
@@ -119,5 +121,5 @@ export class DistributionDialog {
 }
 interface Inputs {
   onClose: () => void;
-  onSubmit: (payload: Distribution[], allowCustomPrintingPrice?: boolean) => void;
+  onSubmit: (payload: Distribution[], allowCustomPrintingPrice?: boolean, allowAuthorCopyPrice?: boolean) => void;
 }

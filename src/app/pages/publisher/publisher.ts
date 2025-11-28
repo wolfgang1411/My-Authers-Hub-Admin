@@ -144,13 +144,15 @@ export class Publisher implements OnInit {
       data: {
         onSubmit: async (
           distributionData: Distribution[],
-          allowCustomPrintingPrice?: boolean
+          allowCustomPrintingPrice?: boolean,
+          allowAuthorCopyPrice?: boolean
         ) => {
           console.log(distributionData, 'distrubittton dta');
           const response = await this.publisherService.approvePublisher(
             distributionData,
             publisherId,
-            allowCustomPrintingPrice
+            allowCustomPrintingPrice,
+            allowAuthorCopyPrice
           );
           if (response) {
             const updatedData = this.dataSource.data.map((item) =>
