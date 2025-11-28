@@ -7,6 +7,7 @@
   <app-back></app-back>
 </div>
 <mat-stepper
+  #stepper
   class="example-stepper !my-4"
   [orientation]="(stepperOrientation | async)!"
   [linear]="true"
@@ -25,7 +26,7 @@
             <!-- ⬅ Profile Image Upload -->
             <div class="flex flex-col items-center shrink-0">
               <app-upload-file
-                [prefillMedia]="mediasArray.value[0] ?? null"
+                [prefillMedia]="mediaControl.value ?? null"
                 (mediaAdded)="onMediaAdded($event)"
               ></app-upload-file>
 
@@ -141,7 +142,11 @@
       </div>
     </div>
 
-    <button matButton="filled" class="!bg-primary mt-8" matStepperNext>
+    <button
+      matButton="filled"
+      class="!bg-primary mt-8"
+      (click)="checkProfileImageAndProceed(stepper)"
+    >
       Next
     </button>
   </mat-step>

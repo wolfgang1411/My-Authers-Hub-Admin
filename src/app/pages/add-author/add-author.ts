@@ -333,26 +333,23 @@ export class AddAuthor implements OnInit {
       this.isPrefilling = false;
     }
   }
-  get mediasArray() {
-    return this.authorFormGroup.get('medias') as FormArray;
+  get mediaControl() {
+    return this.authorFormGroup.get('media') as FormControl<Media | null>;
   }
 
   onMediaAdded(newMedia: Media) {
-    const existing = this.mediasArray.value[0];
+    const existing = this.mediaControl.value;
 
     if (existing?.id) this.mediaToDeleteId = existing.id;
 
-    this.mediasArray.setControl(
-      0,
-      this._formBuilder.control({
-        ...newMedia,
-        id: 0,
-        url: '',
-      })
-    );
+    this.mediaControl.setValue({
+      ...newMedia,
+      id: 0,
+      url: '',
+    });
 
-    this.authorFormGroup.get('medias')?.updateValueAndValidity(); // 🔥 enable next
-    console.log('🆕 New media selected', this.mediasArray.value[0]);
+    this.mediaControl.updateValueAndValidity(); // 🔥 enable next
+    console.log('🆕 New media selected', this.mediaControl.value);
   }
   // lookupByPincode(pin: string) {
   //   if (this.isPrefilling) return;
@@ -393,7 +390,7 @@ export class AddAuthor implements OnInit {
     about: ['', Validators.required],
     userPassword: ['', [Validators.required, Validators.minLength(8)]],
     authorImage: [''],
-    medias: this._formBuilder.array<Media>([], Validators.required),
+    media: this._formBuilder.control<Media | null>(null, Validators.required),
     signupCode: <string | null>null,
   });
   authorBankDetails = this._formBuilder.group(
@@ -431,10 +428,8 @@ export class AddAuthor implements OnInit {
   });
   createSocialGroup(): FormGroup<SocialMediaGroupType> {
     return new FormGroup<SocialMediaGroupType>({
-      type: new FormControl<SocialMediaType | null>(null, [
-        Validators.required,
-      ]),
-      url: new FormControl<string | null>(null, [Validators.required]),
+      type: new FormControl<SocialMediaType | null>(null),
+      url: new FormControl<string | null>(null),
       publisherId: new FormControl<number | null>(null),
       name: new FormControl<string | null>(null),
       autherId: new FormControl<number | null>(null),
@@ -453,12 +448,10 @@ export class AddAuthor implements OnInit {
   addSocialMedia() {
     this.socialMediaArray.push(
       new FormGroup<SocialMediaGroupType>({
-        type: new FormControl<SocialMediaType | null>(null, [
-          Validators.required,
-        ]),
-        url: new FormControl<string | null>(null, [Validators.required]),
+        type: new FormControl<SocialMediaType | null>(null),
+        url: new FormControl<string | null>(null),
         publisherId: new FormControl<number | null>(null),
-        name: new FormControl<string | null>(null, [Validators.required]),
+        name: new FormControl<string | null>(null),
         autherId: new FormControl<number | null>(null),
         id: new FormControl<number | null>(null),
       })
@@ -553,9 +546,10 @@ export class AddAuthor implements OnInit {
       socialMediaArray.push(group);
     });
     const mediaList = authorDetails.medias as Media[];
-    this.mediasArray.clear();
     if (mediaList?.length > 0) {
-      this.mediasArray.push(this._formBuilder.control(mediaList[0]));
+      this.mediaControl.setValue(mediaList[0]);
+    } else {
+      this.mediaControl.setValue(null);
     }
   }
   async handleNewOrSuperAdminAuthorSubmission(authorData: Author) {
@@ -584,14 +578,14 @@ export class AddAuthor implements OnInit {
           ...group.value,
           autherId: response.id,
         }))
-        .filter((item) => item.url?.trim());
+        .filter((item) => item.type && item.url?.trim());
 
       if (socialMediaData.length > 0) {
         await this.socialService.createOrUpdateSocialMediaLinks(
           socialMediaData as socialMediaGroup[]
         );
       }
-      const media = this.mediasArray.value[0];
+      const media = this.mediaControl.value;
       if (this.mediaToDeleteId && media?.file) {
         await this.authorsService.removeImage(this.mediaToDeleteId);
         console.log('🗑 Old image deleted');
@@ -683,14 +677,14 @@ export class AddAuthor implements OnInit {
           ...group.value,
           autherId: this.authorId,
         }))
-        .filter((item) => item.url?.trim());
+        .filter((item) => item.type && item.url?.trim());
 
       if (socialMediaData.length > 0) {
         await this.socialService.createOrUpdateSocialMediaLinks(
           socialMediaData as socialMediaGroup[]
         );
       }
-      const media = this.mediasArray.value[0];
+      const media = this.mediaControl.value;
       if (this.mediaToDeleteId && media?.file) {
         await this.authorsService.removeImage(this.mediaToDeleteId);
         console.log('🗑 Old image deleted');
@@ -717,11 +711,39 @@ export class AddAuthor implements OnInit {
     }
   }
 
+  async checkProfileImageAndProceed(stepper?: any) {
+    // Check if media is not uploaded
+    if (!this.mediaControl.value) {
+      await Swal.fire({
+        title: 'Profile Image Required',
+        text: 'Please upload a profile image to continue.',
+        icon: 'error',
+        heightAuto: false,
+      });
+      return false;
+    }
+    if (stepper) {
+      stepper.next();
+    }
+    return true;
+  }
+
   async onSubmit() {
     try {
+      // Check profile image first
+      if (!this.mediaControl.value) {
+        await Swal.fire({
+          title: 'Profile Image Required',
+          text: 'Please upload a profile image to continue.',
+          icon: 'error',
+          heightAuto: false,
+        });
+        return;
+      }
+
+      // Social media is optional, so we don't check its validity
       const invalid =
         this.authorFormGroup.invalid ||
-        this.authorSocialMediaGroup.invalid ||
         this.authorAddressDetails.invalid ||
         this.authorBankDetails.invalid;
 
@@ -729,7 +751,7 @@ export class AddAuthor implements OnInit {
         this.authorFormGroup.markAllAsTouched();
         this.authorAddressDetails.markAllAsTouched();
         this.authorBankDetails.markAllAsTouched();
-        this.authorSocialMediaGroup.markAllAsTouched();
+        // Don't mark social media as touched since fields are optional
 
         await Swal.fire({
           title: 'Error',
