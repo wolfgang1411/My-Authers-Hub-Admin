@@ -10,6 +10,7 @@ export interface Platform {
   id: number;
   name: string;
   marginPercent: number;
+  extraFlatMargin?: number;
   type: BookingType;
   isEbookPlatform: boolean;
   status: PlatformStatus;

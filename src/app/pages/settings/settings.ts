@@ -17,6 +17,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { TitleConfigComponent } from '../../components/title-config/title-config';
 import { TitleSetting } from '../title-setting/title-setting';
+import { RoyaltyCalculatorSettings } from '../../components/royalty-calculator-settings/royalty-calculator-settings';
 
 @Component({
   selector: 'app-settings',
@@ -27,6 +28,7 @@ import { TitleSetting } from '../title-setting/title-setting';
     SharedModule,
     TitleConfigComponent,
     TitleSetting,
+    RoyaltyCalculatorSettings,
   ],
   templateUrl: './settings.html',
   styleUrl: './settings.css',

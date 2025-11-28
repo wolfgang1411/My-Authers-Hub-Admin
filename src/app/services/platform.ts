@@ -2,8 +2,17 @@ import { inject, Injectable, signal } from '@angular/core';
 import { Server } from './server';
 import { Logger } from './logger';
 import { LoaderService } from './loader';
-import { Platform } from '../interfaces/Platform';
+import { Platform, PlatformStatus } from '../interfaces/Platform';
 import { BookingType } from '../interfaces/StaticValue';
+
+export interface PlatformPayload {
+  name: string;
+  marginPercent: number;
+  extraFlatMargin?: number;
+  type: BookingType;
+  isEbookPlatform?: boolean;
+  status?: PlatformStatus;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -25,8 +34,42 @@ export class PlatformService {
         this.serverService.get<Platform[]>('platforms'),
         'fetch-platforms'
       );
-      this.platforms.set(platforms);
+      this.platforms.set(this.sortPlatforms(platforms));
       return platforms;
+    } catch (error) {
+      this.loggerService.logError(error);
+      throw error;
+    }
+  }
+
+  async createPlatform(payload: PlatformPayload): Promise<Platform> {
+    try {
+      const response = await this.loaderService.loadPromise(
+        this.serverService.post<Platform>('platforms', {
+          status: PlatformStatus.ACTIVE,
+          ...payload,
+        }),
+        'create-platform'
+      );
+      this.upsertPlatform(response);
+      return response;
+    } catch (error) {
+      this.loggerService.logError(error);
+      throw error;
+    }
+  }
+
+  async updatePlatform(
+    id: number,
+    payload: PlatformPayload
+  ): Promise<Platform> {
+    try {
+      const response = await this.loaderService.loadPromise(
+        this.serverService.patch<Platform>(`platforms/${id}`, payload),
+        'update-platform'
+      );
+      this.upsertPlatform(response);
+      return response;
     } catch (error) {
       this.loggerService.logError(error);
       throw error;
@@ -66,6 +109,19 @@ export class PlatformService {
    */
   getPlatformNames(): string[] {
     return this.platforms().map((p) => p.name);
+  }
+
+  private upsertPlatform(platform: Platform) {
+    this.platforms.update((items) =>
+      this.sortPlatforms([
+        ...items.filter((p) => p.id !== platform.id),
+        platform,
+      ])
+    );
+  }
+
+  private sortPlatforms(platforms: Platform[]) {
+    return [...platforms].sort((a, b) => a.name.localeCompare(b.name));
   }
 }
 

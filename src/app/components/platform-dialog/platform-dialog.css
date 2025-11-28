@@ -1,0 +1,87 @@
+.platform-dialog {
+  min-width: 500px;
+  max-width: 600px;
+}
+
+.dialog-title {
+  color: var(--text-heading, #3d1a5d);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+mat-dialog-content {
+  padding: 1.5rem 0;
+}
+
+.platform-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.form-grid .full-width:first-child {
+  grid-column: 1 / -1;
+}
+
+.checkbox-field {
+  margin-top: 0.5rem;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(61, 26, 93, 0.1);
+}
+
+.cancel-btn {
+  color: var(--text-secondary, #475569);
+}
+
+.save-btn {
+  background-color: var(--primary, #3d1a5d) !important;
+  color: white !important;
+}
+
+.save-btn:hover:not(:disabled) {
+  background-color: var(--purple, #5950ac) !important;
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+::ng-deep .mat-mdc-form-field {
+  width: 100%;
+}
+
+::ng-deep .mat-mdc-text-field-wrapper {
+  background-color: white;
+}
+
+::ng-deep .mat-mdc-form-field-focus-overlay {
+  background-color: var(--primary-superlight, #ebe3f7);
+}
+
+::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+  border-color: var(--primary, #3d1a5d);
+}
+
+::ng-deep .mdc-text-field--focused .mdc-notched-outline__leading,
+::ng-deep .mdc-text-field--focused .mdc-notched-outline__notch,
+::ng-deep .mdc-text-field--focused .mdc-notched-outline__trailing {
+  border-color: var(--primary, #3d1a5d) !important;
+}
+
