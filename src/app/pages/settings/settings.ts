@@ -11,6 +11,7 @@ import { Router } from '@angular/router';
 import { SettingsService } from '../../services/settings';
 import { PrintingService } from '../../services/printing-service';
 import { PrintingCalculator } from '../../components/printing-calculator/printing-calculator';
+import { PrintingSettingsManager } from '../../components/printing-settings-manager/printing-settings-manager';
 import { MatTabsModule } from '@angular/material/tabs';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { TitleConfigComponent } from '../../components/title-config/title-config';
@@ -20,6 +21,7 @@ import { TitleSetting } from '../title-setting/title-setting';
   selector: 'app-settings',
   imports: [
     PrintingCalculator,
+    PrintingSettingsManager,
     MatTabsModule,
     SharedModule,
     TitleConfigComponent,

@@ -6,6 +6,7 @@ import {
   LaminationType,
   Pagination,
   PaperQuailty,
+  Size,
   SizeCategory,
   TitlePrintingCostPayload,
   TitlePrintingCostResponse,
@@ -111,6 +112,18 @@ export class PrintingService {
     } catch (error) {
       console.error('Error fetching printing price:', error);
       this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async getSizesByCategoryId(sizeCategoryId: number) {
+    try {
+      return await this.serverService.get<Pagination<Size>>('size', {
+        sizeCategoryId,
+        itemsPerPage: 200,
+      });
+    } catch (error) {
+      console.error('Error fetching sizes by category:', error);
       throw error;
     }
   }

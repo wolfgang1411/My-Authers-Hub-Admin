@@ -35,98 +35,46 @@
     </h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <!-- Size Category - First -->
-      <div class="flex gap-2 items-center">
-        <mat-form-field class="flex-1">
-          <mat-label>{{ "sizecategory" | translate }}</mat-label>
-          <mat-select formControlName="sizeCategoryId">
-            @for (size of sizeTypes(); track size.id) {
-            <mat-option [value]="size.id">{{ size.size }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        @if (isSuperAdmin()) {
-        <button
-          type="button"
-          matButton="filled"
-          mat-button
-          class="!bg-primary"
-          (click)="updateRate('sizeType')"
-        >
-          {{ "updaterate" | translate }}
-        </button>
-        }
-      </div>
+      <mat-form-field class="w-full">
+        <mat-label>{{ "sizecategory" | translate }}</mat-label>
+        <mat-select formControlName="sizeCategoryId">
+          @for (size of sizeTypes(); track size.id) {
+          <mat-option [value]="size.id">{{ size.size }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
 
       <!-- Binding Type -->
-      <div class="flex gap-2 items-center">
-        <mat-form-field class="flex-1">
-          <mat-label>{{ "bindingtype" | translate }}</mat-label>
-          <mat-select formControlName="bindingTypeId" [disabled]="!isSizeCategorySelected()">
-            @for (type of filteredBindingTypes(); track type.id) {
-            <mat-option [value]="type.id">{{ type.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        @if (isSuperAdmin()) {
-        <button
-          type="button"
-          mat-button
-          matButton="filled"
-          class="!bg-primary"
-          (click)="updateRate('bidingType')"
-        >
-          {{ "updaterate" | translate }}
-        </button>
-        }
-      </div>
+      <mat-form-field class="w-full">
+        <mat-label>{{ "bindingtype" | translate }}</mat-label>
+        <mat-select formControlName="bindingTypeId" [disabled]="!isSizeCategorySelected()">
+          @for (type of filteredBindingTypes(); track type.id) {
+          <mat-option [value]="type.id">{{ type.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
 
       <!-- Paper Quality -->
-      <div class="flex gap-2 items-center">
-        <mat-form-field class="flex-1">
-          <mat-label>{{ "papertype" | translate }}</mat-label>
-          <mat-select formControlName="paperQuailtyId" [disabled]="!isSizeCategorySelected()">
-            @for (paper of filteredPaperQualityTypes(); track paper.id) {
-            <mat-option [value]="paper.id">{{ paper.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        @if (isSuperAdmin()) {
-        <button
-          type="button"
-          mat-button
-          matButton="filled"
-          class="!bg-primary"
-          (click)="updateRate('paperQualityType')"
-        >
-          {{ "updaterate" | translate }}
-        </button>
-        }
-      </div>
+      <mat-form-field class="w-full">
+        <mat-label>{{ "papertype" | translate }}</mat-label>
+        <mat-select formControlName="paperQuailtyId" [disabled]="!isSizeCategorySelected()">
+          @for (paper of filteredPaperQualityTypes(); track paper.id) {
+          <mat-option [value]="paper.id">{{ paper.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
 
       <!-- Lamination Type -->
-      <div class="flex gap-2 items-center">
-        <mat-form-field class="flex-1">
-          <mat-label>{{ "laminationtype" | translate }}</mat-label>
-          <mat-select formControlName="laminationTypeId" [disabled]="!isSizeCategorySelected()">
-            @for (lamination of filteredLaminationTypes(); track lamination.id) {
-            <mat-option [value]="lamination.id">{{
-              lamination.name
-            }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        @if (isSuperAdmin()) {
-        <button
-          type="button"
-          matButton="filled"
-          mat-button
-          class="!bg-primary"
-          (click)="updateRate('laminationType')"
-        >
-          {{ "updaterate" | translate }}
-        </button>
-        }
-      </div>
+      <mat-form-field class="w-full">
+        <mat-label>{{ "laminationtype" | translate }}</mat-label>
+        <mat-select formControlName="laminationTypeId" [disabled]="!isSizeCategorySelected()">
+          @for (lamination of filteredLaminationTypes(); track lamination.id) {
+          <mat-option [value]="lamination.id">{{
+            lamination.name
+          }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
     </div>
   </div>
 
@@ -161,21 +109,10 @@
     <h2 class="text-lg font-medium mt-4 mb-2 text-text-primary">
       Margin Settings
     </h2>
-    <div class="flex gap-2 items-center">
-      <mat-form-field class="flex-1">
-        <mat-label>{{ "marginpercent" | translate }}</mat-label>
-        <input matInput type="number" [value]="marginPercent()" readonly />
-      </mat-form-field>
-      <button
-        type="button"
-        matButton="filled"
-        mat-button
-        class="!bg-primary"
-        (click)="updateRate('marginPercent')"
-      >
-        {{ "updaterate" | translate }}
-      </button>
-    </div>
+    <mat-form-field class="w-full">
+      <mat-label>{{ "marginpercent" | translate }}</mat-label>
+      <input matInput type="number" [value]="marginPercent()" readonly />
+    </mat-form-field>
   </div>
   }
 

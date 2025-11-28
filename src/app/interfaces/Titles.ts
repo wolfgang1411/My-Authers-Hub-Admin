@@ -292,18 +292,26 @@ export interface TitlePrintingPayload {}
 
 export interface SizeCategory {
   id: number;
-  size: string;
-  width: number;
-  length: number;
-  type: SizeCategoryType;
+  name: string;
   packetPrice: number;
   weightMultiplayer: number;
-  insideCoverPrice?: number;
-  TitlePrinting: TitlePrinting[];
+  insideCoverPrice: number;
+  status?: string;
+  sizes?: Size[];
+  bindingTypes?: BookBindings[];
+  laminationTypes?: LaminationType[];
+  paperQualities?: PaperQuailty[];
+  // Legacy fields for backward compatibility
+  size?: string;
+  width?: number;
+  length?: number;
+  type?: SizeCategoryType;
+  category?: SizeCategoryType; // Deprecated, kept for backward compatibility
+  TitlePrinting?: TitlePrinting[];
   sizeCategory?: {
     id: number;
     name: string;
-    category: string;
+    category?: string;
     packetPrice: number;
     weightMultiplayer: number;
     insideCoverPrice: number;
@@ -366,6 +374,42 @@ export interface CreateSizeType {
 }
 
 export interface UpdateSizeType extends CreateSizeType {
+  id?: number | null;
+}
+
+// Size entity (different from SizeCategory)
+export interface Size {
+  id: number;
+  size: string;
+  width: number;
+  length: number;
+  sizeCategoryId?: number | null;
+  status?: string;
+}
+
+export interface CreateSize {
+  size: string;
+  width: number;
+  length: number;
+  sizeCategoryId?: number;
+}
+
+export interface UpdateSize extends CreateSize {
+  id?: number | null;
+}
+
+// SizeCategory DTOs
+export interface CreateSizeCategory {
+  name: string;
+  packetPrice: number;
+  weightMultiplayer: number;
+  insideCoverPrice: number;
+  bindingTypeIds?: number[];
+  laminationTypeIds?: number[];
+  paperQualityIds?: number[];
+}
+
+export interface UpdateSizeCategory extends Partial<CreateSizeCategory> {
   id?: number | null;
 }
 
