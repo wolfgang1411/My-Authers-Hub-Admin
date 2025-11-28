@@ -620,6 +620,10 @@ export class AddAuthor implements OnInit {
     });
   }
   async handleAuthorUpdateFlow(authorData: Author) {
+    // Publishers can only raise ADDRESS and BANK tickets
+    // AUTHOR type tickets are only for authors updating their own info
+    const isPublisher = this.loggedInUser()?.accessLevel === 'PUBLISHER';
+
     const sections = [
       {
         type: UpdateTicketType.ADDRESS,
@@ -637,16 +641,21 @@ export class AddAuthor implements OnInit {
           'gstNumber',
         ],
       },
-      {
-        type: UpdateTicketType.AUTHOR,
-        fields: [
-          'authorName',
-          'authorEmail',
-          'authorContactNumber',
-          'authorAbout',
-          'authorUsername',
-        ],
-      },
+      // Only include AUTHOR type ticket if user is an author (not publisher)
+      ...(isPublisher
+        ? []
+        : [
+            {
+              type: UpdateTicketType.AUTHOR,
+              fields: [
+                'authorName',
+                'authorEmail',
+                'authorContactNumber',
+                'authorAbout',
+                'authorUsername',
+              ],
+            },
+          ]),
     ];
 
     const rawValue = {

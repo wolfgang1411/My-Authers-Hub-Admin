@@ -1,0 +1,311 @@
+<div class="flex flex-col flex-grow gap-4">
+  <h3 class="heading">
+    {{ "updatetickets" | translate }}
+  </h3>
+
+  <div class="flex md:flex-row flex-col justify-between w-full gap-4">
+    <div
+      class="flex h-[38px] items-center justify-center md:min-w-[480px] min-w-full gap-2"
+    >
+      <input
+        class="input-field outline-none w-full"
+        #input
+        (input)="searchStr.next(input.value)"
+        [placeholder]="'search' | translate"
+      />
+      <button
+        class="btn h-[38px] flex items-center self-end justify-center gap-2"
+        (click)="searchStr.next(input.value)"
+      >
+        <svg-icon
+          src="images/magnifying-glass-solid-full.svg"
+          class="w-4 fill-white flex"
+        ></svg-icon>
+        {{ "search" | translate }}
+      </button>
+    </div>
+
+    <!-- Status Filter Buttons -->
+    <div class="flex gap-2 items-center">
+      <button
+        type="button"
+        matButton="filled"
+        matButton
+        [ngClass]="{
+          '!bg-primary !text-white': selectedStatus() === UpdateTicketStatus.PENDING,
+          '!bg-primary-superlight': selectedStatus() !== UpdateTicketStatus.PENDING
+        }"
+        (click)="onStatusChange(UpdateTicketStatus.PENDING)"
+      >
+        <mat-icon>schedule</mat-icon>
+        PENDING
+      </button>
+      <button
+        type="button"
+        matButton="filled"
+        matButton
+        [ngClass]="{
+          '!bg-primary !text-white': selectedStatus() === UpdateTicketStatus.APPROVED,
+          '!bg-primary-superlight': selectedStatus() !== UpdateTicketStatus.APPROVED
+        }"
+        (click)="onStatusChange(UpdateTicketStatus.APPROVED)"
+      >
+        <mat-icon>check_circle</mat-icon>
+        APPROVED
+      </button>
+      <button
+        type="button"
+        matButton="filled"
+        matButton
+        [ngClass]="{
+          '!bg-primary !text-white': selectedStatus() === UpdateTicketStatus.REJECTED,
+          '!bg-primary-superlight': selectedStatus() !== UpdateTicketStatus.REJECTED
+        }"
+        (click)="onStatusChange(UpdateTicketStatus.REJECTED)"
+      >
+        <mat-icon>cancel</mat-icon>
+        REJECTED
+      </button>
+      <button
+        type="button"
+        matButton="filled"
+        matButton
+        [ngClass]="{
+          '!bg-primary !text-white': selectedStatus() === 'ALL',
+          '!bg-primary-superlight': selectedStatus() !== 'ALL'
+        }"
+        (click)="onStatusChange('ALL')"
+      >
+        <mat-icon>list</mat-icon>
+        ALL
+      </button>
+    </div>
+  </div>
+
+  <mat-tab-group
+    [selectedIndex]="selectedTabIndex()"
+    (selectedIndexChange)="onTabChange($event)"
+    class="w-full"
+  >
+    <!-- Address Tab -->
+    <mat-tab label="{{ 'address' | translate }}">
+      <div class="pt-6">
+        <app-list-table
+          [dataSource]="addressUpdateDataSource"
+          [displayedColumns]="addressUpdateColumns"
+          [actionTemplate]="addressUpdateActions"
+        >
+        </app-list-table>
+        @if(hasMoreTickets(0)) {
+        <div class="flex justify-center mt-4">
+          <button
+            class="btn !bg-primary text-white"
+            (click)="loadMoreTickets()"
+            [disabled]="isLoading()"
+          >
+            {{ "loadmore" | translate }}
+          </button>
+        </div>
+        }
+        <ng-template #addressUpdateActions let-element>
+          <div
+            class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap"
+          >
+            <button
+              class="!bg-primary"
+              mat-icon-button
+              (click)="onViewTicket(element)"
+              [title]="'view' | translate"
+            >
+              <mat-icon class="!text-white">visibility</mat-icon>
+            </button>
+            @if(isSuperAdmin() && element.status === 'PENDING') {
+            <button
+              (click)="onApproveTicket(element.ticket)"
+              [title]="'approve' | translate"
+              class="!bg-green-700"
+              mat-icon-button
+            >
+              <mat-icon class="!text-white">thumb_up</mat-icon>
+            </button>
+            <button
+              (click)="onRejectTicket(element.ticket)"
+              [title]="'reject' | translate"
+              class="!bg-accent"
+              mat-icon-button
+            >
+              <mat-icon class="!text-white">thumb_down</mat-icon>
+            </button>
+            }
+          </div>
+        </ng-template>
+      </div>
+    </mat-tab>
+
+    <!-- Bank Tab -->
+    <mat-tab label="{{ 'bank' | translate }}">
+      <div class="pt-6">
+        <app-list-table
+          [dataSource]="bankUpdateDataSource"
+          [displayedColumns]="bankUpdateColumns"
+          [actionTemplate]="bankUpdateActions"
+        >
+        </app-list-table>
+        @if(hasMoreTickets(1)) {
+        <div class="flex justify-center mt-4">
+          <button
+            class="btn !bg-primary text-white"
+            (click)="loadMoreTickets()"
+            [disabled]="isLoading()"
+          >
+            {{ "loadmore" | translate }}
+          </button>
+        </div>
+        }
+        <ng-template #bankUpdateActions let-element>
+          <div
+            class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap"
+          >
+            <button
+              class="!bg-primary"
+              mat-icon-button
+              (click)="onViewTicket(element)"
+              [title]="'view' | translate"
+            >
+              <mat-icon class="!text-white">visibility</mat-icon>
+            </button>
+            @if(isSuperAdmin() && element.status === 'PENDING') {
+            <button
+              (click)="onApproveTicket(element.ticket)"
+              [title]="'approve' | translate"
+              class="!bg-green-700"
+              mat-icon-button
+            >
+              <mat-icon class="!text-white">thumb_up</mat-icon>
+            </button>
+            <button
+              (click)="onRejectTicket(element.ticket)"
+              [title]="'reject' | translate"
+              class="!bg-accent"
+              mat-icon-button
+            >
+              <mat-icon class="!text-white">thumb_down</mat-icon>
+            </button>
+            }
+          </div>
+        </ng-template>
+      </div>
+    </mat-tab>
+
+    <!-- Author Tab -->
+    <mat-tab label="{{ 'author' | translate }}">
+      <div class="pt-6">
+        <app-list-table
+          [dataSource]="authorUpdateDataSource"
+          [displayedColumns]="authorUpdateColumns"
+          [actionTemplate]="authorUpdateActions"
+        >
+        </app-list-table>
+        @if(hasMoreTickets(2)) {
+        <div class="flex justify-center mt-4">
+          <button
+            class="btn !bg-primary text-white"
+            (click)="loadMoreTickets()"
+            [disabled]="isLoading()"
+          >
+            {{ "loadmore" | translate }}
+          </button>
+        </div>
+        }
+        <ng-template #authorUpdateActions let-element>
+          <div
+            class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap"
+          >
+            <button
+              class="!bg-primary"
+              mat-icon-button
+              (click)="onViewTicket(element)"
+              [title]="'view' | translate"
+            >
+              <mat-icon class="!text-white">visibility</mat-icon>
+            </button>
+            @if(isSuperAdmin() && element.status === 'PENDING') {
+            <button
+              (click)="onApproveTicket(element.ticket)"
+              [title]="'approve' | translate"
+              class="!bg-green-700"
+              mat-icon-button
+            >
+              <mat-icon class="!text-white">thumb_up</mat-icon>
+            </button>
+            <button
+              (click)="onRejectTicket(element.ticket)"
+              [title]="'reject' | translate"
+              class="!bg-accent"
+              mat-icon-button
+            >
+              <mat-icon class="!text-white">thumb_down</mat-icon>
+            </button>
+            }
+          </div>
+        </ng-template>
+      </div>
+    </mat-tab>
+
+    <!-- Publisher Tab -->
+    <mat-tab label="{{ 'publisher' | translate }}">
+      <div class="pt-6">
+        <app-list-table
+          [dataSource]="publisherUpdateDataSource"
+          [displayedColumns]="publisherUpdateColumns"
+          [actionTemplate]="publisherUpdateActions"
+        >
+        </app-list-table>
+        @if(hasMoreTickets(3)) {
+        <div class="flex justify-center mt-4">
+          <button
+            class="btn !bg-primary text-white"
+            (click)="loadMoreTickets()"
+            [disabled]="isLoading()"
+          >
+            {{ "loadmore" | translate }}
+          </button>
+        </div>
+        }
+        <ng-template #publisherUpdateActions let-element>
+          <div
+            class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap"
+          >
+            <button
+              class="!bg-primary"
+              mat-icon-button
+              (click)="onViewTicket(element)"
+              [title]="'view' | translate"
+            >
+              <mat-icon class="!text-white">visibility</mat-icon>
+            </button>
+            @if(isSuperAdmin() && element.status === 'PENDING') {
+            <button
+              (click)="onApproveTicket(element.ticket)"
+              [title]="'approve' | translate"
+              class="!bg-green-700"
+              mat-icon-button
+            >
+              <mat-icon class="!text-white">thumb_up</mat-icon>
+            </button>
+            <button
+              (click)="onRejectTicket(element.ticket)"
+              [title]="'reject' | translate"
+              class="!bg-accent"
+              mat-icon-button
+            >
+              <mat-icon class="!text-white">thumb_down</mat-icon>
+            </button>
+            }
+          </div>
+        </ng-template>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>
+

@@ -685,4 +685,5 @@ export interface UpdateTicketFilter {
   titleId?: number;
   userId?: number;
   searchStr?: string;
+  type?: string; // For filtering by ticket type (ADDRESS, BANK, AUTHOR, PUBLISHER)
 }
