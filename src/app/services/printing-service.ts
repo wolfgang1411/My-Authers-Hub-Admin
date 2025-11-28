@@ -53,12 +53,12 @@ export class PrintingService {
   }
   async getSizeCategory(filter?: BasicFilter) {
     try {
-      return await this.serverService.get<Pagination<SizeCategory>>(
+      return await this.serverService.get<Pagination<Size>>(
         `size`,
         filter
       );
     } catch (error) {
-      console.error('Error fetching paper types by category:', error);
+      console.error('Error fetching sizes:', error);
       throw error;
     }
   }

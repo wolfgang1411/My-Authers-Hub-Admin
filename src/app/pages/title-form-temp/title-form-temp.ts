@@ -1133,12 +1133,15 @@ export class TitleFormTemp implements OnDestroy {
 
       if (pricingControl) {
         // Update existing control values
-        pricingControl.patchValue({
-          id,
-          platform,
-          mrp,
-          salesPrice,
-        }, { emitEvent: false });
+        pricingControl.patchValue(
+          {
+            id,
+            platform,
+            mrp,
+            salesPrice,
+          },
+          { emitEvent: false }
+        );
       } else {
         // This should not happen if ensurePricingArrayHasAllPlatforms worked correctly
         // Log warning for debugging
@@ -1434,12 +1437,15 @@ export class TitleFormTemp implements OnDestroy {
     }
 
     const pricingArray = this.tempForm.controls.pricing;
-    
+
     // Create a Set of existing platform names for faster lookup
     const existingPlatforms = new Set(
       pricingArray.controls
         .map((control) => control.controls.platform.value)
-        .filter((platform): platform is string => platform !== null && platform !== undefined)
+        .filter(
+          (platform): platform is string =>
+            platform !== null && platform !== undefined
+        )
     );
 
     // Add missing platforms only
@@ -3099,13 +3105,13 @@ export class TitleFormTemp implements OnDestroy {
 
       // Get the Size ID from the form control (form control is named sizeCategoryId but contains Size ID)
       const sizeId = Number(printingDetails.sizeCategoryId);
-      
+
       // Fetch the Size to get its sizeCategoryId
       const selectedSize = await this.printingService.getSizeById(sizeId);
       if (!selectedSize || !selectedSize.sizeCategory?.id) {
         throw new Error('Invalid size or size category not found');
       }
-      
+
       const sizeCategoryId = selectedSize.sizeCategory.id;
 
       // Build printing data
@@ -3140,7 +3146,7 @@ export class TitleFormTemp implements OnDestroy {
         paperQuailtyId: Number(printingDetails.paperQuailtyId),
         sizeId: sizeId,
         sizeCategoryId: sizeCategoryId,
-        isColorPagesRandom: printingDetails.isColorPagesRandom || false,
+        isColorPagesRandom: printing.controls.isColorPagesRandom.value ?? false,
       };
 
       // Only add customPrintCost if it has a valid value

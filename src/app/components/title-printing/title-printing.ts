@@ -22,6 +22,7 @@ import {
   LaminationType,
   PaperQuailty,
   PrintingFormGroup,
+  Size,
   SizeCategory,
   TitleMediaGroup,
   TitleMediaType,
@@ -61,7 +62,7 @@ export class TitlePrinting implements OnDestroy {
   bindingType = signal<BookBindings[]>([]);
   laminationTypes = signal<LaminationType[]>([]);
   paperQuality = signal<PaperQuailty[]>([]);
-  sizeCategory = signal<SizeCategory[]>([]);
+  sizeCategory = signal<Size[]>([]);
   allBindingTypes = signal<BookBindings[]>([]);
   allLaminationTypes = signal<LaminationType[]>([]);
   allPaperQualities = signal<PaperQuailty[]>([]);
@@ -219,24 +220,21 @@ export class TitlePrinting implements OnDestroy {
     }
 
     try {
-      // Fetch the size to get its sizeCategoryId
-      const selectedSize = await this.printingService.getSizeById(sizeId);
-      if (!selectedSize || !selectedSize.sizeCategory?.id) {
-        // Fallback to all options if size category not found
+      // Get the selected size from the already loaded data
+      const selectedSize = this.sizeCategory().find((s) => s.id === sizeId);
+
+      if (!selectedSize || !selectedSize.sizeCategory) {
+        // Fallback to all options if size or sizeCategory not found
         this.bindingType.set(this.allBindingTypes());
         this.laminationTypes.set(this.allLaminationTypes());
         this.paperQuality.set(this.allPaperQualities());
         return;
       }
 
-      const sizeCategoryId = selectedSize.sizeCategory.id;
-
-      // Fetch filtered options by size category
-      const [bindings, laminations, qualities] = await Promise.all([
-        this.printingService.getBindingTypesBySizeCategoryId(sizeCategoryId),
-        this.printingService.getLaminationTypesBySizeCategoryId(sizeCategoryId),
-        this.printingService.getPaperQualitiesBySizeCategoryId(sizeCategoryId),
-      ]);
+      // Use the nested arrays from the size's sizeCategory
+      const bindings = selectedSize.sizeCategory.bindingTypes || [];
+      const laminations = selectedSize.sizeCategory.laminationTypes || [];
+      const qualities = selectedSize.sizeCategory.paperQualities || [];
 
       this.bindingType.set(bindings);
       this.laminationTypes.set(laminations);
@@ -245,7 +243,10 @@ export class TitlePrinting implements OnDestroy {
       // Reset selections if current selection is not in filtered list
       const currentBindingId =
         this.printingGroup().controls.bookBindingsId.value;
-      if (currentBindingId && !bindings.find((b) => b.id === currentBindingId)) {
+      if (
+        currentBindingId &&
+        !bindings.find((b) => b.id === currentBindingId)
+      ) {
         this.printingGroup().controls.bookBindingsId.setValue(null);
       }
 

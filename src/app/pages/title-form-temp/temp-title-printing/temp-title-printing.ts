@@ -25,6 +25,7 @@ import {
   LaminationType,
   PaperQuailty,
   PrintingFormGroup,
+  Size,
   SizeCategory,
   TitleDetailsFormGroup,
   TitleMediaGroup,
@@ -64,7 +65,7 @@ export class TempTitlePrinting implements OnDestroy {
   bindingType = signal<BookBindings[]>([]);
   laminationTypes = signal<LaminationType[]>([]);
   paperQuality = signal<PaperQuailty[]>([]);
-  sizeCategory = signal<SizeCategory[]>([]);
+  sizeCategory = signal<Size[]>([]);
   allBindingTypes = signal<BookBindings[]>([]);
   allLaminationTypes = signal<LaminationType[]>([]);
   allPaperQualities = signal<PaperQuailty[]>([]);
@@ -382,7 +383,10 @@ export class TempTitlePrinting implements OnDestroy {
       // Reset selections if current selection is not in filtered list
       const currentBindingId =
         this.printingGroup().controls.bookBindingsId.value;
-      if (currentBindingId && !bindings.find((b) => b.id === currentBindingId)) {
+      if (
+        currentBindingId &&
+        !bindings.find((b) => b.id === currentBindingId)
+      ) {
         this.printingGroup().controls.bookBindingsId.setValue(null);
       }
 

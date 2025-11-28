@@ -1,8 +1,18 @@
-import { Component, computed, effect, input, OnInit, OnDestroy, output, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  input,
+  OnInit,
+  OnDestroy,
+  output,
+  signal,
+} from '@angular/core';
 import {
   BookBindings,
   LaminationType,
   PaperQuailty,
+  Size,
   SizeCategory,
   TitlePrintingCostPayload,
   TitlePrintingCostResponse,
@@ -26,7 +36,13 @@ import { SharedModule } from '../../modules/shared/shared-module';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonModule } from '@angular/material/button';
-import { debounceTime, firstValueFrom, startWith, Subject, takeUntil } from 'rxjs';
+import {
+  debounceTime,
+  firstValueFrom,
+  startWith,
+  Subject,
+  takeUntil,
+} from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { AddUpdatePaperQuality } from '../add-update-paper-quality/add-update-paper-quality';
 import { AddUpdateBindingType } from '../add-update-binding-type/add-update-binding-type';
@@ -64,7 +80,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
 
   bindingTypes = input.required<BookBindings[]>();
   paperQualityTypes = input.required<PaperQuailty[]>();
-  sizeTypes = input.required<SizeCategory[]>();
+  sizeTypes = input.required<Size[]>();
   laminationTypes = input.required<LaminationType[]>();
   marginPercent = input.required<number | null>();
 
@@ -78,7 +94,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
   filteredBindingTypes = signal<BookBindings[]>([]);
   filteredLaminationTypes = signal<LaminationType[]>([]);
   filteredPaperQualityTypes = signal<PaperQuailty[]>([]);
-  
+
   // Store all options for fallback
   allBindingTypes = signal<BookBindings[]>([]);
   allLaminationTypes = signal<LaminationType[]>([]);
@@ -109,7 +125,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
   });
 
   calculation = signal<TitlePrintingCostResponse | null>(null);
-  
+
   // Computed to check if size category is selected
   isSizeCategorySelected = computed(() => {
     return !!this.form.controls.sizeCategoryId.value;
@@ -117,17 +133,17 @@ export class PrintingCalculator implements OnInit, OnDestroy {
 
   // Computed to get selected size category's insideCoverPrice
   selectedSizeCategoryInsideCoverPrice = computed(() => {
-    const sizeCategoryId = this.form.controls.sizeCategoryId.value;
-    if (!sizeCategoryId) return 0;
-    const sizeCategory = this.sizeTypes().find(sc => sc.id === sizeCategoryId);
-    return sizeCategory?.insideCoverPrice ?? sizeCategory?.sizeCategory?.insideCoverPrice ?? 0;
+    const sizeId = this.form.controls.sizeCategoryId.value;
+    if (!sizeId) return 0;
+    const selectedSize = this.sizeTypes().find((s) => s.id === sizeId);
+    return selectedSize?.sizeCategory?.insideCoverPrice ?? 0;
   });
 
   // Computed to check if user is superadmin
   isSuperAdmin = computed(() => {
     return this.userService.loggedInUser$()?.accessLevel === 'SUPERADMIN';
   });
-  
+
   constructor(
     private settingService: SettingsService,
     private printingService: PrintingService,
@@ -140,7 +156,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
       this.allBindingTypes.set(this.bindingTypes());
       this.allLaminationTypes.set(this.laminationTypes());
       this.allPaperQualityTypes.set(this.paperQualityTypes());
-      
+
       // Reload filtered options if size category is selected
       const sizeCategoryId = this.form.controls.sizeCategoryId.value;
       if (sizeCategoryId) {
@@ -153,7 +169,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
       }
     });
   }
-  
+
   async ngOnInit(): Promise<void> {
     // Initialize all options from inputs
     this.allBindingTypes.set(this.bindingTypes());
@@ -181,9 +197,11 @@ export class PrintingCalculator implements OnInit, OnDestroy {
       this.filteredPaperQualityTypes.set(this.allPaperQualityTypes());
     }
 
-    this.form.valueChanges.pipe(debounceTime(600), takeUntil(this.destroy$)).subscribe(() => {
-      this.updatePrice();
-    });
+    this.form.valueChanges
+      .pipe(debounceTime(600), takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.updatePrice();
+      });
   }
 
   ngOnDestroy(): void {
@@ -209,13 +227,15 @@ export class PrintingCalculator implements OnInit, OnDestroy {
   }
 
   /**
-   * Load binding types, lamination types, and paper qualities based on selected size category
+   * Load binding types, lamination types, and paper qualities based on selected size
    */
-  private async loadOptionsBySizeCategory(sizeCategoryId: number | null): Promise<void> {
+  private async loadOptionsBySizeCategory(
+    sizeId: number | null
+  ): Promise<void> {
     // Update field states
-    this.updateFieldStates(sizeCategoryId);
-    
-    if (!sizeCategoryId) {
+    this.updateFieldStates(sizeId);
+
+    if (!sizeId) {
       // If no size selected, show all options
       this.filteredBindingTypes.set(this.allBindingTypes());
       this.filteredLaminationTypes.set(this.allLaminationTypes());
@@ -224,12 +244,21 @@ export class PrintingCalculator implements OnInit, OnDestroy {
     }
 
     try {
-      // Fetch filtered options by size category
-      const [bindings, laminations, qualities] = await Promise.all([
-        this.printingService.getBindingTypesBySizeCategoryId(sizeCategoryId),
-        this.printingService.getLaminationTypesBySizeCategoryId(sizeCategoryId),
-        this.printingService.getPaperQualitiesBySizeCategoryId(sizeCategoryId),
-      ]);
+      // Get the selected size from the already loaded data
+      const selectedSize = this.sizeTypes().find((s) => s.id === sizeId);
+
+      if (!selectedSize || !selectedSize.sizeCategory) {
+        // Fallback to all options if size or sizeCategory not found
+        this.filteredBindingTypes.set(this.allBindingTypes());
+        this.filteredLaminationTypes.set(this.allLaminationTypes());
+        this.filteredPaperQualityTypes.set(this.allPaperQualityTypes());
+        return;
+      }
+
+      // Use the nested arrays from the size's sizeCategory
+      const bindings = selectedSize.sizeCategory.bindingTypes || [];
+      const laminations = selectedSize.sizeCategory.laminationTypes || [];
+      const qualities = selectedSize.sizeCategory.paperQualities || [];
 
       this.filteredBindingTypes.set(bindings);
       this.filteredLaminationTypes.set(laminations);
@@ -237,7 +266,10 @@ export class PrintingCalculator implements OnInit, OnDestroy {
 
       // Reset selections if current selection is not in filtered list
       const currentBindingId = this.form.controls.bindingTypeId.value;
-      if (currentBindingId && !bindings.find((b) => b.id === currentBindingId)) {
+      if (
+        currentBindingId &&
+        !bindings.find((b) => b.id === currentBindingId)
+      ) {
         this.form.controls.bindingTypeId.setValue(null);
       }
 
@@ -257,7 +289,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
         this.form.controls.paperQuailtyId.setValue(null);
       }
     } catch (error) {
-      console.error('Error loading options by size category:', error);
+      console.error('Error loading options by size:', error);
       // Fallback to all options on error
       this.filteredBindingTypes.set(this.allBindingTypes());
       this.filteredLaminationTypes.set(this.allLaminationTypes());

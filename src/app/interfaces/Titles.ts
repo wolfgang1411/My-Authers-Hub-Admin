@@ -385,6 +385,7 @@ export interface Size {
   length: number;
   sizeCategoryId?: number | null;
   status?: string;
+  sizeCategory?: SizeCategory;
 }
 
 export interface CreateSize {

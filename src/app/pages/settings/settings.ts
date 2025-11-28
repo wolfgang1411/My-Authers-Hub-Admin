@@ -4,6 +4,7 @@ import {
   BookBindings,
   LaminationType,
   PaperQuailty,
+  Size,
   SizeCategory,
   User,
 } from '../../interfaces';
@@ -55,7 +56,7 @@ export class Settings implements OnInit {
 
   bindingTypes = signal<BookBindings[]>([]);
   paperQualityTypes = signal<PaperQuailty[]>([]);
-  sizeTypes = signal<SizeCategory[]>([]);
+  sizeTypes = signal<Size[]>([]);
   laminationTypes = signal<LaminationType[]>([]);
   marginPercent = signal<number | null>(null);
 
@@ -136,15 +137,9 @@ export class Settings implements OnInit {
     });
   }
   onSizeTypesUpdate({ data, isNew }: { data: SizeCategory; isNew: boolean }) {
-    this.sizeTypes.update((d) => {
-      if (isNew) {
-        d.push(data);
-      } else {
-        d = d.map((q) => (q.id === data.id ? data : q));
-      }
-
-      return d;
-    });
+    // When a size category is updated, we need to refresh the sizes
+    // since the category data is nested in each size
+    this.fetchInitialData();
   }
 
   onMarginPercentUpdate(value: number) {
