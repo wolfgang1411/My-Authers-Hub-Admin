@@ -19,6 +19,7 @@ import {
 } from '@angular/forms';
 import { SettingsService } from '../../services/settings';
 import { PrintingService } from '../../services/printing-service';
+import { UserService } from '../../services/user';
 import { CommonModule } from '@angular/common';
 import { MatFormField, MatInput, MatLabel } from '@angular/material/input';
 import { SharedModule } from '../../modules/shared/shared-module';
@@ -40,7 +41,7 @@ type ModuleType =
   | 'paperQualityType'
   | 'sizeType'
   | 'bidingType'
-  | 'insideCover';
+  | 'marginPercent';
 
 @Component({
   selector: 'app-printing-calculator',
@@ -65,13 +66,13 @@ export class PrintingCalculator implements OnInit, OnDestroy {
   paperQualityTypes = input.required<PaperQuailty[]>();
   sizeTypes = input.required<SizeCategory[]>();
   laminationTypes = input.required<LaminationType[]>();
-  insideCoverPrice = input.required<number | null>();
+  marginPercent = input.required<number | null>();
 
   onPaperQualityTypesUpdate = output<{ data: PaperQuailty; isNew: boolean }>();
   onBindingTypesUpdate = output<{ data: BookBindings; isNew: boolean }>();
   onSizeTypesUpdate = output<{ data: SizeCategory; isNew: boolean }>();
   onLaminationTypesUpdate = output<{ data: LaminationType; isNew: boolean }>();
-  onInsideCoverPriceUpdate = output<number>();
+  onMarginPercentUpdate = output<number>();
 
   // Filtered options based on selected size category
   filteredBindingTypes = signal<BookBindings[]>([]);
@@ -113,12 +114,26 @@ export class PrintingCalculator implements OnInit, OnDestroy {
   isSizeCategorySelected = computed(() => {
     return !!this.form.controls.sizeCategoryId.value;
   });
+
+  // Computed to get selected size category's insideCoverPrice
+  selectedSizeCategoryInsideCoverPrice = computed(() => {
+    const sizeCategoryId = this.form.controls.sizeCategoryId.value;
+    if (!sizeCategoryId) return 0;
+    const sizeCategory = this.sizeTypes().find(sc => sc.id === sizeCategoryId);
+    return sizeCategory?.insideCoverPrice ?? sizeCategory?.sizeCategory?.insideCoverPrice ?? 0;
+  });
+
+  // Computed to check if user is superadmin
+  isSuperAdmin = computed(() => {
+    return this.userService.loggedInUser$()?.accessLevel === 'SUPERADMIN';
+  });
   
   constructor(
     private settingService: SettingsService,
     private printingService: PrintingService,
     private matDialog: MatDialog,
-    private translateServie: TranslateService
+    private translateServie: TranslateService,
+    private userService: UserService
   ) {
     // Watch for input changes and update all* signals
     effect(() => {
@@ -267,8 +282,8 @@ export class PrintingCalculator implements OnInit, OnDestroy {
           ? `Are you sure you wish to create new binding type`
           : `Are you sure you wish to update binding type`;
         break;
-      case 'insideCover':
-        label = `Are you sure you wish to update inside cover amount`;
+      case 'marginPercent':
+        label = `Are you sure you wish to update margin percent`;
         break;
       case 'laminationType':
         label = isNew
@@ -299,8 +314,8 @@ export class PrintingCalculator implements OnInit, OnDestroy {
 
   updateRate(moduleType: ModuleType) {
     switch (moduleType) {
-      case 'insideCover':
-        const insideCoverDialog = this.matDialog.open(InviteDialog, {
+      case 'marginPercent':
+        const marginPercentDialog = this.matDialog.open(InviteDialog, {
           data: {
             onSave: async (val: any) => {
               if (
@@ -309,14 +324,14 @@ export class PrintingCalculator implements OnInit, OnDestroy {
                 return;
               }
               val = Number(val);
-              await this.settingService.updateInsideCoverAmount(val);
-              this.insideCoverPrice = val;
-              insideCoverDialog.close();
+              await this.settingService.updateMarginPercent(val);
+              this.onMarginPercentUpdate.emit(val);
+              marginPercentDialog.close();
             },
-            onClose: () => insideCoverDialog.close(),
-            heading: 'Manage inside cover rate',
-            defaultValue: this.insideCoverPrice(),
-            placeholder: 'enteramount',
+            onClose: () => marginPercentDialog.close(),
+            heading: 'Manage margin percent',
+            defaultValue: this.marginPercent(),
+            placeholder: 'enterpercent',
             validators: [Validators.required],
             type: 'number',
           },

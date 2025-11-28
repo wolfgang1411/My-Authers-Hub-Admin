@@ -17,12 +17,12 @@
             [laminationTypes]="laminationTypes()"
             [sizeTypes]="sizeTypes()"
             [paperQualityTypes]="paperQualityTypes()"
-            [insideCoverPrice]="insideCover()"
+            [marginPercent]="marginPercent()"
             (onPaperQualityTypesUpdate)="onPaperQualityTypesUpdae($event)"
             (onBindingTypesUpdate)="onBindingTypesUpdate($event)"
             (onLaminationTypesUpdate)="onLaminationTypesUpdate($event)"
             (onSizeTypesUpdate)="onSizeTypesUpdate($event)"
-            (onInsideCoverPriceUpdate)="onInsideCoverPriceUpdate($event)"
+            (onMarginPercentUpdate)="onMarginPercentUpdate($event)"
           ></app-printing-calculator>
         </section>
       </mat-tab>

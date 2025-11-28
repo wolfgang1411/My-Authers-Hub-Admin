@@ -298,6 +298,7 @@ export interface SizeCategory {
   type: SizeCategoryType;
   packetPrice: number;
   weightMultiplayer: number;
+  insideCoverPrice?: number;
   TitlePrinting: TitlePrinting[];
   sizeCategory?: {
     id: number;
@@ -361,6 +362,7 @@ export interface CreateSizeType {
   weightMultiplayer: number;
   packetPrice: number;
   type: string;
+  insideCoverPrice?: number;
 }
 
 export interface UpdateSizeType extends CreateSizeType {

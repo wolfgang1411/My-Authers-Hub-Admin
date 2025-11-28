@@ -55,7 +55,7 @@ export class Settings implements OnInit {
   paperQualityTypes = signal<PaperQuailty[]>([]);
   sizeTypes = signal<SizeCategory[]>([]);
   laminationTypes = signal<LaminationType[]>([]);
-  insideCover = signal<number | null>(null);
+  marginPercent = signal<number | null>(null);
 
   async fetchInitialData() {
     const { items: bindingTypes } = await this.printService.getBindingType({
@@ -70,13 +70,14 @@ export class Settings implements OnInit {
     const { items: laminations } = await this.printService.getLaminationType({
       itemsPerPage: 200,
     });
-    const { val: insideCover } = await this.settingService.fetchInsideCover();
+    const { val: marginPercent } =
+      await this.settingService.fetchMarginPercent();
 
     this.bindingTypes.set(bindingTypes);
     this.paperQualityTypes.set(paperQuality);
     this.sizeTypes.set(sizes);
     this.laminationTypes.set(laminations);
-    this.insideCover.set(Number(insideCover));
+    this.marginPercent.set(Number(marginPercent));
   }
 
   onPaperQualityTypesUpdae({
@@ -144,7 +145,7 @@ export class Settings implements OnInit {
     });
   }
 
-  onInsideCoverPriceUpdate(value: number) {
-    this.insideCover.set(value);
+  onMarginPercentUpdate(value: number) {
+    this.marginPercent.set(value);
   }
 }

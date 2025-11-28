@@ -72,7 +72,7 @@ export class SettingsService {
   async createOrUpdateSizeType(data: UpdateSizeType) {
     try {
       data = { ...data };
-      const url = data.id ? `size/${data.id}` : 'size';
+      const url = data.id ? `size-category/${data.id}` : 'size-category';
       const method = data.id ? 'patch' : 'post';
       delete data.id;
       return await this.loaderService.loadPromise<SizeCategory>(
@@ -101,12 +101,12 @@ export class SettingsService {
     }
   }
 
-  async updateInsideCoverAmount(amount: string | number) {
+  async updateMarginPercent(percent: string | number) {
     try {
       return await this.loaderService.loadPromise(
         this.serverService.patch('keyvals', {
-          key: 'INSIDE_COVER_PRICE',
-          val: amount.toString(),
+          key: 'PRINT_MARGIN_PERCENT',
+          val: percent.toString(),
           isEncrypted: false,
         })
       );
@@ -116,10 +116,10 @@ export class SettingsService {
     }
   }
 
-  async fetchInsideCover() {
+  async fetchMarginPercent() {
     try {
       return await this.loaderService.loadPromise(
-        this.serverService.get<{ val: string }>('keyvals/INSIDE_COVER_PRICE')
+        this.serverService.get<{ val: string }>('keyvals/PRINT_MARGIN_PERCENT')
       );
     } catch (error) {
       this.loggerService.logError(error);

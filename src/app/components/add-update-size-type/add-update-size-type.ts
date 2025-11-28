@@ -46,6 +46,7 @@ export class AddUpdateSizeType {
     ]),
     packetPrice: new FormControl<number | null>(null, [Validators.required]),
     type: new FormControl<string | null>(null, [Validators.required]),
+    insideCoverPrice: new FormControl<number | null>(null, [Validators.required]),
   });
 
   ngOnInit(): void {
@@ -61,14 +62,17 @@ export class AddUpdateSizeType {
   }
 
   updateValue(data?: SizeCategory) {
+    // Prioritize nested sizeCategory values since we're updating size-category
+    const sizeCategoryData = data?.sizeCategory;
     this.form.patchValue(
       {
-        id: data?.id,
+        id: sizeCategoryData?.id ?? data?.id,
         length: data?.length,
-        packetPrice: data?.packetPrice,
-        type: 'A',
+        packetPrice: sizeCategoryData?.packetPrice ?? data?.packetPrice ?? 0,
+        type: data?.type || sizeCategoryData?.category || 'A',
         width: data?.width,
-        weightMultiplayer: data?.weightMultiplayer,
+        weightMultiplayer: sizeCategoryData?.weightMultiplayer ?? data?.weightMultiplayer ?? 1,
+        insideCoverPrice: sizeCategoryData?.insideCoverPrice ?? data?.insideCoverPrice ?? 0,
       },
       { emitEvent: false }
     );
@@ -81,8 +85,9 @@ export class AddUpdateSizeType {
         length: Number(this.form.controls.length.value) as number,
         width: Number(this.form.controls.width.value) as number,
         packetPrice: this.form.controls.packetPrice.value as number,
-        type: 'A',
+        type: this.form.controls.type.value || 'A',
         weightMultiplayer: this.form.controls.weightMultiplayer.value as number,
+        insideCoverPrice: this.form.controls.insideCoverPrice.value as number,
       });
     }
   }

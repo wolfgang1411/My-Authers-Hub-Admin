@@ -44,6 +44,7 @@
             }
           </mat-select>
         </mat-form-field>
+        @if (isSuperAdmin()) {
         <button
           type="button"
           matButton="filled"
@@ -53,6 +54,7 @@
         >
           {{ "updaterate" | translate }}
         </button>
+        }
       </div>
 
       <!-- Binding Type -->
@@ -65,6 +67,7 @@
             }
           </mat-select>
         </mat-form-field>
+        @if (isSuperAdmin()) {
         <button
           type="button"
           mat-button
@@ -74,6 +77,7 @@
         >
           {{ "updaterate" | translate }}
         </button>
+        }
       </div>
 
       <!-- Paper Quality -->
@@ -86,6 +90,7 @@
             }
           </mat-select>
         </mat-form-field>
+        @if (isSuperAdmin()) {
         <button
           type="button"
           mat-button
@@ -95,6 +100,7 @@
         >
           {{ "updaterate" | translate }}
         </button>
+        }
       </div>
 
       <!-- Lamination Type -->
@@ -109,6 +115,7 @@
             }
           </mat-select>
         </mat-form-field>
+        @if (isSuperAdmin()) {
         <button
           type="button"
           matButton="filled"
@@ -118,6 +125,7 @@
         >
           {{ "updaterate" | translate }}
         </button>
+        }
       </div>
     </div>
   </div>
@@ -133,15 +141,11 @@
         <mat-checkbox formControlName="insideCover">
           {{ "isinsidecover" | translate }}
         </mat-checkbox>
-        <button
-          type="button"
-          matButton="filled"
-          mat-button
-          class="!bg-primary"
-          (click)="updateRate('insideCover')"
-        >
-          {{ "updaterate" | translate }}
-        </button>
+        @if (isSizeCategorySelected() && isSuperAdmin()) {
+        <span class="text-sm text-gray-600">
+          ({{ selectedSizeCategoryInsideCoverPrice() | currency : "INR" }})
+        </span>
+        }
       </div>
 
       <!-- Random Color Pages -->
@@ -150,6 +154,30 @@
       </mat-checkbox>
     </div>
   </div>
+
+  <!-- Section: Margin Percent (SuperAdmin Only) -->
+  @if (isSuperAdmin()) {
+  <div class="col-span-2">
+    <h2 class="text-lg font-medium mt-4 mb-2 text-text-primary">
+      Margin Settings
+    </h2>
+    <div class="flex gap-2 items-center">
+      <mat-form-field class="flex-1">
+        <mat-label>{{ "marginpercent" | translate }}</mat-label>
+        <input matInput type="number" [value]="marginPercent()" readonly />
+      </mat-form-field>
+      <button
+        type="button"
+        matButton="filled"
+        mat-button
+        class="!bg-primary"
+        (click)="updateRate('marginPercent')"
+      >
+        {{ "updaterate" | translate }}
+      </button>
+    </div>
+  </div>
+  }
 
   <!-- Section: Cost Calculation -->
   <div
