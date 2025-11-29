@@ -5,10 +5,11 @@ import { AuthorsService } from '../../pages/authors/authors-service';
 import { Author, AuthorFilter, AuthorStatus } from '../../interfaces';
 import { formatDate, subDays } from 'date-fns';
 import { SharedModule } from '../../modules/shared/shared-module';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-recent-authors',
-  imports: [SharedModule],
+  imports: [SharedModule, MatIconModule],
   templateUrl: './recent-authors.html',
   styleUrl: './recent-authors.css',
 })

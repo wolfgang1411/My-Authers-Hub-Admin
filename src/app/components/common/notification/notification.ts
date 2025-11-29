@@ -9,6 +9,7 @@ import { UserService } from '../../../services/user';
 import { RouterModule } from '@angular/router';
 import { LoaderService } from '../../../services/loader';
 import { combineLatest, map, Observable } from 'rxjs';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-notification',
@@ -18,6 +19,7 @@ import { combineLatest, map, Observable } from 'rxjs';
     MatMenuModule,
     MatBadgeModule,
     RouterModule,
+    MatIconModule,
   ],
   templateUrl: './notification.html',
   styleUrl: './notification.css',

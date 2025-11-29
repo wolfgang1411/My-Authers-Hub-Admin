@@ -4,10 +4,11 @@ import { RouterLink } from '@angular/router';
 import { UserService } from 'src/app/services/user';
 import { MatIconModule } from '@angular/material/icon';
 import Swal from 'sweetalert2';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-profile-card-component',
-  imports: [SharedModule, RouterLink, MatIconModule],
+  imports: [SharedModule, RouterLink, MatIconModule, MatButtonModule],
   templateUrl: './profile-card-component.html',
   styleUrl: './profile-card-component.css',
 })

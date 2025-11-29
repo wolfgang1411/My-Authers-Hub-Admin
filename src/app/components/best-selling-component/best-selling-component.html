@@ -1,7 +1,9 @@
 <div class="bg-surface h-full rounded-lg p-4 shadow-sm">
   <h3 class="text-slate-800 font-medium mb-3">{{ heading() }}</h3>
   @for (title of titles(); track $index) {
-  <div class="flex items-center justify-between py-2 border-b last:border-b-0">
+  <div
+    class="flex hover:bg-gray-50 rounded-lg px-1 transition items-center justify-between py-2 border-b last:border-b-0"
+  >
     <div class="flex items-center gap-3">
       <div
         class="w-8 h-8 rounded bg-indigo-100 flex items-center justify-center text-indigo-600"

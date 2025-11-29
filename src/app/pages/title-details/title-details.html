@@ -175,12 +175,14 @@
     </div>
 
     <h2 class="text-2xl font-semibold text-[var(--text-heading)] mb-2">
-      No Titles Added Yet
+      {{
+        titles().length ? "There is no Titles in draft" : "No Titles Added Yet"
+      }}
     </h2>
 
     <p class="text-[var(--text-secondary)] text-sm max-w-lg leading-6 mb-6">
-      Start building your publishing journey by adding your first book title.
-      Drafts will appear here once saved.
+      Start building your publishing journey by adding your book title. Drafts
+      will appear here once saved.
     </p>
 
     <!-- CTA Button -->

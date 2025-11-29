@@ -1,14 +1,13 @@
 <div class="flex gap-4 items-center">
-  <!-- Notification Icon with Badge -->
   <button
     mat-icon-button
     [matMenuTriggerFor]="notificationMenu"
     [matBadge]="unreadNotifications().length"
     matBadgeColor="warn"
     matBadgeOverlap="false"
-    class="w-8 h-8"
+    class="rounded-full !bg-green-2 text-white cursor-pointer hover:bg-green-2/80 hover:shadow-inner transition-all duration-300"
   >
-    <svg-icon class="fill-black" src="images/bell-solid-full.svg"></svg-icon>
+    <mat-icon class="!text-white">notifications_active</mat-icon>
   </button>
 </div>
 <mat-menu
@@ -16,7 +15,6 @@
   class="!p-0 w-[320px] max-w-[320px]"
   (closed)="onNotificationClose()"
 >
-  <!-- Header -->
   <div class="px-3 py-2 border-b border-gray-200 bg-gray-50">
     <span class="font-semibold text-sm text-gray-700">Notifications</span>
   </div>

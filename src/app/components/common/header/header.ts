@@ -8,6 +8,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterModule } from '@angular/router';
 import { Notification } from '../notification/notification';
+import { SafeUrlPipe } from 'src/app/pipes/safe-url-pipe';
 @Component({
   selector: 'app-header',
   imports: [
@@ -18,6 +19,7 @@ import { Notification } from '../notification/notification';
     MatButtonModule,
     RouterModule,
     Notification,
+    SafeUrlPipe,
   ],
   templateUrl: './header.html',
   styleUrl: './header.css',

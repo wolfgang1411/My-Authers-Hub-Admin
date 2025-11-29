@@ -174,7 +174,7 @@ export class TitleDetails {
     return frontCover ? frontCover.url : null;
   }
   pendingTitles = computed(() =>
-    this.titles().filter((t) => t.status !== 'PENDING')
+    this.titles().filter((t) => t.status === 'PENDING')
   );
   deleteTitle(titleId: number) {}
 }

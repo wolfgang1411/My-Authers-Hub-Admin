@@ -2,7 +2,9 @@
   <h3 class="text-slate-800 font-medium mb-3">Recent Authors</h3>
 
   @if(authors()?.length) { @for (author of authors(); track $index) {
-  <div class="flex items-center justify-between py-2 border-b last:border-b-0">
+  <div
+    class="flex items-center hover:bg-gray-50 rounded-lg px-1 transition justify-between py-2 border-b last:border-b-0"
+  >
     <div class="flex items-center gap-3">
       <div
         class="w-8 h-8 rounded bg-indigo-100 flex items-center justify-center text-indigo-600"

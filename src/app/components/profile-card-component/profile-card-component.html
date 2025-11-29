@@ -1,5 +1,5 @@
 <div class="bg-white rounded-lg p-4 shadow-sm">
-  <div class="flex flex-col items-center gap-3">
+  <div class="flex flex-col items-center gap-2">
     <div
       class="w-28 h-28 rounded-full bg-gray-100 relative overflow-hidden flex items-center justify-center"
     >
@@ -38,7 +38,7 @@
       </span>
 
       <!-- Email + Phone -->
-      <div class="mt-3 text-sm text-gray-600 leading-relaxed space-y-1">
+      <div class="mt-1 text-sm text-gray-600 leading-relaxed space-y-1">
         <p class="flex items-center justify-center gap-2">
           <mat-icon class="text-primary !text-base">mail</mat-icon>
           {{ userService.loggedInUser$()?.email }}
@@ -53,17 +53,21 @@
 
     <div class="w-full flex gap-2">
       <button
-        class="flex-1 py-2 bg-primary text-white rounded hover:bg-primary/85 cursor-pointer"
+        matButton="filled"
+        class="flex-1 py-2 !bg-primary !text-white rounded hover:bg-primary/85 cursor-pointer"
         [routerLink]="['/profile']"
         routerLinkActive="router-link-active"
       >
+        <mat-icon>edit</mat-icon>
         Edit Profile
       </button>
       <button
+        matButton="filled"
         class="flex-1 py-2 bg-primary-superlight border rounded hover:bg-primary-light"
         [routerLink]="['/settings']"
         routerLinkActive="router-link-active"
       >
+        <mat-icon>settings</mat-icon>
         Settings
       </button>
     </div>
