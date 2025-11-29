@@ -1,158 +1,147 @@
-<div class="flex flex-col gap-6">
-  <div class="flex justify-between">
-    <h2 class="text-2xl font-medium text-[var(--text-heading)]">
-      Payout Details
-    </h2>
-
-    <app-back class="self-end"></app-back>
+<div class="flex flex-col gap-10 pb-20">
+  <!-- ===== HEADER ===== -->
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-3xl font-medium text-gray-900">Payout Details</h1>
+      <p class="text-gray-500 text-sm mt-1">
+        Summary of processed payout request.
+      </p>
+    </div>
+    <app-back></app-back>
   </div>
+
+  <!-- ===== MAIN PAYOUT CARD ===== -->
   <div
-    class="rounded-2xl border border-[var(--primary-superlight)] shadow-md bg-white overflow-hidden"
+    class="rounded-xl shadow-lg border border-gray-200 bg-white overflow-hidden"
   >
-    <div class="bg-primary px-6 py-4 flex items-center justify-between">
-      <h2 class="text-xl font-medium text-white">
-        {{ "payout" | translate }}
-      </h2>
-      <mat-icon class="!text-white">receipt_long</mat-icon>
+    <!-- Header -->
+    <div
+      class="bg-primary px-7 py-5 flex items-center justify-between text-white"
+    >
+      <div class="flex items-center gap-3">
+        <mat-icon class="text-white">payments</mat-icon>
+        <h2 class="text-xl font-medium">Payout Summary</h2>
+      </div>
+      <span class="opacity-90">{{ payout()?.createdAt | myDate }}</span>
     </div>
 
-    <div class="divide-y divide-[var(--primary-superlight)]">
-      <div
-        class="flex flex-row justify-between px-6 py-4 hover:bg-[var(--light-purple-bg)] transition"
-      >
-        <span class="text-[var(--text-secondary)]">{{
-          "createdat" | translate
-        }}</span>
-        <span class="text-[var(--text-heading)] font-medium">
-          {{ payout()?.createdAt | myDate }}
-        </span>
-      </div>
-      <div
-        class="flex flex-row justify-between px-6 py-4 hover:bg-[var(--light-purple-bg)] transition"
-      >
-        <span class="text-[var(--text-secondary)]">{{
-          "amount" | translate
-        }}</span>
-        <span class="text-[var(--primary)] font-medium text-lg">
+    <!-- Key data grid -->
+    <div
+      class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-200"
+    >
+      <!-- Amount -->
+      <div class="px-8 py-6">
+        <p class="text-gray-500 text-sm">Amount</p>
+        <h3 class="text-3xl font-medium text-primary mt-1">
           {{ payout()?.requestedAmount }} INR
-        </span>
+        </h3>
       </div>
-      <div
-        class="flex flex-row justify-between px-6 py-4 hover:bg-[var(--light-purple-bg)] transition"
-      >
-        <span class="text-[var(--text-secondary)]">{{
-          "status" | translate
-        }}</span>
 
+      <!-- Status -->
+      <div class="px-8 py-6">
+        <p class="text-gray-500 text-sm">Status</p>
         <span
-          class="px-3 py-1 rounded-full text-xs font-medium border"
+          class="px-3 py-1.5 text-xs font-medium rounded-full border inline-block mt-1"
           [ngClass]="{
             'bg-yellow-100 text-yellow-700 border-yellow-300':
-              payout()?.status === 'PENDING',
+              payout()?.status == 'PENDING',
             'bg-green-100 text-green-700 border-green-300':
-              payout()?.status === 'APPROVED',
+              payout()?.status == 'APPROVED',
             'bg-red-100 text-red-700 border-red-300':
-              payout()?.status === 'REJECTED'
+              payout()?.status == 'REJECTED'
           }"
         >
           {{ payout()?.status }}
         </span>
       </div>
-      <div class="flex flex-row justify-between px-6 py-4">
-        <span class="text-[var(--text-secondary)]">{{
-          "approvedby" | translate
-        }}</span>
-        <span class="text-[var(--text-heading)] font-medium capitalize">
-          @if (payout()?.approvedBy) {
+
+      <!-- Approved By -->
+      <div class="px-8 py-6">
+        <p class="text-gray-500 text-sm">Approved By</p>
+        <p class="text-gray-800 font-medium mt-1">
+          @if(payout()?.approvedBy){
           {{ payout()?.approvedBy?.firstName }}
           {{ payout()?.approvedBy?.lastName }}
-          } @else { N/A }
-        </span>
+          } @else { — }
+        </p>
       </div>
     </div>
   </div>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+  <!-- ===== USER / ADDRESS / BANK DETAILS ===== -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <!-- USER CARD -->
     <div
-      class="rounded-2xl border border-[var(--primary-superlight)] shadow-md bg-white overflow-hidden"
+      class="rounded-xl shadow-md border border-gray-200 bg-white overflow-hidden"
     >
       <div class="bg-primary px-6 py-4 flex items-center gap-3">
         <mat-icon class="!text-white">person</mat-icon>
-        <h2 class="text-white text-lg font-medium">
-          {{ "userdetails" | translate }}
-        </h2>
+        <h2 class="text-white font-medium text-lg">User Details</h2>
       </div>
 
-      <div class="divide-y divide-[var(--primary-superlight)]">
-        <div class="px-6 py-3 flex justify-between">
-          <span class="text-[var(--text-secondary)]">Name</span>
-          <span class="font-medium capitalize">{{ userDetails()?.name }}</span>
+      <div class="px-6 py-4 space-y-4">
+        <div class="flex justify-between">
+          <span class="text-gray-500">Name</span>
+          <span class="font-medium">{{ userDetails()?.name }}</span>
         </div>
-
-        <div class="px-6 py-3 flex justify-between">
-          <span class="text-[var(--text-secondary)]">Email</span>
+        <div class="flex justify-between">
+          <span class="text-gray-500">Email</span>
           <span class="font-medium">{{ userDetails()?.email }}</span>
         </div>
-
-        <div class="px-6 py-3 flex justify-between">
-          <span class="text-[var(--text-secondary)]">Phone</span>
+        <div class="flex justify-between">
+          <span class="text-gray-500">Phone</span>
           <span class="font-medium">{{ userDetails()?.phone }}</span>
         </div>
       </div>
     </div>
+
+    <!-- ADDRESS CARD -->
     <div
-      class="rounded-2xl border border-[var(--primary-superlight)] shadow-md bg-white overflow-hidden"
+      class="rounded-xl shadow-md border border-gray-200 bg-white overflow-hidden"
     >
       <div class="bg-primary px-6 py-4 flex items-center gap-3">
         <mat-icon class="!text-white">home</mat-icon>
-        <h2 class="text-white text-lg font-medium">
-          {{ "address" | translate }}
-        </h2>
+        <h2 class="text-white font-medium text-lg">Address</h2>
       </div>
 
-      <div class="divide-y divide-[var(--primary-superlight)]">
-        <div class="px-6 py-3 flex justify-between">
-          <span class="text-[var(--text-secondary)]">Address</span>
-          <span class="font-medium capitalize">{{
-            addressDetails()?.address
-          }}</span>
+      <div class="px-6 py-4 space-y-4">
+        <div class="flex justify-between">
+          <span class="text-gray-500">Address</span>
+          <span class="font-medium">{{ addressDetails()?.address }}</span>
         </div>
-
-        <div class="px-6 py-3 flex justify-between">
-          <span class="text-[var(--text-secondary)]">City</span>
-          <span class="font-medium"
-            >{{ addressDetails()?.city }}, {{ addressDetails()?.state }}</span
-          >
+        <div class="flex justify-between">
+          <span class="text-gray-500">City</span>
+          <span class="font-medium">
+            {{ addressDetails()?.city }}, {{ addressDetails()?.state }}
+          </span>
         </div>
-
-        <div class="px-6 py-3 flex justify-between">
-          <span class="text-[var(--text-secondary)]">Pincode</span>
+        <div class="flex justify-between">
+          <span class="text-gray-500">Pincode</span>
           <span class="font-medium">{{ addressDetails()?.pincode }}</span>
         </div>
       </div>
     </div>
+
+    <!-- BANK CARD -->
     <div
-      class="rounded-2xl border border-[var(--primary-superlight)] shadow-md bg-white overflow-hidden"
+      class="rounded-xl shadow-md border border-gray-200 bg-white overflow-hidden"
     >
       <div class="bg-primary px-6 py-4 flex items-center gap-3">
         <mat-icon class="!text-white">account_balance</mat-icon>
-        <h2 class="text-white text-lg font-medium">
-          {{ "bankdetails" | translate }}
-        </h2>
+        <h2 class="text-white font-medium text-lg">Bank Details</h2>
       </div>
 
-      <div class="divide-y divide-[var(--primary-superlight)]">
-        <div class="px-6 py-3 flex justify-between">
-          <span class="text-[var(--text-secondary)]">Bank Name</span>
+      <div class="px-6 py-4 space-y-4">
+        <div class="flex justify-between">
+          <span class="text-gray-500">Bank Name</span>
           <span class="font-medium">{{ bankDetails()?.name }}</span>
         </div>
-
-        <div class="px-6 py-3 flex justify-between">
-          <span class="text-[var(--text-secondary)]">Account No</span>
+        <div class="flex justify-between">
+          <span class="text-gray-500">Account No</span>
           <span class="font-medium">{{ bankDetails()?.accountNo }}</span>
         </div>
-
-        <div class="px-6 py-3 flex justify-between">
-          <span class="text-[var(--text-secondary)]">IFSC Code</span>
+        <div class="flex justify-between">
+          <span class="text-gray-500">IFSC Code</span>
           <span class="font-medium">{{ bankDetails()?.ifsc }}</span>
         </div>
       </div>

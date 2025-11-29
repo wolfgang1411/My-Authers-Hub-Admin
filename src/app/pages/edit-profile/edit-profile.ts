@@ -26,13 +26,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { UserService } from '../../services/user';
 import Swal from 'sweetalert2';
 import { AuthService } from '../../services/auth';
-import { validate } from 'uuid';
-import { firstValueFrom } from 'rxjs';
-import { TranslateService } from '@ngx-translate/core';
+import { SafeUrlPipe } from 'src/app/pipes/safe-url-pipe';
 
 @Component({
   selector: 'app-edit-profile',
@@ -46,6 +44,7 @@ import { TranslateService } from '@ngx-translate/core';
     MatSlideToggleModule,
     SharedModule,
     RouterModule,
+    SafeUrlPipe,
   ],
   templateUrl: './edit-profile.html',
   styleUrl: './edit-profile.css',

@@ -1,5 +1,5 @@
-<div class="bg-white rounded-lg p-4 shadow-sm">
-  <h3 class="text-slate-800 font-semibold mb-3">Recent Authors</h3>
+<div class="bg-surface rounded-lg p-4 shadow-sm h-full">
+  <h3 class="text-slate-800 font-medium mb-3">Recent Authors</h3>
 
   @if(authors()?.length) { @for (author of authors(); track $index) {
   <div class="flex items-center justify-between py-2 border-b last:border-b-0">
@@ -13,11 +13,13 @@
         <div class="text-sm font-medium">
           {{ author.user.firstName }} {{ author.user.lastName }}
         </div>
-        <div class="text-xs text-gray-400">Copies: {{ 1 }}</div>
+        <div class="text-xs text-gray-400">
+          Copies: {{ author.booksSold || "N/A" }}
+        </div>
       </div>
     </div>
     <div class="text-right">
-      <div class="text-sm font-bold">
+      <div class="text-sm font-medium">
         {{ author.totalEarning || 0 | currency }}
       </div>
     </div>

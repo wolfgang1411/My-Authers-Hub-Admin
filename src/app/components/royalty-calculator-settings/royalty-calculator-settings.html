@@ -30,85 +30,87 @@
     </div>
 
     <div class="space-y-4" formArrayName="items">
-      @for (group of royaltyItems.controls; track trackByIndex; let idx = $index) {
-        <div class="platform-row" [formGroupName]="idx">
-          <label class="form-field">
-            <span>Platform</span>
-            <select formControlName="platform">
-              <option value="" disabled>Select platform</option>
-              @for (platform of platforms(); track platform.id) {
-                <option [value]="platform.name">{{ platform.name }}</option>
-              }
-            </select>
-          </label>
+      @for (group of royaltyItems.controls; track trackByIndex($index); let idx
+      = $index) {
+      <div class="platform-row" [formGroupName]="idx">
+        <label class="form-field">
+          <span>Platform</span>
+          <select formControlName="platform">
+            <option value="" disabled>Select platform</option>
+            @for (platform of platforms(); track platform.id) {
+            <option [value]="platform.name">{{ platform.name }}</option>
+            }
+          </select>
+        </label>
 
-          <label class="form-field">
-            <span>MRP</span>
-            <input
-              type="number"
-              min="0"
-              placeholder="0"
-              formControlName="price"
-            />
-          </label>
+        <label class="form-field">
+          <span>MRP</span>
+          <input
+            type="number"
+            min="0"
+            placeholder="0"
+            formControlName="price"
+          />
+        </label>
 
-          <label class="form-field">
-            <span>Division % list</span>
-            <input
-              type="text"
-              placeholder="e.g. 10, 90"
-              formControlName="division"
-            />
-          </label>
+        <label class="form-field">
+          <span>Division % list</span>
+          <input
+            type="text"
+            placeholder="e.g. 10, 90"
+            formControlName="division"
+          />
+        </label>
 
-          <button
-            type="button"
-            class="btn-danger"
-            (click)="removeItem(idx)"
-            aria-label="Remove platform row"
-          >
-            Remove
-          </button>
-        </div>
+        <button
+          type="button"
+          class="btn-danger"
+          (click)="removeItem(idx)"
+          aria-label="Remove platform row"
+        >
+          Remove
+        </button>
+      </div>
       }
     </div>
 
     <div class="actions">
       <button class="btn-primary" type="submit" [disabled]="isCalculating()">
-        {{ isCalculating() ? 'Calculating…' : 'Calculate royalties' }}
+        {{ isCalculating() ? "Calculating…" : "Calculate Royalties" }}
       </button>
     </div>
   </form>
 
   @if (resultDivision().length) {
-    <div class="result">
-      <h3 class="heading-sm">Latest calculation</h3>
-      <div class="result-grid">
-        @for (item of resultDivision(); track item.platform) {
-          <div class="result-card">
-            <div class="result-header">
-              <span class="platform-name">{{ item.platform }}</span>
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Division %</th>
-                  <th>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (entry of divisionRows(item.platform, item.divisionValue); track entry.id) {
-                  <tr>
-                    <td>{{ entry.percentage }}%</td>
-                    <td>₹ {{ entry.amount | number: '1.2-2' }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
+  <div class="result">
+    <h3 class="heading-sm">Latest calculation</h3>
+    <div class="result-grid">
+      @for (item of resultDivision(); track item.platform) {
+      <div class="result-card">
+        <div class="result-header">
+          <span class="platform-name">{{ item.platform }}</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Division %</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of divisionRows(item.platform, item.divisionValue);
+            track entry.id) {
+            <tr>
+              <td>{{ entry.percentage }}%</td>
+              <td>₹ {{ entry.amount | number : "1.2-2" }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
       </div>
+      }
     </div>
+  </div>
   }
 </section>
 
@@ -144,36 +146,33 @@
         </tr>
       </thead>
       <tbody>
-        @if (platforms().length) {
-          @for (platform of platforms(); track platform.id) {
-            <tr>
-              <td>{{ platform.name }}</td>
-              <td>{{ platform.type }}</td>
-              <td>{{ platform.marginPercent }}%</td>
-              <td>{{ platform.extraFlatMargin || 0 }}</td>
-              <td>{{ platform.isEbookPlatform ? 'Yes' : 'No' }}</td>
-              <td>
-                <button
-                  type="button"
-                  class="link"
-                  (click)="onEditPlatform(platform)"
-                >
-                  Edit
-                </button>
-              </td>
-            </tr>
-          }
-        } @else {
-          <tr>
-            <td colspan="6" class="empty-state">
-              No platforms found. Add your first platform above.
-            </td>
-          </tr>
+        @if (platforms().length) { @for (platform of platforms(); track
+        platform.id) {
+        <tr>
+          <td>{{ platform.name }}</td>
+          <td>{{ platform.type }}</td>
+          <td>{{ platform.marginPercent }}%</td>
+          <td>{{ platform.extraFlatMargin || 0 }}</td>
+          <td>{{ platform.isEbookPlatform ? "Yes" : "No" }}</td>
+          <td>
+            <button
+              type="button"
+              class="link"
+              (click)="onEditPlatform(platform)"
+            >
+              Edit
+            </button>
+          </td>
+        </tr>
+        } } @else {
+        <tr>
+          <td colspan="6" class="empty-state">
+            No platforms found. Add your first platform above.
+          </td>
+        </tr>
         }
       </tbody>
     </table>
   </div>
 </section>
 }
-
-

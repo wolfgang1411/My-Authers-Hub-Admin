@@ -1,79 +1,95 @@
-<div class="min-h-screen bg-gray-50">
-  <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-semibold text-slate-800">Dashboard</h1>
-    <div class="flex items-center gap-4">
-      <button class="px-3 py-2 text-white rounded shadow text-sm bg-primary">
+<div class="min-h-screen bg-gray-50 p-5">
+  <!-- ░ DASHBOARD HEADER ░ -->
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="text-2xl font-medium text-slate-800">Dashboard Overview</h1>
+    <div class="flex items-center gap-3">
+      <!-- <button
+        class="px-4 py-2 text-white rounded-lg shadow text-sm bg-primary hover:bg-primary/90"
+      >
         Home
-      </button>
-      <button
-        class="px-3 py-2 bg-white rounded shadow text-sm"
+      </button> -->
+      <!-- <button
+        class="px-4 py-2 text-sm bg-white rounded-lg shadow hover:bg-gray-100"
         (click)="toggleTheme()"
       >
         Theme
-      </button>
+      </button> -->
     </div>
   </div>
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-    @for(stat of stats() ; track $index){
-    <ng-container>
-      <app-stat-card-component
-        [stat]="stat"
-        class="bg-white p-4 rounded-lg shadow-sm"
-      ></app-stat-card-component>
-    </ng-container>
+
+  <!-- ░ STATS SECTION ░ -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
+    @for(stat of stats(); track $index){
+    <app-stat-card-component
+      [stat]="stat"
+      class="bg-white p-5 rounded-xl shadow-md border border-gray-200"
+    ></app-stat-card-component>
     }
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-    <div class="lg:col-span-2 space-4">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 flex flex-col gap-6">
       <app-sales-analytics-component
-        class="bg-white p-4 rounded-lg shadow-sm"
+        class="bg-white p-6 rounded-xl shadow-md border border-gray-200"
       ></app-sales-analytics-component>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- <div class="input-field">
-          <input matInput [matDatepicker]="dp" [formControl]="date" />
-          <mat-datepicker-toggle
-            matIconSuffix
-            [for]="dp"
-          ></mat-datepicker-toggle>
-          <mat-datepicker
-            #dp
-            startView="multi-year"
-            panelClass="example-month-picker"
-          >
-          </mat-datepicker>
-        </div> -->
-
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[250px]">
         <app-recent-authors
-          class="col-span-1 md:col-span-1 bg-white p-4 rounded-lg shadow-sm"
+          class="bg-white p-6 rounded-xl shadow-md border border-gray-200"
         >
+          <ng-template #empty>
+            <div
+              class="h-[120px] flex flex-col items-center justify-center text-gray-400 italic"
+            >
+              No authors yet — start adding 🎯
+            </div>
+          </ng-template>
         </app-recent-authors>
         <app-title-preview-component
           [heading]="titleConfigs().bestSelling.heading"
           [filter]="titleConfigs().bestSelling.filter"
           [type]="titleConfigs().bestSelling.type"
-          class="col-span-1 md:col-span-1 bg-white p-4 rounded-lg shadow-sm"
-        ></app-title-preview-component>
-
+          class="bg-white p-6 rounded-xl shadow-md border border-gray-200 min-h-[180px]"
+        >
+          <ng-template #empty>
+            <div
+              class="h-[120px] flex flex-col items-center justify-center text-gray-400 italic"
+            >
+              No sales records yet 📊
+            </div>
+          </ng-template>
+        </app-title-preview-component>
         <app-title-preview-component
           [heading]="titleConfigs().recent.heading"
           [filter]="titleConfigs().recent.filter"
           [type]="titleConfigs().recent.type"
-          class="col-span-1 md:col-span-1 bg-white p-4 rounded-lg shadow-sm"
-        ></app-title-preview-component>
-
-        <!-- <app-browser-usage-component
-          class="col-span-1 md:col-span-1 bg-white p-4 rounded-lg shadow-sm"
-        ></app-browser-usage-component> -->
+          class="bg-white p-6 rounded-xl shadow-md border border-gray-200 min-h-[180px]"
+        >
+          <ng-template #empty>
+            <div
+              class="h-[120px] flex flex-col items-center justify-center text-gray-400 italic"
+            >
+              No new books uploaded ✍️
+            </div>
+          </ng-template>
+        </app-title-preview-component>
         <app-activity-timeline-component
-          class="col-span-1 md:col-span-1 bg-white p-4 rounded-lg shadow-sm"
+          class="bg-white p-6 rounded-xl shadow-md border border-gray-200 min-h-[180px]"
         ></app-activity-timeline-component>
       </div>
     </div>
-    <div class="gap-4 flex flex-col">
+    <div class="flex flex-col gap-6">
       <app-profile-card-component></app-profile-card-component>
-      <app-recent-orders-component></app-recent-orders-component>
+      <app-recent-orders-component
+        class="min-h-[200px] bg-white p-6 rounded-xl shadow-md border border-gray-200"
+      >
+        <ng-template #empty>
+          <div
+            class="h-full flex items-center justify-center text-gray-400 italic"
+          >
+            No orders received yet 📦
+          </div>
+        </ng-template>
+      </app-recent-orders-component>
     </div>
   </div>
 </div>

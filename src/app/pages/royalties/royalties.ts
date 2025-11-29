@@ -16,6 +16,7 @@ import {
   SalesCsvData,
   SalesType,
   Title,
+  TitleStatus,
 } from '../../interfaces';
 import { debounceTime, Subject } from 'rxjs';
 import Swal from 'sweetalert2';

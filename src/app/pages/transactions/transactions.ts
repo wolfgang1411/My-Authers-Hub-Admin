@@ -3,7 +3,7 @@ import { TransactionService } from '../../services/transaction';
 import { Transaction, TransactionFilter } from '../../interfaces';
 import { TransactionTable } from '../../components/transaction-table/transaction-table';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { Subject } from 'rxjs';
+import { debounceTime, Subject } from 'rxjs';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 
@@ -18,6 +18,14 @@ export class Transactions implements OnInit {
 
   ngOnInit(): void {
     this.loadTransactions();
+    this.searchStr.pipe(debounceTime(200)).subscribe((value) => {
+      this.filter.page = 1;
+      this.filter.searchStr = value;
+      if (!value?.length) {
+        delete this.filter.searchStr;
+      }
+      this.loadTransactions();
+    });
   }
 
   searchStr = new Subject<string>();

@@ -89,7 +89,7 @@
 .link {
   border-radius: 0.5rem;
   padding: 0.65rem 1.5rem;
-  font-weight: 600;
+  font-weight: 400;
   font-size: 0.95rem;
   border: none;
   cursor: pointer;
@@ -201,5 +201,3 @@ td {
   border-color: var(--primary, #3d1a5d);
   box-shadow: 0 0 0 3px var(--primary-superlight, #ebe3f7);
 }
-
-

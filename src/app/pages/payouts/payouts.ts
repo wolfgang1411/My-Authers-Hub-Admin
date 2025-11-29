@@ -5,9 +5,9 @@ import { SharedModule } from '../../modules/shared/shared-module';
 import { ListTable } from '../../components/list-table/list-table';
 import { RouterModule } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
-import { Subject } from 'rxjs';
+import { debounceTime, Subject } from 'rxjs';
 import { MatTableDataSource } from '@angular/material/table';
-import { MatIconButton } from '@angular/material/button';
+import { MatButtonModule, MatIconButton } from '@angular/material/button';
 import Swal from 'sweetalert2';
 import { UserService } from '../../services/user';
 import { User } from '../../interfaces';
@@ -16,7 +16,14 @@ import { InviteDialog } from '../../components/invite-dialog/invite-dialog';
 
 @Component({
   selector: 'app-payouts',
-  imports: [SharedModule, ListTable, RouterModule, MatIcon, MatIconButton],
+  imports: [
+    SharedModule,
+    ListTable,
+    RouterModule,
+    MatIcon,
+    MatIconButton,
+    MatButtonModule,
+  ],
   templateUrl: './payouts.html',
   styleUrl: './payouts.css',
 })
@@ -31,6 +38,14 @@ export class Payouts implements OnInit {
 
   ngOnInit(): void {
     this.fetchPayouts();
+    this.searchStr.pipe(debounceTime(200)).subscribe((value) => {
+      this.filter.page = 1;
+      this.filter.searchStr = value;
+      if (!value?.length) {
+        delete this.filter.searchStr;
+      }
+      this.fetchPayouts();
+    });
   }
 
   loggedInUser!: Signal<User | null>;
@@ -86,7 +101,9 @@ export class Payouts implements OnInit {
         const status = (() => {
           switch (payout.status) {
             case 'PAID':
-              return 'Added to wallet';
+              return this.loggedInUser()?.accessLevel === 'SUPERADMIN'
+                ? 'Added to wallet'
+                : 'WITHDRAWN';
             case 'PENDING':
               return 'On Hold';
             case 'APPROVED':
@@ -136,7 +153,7 @@ export class Payouts implements OnInit {
       showCancelButton: true,
       confirmButtonText,
       cancelButtonText: 'Cancel',
-      confirmButtonColor: isReject ? '#ff6b6b' : '#00397e',
+      confirmButtonColor: isReject ? '#ff6b6b' : '#3d1a5d',
     };
 
     // Add checkbox only for REJECTED

@@ -7,14 +7,17 @@
         <div
           class="relative w-30 h-30 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden"
         >
+          @if (loggedInUser()?.url !==null) {
           <img
-            class="object-cover w-[60px] h-[60px]"
-            [src]="
-              loggedInUser()?.url !== null
-                ? loggedInUser()?.url
-                : 'images/user-solid-full.svg'
-            "
+            [src]="loggedInUser()?.url ?? '' | safeUrl"
+            class="w-full h-full object-cover"
           />
+          } @if (!loggedInUser()?.url ) {
+          <img
+            src="images/user-solid-full.svg"
+            class="w-[50px] h-[50px] opacity-60 object-contain"
+          />
+          }
           <button
             type="button"
             class="absolute bottom-3 right-5 bg-primary rounded-full w-7 h-7 flex items-center justify-center shadow-md p-1 hover:bg-purple/90"
