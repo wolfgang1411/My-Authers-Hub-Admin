@@ -1,7 +1,10 @@
 :host {
+  display: block;
   position: sticky;
   top: 0;
   z-index: 100;
+  background-color: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
 }
 
 .mat-mdc-menu-content {

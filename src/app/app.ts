@@ -99,20 +99,14 @@ export class App {
 
   setHeaderVisibility(url: string) {
     const isAuthenticated = this.authService.isUserAuthenticated$();
-    const isShowHeader =
-      !url.includes('login') &&
-      !url.includes('shared-title-view') &&
-      !!isAuthenticated;
+    const isShowHeader = !url.includes('login') && !!isAuthenticated;
     this.layoutService.changeHeaderVisibility(isShowHeader);
   }
 
   setSidebarVisibility(url: string) {
     const isAuthenticated = this.authService.isUserAuthenticated$();
     const isShowSidebar =
-      !url.includes('login') &&
-      !url.includes('invite') &&
-      !url.includes('shared-title-view') &&
-      !!isAuthenticated;
+      !url.includes('login') && !url.includes('invite') && !!isAuthenticated;
     this.layoutService.changeSidebarVisibility(isShowSidebar);
   }
 }
