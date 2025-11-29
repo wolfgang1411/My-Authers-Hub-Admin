@@ -74,6 +74,7 @@ export class TempTitlePrinting implements OnDestroy {
   printingGroup = input.required<FormGroup<PrintingFormGroup>>();
   documentMedia = input.required<FormArray<FormGroup<TitleMediaGroup>>>();
   allowCustomPrintingPrice = input<boolean>(false);
+  allowAuthorCopyPrice = input<boolean>(false);
   titleDetailsGroup = input<FormGroup<TitleDetailsFormGroup> | null>(null);
   authors = input<Author[]>([]);
 
@@ -83,6 +84,9 @@ export class TempTitlePrinting implements OnDestroy {
 
   // Computed to check if custom printing price field should be shown
   showCustomPrintCost = computed(() => this.allowCustomPrintingPrice());
+
+  // Computed to check if author print price field should be shown
+  showAuthorPrintPrice = computed(() => this.allowAuthorCopyPrice());
 
   async ngOnInit() {
     // Load all sizes first

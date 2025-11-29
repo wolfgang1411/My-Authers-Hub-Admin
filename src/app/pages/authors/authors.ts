@@ -1,6 +1,7 @@
 import {
   Component,
   computed,
+  Signal,
   signal,
   TemplateRef,
   ViewChild,
@@ -9,7 +10,7 @@ import { AuthorsService } from './authors-service';
 import { debounceTime, Subject } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { Author, AuthorFilter, AuthorStatus } from '../../interfaces';
+import { Author, AuthorFilter, AuthorStatus, User } from '../../interfaces';
 import { MatTableDataSource } from '@angular/material/table';
 import { ListTable } from '../../components/list-table/list-table';
 import { MatIcon } from '@angular/material/icon';
@@ -30,6 +31,7 @@ import { TitleService } from '../titles/title-service';
 import { MatMenuModule } from '@angular/material/menu';
 import { SalesService } from '../../services/sales';
 import { AuthorTitleList } from '../../components/author-title-list/author-title-list';
+import { UserService } from 'src/app/services/user';
 
 @Component({
   selector: 'app-authors',
@@ -57,8 +59,12 @@ export class Authors {
     private authService: AuthService,
     private translateService: TranslateService,
     private titleService: TitleService,
-    private salesService: SalesService
-  ) {}
+    private salesService: SalesService,
+    private userService: UserService
+  ) {
+    this.loggedInUser = this.userService.loggedInUser$;
+  }
+  loggedInUser!: Signal<User | null>;
   searchStr = new Subject<string>();
   @ViewChild('nameRowMenu') nameRowMenu!: TemplateRef<any>;
   test!: Subject<string>;

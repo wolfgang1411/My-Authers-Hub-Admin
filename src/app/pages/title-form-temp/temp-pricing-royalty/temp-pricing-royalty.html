@@ -158,10 +158,8 @@
               <span class="font-medium">Note:</span>
               MSP is
               <span class="font-semibold">{{ ebookMsp() | currency }}</span> for
-              ebook platforms (<span class="font-mono"
-                >MAH_EBOOK, KINDLE, GOOGLE_PLAY</span
-              >) and is <span class="font-semibold">calculated</span> for other
-              platforms.
+              ebook platforms and is
+              <span class="font-semibold">calculated</span> for other platforms.
             </span>
           </div>
           }
@@ -261,6 +259,7 @@
                   step="0.01"
                   [placeholder]="'entermrp' | translate"
                   class="pricing-input pl-8"
+                  (wheel)="$event.target.blur()"
                   [ngClass]="{
                     'border-red-400 bg-red-50 focus:ring-red-500 focus:border-red-500':
                       item.controls.mrp.invalid && item.controls.mrp.touched,
@@ -349,6 +348,7 @@
                   step="0.01"
                   [placeholder]="'salesprice' | translate"
                   class="pricing-input pl-8"
+                  (wheel)="$event.target.blur()"
                   [ngClass]="{
                     'border-red-400 bg-red-50 focus:ring-red-500 focus:border-red-500':
                       item.controls.salesPrice.invalid &&
@@ -437,6 +437,7 @@
               step="1"
               class="w-full px-3 py-2 border rounded-md"
               placeholder="%"
+              (wheel)="$event.target.blur()"
             />
             <span class="text-sm">%</span>
           </div>
@@ -467,11 +468,6 @@
           <!-- Publisher % Auto Filled -->
           <div class="text-xl font-bold text-blue-700">
             {{ publisherPercentage() | number : "1.2-2" }}%
-          </div>
-
-          <!-- Auto Amount (Calculated from total revenue) -->
-          <div class="text-base text-green-600">
-            ₹ {{ publisherTotalAmount() | number : "1.2-2" }}
           </div>
         </div>
       </div>

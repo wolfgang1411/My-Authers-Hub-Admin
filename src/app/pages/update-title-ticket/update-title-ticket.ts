@@ -21,6 +21,7 @@ import { ListTable } from '../../components/list-table/list-table';
 import { TitleService } from '../titles/title-service';
 import { UserService } from '../../services/user';
 import { User } from '../../interfaces';
+import { PlatformService } from '../../services/platform';
 import {
   TitleUpdateTicket,
   TitlePrintingUpdateTicket,
@@ -161,7 +162,8 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
     private translateService: TranslateService,
     private userService: UserService,
     private router: Router,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private platformService: PlatformService
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -662,7 +664,16 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
       const platforms =
         ticket.data && Array.isArray(ticket.data)
           ? ticket.data
-              .map((p) => p.platform)
+              .map((p) => {
+                // Convert platformId to platform name for display
+                if (p.platformId) {
+                  const platform = this.platformService
+                    .platforms()
+                    .find((pl) => pl.id === p.platformId);
+                  return platform?.name || `Platform ${p.platformId}`;
+                }
+                return null;
+              })
               .filter(Boolean)
               .join(', ')
           : 'N/A';

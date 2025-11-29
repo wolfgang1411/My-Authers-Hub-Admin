@@ -436,7 +436,7 @@ export interface PrintingCreate {
 
 export interface PricingCreate {
   id?: number | null;
-  platform: string;
+  platformId: number;
   salesPrice: number;
   mrp: number;
 }
@@ -685,4 +685,5 @@ export interface UpdateTicketFilter {
   titleId?: number;
   userId?: number;
   searchStr?: string;
+  type?: string; // For filtering by ticket type (ADDRESS, BANK, AUTHOR, PUBLISHER)
 }

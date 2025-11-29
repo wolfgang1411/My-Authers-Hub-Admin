@@ -394,6 +394,11 @@
         loggedInUser()?.accessLevel === 'PUBLISHER' &&
         loggedInUser()?.publisher?.allowCustomPrintingPrice === true
       "
+      [allowAuthorCopyPrice]="
+        loggedInUser()?.accessLevel === 'SUPERADMIN' ||
+        (loggedInUser()?.accessLevel === 'PUBLISHER' &&
+          loggedInUser()?.publisher?.allowAuthorCopyPrice === true)
+      "
       [titleDetailsGroup]="tempForm.controls.titleDetails"
       [authors]="authorsSignal()"
     ></app-temp-title-printing>

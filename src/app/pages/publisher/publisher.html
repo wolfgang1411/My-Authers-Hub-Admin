@@ -23,6 +23,17 @@
         <mat-icon class="material-icons">person_add</mat-icon>
         {{ "invitepublisher" | translate }}
       </button>
+      <button
+        matButton
+        matButton="filled"
+        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        [routerLink]="['/update-tickets']"
+        [queryParams]="{ tab: 'publisher' }"
+        routerLinkActive="router-link-active"
+      >
+        <mat-icon class="material-icons">support_agent</mat-icon>
+        {{ "raisedtickets" | translate }}
+      </button>
     </div>
   </div>
 
@@ -117,7 +128,17 @@
       >
         <mat-icon class="!text-white">lock_reset</mat-icon>
       </button>
-      @if (loggedInUser()?.accessLevel === 'SUPERADMIN') { @if(element.status
+      @if(element.status === PublisherStatus.Active &&
+      loggedInUser()?.accessLevel !== 'SUPERADMIN') {
+      <button
+        class="!bg-primary"
+        mat-icon-button
+        [routerLink]="['/publisher', element.id]"
+        [title]="'raiseaticket' | translate"
+      >
+        <mat-icon class="!text-white">support_agent</mat-icon>
+      </button>
+      } @if (loggedInUser()?.accessLevel === 'SUPERADMIN') { @if(element.status
       !== PublisherStatus.Deactivated) {
       <button
         class="!bg-accent active:bg-accent/60"

@@ -21,3 +21,4 @@ export * from './Title-config';
 export * from './Sales';
 export * from './Dashboard';
 export * from './Platform';
+export * from './UpdateTicket';

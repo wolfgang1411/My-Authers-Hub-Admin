@@ -62,6 +62,14 @@ export const routes: Routes = [
     canActivate: [privateRouteGuard],
   },
   {
+    path: 'update-tickets',
+    loadComponent: () =>
+      import('./pages/update-ticket-list/update-ticket-list').then(
+        (c) => c.UpdateTicketList
+      ),
+    canActivate: [privateRouteGuard],
+  },
+  {
     path: 'titles',
     loadComponent: () => import('./pages/titles/titles').then((c) => c.Titles),
     canActivate: [privateRouteGuard],

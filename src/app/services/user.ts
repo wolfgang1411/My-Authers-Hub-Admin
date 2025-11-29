@@ -1,6 +1,14 @@
 import { Injectable, signal } from '@angular/core';
 import { Server } from './server';
-import { Media, UpdateUser, UpdateUserWithTicket, User } from '../interfaces';
+import {
+  Media,
+  UpdateUser,
+  UpdateUserWithTicket,
+  User,
+  UpdateTicket,
+  UpdateTicketFilter,
+  Pagination,
+} from '../interfaces';
 import { Logger } from './logger';
 import { LoaderService } from './loader';
 import { S3Service } from './s3';
@@ -112,6 +120,50 @@ export class UserService {
       };
       this.loggedInUser.set(temp as User);
       return media;
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async getUpdateTickets(filter?: UpdateTicketFilter): Promise<Pagination<UpdateTicket>> {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<UpdateTicket>>('update-ticket', filter)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async getUpdateTicket(id: number): Promise<UpdateTicket> {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<UpdateTicket>(`update-ticket/${id}`)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async approveUpdateTicket(id: number): Promise<UpdateTicket> {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<UpdateTicket>(`update-ticket/${id}/approve`)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async rejectUpdateTicket(id: number): Promise<UpdateTicket> {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<UpdateTicket>(`update-ticket/${id}/reject`)
+      );
     } catch (error) {
       this.logger.logError(error);
       throw error;

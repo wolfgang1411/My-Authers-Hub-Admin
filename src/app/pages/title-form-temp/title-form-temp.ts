@@ -827,7 +827,40 @@ export class TitleFormTemp implements OnDestroy {
     }
   }
 
-  createRoyaltyGroup(data?: UpdateRoyalty) {
+  createRoyaltyGroup(
+    data?: Partial<UpdateRoyalty> & {
+      platform?: string | PlatForm | { id?: number; name?: string };
+      titleId?: number;
+    }
+  ) {
+    // Ensure platform is always a string (platform name)
+    let platformValue: string | null = null;
+
+    // Handle platformId (from UpdateRoyalty)
+    if (data?.platformId) {
+      const platformObj = this.platformService
+        .platforms()
+        .find((p) => p.id === data.platformId);
+      platformValue = platformObj?.name || null;
+    }
+    // Handle platform (string, PlatForm enum, or ViewPlatformDto object) - for backward compatibility and when creating new groups
+    else if (data?.platform) {
+      if (typeof data.platform === 'string') {
+        platformValue = data.platform;
+      } else if (typeof data.platform === 'object' && data.platform !== null) {
+        // Extract name from platform object (ViewPlatformDto has 'name' property)
+        const platformObj = data.platform as any;
+        platformValue = platformObj.name || null;
+        // If we have platform.id but no name, try to look it up
+        if (!platformValue && platformObj.id) {
+          const foundPlatform = this.platformService
+            .platforms()
+            .find((p) => p.id === platformObj.id);
+          platformValue = foundPlatform?.name || null;
+        }
+      }
+    }
+
     return new FormGroup<RoyaltyFormGroup>({
       id: new FormControl<number | null>(data?.id || null),
       name: new FormControl<string | null>(data?.name || null),
@@ -836,8 +869,8 @@ export class TitleFormTemp implements OnDestroy {
       percentage: new FormControl(data?.percentage || null, [
         Validators.required,
       ]),
-      platform: new FormControl(data?.platform || null),
-      titleId: new FormControl<number>(this.titleId),
+      platform: new FormControl<string | null>(platformValue),
+      titleId: new FormControl<number>(data?.titleId || this.titleId),
     });
   }
 
@@ -1064,10 +1097,30 @@ export class TitleFormTemp implements OnDestroy {
 
     data.royalties?.forEach((d) => {
       const { authorId: aId, publisherId: pId } = d;
+
+      // Extract platform name from platform object (ViewPlatformDto has 'name' property)
+      const platformName =
+        typeof d.platform === 'string'
+          ? d.platform
+          : (d.platform as any)?.name || null;
+
+      if (!platformName) {
+        console.warn('Royalty missing platform name:', d);
+        return;
+      }
+
       const controlExist = this.tempForm.controls.royalties.controls.find(
-        ({ controls: { authorId, publisherId, platform } }) =>
-          (aId && aId === authorId.value && platform.value === d.platform) ||
-          (pId && pId === publisherId.value && platform.value === d.platform)
+        ({ controls: { authorId, publisherId, platform } }) => {
+          const controlPlatformName = platform.value as string;
+          return (
+            (aId &&
+              aId === authorId.value &&
+              controlPlatformName === platformName) ||
+            (pId &&
+              pId === publisherId.value &&
+              controlPlatformName === platformName)
+          );
+        }
       );
 
       console.log({ d, controlExist });
@@ -1079,7 +1132,7 @@ export class TitleFormTemp implements OnDestroy {
       } else {
         this.tempForm.controls.royalties.push(
           this.createRoyaltyGroup({
-            platform: d.platform,
+            platform: platformName,
             percentage: d.percentage,
             publisherId: pId,
             authorId: aId,
@@ -1154,43 +1207,27 @@ export class TitleFormTemp implements OnDestroy {
 
   /**
    * Get MSP for a specific platform
-   * For MAH_EBOOK, KINDLE, GOOGLE_PLAY platforms, MSP is fixed at 69
-   * For other platforms, use the calculated MSP from printing cost
-   * @param platform - The platform type
+   * For platforms with isEbookPlatform = true, MSP is fixed at EBOOK_MSP keyval
+   * For platforms with isEbookPlatform = false, use the calculated MSP from printing cost
+   * @param platformId - The platform ID
    * @returns The MSP value for the platform
    */
-  getMspForPlatform(platform: string | null | undefined): number {
-    if (!platform) {
+  getMspForPlatform(platformId: number | null | undefined): number {
+    if (!platformId || platformId <= 0) {
       // Fallback to calculated MSP if platform is not available
       return Number(this.tempForm.controls.printing.controls.msp?.value) || 0;
     }
 
-    // Fixed MSP for ebook platforms
-    const platformData = this.platformService.getPlatformByName(platform);
+    // Fixed MSP for ebook platforms (determined by isEbookPlatform field)
+    const platformData = this.platformService
+      .platforms()
+      .find((p) => p.id === platformId);
     if (platformData && platformData.isEbookPlatform) {
       return Number(this.staticValuesService.staticValues()?.EBOOK_MSP);
     }
 
-    // Use calculated MSP for other platforms
+    // Use calculated MSP for print platforms
     return Number(this.tempForm.controls.printing.controls.msp?.value) || 0;
-  }
-
-  /**
-   * Helper method to check if a platform is ebook
-   */
-  private isEbookPlatform(platformName: string | null | undefined): boolean {
-    if (!platformName) return false;
-    const platformData = this.platformService.getPlatformByName(platformName);
-    return platformData?.isEbookPlatform ?? false;
-  }
-
-  /**
-   * Helper method to check if a platform is print
-   */
-  private isPrintPlatform(platformName: string | null | undefined): boolean {
-    if (!platformName) return false;
-    const platformData = this.platformService.getPlatformByName(platformName);
-    return !(platformData?.isEbookPlatform ?? false);
   }
 
   mrpValidator(): ValidatorFn {
@@ -1199,12 +1236,18 @@ export class TitleFormTemp implements OnDestroy {
         return null; // parent not ready yet
       }
 
-      // Get platform from parent form group
-      const platform = control.parent.get('platform')?.value as
-        | PlatForm
+      // Get platform name from parent form group
+      const platformName = control.parent.get('platform')?.value as
+        | string
         | null
         | undefined;
-      const platformMsp = this.getMspForPlatform(platform);
+
+      // Get platform object to access platformId
+      const platform = platformName
+        ? this.platformService.getPlatformByName(platformName)
+        : null;
+
+      const platformMsp = this.getMspForPlatform(platform?.id);
       const mrp = Number(control.value);
 
       return platformMsp !== null && platformMsp > 0 && mrp < platformMsp
@@ -1221,12 +1264,18 @@ export class TitleFormTemp implements OnDestroy {
         return null; // parent not ready yet
       }
 
-      // Get platform from parent form group
-      const platform = control.parent.get('platform')?.value as
-        | PlatForm
+      // Get platform name from parent form group
+      const platformName = control.parent.get('platform')?.value as
+        | string
         | null
         | undefined;
-      const platformMsp = this.getMspForPlatform(platform);
+
+      // Get platform object to access platformId
+      const platform = platformName
+        ? this.platformService.getPlatformByName(platformName)
+        : null;
+
+      const platformMsp = this.getMspForPlatform(platform?.id);
       const mrp = control.parent.get('mrp')?.value;
       const salesPrice = control.value;
 
@@ -1411,10 +1460,10 @@ export class TitleFormTemp implements OnDestroy {
           new FormGroup({
             id: new FormControl<number | null | undefined>(null),
             platform: new FormControl<string>(platform, Validators.required),
-            salesPrice: new FormControl<number | null | undefined>(
-              null,
-              Validators.required
-            ),
+            salesPrice: new FormControl<number | null | undefined>(null, [
+              Validators.required,
+              this.salesPriceValidator() as ValidatorFn,
+            ]),
             mrp: new FormControl<number | null | undefined>(null, [
               Validators.required,
               this.mrpValidator() as ValidatorFn,
@@ -1455,10 +1504,10 @@ export class TitleFormTemp implements OnDestroy {
         const newControl = new FormGroup({
           id: new FormControl<number | null | undefined>(null),
           platform: new FormControl<string>(platform.name, Validators.required),
-          salesPrice: new FormControl<number | null | undefined>(
-            null,
-            Validators.required
-          ),
+          salesPrice: new FormControl<number | null | undefined>(null, [
+            Validators.required,
+            this.salesPriceValidator() as ValidatorFn,
+          ]),
           mrp: new FormControl<number | null | undefined>(null, [
             Validators.required,
             this.mrpValidator() as ValidatorFn,
@@ -1494,8 +1543,11 @@ export class TitleFormTemp implements OnDestroy {
 
     pricingArray.controls.forEach((control) => {
       const platformName = control.controls.platform.value as string | null;
-      const isEbookPlatform = this.isEbookPlatform(platformName);
-      const isPrintPlatform = this.isPrintPlatform(platformName);
+      const platform = platformName
+        ? this.platformService.getPlatformByName(platformName)
+        : null;
+      const isEbookPlatform = platform?.isEbookPlatform ?? false;
+      const isPrintPlatform = !isEbookPlatform;
 
       if (isOnlyEbook) {
         // For ebook-only titles, remove validators from non-ebook platforms
@@ -1508,7 +1560,10 @@ export class TitleFormTemp implements OnDestroy {
           control.controls.mrp.updateValueAndValidity({ emitEvent: false });
         } else {
           // Ensure ebook platforms have validators
-          control.controls.salesPrice.setValidators(Validators.required);
+          control.controls.salesPrice.setValidators([
+            Validators.required,
+            this.salesPriceValidator() as ValidatorFn,
+          ]);
           control.controls.mrp.setValidators([
             Validators.required,
             this.mrpValidator() as ValidatorFn,
@@ -1529,7 +1584,10 @@ export class TitleFormTemp implements OnDestroy {
           control.controls.mrp.updateValueAndValidity({ emitEvent: false });
         } else {
           // Ensure print platforms have validators
-          control.controls.salesPrice.setValidators(Validators.required);
+          control.controls.salesPrice.setValidators([
+            Validators.required,
+            this.salesPriceValidator() as ValidatorFn,
+          ]);
           control.controls.mrp.setValidators([
             Validators.required,
             this.mrpValidator() as ValidatorFn,
@@ -1541,7 +1599,10 @@ export class TitleFormTemp implements OnDestroy {
         }
       } else {
         // For PRINT_EBOOK, ensure all platforms have validators
-        control.controls.salesPrice.setValidators(Validators.required);
+        control.controls.salesPrice.setValidators([
+          Validators.required,
+          this.salesPriceValidator() as ValidatorFn,
+        ]);
         control.controls.mrp.setValidators([
           Validators.required,
           this.mrpValidator() as ValidatorFn,
@@ -2371,54 +2432,147 @@ export class TitleFormTemp implements OnDestroy {
       ];
 
       // Filter controls based on publishing type
+      // For PRINT_EBOOK, include ALL platforms (both ebook and print)
       const controlsToCheck = isOnlyEbook
         ? pricingControls.controls.filter((control) => {
-            const platform = control.controls.platform.value as PlatForm | null;
-            return this.isEbookPlatform(platform as string);
+            const platformName = control.controls.platform.value as
+              | string
+              | null;
+            const platform = platformName
+              ? this.platformService.getPlatformByName(platformName)
+              : null;
+            return platform?.isEbookPlatform ?? false;
           })
         : isOnlyPrint
         ? pricingControls.controls.filter((control) => {
-            const platform = control.controls.platform.value as PlatForm | null;
-            return this.isPrintPlatform(platform as string);
+            const platformName = control.controls.platform.value as
+              | string
+              | null;
+            const platform = platformName
+              ? this.platformService.getPlatformByName(platformName)
+              : null;
+            return !(platform?.isEbookPlatform ?? false);
           })
-        : pricingControls.controls;
+        : pricingControls.controls; // PRINT_EBOOK: include all platforms
 
-      const data: PricingCreate[] = controlsToCheck
-        .filter(({ controls: { platform, mrp, salesPrice } }) => {
-          // Basic validation - check if all required fields have valid values
-          if (
-            !platform.value ||
-            mrp.value === null ||
-            mrp.value === undefined ||
-            mrp.value === '' ||
-            salesPrice.value === null ||
-            salesPrice.value === undefined ||
-            salesPrice.value === '' ||
-            isNaN(Number(mrp.value)) ||
-            isNaN(Number(salesPrice.value)) ||
-            Number(mrp.value) <= 0 ||
-            Number(salesPrice.value) <= 0
-          ) {
-            return false;
-          }
+      // Collect validation errors instead of silently filtering
+      const validationErrors: string[] = [];
+      const data: PricingCreate[] = [];
 
-          // Double-check platform is valid based on publishing type
-          if (isOnlyEbook) {
-            return this.isEbookPlatform(platform.value as string);
-          }
-          if (isOnlyPrint) {
-            return this.isPrintPlatform(platform.value as string);
-          }
+      for (const control of controlsToCheck) {
+        const { platform, id, mrp, salesPrice } = control.controls;
+        const platformName = platform.value as string;
 
-          return true;
-        })
-        .map(({ controls: { platform, id, mrp, salesPrice } }) => ({
-          id: id.value || undefined,
-          platform: platform.value as string,
-          mrp: Number(mrp.value),
-          salesPrice: Number(salesPrice.value),
-          titleId: Number(this.titleId),
-        }));
+        if (!platformName) {
+          validationErrors.push(
+            'Platform name is missing for one or more pricing entries.'
+          );
+          continue;
+        }
+
+        const platformObj =
+          this.platformService.getPlatformByName(platformName);
+        if (!platformObj) {
+          validationErrors.push(`Platform '${platformName}' not found.`);
+          continue;
+        }
+
+        // Double-check platform is valid based on publishing type
+        // For PRINT_EBOOK (when both isOnlyEbook and isOnlyPrint are false),
+        // include ALL platforms (both ebook and print)
+        if (isOnlyEbook && !platformObj.isEbookPlatform) {
+          continue; // Skip non-ebook platforms for ebook-only titles
+        }
+        if (isOnlyPrint && platformObj.isEbookPlatform) {
+          continue; // Skip ebook platforms for print-only titles
+        }
+        // PRINT_EBOOK: Include all platforms (both ebook and print)
+
+        // Basic validation - check if all required fields have valid values
+        if (
+          mrp.value === null ||
+          mrp.value === undefined ||
+          mrp.value === '' ||
+          salesPrice.value === null ||
+          salesPrice.value === undefined ||
+          salesPrice.value === '' ||
+          isNaN(Number(mrp.value)) ||
+          isNaN(Number(salesPrice.value)) ||
+          Number(mrp.value) <= 0 ||
+          Number(salesPrice.value) <= 0
+        ) {
+          validationErrors.push(
+            `Platform ${platformName}: Please provide valid MRP and Sales Price (both must be greater than 0).`
+          );
+          continue;
+        }
+
+        // Validate MSP before creating pricing data
+        const platformMsp = this.getMspForPlatform(platformObj.id);
+        const salesPriceValue = Number(salesPrice.value);
+        const mrpValue = Number(mrp.value);
+
+        // Check if sales price is lower than MSP
+        if (platformMsp > 0 && salesPriceValue < platformMsp) {
+          validationErrors.push(
+            `Platform ${platformName}: Sales price (${salesPriceValue}) cannot be lower than MSP (${platformMsp.toFixed(
+              2
+            )}).`
+          );
+          continue;
+        }
+
+        // Check if MRP is lower than MSP
+        if (platformMsp > 0 && mrpValue < platformMsp) {
+          validationErrors.push(
+            `Platform ${platformName}: MRP (${mrpValue}) cannot be lower than MSP (${platformMsp.toFixed(
+              2
+            )}).`
+          );
+          continue;
+        }
+
+        // Check if sales price is higher than MRP
+        if (salesPriceValue > mrpValue) {
+          validationErrors.push(
+            `Platform ${platformName}: Sales price (${salesPriceValue}) cannot be higher than MRP (${mrpValue}).`
+          );
+          continue;
+        }
+
+        // All validations passed, add to pricing data
+        data.push({
+          id: id.value ?? undefined,
+          platformId: platformObj.id,
+          mrp: mrpValue,
+          salesPrice: salesPriceValue,
+        } as PricingCreate);
+      }
+
+      // If there are validation errors, show them and return early
+      if (validationErrors.length > 0) {
+        const errorMessage = validationErrors.join('\n');
+        Swal.fire({
+          icon: 'error',
+          title: this.translateService.instant('error') || 'Validation Error',
+          html: `<div style="text-align: left;">${errorMessage.replace(
+            /\n/g,
+            '<br>'
+          )}</div>`,
+          width: '600px',
+        });
+        return;
+      }
+
+      // Debug: Log pricing data being sent for PRINT_EBOOK
+      if (!isOnlyEbook && !isOnlyPrint) {
+        console.log('PRINT_EBOOK - Pricing data being sent:', {
+          totalControls: pricingControls.controls.length,
+          controlsToCheck: controlsToCheck.length,
+          validPricingData: data.length,
+          platforms: data.map((p) => p.platformId),
+        });
+      }
 
       if (!data.length) {
         // Check which platforms are missing data for better error message
@@ -2584,14 +2738,24 @@ export class TitleFormTemp implements OnDestroy {
     const relevantControls = isOnlyEbook
       ? pricingControls.controls.filter((control) => {
           const platformName = control.controls.platform.value as string | null;
-          return this.isEbookPlatform(platformName);
+          const platform = platformName
+            ? this.platformService.getPlatformByName(platformName)
+            : null;
+          return platform?.isEbookPlatform ?? false;
         })
       : isOnlyPrint
       ? pricingControls.controls.filter((control) => {
           const platformName = control.controls.platform.value as string | null;
-          return this.isPrintPlatform(platformName);
+          const platform = platformName
+            ? this.platformService.getPlatformByName(platformName)
+            : null;
+          return !(platform?.isEbookPlatform ?? false);
         })
       : pricingControls.controls;
+
+    console.log({
+      relevantControls,
+    });
 
     const hasInvalidRelevantControl = relevantControls.some(
       (control) => !control.valid
@@ -2638,66 +2802,178 @@ export class TitleFormTemp implements OnDestroy {
       const publishingType = this.tempForm.controls.publishingType.value;
       const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
       const isOnlyPrint = publishingType === PublishingType.ONLY_PRINT;
-      const ebookPlatforms: PlatForm[] = [
-        PlatForm.MAH_EBOOK,
-        PlatForm.KINDLE,
-        PlatForm.GOOGLE_PLAY,
-      ];
-      const printPlatforms: PlatForm[] = [
-        PlatForm.AMAZON,
-        PlatForm.FLIPKART,
-        PlatForm.MAH_PRINT,
-      ];
 
       // Filter controls based on publishing type
+      // For PRINT_EBOOK, include ALL platforms (both ebook and print)
       const controlsToCheck = isOnlyEbook
         ? pricingControls.controls.filter((control) => {
-            const platform = control.controls.platform.value as PlatForm | null;
-            return this.isEbookPlatform(platform as string);
+            const platformName = control.controls.platform.value as
+              | string
+              | null;
+            const platform = platformName
+              ? this.platformService.getPlatformByName(platformName)
+              : null;
+            return platform?.isEbookPlatform ?? false;
           })
         : isOnlyPrint
         ? pricingControls.controls.filter((control) => {
-            const platform = control.controls.platform.value as PlatForm | null;
-            return this.isPrintPlatform(platform as string);
+            const platformName = control.controls.platform.value as
+              | string
+              | null;
+            const platform = platformName
+              ? this.platformService.getPlatformByName(platformName)
+              : null;
+            return !(platform?.isEbookPlatform ?? false);
           })
-        : pricingControls.controls;
+        : pricingControls.controls; // PRINT_EBOOK: include all platforms
 
-      const pricingData: PricingCreate[] = controlsToCheck
-        .filter(({ controls: { platform, mrp, salesPrice } }) => {
-          // Basic validation - check if all required fields have valid values
-          if (
-            !platform.value ||
-            mrp.value === null ||
-            mrp.value === undefined ||
-            mrp.value === '' ||
-            salesPrice.value === null ||
-            salesPrice.value === undefined ||
-            salesPrice.value === '' ||
-            isNaN(Number(mrp.value)) ||
-            isNaN(Number(salesPrice.value)) ||
-            Number(mrp.value) <= 0 ||
-            Number(salesPrice.value) <= 0
-          ) {
-            return false;
-          }
+      // Debug: Log controlsToCheck for PRINT_EBOOK
+      if (!isOnlyEbook && !isOnlyPrint) {
+        console.log('PRINT_EBOOK - controlsToCheck before mapping:', {
+          totalControls: pricingControls.controls.length,
+          controlsToCheckCount: controlsToCheck.length,
+          controlsToCheckPlatforms: controlsToCheck.map((c) => ({
+            name: c.controls.platform.value,
+            mrp: c.controls.mrp.value,
+            salesPrice: c.controls.salesPrice.value,
+          })),
+        });
+      }
 
-          // Double-check platform is valid based on publishing type
-          if (isOnlyEbook) {
-            return this.isEbookPlatform(platform.value as string);
-          }
-          if (isOnlyPrint) {
-            return this.isPrintPlatform(platform.value as string);
-          }
+      // Collect validation errors instead of silently filtering
+      const validationErrors: string[] = [];
+      const pricingData: PricingCreate[] = [];
 
-          return true;
-        })
-        .map(({ controls: { platform, id, mrp, salesPrice } }) => ({
-          id: id.value || undefined,
-          platform: platform.value as string,
-          mrp: Number(mrp.value),
-          salesPrice: Number(salesPrice.value),
-          titleId: Number(this.titleId),
-        }));
+      for (const control of controlsToCheck) {
+        const { platform, id, mrp, salesPrice } = control.controls;
+        const platformName = platform.value as string;
+
+        if (!platformName) {
+          validationErrors.push(
+            'Platform name is missing for one or more pricing entries.'
+          );
+          continue;
+        }
+
+        const platformObj =
+          this.platformService.getPlatformByName(platformName);
+        if (!platformObj) {
+          validationErrors.push(`Platform '${platformName}' not found.`);
+          continue;
+        }
+
+        // For PRINT_EBOOK, we need to include ALL platforms (both ebook and print)
+        // So we only filter by platform type for ONLY_EBOOK and ONLY_PRINT
+        if (isOnlyEbook && !platformObj.isEbookPlatform) {
+          continue; // Skip non-ebook platforms for ebook-only titles
+        }
+        if (isOnlyPrint && platformObj.isEbookPlatform) {
+          continue; // Skip ebook platforms for print-only titles
+        }
+        // For PRINT_EBOOK (when both isOnlyEbook and isOnlyPrint are false),
+        // continue processing all platforms
+
+        // Basic validation - check if all required fields have valid values
+        if (
+          mrp.value === null ||
+          mrp.value === undefined ||
+          mrp.value === '' ||
+          salesPrice.value === null ||
+          salesPrice.value === undefined ||
+          salesPrice.value === '' ||
+          isNaN(Number(mrp.value)) ||
+          isNaN(Number(salesPrice.value)) ||
+          Number(mrp.value) <= 0 ||
+          Number(salesPrice.value) <= 0
+        ) {
+          validationErrors.push(
+            `Platform ${platformName}: Please provide valid MRP and Sales Price (both must be greater than 0).`
+          );
+          continue;
+        }
+
+        // Validate MSP before creating pricing data
+        const platformMsp = this.getMspForPlatform(platformObj.id);
+        const salesPriceValue = Number(salesPrice.value);
+        const mrpValue = Number(mrp.value);
+
+        // Check if sales price is lower than MSP
+        if (platformMsp > 0 && salesPriceValue < platformMsp) {
+          validationErrors.push(
+            `Platform ${platformName}: Sales price (${salesPriceValue}) cannot be lower than MSP (${platformMsp.toFixed(
+              2
+            )}).`
+          );
+          continue;
+        }
+
+        // Check if MRP is lower than MSP
+        if (platformMsp > 0 && mrpValue < platformMsp) {
+          validationErrors.push(
+            `Platform ${platformName}: MRP (${mrpValue}) cannot be lower than MSP (${platformMsp.toFixed(
+              2
+            )}).`
+          );
+          continue;
+        }
+
+        // Check if sales price is higher than MRP
+        if (salesPriceValue > mrpValue) {
+          validationErrors.push(
+            `Platform ${platformName}: Sales price (${salesPriceValue}) cannot be higher than MRP (${mrpValue}).`
+          );
+          continue;
+        }
+
+        // All validations passed, add to pricing data
+        pricingData.push({
+          id: id.value ?? undefined,
+          platformId: platformObj.id,
+          mrp: mrpValue,
+          salesPrice: salesPriceValue,
+        } as PricingCreate);
+      }
+
+      // If there are validation errors, show them and return early
+      if (validationErrors.length > 0) {
+        const errorMessage = validationErrors.join('\n');
+        Swal.fire({
+          icon: 'error',
+          title: this.translateService.instant('error') || 'Validation Error',
+          html: `<div style="text-align: left;">${errorMessage.replace(
+            /\n/g,
+            '<br>'
+          )}</div>`,
+          width: '600px',
+        });
+        return;
+      }
+
+      // Debug: Log pricing data being sent for PRINT_EBOOK
+      if (!isOnlyEbook && !isOnlyPrint) {
+        const platformDetails = pricingData.map((p) => {
+          const platform = this.platformService.getPlatformById(p.platformId);
+          return {
+            platformId: p.platformId,
+            platformName: platform?.name || 'Unknown',
+            isEbook: platform?.isEbookPlatform || false,
+            mrp: p.mrp,
+            salesPrice: p.salesPrice,
+          };
+        });
+        console.log('PRINT_EBOOK - Final pricing data being sent:', {
+          totalControls: pricingControls.controls.length,
+          controlsToCheck: controlsToCheck.length,
+          validPricingData: pricingData.length,
+          platformDetails,
+          ebookCount: platformDetails.filter((p) => p.isEbook).length,
+          printCount: platformDetails.filter((p) => !p.isEbook).length,
+        });
+      }
+
+      console.log({
+        pricingData,
+      });
 
       if (!pricingData.length) {
         // Check which platforms are missing data for better error message
@@ -2775,90 +3051,110 @@ export class TitleFormTemp implements OnDestroy {
       // Filter to only check relevant platform controls based on publishing type
       const royaltiesControlsToCheck = isOnlyEbook
         ? royaltiesControl.controls.filter((control) => {
-            const platform = control.controls.platform.value as PlatForm | null;
-            return this.isEbookPlatform(platform as string);
+            const platformName = control.controls.platform.value as
+              | string
+              | null;
+            const platform = platformName
+              ? this.platformService.getPlatformByName(platformName)
+              : null;
+            return platform?.isEbookPlatform ?? false;
           })
         : isOnlyPrint
         ? royaltiesControl.controls.filter((control) => {
-            const platform = control.controls.platform.value as PlatForm | null;
-            return this.isPrintPlatform(platform as string);
+            const platformName = control.controls.platform.value as
+              | string
+              | null;
+            const platform = platformName
+              ? this.platformService.getPlatformByName(platformName)
+              : null;
+            return !(platform?.isEbookPlatform ?? false);
           })
         : royaltiesControl.controls;
 
       // Map and filter royalties, then deduplicate by (authorId/publisherId, platform)
       const royaltiesMap = new Map<string, UpdateRoyalty>();
 
-      royaltiesControlsToCheck
-        .filter(({ controls: { percentage, platform } }) => {
-          const rawPercentage = percentage.value;
+      royaltiesControlsToCheck.forEach(
+        ({
+          controls: {
+            id: { value: id },
+            authorId: { value: authorId },
+            name: { value: name },
+            percentage: { value: percentage },
+            publisherId: { value: publisherId },
+            platform: { value: platform },
+          },
+        }) => {
+          // Get platform name from form control (it's stored as string)
+          const platformName = platform as string;
+          if (!platformName) {
+            return; // Skip if no platform
+          }
+
+          // Get platform by name to get platformId (form stores platform name)
+          const platformObj =
+            this.platformService.getPlatformByName(platformName);
+          if (!platformObj) {
+            console.error(`Platform '${platformName}' not found`);
+            return; // Skip if platform not found
+          }
+
+          // Basic validation - check if percentage is valid
+          const rawPercentage = percentage;
           const hasValue =
             rawPercentage !== null && rawPercentage !== undefined;
           const numericPercentage = Number(rawPercentage);
 
-          // Basic validation - check if percentage is valid
           if (
-            !platform.value ||
             !hasValue ||
             isNaN(numericPercentage) ||
             numericPercentage < 0 ||
             numericPercentage > 100
           ) {
-            return false;
+            return; // Skip invalid percentage
           }
 
           // Double-check platform is valid based on publishing type
-          if (isOnlyEbook) {
-            return this.isEbookPlatform(platform.value as string);
+          // For PRINT_EBOOK (when both isOnlyEbook and isOnlyPrint are false),
+          // return true for ALL platforms (both ebook and print)
+          if (isOnlyEbook && !platformObj.isEbookPlatform) {
+            return; // Skip non-ebook platforms for ebook-only titles
           }
-          if (isOnlyPrint) {
-            return this.isPrintPlatform(platform.value as string);
+          if (isOnlyPrint && platformObj.isEbookPlatform) {
+            return; // Skip ebook platforms for print-only titles
           }
 
-          return true;
-        })
-        .forEach(
-          ({
-            controls: {
-              id: { value: id },
-              authorId: { value: authorId },
-              name: { value: name },
-              percentage: { value: percentage },
-              publisherId: { value: publisherId },
-              platform: { value: platform },
-            },
-          }) => {
-            // Create unique key: authorId/publisherId + platform
-            const key = authorId
-              ? `author_${authorId}_${platform}`
-              : `publisher_${publisherId}_${platform}`;
+          // Create unique key: authorId/publisherId + platformId
+          const key = authorId
+            ? `author_${authorId}_${platformObj.id}`
+            : `publisher_${publisherId}_${platformObj.id}`;
 
-            const royalty: UpdateRoyalty = {
-              id: id || undefined,
-              authorId: authorId || undefined,
-              platform: platform as PlatForm,
-              percentage: Number(percentage),
-              name: name || '',
-              publisherId: publisherId || undefined,
-              titleId: this.titleId,
-            };
+          const royalty: UpdateRoyalty = {
+            id: id || undefined,
+            authorId: authorId || undefined,
+            platformId: platformObj.id,
+            percentage: Number(percentage),
+            name: name || '',
+            publisherId: publisherId || undefined,
+          };
 
-            // Deduplicate: keep entry with ID if available, otherwise keep the last occurrence
-            const existing = royaltiesMap.get(key);
-            if (!existing) {
-              // No existing entry, add it
-              royaltiesMap.set(key, royalty);
-            } else if (id && !existing.id) {
-              // Current has ID, existing doesn't - replace
-              royaltiesMap.set(key, royalty);
-            } else if (!id && existing.id) {
-              // Existing has ID, current doesn't - keep existing
-              // Do nothing
-            } else {
-              // Both have ID or both don't - keep the last one (current)
-              royaltiesMap.set(key, royalty);
-            }
+          // Deduplicate: keep entry with ID if available, otherwise keep the last occurrence
+          const existing = royaltiesMap.get(key);
+          if (!existing) {
+            // No existing entry, add it
+            royaltiesMap.set(key, royalty);
+          } else if (id && !existing.id) {
+            // Current has ID, existing doesn't - replace
+            royaltiesMap.set(key, royalty);
+          } else if (!id && existing.id) {
+            // Existing has ID, current doesn't - keep existing
+            // Do nothing
+          } else {
+            // Both have ID or both don't - keep the last one (current)
+            royaltiesMap.set(key, royalty);
           }
-        );
+        }
+      );
 
       const royalties: UpdateRoyalty[] = Array.from(royaltiesMap.values());
 
@@ -3493,16 +3789,32 @@ export class TitleFormTemp implements OnDestroy {
               publisherId: { value: publisherId },
               platform: { value: platform },
             },
-          }) => ({
-            id: id || undefined,
-            authorId: authorId || undefined,
-            platform: platform as PlatForm,
-            percentage: Number(percentage),
-            name: name || '',
-            publisherId: publisherId || undefined,
-            titleId: this.titleId,
-          })
-        );
+          }) => {
+            // Get platform name from form control (it's stored as string)
+            const platformName = platform as string;
+            if (!platformName) {
+              return null; // Skip if no platform
+            }
+
+            // Get platform by name to get platformId
+            const platformObj =
+              this.platformService.getPlatformByName(platformName);
+            if (!platformObj) {
+              console.error(`Platform '${platformName}' not found`);
+              return null; // Skip if platform not found
+            }
+
+            return {
+              id: id ?? undefined,
+              authorId: authorId ?? undefined,
+              platformId: platformObj.id,
+              percentage: Number(percentage),
+              name: name || '',
+              publisherId: publisherId ?? undefined,
+            } as UpdateRoyalty;
+          }
+        )
+        .filter((royalty): royalty is UpdateRoyalty => royalty !== null);
 
       if (!royalties.length) {
         Swal.fire({
