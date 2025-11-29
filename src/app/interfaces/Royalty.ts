@@ -31,8 +31,14 @@ export interface CreateRoyalty {
   totalEarnings: number;
 }
 
-export interface UpdateRoyalty extends Partial<CreateRoyalty> {
+export interface UpdateRoyalty {
   id?: number | null;
+  titleId?: number;
+  authorId?: number | null;
+  publisherId?: number | null;
+  platformId: number;
+  percentage: number;
+  name?: string | null;
 }
 
 export interface RoyaltyFilter {

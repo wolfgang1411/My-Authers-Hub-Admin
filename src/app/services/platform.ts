@@ -105,6 +105,13 @@ export class PlatformService {
   }
 
   /**
+   * Get platform by ID
+   */
+  getPlatformById(id: number): Platform | undefined {
+    return this.platforms().find((p) => p.id === id);
+  }
+
+  /**
    * Get platform names as array (for backward compatibility with PlatForm enum)
    */
   getPlatformNames(): string[] {

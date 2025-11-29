@@ -436,7 +436,7 @@ export interface PrintingCreate {
 
 export interface PricingCreate {
   id?: number | null;
-  platform: string;
+  platformId: number;
   salesPrice: number;
   mrp: number;
 }
