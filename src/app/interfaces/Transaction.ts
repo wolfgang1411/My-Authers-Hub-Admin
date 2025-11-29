@@ -22,4 +22,5 @@ export interface Transaction {
 export interface TransactionFilter {
   page?: number;
   itemsPerPage?: number;
+  searchStr?: string;
 }

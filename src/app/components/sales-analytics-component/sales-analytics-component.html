@@ -1,23 +1,34 @@
-<div class="bg-white rounded-lg p-4 shadow-sm">
-  <div class="flex items-center justify-between mb-4">
+<div
+  class="w-full rounded-2xl bg-surface h-full shadow-lg p-6 border border-gray-200"
+>
+  <div class="flex items-center justify-between mb-6 pb-3 border-b">
+    <h2 class="text-lg font-medium text-gray-700">Sales Analytics</h2>
+
     <mat-radio-group
-      (change)="salesDuration.next($event.value)"
-      aria-label="Select an option"
+      class="flex items-center gap-4"
       [value]="salesDuration.value"
+      (change)="salesDuration.next($event.value)"
     >
-      <mat-radio-button value="WEEKLY">Weekly</mat-radio-button>
-      <mat-radio-button value="MONTHLY">Monthly</mat-radio-button>
-      <mat-radio-button value="YEARLY">Yearly</mat-radio-button>
+      <mat-radio-button value="WEEKLY" class="!text-sm"
+        >Weekly</mat-radio-button
+      >
+      <mat-radio-button value="MONTHLY" class="!text-sm"
+        >Monthly</mat-radio-button
+      >
+      <mat-radio-button value="YEARLY" class="!text-sm"
+        >Yearly</mat-radio-button
+      >
     </mat-radio-group>
   </div>
-  <div>
+
+  <!-- Chart Graph -->
+  <div class="relative h-[340px] overflow-visible">
     <canvas
       baseChart
       [data]="chartData()"
       [labels]="labels()"
       [options]="chartOptions"
       [type]="lineType"
-    >
-    </canvas>
+    ></canvas>
   </div>
 </div>

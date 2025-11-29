@@ -2,11 +2,10 @@ import { Component, OnInit, signal } from '@angular/core';
 import { ChartConfiguration, ChartOptions } from 'chart.js';
 import { NgChartsModule } from 'ng2-charts';
 import { DashboardService } from '../../services/dashboard-service';
-import { StaticValuesService } from '../../services/static-values';
-import { DashbordStateType, PlatForm } from '../../interfaces';
-import { TranslateService } from '@ngx-translate/core';
+import { DashbordStateType, Platform } from '../../interfaces';
 import { MatRadioModule } from '@angular/material/radio';
 import { BehaviorSubject } from 'rxjs';
+import { PlatformService } from 'src/app/services/platform';
 
 @Component({
   selector: 'app-sales-analytics-component',
@@ -16,9 +15,8 @@ import { BehaviorSubject } from 'rxjs';
 })
 export class SalesAnalyticsComponent implements OnInit {
   constructor(
-    private staticValService: StaticValuesService,
     private svc: DashboardService,
-    private translateService: TranslateService
+    private platformService: PlatformService
   ) {}
 
   salesDuration = new BehaviorSubject<DashbordStateType>('WEEKLY');
@@ -27,64 +25,64 @@ export class SalesAnalyticsComponent implements OnInit {
     datasets: [],
     labels: [],
   });
-  private salesCache: Record<
-    DashbordStateType,
-    ChartConfiguration<'line'>['data']
-  > = {} as any;
-
   chartOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
     elements: { point: { radius: 3 } },
     scales: {
       x: { grid: { display: false } },
-      y: { grid: { color: '#f3f4f6' } },
+      y: { grid: { color: '#ceb8ef' } },
     },
     plugins: {
       legend: { position: 'top' },
     },
   };
   lineType: any = 'line';
+  platforms = signal<Platform[]>([]);
 
   async fetchAndUpdateStates(type: DashbordStateType = 'MONTHLY') {
-    if (this.salesCache[type]) {
-      this.chartData.set(this.salesCache[type]);
-      this.labels.set(this.salesCache[type].labels || ([] as any));
-      return;
-    }
-
     try {
-      const res = await this.svc.getStatsTemp(type);
-      const newLabels = res.map((item) => Object.keys(item)[0]);
-      this.labels.set(newLabels);
-      const platforms = Object.keys(
-        this.staticValService.staticValues()?.PlatForm || {}
-      ) as PlatForm[];
-      const datasets = platforms.map((platform) => {
-        const data = res.map((item) => {
-          const unitData = Object.values(item)[0];
-          return unitData[platform]?.amount || 0;
+      const res = (await this.svc.getStatsTemp(type)) as Record<string, any>[];
+
+      if (!res || res.length === 0) {
+        console.warn('⚠ No sales data');
+        return;
+      }
+      const labels = res.map((item) => Object.keys(item)[0]);
+      this.labels.set(labels);
+      const platformList = this.platforms();
+      if (!platformList || platformList.length === 0) {
+        console.warn('⚠ No platforms fetched');
+        return;
+      }
+      const datasets = platformList.map((platform) => {
+        const values = res.map((item) => {
+          const key = Object.keys(item)[0];
+          const dayData = item[key] as Record<string, any>;
+          return dayData?.[platform?.name]?.amount ?? 0;
         });
-        const color = this.getRandomColor();
+
         return {
-          label: this.translateService.instant(platform),
-          data,
+          label: platform.name,
+          data: values,
+          borderColor: this.getRandomColor(),
+          backgroundColor: 'transparent',
           tension: 0.4,
-          fill: false,
-          borderColor: color,
-          backgroundColor: color,
+          pointRadius: 3,
         };
       });
+      const finalGraphData = { labels, datasets };
+      this.chartData.set(finalGraphData);
 
-      const chartData = { labels: newLabels, datasets };
-      this.salesCache[type] = chartData;
-      this.chartData.set(chartData);
-    } catch (error) {
-      console.error(error);
+      console.log('📊 SALES GRAPH UPDATED =>', finalGraphData);
+    } catch (err) {
+      console.error('❌ fetchAndUpdateStates failed', err);
     }
   }
 
-  ngOnInit(): void {
+  async ngOnInit() {
+    const fetchedPlatforms = await this.platformService.fetchPlatforms();
+    this.platforms.set(fetchedPlatforms);
     this.salesDuration.subscribe((duration) => {
       this.fetchAndUpdateStates(duration);
     });

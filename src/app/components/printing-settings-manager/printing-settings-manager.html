@@ -1,23 +1,15 @@
 <div class="printing-settings-manager p-6">
   <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-text-heading">
+    <h1 class="text-2xl font-medium text-text-heading">
       {{ "printingsettings" | translate }}
     </h1>
     @if (isSuperAdmin()) {
     <div class="flex gap-2">
-      <button
-        mat-raised-button
-        color="primary"
-        (click)="updateMarginPercent()"
-      >
+      <button mat-raised-button color="primary" (click)="updateMarginPercent()">
         <mat-icon>percent</mat-icon>
         {{ "marginpercent" | translate }}: {{ marginPercent() }}%
       </button>
-      <button
-        mat-raised-button
-        color="primary"
-        (click)="startAddingCategory()"
-      >
+      <button mat-raised-button color="primary" (click)="startAddingCategory()">
         <mat-icon>add</mat-icon>
         {{ "addsizecategory" | translate }}
       </button>
@@ -43,21 +35,34 @@
     <mat-expansion-panel [expanded]="selectedCategoryId() === category.id">
       <mat-expansion-panel-header>
         <mat-panel-title>
-          <span class="font-semibold text-lg">{{ category.name }}</span>
+          <span class="font-medium text-lg">{{ category.name }}</span>
         </mat-panel-title>
         <mat-panel-description>
-          <div class="flex items-center gap-6 text-sm">
+          <div class="flex items-center gap-6 text-sm w-full justify-between">
             <div class="flex items-center gap-2">
-              <span class="text-gray-600">{{ "sizes" | translate }}: <span class="font-medium text-gray-800">{{ category.sizes?.length || 0 }}</span></span>
+              <span class="text-gray-600"
+                >{{ "sizes" | translate }}:
+                <span class="font-medium text-gray-800">{{
+                  category.sizes?.length || 0
+                }}</span></span
+              >
             </div>
             <div class="flex items-center gap-4 border-l pl-4">
               <div class="flex items-center gap-1.5">
-                <span class="text-gray-500 text-xs">{{ "packetprice" | translate }}:</span>
-                <span class="font-semibold text-primary">{{ category.packetPrice | currency : "INR" }}</span>
+                <span class="text-gray-500 text-xs"
+                  >{{ "packetprice" | translate }}:</span
+                >
+                <span class="font-medium text-primary">{{
+                  category.packetPrice | currency : "INR"
+                }}</span>
               </div>
               <div class="flex items-center gap-1.5">
-                <span class="text-gray-500 text-xs">{{ "insidecoverprice" | translate }}:</span>
-                <span class="font-semibold text-primary">{{ category.insideCoverPrice | currency : "INR" }}</span>
+                <span class="text-gray-500 text-xs"
+                  >{{ "insidecoverprice" | translate }}:</span
+                >
+                <span class="font-medium text-primary">{{
+                  category.insideCoverPrice | currency : "INR"
+                }}</span>
               </div>
             </div>
             @if (isSuperAdmin()) {
@@ -67,18 +72,19 @@
                 color="primary"
                 (click)="updateCategory(category); $event.stopPropagation()"
                 [matTooltip]="'editcategory' | translate"
-                class="!w-8 !h-8"
+                class="rounded-full !bg-primary items-center p-1.5 flex justify-center"
               >
-                <mat-icon class="!text-lg">edit</mat-icon>
+                <mat-icon class="!text-white">edit</mat-icon>
               </button>
+
               <button
                 mat-icon-button
                 color="warn"
                 (click)="deleteCategory(category); $event.stopPropagation()"
                 [matTooltip]="'deletecategory' | translate"
-                class="!w-8 !h-8"
+                class="rounded-full !bg-red-colour items-center p-1.5 flex justify-center"
               >
-                <mat-icon class="!text-lg">delete</mat-icon>
+                <mat-icon class="!text-white">delete</mat-icon>
               </button>
             </div>
             }
@@ -92,20 +98,32 @@
           <mat-tab [label]="'categorydetails' | translate">
             <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="text-sm font-medium text-gray-700">{{ "name" | translate }}</label>
+                <label class="text-sm font-medium text-gray-700">{{
+                  "name" | translate
+                }}</label>
                 <p class="text-gray-900">{{ category.name }}</p>
               </div>
               <div>
-                <label class="text-sm font-medium text-gray-700">{{ "packetprice" | translate }}</label>
-                <p class="text-gray-900">{{ category.packetPrice | currency : "INR" }}</p>
+                <label class="text-sm font-medium text-gray-700">{{
+                  "packetprice" | translate
+                }}</label>
+                <p class="text-gray-900">
+                  {{ category.packetPrice | currency : "INR" }}
+                </p>
               </div>
               <div>
-                <label class="text-sm font-medium text-gray-700">{{ "weightmultiplayer" | translate }}</label>
+                <label class="text-sm font-medium text-gray-700">{{
+                  "weightmultiplayer" | translate
+                }}</label>
                 <p class="text-gray-900">{{ category.weightMultiplayer }}</p>
               </div>
               <div>
-                <label class="text-sm font-medium text-gray-700">{{ "insidecoverprice" | translate }}</label>
-                <p class="text-gray-900">{{ category.insideCoverPrice | currency : "INR" }}</p>
+                <label class="text-sm font-medium text-gray-700">{{
+                  "insidecoverprice" | translate
+                }}</label>
+                <p class="text-gray-900">
+                  {{ category.insideCoverPrice | currency : "INR" }}
+                </p>
               </div>
             </div>
           </mat-tab>
@@ -150,7 +168,5 @@
     </mat-expansion-panel>
     }
   </mat-accordion>
-  }
-  }
+  } }
 </div>
-

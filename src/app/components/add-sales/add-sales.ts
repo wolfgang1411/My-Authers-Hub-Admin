@@ -21,6 +21,7 @@ import {
   PublishingType,
   SalesType,
   Title,
+  TitleStatus,
 } from '../../interfaces';
 import { Platform } from '../../interfaces/Platform';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -303,7 +304,10 @@ export class AddSales implements OnInit {
 
   async fetchAndUpdateTitle(str?: string) {
     try {
-      const { items } = await this.titleService.getTitles({ searchStr: str });
+      const { items } = await this.titleService.getTitles({
+        searchStr: str,
+        status: TitleStatus.APPROVED,
+      });
 
       // Filter out titles where printingOnly is true
       const filteredItems = items.filter((title) => !title.printingOnly);

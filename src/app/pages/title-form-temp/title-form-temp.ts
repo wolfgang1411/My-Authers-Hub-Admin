@@ -1348,7 +1348,7 @@ export class TitleFormTemp implements OnDestroy {
 
       if (!national && !hardboundNational) {
         return {
-          invalid: 'Either choose national or hardbound national atlest.',
+          invalid: 'Either choose national or hardbound national atleast.',
         };
       }
 

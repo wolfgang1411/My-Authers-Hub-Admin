@@ -17,4 +17,5 @@ export type PayoutFilter = {
   itemsPerPage?: number;
   page?: number;
   status?: PayoutStatus;
+  searchStr?: string;
 };

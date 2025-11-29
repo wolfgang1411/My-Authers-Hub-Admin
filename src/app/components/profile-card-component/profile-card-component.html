@@ -4,13 +4,18 @@
       class="w-28 h-28 rounded-full bg-gray-100 relative overflow-hidden flex items-center justify-center"
     >
       <img
-        src="images/user-solid-full.svg"
+        [src]="
+          userService.loggedInUser$()?.url !== null
+            ? userService.loggedInUser$()?.url
+            : 'images/user-solid-full.svg'
+        "
         alt="avatar"
         class="w-[30px] h-[30px] object-cover"
       />
       <button
+        type="button"
+        class="absolute bottom-3 right-5 bg-primary rounded-full w-7 h-7 flex items-center justify-center shadow-md p-1 hover:bg-purple/90"
         (click)="onClickUpdateImage()"
-        class="absolute bottom-2 right-5 z-50 w-7 h-7 p-1 rounded-full bg-primary text-white flex items-center justify-center shadow"
       >
         <svg-icon
           class="flex w-6 !fill-white"
@@ -18,11 +23,34 @@
         ></svg-icon>
       </button>
     </div>
-    <div class="text-center">
-      <h3 class="text-lg font-semibold text-primary">Ritika Singh</h3>
-      <p class="text-sm text-gray-500">Super Admin</p>
-      <p class="text-sm text-gray-400 mt-1">New Delhi, India</p>
+    <div class="flex flex-col items-center gap-2 text-center py-4">
+      <!-- Name -->
+      <h3 class="text-xl font-medium text-gray-800 tracking-tight">
+        {{ userService.loggedInUser$()?.firstName }}
+        {{ userService.loggedInUser$()?.lastName }}
+      </h3>
+
+      <!-- Role -->
+      <span
+        class="text-xs font-medium px-3 py-1 rounded-full uppercase bg-primary/10 text-primary tracking-wide"
+      >
+        {{ userService.loggedInUser$()?.accessLevel }}
+      </span>
+
+      <!-- Email + Phone -->
+      <div class="mt-3 text-sm text-gray-600 leading-relaxed space-y-1">
+        <p class="flex items-center justify-center gap-2">
+          <mat-icon class="text-primary !text-base">mail</mat-icon>
+          {{ userService.loggedInUser$()?.email }}
+        </p>
+
+        <p class="flex items-center justify-center gap-2">
+          <mat-icon class="text-primary !text-base">call</mat-icon>
+          {{ userService.loggedInUser$()?.phoneNumber || "N/A" }}
+        </p>
+      </div>
     </div>
+
     <div class="w-full flex gap-2">
       <button
         class="flex-1 py-2 bg-primary text-white rounded hover:bg-primary/85 cursor-pointer"

@@ -20,11 +20,11 @@
   </div>
 
   <!-- ====================== Draft Titles ====================== -->
+  @if (draftTitles().length > 0) {
   <h1 class="text-xl mb-4 font-medium text-[var(--text-heading)]">
     Draft Titles
   </h1>
-  @if (draftTitles().length > 0) { @for (title of draftTitles(); track title.id)
-  {
+  @for (title of draftTitles(); track title.id) {
   <div
     class="bg-white rounded-2xl shadow-sm border border-[var(--primary-superlight)] flex flex-col md:flex-row p-6 hover:shadow-lg transition-all mb-6"
   >
@@ -163,14 +163,40 @@
     </div>
   </div>
   } } @else {
-  <div
-    class="text-center text-[var(--text-secondary)] py-12 text-sm italic tracking-wide"
-  >
-    No draft titles found.
+
+  <div class="flex flex-col items-center justify-center py-14 text-center">
+    <!-- Cute Illustration box -->
+    <div class="w-60 opacity-90 mb-6">
+      <img
+        src="images/illustration3.png"
+        alt="No Titles"
+        class="mx-auto drop-shadow-sm"
+      />
+    </div>
+
+    <h2 class="text-2xl font-semibold text-[var(--text-heading)] mb-2">
+      No Titles Added Yet
+    </h2>
+
+    <p class="text-[var(--text-secondary)] text-sm max-w-lg leading-6 mb-6">
+      Start building your publishing journey by adding your first book title.
+      Drafts will appear here once saved.
+    </p>
+
+    <!-- CTA Button -->
+    <button
+      mat-flat-button
+      class="!bg-primary text-white font-medium px-6 py-3 rounded-lg shadow-md hover:shadow-lg hover:!bg-[var(--purple)] transition-all flex items-center gap-2"
+      [routerLink]="['/title', 0]"
+    >
+      <mat-icon>add_circle_outline</mat-icon>
+      Add Your First Title
+    </button>
   </div>
   }
 
   <!-- ====================== Published Titles Grid ====================== -->
+  @if (pendingTitles() && pendingTitles().length > 0) {
   <h1 class="text-xl mt-8 mb-4 font-medium text-[var(--text-heading)]">
     Pending for Approval
   </h1>
@@ -228,4 +254,5 @@
     </div>
     }
   </div>
+  }
 </div>

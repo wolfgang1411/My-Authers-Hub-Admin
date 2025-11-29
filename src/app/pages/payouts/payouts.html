@@ -67,6 +67,7 @@
       <button
         mat-icon-button
         [routerLink]="['/payouts', element.id]"
+        title="View"
         class="!bg-[var(--primary)] hover:opacity-90 rounded-full p-2"
       >
         <mat-icon class="!text-white">visibility</mat-icon>
@@ -102,6 +103,7 @@
       <button
         mat-icon-button
         disabled
+        title="Paid"
         class="!bg-[var(--primary)] rounded-full p-2 opacity-80"
       >
         <mat-icon class="!text-white">check</mat-icon>
@@ -116,6 +118,16 @@
       </button>
       }
     </div>
+    } @if ( loggedInUser()?.accessLevel === 'PUBLISHER') {
+    <button
+      matButton="filled"
+      [routerLink]="['/wallet']"
+      title="View"
+      class="!bg-[var(--primary)] hover:opacity-90 rounded-full p-2 !text-white"
+    >
+      <mat-icon class="!text-white">visibility</mat-icon>
+      {{ "viewwallet" | translate }}
+    </button>
     }
   </ng-template>
 </section>
