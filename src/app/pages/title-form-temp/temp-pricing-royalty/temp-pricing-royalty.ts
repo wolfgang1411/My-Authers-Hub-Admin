@@ -73,6 +73,21 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
   authors = input.required<Author[]>();
   publisher = input.required<Publishers | null>();
 
+  // Form validation inputs
+  isPrintingValid = input<boolean>(false);
+  isPricingValid = input<boolean>(false);
+  hasPricing = input<boolean>(false);
+
+  // Computed: Are all forms valid?
+  areFormsValid = computed(() => {
+    return (
+      this.isPrintingValid() &&
+      this.isPricingValid() &&
+      this.hasPricing() &&
+      this.publisher() !== null
+    );
+  });
+
   // Computed properties
   ebookMsp = computed(() => {
     return Number(this.staticValueService.staticValues()?.EBOOK_MSP);
@@ -198,6 +213,68 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
           }
         }
       });
+
+      // Watch form validity and update controls accordingly
+      effect(() => {
+        const formsValid = this.areFormsValid();
+        const authorControls = this.authorPercentageControls();
+        const authors = this.authors();
+
+        // Calculate default percentage based on author count
+        const authorCount = authors.length;
+        const defaultAuthorPercentage: number =
+          authorCount > 0
+            ? authorCount === 1
+              ? 100
+              : Math.round((100 / authorCount) * 100) / 100 // Round to 2 decimal places
+            : 0;
+
+        // Update all author controls based on form validity
+        authorControls.forEach((control, authorId) => {
+          if (!formsValid) {
+            // Set to 0 and disable if forms are invalid
+            if (control.value !== 0) {
+              control.patchValue(0, { emitEvent: false });
+            }
+            if (control.enabled) {
+              control.disable();
+            }
+          } else {
+            // Enable if forms are valid
+            if (control.disabled) {
+              control.enable();
+            }
+
+            // If control value is 0 (from when it was disabled), set to default
+            // But only if there's no existing royalty value
+            if (control.value === 0 || control.value === null) {
+              // Check if there's an existing royalty value for this author
+              const existingRoyalty = this.royaltiesController().controls.find(
+                (r) =>
+                  r.controls.authorId.value === authorId &&
+                  r.controls.percentage.value !== null &&
+                  r.controls.percentage.value !== undefined &&
+                  r.controls.percentage.value !== 0
+              );
+
+              const valueToSet =
+                existingRoyalty?.controls.percentage.value ??
+                defaultAuthorPercentage;
+
+              control.patchValue(Math.round(valueToSet), { emitEvent: false });
+            }
+          }
+        });
+
+        // Recalculate publisher percentage when form validity changes
+        if (this.publisher()) {
+          // Use setTimeout to ensure author controls are updated first
+          setTimeout(() => {
+            this.calculatePublisherPercentage();
+            this.syncAuthorPercentagesToRoyalties();
+          }, 100);
+        }
+      });
     });
 
     // Initial sync - use longer timeout to ensure all data is loaded
@@ -233,19 +310,26 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
    * Initialize form controls for author percentages
    * One control per author
    * Uses the first platform's percentage value if multiple exist
+   * Sets to 0 and disables if forms are not valid
    */
   private initializeAuthorPercentageControls(): void {
     const authors = this.authors();
     const controls = new Map<number, FormControl<number | null>>();
-    authors.forEach((author) => {
-      // get % initial value
-      const existingRoyalty = this.royaltiesController().controls.find(
-        (r) =>
-          r.controls.authorId.value === author.id &&
-          r.controls.percentage.value != null
-      );
+    const formsValid = this.areFormsValid();
 
-      const percent = existingRoyalty?.controls.percentage.value ?? 0;
+    authors.forEach((author) => {
+      // If forms are not valid, set to 0
+      // Otherwise, get % initial value from existing royalty
+      let percent = 0;
+      if (formsValid) {
+        const existingRoyalty = this.royaltiesController().controls.find(
+          (r) =>
+            r.controls.authorId.value === author.id &&
+            r.controls.percentage.value != null
+        );
+
+        percent = existingRoyalty?.controls.percentage.value ?? 100;
+      }
 
       // Create % control
       const percentControl = new FormControl(Math.round(percent), [
@@ -253,6 +337,11 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
         Validators.min(0),
         Validators.max(100),
       ]);
+
+      // Disable if forms are not valid
+      if (!formsValid) {
+        percentControl.disable();
+      }
 
       percentControl.valueChanges
         .pipe(debounceTime(300), takeUntil(this.destroy$))
@@ -385,6 +474,26 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     const publisher = this.publisher();
     if (!publisher) {
       return; // No publisher, nothing to calculate
+    }
+
+    // If forms are not valid, set publisher percentage to 0
+    if (!this.areFormsValid()) {
+      this.publisherPercentage.set(0);
+      // Also update all publisher royalty controls to 0
+      const platforms = this.displayedColumns();
+      platforms.forEach((platform) => {
+        const royaltyControl = this.royaltiesController().controls.find(
+          (r) =>
+            r.controls.publisherId.value === publisher.id &&
+            r.controls.platform.value === platform
+        );
+        if (royaltyControl) {
+          royaltyControl.controls.percentage.patchValue(0, {
+            emitEvent: false,
+          });
+        }
+      });
+      return;
     }
 
     const authorControls = this.authorPercentageControls();
@@ -740,36 +849,61 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
   /**
    * Get author percentage control
    * Creates a control if it doesn't exist (for template safety)
+   * Returns 0 and disabled if forms are not valid
    */
   getAuthorPercentageControl(authorId: number): FormControl<number | null> {
     const controls = this.authorPercentageControls();
     let control = controls.get(authorId);
+    const formsValid = this.areFormsValid();
 
     // If control doesn't exist, create it immediately
     if (!control) {
       // Check if author exists
       const author = this.authors().find((a) => a.id === authorId);
       if (author) {
-        // Find existing royalty value or default to 100
-        const existingRoyalty = this.royaltiesController().controls.find(
-          (r) =>
-            r.controls.authorId.value === authorId &&
-            r.controls.platform.value &&
-            r.controls.percentage.value !== null &&
-            r.controls.percentage.value !== undefined
-        );
+        // If forms are not valid, set to 0
+        // Otherwise, find existing royalty value or calculate default based on author count
+        let initialValue = 0;
+        if (formsValid) {
+          const existingRoyalty = this.royaltiesController().controls.find(
+            (r) =>
+              r.controls.authorId.value === authorId &&
+              r.controls.platform.value &&
+              r.controls.percentage.value !== null &&
+              r.controls.percentage.value !== undefined &&
+              r.controls.percentage.value !== 0 // Don't use 0 as existing value
+          );
 
-        const initialValue =
-          existingRoyalty?.controls.percentage.value !== null &&
-          existingRoyalty?.controls.percentage.value !== undefined
-            ? existingRoyalty.controls.percentage.value
-            : 100;
+          if (
+            existingRoyalty?.controls.percentage.value !== null &&
+            existingRoyalty?.controls.percentage.value !== undefined &&
+            existingRoyalty.controls.percentage.value !== 0
+          ) {
+            // Use existing royalty value if it's not 0
+            initialValue = existingRoyalty.controls.percentage.value;
+          } else {
+            // Calculate default based on author count
+            const authors = this.authors();
+            const authorCount = authors.length;
+            initialValue =
+              authorCount > 0
+                ? authorCount === 1
+                  ? 100
+                  : Math.round((100 / authorCount) * 100) / 100 // Round to 2 decimal places
+                : 0;
+          }
+        }
 
         control = new FormControl<number | null>(Math.round(initialValue), [
           Validators.required,
           Validators.min(0),
           Validators.max(100),
         ]);
+
+        // Disable control if forms are not valid
+        if (!formsValid) {
+          control.disable();
+        }
 
         // Subscribe to changes
         // Round values to whole numbers on change
@@ -802,6 +936,64 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       } else {
         // Author not found, return a temporary control
         control = new FormControl<number | null>(null);
+      }
+    }
+
+    // Update control state based on form validity
+    if (control) {
+      if (!formsValid) {
+        // Set to 0 and disable if forms are invalid
+        if (control.value !== 0) {
+          control.patchValue(0, { emitEvent: false });
+        }
+        if (control.enabled) {
+          control.disable();
+        }
+      } else {
+        // Enable if forms are valid
+        if (control.disabled) {
+          control.enable();
+        }
+
+        // If control value is 0 or null (from when it was disabled), set to default
+        // But only if there's no existing royalty value
+        if (control.value === 0 || control.value === null) {
+          // Check if there's an existing royalty value for this author
+          const existingRoyalty = this.royaltiesController().controls.find(
+            (r) =>
+              r.controls.authorId.value === authorId &&
+              r.controls.percentage.value !== null &&
+              r.controls.percentage.value !== undefined &&
+              r.controls.percentage.value !== 0
+          );
+
+          // Calculate default based on author count if no existing value
+          if (
+            !existingRoyalty ||
+            existingRoyalty.controls.percentage.value === 0 ||
+            existingRoyalty.controls.percentage.value === null ||
+            existingRoyalty.controls.percentage.value === undefined
+          ) {
+            const authors = this.authors();
+            const authorCount = authors.length;
+            const defaultAuthorPercentage: number =
+              authorCount > 0
+                ? authorCount === 1
+                  ? 100
+                  : Math.round((100 / authorCount) * 100) / 100 // Round to 2 decimal places
+                : 0;
+
+            control.patchValue(Math.round(defaultAuthorPercentage), {
+              emitEvent: false,
+            });
+          } else {
+            // Use existing royalty value
+            control.patchValue(
+              Math.round(existingRoyalty.controls.percentage.value),
+              { emitEvent: false }
+            );
+          }
+        }
       }
     }
 
