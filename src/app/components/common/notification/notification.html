@@ -1,81 +1,157 @@
-<div class="flex gap-4 items-center">
+<div class="relative">
   <button
-    mat-icon-button
+    type="button"
     [matMenuTriggerFor]="notificationMenu"
-    [matBadge]="unreadNotifications().length"
-    matBadgeColor="warn"
-    matBadgeOverlap="false"
-    class="rounded-full !bg-green-2 text-white cursor-pointer hover:bg-green-2/80 hover:shadow-inner transition-all duration-300"
+    class="relative w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 shadow-sm hover:shadow-md"
   >
-    <mat-icon class="!text-white">notifications_active</mat-icon>
+    <mat-icon class="text-gray-600 text-xl">notifications</mat-icon>
+    @if (unreadNotifications().length > 0) {
+    <span
+      class="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1.5 rounded-full bg-red-500 text-white text-[10px] font-semibold border-2 border-white"
+    >
+      {{
+        unreadNotifications().length > 99 ? "99+" : unreadNotifications().length
+      }}
+    </span>
+    }
   </button>
 </div>
+
 <mat-menu
   #notificationMenu="matMenu"
-  class="!p-0 w-[320px] max-w-[320px]"
+  class="!p-0 w-[380px] max-w-[380px]"
   (closed)="onNotificationClose()"
 >
-  <div class="px-3 py-2 border-b border-gray-200 bg-gray-50">
-    <span class="font-semibold text-sm text-gray-700">Notifications</span>
+  <!-- Header -->
+  <div
+    class="px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-[var(--light-purple-bg)] to-white flex items-center justify-between"
+  >
+    <div class="flex items-center gap-2">
+      <mat-icon class="text-[var(--primary)] text-xl"
+        >notifications_active</mat-icon
+      >
+      <span class="font-semibold text-base text-[var(--text-heading)]"
+        >Notifications</span
+      >
+      @if (unreadNotifications().length > 0) {
+      <span
+        class="px-2 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-semibold"
+      >
+        {{ unreadNotifications().length }} new
+      </span>
+      }
+    </div>
   </div>
 
-  <div class="max-h-[300px] overflow-y-auto">
+  <!-- Notifications List -->
+  <div class="max-h-[400px] overflow-y-auto">
     @if (notifications().length) { @for (notification of notifications(); track
-    $index) {
+    notification.id) { @if
+    (!notification.markAsReadByUser.includes(loggedInUser()?.id || 0)) {
+    <!-- Unread Notification -->
     <div
-      class="px-3 py-2 flex flex-col gap-1 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150"
+      class="px-4 py-3 flex gap-3 border-b border-gray-100 bg-blue-50/30 hover:bg-blue-50/50 transition-colors duration-150 cursor-pointer relative group"
     >
-      <span class="font-medium text-sm text-gray-800">
-        {{ notification.title }}
-      </span>
-
-      <p class="text-xs text-gray-600 leading-snug">
-        {{ notification.message }}
-      </p>
-
-      <div class="flex justify-between items-center text-[11px] text-gray-400">
-        <span>&nbsp;</span>
-        @if (notification.sendAt) {
-        <span>Sent: {{ notification.sendAt | date : "medium" }}</span>
-        }
+      <div class="flex-shrink-0 w-2 h-2 rounded-full bg-blue-500 mt-2"></div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-start justify-between gap-2 mb-1">
+          <span class="font-semibold text-sm text-gray-900 leading-tight">
+            {{ notification.title }}
+          </span>
+          <mat-icon
+            class="text-gray-400 text-base opacity-0 group-hover:opacity-100 transition-opacity"
+            >fiber_manual_record</mat-icon
+          >
+        </div>
+        <p class="text-xs text-gray-600 leading-relaxed mb-2 line-clamp-2">
+          {{ notification.message }}
+        </p>
+        <div class="flex items-center gap-2 text-[11px] text-gray-500">
+          <mat-icon class="text-gray-400 text-sm">schedule</mat-icon>
+          @if (notification.sendAt) {
+          <span>{{ notification.sendAt | date : "short" }}</span>
+          } @else {
+          <span>Scheduled</span>
+          }
+        </div>
       </div>
     </div>
-    } } @else {
-    <div class="px-4 py-3 text-sm text-gray-500 text-center">
-      No new notifications
+    } @else {
+    <!-- Read Notification -->
+    <div
+      class="px-4 py-3 flex gap-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150 cursor-pointer relative group"
+    >
+      <div class="flex-shrink-0 w-2 h-2 rounded-full bg-gray-300 mt-2"></div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-start justify-between gap-2 mb-1">
+          <span class="font-medium text-sm text-gray-700 leading-tight">
+            {{ notification.title }}
+          </span>
+          <mat-icon
+            class="text-gray-300 text-base opacity-0 group-hover:opacity-100 transition-opacity"
+            >check_circle</mat-icon
+          >
+        </div>
+        <p class="text-xs text-gray-500 leading-relaxed mb-2 line-clamp-2">
+          {{ notification.message }}
+        </p>
+        <div class="flex items-center gap-2 text-[11px] text-gray-400">
+          <mat-icon class="text-gray-300 text-sm">schedule</mat-icon>
+          @if (notification.sendAt) {
+          <span>{{ notification.sendAt | date : "short" }}</span>
+          } @else {
+          <span>Scheduled</span>
+          }
+        </div>
+      </div>
+    </div>
+    } } } @else {
+    <!-- Empty State -->
+    <div
+      class="px-6 py-12 flex flex-col items-center justify-center text-center"
+    >
+      <div
+        class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-3"
+      >
+        <mat-icon class="text-gray-400 text-3xl">notifications_none</mat-icon>
+      </div>
+      <p class="text-sm font-medium text-gray-700 mb-1">No notifications</p>
+      <p class="text-xs text-gray-500">You're all caught up!</p>
     </div>
     }
   </div>
 
-  <!-- Manage Button (SuperAdmin only) -->
-  <div class="grid grid-cols-2 gap-4 border-t border-gray-200 p-2 text-center">
+  <!-- Footer Actions -->
+  <div
+    class="border-t border-gray-200 bg-gray-50 px-3 py-2.5 flex items-center justify-between gap-2"
+  >
     @if (lastPage() > page()) {
-
-    <!-- fetch-notifications -->
     <button
+      type="button"
+      matButton="filled"
       (click)="loadMoreNotifications($event)"
-      mat-stroked-button
-      class="w-full !text-primary"
+      class="flex !bg-primary-light rounded-lg px-3 py-2 text-sm font-medium text-[var(--primary)] border border-[#ceb8ef] hover:bg-[var(--primary-superlight)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-1 items-center justify-center gap-2"
       [disabled]="isNotificationLoading$ | async"
     >
-      {{
-        ((isNotificationLoading$ | async) ? "loading" : "loadmore") | translate
-      }}
       @if((isNotificationLoading$ | async)) {
       <span class="loading-dots"></span>
+      } @else {
+      <mat-icon class="text-base">expand_more</mat-icon>
       }
+      <span>{{
+        ((isNotificationLoading$ | async) ? "loading" : "loadmore") | translate
+      }}</span>
     </button>
-    } @else {
-    <span>&nbsp;</span>
     } @if (loggedInUser()?.accessLevel === 'SUPERADMIN' ||
     loggedInUser()?.accessLevel === 'PUBLISHER') {
-
     <button
-      mat-stroked-button
-      class="w-full !text-primary"
+      type="button"
+      matButton="filled"
       routerLink="/notifications"
+      class="flex-1 rounded-lg px-3 py-2 text-sm font-medium text-white bg-[var(--primary)] hover:bg-[var(--purple)] transition-colors flex items-center justify-center gap-2"
     >
-      {{ "manage" | translate }}
+      <mat-icon class="text-base">settings</mat-icon>
+      <span>{{ "manage" | translate }}</span>
     </button>
     }
   </div>

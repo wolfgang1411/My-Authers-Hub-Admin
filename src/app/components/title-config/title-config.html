@@ -1,42 +1,48 @@
-<div class="container mx-auto my-8 flex flex-col gap-8">
-  <!-- Header -->
-  <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-medium text-[var(--primary)] tracking-tight">
-      {{ "storesettings" | translate }}
-    </h1>
+<section
+  class="bg-white rounded-xl p-6 shadow-[0_10px_25px_rgba(61,26,93,0.08)] border border-[#ceb8ef]"
+>
+  <div class="flex items-center justify-between gap-4 mb-6 flex-wrap">
+    <div>
+      <h2 class="text-xl font-medium text-[var(--text-heading)]">
+        {{ "storesettings" | translate }}
+      </h2>
+      <p class="mt-1 text-[#475569] text-[0.95rem]">
+        Manage store settings and configurations for titles.
+      </p>
+    </div>
   </div>
 
   <!-- Accordion -->
-  <mat-accordion class="flex flex-col gap-5">
+  <mat-accordion class="flex flex-col gap-4">
     @for (titleConfigItem of titleConfigsData(); track $index) {
     <mat-expansion-panel
-      class="overflow-hidden rounded-xl border-0 bg-gradient-to-r from-[var(--light-purple-bg)] via-white to-[var(--primary-superlight)] shadow-md hover:shadow-lg transition-all duration-300"
+      class="overflow-hidden rounded-lg border border-[#ceb8ef] bg-white shadow-sm hover:shadow-md transition-all duration-300"
     >
       <!-- Panel Header -->
       <mat-expansion-panel-header
-        class="!bg-gradient-to-r from-[var(--primary-superlight)] to-[var(--light-purple-bg)] rounded-t-xl py-3 px-5"
+        class="!bg-[var(--light-purple-bg)] rounded-t-lg py-3 px-4"
       >
         <mat-panel-title class="flex items-center justify-between w-full">
-          <span class="text-base font-medium text-[var(--primary)]">
+          <span class="text-base font-medium text-[var(--text-heading)]">
             {{ titleConfigItem.type | translate }}
           </span>
 
-          <div class="flex gap-3">
+          <div class="flex gap-2">
             <button
               (click)="onClickAddNewItem($event, titleConfigItem.type)"
-              mat-flat-button
-              class="!bg-[var(--primary)] text-white rounded-full shadow-sm hover:shadow-md transition-all duration-200 px-3 py-1 text-xs"
+              type="button"
+              class="rounded-lg px-3 py-1.5 font-normal text-sm border-none cursor-pointer bg-[var(--primary)] text-white hover:bg-[var(--purple)] transition-colors flex items-center gap-1.5"
             >
-              <mat-icon class="text-white text-sm mr-1">add</mat-icon>
+              <mat-icon class="!text-white text-base">add</mat-icon>
               {{ "additem" | translate }}
             </button>
 
             <button
               (click)="onClickUpdateList($event, titleConfigItem.type)"
-              mat-flat-button
-              class="!bg-[var(--green-2)] text-white rounded-full shadow-sm hover:shadow-md transition-all duration-200 px-3 py-1 text-xs"
+              type="button"
+              class="rounded-lg px-3 py-1.5 font-normal text-sm border-none cursor-pointer bg-[var(--green-2)] text-white hover:opacity-90 transition-colors flex items-center gap-1.5"
             >
-              <mat-icon class="text-white text-sm mr-1">update</mat-icon>
+              <mat-icon class="!text-white text-base">update</mat-icon>
               {{ "reorderitems" | translate }}
             </button>
           </div>
@@ -50,7 +56,7 @@
       >
         @for (titleConfig of titleConfigItem.data; track $index) {
         <div
-          class="relative bg-gradient-to-br from-white to-[var(--light-purple-bg)] border border-[var(--primary-light)] rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:scale-[1.015] p-3 flex flex-col items-start"
+          class="relative bg-white border border-[#ceb8ef] rounded-lg shadow-sm hover:shadow-md transition-all duration-300 p-3 flex flex-col items-start"
         >
           <!-- Thumbnail -->
           <img
@@ -81,20 +87,19 @@
 
           <!-- Delete Button -->
           <button
-            mat-icon-button
-            color="warn"
-            class="!absolute top-1 right-1 !bg-[var(--accent)] hover:!bg-[var(--accent/70)] transition-colors duration-300 rounded-full shadow-sm flex items-center"
+            type="button"
+            class="absolute top-1 right-1 bg-[rgba(220,38,38,0.1)] hover:bg-[rgba(220,38,38,0.15)] text-[#b91c1c] transition-colors duration-300 rounded-full shadow-sm flex items-center justify-center w-7 h-7 cursor-pointer border-none"
             aria-label="Delete title"
             (click)="onClickDeleteConfigItem(titleConfig)"
           >
-            <mat-icon class="!text-white !text-sm">delete</mat-icon>
+            <mat-icon class="!text-[#b91c1c] !text-base">delete</mat-icon>
           </button>
         </div>
         }
       </div>
       } @else {
       <div
-        class="p-6 flex flex-col items-center justify-center text-center bg-[var(--light-purple-bg)] border-t border-[var(--primary-superlight)]"
+        class="p-6 flex flex-col items-center justify-center text-center bg-[var(--light-purple-bg)] border-t border-[#ceb8ef]"
       >
         <mat-icon class="text-[var(--primary)] text-4xl mb-1"
           >library_books</mat-icon
@@ -107,4 +112,4 @@
     </mat-expansion-panel>
     }
   </mat-accordion>
-</div>
+</section>

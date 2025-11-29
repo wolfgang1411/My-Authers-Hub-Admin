@@ -1,364 +1,373 @@
-<div class="container mx-auto my-8 flex flex-col gap-8">
-  <div class="mb-6">
-    <h1 class="text-2xl font-medium text-[var(--primary)] tracking-tight">
-      Title Category Settings — Lists
-    </h1>
-    <p class="text-sm text-text-secondary mt-1">
-      Manage categories, sub-categories, genres & trade categories
-    </p>
+<section
+  class="bg-white rounded-xl p-6 shadow-[0_10px_25px_rgba(61,26,93,0.08)] border border-[#ceb8ef]"
+>
+  <div class="flex items-center justify-between gap-4 mb-6 flex-wrap">
+    <div>
+      <h2 class="text-xl font-medium text-[var(--text-heading)]">
+        Title Category Settings — Lists
+      </h2>
+      <p class="mt-1 text-[#475569] text-[0.95rem]">
+        Manage categories, sub-categories, genres & trade categories
+      </p>
+    </div>
   </div>
-  <div class="bg-white shadow-md rounded-2xl p-6 border border-gray-100">
-    <form
-      [formGroup]="form"
-      (ngSubmit)="onSubmit()"
-      class="grid grid-cols-1 md:grid-cols-3 gap-4"
+  <form class="flex flex-col gap-6" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div>
+      <h3 class="text-base font-medium mb-3 text-[var(--text-heading)]">
+        Category Information
+      </h3>
+      <div class="grid gap-4 md:grid-cols-3">
+        <label
+          class="flex flex-col gap-[0.35rem] text-[0.9rem] text-[#0f172a] font-medium"
+        >
+          <span>Type</span>
+          <select
+            formControlName="type"
+            class="border border-[rgba(15,23,42,0.1)] rounded-lg px-3 py-[0.65rem] text-[0.95rem] focus:outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_var(--primary-superlight)]"
+          >
+            @for (t of type; track $index) {
+            <option [value]="t.value">{{ t.label }}</option>
+            }
+          </select>
+        </label>
+        <label
+          class="flex flex-col gap-[0.35rem] text-[0.9rem] text-[#0f172a] font-medium"
+        >
+          <span>Name</span>
+          <input
+            type="text"
+            placeholder="e.g. Fiction, Romance, Science"
+            formControlName="name"
+            class="border border-[rgba(15,23,42,0.1)] rounded-lg px-3 py-[0.65rem] text-[0.95rem] focus:outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_var(--primary-superlight)]"
+          />
+        </label>
+        <label
+          class="flex flex-col gap-[0.35rem] text-[0.9rem] text-[#0f172a] font-medium"
+        >
+          <span>Parent Category</span>
+          <select
+            formControlName="parentId"
+            [disabled]="isParentDisabled()"
+            class="border border-[rgba(15,23,42,0.1)] rounded-lg px-3 py-[0.65rem] text-[0.95rem] focus:outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_var(--primary-superlight)] disabled:bg-[#f1f5f9] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <option [value]="null">None</option>
+            @for (p of parentCategories(); track $index) {
+            <option [value]="p.id">{{ p.name }}</option>
+            }
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex items-center justify-end gap-3">
+      <!-- Reset -->
+      <button
+        type="button"
+        class="rounded-lg px-6 py-[0.65rem] font-normal text-[0.95rem] border-none cursor-pointer bg-[rgba(220,38,38,0.1)] text-[#b91c1c] hover:bg-[rgba(220,38,38,0.15)] transition-colors flex items-center gap-2"
+        (click)="resetForm()"
+      >
+        <mat-icon class="!text-[#b91c1c] text-base">refresh</mat-icon>
+        Reset
+      </button>
+
+      <!-- Add / Save -->
+      <button
+        type="submit"
+        class="rounded-lg px-6 py-[0.65rem] font-normal text-[0.95rem] border-none cursor-pointer bg-[var(--primary)] text-white hover:bg-[var(--purple)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+        [disabled]="form.invalid"
+      >
+        <mat-icon class="!text-white text-base">
+          {{ editId() ? "save" : "add" }}
+        </mat-icon>
+        {{ editId() ? "Save Changes" : "Add" }}
+      </button>
+    </div>
+  </form>
+
+  <div class="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-4 mt-6">
+    <div class="flex w-full gap-3 flex-wrap items-end">
+      <button
+        type="button"
+        class="rounded-md px-3 py-1.5 text-sm cursor-pointer transition-colors flex items-center gap-1.5"
+        [ngClass]="{
+          'bg-[var(--primary)] text-white': lastSelectedTab === 'ALL',
+          'bg-[var(--primary-superlight)] text-[var(--text-heading)] border border-[#ceb8ef] hover:bg-[var(--primary-light)]':
+            lastSelectedTab !== 'ALL'
+        }"
+        (click)="selectTab('ALL')"
+      >
+        <mat-icon class="!text-base">format_list_bulleted</mat-icon>
+        All
+      </button>
+      <button
+        type="button"
+        class="rounded-md px-3 py-1.5 text-sm cursor-pointer transition-colors flex items-center gap-1.5"
+        [ngClass]="{
+          'bg-[var(--primary)] text-white':
+            lastSelectedTab === titleCategoryType.CATEGORY,
+          'bg-[var(--primary-superlight)] text-[var(--text-heading)] border border-[#ceb8ef] hover:bg-[var(--primary-light)]':
+            lastSelectedTab !== titleCategoryType.CATEGORY
+        }"
+        (click)="selectTab(titleCategoryType.CATEGORY)"
+      >
+        <mat-icon class="!text-base">category</mat-icon>
+        Category
+      </button>
+      <button
+        type="button"
+        class="rounded-md px-3 py-1.5 text-sm cursor-pointer transition-colors flex items-center gap-1.5"
+        [ngClass]="{
+          'bg-[var(--primary)] text-white':
+            lastSelectedTab === titleCategoryType.SUBCATEGORY,
+          'bg-[var(--primary-superlight)] text-[var(--text-heading)] border border-[#ceb8ef] hover:bg-[var(--primary-light)]':
+            lastSelectedTab !== titleCategoryType.SUBCATEGORY
+        }"
+        (click)="selectTab(titleCategoryType.SUBCATEGORY)"
+      >
+        <mat-icon class="!text-base">chevron_right</mat-icon>
+        Sub Category
+      </button>
+      <button
+        type="button"
+        class="rounded-md px-3 py-1.5 text-sm cursor-pointer transition-colors flex items-center gap-1.5"
+        [ngClass]="{
+          'bg-[var(--primary)] text-white':
+            lastSelectedTab === titleCategoryType.TRADE,
+          'bg-[var(--primary-superlight)] text-[var(--text-heading)] border border-[#ceb8ef] hover:bg-[var(--primary-light)]':
+            lastSelectedTab !== titleCategoryType.TRADE
+        }"
+        (click)="selectTab(titleCategoryType.TRADE)"
+      >
+        <mat-icon class="!text-base">shopping_cart</mat-icon>
+        Trade Category
+      </button>
+      <button
+        type="button"
+        class="rounded-md px-3 py-1.5 text-sm cursor-pointer transition-colors flex items-center gap-1.5"
+        [ngClass]="{
+          'bg-[var(--primary)] text-white': lastSelectedTab === 'GENRE',
+          'bg-[var(--primary-superlight)] text-[var(--text-heading)] border border-[#ceb8ef] hover:bg-[var(--primary-light)]':
+            lastSelectedTab !== 'GENRE'
+        }"
+        (click)="selectTab(titleCategoryType.GENRE)"
+      >
+        <mat-icon class="!text-base">style</mat-icon>
+        Genre
+      </button>
+    </div>
+    <label
+      class="flex flex-col gap-[0.35rem] text-[0.9rem] text-[#0f172a] font-medium"
     >
-      <mat-form-field class="w-full">
-        <mat-label>Type</mat-label>
-        <mat-select formControlName="type">
-          @for (t of type; track $index) {
-          <mat-option [value]="t.value">
-            {{ t.label }}
-          </mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field class="w-full">
-        <mat-label>Name</mat-label>
+      <span>Search name or description</span>
+      <div class="relative">
         <input
-          matInput
-          placeholder="e.g. Fiction, Romance, Science"
-          formControlName="name"
-        />
-      </mat-form-field>
-      <mat-form-field class="w-full">
-        <mat-label>Parent Category</mat-label>
-        <mat-select formControlName="parentId" [disabled]="isParentDisabled()">
-          <mat-option [value]="null">None</mat-option>
-          @for (p of parentCategories(); track $index) {
-          <mat-option [value]="p.id">{{ p.name }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-
-      <!-- Action Buttons -->
-      <div class="flex md:col-span-3 items-center justify-end gap-4 mt-3">
-        <!-- Reset -->
-        <button
-          type="button"
-          mat-button
-          matButton="filled"
-          class="text-primary !bg-red-colour flex items-center gap-1"
-          (click)="resetForm()"
-        >
-          <mat-icon>refresh</mat-icon>
-          Reset
-        </button>
-
-        <!-- Add / Save -->
-        <button
-          type="submit"
-          mat-flat-button
-          class="!bg-primary !text-white px-6 py-2 rounded-lg shadow-md"
-          [disabled]="form.invalid"
-        >
-          <mat-icon class="mr-1 !text-white">
-            {{ editId() ? "save" : "add" }}
-          </mat-icon>
-          {{ editId() ? "Save Changes" : "Add" }}
-        </button>
-      </div>
-    </form>
-
-    <div class="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-4 mt-10">
-      <div class="flex w-full gap-4 mt-4">
-        <button
-          class="btn rounded-md !text-primary"
-          matButton="filled"
-          matButton
-          type="button"
-          [ngClass]="{
-            '!bg-primary !text-white': lastSelectedTab === 'ALL',
-            '!bg-primary-superlight': lastSelectedTab !== 'ALL'
-          }"
-          (click)="selectTab('ALL')"
-        >
-          <mat-icon>format_list_bulleted</mat-icon>
-          All
-        </button>
-        <button
-          class="btn rounded-md !text-primary"
-          type="button"
-          matButton="filled"
-          matButton
-          [ngClass]="{
-            '!bg-primary !text-white':
-              lastSelectedTab === titleCategoryType.CATEGORY,
-            '!bg-primary-superlight':
-              lastSelectedTab !== titleCategoryType.CATEGORY
-          }"
-          (click)="selectTab(titleCategoryType.CATEGORY)"
-        >
-          <mat-icon>category</mat-icon>
-
-          Category
-        </button>
-        <button
-          class="btn rounded-md bg-primary-superlight !text-primary"
-          type="button"
-          matButton="filled"
-          matButton
-          [ngClass]="{
-            '!bg-primary !text-white':
-              lastSelectedTab === titleCategoryType.SUBCATEGORY,
-            '!bg-primary-superlight':
-              lastSelectedTab !== titleCategoryType.SUBCATEGORY
-          }"
-          (click)="selectTab(titleCategoryType.SUBCATEGORY)"
-        >
-          <mat-icon>chevron_right</mat-icon>
-
-          Sub Category
-        </button>
-        <button
-          class="btn rounded-md bg-primary-superlight !text-primary"
-          type="button"
-          matButton="filled"
-          matButton
-          [ngClass]="{
-            '!bg-primary !text-white':
-              lastSelectedTab === titleCategoryType.TRADE,
-            '!bg-primary-superlight':
-              lastSelectedTab !== titleCategoryType.TRADE
-          }"
-          (click)="selectTab(titleCategoryType.TRADE)"
-        >
-          <mat-icon>shopping_cart</mat-icon>
-
-          Trade Category
-        </button>
-        <button
-          class="btn rounded-md bg-primary-superlight !text-primary"
-          type="button"
-          matButton="filled"
-          matButton
-          [ngClass]="{
-            '!bg-primary !text-white': lastSelectedTab === 'GENRE',
-            '!bg-primary-superlight': lastSelectedTab !== 'GENRE'
-          }"
-          (click)="selectTab(titleCategoryType.GENRE)"
-        >
-          <mat-icon>style</mat-icon>
-
-          Genre
-        </button>
-      </div>
-      <mat-form-field class="w-full">
-        <mat-label>Search name or description</mat-label>
-        <input
-          matInput
+          type="text"
           [value]="searchText()"
           (input)="searchText.set($any($event.target).value)"
+          class="border border-[rgba(15,23,42,0.1)] rounded-lg px-3 py-[0.65rem] pr-10 text-[0.95rem] focus:outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_var(--primary-superlight)] w-full"
+          placeholder="Search..."
         />
-        <mat-icon matSuffix>search</mat-icon>
-      </mat-form-field>
-    </div>
-    <div class="overflow-x-auto">
-      <mat-accordion>
-        <!-- CATEGORY LIST -->
-        @if (lastSelectedTab === titleCategoryType.CATEGORY || lastSelectedTab
-        === 'ALL') {
-        <div class="max-h-1/2 overflow-y-auto border rounded-lg mt-4 relative">
-          <div class="bg-[var(--primary-light)] sticky top-0 z-[200]">
-            <h3 class="text-lg font-medium p-4">Category List</h3>
-          </div>
-
-          @for (cat of categoriesWithChildren(); track $index) {
-          <mat-expansion-panel class="mb-2">
-            <mat-expansion-panel-header>
-              <mat-panel-title class="font-medium text-base">
-                {{ cat.name }}
-              </mat-panel-title>
-
-              <mat-panel-description class="flex gap-2 !justify-end">
-                <button
-                  class="!bg-primary"
-                  mat-icon-button
-                  (click)="startEdit(cat)"
-                >
-                  <mat-icon class="!text-white">edit</mat-icon>
-                </button>
-                <button
-                  mat-icon-button
-                  class="!bg-red-colour !text-white"
-                  (click)="deleteItem(cat.id, cat.type)"
-                >
-                  <mat-icon class="!text-white">delete</mat-icon>
-                </button>
-              </mat-panel-description>
-            </mat-expansion-panel-header>
-
-            <div class="max-h-64 overflow-y-auto pr-2">
-              @if(cat.children.length === 0) {
-              <div class="text-sm text-text-secondary py-2">
-                No Subcategories
-              </div>
-              } @for (child of cat.children; track $index) {
-              <div class="flex items-center justify-between py-2 border-b">
-                <div class="text-sm">{{ child.name }}</div>
-                <div class="flex gap-2">
-                  <button
-                    mat-icon-button
-                    class="!bg-primary !mr-2"
-                    (click)="startEdit(child)"
-                  >
-                    <mat-icon class="!text-white">edit</mat-icon>
-                  </button>
-                  <button
-                    mat-icon-button
-                    class="!bg-red-colour !text-white"
-                    (click)="deleteItem(child.id, child.type)"
-                  >
-                    <mat-icon class="!text-white">delete</mat-icon>
-                  </button>
-                </div>
-              </div>
-              }
-            </div>
-          </mat-expansion-panel>
-          }
-        </div>
-        } @if (lastSelectedTab === titleCategoryType.SUBCATEGORY ||
-        lastSelectedTab === 'ALL') {
-        <div class="max-h-80 overflow-y-auto border rounded-lg mt-4 relative">
-          <div class="bg-[var(--primary-light)] sticky top-0 z-[200]">
-            <h3 class="text-lg font-medium p-4">Sub Category List</h3>
-          </div>
-
-          <table mat-table [dataSource]="subCategory()" class="min-w-full">
-            <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Category Name</th>
-              <td mat-cell *matCellDef="let item">{{ item.name }}</td>
-            </ng-container>
-            <ng-container matColumnDef="parent">
-              <th mat-header-cell *matHeaderCellDef>Parent Category</th>
-              <td mat-cell *matCellDef="let item">
-                {{ item.parent?.name || "-" }}
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
-              <td mat-cell *matCellDef="let item">
-                <button
-                  mat-icon-button
-                  class="!bg-primary !mr-2"
-                  (click)="startEdit(item)"
-                >
-                  <mat-icon class="!text-white">edit</mat-icon>
-                </button>
-                <button
-                  mat-icon-button
-                  class="!bg-red-colour !text-white"
-                  (click)="deleteItem(item.id, item.type)"
-                >
-                  <mat-icon class="!text-white">delete</mat-icon>
-                </button>
-              </td>
-            </ng-container>
-
-            <tr
-              mat-header-row
-              *matHeaderRowDef="['name', 'parent', 'actions']; sticky: true"
-            ></tr>
-            <tr
-              mat-row
-              *matRowDef="let row; columns: ['name', 'parent', 'actions']"
-            ></tr>
-          </table>
-        </div>
-        } @if (lastSelectedTab === titleCategoryType.GENRE || lastSelectedTab
-        === 'ALL') {
-        <div class="max-h-80 overflow-y-auto border rounded-lg mt-4 relative">
-          <div class="bg-[var(--primary-light)] sticky top-0 z-[200]">
-            <h3 class="text-lg font-medium p-4">Genre</h3>
-          </div>
-
-          <table mat-table [dataSource]="genre()" class="min-w-full">
-            <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Name</th>
-              <td mat-cell *matCellDef="let item">{{ item.name }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
-              <td mat-cell *matCellDef="let item">
-                <button
-                  mat-icon-button
-                  class="!bg-primary !mr-2"
-                  (click)="startEdit(item)"
-                >
-                  <mat-icon class="!text-white">edit</mat-icon>
-                </button>
-                <button
-                  mat-icon-button
-                  class="!bg-red-colour !text-white"
-                  (click)="deleteItem(item.id, item.type)"
-                >
-                  <mat-icon class="!text-white">delete</mat-icon>
-                </button>
-              </td>
-            </ng-container>
-
-            <tr
-              mat-header-row
-              *matHeaderRowDef="['name', 'actions']; sticky: true"
-            ></tr>
-            <tr mat-row *matRowDef="let row; columns: ['name', 'actions']"></tr>
-          </table>
-        </div>
-        } @if (lastSelectedTab === titleCategoryType.TRADE || lastSelectedTab
-        === 'ALL') {
-        <div class="max-h-80 overflow-y-auto border rounded-lg mt-4 relative">
-          <div class="bg-[var(--primary-light)] sticky top-0 z-[200]">
-            <h3 class="text-lg font-medium p-4">Trade</h3>
-          </div>
-
-          <table mat-table [dataSource]="trade()" class="min-w-full">
-            <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Name</th>
-              <td mat-cell *matCellDef="let item">{{ item.name }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
-              <td mat-cell *matCellDef="let item">
-                <button
-                  mat-icon-button
-                  class="!bg-primary !mr-2"
-                  (click)="startEdit(item)"
-                >
-                  <mat-icon class="!text-white">edit</mat-icon>
-                </button>
-                <button
-                  mat-icon-button
-                  class="!bg-red-colour !text-white"
-                  (click)="deleteItem(item.id, item.type)"
-                >
-                  <mat-icon class="!text-white">delete</mat-icon>
-                </button>
-              </td>
-            </ng-container>
-
-            <tr
-              mat-header-row
-              *matHeaderRowDef="['name', 'actions']; sticky: true"
-            ></tr>
-            <tr mat-row *matRowDef="let row; columns: ['name', 'actions']"></tr>
-          </table>
-        </div>
-        }
-      </mat-accordion>
-    </div>
+        <mat-icon
+          class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+          >search</mat-icon
+        >
+      </div>
+    </label>
   </div>
-</div>
+  <div class="overflow-x-auto">
+    <mat-accordion>
+      <!-- CATEGORY LIST -->
+      @if (lastSelectedTab === titleCategoryType.CATEGORY || lastSelectedTab ===
+      'ALL') {
+      <div class="max-h-1/2 overflow-y-auto border rounded-lg mt-4 relative">
+        <div class="bg-[var(--primary-light)] sticky top-0 z-[200]">
+          <h3 class="text-lg font-medium p-4">Category List</h3>
+        </div>
+
+        @for (cat of categoriesWithChildren(); track $index) {
+        <mat-expansion-panel class="mb-2">
+          <mat-expansion-panel-header>
+            <mat-panel-title class="font-medium text-base">
+              {{ cat.name }}
+            </mat-panel-title>
+
+            <mat-panel-description class="flex gap-2 !justify-end">
+              <button
+                class="!bg-primary"
+                mat-icon-button
+                (click)="startEdit(cat)"
+              >
+                <mat-icon class="!text-white">edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                class="!bg-red-colour !text-white"
+                (click)="deleteItem(cat.id, cat.type)"
+              >
+                <mat-icon class="!text-white">delete</mat-icon>
+              </button>
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <div class="max-h-64 overflow-y-auto pr-2">
+            @if(cat.children.length === 0) {
+            <div class="text-sm text-text-secondary py-2">No Subcategories</div>
+            } @for (child of cat.children; track $index) {
+            <div class="flex items-center justify-between py-2 border-b">
+              <div class="text-sm">{{ child.name }}</div>
+              <div class="flex gap-2">
+                <button
+                  mat-icon-button
+                  class="!bg-primary !mr-2"
+                  (click)="startEdit(child)"
+                >
+                  <mat-icon class="!text-white">edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  class="!bg-red-colour !text-white"
+                  (click)="deleteItem(child.id, child.type)"
+                >
+                  <mat-icon class="!text-white">delete</mat-icon>
+                </button>
+              </div>
+            </div>
+            }
+          </div>
+        </mat-expansion-panel>
+        }
+      </div>
+      } @if (lastSelectedTab === titleCategoryType.SUBCATEGORY ||
+      lastSelectedTab === 'ALL') {
+      <div class="max-h-80 overflow-y-auto border rounded-lg mt-4 relative">
+        <div class="bg-[var(--primary-light)] sticky top-0 z-[200]">
+          <h3 class="text-lg font-medium p-4">Sub Category List</h3>
+        </div>
+
+        <table mat-table [dataSource]="subCategory()" class="min-w-full">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Category Name</th>
+            <td mat-cell *matCellDef="let item">{{ item.name }}</td>
+          </ng-container>
+          <ng-container matColumnDef="parent">
+            <th mat-header-cell *matHeaderCellDef>Parent Category</th>
+            <td mat-cell *matCellDef="let item">
+              {{ item.parent?.name || "-" }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let item">
+              <button
+                mat-icon-button
+                class="!bg-primary !mr-2"
+                (click)="startEdit(item)"
+              >
+                <mat-icon class="!text-white">edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                class="!bg-red-colour !text-white"
+                (click)="deleteItem(item.id, item.type)"
+              >
+                <mat-icon class="!text-white">delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr
+            mat-header-row
+            *matHeaderRowDef="['name', 'parent', 'actions']; sticky: true"
+          ></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: ['name', 'parent', 'actions']"
+          ></tr>
+        </table>
+      </div>
+      } @if (lastSelectedTab === titleCategoryType.GENRE || lastSelectedTab ===
+      'ALL') {
+      <div class="max-h-80 overflow-y-auto border rounded-lg mt-4 relative">
+        <div class="bg-[var(--primary-light)] sticky top-0 z-[200]">
+          <h3 class="text-lg font-medium p-4">Genre</h3>
+        </div>
+
+        <table mat-table [dataSource]="genre()" class="min-w-full">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Name</th>
+            <td mat-cell *matCellDef="let item">{{ item.name }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let item">
+              <button
+                mat-icon-button
+                class="!bg-primary !mr-2"
+                (click)="startEdit(item)"
+              >
+                <mat-icon class="!text-white">edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                class="!bg-red-colour !text-white"
+                (click)="deleteItem(item.id, item.type)"
+              >
+                <mat-icon class="!text-white">delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr
+            mat-header-row
+            *matHeaderRowDef="['name', 'actions']; sticky: true"
+          ></tr>
+          <tr mat-row *matRowDef="let row; columns: ['name', 'actions']"></tr>
+        </table>
+      </div>
+      } @if (lastSelectedTab === titleCategoryType.TRADE || lastSelectedTab ===
+      'ALL') {
+      <div class="max-h-80 overflow-y-auto border rounded-lg mt-4 relative">
+        <div class="bg-[var(--primary-light)] sticky top-0 z-[200]">
+          <h3 class="text-lg font-medium p-4">Trade</h3>
+        </div>
+
+        <table mat-table [dataSource]="trade()" class="min-w-full">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Name</th>
+            <td mat-cell *matCellDef="let item">{{ item.name }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let item">
+              <button
+                mat-icon-button
+                class="!bg-primary !mr-2"
+                (click)="startEdit(item)"
+              >
+                <mat-icon class="!text-white">edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                class="!bg-red-colour !text-white"
+                (click)="deleteItem(item.id, item.type)"
+              >
+                <mat-icon class="!text-white">delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr
+            mat-header-row
+            *matHeaderRowDef="['name', 'actions']; sticky: true"
+          ></tr>
+          <tr mat-row *matRowDef="let row; columns: ['name', 'actions']"></tr>
+        </table>
+      </div>
+      }
+    </mat-accordion>
+  </div>
+</section>

@@ -1,154 +1,235 @@
-<form
-  [formGroup]="form"
-  class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-white rounded shadow"
+<section
+  class="bg-white rounded-xl p-6 shadow-[0_10px_25px_rgba(61,26,93,0.08)] border border-[#ceb8ef]"
 >
-  <!-- Section: Basic Information -->
-  <div class="col-span-2">
-    <h2 class="text-lg font-medium mb-2 text-text-primary">
-      Basic Information
-    </h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Total Pages -->
-      <mat-form-field class="w-full">
-        <mat-label>{{ "totalpages" | translate }}</mat-label>
-        <input matInput type="number" formControlName="totalPages" />
-      </mat-form-field>
-
-      <!-- Color Pages -->
-      <mat-form-field class="w-full">
-        <mat-label>{{ "colourpages" | translate }}</mat-label>
-        <input matInput type="number" formControlName="colorPages" />
-      </mat-form-field>
+  <div class="flex items-center justify-between gap-4 mb-6 flex-wrap">
+    <div>
+      <h2 class="text-xl font-semibold text-[var(--text-heading)]">
+        {{ "printingcalculator" | translate }}
+      </h2>
+      <p class="mt-1 text-[#475569] text-[0.95rem]">
+        Calculate printing costs based on book specifications and options.
+      </p>
     </div>
   </div>
 
-  <!-- Section: Options With Update Buttons -->
-  <div class="col-span-2">
-    <h2 class="text-lg font-medium mt-4 mb-2 text-text-primary">
-      Customization Options
-    </h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Size Category - First -->
-      <mat-form-field class="w-full">
-        <mat-label>{{ "sizecategory" | translate }}</mat-label>
-        <mat-select formControlName="sizeCategoryId">
-          @for (size of sizeTypes(); track size.id) {
-          <mat-option [value]="size.id">{{ size.size }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-
-      <!-- Binding Type -->
-      <mat-form-field class="w-full">
-        <mat-label>{{ "bindingtype" | translate }}</mat-label>
-        <mat-select
-          formControlName="bindingTypeId"
-          [disabled]="!isSizeCategorySelected()"
+  <form class="flex flex-col gap-6" [formGroup]="form">
+    <!-- Section: Basic Information -->
+    <div>
+      <h3 class="text-base font-semibold mb-3 text-[var(--text-heading)]">
+        Basic Information
+      </h3>
+      <div class="grid gap-4 md:grid-cols-2">
+        <label
+          class="flex flex-col gap-[0.35rem] text-[0.9rem] text-[#0f172a] font-medium"
         >
-          @for (type of filteredBindingTypes(); track type.id) {
-          <mat-option [value]="type.id">{{ type.name }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+          <span>{{ "totalpages" | translate }}</span>
+          <input
+            type="number"
+            min="0"
+            placeholder="0"
+            formControlName="totalPages"
+            class="border border-[rgba(15,23,42,0.1)] rounded-lg px-3 py-[0.65rem] text-[0.95rem] focus:outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_var(--primary-superlight)]"
+          />
+        </label>
 
-      <!-- Paper Quality -->
-      <mat-form-field class="w-full">
-        <mat-label>{{ "papertype" | translate }}</mat-label>
-        <mat-select
-          formControlName="paperQuailtyId"
-          [disabled]="!isSizeCategorySelected()"
+        <label
+          class="flex flex-col gap-[0.35rem] text-[0.9rem] text-[#0f172a] font-medium"
         >
-          @for (paper of filteredPaperQualityTypes(); track paper.id) {
-          <mat-option [value]="paper.id">{{ paper.name }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+          <span>{{ "colourpages" | translate }}</span>
+          <input
+            type="number"
+            min="0"
+            placeholder="0"
+            formControlName="colorPages"
+            class="border border-[rgba(15,23,42,0.1)] rounded-lg px-3 py-[0.65rem] text-[0.95rem] focus:outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_var(--primary-superlight)]"
+          />
+        </label>
+      </div>
+    </div>
 
-      <!-- Lamination Type -->
-      <mat-form-field class="w-full">
-        <mat-label>{{ "laminationtype" | translate }}</mat-label>
-        <mat-select
-          formControlName="laminationTypeId"
-          [disabled]="!isSizeCategorySelected()"
+    <!-- Section: Customization Options -->
+    <div>
+      <h3 class="text-base font-semibold mb-3 text-[var(--text-heading)]">
+        Customization Options
+      </h3>
+      <div class="grid gap-4 md:grid-cols-2">
+        <label
+          class="flex flex-col gap-[0.35rem] text-[0.9rem] text-[#0f172a] font-medium"
         >
-          @for (lamination of filteredLaminationTypes(); track lamination.id) {
-          <mat-option [value]="lamination.id">{{ lamination.name }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-    </div>
-  </div>
+          <span>{{ "sizecategory" | translate }}</span>
+          <select
+            formControlName="sizeCategoryId"
+            class="border border-[rgba(15,23,42,0.1)] rounded-lg px-3 py-[0.65rem] text-[0.95rem] focus:outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_var(--primary-superlight)]"
+          >
+            <option value="" disabled>Select size category</option>
+            @for (size of sizeTypes(); track size.id) {
+            <option [value]="size.id">{{ size.size }}</option>
+            }
+          </select>
+        </label>
 
-  <!-- Section: Options Checkboxes -->
-  <div class="col-span-2">
-    <h2 class="text-lg font-medium mt-4 mb-2 text-text-primary">
-      Other Options
-    </h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Inside Cover -->
-      <div class="flex items-center gap-4">
-        <mat-checkbox formControlName="insideCover">
-          {{ "isinsidecover" | translate }}
-        </mat-checkbox>
-        @if (isSizeCategorySelected() && isSuperAdmin()) {
-        <span class="text-sm text-gray-600">
-          ({{ selectedSizeCategoryInsideCoverPrice() | currency : "INR" }})
-        </span>
-        }
-      </div>
+        <label
+          class="flex flex-col gap-[0.35rem] text-[0.9rem] text-[#0f172a] font-medium"
+        >
+          <span>{{ "bindingtype" | translate }}</span>
+          <select
+            formControlName="bindingTypeId"
+            [disabled]="!isSizeCategorySelected()"
+            class="border border-[rgba(15,23,42,0.1)] rounded-lg px-3 py-[0.65rem] text-[0.95rem] focus:outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_var(--primary-superlight)] disabled:bg-[#f1f5f9] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <option value="" disabled>Select binding type</option>
+            @for (type of filteredBindingTypes(); track type.id) {
+            <option [value]="type.id">{{ type.name }}</option>
+            }
+          </select>
+        </label>
 
-      <!-- Random Color Pages -->
-      <mat-checkbox formControlName="isColorPagesRandom">
-        {{ "iscolorpagesrandom" | translate }}
-      </mat-checkbox>
-    </div>
-  </div>
+        <label
+          class="flex flex-col gap-[0.35rem] text-[0.9rem] text-[#0f172a] font-medium"
+        >
+          <span>{{ "papertype" | translate }}</span>
+          <select
+            formControlName="paperQuailtyId"
+            [disabled]="!isSizeCategorySelected()"
+            class="border border-[rgba(15,23,42,0.1)] rounded-lg px-3 py-[0.65rem] text-[0.95rem] focus:outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_var(--primary-superlight)] disabled:bg-[#f1f5f9] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <option value="" disabled>Select paper quality</option>
+            @for (paper of filteredPaperQualityTypes(); track paper.id) {
+            <option [value]="paper.id">{{ paper.name }}</option>
+            }
+          </select>
+        </label>
 
-  <!-- Section: Cost Calculation -->
-  <div
-    class="bg-[var(--primary-light)] border border-purple-700 rounded-lg p-6 shadow-md"
-  >
-    <h2 class="text-lg font-medium text-text-heading mb-4">Cost Breakdown</h2>
-    <div class="grid grid-cols-2 gap-4 gap-x-8 text-sm text-gray-700">
-      <!-- Printing Per Item -->
-      <div class="flex justify-between">
-        <span>Printing Per Item :</span>
-        <span class="font-medium text-gray-900">
-          {{ calculation()?.printPerItem | currency : "INR" }}
-        </span>
-      </div>
-
-      <!-- Weight Per Item -->
-      <div class="flex justify-between">
-        <span>Weight Per Item :</span>
-        <span class="font-medium text-gray-900">
-          {{ calculation()?.deliveryWeightPerItem || "N/A" }} kg
-        </span>
-      </div>
-
-      <!-- Delivery -->
-      <div class="flex justify-between">
-        <span>Delivery Cost :</span>
-        <span class="font-medium text-gray-900">
-          {{ calculation()?.deliveryCost | currency : "INR" }}
-        </span>
-      </div>
-
-      <!-- Total Weight -->
-      <div class="flex justify-between">
-        <span>Total Weight :</span>
-        <span class="font-medium text-gray-900">
-          {{ calculation()?.deliveryWeight || "N/A" }} kg
-        </span>
-      </div>
-
-      <!-- Total Printing Cost -->
-      <div
-        class="col-span-2 flex justify-between border-t pt-4 mt-2 font-semibold text-base text-text-heading"
-      >
-        <span>Total Printing</span>
-        <span>{{ calculation()?.printCost | currency : "INR" }}</span>
+        <label
+          class="flex flex-col gap-[0.35rem] text-[0.9rem] text-[#0f172a] font-medium"
+        >
+          <span>{{ "laminationtype" | translate }}</span>
+          <select
+            formControlName="laminationTypeId"
+            [disabled]="!isSizeCategorySelected()"
+            class="border border-[rgba(15,23,42,0.1)] rounded-lg px-3 py-[0.65rem] text-[0.95rem] focus:outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_var(--primary-superlight)] disabled:bg-[#f1f5f9] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <option value="" disabled>Select lamination type</option>
+            @for (lamination of filteredLaminationTypes(); track lamination.id)
+            {
+            <option [value]="lamination.id">{{ lamination.name }}</option>
+            }
+          </select>
+        </label>
       </div>
     </div>
+
+    <!-- Section: Other Options -->
+    <div>
+      <h3 class="text-base font-semibold mb-3 text-[var(--text-heading)]">
+        Other Options
+      </h3>
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="flex items-center gap-2 text-[0.95rem] text-[#0f172a]">
+          <input
+            type="checkbox"
+            id="insideCover"
+            formControlName="insideCover"
+            class="w-[1.1rem] h-[1.1rem] cursor-pointer accent-[var(--primary)]"
+          />
+          <label for="insideCover" class="cursor-pointer select-none">
+            {{ "isinsidecover" | translate }}
+            @if (isSizeCategorySelected() && isSuperAdmin()) {
+            <span class="text-sm text-gray-600">
+              ({{ selectedSizeCategoryInsideCoverPrice() | currency : "INR" }})
+            </span>
+            }
+          </label>
+        </div>
+
+        <div class="flex items-center gap-2 text-[0.95rem] text-[#0f172a]">
+          <input
+            type="checkbox"
+            id="isColorPagesRandom"
+            formControlName="isColorPagesRandom"
+            class="w-[1.1rem] h-[1.1rem] cursor-pointer accent-[var(--primary)]"
+          />
+          <label for="isColorPagesRandom" class="cursor-pointer select-none">
+            {{ "iscolorpagesrandom" | translate }}
+          </label>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  @if (calculation()) {
+  <div class="mt-6">
+    <h3 class="text-base font-semibold mb-3 text-[var(--text-heading)]">
+      Cost Breakdown
+    </h3>
+    <div
+      class="border border-[#ceb8ef] rounded-xl p-4 bg-[var(--light-purple-bg)]"
+    >
+      <table class="w-full border-collapse">
+        <tbody>
+          <tr>
+            <td
+              class="py-2 border-b border-[rgba(61,26,93,0.1)] font-medium text-[#475569]"
+            >
+              Printing Per Item
+            </td>
+            <td
+              class="py-2 border-b border-[rgba(61,26,93,0.1)] text-right font-semibold text-[var(--text-heading)]"
+            >
+              {{ calculation()?.printPerItem | currency : "INR" }}
+            </td>
+          </tr>
+          <tr>
+            <td
+              class="py-2 border-b border-[rgba(61,26,93,0.1)] font-medium text-[#475569]"
+            >
+              Weight Per Item
+            </td>
+            <td
+              class="py-2 border-b border-[rgba(61,26,93,0.1)] text-right font-semibold text-[var(--text-heading)]"
+            >
+              {{ calculation()?.deliveryWeightPerItem || "N/A" }} kg
+            </td>
+          </tr>
+          <tr>
+            <td
+              class="py-2 border-b border-[rgba(61,26,93,0.1)] font-medium text-[#475569]"
+            >
+              Delivery Cost
+            </td>
+            <td
+              class="py-2 border-b border-[rgba(61,26,93,0.1)] text-right font-semibold text-[var(--text-heading)]"
+            >
+              {{ calculation()?.deliveryCost | currency : "INR" }}
+            </td>
+          </tr>
+          <tr>
+            <td
+              class="py-2 border-b border-[rgba(61,26,93,0.1)] font-medium text-[#475569]"
+            >
+              Total Weight
+            </td>
+            <td
+              class="py-2 border-b border-[rgba(61,26,93,0.1)] text-right font-semibold text-[var(--text-heading)]"
+            >
+              {{ calculation()?.deliveryWeight || "N/A" }} kg
+            </td>
+          </tr>
+          <tr>
+            <td
+              class="py-3 border-t-2 border-[#ceb8ef] font-medium text-[#475569] text-[1.05rem]"
+            >
+              Total Printing
+            </td>
+            <td
+              class="py-3 border-t-2 border-[#ceb8ef] text-right font-semibold text-[var(--text-heading)] text-[1.05rem]"
+            >
+              {{ calculation()?.printCost | currency : "INR" }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
-</form>
+  }
+</section>

@@ -1,5 +1,9 @@
 :host .mat-mdc-menu-content {
   padding: 0 !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 10px 25px rgba(61, 26, 93, 0.15) !important;
+  border: 1px solid #ceb8ef !important;
+  overflow: hidden !important;
 }
 
 .loading-dots::after {
@@ -26,4 +30,30 @@
   100% {
     content: "";
   }
+}
+
+/* Custom scrollbar for notifications list */
+:host ::ng-deep .mat-mdc-menu-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+:host ::ng-deep .mat-mdc-menu-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+:host ::ng-deep .mat-mdc-menu-content::-webkit-scrollbar-thumb {
+  background: #ceb8ef;
+  border-radius: 3px;
+}
+
+:host ::ng-deep .mat-mdc-menu-content::-webkit-scrollbar-thumb:hover {
+  background: #b8a0e0;
+}
+
+/* Line clamp utility */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
