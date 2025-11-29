@@ -69,6 +69,12 @@ export class Sidebar implements OnInit {
 
     // Filter menu items based on access level
     return menuItems.filter((item) => {
+      // Hide Authors and Publishers links for author role (only show for publisher and superadmin)
+      if (accessLevel === 'AUTHER') {
+        if (item.name === 'Authors' || item.name === 'Publishers') {
+          return false;
+        }
+      }
       // Hide Wallet for superadmin
       if (accessLevel === 'SUPERADMIN' && item.name === 'Wallet') {
         return false;

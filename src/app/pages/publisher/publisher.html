@@ -128,7 +128,8 @@
       >
         <mat-icon class="!text-white">lock_reset</mat-icon>
       </button>
-      @if(element.status === PublisherStatus.Active) {
+      @if(element.status === PublisherStatus.Active &&
+      loggedInUser()?.accessLevel !== 'SUPERADMIN') {
       <button
         class="!bg-primary"
         mat-icon-button
