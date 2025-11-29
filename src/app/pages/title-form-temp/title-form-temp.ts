@@ -1,4 +1,6 @@
 import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   computed,
   effect,
@@ -125,6 +127,7 @@ import { PlatformService } from '../../services/platform';
   ],
   templateUrl: './title-form-temp.html',
   styleUrl: './title-form-temp.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TitleFormTemp implements OnDestroy {
   private readonly destroy$ = new Subject<void>();
@@ -140,6 +143,7 @@ export class TitleFormTemp implements OnDestroy {
     private router: Router,
     private translateService: TranslateService,
     private staticValuesService: StaticValuesService,
+    private cdr: ChangeDetectorRef,
     userService: UserService
   ) {
     this.loggedInUser = userService.loggedInUser$;
@@ -197,15 +201,15 @@ export class TitleFormTemp implements OnDestroy {
   onSelectDocumentsReady() {
     this.tempForm.get('hasFiles')?.setValue(true);
 
-    // Safe null check before accessing nativeElement
-    setTimeout(() => {
+    // Use queueMicrotask for DOM access after change detection
+    queueMicrotask(() => {
       if (this.scrollTarget?.nativeElement) {
         this.scrollTarget.nativeElement.scrollIntoView({
           behavior: 'smooth',
           block: 'start',
         });
       }
-    }, 200);
+    });
   }
   private readonly baseOrder = [
     'details',
@@ -277,6 +281,7 @@ export class TitleFormTemp implements OnDestroy {
   /**
    * Move to next step after successful submission
    * Only moves if not raising a ticket
+   * Uses logical step order instead of DOM order to handle conditional steps
    */
   private goToNextStep(): void {
     // Don't move to next step when raising a ticket
@@ -289,64 +294,77 @@ export class TitleFormTemp implements OnDestroy {
       return;
     }
 
-    const currentIndex = stepperInstance.selectedIndex;
-    const totalSteps = stepperInstance.steps.length;
+    // Get current step name from logical order
+    const currentStepName = this.currentStep();
+    const stepOrder = this.getStepOrder();
 
-    // Check if we can move to next step
-    if (currentIndex >= totalSteps - 1) {
-      return;
+    if (!currentStepName) {
+      // If no current step, try to get from stepper index
+      const currentIndex = stepperInstance.selectedIndex;
+      const stepName = this.getStepNameFromIndex(currentIndex);
+      if (stepName) {
+        this.currentStep.set(stepName);
+      } else {
+        return; // Can't determine current step
+      }
     }
 
-    // Use setTimeout to ensure stepper is ready and form state is updated
-    setTimeout(() => {
+    // Find current step index in logical order
+    const currentStepIndex = stepOrder.indexOf(this.currentStep() || '');
+    if (currentStepIndex === -1 || currentStepIndex >= stepOrder.length - 1) {
+      return; // Already at last step or step not found
+    }
+
+    // Get next step name from logical order
+    const nextStepName = stepOrder[currentStepIndex + 1];
+    if (!nextStepName) {
+      return; // No next step
+    }
+
+    // Find the DOM index for the next step
+    const nextStepIndex = this.getIndexFromStepName(nextStepName);
+    if (nextStepIndex === -1) {
+      return; // Step not found in DOM (shouldn't happen, but safety check)
+    }
+
+    // Use queueMicrotask to ensure stepper is ready and form state is updated
+    queueMicrotask(() => {
       try {
         // Ensure current step is marked as completed if it has a stepControl
+        const currentIndex = stepperInstance.selectedIndex;
         if (currentIndex >= 0 && currentIndex < stepperInstance.steps.length) {
           const currentStep = stepperInstance.steps.toArray()[currentIndex];
           if (currentStep?.stepControl) {
             // Mark as touched and ensure it's valid
             currentStep.stepControl.markAllAsTouched();
-            // If still invalid, mark as completed anyway since we've saved
-            if (!currentStep.stepControl.valid) {
-              // Force the step to be completed by directly setting selectedIndex
-              const nextIndex = currentIndex + 1;
-              stepperInstance.selectedIndex = nextIndex;
-              const newStepName = this.getStepNameFromIndex(nextIndex);
-              if (newStepName) {
-                this.currentStep.set(newStepName);
-                this.updateStepInQueryParams(newStepName);
-              }
-              return;
-            }
           }
         }
 
-        // Move to next step using next() method
-        stepperInstance.next();
-
-        // Update step signal and query params after stepper updates
-        setTimeout(() => {
-          const newIndex = stepperInstance.selectedIndex;
-          const newStepName = this.getStepNameFromIndex(newIndex);
-          if (newStepName && newIndex !== currentIndex) {
-            this.currentStep.set(newStepName);
-            this.updateStepInQueryParams(newStepName);
-          }
-        }, 100);
+        // Navigate to next step by setting selectedIndex directly
+        // This ensures we go to the correct step regardless of DOM order
+        stepperInstance.selectedIndex = nextStepIndex;
+        this.currentStep.set(nextStepName);
+        this.updateStepInQueryParams(nextStepName);
+        this.cdr.markForCheck();
       } catch (error) {
         console.error('Error moving to next step:', error);
-        // Fallback: try direct index set
-        const nextIndex = currentIndex + 1;
-        if (nextIndex < totalSteps) {
-          stepperInstance.selectedIndex = nextIndex;
-          const newStepName = this.getStepNameFromIndex(nextIndex);
-          if (newStepName) {
-            this.currentStep.set(newStepName);
-            this.updateStepInQueryParams(newStepName);
-          }
+        // Fallback: try using next() method
+        try {
+          stepperInstance.next();
+          queueMicrotask(() => {
+            const newIndex = stepperInstance.selectedIndex;
+            const newStepName = this.getStepNameFromIndex(newIndex);
+            if (newStepName) {
+              this.currentStep.set(newStepName);
+              this.updateStepInQueryParams(newStepName);
+              this.cdr.markForCheck();
+            }
+          });
+        } catch (fallbackError) {
+          console.error('Error in fallback navigation:', fallbackError);
         }
       }
-    }, 100);
+    });
   }
 
   /**
@@ -362,11 +380,12 @@ export class TitleFormTemp implements OnDestroy {
 
     const stepperInstance = this.stepper();
     if (stepperInstance && index < stepperInstance.steps.length) {
-      setTimeout(() => {
+      queueMicrotask(() => {
         stepperInstance.selectedIndex = index;
         this.currentStep.set(step);
         this.updateStepInQueryParams(step);
-      }, 200);
+        this.cdr.markForCheck();
+      });
     }
   }
 
@@ -375,11 +394,12 @@ export class TitleFormTemp implements OnDestroy {
    */
   private setupStepperStepTracking(): void {
     // Wait for stepper to be available and form to be initialized
-    setTimeout(() => {
+    // Use afterNextRender in constructor context, but queueMicrotask here
+    Promise.resolve().then(() => {
       const stepperInstance = this.stepper();
       if (!stepperInstance) {
         // Retry if stepper not ready yet
-        setTimeout(() => this.setupStepperStepTracking(), 200);
+        queueMicrotask(() => this.setupStepperStepTracking());
         return;
       }
 
@@ -391,15 +411,16 @@ export class TitleFormTemp implements OnDestroy {
           if (stepName) {
             this.currentStep.set(stepName);
             this.updateStepInQueryParams(stepName);
+            this.cdr.markForCheck();
 
             // Calculate MSP when moving to pricing step
             // This ensures MSP is calculated even if it wasn't calculated earlier
             if (stepName === 'pricing') {
-              setTimeout(() => {
+              queueMicrotask(() => {
                 // Force calculation when moving to pricing step
                 // This handles cases where fields were filled but calculation didn't trigger
                 this.calculatePrintingCost();
-              }, 200);
+              });
             }
           }
         });
@@ -412,13 +433,14 @@ export class TitleFormTemp implements OnDestroy {
         if (targetIndex !== -1 && targetIndex < stepperInstance.steps.length) {
           stepperInstance.selectedIndex = targetIndex;
           this.currentStep.set(queryStep);
+          this.cdr.markForCheck();
 
           // Calculate MSP if navigating to pricing step
           if (queryStep === 'pricing') {
-            setTimeout(() => {
+            queueMicrotask(() => {
               // Force calculation when navigating to pricing from query params
               this.calculatePrintingCost();
-            }, 300);
+            });
           }
         } else {
           // Invalid step in query params, use current stepper index
@@ -427,6 +449,7 @@ export class TitleFormTemp implements OnDestroy {
           if (stepName) {
             this.currentStep.set(stepName);
             this.updateStepInQueryParams(stepName);
+            this.cdr.markForCheck();
           }
         }
       } else {
@@ -436,9 +459,10 @@ export class TitleFormTemp implements OnDestroy {
         if (stepName) {
           this.currentStep.set(stepName);
           this.updateStepInQueryParams(stepName);
+          this.cdr.markForCheck();
         }
       }
-    }, 400);
+    });
   }
 
   @ViewChildren('fileInput') fileInputs!: QueryList<
@@ -478,10 +502,11 @@ export class TitleFormTemp implements OnDestroy {
     const current = this.authorsSignal();
     if (!current.some((a) => a.id === author.id)) {
       this.authorsSignal.set([...current, author]);
-      // Update validators for newly added author
-      setTimeout(() => {
+      // Update validators for newly added author - use queueMicrotask for proper timing
+      queueMicrotask(() => {
         this.updateAuthorPrintPriceValidators();
-      }, 100);
+        this.cdr.markForCheck();
+      });
     }
   }
 
@@ -714,51 +739,74 @@ export class TitleFormTemp implements OnDestroy {
   mapRoyaltiesArray(publisher: Publishers | null, authors: Author[]) {
     const { printing, pricing, royalties } = this.tempForm.controls;
 
-    // Early exit if required data is missing
-    // Allow publisher royalties even without authors (publisher should get 100% in that case)
-    if (
-      !publisher ||
-      !Array.isArray(authors) ||
-      !printing?.valid ||
-      !pricing?.valid ||
-      !pricing.length
-    ) {
+    // Check if forms are valid - if not, set royalties to 0% but don't exit
+    // This allows UI to show 0% and disabled state when forms are invalid
+    const isPrintingValid = printing?.valid ?? false;
+    const isPricingValid = pricing?.valid ?? false;
+    const hasPricing = pricing.length > 0;
+    const areFormsValid = isPrintingValid && isPricingValid && hasPricing;
+
+    // Only exit if publisher or authors are missing (required data)
+    // If forms are invalid, continue but set percentages to 0
+    if (!publisher || !Array.isArray(authors)) {
       return;
     }
 
     const publisherId = publisher.id;
     const authorIds = authors.map((a) => a.id);
 
-    const platforms =
-      (Object.keys(
-        this.staticValueService.staticValues()?.PlatForm || {}
-      ) as PlatForm[]) || [];
+    // Get platform names from platform service instead of static values
+    const platforms = this.platformService.getPlatformNames();
 
     if (!platforms.length) {
       return; // No platforms available
     }
 
     // 🧹 STEP 1: Remove royalties not related to current publisher or authors
+    let removedCount = 0;
     for (let i = royalties.length - 1; i >= 0; i--) {
       const control = royalties.at(i);
       const { publisherId: pid, authorId: aid } = control.value;
 
       const isValid = pid === publisherId || (aid && authorIds.includes(aid));
 
-      if (!isValid) royalties.removeAt(i);
+      if (!isValid) {
+        royalties.removeAt(i);
+        removedCount++;
+      }
     }
 
+    // Calculate default author percentage: 100% if 1 author, equally divided if more than 1
+    // BUT: If forms are not valid, set to 0% instead
+    const authorCount = authors.length;
+
+    // If forms are not valid, set all percentages to 0
+    // Otherwise, calculate normal defaults
+    const defaultAuthorPercentage: number = areFormsValid
+      ? authorCount > 0
+        ? authorCount === 1
+          ? 100
+          : Math.round((100 / authorCount) * 100) / 100 // Round to 2 decimal places
+        : 0
+      : 0; // Set to 0 if forms are invalid
+
     // 🧱 STEP 2: Ensure publisher royalties per platform
+    // Publisher gets 100% by default only if no authors exist AND forms are valid
+    // If forms are invalid, set to 0%
+    const defaultPublisherPercentage = areFormsValid
+      ? authorCount > 0
+        ? 0
+        : 100
+      : 0; // Set to 0 if forms are invalid
+
     for (const platform of platforms) {
       let control = royalties.controls.find(
         ({ value }) =>
           value.publisherId === publisherId && value.platform === platform
       );
 
-      console.log({ control });
-
       if (!control) {
-        // ✅ Create new if missing
+        // ✅ Create new if missing - set publisher percentage based on author count
         control = this.createRoyaltyGroup({
           publisherId,
           titleId: this.titleId,
@@ -769,11 +817,12 @@ export class TitleFormTemp implements OnDestroy {
             }`.trim() ||
             'Unknown Publisher',
           platform,
+          percentage: defaultPublisherPercentage, // 100% if no authors, 0% if authors exist
         });
 
         royalties.push(control);
       } else {
-        // ✅ Keep existing values
+        // ✅ Keep existing values, but set default if no percentage exists
         const existingValue = control.value;
 
         control.patchValue({
@@ -786,14 +835,21 @@ export class TitleFormTemp implements OnDestroy {
             }`.trim() ||
             'Unknown Publisher',
           platform,
-          percentage: existingValue.percentage,
+          percentage:
+            existingValue.percentage !== null &&
+            existingValue.percentage !== undefined
+              ? existingValue.percentage
+              : defaultPublisherPercentage, // Default based on author count if no existing value
         });
       }
     }
 
     // 👥 STEP 3: Ensure author royalties per platform
+    // Authors get 100% divided equally if more than 1, or 100% if only 1
     for (const author of authors) {
       const { id: authorId, name, user } = author;
+      const authorName =
+        name || `${user.firstName || ''} ${user.lastName || ''}`.trim();
 
       for (const platform of platforms) {
         let control = royalties.controls.find(
@@ -802,25 +858,33 @@ export class TitleFormTemp implements OnDestroy {
         );
 
         if (!control) {
-          // ✅ Create new if missing
+          // ✅ Create new if missing - set author percentage based on count
           control = this.createRoyaltyGroup({
             authorId,
             titleId: this.titleId,
-            name:
-              name || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+            name: authorName,
             platform,
+            percentage: defaultAuthorPercentage, // 100% if 1 author, equally divided if more
           });
           royalties.push(control);
         } else {
-          // ✅ Preserve existing values
+          // ✅ Preserve existing values, but set default if no percentage exists or is 0
           const existingValue = control.value;
+          const hasValidPercentage =
+            existingValue.percentage !== null &&
+            existingValue.percentage !== undefined &&
+            existingValue.percentage > 0;
+
+          const percentageToSet = hasValidPercentage
+            ? existingValue.percentage
+            : defaultAuthorPercentage;
+
           control.patchValue({
             authorId,
             titleId: this.titleId,
-            name:
-              name || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+            name: authorName,
             platform,
-            ...existingValue,
+            percentage: percentageToSet, // Default based on author count if no valid existing value
           });
         }
       }
@@ -861,17 +925,20 @@ export class TitleFormTemp implements OnDestroy {
       }
     }
 
-    return new FormGroup<RoyaltyFormGroup>({
-      id: new FormControl<number | null>(data?.id || null),
-      name: new FormControl<string | null>(data?.name || null),
-      authorId: new FormControl<number | null>(data?.authorId || null),
-      publisherId: new FormControl<number | null>(data?.publisherId || null),
-      percentage: new FormControl(data?.percentage || null, [
-        Validators.required,
-      ]),
+    // Use nullish coalescing (??) instead of || to preserve 0 values
+    const percentageValue = data?.percentage ?? null;
+
+    const royaltyGroup = new FormGroup<RoyaltyFormGroup>({
+      id: new FormControl<number | null>(data?.id ?? null),
+      name: new FormControl<string | null>(data?.name ?? null),
+      authorId: new FormControl<number | null>(data?.authorId ?? null),
+      publisherId: new FormControl<number | null>(data?.publisherId ?? null),
+      percentage: new FormControl(percentageValue, [Validators.required]),
       platform: new FormControl<string | null>(platformValue),
-      titleId: new FormControl<number>(data?.titleId || this.titleId),
+      titleId: new FormControl<number>(data?.titleId ?? this.titleId),
     });
+
+    return royaltyGroup;
   }
 
   async calculatePrintingCost() {
@@ -1086,13 +1153,14 @@ export class TitleFormTemp implements OnDestroy {
       this.tempForm.controls.printing.controls.totalPages.patchValue(
         interior.noOfPages || 0
       );
-      // Auto-calculate black and white pages and MSP after a small delay to ensure form state is updated
-      setTimeout(() => {
+      // Auto-calculate black and white pages and MSP after form state is updated
+      queueMicrotask(() => {
         this.calculateBlackAndWhitePages();
         // Recalculate printing cost (MSP) when totalPages changes
         // This will calculate if all required fields are available
         this.calculatePrintingCost();
-      }, 100);
+        this.cdr.markForCheck();
+      });
     }
 
     data.royalties?.forEach((d) => {
@@ -1122,8 +1190,6 @@ export class TitleFormTemp implements OnDestroy {
           );
         }
       );
-
-      console.log({ d, controlExist });
 
       if (controlExist) {
         controlExist.patchValue({
@@ -1444,12 +1510,11 @@ export class TitleFormTemp implements OnDestroy {
   }
 
   createPricingArrayTemp(): FormArray<PricingGroup> {
-    const platforms = Object.keys(
-      this.staticValueService.staticValues()?.PlatForm || {}
-    );
+    // Get platform names from platform service instead of static values
+    const platforms = this.platformService.getPlatformNames();
 
     // If no platforms available yet, return empty array
-    // It will be initialized later when static values load
+    // It will be initialized later when platforms load
     if (!platforms.length) {
       return new FormArray<PricingGroup>([]);
     }
@@ -2149,14 +2214,10 @@ export class TitleFormTemp implements OnDestroy {
       }
 
       // Update URL to include the title ID to prevent creating new title on refresh
-      // When titleId changes, format step disappears, so adjust step if needed
-      const currentStepName = this.currentStep();
-      let targetStep = currentStepName || 'details';
-
-      // If we were on format step, move to details
-      if (currentStepName === 'format') {
-        targetStep = 'details';
-      }
+      // When titleId changes, format step disappears, so we're now on 'details' step
+      // Set current step to 'details' explicitly so goToNextStep() knows where we are
+      this.currentStep.set('details');
+      const targetStep = 'details';
 
       // Update URL with titleId and current step
       this.router.navigate(['/title', this.titleId], {
@@ -2167,10 +2228,26 @@ export class TitleFormTemp implements OnDestroy {
         },
       });
 
-      // Move to next step after URL update completes
-      setTimeout(() => {
+      // Move to next step (documents) after URL update completes
+      // Use a small delay to ensure stepper has updated after titleId change
+      queueMicrotask(() => {
+        // Ensure stepper reflects the new step order (format step removed)
+        const stepperInstance = this.stepper();
+        if (stepperInstance) {
+          // Find the details step index in the new step order
+          const stepOrder = this.getStepOrder();
+          const detailsIndex = stepOrder.indexOf('details');
+          if (
+            detailsIndex !== -1 &&
+            detailsIndex < stepperInstance.steps.length
+          ) {
+            stepperInstance.selectedIndex = detailsIndex;
+            this.cdr.markForCheck();
+          }
+        }
+        // Now move to next step (documents)
         this.goToNextStep();
-      }, 150);
+      });
     } catch (error) {
       console.error('Error creating title:', error);
       this.errorMessage.set(
@@ -2234,13 +2311,14 @@ export class TitleFormTemp implements OnDestroy {
             this.tempForm.controls.printing.controls.totalPages.patchValue(
               interior.noOfPages
             );
-            // Auto-calculate black and white pages and MSP after a small delay to ensure form state is updated
-            setTimeout(() => {
+            // Auto-calculate black and white pages and MSP after form state is updated
+            queueMicrotask(() => {
               this.calculateBlackAndWhitePages();
               // Recalculate printing cost (MSP) when totalPages changes
               // This will calculate if all required fields are available
               this.calculatePrintingCost();
-            }, 100);
+              this.cdr.markForCheck();
+            });
           }
 
           // Clear file controls after successful upload to prevent duplicate uploads
@@ -2319,13 +2397,14 @@ export class TitleFormTemp implements OnDestroy {
           this.tempForm.controls.printing.controls.totalPages.patchValue(
             interior.noOfPages
           );
-          // Auto-calculate black and white pages and MSP after a small delay to ensure form state is updated
-          setTimeout(() => {
+          // Auto-calculate black and white pages and MSP after form state is updated
+          queueMicrotask(() => {
             this.calculateBlackAndWhitePages();
             // Recalculate printing cost (MSP) when totalPages changes
             // This will calculate if all required fields are available
             this.calculatePrintingCost();
-          }, 100);
+            this.cdr.markForCheck();
+          });
         }
 
         // Clear file controls after successful upload to prevent duplicate uploads
@@ -2564,16 +2643,6 @@ export class TitleFormTemp implements OnDestroy {
         return;
       }
 
-      // Debug: Log pricing data being sent for PRINT_EBOOK
-      if (!isOnlyEbook && !isOnlyPrint) {
-        console.log('PRINT_EBOOK - Pricing data being sent:', {
-          totalControls: pricingControls.controls.length,
-          controlsToCheck: controlsToCheck.length,
-          validPricingData: data.length,
-          platforms: data.map((p) => p.platformId),
-        });
-      }
-
       if (!data.length) {
         // Check which platforms are missing data for better error message
         const missingPlatforms: string[] = [];
@@ -2753,10 +2822,6 @@ export class TitleFormTemp implements OnDestroy {
         })
       : pricingControls.controls;
 
-    console.log({
-      relevantControls,
-    });
-
     const hasInvalidRelevantControl = relevantControls.some(
       (control) => !control.valid
     );
@@ -2826,19 +2891,6 @@ export class TitleFormTemp implements OnDestroy {
             return !(platform?.isEbookPlatform ?? false);
           })
         : pricingControls.controls; // PRINT_EBOOK: include all platforms
-
-      // Debug: Log controlsToCheck for PRINT_EBOOK
-      if (!isOnlyEbook && !isOnlyPrint) {
-        console.log('PRINT_EBOOK - controlsToCheck before mapping:', {
-          totalControls: pricingControls.controls.length,
-          controlsToCheckCount: controlsToCheck.length,
-          controlsToCheckPlatforms: controlsToCheck.map((c) => ({
-            name: c.controls.platform.value,
-            mrp: c.controls.mrp.value,
-            salesPrice: c.controls.salesPrice.value,
-          })),
-        });
-      }
 
       // Collect validation errors instead of silently filtering
       const validationErrors: string[] = [];
@@ -2948,32 +3000,6 @@ export class TitleFormTemp implements OnDestroy {
         });
         return;
       }
-
-      // Debug: Log pricing data being sent for PRINT_EBOOK
-      if (!isOnlyEbook && !isOnlyPrint) {
-        const platformDetails = pricingData.map((p) => {
-          const platform = this.platformService.getPlatformById(p.platformId);
-          return {
-            platformId: p.platformId,
-            platformName: platform?.name || 'Unknown',
-            isEbook: platform?.isEbookPlatform || false,
-            mrp: p.mrp,
-            salesPrice: p.salesPrice,
-          };
-        });
-        console.log('PRINT_EBOOK - Final pricing data being sent:', {
-          totalControls: pricingControls.controls.length,
-          controlsToCheck: controlsToCheck.length,
-          validPricingData: pricingData.length,
-          platformDetails,
-          ebookCount: platformDetails.filter((p) => p.isEbook).length,
-          printCount: platformDetails.filter((p) => !p.isEbook).length,
-        });
-      }
-
-      console.log({
-        pricingData,
-      });
 
       if (!pricingData.length) {
         // Check which platforms are missing data for better error message
@@ -3894,7 +3920,7 @@ export class TitleFormTemp implements OnDestroy {
         this.fetchAndUpdatePublishingPoints();
       }
     } catch (error) {
-      console.log(error);
+      // Error handled silently
     }
   }
 

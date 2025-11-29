@@ -315,7 +315,8 @@
 
           <div class="self-center flex">
             @if(media.value.url && media.value.type !== 'INTERIOR' &&
-            media.value.mediaType !== 'FULL_COVER' && media.value.type !== 'MANUSCRIPT') {
+            media.value.mediaType !== 'FULL_COVER' && media.value.type !==
+            'MANUSCRIPT') {
             <div class="border rounded p-2 inline-block bg-white shadow-sm">
               <img
                 [src]="media.value.url"
@@ -324,16 +325,14 @@
               />
             </div>
             } @if(media.get('url')?.value && (media.get('type')?.value ===
-            'INTERIOR' || media.value.type === 'FULL_COVER' || media.value.type === 'MANUSCRIPT')) {
+            'INTERIOR' || media.value.type === 'FULL_COVER' || media.value.type
+            === 'MANUSCRIPT')) {
             <mat-card
               class="flex !flex-row !items-center !gap-4 p-3 bg-gray-50 shadow-sm rounded-md"
             >
               <mat-icon color="warn">
-                @if(media.value.type === 'MANUSCRIPT') {
-                  description
-                } @else {
-                  picture_as_pdf
-                }
+                @if(media.value.type === 'MANUSCRIPT') { description } @else {
+                picture_as_pdf }
               </mat-icon>
               <div>
                 <p class="text-sm font-medium text-gray-800">
@@ -354,7 +353,11 @@
                 color="warn"
                 class="!bg-accent"
                 (click)="removeFile($index)"
-                [attr.aria-label]="media.value.type === 'MANUSCRIPT' ? 'Remove Document' : 'Remove PDF'"
+                [attr.aria-label]="
+                  media.value.type === 'MANUSCRIPT'
+                    ? 'Remove Document'
+                    : 'Remove PDF'
+                "
               >
                 <mat-icon class="!fill-red">delete</mat-icon>
               </button>
@@ -440,6 +443,9 @@
       [authors]="authorsSignal()"
       [publisher]="publisherSignal()"
       [publishingType]="tempForm.controls.publishingType.value || null"
+      [isPrintingValid]="tempForm.controls.printing.valid"
+      [isPricingValid]="tempForm.controls.pricing.valid"
+      [hasPricing]="tempForm.controls.pricing.length > 0"
     ></app-temp-pricing-royalty>
 
     <div class="flex justify-end mt-6">
