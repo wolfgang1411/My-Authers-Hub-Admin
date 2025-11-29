@@ -60,7 +60,6 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
   ) {}
 
   // Pricing inputs
-  publisherTotalAmount = signal<number>(0);
   pricingControls = input.required<FormArray<PricingGroup>>();
   msp = input.required<number>();
   printingPrice = input.required<number | null>();
@@ -461,9 +460,6 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       }
     });
     // Auto convert % → ₹ amount for publisher
-    const total = this.getTotalRevenue();
-    const publisherAmount = (this.publisherPercentage() / 100) * total;
-    this.publisherTotalAmount.set(publisherAmount);
 
     // Manually trigger royalty amount calculation since we update with emitEvent: false
     setTimeout(() => {
