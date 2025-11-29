@@ -98,12 +98,21 @@ export class App {
   setPageMeta(url: string) {}
 
   setHeaderVisibility(url: string) {
-    const isShowHeader = !url.includes('login');
+    const isAuthenticated = this.authService.isUserAuthenticated$();
+    const isShowHeader =
+      !url.includes('login') &&
+      !url.includes('shared-title-view') &&
+      !!isAuthenticated;
     this.layoutService.changeHeaderVisibility(isShowHeader);
   }
 
   setSidebarVisibility(url: string) {
-    const isShowSidebar = !url.includes('login') && !url.includes('invite');
+    const isAuthenticated = this.authService.isUserAuthenticated$();
+    const isShowSidebar =
+      !url.includes('login') &&
+      !url.includes('invite') &&
+      !url.includes('shared-title-view') &&
+      !!isAuthenticated;
     this.layoutService.changeSidebarVisibility(isShowSidebar);
   }
 }

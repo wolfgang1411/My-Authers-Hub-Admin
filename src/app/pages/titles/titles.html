@@ -84,6 +84,18 @@
         <mat-icon>menu_book</mat-icon>
         {{ "mytitles" | translate }}
       </button>
+      @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
+      <button
+        matButton
+        matButton="filled"
+        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        [routerLink]="['/shared-titles']"
+        routerLinkActive="router-link-active"
+      >
+        <mat-icon>share</mat-icon>
+        Shared Titles
+      </button>
+      }
       }
     </div>
   </div>

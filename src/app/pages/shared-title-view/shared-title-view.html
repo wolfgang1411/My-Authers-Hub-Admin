@@ -1,0 +1,342 @@
+<div class="p-6 bg-[var(--surface)] min-h-screen rounded-2xl">
+  @if (isLoading()) {
+  <div class="flex justify-center items-center min-h-screen">
+    <div class="text-center">
+      <mat-icon class="text-6xl text-[var(--primary)] animate-spin"
+        >refresh</mat-icon
+      >
+      <p class="mt-4 text-[var(--text-primary)]">Loading...</p>
+    </div>
+  </div>
+  } @else if (error()) {
+  <div class="flex flex-col justify-center items-center min-h-screen">
+    <mat-icon class="text-6xl text-[var(--accent)]">error</mat-icon>
+    <p class="mt-4 text-[var(--text-primary)] text-lg">{{ error() }}</p>
+    @if (isLoggedIn()) {
+    <app-back class="mt-4"></app-back>
+    }
+  </div>
+  } @else if (titleData()) {
+  <!-- Logged in view with tabs -->
+  @if (isLoggedIn()) {
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-medium text-[var(--text-heading)]">
+      {{ titleData()?.title?.name || "Shared Title" }}
+    </h1>
+    <app-back></app-back>
+  </div>
+
+  <mat-tab-group
+    class="bg-white rounded-2xl shadow-sm border border-[var(--primary-superlight)]"
+  >
+    <!-- OVERVIEW TAB -->
+    <mat-tab label="Overview">
+      <div class="p-6">
+        <!-- Hero Section -->
+        <div
+          class="bg-gradient-to-r from-[var(--light-purple-bg)] to-white border border-[var(--primary-light)] rounded-2xl shadow-md p-6 flex flex-col md:flex-row items-start gap-6 mb-8 transition-all hover:shadow-lg"
+        >
+          <!-- Cover -->
+          <div
+            class="w-[180px] h-[250px] rounded-xl overflow-hidden shadow-lg border border-[var(--primary-light)] bg-white flex items-center justify-center text-[var(--text-placeholder)] font-medium text-sm"
+          >
+            @if (frontCoverUrl()) {
+            <img
+              [src]="frontCoverUrl()"
+              alt="Front Cover"
+              class="object-cover w-full h-full rounded-xl"
+            />
+            } @else {
+            <span>COVER</span>
+            }
+          </div>
+
+          <!-- Book Info -->
+          <div class="flex-1">
+            <h2
+              class="text-2xl font-bold text-[var(--primary)] mb-1 capitalize"
+            >
+              {{ titleData()?.title?.name }}
+            </h2>
+            <p class="text-[var(--text-primary)] text-sm mb-4">
+              Shared Title Media
+            </p>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- MEDIA TAB -->
+    <mat-tab label="Media">
+      <div
+        class="bg-white border border-[var(--primary-superlight)] rounded-2xl shadow-md p-6 mb-8 m-6 transition-all hover:shadow-lg"
+      >
+        <h3
+          class="text-lg font-medium text-[var(--primary)] mb-6 flex items-center gap-2"
+        >
+          <mat-icon class="text-[var(--primary)]">perm_media</mat-icon>
+          Uploaded Media
+        </h3>
+
+        @if (!titleData()?.media?.length) {
+        <div
+          class="flex flex-col items-center justify-center py-12 bg-[var(--light-purple-bg)] rounded-xl border border-[var(--primary-light)]"
+        >
+          <mat-icon class="text-[var(--primary)] text-4xl mb-2"
+            >photo_library</mat-icon
+          >
+          <p class="text-[var(--text-primary)] text-sm">No media available.</p>
+        </div>
+        } @if (titleData()?.media?.length) {
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          @for (media of titleData()?.media; track $index) {
+          <div
+            class="group rounded-2xl overflow-hidden border border-[var(--primary-light)] bg-[var(--light-purple-bg)] shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all"
+          >
+            <div class="p-4 flex flex-col justify-between h-full">
+              <div class="flex items-center justify-between mb-3">
+                <p class="font-medium text-[var(--text-heading)] text-sm">
+                  {{ media.type.replace("_", " ") }}
+                </p>
+                @if (media?.type === 'MANUSCRIPT') {
+                <mat-icon class="text-[var(--primary)] text-base"
+                  >description</mat-icon
+                >
+                } @else if (media?.url?.toLowerCase()?.includes('.pdf')) {
+                <mat-icon class="text-[var(--primary)] text-base"
+                  >picture_as_pdf</mat-icon
+                >
+                }
+              </div>
+
+              <!-- 📄 MANUSCRIPT Document -->
+              @if (media.type === 'MANUSCRIPT' && media.url) {
+              <div
+                class="h-48 flex flex-col items-center justify-center bg-gradient-to-br from-[var(--light-purple-bg)] to-[var(--primary-superlight)] rounded-lg border border-[var(--primary-light)]"
+              >
+                <mat-icon class="text-[var(--primary)] text-5xl mb-3"
+                  >description</mat-icon
+                >
+                <a
+                  [href]="media.url"
+                  [download]="media.name"
+                  class="bg-[var(--primary)] text-white text-sm px-4 py-2 rounded-md shadow hover:bg-[var(--purple)] transition flex items-center gap-2"
+                >
+                  <mat-icon class="text-base">download</mat-icon>
+                  Download
+                </a>
+              </div>
+              }
+
+              <!-- 📄 PDF Preview -->
+              @else if (media.url && media.url.toLowerCase().includes('.pdf')) {
+              <div
+                class="relative bg-white rounded-lg border border-[var(--primary-superlight)] overflow-hidden"
+              >
+                <iframe
+                  [src]="media.url | safeUrl"
+                  class="w-full h-48"
+                  frameborder="0"
+                ></iframe>
+
+                <div
+                  class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                >
+                  <a
+                    [href]="media.url"
+                    target="_blank"
+                    class="bg-[var(--primary)] text-white text-sm px-3 py-3 rounded-md shadow hover:bg-[var(--purple)] transition"
+                  >
+                    Open PDF
+                  </a>
+                </div>
+              </div>
+              }
+
+              <!-- 🖼 Image Preview -->
+              @else if (media.url) {
+              <div
+                class="relative overflow-hidden rounded-lg border border-[var(--primary-superlight)]"
+              >
+                <img
+                  [src]="media.url"
+                  alt="{{ media.name }}"
+                  class="object-cover w-full h-48 rounded-lg bg-white group-hover:scale-[1.05] transition-transform"
+                />
+
+                <div
+                  class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                >
+                  <a
+                    [href]="media.url"
+                    target="_blank"
+                    class="text-white text-sm font-medium bg-[var(--primary)] px-3 py-3 rounded-md shadow hover:bg-[var(--purple)] transition"
+                  >
+                    View Image
+                  </a>
+                </div>
+              </div>
+              }
+
+              <!-- 🚫 Placeholder -->
+              @else {
+              <div
+                class="h-48 flex flex-col items-center justify-center bg-gradient-to-br from-[var(--light-purple-bg)] to-[var(--primary-superlight)] rounded-lg border border-[var(--primary-light)]"
+              >
+                <mat-icon class="text-[var(--primary)] text-3xl mb-2"
+                  >insert_photo</mat-icon
+                >
+                <p class="text-xs text-[var(--text-primary)]">
+                  No preview available
+                </p>
+              </div>
+              }
+            </div>
+          </div>
+          }
+        </div>
+        }
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+  } @else {
+  <!-- Not logged in view - single view with title and media only -->
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-[var(--text-heading)] mb-2">
+        {{ titleData()?.title?.name || "Shared Title" }}
+      </h1>
+    </div>
+
+    <div
+      class="bg-white border border-[var(--primary-superlight)] rounded-2xl shadow-md p-6 mb-8 transition-all hover:shadow-lg"
+    >
+      <h3
+        class="text-lg font-medium text-[var(--primary)] mb-6 flex items-center gap-2"
+      >
+        <mat-icon class="text-[var(--primary)]">perm_media</mat-icon>
+        Media
+      </h3>
+
+      @if (!titleData()?.media?.length) {
+      <div
+        class="flex flex-col items-center justify-center py-12 bg-[var(--light-purple-bg)] rounded-xl border border-[var(--primary-light)]"
+      >
+        <mat-icon class="text-[var(--primary)] text-4xl mb-2"
+          >photo_library</mat-icon
+        >
+        <p class="text-[var(--text-primary)] text-sm">No media available.</p>
+      </div>
+      } @if (titleData()?.media?.length) {
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        @for (media of titleData()?.media; track $index) {
+        <div
+          class="group rounded-2xl overflow-hidden border border-[var(--primary-light)] bg-[var(--light-purple-bg)] shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all"
+        >
+          <div class="p-4 flex flex-col justify-between h-full">
+            <div class="flex items-center justify-between mb-3">
+              <p class="font-medium text-[var(--text-heading)] text-sm">
+                {{ media.type.replace("_", " ") }}
+              </p>
+              @if (media?.type === 'MANUSCRIPT') {
+              <mat-icon class="text-[var(--primary)] text-base"
+                >description</mat-icon
+              >
+              } @else if (media?.url?.toLowerCase()?.includes('.pdf')) {
+              <mat-icon class="text-[var(--primary)] text-base"
+                >picture_as_pdf</mat-icon
+              >
+              }
+            </div>
+
+            <!-- 📄 MANUSCRIPT Document -->
+            @if (media.type === 'MANUSCRIPT' && media.url) {
+            <div
+              class="h-48 flex flex-col items-center justify-center bg-gradient-to-br from-[var(--light-purple-bg)] to-[var(--primary-superlight)] rounded-lg border border-[var(--primary-light)]"
+            >
+              <mat-icon class="text-[var(--primary)] text-5xl mb-3"
+                >description</mat-icon
+              >
+              <a
+                [href]="media.url"
+                [download]="media.name"
+                class="bg-[var(--primary)] text-white text-sm px-4 py-2 rounded-md shadow hover:bg-[var(--purple)] transition flex items-center gap-2"
+              >
+                <mat-icon class="text-base">download</mat-icon>
+                Download
+              </a>
+            </div>
+            }
+
+            <!-- 📄 PDF Preview -->
+            @else if (media.url && media.url.toLowerCase().includes('.pdf')) {
+            <div
+              class="relative bg-white rounded-lg border border-[var(--primary-superlight)] overflow-hidden"
+            >
+              <iframe
+                [src]="media.url | safeUrl"
+                class="w-full h-48"
+                frameborder="0"
+              ></iframe>
+
+              <div
+                class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+              >
+                <a
+                  [href]="media.url"
+                  target="_blank"
+                  class="bg-[var(--primary)] text-white text-sm px-3 py-3 rounded-md shadow hover:bg-[var(--purple)] transition"
+                >
+                  Open PDF
+                </a>
+              </div>
+            </div>
+            }
+
+            <!-- 🖼 Image Preview -->
+            @else if (media.url) {
+            <div
+              class="relative overflow-hidden rounded-lg border border-[var(--primary-superlight)]"
+            >
+              <img
+                [src]="media.url"
+                alt="{{ media.name }}"
+                class="object-cover w-full h-48 rounded-lg bg-white group-hover:scale-[1.05] transition-transform"
+              />
+
+              <div
+                class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+              >
+                <a
+                  [href]="media.url"
+                  target="_blank"
+                  class="text-white text-sm font-medium bg-[var(--primary)] px-3 py-3 rounded-md shadow hover:bg-[var(--purple)] transition"
+                >
+                  View Image
+                </a>
+              </div>
+            </div>
+            }
+
+            <!-- 🚫 Placeholder -->
+            @else {
+            <div
+              class="h-48 flex flex-col items-center justify-center bg-gradient-to-br from-[var(--light-purple-bg)] to-[var(--primary-superlight)] rounded-lg border border-[var(--primary-light)]"
+            >
+              <mat-icon class="text-[var(--primary)] text-3xl mb-2"
+                >insert_photo</mat-icon
+              >
+              <p class="text-xs text-[var(--text-primary)]">
+                No preview available
+              </p>
+            </div>
+            }
+          </div>
+        </div>
+        }
+      </div>
+      }
+    </div>
+  </div>
+  } }
+</div>

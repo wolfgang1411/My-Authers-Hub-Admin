@@ -202,6 +202,21 @@ export const routes: Routes = [
     canActivate: [privateRouteGuard],
   },
   {
+    path: 'shared-titles',
+    loadComponent: () =>
+      import('./pages/shared-titles/shared-titles').then(
+        (c) => c.SharedTitles
+      ),
+    canActivate: [privateRouteGuard],
+  },
+  {
+    path: 'shared-title-view/:code',
+    loadComponent: () =>
+      import('./pages/shared-title-view/shared-title-view').then(
+        (c) => c.SharedTitleView
+      ),
+  },
+  {
     path: '',
     redirectTo: '/dashboard',
     pathMatch: 'full',
