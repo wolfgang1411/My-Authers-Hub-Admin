@@ -421,8 +421,9 @@
           <div class="flex-1">
             <label class="block text-sm font-medium mb-1">
               {{
-                author.name ||
-                  author.user?.firstName + " " + author.user?.lastName
+                author.name || author.user
+                  ? author.user.firstName + " " + author.user.lastName
+                  : "N/A"
               }}
             </label>
           </div>
@@ -551,8 +552,9 @@
                 class="border border-gray-300 px-4 py-2 font-medium sticky left-0 bg-white z-10"
               >
                 {{
-                  author.name ||
-                    author.user?.firstName + " " + author.user?.lastName
+                  author.name || author.user
+                    ? author.user.firstName + " " + author.user.lastName
+                    : "N/A"
                 }}
               </td>
               @for (platform of displayedColumns(); track platform) {

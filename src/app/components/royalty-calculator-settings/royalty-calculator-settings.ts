@@ -150,8 +150,6 @@ export class RoyaltyCalculatorSettings implements OnInit {
     });
   }
 
-  protected trackByIndex = (index: number) => index;
-
   protected divisionEntries(record: Record<string, number>) {
     return Object.entries(record || {});
   }

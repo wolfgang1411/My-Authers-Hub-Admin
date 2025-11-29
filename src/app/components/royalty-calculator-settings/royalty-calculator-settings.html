@@ -30,8 +30,7 @@
     </div>
 
     <div class="space-y-4" formArrayName="items">
-      @for (group of royaltyItems.controls; track trackByIndex($index); let idx
-      = $index) {
+      @for (group of royaltyItems.controls; track $index; let idx = $index) {
       <div class="platform-row" [formGroupName]="idx">
         <label class="form-field">
           <span>Platform</span>

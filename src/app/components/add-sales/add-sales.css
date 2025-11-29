@@ -44,7 +44,8 @@ table tr th:not(:last-child) {
 }
 
 .active {
-  @apply !bg-primary !text-white;
+  background-color: var(--primary) !important;
+  color: white !important;
 }
 
 /* Fix Material form field label positioning */
