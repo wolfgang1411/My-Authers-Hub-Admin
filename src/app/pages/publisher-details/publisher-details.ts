@@ -1,6 +1,8 @@
-import { Component, computed, effect } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, computed, effect, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { signal } from '@angular/core';
+import { takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 import { PublisherService } from '../publisher/publisher-service';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { Back } from '../../components/back/back';
@@ -45,9 +47,13 @@ import { BuyAssignPointsButton } from '../../components/buy-assign-points-button
   templateUrl: './publisher-details.html',
   styleUrl: './publisher-details.css',
 })
-export class PublisherDetails {
+export class PublisherDetails implements OnInit, OnDestroy {
+  private readonly destroy$ = new Subject<void>();
+  selectedTabIndex = signal<number>(0);
+
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private publisherService: PublisherService,
     private authorsService: AuthorsService,
     private titleService: TitleService,
@@ -55,9 +61,27 @@ export class PublisherDetails {
     private translateService: TranslateService,
     public staticValueService: StaticValuesService
   ) {
-    this.route.params.subscribe(({ id }) => {
+    this.route.params.pipe(takeUntil(this.destroy$)).subscribe(({ id }) => {
       this.publisherId = id;
     });
+
+    // Read tab index from query params
+    this.route.queryParams
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((params) => {
+        const tabIndex = params['tab'];
+        if (tabIndex !== undefined) {
+          const index = Number(tabIndex);
+          if (!isNaN(index) && index >= 0) {
+            this.selectedTabIndex.set(index);
+          }
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   distributionType = computed(() => {
@@ -300,5 +324,33 @@ export class PublisherDetails {
   applySubPublisherFilter(event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
     this.subPublisherData.filter = filterValue.trim().toLowerCase();
+  }
+
+  returnUrl(): string {
+    const url = `publisherDetails/${this.publisherId}?tab=5`;
+    return url.toString();
+  }
+
+  onTabChange(index: number): void {
+    this.selectedTabIndex.set(index);
+    this.updateTabInQueryParams(index);
+  }
+
+  private updateTabInQueryParams(tabIndex: number): void {
+    const currentParams = { ...this.route.snapshot.queryParams };
+
+    if (tabIndex === 0) {
+      // Remove tab param if it's the first tab (default)
+      delete currentParams['tab'];
+    } else {
+      currentParams['tab'] = tabIndex.toString();
+    }
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: currentParams,
+      queryParamsHandling: 'merge',
+      replaceUrl: true, // Don't add to history
+    });
   }
 }

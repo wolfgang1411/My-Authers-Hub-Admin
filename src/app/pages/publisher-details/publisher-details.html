@@ -5,7 +5,11 @@
       <app-back></app-back>
     </div>
   </nav>
-  <mat-tab-group dynamicHeight>
+  <mat-tab-group
+    dynamicHeight
+    [selectedIndex]="selectedTabIndex()"
+    (selectedTabChange)="onTabChange($event.index)"
+  >
     <mat-tab>
       <ng-template mat-tab-label>
         <span class="text-text-heading font-medium">
@@ -307,6 +311,7 @@
             <!-- Buy Button -->
             <div class="mt-4 flex justify-end">
               <app-buy-assign-points-button
+                [returnUrl]="returnUrl()"
                 [distributionType]="point.distributionType"
                 [publisherId]="publisherId"
                 [publisherName]="publisherDetails()?.name"
@@ -345,6 +350,7 @@
 
               <div class="mt-4 flex justify-end">
                 <app-buy-assign-points-button
+                  [returnUrl]="returnUrl()"
                   [distributionType]="type"
                   [publisherId]="publisherId"
                   [publisherName]="publisherDetails()?.name"
