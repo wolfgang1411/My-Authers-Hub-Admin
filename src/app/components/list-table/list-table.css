@@ -1,5 +1,5 @@
 table {
-  @apply w-full border;
+  @apply w-full;
   border-radius: 8px;
   background-color: var(--primary-light);
 }

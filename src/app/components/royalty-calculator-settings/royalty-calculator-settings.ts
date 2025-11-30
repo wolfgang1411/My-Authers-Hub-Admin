@@ -27,6 +27,9 @@ import { Platform } from '../../interfaces/Platform';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { PlatformDialog } from '../platform-dialog/platform-dialog';
 import { UserService } from '../../services/user';
+import { InputError } from 'src/app/directives/input-error';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 
 type RoyaltyItemForm = FormGroup<{
   platform: FormControl<string>;
@@ -37,7 +40,14 @@ type RoyaltyItemForm = FormGroup<{
 @Component({
   selector: 'app-royalty-calculator-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, SharedModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    SharedModule,
+    InputError,
+    MatIconModule,
+    MatButtonModule,
+  ],
   templateUrl: './royalty-calculator-settings.html',
   styleUrl: './royalty-calculator-settings.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,8 +62,8 @@ export class RoyaltyCalculatorSettings implements OnInit {
   protected readonly platforms = computed(() =>
     this.platformService.platforms()
   );
-  protected readonly isSuperAdmin = computed(() =>
-    this.userService.loggedInUser$()?.accessLevel === 'SUPERADMIN'
+  protected readonly isSuperAdmin = computed(
+    () => this.userService.loggedInUser$()?.accessLevel === 'SUPERADMIN'
   );
   protected readonly resultDivision = signal<
     CalculateRoyaltiesResponse['divisionValue']
@@ -72,11 +82,37 @@ export class RoyaltyCalculatorSettings implements OnInit {
     return this.calculatorForm.get('items') as FormArray<RoyaltyItemForm>;
   }
 
+  isSubmitted: boolean = false;
+
   async ngOnInit() {
     if (!this.platforms().length) {
       await this.platformService.fetchPlatforms().catch(() => undefined);
     } else {
       this.platformService.fetchPlatforms().catch(() => undefined);
+    }
+  }
+
+  validateMRP(index: number): void {
+    const item = this.royaltyItems.at(index);
+    if (!item) return;
+
+    const selectedPlatform = item.get('platform')?.value;
+    const enteredMRP = item.get('price')?.value as number;
+    const printingCost = this.calculatorForm.get('printingPrice')
+      ?.value as number;
+
+    const platform = this.platforms()?.find((p) => p.name === selectedPlatform);
+    if (!platform) return;
+
+    if (platform.isEbookPlatform) {
+      item.get('price')?.setErrors(null);
+      return;
+    }
+
+    if (enteredMRP < printingCost) {
+      item.get('price')?.setErrors({ invalidMRP: true });
+    } else {
+      item.get('price')?.setErrors(null);
     }
   }
 
@@ -97,6 +133,7 @@ export class RoyaltyCalculatorSettings implements OnInit {
   }
 
   async onCalculate() {
+    this.isSubmitted = true;
     if (this.calculatorForm.invalid) {
       this.calculatorForm.markAllAsTouched();
       return;
@@ -156,10 +193,10 @@ export class RoyaltyCalculatorSettings implements OnInit {
 
   protected divisionRows(
     platform: string,
-    divisionValue: Record<string, number>,
+    divisionValue: Record<string, number>
   ) {
     const requestItem = this.lastCalculatedItems().find(
-      (item) => item.platform === platform,
+      (item) => item.platform === platform
     );
     const divisions = requestItem?.division ?? Object.keys(divisionValue);
 
@@ -177,7 +214,7 @@ export class RoyaltyCalculatorSettings implements OnInit {
         validators: [Validators.required],
       }),
       price: new FormControl<number | null>(null, {
-        validators: [Validators.required, Validators.min(0)],
+        validators: [Validators.required],
       }),
       division: new FormControl('', {
         nonNullable: true,

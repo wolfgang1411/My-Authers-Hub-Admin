@@ -25,16 +25,26 @@
           min="0"
           placeholder="0"
           formControlName="printingPrice"
+          name="Printing Price"
+          appInputError
+          [isActive]="isSubmitted"
         />
       </label>
     </div>
 
     <div class="space-y-4" formArrayName="items">
       @for (group of royaltyItems.controls; track $index; let idx = $index) {
-      <div class="platform-row" [formGroupName]="idx">
+      <div class="platform-row items-start" [formGroupName]="idx">
         <label class="form-field">
           <span>Platform</span>
-          <select formControlName="platform">
+          <select
+            formControlName="platform"
+            (change)="validateMRP(idx)"
+            name="Platform"
+            required
+            appInputError
+            [isActive]="isSubmitted"
+          >
             <option value="" disabled>Select platform</option>
             @for (platform of platforms(); track platform.id) {
             <option [value]="platform.name">{{ platform.name }}</option>
@@ -42,14 +52,25 @@
           </select>
         </label>
 
-        <label class="form-field">
+        <label class="form-field items-start">
           <span>MRP</span>
           <input
+            class="w-full"
             type="number"
-            min="0"
             placeholder="0"
             formControlName="price"
+            (input)="validateMRP(idx)"
+            name="Price"
+            required
+            appInputError
+            [isActive]="isSubmitted"
           />
+          @if (royaltyItems.at(idx).get('price')?.errors?.['invalidMRP']) {
+          <p class="text-xs text-red-600 mt-1 font-medium">
+            MRP must be greater than or equal to Printing Price for non-ebook
+            platforms.
+          </p>
+          }
         </label>
 
         <label class="form-field">
@@ -58,17 +79,23 @@
             type="text"
             placeholder="e.g. 10, 90"
             formControlName="division"
+            name="Division"
+            required
+            appInputError
+            [isActive]="isSubmitted"
           />
         </label>
-
-        <button
-          type="button"
-          class="btn-danger"
-          (click)="removeItem(idx)"
-          aria-label="Remove platform row"
-        >
-          Remove
-        </button>
+        <label class="form-field">
+          <span>&nbsp;</span>
+          <button
+            type="button"
+            class="btn-danger"
+            (click)="removeItem(idx)"
+            aria-label="Remove platform row"
+          >
+            Remove
+          </button>
+        </label>
       </div>
       }
     </div>
@@ -124,10 +151,12 @@
     </div>
     <button
       type="button"
+      matButton="filled"
       class="btn-primary"
       (click)="onAddPlatform()"
       aria-label="Add platform"
     >
+      <mat-icon class="!text-white">add</mat-icon>
       Add Platform
     </button>
   </div>
@@ -156,9 +185,11 @@
           <td>
             <button
               type="button"
-              class="link"
+              matButton="filled"
+              class="hover:!bg-primary/80"
               (click)="onEditPlatform(platform)"
             >
+              <mat-icon>edit</mat-icon>
               Edit
             </button>
           </td>
