@@ -4,12 +4,7 @@ import {
   inject,
   OnInit,
 } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   MAT_DIALOG_DATA,
   MatDialogActions,
@@ -114,17 +109,21 @@ export class PlatformDialog implements OnInit {
         await this.platformService.updatePlatform(value.id, payload);
         Swal.fire({
           icon: 'success',
-          title: 'Platform updated',
+          title: 'Success',
           timer: 1200,
+          text: 'Platform updated',
           showConfirmButton: false,
+          heightAuto: false,
         });
       } else {
         await this.platformService.createPlatform(payload);
         Swal.fire({
           icon: 'success',
-          title: 'Platform created',
+          title: 'Success',
+          text: 'Platform created',
           timer: 1200,
           showConfirmButton: false,
+          heightAuto: false,
         });
       }
       this.dialogRef.close(true);
@@ -137,4 +136,3 @@ export class PlatformDialog implements OnInit {
     this.dialogRef.close();
   }
 }
-

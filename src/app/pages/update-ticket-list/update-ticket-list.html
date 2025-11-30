@@ -32,8 +32,10 @@
         matButton="filled"
         matButton
         [ngClass]="{
-          '!bg-primary !text-white': selectedStatus() === UpdateTicketStatus.PENDING,
-          '!bg-primary-superlight': selectedStatus() !== UpdateTicketStatus.PENDING
+          '!bg-primary !text-white':
+            selectedStatus() === UpdateTicketStatus.PENDING,
+          '!bg-primary-superlight':
+            selectedStatus() !== UpdateTicketStatus.PENDING
         }"
         (click)="onStatusChange(UpdateTicketStatus.PENDING)"
       >
@@ -45,8 +47,10 @@
         matButton="filled"
         matButton
         [ngClass]="{
-          '!bg-primary !text-white': selectedStatus() === UpdateTicketStatus.APPROVED,
-          '!bg-primary-superlight': selectedStatus() !== UpdateTicketStatus.APPROVED
+          '!bg-primary !text-white':
+            selectedStatus() === UpdateTicketStatus.APPROVED,
+          '!bg-primary-superlight':
+            selectedStatus() !== UpdateTicketStatus.APPROVED
         }"
         (click)="onStatusChange(UpdateTicketStatus.APPROVED)"
       >
@@ -58,8 +62,10 @@
         matButton="filled"
         matButton
         [ngClass]="{
-          '!bg-primary !text-white': selectedStatus() === UpdateTicketStatus.REJECTED,
-          '!bg-primary-superlight': selectedStatus() !== UpdateTicketStatus.REJECTED
+          '!bg-primary !text-white':
+            selectedStatus() === UpdateTicketStatus.REJECTED,
+          '!bg-primary-superlight':
+            selectedStatus() !== UpdateTicketStatus.REJECTED
         }"
         (click)="onStatusChange(UpdateTicketStatus.REJECTED)"
       >
@@ -143,7 +149,7 @@
     </mat-tab>
 
     <!-- Bank Tab -->
-    <mat-tab label="{{ 'bank' | translate }}">
+    <mat-tab label="{{ 'bankdetails' | translate }}">
       <div class="pt-6">
         <app-list-table
           [dataSource]="bankUpdateDataSource"
@@ -308,4 +314,3 @@
     </mat-tab>
   </mat-tab-group>
 </div>
-
