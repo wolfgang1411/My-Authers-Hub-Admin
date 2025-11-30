@@ -1,0 +1,18 @@
+@if (buttonClass()) {
+<button
+  [class]="buttonClass()"
+  (click)="onClick()"
+>
+  {{ buttonText() }}
+</button>
+} @else {
+<button
+  mat-raised-button
+  color="primary"
+  class="!text-xs !py-1.5 !px-4"
+  (click)="onClick()"
+>
+  {{ buttonText() }}
+</button>
+}
+

@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatError } from '@angular/material/input';
+import { BuyAssignPointsButton } from '../../../components/buy-assign-points-button/buy-assign-points-button';
 
 @Component({
   selector: 'app-temp-title-distribution',
@@ -15,6 +16,7 @@ import { MatError } from '@angular/material/input';
     MatIconModule,
     MatButtonModule,
     MatError,
+    BuyAssignPointsButton,
   ],
   templateUrl: './temp-title-distribution.html',
   styleUrl: './temp-title-distribution.css',
@@ -22,8 +24,12 @@ import { MatError } from '@angular/material/input';
 export class TempTitleDistribution {
   distributionControl =
     input.required<FormArray<FormGroup<TitleDistributionGroup>>>();
+  publisherId = input<number | undefined>(undefined);
+  publisherName = input<string | undefined>(undefined);
+  returnUrl = input<string | undefined>(undefined);
 
   onClickPurchasePoint = output<DistributionType>();
+  onPointsPurchased = output<void>();
 
   animateBuyButton = signal<DistributionType | null>(null);
 

@@ -4023,6 +4023,13 @@ export class TitleFormTemp implements OnDestroy {
     }
   }
 
+  getCurrentUrl(): string {
+    if (typeof window !== 'undefined') {
+      return window.location.href;
+    }
+    return '';
+  }
+
   async onClickPurchasePoint(type: DistributionType) {
     try {
       const publisherId =

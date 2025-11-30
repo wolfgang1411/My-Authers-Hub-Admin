@@ -471,7 +471,19 @@
   >
     <app-temp-title-distribution
       [distributionControl]="tempForm.controls.distribution"
+      [publisherId]="
+        publisherSignal()?.id ||
+        tempForm.controls.titleDetails.controls.publisher.controls.id.value ||
+        undefined
+      "
+      [publisherName]="publisherSignal()?.name || undefined"
+      [returnUrl]="
+        titleId
+          ? `title/${titleId}?step=distribution`
+          : getCurrentUrl()
+      "
       (onClickPurchasePoint)="onClickPurchasePoint($event)"
+      (onPointsPurchased)="fetchAndUpdatePublishingPoints()"
     ></app-temp-title-distribution>
     <div class="flex justify-end">
       <button

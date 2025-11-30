@@ -26,6 +26,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { StaticValuesService } from '../../services/static-values';
 import { MatButtonModule } from '@angular/material/button';
 import { SafeUrlPipe } from 'src/app/pipes/safe-url-pipe';
+import { BuyAssignPointsButton } from '../../components/buy-assign-points-button/buy-assign-points-button';
 @Component({
   selector: 'app-publisher-details',
   imports: [
@@ -39,6 +40,7 @@ import { SafeUrlPipe } from 'src/app/pipes/safe-url-pipe';
     MatIconModule,
     MatButtonModule,
     SafeUrlPipe,
+    BuyAssignPointsButton,
   ],
   templateUrl: './publisher-details.html',
   styleUrl: './publisher-details.css',
@@ -157,24 +159,8 @@ export class PublisherDetails {
       console.error('Error fetching publisher details:', error);
     }
   }
-  async buyPoints(type: DistributionType) {
-    try {
-      const res = await this.publisherService.buyPublishingPoints(
-        type,
-        2,
-        '',
-        this.publisherId
-      );
-      if (res) {
-        Swal.fire({
-          icon: 'success',
-          title: 'Requested',
-          text: 'Purchase request has been sent to admin for approval',
-        });
-      }
-    } catch (error) {
-      console.log(error);
-    }
+  async onPointsPurchased() {
+    await this.fetchPublishingPoints();
   }
 
   async fetchSubPublishers() {

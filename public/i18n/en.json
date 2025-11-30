@@ -605,5 +605,17 @@
   "royaltycalculator": "Royalty Calculator",
   "viewwallet": "View Wallet",
   "raisedtickets": "Raised Tickets",
-  "customPrintPrice": "Custom Print Price"
+  "customPrintPrice": "Custom Print Price",
+  "pointswillbeassignedto": "Points will be assigned to",
+  "howmanypointswanttobuyorassign": "How many points do you want to buy or assign for",
+  "distributiontype": "distribution type",
+  "points": "Points",
+  "pointsrequired": "Points are required",
+  "pointsmustbeatleast1": "Points must be at least 1",
+  "pointsmustbeapositiveinteger": "Points must be a positive integer",
+  "redirectingtopayment": "Redirecting to Payment",
+  "youwillberedirectedtopaymentpage": "You will be redirected to the payment page.",
+  "pointssuccessfullyassigned": "Points successfully assigned to publisher.",
+  "purchaserequestsent": "Purchase request has been sent to admin for approval.",
+  "errorbuyingpoints": "Failed to buy/assign points. Please try again."
 }

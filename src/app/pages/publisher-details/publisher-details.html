@@ -306,14 +306,12 @@
 
             <!-- Buy Button -->
             <div class="mt-4 flex justify-end">
-              <button
-                mat-raised-button
-                color="primary"
-                class="!text-xs !py-1.5 !px-4"
-                (click)="buyPoints(point.distributionType)"
-              >
-                Buy More
-              </button>
+              <app-buy-assign-points-button
+                [distributionType]="point.distributionType"
+                [publisherId]="publisherId"
+                [publisherName]="publisherDetails()?.name"
+                (onSuccess)="onPointsPurchased()"
+              ></app-buy-assign-points-button>
             </div>
           </div>
           }
@@ -346,14 +344,12 @@
               </div>
 
               <div class="mt-4 flex justify-end">
-                <button
-                  mat-raised-button
-                  color="accent"
-                  class="!text-xs !py-1.5 !px-4 !bg-green-2 !text-white focus:bg-green-2/50"
-                  (click)="buyPoints(type)"
-                >
-                  Buy Points
-                </button>
+                <app-buy-assign-points-button
+                  [distributionType]="type"
+                  [publisherId]="publisherId"
+                  [publisherName]="publisherDetails()?.name"
+                  (onSuccess)="onPointsPurchased()"
+                ></app-buy-assign-points-button>
               </div>
             </div>
             }

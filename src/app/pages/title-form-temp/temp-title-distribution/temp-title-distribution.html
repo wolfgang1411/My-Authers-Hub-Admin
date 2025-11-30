@@ -53,15 +53,21 @@
         </span>
         @if (!distribution.controls.availablePoints.value
         &&!distribution.controls.id.value ) {
-        <button
-          (click)="onClickBuy(distribution.controls.type.value)"
-          class="mt-4 btn btn__primary !rounded-full"
-          [ngClass]="{
-            shake: animateBuyButton() === distribution.controls.type.value
-          }"
-        >
-          Purchase points
-        </button>
+        <div class="mt-4">
+          <app-buy-assign-points-button
+            [distributionType]="distribution.controls.type.value"
+            [publisherId]="publisherId()"
+            [publisherName]="publisherName()"
+            [returnUrl]="returnUrl()"
+            [buttonClass]="
+              'btn btn__primary !rounded-full' +
+              (animateBuyButton() === distribution.controls.type.value
+                ? ' shake'
+                : '')
+            "
+            (onSuccess)="onPointsPurchased.emit()"
+          ></app-buy-assign-points-button>
+        </div>
         } @else {
         <button
           class="mt-4 btn btn__primary !rounded-full flex items-center gap-2"
