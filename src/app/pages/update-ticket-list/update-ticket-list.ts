@@ -26,6 +26,7 @@ import {
   UpdateTicketStatus,
 } from '../../interfaces';
 import { UpdateTicketFilter } from '../../interfaces/Titles';
+import { TicketDetailsDialog } from 'src/app/components/ticket-details-dialog/ticket-details-dialog';
 
 @Component({
   selector: 'app-update-ticket-list',
@@ -53,7 +54,9 @@ export class UpdateTicketList implements OnInit, OnDestroy {
 
   selectedTabIndex = signal(0);
   searchStr = new Subject<string>();
-  selectedStatus = signal<UpdateTicketStatus | 'ALL'>(UpdateTicketStatus.PENDING);
+  selectedStatus = signal<UpdateTicketStatus | 'ALL'>(
+    UpdateTicketStatus.PENDING
+  );
 
   // Track which tabs have been fetched
   private fetchedTabs = new Set<number>();
@@ -156,7 +159,7 @@ export class UpdateTicketList implements OnInit, OnDestroy {
     const tab = params['tab'];
     let initialTabIndex = this.getTabIndexFromName(tab);
     this.selectedTabIndex.set(initialTabIndex);
-    
+
     // Subscribe to query param changes for navigation
     this.route.queryParams
       .pipe(takeUntil(this.destroy$))
@@ -209,21 +212,31 @@ export class UpdateTicketList implements OnInit, OnDestroy {
 
   private getTabNameByIndex(index: number): string | undefined {
     switch (index) {
-      case 0: return 'address';
-      case 1: return 'bank';
-      case 2: return 'author';
-      case 3: return 'publisher';
-      default: return undefined;
+      case 0:
+        return 'address';
+      case 1:
+        return 'bank';
+      case 2:
+        return 'author';
+      case 3:
+        return 'publisher';
+      default:
+        return undefined;
     }
   }
 
   private getTabIndexFromName(tabName: string | undefined): number {
     switch (tabName) {
-      case 'address': return 0;
-      case 'bank': return 1;
-      case 'author': return 2;
-      case 'publisher': return 3;
-      default: return 0; // Default to ADDRESS tab
+      case 'address':
+        return 0;
+      case 'bank':
+        return 1;
+      case 'author':
+        return 2;
+      case 'publisher':
+        return 3;
+      default:
+        return 0; // Default to ADDRESS tab
     }
   }
 
@@ -281,11 +294,17 @@ export class UpdateTicketList implements OnInit, OnDestroy {
     const baseFilter: UpdateTicketFilter = {
       page: 1,
       itemsPerPage: 30,
-      status: currentStatus !== 'ALL' ? (currentStatus as 'PENDING' | 'APPROVED' | 'REJECTED') : undefined,
+      status:
+        currentStatus !== 'ALL'
+          ? (currentStatus as 'PENDING' | 'APPROVED' | 'REJECTED')
+          : undefined,
     };
     switch (tabIndex) {
       case 0:
-        this.addressUpdateFilter = { ...baseFilter, type: UpdateTicketType.ADDRESS };
+        this.addressUpdateFilter = {
+          ...baseFilter,
+          type: UpdateTicketType.ADDRESS,
+        };
         this.addressUpdateTickets.set([]);
         break;
       case 1:
@@ -293,11 +312,17 @@ export class UpdateTicketList implements OnInit, OnDestroy {
         this.bankUpdateTickets.set([]);
         break;
       case 2:
-        this.authorUpdateFilter = { ...baseFilter, type: UpdateTicketType.AUTHOR };
+        this.authorUpdateFilter = {
+          ...baseFilter,
+          type: UpdateTicketType.AUTHOR,
+        };
         this.authorUpdateTickets.set([]);
         break;
       case 3:
-        this.publisherUpdateFilter = { ...baseFilter, type: UpdateTicketType.PUBLISHER };
+        this.publisherUpdateFilter = {
+          ...baseFilter,
+          type: UpdateTicketType.PUBLISHER,
+        };
         this.publisherUpdateTickets.set([]);
         break;
     }
@@ -690,22 +715,28 @@ export class UpdateTicketList implements OnInit, OnDestroy {
     }
   }
 
-  onViewTicket(ticket: any): void {
-    // TODO: Create view ticket dialog component
-    Swal.fire({
-      icon: 'info',
-      title: 'Ticket Details',
-      html: `
-        <div style="text-align: left;">
-          <p><strong>Type:</strong> ${ticket.ticket.type}</p>
-          <p><strong>Status:</strong> ${ticket.ticket.status}</p>
-          <p><strong>Requested By:</strong> ${ticket.requestedBy}</p>
-          <p><strong>Created At:</strong> ${ticket.createdAt}</p>
-          <p><strong>Changes:</strong> ${ticket.changesList.join(', ')}</p>
-        </div>
-      `,
-      width: '600px',
+  // onViewTicket(ticket: any): void {
+  //   // TODO: Create view ticket dialog component
+  //   Swal.fire({
+  //     icon: 'info',
+  //     title: 'Ticket Details',
+  //     html: `
+  //       <div style="text-align: left;">
+  //         <p><strong>Type:</strong> ${ticket.ticket.type}</p>
+  //         <p><strong>Status:</strong> ${ticket.ticket.status}</p>
+  //         <p><strong>Requested By:</strong> ${ticket.requestedBy}</p>
+  //         <p><strong>Created At:</strong> ${ticket.createdAt}</p>
+  //         <p><strong>Changes:</strong> ${ticket.changesList.join(', ')}</p>
+  //       </div>
+  //     `,
+  //     width: '600px',
+  //   });
+  // }
+  onViewTicket(ticket: any) {
+    this.dialog.open(TicketDetailsDialog, {
+      width: '550px',
+      data: ticket,
+      panelClass: 'custom-dialog',
     });
   }
 }
-
