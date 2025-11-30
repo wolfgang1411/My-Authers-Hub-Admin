@@ -626,3 +626,14 @@ mat-label {
   --mat-sys-primary-container: #ebe3f7;
   --mat-sys-on-primary-container: #3d1a5d;
 }
+
+@keyframes fadeUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
