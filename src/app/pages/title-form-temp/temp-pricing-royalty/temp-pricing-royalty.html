@@ -556,90 +556,84 @@
 
     <!-- Calculations Section -->
     @if (displayedColumns().length > 0 && visiblePricingControls().length > 0) {
-    <div class="flex flex-col gap-2 mt-4">
-      <h3 class="text-lg font-medium">Royalty Amount Calculations</h3>
-      <div class="overflow-x-auto -mx-4 px-4">
-        <table class="min-w-full border-collapse border border-gray-300">
-          <thead>
-            <tr class="bg-gray-100">
-              <th
-                class="border border-gray-300 px-4 py-2 text-left sticky left-0 bg-gray-100 z-10"
-              >
-                Name
-              </th>
-              @for (platform of displayedColumns(); track platform) {
-              <th
-                class="border border-gray-300 px-4 py-2 text-center min-w-[140px]"
-              >
-                {{ platform | translate }}
-              </th>
-              }
-            </tr>
-          </thead>
-          <tbody>
-            @for (author of authors(); track author.id) {
-            <tr>
-              <td
-                class="border border-gray-300 px-4 py-2 font-medium sticky left-0 bg-white z-10"
-              >
-                {{
-                  author.name || author.user
-                    ? author.user.firstName + " " + author.user.lastName
-                    : "N/A"
-                }}
-              </td>
-              @for (platform of displayedColumns(); track platform) {
-              <td
-                class="border border-gray-300 px-4 py-2 text-center min-w-[140px]"
-              >
-                @if (shouldShowRoyaltyNA(platform)) {
-                <span class="text-gray-400 italic">N/A</span>
-                } @else {
-                {{ (totalRoyaltiesAmount()['author' + author.id]?.[platform] || 0) | currency }}
-                }
-              </td>
-              }
-            </tr>
-            } @if (publisher()) {
-            <tr class="bg-blue-50">
-              <td
-                class="border border-gray-300 px-4 py-2 font-medium sticky left-0 bg-blue-50 z-10"
-              >
-                {{
-                  publisher()?.name ||
-                    publisher()?.user?.firstName +
-                      " " +
-                      publisher()?.user?.lastName
-                }}
-                <span class="text-xs text-gray-500">(Publisher)</span>
-              </td>
-              @for (platform of displayedColumns(); track platform) {
-              <td
-                class="border border-gray-300 px-4 py-2 text-center font-medium min-w-[140px]"
-              >
-                @if (shouldShowRoyaltyNA(platform)) {
-                <span class="text-gray-400 italic">N/A</span>
-                } @else if (!isEbookPlatform(platform) &&
-                publisherExtraMargin()[platform]) {
-                <div class="flex flex-col gap-1">
-                  <div class="font-semibold text-blue-700">
-                    {{ (totalRoyaltiesAmount()['publisher' + publisher()?.id]?.[platform] || 0) | currency }}
-                  </div>
-                  <div class="text-xs text-green-600 font-medium">
-                    (includes
-                    {{ publisherExtraMargin()[platform] || 0 | currency }}
-                    custom print margin)
-                  </div>
+    <div class="flex flex-col gap-2 mt-4 max-w-full overflow-x-hidden">
+      <h3 class="text-base font-medium">Royalty Amount Calculations</h3>
+      <div class="royalty-cards-grid">
+        @for (platform of displayedColumns(); track platform) {
+        <div class="royalty-platform-card">
+          <!-- Card Header -->
+          <div class="royalty-card-header">
+            <h4 class="royalty-card-title">{{ platform | translate }}</h4>
+          </div>
+
+          <!-- Card Body -->
+          <div class="royalty-card-body">
+            <!-- Authors Section -->
+            <div class="royalty-authors-section">
+              <div class="royalty-section-label">Authors</div>
+              <div class="royalty-amounts-list">
+                @for (author of authors(); track author.id) {
+                <div class="royalty-amount-item">
+                  <span class="royalty-name">
+                    {{
+                      author.name || author.user
+                        ? author.user.firstName + " " + author.user.lastName
+                        : "N/A"
+                    }}
+                  </span>
+                  <span class="royalty-amount">
+                    @if (shouldShowRoyaltyNA(platform)) {
+                    <span class="text-gray-400 italic">N/A</span>
+                    } @else {
+                    {{ (totalRoyaltiesAmount()['author' + author.id]?.[platform] || 0) | currency }}
+                    }
+                  </span>
                 </div>
-                } @else {
-                {{ (totalRoyaltiesAmount()['publisher' + publisher()?.id]?.[platform] || 0) | currency }}
                 }
-              </td>
-              }
-            </tr>
+              </div>
+            </div>
+
+            <!-- Publisher Section -->
+            @if (publisher()) {
+            <div class="royalty-publisher-section">
+              <div class="royalty-section-divider"></div>
+              <div class="royalty-section-label">Publisher</div>
+              <div class="royalty-amount-item royalty-amount-item-publisher">
+                <span class="royalty-name">
+                  {{
+                    publisher()?.name ||
+                      publisher()?.user?.firstName +
+                        " " +
+                        publisher()?.user?.lastName
+                  }}
+                </span>
+                <div class="royalty-amount">
+                  @if (shouldShowRoyaltyNA(platform)) {
+                  <span class="text-gray-400 italic">N/A</span>
+                  } @else if (!isEbookPlatform(platform) &&
+                  publisherExtraMargin()[platform]) {
+                  <div class="flex flex-col gap-1 items-end">
+                    <div class="font-semibold text-blue-700">
+                      {{ (totalRoyaltiesAmount()['publisher' + publisher()?.id]?.[platform] || 0) | currency }}
+                    </div>
+                    <div class="text-xs text-green-600 font-medium">
+                      (includes
+                      {{ publisherExtraMargin()[platform] || 0 | currency }}
+                      custom print margin)
+                    </div>
+                  </div>
+                  } @else {
+                  <span class="font-semibold text-blue-700">
+                    {{ (totalRoyaltiesAmount()['publisher' + publisher()?.id]?.[platform] || 0) | currency }}
+                  </span>
+                  }
+                </div>
+              </div>
+            </div>
             }
-          </tbody>
-        </table>
+          </div>
+        </div>
+        }
       </div>
     </div>
     }

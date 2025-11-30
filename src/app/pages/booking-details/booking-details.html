@@ -41,7 +41,7 @@
             <p class="text-sm text-gray-600">
               {{ booking()?.title?.shortDescription }}
             </p>
-            @if(booking()?.type === 'PRINT') {
+            <!-- @if(booking()?.type === 'PRINT') {
 
             <p class="text-xs text-green-700 mt-2">
               {{ "ISBNPrint" | translate }}: {{ title()?.isbnPrint }}
@@ -51,7 +51,7 @@
             <p class="text-xs text-green-700">
               {{ "ISBNEBook" | translate }}: {{ title()?.isbnEbook }}
             </p>
-            }
+            } -->
           </div>
         </div>
       </div>
@@ -69,10 +69,7 @@
             <span class="font-medium">{{ "bookingdate" | translate }}</span>
             <span>{{ booking()?.bookingDate | date : "mediumDate" }}</span>
           </mat-list-item>
-          <mat-list-item class="flex justify-between items-center">
-            <span class="font-medium">{{ "bookformat" | translate }}</span>
-            <span>{{ booking()?.type }}</span>
-          </mat-list-item>
+
           <mat-list-item class="flex justify-between items-center">
             <span class="font-medium">{{ "platform" | translate }}</span>
             <span>{{ booking()?.platform | translate }}</span>
