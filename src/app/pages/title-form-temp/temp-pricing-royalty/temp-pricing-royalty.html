@@ -259,6 +259,10 @@
                   step="0.01"
                   [placeholder]="'entermrp' | translate"
                   class="pricing-input pl-8"
+                  [class.pr-8]="
+                    isPricingDisabled(item) &&
+                    !(item.controls.mrp.invalid && item.controls.mrp.touched)
+                  "
                   (wheel)="$event.target.blur()"
                   [ngClass]="{
                     'border-red-400 bg-red-50 focus:ring-red-500 focus:border-red-500':
@@ -266,10 +270,20 @@
                     'border-green-400 bg-green-50':
                       item.controls.mrp.valid &&
                       item.controls.mrp.touched &&
-                      !item.controls.mrp.invalid
+                      !item.controls.mrp.invalid,
+                    'bg-gray-100 cursor-not-allowed opacity-75':
+                      item.controls.mrp.disabled
                   }"
                 />
-                @if ( item.controls.mrp.invalid && item.controls.mrp.touched ) {
+                @if (item.controls.mrp.disabled && !(item.controls.mrp.invalid
+                && item.controls.mrp.touched)) {
+                <span
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500"
+                  title="Set by superadmin"
+                  >🔒</span
+                >
+                } @if ( item.controls.mrp.invalid && item.controls.mrp.touched )
+                {
                 <span
                   class="absolute right-3 top-1/2 -translate-y-1/2 error-icon"
                   title="Invalid MRP"
@@ -348,6 +362,13 @@
                   step="0.01"
                   [placeholder]="'salesprice' | translate"
                   class="pricing-input pl-8"
+                  [class.pr-8]="
+                    isPricingDisabled(item) &&
+                    !(
+                      item.controls.salesPrice.invalid &&
+                      item.controls.salesPrice.touched
+                    )
+                  "
                   (wheel)="$event.target.blur()"
                   [ngClass]="{
                     'border-red-400 bg-red-50 focus:ring-red-500 focus:border-red-500':
@@ -356,10 +377,20 @@
                     'border-green-400 bg-green-50':
                       item.controls.salesPrice.valid &&
                       item.controls.salesPrice.touched &&
-                      !item.controls.salesPrice.invalid
+                      !item.controls.salesPrice.invalid,
+                    'bg-gray-100 cursor-not-allowed opacity-75':
+                      item.controls.salesPrice.disabled
                   }"
                 />
-                @if ( item.controls.salesPrice.invalid &&
+                @if (item.controls.salesPrice.disabled &&
+                !(item.controls.salesPrice.invalid &&
+                item.controls.salesPrice.touched)) {
+                <span
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500"
+                  title="Set by superadmin"
+                  >🔒</span
+                >
+                } @if ( item.controls.salesPrice.invalid &&
                 item.controls.salesPrice.touched ) {
                 <span
                   class="absolute right-3 top-1/2 -translate-y-1/2 error-icon"
@@ -561,7 +592,11 @@
               <td
                 class="border border-gray-300 px-4 py-2 text-center min-w-[140px]"
               >
+                @if (shouldShowRoyaltyNA(platform)) {
+                <span class="text-gray-400 italic">N/A</span>
+                } @else {
                 {{ (totalRoyaltiesAmount()['author' + author.id]?.[platform] || 0) | currency }}
+                }
               </td>
               }
             </tr>
@@ -582,7 +617,9 @@
               <td
                 class="border border-gray-300 px-4 py-2 text-center font-medium min-w-[140px]"
               >
-                @if (!isEbookPlatform(platform) &&
+                @if (shouldShowRoyaltyNA(platform)) {
+                <span class="text-gray-400 italic">N/A</span>
+                } @else if (!isEbookPlatform(platform) &&
                 publisherExtraMargin()[platform]) {
                 <div class="flex flex-col gap-1">
                   <div class="font-semibold text-blue-700">

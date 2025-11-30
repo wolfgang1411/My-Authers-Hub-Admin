@@ -3,14 +3,13 @@ import { Server } from './server';
 import { Logger } from './logger';
 import { LoaderService } from './loader';
 import { Platform, PlatformStatus } from '../interfaces/Platform';
-import { BookingType } from '../interfaces/StaticValue';
 
 export interface PlatformPayload {
   name: string;
   marginPercent: number;
   extraFlatMargin?: number;
-  type: BookingType;
   isEbookPlatform?: boolean;
+  isSuperAdminPricingOnly?: boolean;
   status?: PlatformStatus;
 }
 
@@ -74,13 +73,6 @@ export class PlatformService {
       this.loggerService.logError(error);
       throw error;
     }
-  }
-
-  /**
-   * Get platforms filtered by type (EBOOK or PRINT)
-   */
-  getPlatformsByType(type: BookingType): Platform[] {
-    return this.platforms().filter((p) => p.type === type);
   }
 
   /**

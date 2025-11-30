@@ -25,7 +25,6 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { CommonModule } from '@angular/common';
 import { PlatformService, PlatformPayload } from '../../services/platform';
 import { Platform } from '../../interfaces/Platform';
-import { BookingType } from '../../interfaces/StaticValue';
 import { SharedModule } from '../../modules/shared/shared-module';
 import Swal from 'sweetalert2';
 
@@ -55,7 +54,6 @@ export class PlatformDialog implements OnInit {
   private readonly dialogData = inject<Platform | null>(MAT_DIALOG_DATA);
   private readonly platformService = inject(PlatformService);
 
-  protected readonly bookingTypes = Object.values(BookingType);
   protected readonly isSaving = false;
 
   protected readonly platformForm = this.fb.group({
@@ -67,10 +65,8 @@ export class PlatformDialog implements OnInit {
       Validators.max(100),
     ]),
     extraFlatMargin: this.fb.control<number | null>(0),
-    type: this.fb.control<BookingType>(BookingType.PRINT, [
-      Validators.required,
-    ]),
     isEbookPlatform: this.fb.control(false),
+    isSuperAdminPricingOnly: this.fb.control(false),
   });
 
   ngOnInit() {
@@ -80,8 +76,8 @@ export class PlatformDialog implements OnInit {
         name: this.dialogData.name,
         marginPercent: this.dialogData.marginPercent,
         extraFlatMargin: this.dialogData.extraFlatMargin ?? 0,
-        type: this.dialogData.type,
         isEbookPlatform: this.dialogData.isEbookPlatform,
+        isSuperAdminPricingOnly: this.dialogData.isSuperAdminPricingOnly ?? false,
       });
     }
   }
@@ -100,8 +96,8 @@ export class PlatformDialog implements OnInit {
         value.extraFlatMargin === null
           ? undefined
           : Number(value.extraFlatMargin),
-      type: value.type!,
       isEbookPlatform: value.isEbookPlatform ?? false,
+      isSuperAdminPricingOnly: value.isSuperAdminPricingOnly ?? false,
     };
 
     if (!payload.name) {

@@ -602,6 +602,7 @@
   "weightmultiplayerisrequired": "Weight multiplier is required",
   "insidecoverpriceisrequired": "Inside cover price is required",
   "printingsettingsmanager": "Printing Settings Manager",
-  "royaltycalculator" :"Royalty Calculator",
-  "viewwallet":"View Wallet"
+  "royaltycalculator": "Royalty Calculator",
+  "viewwallet": "View Wallet",
+  "customPrintPrice": "Custom Print Price"
 }

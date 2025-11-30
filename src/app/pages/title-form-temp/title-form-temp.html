@@ -404,6 +404,7 @@
       "
       [titleDetailsGroup]="tempForm.controls.titleDetails"
       [authors]="authorsSignal()"
+      (calculateCost)="calculatePrintingCost()"
     ></app-temp-title-printing>
     <div class="flex justify-end">
       <button

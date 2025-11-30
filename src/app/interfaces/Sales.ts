@@ -1,6 +1,5 @@
 import { FormArray, FormControl, FormGroup } from '@angular/forms';
 import {
-  BookingType,
   EarningsStatus,
   PlatForm,
   SalesType,
@@ -72,7 +71,7 @@ export interface CreateSaleForm {
 export interface SalesCsvData {
   Title: string;
   Type: SalesType;
-  Booking_Type: BookingType;
+  Booking_Type: 'EBOOK' | 'PRINT';
   Platform: PlatForm;
   Amount: number;
   Quantity: number;

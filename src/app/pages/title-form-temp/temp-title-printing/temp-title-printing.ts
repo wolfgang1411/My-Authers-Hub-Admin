@@ -3,6 +3,7 @@ import {
   computed,
   ElementRef,
   input,
+  output,
   OnDestroy,
   Signal,
   signal,
@@ -77,6 +78,9 @@ export class TempTitlePrinting implements OnDestroy {
   allowAuthorCopyPrice = input<boolean>(false);
   titleDetailsGroup = input<FormGroup<TitleDetailsFormGroup> | null>(null);
   authors = input<Author[]>([]);
+  
+  // Output event to trigger calculation in parent
+  calculateCost = output<void>();
 
   fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
@@ -189,31 +193,74 @@ export class TempTitlePrinting implements OnDestroy {
 
   /**
    * Setup validation for customPrintCost to ensure it's not lower than actual printing cost
+   * Validation and calculation only happen on blur
    */
   private setupCustomPrintCostValidation(): void {
     const customPrintCostControl =
       this.printingGroup().controls.customPrintCost;
     const printingPriceControl = this.printingGroup().controls.printingPrice;
 
-    // Watch for changes in printingPrice and validate customPrintCost
+    // Watch for changes in printingPrice to re-validate customPrintCost if needed
     printingPriceControl.valueChanges
-      .pipe(takeUntil(this.destroy$))
+      .pipe(
+        debounceTime(300),
+        takeUntil(this.destroy$)
+      )
       .subscribe(() => {
-        this.validateCustomPrintCost();
-      });
-
-    // Watch for changes in customPrintCost
-    customPrintCostControl.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        this.validateCustomPrintCost();
+        // Only re-validate if customPrintCost is already touched
+        if (customPrintCostControl.touched) {
+          this.validateCustomPrintCost();
+        }
       });
   }
 
   /**
-   * Validate that customPrintCost is not lower than actual printing cost
+   * Handle blur event for customPrintCost field
+   * Validates and triggers calculation only if valid
    */
-  private validateCustomPrintCost(): void {
+  onCustomPrintCostBlur(): void {
+    const customPrintCostControl =
+      this.printingGroup().controls.customPrintCost;
+    const customPrintCost = customPrintCostControl.value;
+
+    // Mark as touched
+    customPrintCostControl.markAsTouched({ onlySelf: true });
+
+    // If value is null, undefined, or 0, treat as no customPrintCost
+    if (
+      customPrintCost === null ||
+      customPrintCost === undefined ||
+      customPrintCost === 0
+    ) {
+      // Clear the value and any errors
+      customPrintCostControl.setValue(null, { emitEvent: false });
+      if (customPrintCostControl.hasError('minPrintCost')) {
+        const errors = { ...customPrintCostControl.errors };
+        delete errors['minPrintCost'];
+        customPrintCostControl.setErrors(
+          Object.keys(errors).length > 0 ? errors : null,
+          { emitEvent: false }
+        );
+      }
+      // Trigger calculation without customPrintCost
+      this.triggerCalculation();
+      return;
+    }
+
+    // Validate the value
+    const isValid = this.validateCustomPrintCost();
+
+    // Only trigger calculation if validation passes
+    if (isValid) {
+      this.triggerCalculation();
+    }
+  }
+
+  /**
+   * Validate that customPrintCost is not lower than actual printing cost
+   * @returns true if valid, false if invalid
+   */
+  private validateCustomPrintCost(): boolean {
     const customPrintCostControl =
       this.printingGroup().controls.customPrintCost;
     const printingPriceControl = this.printingGroup().controls.printingPrice;
@@ -221,27 +268,59 @@ export class TempTitlePrinting implements OnDestroy {
     const customPrintCost = customPrintCostControl.value;
     const actualPrintCost = printingPriceControl.value;
 
+    // If no actual print cost yet, can't validate - return true to allow calculation
+    if (actualPrintCost === null || actualPrintCost === undefined) {
+      return true;
+    }
+
+    // If customPrintCost is null, undefined, or 0, it's valid (treated as no custom cost)
     if (
-      customPrintCost !== null &&
-      customPrintCost !== undefined &&
-      actualPrintCost !== null &&
-      actualPrintCost !== undefined &&
-      customPrintCost < actualPrintCost
+      customPrintCost === null ||
+      customPrintCost === undefined ||
+      customPrintCost === 0
     ) {
+      // Clear any errors
+      if (customPrintCostControl.hasError('minPrintCost')) {
+        const errors = { ...customPrintCostControl.errors };
+        delete errors['minPrintCost'];
+        customPrintCostControl.setErrors(
+          Object.keys(errors).length > 0 ? errors : null,
+          { emitEvent: false }
+        );
+      }
+      return true;
+    }
+
+    // Validate that customPrintCost is not lower than actual print cost
+    if (Number(customPrintCost) < Number(actualPrintCost)) {
       customPrintCostControl.setErrors({
         minPrintCost: {
           actualPrintCost,
           customPrintCost,
         },
-      });
-    } else if (customPrintCostControl.hasError('minPrintCost')) {
+      }, { emitEvent: false });
+      return false;
+    } else {
       // Clear error if validation passes
-      const errors = { ...customPrintCostControl.errors };
-      delete errors['minPrintCost'];
-      customPrintCostControl.setErrors(
-        Object.keys(errors).length > 0 ? errors : null
-      );
+      if (customPrintCostControl.hasError('minPrintCost')) {
+        const errors = { ...customPrintCostControl.errors };
+        delete errors['minPrintCost'];
+        customPrintCostControl.setErrors(
+          Object.keys(errors).length > 0 ? errors : null,
+          { emitEvent: false }
+        );
+      }
+      return true;
     }
+  }
+
+  /**
+   * Trigger calculation API call
+   * This is called after validation passes
+   */
+  private triggerCalculation(): void {
+    // Emit event to parent to trigger calculation
+    this.calculateCost.emit();
   }
 
   ngOnDestroy(): void {

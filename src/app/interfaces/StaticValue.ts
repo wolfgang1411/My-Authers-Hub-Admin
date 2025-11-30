@@ -236,11 +236,6 @@ export enum OrderStatus {
   FAILED = 'FAILED',
 }
 
-export enum BookingType {
-  EBOOK = 'EBOOK',
-  PRINT = 'PRINT',
-}
-
 export enum BookingStatus {
   PENDING = 'PENDING',
   CONFIRMED = 'CONFIRMED',
@@ -410,7 +405,6 @@ export const StaticValues = {
   PlatForm,
   DeliveryStatus,
   OrderStatus,
-  BookingType,
   BookingStatus,
   PaymentMethod,
   TransactionStatus,

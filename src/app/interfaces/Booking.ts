@@ -1,6 +1,6 @@
 import { User } from './user';
 import { Transaction } from './Transaction';
-import { BookingStatus, BookingType, PlatForm, Title } from './index';
+import { BookingStatus, PlatForm, Title } from './index';
 import { Royalty } from './Royalty';
 
 export interface Booking {
@@ -16,7 +16,6 @@ export interface Booking {
   transactions: Transaction[];
   royalties: Royalty[];
   createdAt: string;
-  type: BookingType;
   platform: PlatForm;
 }
 

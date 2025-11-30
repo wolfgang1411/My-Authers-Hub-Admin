@@ -1,5 +1,3 @@
-import { BookingType } from './StaticValue';
-
 export enum PlatformStatus {
   ACTIVE = 'ACTIVE',
   DEACTIVE = 'DEACTIVE',
@@ -11,8 +9,8 @@ export interface Platform {
   name: string;
   marginPercent: number;
   extraFlatMargin?: number;
-  type: BookingType;
   isEbookPlatform: boolean;
+  isSuperAdminPricingOnly?: boolean;
   status: PlatformStatus;
   createdAt: string;
   updatedAt: string;

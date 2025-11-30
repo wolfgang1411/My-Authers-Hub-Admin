@@ -11,7 +11,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import {
   ApproveTitleGroup,
-  BookingType,
   CreateDistributionLink,
   CreatePlatformIdentifier,
   DistributionType,
@@ -72,7 +71,7 @@ export class ApproveTitle implements OnInit {
       this.form.controls.platformIdentifier.push(
         new FormGroup({
           platform: new FormControl<string | null | undefined>(platform.name),
-          type: new FormControl(this.getPlatformType(platform.name), {
+          type: new FormControl(platform.isEbookPlatform ? 'EBOOK' : 'PRINT', {
             nonNullable: true,
           }),
           uniqueIdentifier: new FormControl<string | null>(''),
@@ -80,11 +79,6 @@ export class ApproveTitle implements OnInit {
         })
       );
     });
-  }
-
-  getPlatformType(platformName: string): BookingType {
-    const platform = this.platformService.getPlatformByName(platformName);
-    return platform?.type || BookingType.PRINT;
   }
 
   onSubmit() {

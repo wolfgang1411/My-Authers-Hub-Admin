@@ -17,7 +17,6 @@ import {
   SizeCategoryType,
   TitleConfigType,
   PlatForm,
-  BookingType,
   PricingStatus,
 } from './index';
 
@@ -76,7 +75,7 @@ export interface TitleStepProgress {
 export interface TitlePlatformIdentifier {
   id: number;
   platform: PlatForm;
-  type: BookingType;
+  type: 'EBOOK' | 'PRINT';
   sales: number;
   totalAmount: number;
   uniqueIdentifier?: string;
@@ -541,13 +540,13 @@ export interface TitleDetailsFormGroup {
 export interface PlatFormIndetifierGroup {
   uniqueIdentifier: FormControl<string | null>;
   platform: FormControl<string | null | undefined>;
-  type: FormControl<BookingType>;
+  type: FormControl<'EBOOK' | 'PRINT'>;
   distributionLink: FormControl<string | null>;
 }
 
 export interface CreatePlatformIdentifier {
   platform: string;
-  type: BookingType;
+  type: 'EBOOK' | 'PRINT';
   uniqueIdentifier?: string;
   distributionLink?: string;
 }

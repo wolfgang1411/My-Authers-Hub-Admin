@@ -32,22 +32,14 @@
           <mat-label>Extra Flat Margin</mat-label>
           <input matInput type="number" formControlName="extraFlatMargin" placeholder="0" />
         </mat-form-field>
-
-        <mat-form-field class="full-width">
-          <mat-label>Booking Type</mat-label>
-          <mat-select formControlName="type">
-            @for (type of bookingTypes; track type) {
-              <mat-option [value]="type">{{ type }}</mat-option>
-            }
-          </mat-select>
-          @if (platformForm.get('type')?.hasError('required') && platformForm.get('type')?.touched) {
-            <mat-error>Booking type is required</mat-error>
-          }
-        </mat-form-field>
       </div>
 
       <mat-checkbox formControlName="isEbookPlatform" class="checkbox-field">
         Mark as eBook platform
+      </mat-checkbox>
+
+      <mat-checkbox formControlName="isSuperAdminPricingOnly" class="checkbox-field">
+        Superadmin pricing only (pricing must be entered by superadmin)
       </mat-checkbox>
     </form>
   </mat-dialog-content>

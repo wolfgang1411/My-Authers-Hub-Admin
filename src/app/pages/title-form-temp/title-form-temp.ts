@@ -997,12 +997,14 @@ export class TitleFormTemp implements OnDestroy {
         insideCover: !!insideCover,
       };
 
-      // Include customPrintCost if it's a valid number
+      // Include customPrintCost if it's a valid number and greater than 0
+      // null, undefined, or 0 means no custom print cost
       if (
         customPrintCost !== null &&
         customPrintCost !== undefined &&
+        customPrintCost !== 0 &&
         !isNaN(Number(customPrintCost)) &&
-        Number(customPrintCost) >= 0
+        Number(customPrintCost) > 0
       ) {
         payload.customPrintCost = Number(customPrintCost);
       }
@@ -1030,6 +1032,7 @@ export class TitleFormTemp implements OnDestroy {
         }
         // Update author print price validators after printing cost changes
         this.updateAuthorPrintPriceValidators();
+        // Note: Validation for customPrintCost is handled in temp-title-printing component on blur
       }
     } catch (error) {
       console.error('Error calculating printing cost:', error);
@@ -1563,20 +1566,33 @@ export class TitleFormTemp implements OnDestroy {
     );
 
     // Add missing platforms only
+    const isPublisher = this.loggedInUser()?.accessLevel === 'PUBLISHER';
+    
     platforms.forEach((platform) => {
       // Check if platform already exists - don't create duplicate
       if (!existingPlatforms.has(platform.name)) {
+        // For publishers, don't set validators for superadmin-only platforms without pricing
+        const isSuperAdminOnly = platform.isSuperAdminPricingOnly ?? false;
+        const shouldSetValidators = !isPublisher || !isSuperAdminOnly;
+        
         const newControl = new FormGroup({
           id: new FormControl<number | null | undefined>(null),
           platform: new FormControl<string>(platform.name, Validators.required),
-          salesPrice: new FormControl<number | null | undefined>(null, [
-            Validators.required,
-            this.salesPriceValidator() as ValidatorFn,
-          ]),
-          mrp: new FormControl<number | null | undefined>(null, [
-            Validators.required,
-            this.mrpValidator() as ValidatorFn,
-          ]),
+          salesPrice: new FormControl<number | null | undefined>(
+            null,
+            shouldSetValidators
+              ? [
+                  Validators.required,
+                  this.salesPriceValidator() as ValidatorFn,
+                ]
+              : []
+          ),
+          mrp: new FormControl<number | null | undefined>(
+            null,
+            shouldSetValidators
+              ? [Validators.required, this.mrpValidator() as ValidatorFn]
+              : []
+          ),
         }) as PricingGroup;
 
         pricingArray.push(newControl);
@@ -1586,6 +1602,7 @@ export class TitleFormTemp implements OnDestroy {
     });
 
     // Update validators based on current publishing type
+    // This will handle cases where pricing already exists for superadmin-only platforms
     this.updatePricingValidatorsForPublishingType(
       this.tempForm.controls.publishingType.value
     );
@@ -1605,6 +1622,7 @@ export class TitleFormTemp implements OnDestroy {
 
     const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
     const isOnlyPrint = publishingType === PublishingType.ONLY_PRINT;
+    const isPublisher = this.loggedInUser()?.accessLevel === 'PUBLISHER';
 
     pricingArray.controls.forEach((control) => {
       const platformName = control.controls.platform.value as string | null;
@@ -1613,6 +1631,19 @@ export class TitleFormTemp implements OnDestroy {
         : null;
       const isEbookPlatform = platform?.isEbookPlatform ?? false;
       const isPrintPlatform = !isEbookPlatform;
+      const isSuperAdminOnly = platform?.isSuperAdminPricingOnly ?? false;
+      
+      // Helper function to check if validators should be set for this platform
+      const shouldSetValidators = () => {
+        // For publishers with superadmin-only platforms without pricing, don't set validators
+        if (isPublisher && isSuperAdminOnly) {
+          const hasPricing = control.controls.id.value != null || 
+                            control.controls.salesPrice.value != null ||
+                            control.controls.mrp.value != null;
+          return hasPricing; // Only set validators if pricing already exists
+        }
+        return true; // For all other cases, set validators
+      };
 
       if (isOnlyEbook) {
         // For ebook-only titles, remove validators from non-ebook platforms
@@ -1624,15 +1655,20 @@ export class TitleFormTemp implements OnDestroy {
           });
           control.controls.mrp.updateValueAndValidity({ emitEvent: false });
         } else {
-          // Ensure ebook platforms have validators
-          control.controls.salesPrice.setValidators([
-            Validators.required,
-            this.salesPriceValidator() as ValidatorFn,
-          ]);
-          control.controls.mrp.setValidators([
-            Validators.required,
-            this.mrpValidator() as ValidatorFn,
-          ]);
+          // Ensure ebook platforms have validators (if allowed)
+          if (shouldSetValidators()) {
+            control.controls.salesPrice.setValidators([
+              Validators.required,
+              this.salesPriceValidator() as ValidatorFn,
+            ]);
+            control.controls.mrp.setValidators([
+              Validators.required,
+              this.mrpValidator() as ValidatorFn,
+            ]);
+          } else {
+            control.controls.salesPrice.clearValidators();
+            control.controls.mrp.clearValidators();
+          }
           control.controls.salesPrice.updateValueAndValidity({
             emitEvent: false,
           });
@@ -1648,7 +1684,28 @@ export class TitleFormTemp implements OnDestroy {
           });
           control.controls.mrp.updateValueAndValidity({ emitEvent: false });
         } else {
-          // Ensure print platforms have validators
+          // Ensure print platforms have validators (if allowed)
+          if (shouldSetValidators()) {
+            control.controls.salesPrice.setValidators([
+              Validators.required,
+              this.salesPriceValidator() as ValidatorFn,
+            ]);
+            control.controls.mrp.setValidators([
+              Validators.required,
+              this.mrpValidator() as ValidatorFn,
+            ]);
+          } else {
+            control.controls.salesPrice.clearValidators();
+            control.controls.mrp.clearValidators();
+          }
+          control.controls.salesPrice.updateValueAndValidity({
+            emitEvent: false,
+          });
+          control.controls.mrp.updateValueAndValidity({ emitEvent: false });
+        }
+      } else {
+        // For PRINT_EBOOK, ensure all platforms have validators (if allowed)
+        if (shouldSetValidators()) {
           control.controls.salesPrice.setValidators([
             Validators.required,
             this.salesPriceValidator() as ValidatorFn,
@@ -1657,21 +1714,10 @@ export class TitleFormTemp implements OnDestroy {
             Validators.required,
             this.mrpValidator() as ValidatorFn,
           ]);
-          control.controls.salesPrice.updateValueAndValidity({
-            emitEvent: false,
-          });
-          control.controls.mrp.updateValueAndValidity({ emitEvent: false });
+        } else {
+          control.controls.salesPrice.clearValidators();
+          control.controls.mrp.clearValidators();
         }
-      } else {
-        // For PRINT_EBOOK, ensure all platforms have validators
-        control.controls.salesPrice.setValidators([
-          Validators.required,
-          this.salesPriceValidator() as ValidatorFn,
-        ]);
-        control.controls.mrp.setValidators([
-          Validators.required,
-          this.mrpValidator() as ValidatorFn,
-        ]);
         control.controls.salesPrice.updateValueAndValidity({
           emitEvent: false,
         });
@@ -1889,9 +1935,9 @@ export class TitleFormTemp implements OnDestroy {
       printingControls.isColorPagesRandom.valueChanges.pipe(
         startWith(printingControls.isColorPagesRandom.value)
       ),
-      printingControls.customPrintCost.valueChanges.pipe(
-        startWith(printingControls.customPrintCost.value)
-      ),
+      // Note: customPrintCost is excluded from this subscription to prevent circular updates
+      // It's already included in the API payload when calculatePrintingCost is called
+      // Validation is handled separately in temp-title-printing component
     ])
       .pipe(debounceTime(500), takeUntil(this.destroy$))
       .subscribe(() => {
@@ -1899,6 +1945,9 @@ export class TitleFormTemp implements OnDestroy {
         // Update author print price validators when printing cost changes
         this.updateAuthorPrintPriceValidators();
       });
+
+    // Note: customPrintCost calculation is now triggered only on blur after validation
+    // See temp-title-printing component for blur handler
   }
 
   async addDefaultMediaArray(medias?: TitleMedia[]) {
@@ -2476,9 +2525,39 @@ export class TitleFormTemp implements OnDestroy {
 
   async onPricingSubmit() {
     const pricingControls = this.tempForm.controls.pricing;
+    const isPublisher = this.loggedInUser()?.accessLevel === 'PUBLISHER';
 
-    if (!pricingControls.valid) {
-      return;
+    // For publishers, check validity excluding superadmin-only platforms without pricing
+    if (isPublisher) {
+      const hasInvalidControl = pricingControls.controls.some((control) => {
+        const platformName = control.controls.platform.value as string | null;
+        if (!platformName) {
+          return !control.valid;
+        }
+        const platform = this.platformService.getPlatformByName(platformName);
+        const isSuperAdminOnly = platform?.isSuperAdminPricingOnly ?? false;
+        
+        // Skip validation for superadmin-only platforms without pricing
+        if (isSuperAdminOnly) {
+          const hasPricing = control.controls.id.value != null || 
+                            control.controls.salesPrice.value != null ||
+                            control.controls.mrp.value != null;
+          if (!hasPricing) {
+            return false; // Don't count as invalid
+          }
+        }
+        
+        return !control.valid;
+      });
+      
+      if (hasInvalidControl) {
+        return;
+      }
+    } else {
+      // For superadmins, check all controls
+      if (!pricingControls.valid) {
+        return;
+      }
     }
 
     if (!this.titleId || this.titleId <= 0) {
@@ -2554,6 +2633,18 @@ export class TitleFormTemp implements OnDestroy {
         if (!platformObj) {
           validationErrors.push(`Platform '${platformName}' not found.`);
           continue;
+        }
+
+        // For publishers, skip validation for superadmin-only platforms without pricing
+        const isPublisher = this.loggedInUser()?.accessLevel === 'PUBLISHER';
+        if (isPublisher && platformObj.isSuperAdminPricingOnly) {
+          const hasPricing = id.value != null || 
+                            salesPrice.value != null ||
+                            mrp.value != null;
+          // If pricing doesn't exist, skip this platform (publisher can't fill it)
+          if (!hasPricing) {
+            continue;
+          }
         }
 
         // Double-check platform is valid based on publishing type
@@ -2822,9 +2913,30 @@ export class TitleFormTemp implements OnDestroy {
         })
       : pricingControls.controls;
 
-    const hasInvalidRelevantControl = relevantControls.some(
-      (control) => !control.valid
-    );
+    const isPublisher = this.loggedInUser()?.accessLevel === 'PUBLISHER';
+    
+    // For publishers, exclude superadmin-only platforms without pricing from validation
+    const hasInvalidRelevantControl = relevantControls.some((control) => {
+      if (isPublisher) {
+        const platformName = control.controls.platform.value as string | null;
+        if (platformName) {
+          const platform = this.platformService.getPlatformByName(platformName);
+          const isSuperAdminOnly = platform?.isSuperAdminPricingOnly ?? false;
+          
+          // Skip validation for superadmin-only platforms without pricing
+          if (isSuperAdminOnly) {
+            const hasPricing = control.controls.id.value != null || 
+                              control.controls.salesPrice.value != null ||
+                              control.controls.mrp.value != null;
+            if (!hasPricing) {
+              return false; // Don't count as invalid
+            }
+          }
+        }
+      }
+      
+      return !control.valid;
+    });
 
     if (hasInvalidRelevantControl) {
       Swal.fire({
@@ -2912,6 +3024,18 @@ export class TitleFormTemp implements OnDestroy {
         if (!platformObj) {
           validationErrors.push(`Platform '${platformName}' not found.`);
           continue;
+        }
+
+        // For publishers, skip validation for superadmin-only platforms without pricing
+        const isPublisher = this.loggedInUser()?.accessLevel === 'PUBLISHER';
+        if (isPublisher && platformObj.isSuperAdminPricingOnly) {
+          const hasPricing = id.value != null || 
+                            salesPrice.value != null ||
+                            mrp.value != null;
+          // If pricing doesn't exist, skip this platform (publisher can't fill it)
+          if (!hasPricing) {
+            continue;
+          }
         }
 
         // For PRINT_EBOOK, we need to include ALL platforms (both ebook and print)

@@ -52,6 +52,11 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   private readonly injector = inject(Injector);
   protected readonly PublishingType = PublishingType;
+  // Store original values for disabled controls to prevent changes
+  private readonly disabledControlValues = new Map<
+    FormControl,
+    number | null
+  >();
 
   constructor(
     private staticValueService: StaticValuesService,
@@ -78,14 +83,90 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
   isPricingValid = input<boolean>(false);
   hasPricing = input<boolean>(false);
 
+  // Signal to track pricing validity for publishers (updated reactively)
+  private pricingValidityForPublisher = signal<boolean>(false);
+
+  // Flag to prevent concurrent sync operations
+  private isSyncing = false;
+
+  // Helper method to check if pricing is valid for publishers
+  private checkPricingValidityForPublisher(): boolean {
+    const pricingControls = this.pricingControls().controls;
+    const displayedPlatforms = this.displayedColumns();
+    const displayedSet = new Set(displayedPlatforms);
+
+    // If no platforms to display, consider it valid (no pricing needed)
+    if (displayedPlatforms.length === 0) {
+      return true;
+    }
+
+    // Check if all pricing controls that publishers should fill are valid
+    for (const control of pricingControls) {
+      const platform = control.controls.platform.value as string | null;
+      if (!platform) {
+        continue;
+      }
+
+      // Only validate platforms that should be displayed based on publishing type
+      if (!displayedSet.has(platform)) {
+        continue;
+      }
+
+      // Get platform data to check if it's superadmin-only
+      const platformData = this.platformService.getPlatformByName(platform);
+      const isSuperAdminOnly = platformData?.isSuperAdminPricingOnly ?? false;
+
+      // For superadmin-only platforms, only validate if pricing already exists
+      if (isSuperAdminOnly) {
+        const hasPricing =
+          control.controls.id.value != null ||
+          control.controls.salesPrice.value != null ||
+          control.controls.mrp.value != null;
+
+        // If pricing doesn't exist, skip validation (publisher can't fill it)
+        if (!hasPricing) {
+          continue;
+        }
+      }
+
+      // For all other platforms (or superadmin-only with pricing), check validity
+      // Note: Disabled controls are still considered valid in Angular forms
+      if (!control.valid) {
+        // Check if control is disabled - disabled controls are always valid
+        if (control.disabled) {
+          continue;
+        }
+
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  // Computed: Check if pricing is valid for platforms that the current user can fill
+  // For publishers, exclude superadmin-only platforms from validation
+  isPricingValidForUser = computed(() => {
+    const accessLevel = this.accessLevel();
+    const isPublisher = accessLevel === 'PUBLISHER';
+
+    // If superadmin, use the parent's isPricingValid
+    if (!isPublisher) {
+      return this.isPricingValid();
+    }
+
+    // For publishers, use the reactively updated signal
+    return this.pricingValidityForPublisher();
+  });
+
   // Computed: Are all forms valid?
   areFormsValid = computed(() => {
-    return (
-      this.isPrintingValid() &&
-      this.isPricingValid() &&
-      this.hasPricing() &&
-      this.publisher() !== null
-    );
+    const isPrintingValid = this.isPrintingValid();
+    const isPricingValid = this.isPricingValidForUser();
+    const hasPricing = this.hasPricing();
+    const hasPublisher = this.publisher() !== null;
+
+    return isPrintingValid && isPricingValid && hasPricing && hasPublisher;
   });
 
   // Computed properties
@@ -148,24 +229,27 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     // Initialize author percentage controls from existing royalties
     this.initializeAuthorPercentageControls();
 
+    // Ensure all pricing controls are enabled by default
+    // This prevents any controls from being stuck in disabled state
+    setTimeout(() => {
+      this.pricingControls().controls.forEach((control) => {
+        if (control.controls.mrp.disabled) {
+          control.controls.mrp.enable({ emitEvent: false });
+        }
+        if (control.controls.salesPrice.disabled) {
+          control.controls.salesPrice.enable({ emitEvent: false });
+        }
+      });
+    }, 100);
+
     // Watch FormArray changes to detect when royalties are added
     // This is crucial for detecting when royalties are prefilled from server
+    // SIMPLIFIED: Single sync operation, no setTimeout - let debounce handle timing
     this.royaltiesController()
-      .valueChanges.pipe(debounceTime(200), takeUntil(this.destroy$))
+      .valueChanges.pipe(debounceTime(300), takeUntil(this.destroy$))
       .subscribe(() => {
-        // When royalties change, recalculate publisher percentage
-        const publisher = this.publisher();
-        const authors = this.authors();
-        const authorControls = this.authorPercentageControls();
-
-        if (
-          publisher &&
-          (authors.length === 0 ||
-            authors.every((author) => authorControls.has(author.id)))
-        ) {
-          // Recalculate publisher percentage when royalties change
-          this.calculatePublisherPercentage();
-        }
+        // When royalties change, sync everything in one go
+        this.syncAllAuthorAndPublisherPercentages();
       });
 
     // Setup effect to watch for author changes and re-initialize controls
@@ -215,10 +299,29 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       });
 
       // Watch form validity and update controls accordingly
+      // Note: Author percentage controls should always be enabled for input
+      // They are only used for calculation, not for blocking user input
       effect(() => {
+        // Access pricing validity to make effect reactive to pricing changes
+        const isPricingValid = this.isPricingValidForUser();
         const formsValid = this.areFormsValid();
         const authorControls = this.authorPercentageControls();
         const authors = this.authors();
+        const pricingControls = this.pricingControls();
+        // Access royalties to make effect reactive to royalty changes (e.g., on page load)
+        // CRITICAL: Access both the array, its length, and values to ensure reactivity
+        const royalties = this.royaltiesController();
+        const royaltiesLength = royalties.length;
+        const royaltiesValue = royalties.value; // Access value to make effect reactive to royalty data changes
+        // Also access controls to ensure reactivity when royalty controls change
+        const royaltiesControls = royalties.controls;
+        // Access a sample of royalty values to ensure effect runs when royalties load
+        if (royaltiesControls.length > 0) {
+          royaltiesControls.forEach((control) => {
+            // Access percentage value to make effect reactive
+            const _ = control.controls.percentage.value;
+          });
+        }
 
         // Calculate default percentage based on author count
         const authorCount = authors.length;
@@ -229,81 +332,75 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
               : Math.round((100 / authorCount) * 100) / 100 // Round to 2 decimal places
             : 0;
 
-        // Update all author controls based on form validity
-        authorControls.forEach((control, authorId) => {
-          if (!formsValid) {
-            // Set to 0 and disable if forms are invalid
-            if (control.value !== 0) {
-              control.patchValue(0, { emitEvent: false });
-            }
-            if (control.enabled) {
-              control.disable();
-            }
-          } else {
-            // Enable if forms are valid
-            if (control.disabled) {
-              control.enable();
-            }
+        // SIMPLIFIED: Effect only ensures controls are enabled and triggers sync
+        // The actual sync logic is in syncAllAuthorAndPublisherPercentages()
+        // This prevents conflicts and ensures single source of truth
 
-            // If control value is 0 (from when it was disabled), set to default
-            // But only if there's no existing royalty value
-            if (control.value === 0 || control.value === null) {
-              // Check if there's an existing royalty value for this author
-              const existingRoyalty = this.royaltiesController().controls.find(
-                (r) =>
-                  r.controls.authorId.value === authorId &&
-                  r.controls.percentage.value !== null &&
-                  r.controls.percentage.value !== undefined &&
-                  r.controls.percentage.value !== 0
-              );
-
-              const valueToSet =
-                existingRoyalty?.controls.percentage.value ??
-                defaultAuthorPercentage;
-
-              control.patchValue(Math.round(valueToSet), { emitEvent: false });
-            }
+        // Always ensure controls are enabled - users should be able to input percentages
+        authorControls.forEach((control) => {
+          if (control.disabled) {
+            control.enable();
           }
         });
 
-        // Recalculate publisher percentage when form validity changes
-        if (this.publisher()) {
-          // Use setTimeout to ensure author controls are updated first
+        // CRITICAL FIX: Always sync FROM royalties if they exist, regardless of form validity
+        // This ensures saved values (like 80) are always shown, even when forms are invalid
+        // Royalties are the source of truth - show them even if pricing is missing
+        const hasAnyRoyalties =
+          royaltiesLength > 0 ||
+          this.royaltiesController().controls.some(
+            (r) =>
+              r.controls.percentage.value !== null &&
+              r.controls.percentage.value !== undefined
+          );
+
+        if (hasAnyRoyalties) {
+          console.log('[Effect] Has royalties, syncing FROM royalties');
+          // Always sync FROM royalties - don't wait for forms to be valid
+          // This ensures publisher's saved values (like 80) are shown even when superadmin hasn't added pricing yet
           setTimeout(() => {
-            this.calculatePublisherPercentage();
-            this.syncAuthorPercentagesToRoyalties();
-          }, 100);
+            console.log('[Effect] Calling syncAuthorControlsFromRoyalties');
+            // Only sync FROM royalties, not TO royalties (don't create new royalties when forms invalid)
+            this.syncAuthorControlsFromRoyalties();
+            // Only calculate publisher percentage if forms are valid
+            if (formsValid && this.publisher()) {
+              this.calculatePublisherPercentage();
+            }
+          }, 50);
+        } else {
+          console.log('[Effect] No royalties found');
+          if (!formsValid) {
+            // Only set to 0 if there are NO royalties at all
+            authorControls.forEach((control) => {
+              if (control.value !== 0 && control.value !== null) {
+                control.patchValue(0, { emitEvent: false });
+              }
+            });
+          }
         }
       });
     });
 
-    // Initial sync - use longer timeout to ensure all data is loaded
+    // SINGLE initial sync - ensure all data is loaded
     // This handles the case where royalties are prefilled before component initializes
     setTimeout(() => {
-      const publisher = this.publisher();
-      const authors = this.authors();
-      const royalties = this.royaltiesController();
+      const accessLevel = this.accessLevel();
 
-      if (publisher && royalties.length > 0) {
-        // Re-initialize author controls if needed (in case royalties were set before init)
-        if (authors.length > 0) {
-          const authorControls = this.authorPercentageControls();
-          const hasAllAuthorControls = authors.every((author) =>
-            authorControls.has(author.id)
-          );
-          if (!hasAllAuthorControls) {
-            this.initializeAuthorPercentageControls();
-          }
-        }
-
-        this.syncAuthorPercentagesToRoyalties();
-        this.calculatePublisherPercentage();
-        // Trigger royalty amount calculation after initial sync
-        setTimeout(() => {
-          this.updateRoyaltyAmounts();
-        }, 600);
+      // For publishers, update pricing validity signal first
+      if (accessLevel === 'PUBLISHER') {
+        const isValid = this.checkPricingValidityForPublisher();
+        this.pricingValidityForPublisher.set(isValid);
       }
-    }, 500);
+
+      // Sync everything in one deterministic operation
+      this.syncAllAuthorAndPublisherPercentages();
+
+      // Also trigger royalty amount calculation after sync
+      // This ensures amounts are calculated even when some pricing is missing
+      setTimeout(() => {
+        this.updateRoyaltyAmounts();
+      }, 700);
+    }, 600);
   }
 
   /**
@@ -318,18 +415,56 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     const formsValid = this.areFormsValid();
 
     authors.forEach((author) => {
-      // If forms are not valid, set to 0
-      // Otherwise, get % initial value from existing royalty
+      // CRITICAL FIX: Always check for existing royalties first, regardless of form validity
+      // This ensures saved values (like 80) are loaded even when some pricing is missing
+      const accessLevel = this.accessLevel();
       let percent = 0;
-      if (formsValid) {
-        const existingRoyalty = this.royaltiesController().controls.find(
+
+      // Check for existing royalties - always do this, even if forms are invalid
+      let authorRoyalties;
+      if (accessLevel === 'SUPERADMIN') {
+        // Superadmin can see all royalties
+        authorRoyalties = this.royaltiesController().controls.filter(
           (r) =>
             r.controls.authorId.value === author.id &&
-            r.controls.percentage.value != null
+            r.controls.platform.value &&
+            r.controls.percentage.value !== null &&
+            r.controls.percentage.value !== undefined
         );
-
-        percent = existingRoyalty?.controls.percentage.value ?? 100;
+      } else {
+        // Publisher only sees visible platforms
+        const displayedPlatforms = this.displayedColumns();
+        const displayedSet = new Set(displayedPlatforms);
+        authorRoyalties = this.royaltiesController().controls.filter(
+          (r) =>
+            r.controls.authorId.value === author.id &&
+            r.controls.platform.value &&
+            displayedSet.has(r.controls.platform.value) &&
+            r.controls.percentage.value !== null &&
+            r.controls.percentage.value !== undefined
+        );
       }
+
+      // Find the first non-zero royalty value
+      const existingRoyalty = authorRoyalties.find(
+        (r) => r.controls.percentage.value !== 0
+      );
+
+      if (existingRoyalty) {
+        // Use existing royalty value if found (this is the saved value like 80)
+        percent = existingRoyalty.controls.percentage.value ?? 0;
+      } else if (formsValid) {
+        // Only use default if forms are valid and no royalties exist
+        const authorCount = authors.length;
+        const defaultAuthorPercentage: number =
+          authorCount > 0
+            ? authorCount === 1
+              ? 100
+              : Math.round((100 / authorCount) * 100) / 100
+            : 0;
+        percent = defaultAuthorPercentage;
+      }
+      // If forms invalid and no royalties, keep percent = 0
 
       // Create % control
       const percentControl = new FormControl(Math.round(percent), [
@@ -338,10 +473,9 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
         Validators.max(100),
       ]);
 
-      // Disable if forms are not valid
-      if (!formsValid) {
-        percentControl.disable();
-      }
+      // CRITICAL FIX: Always keep controls enabled
+      // This allows users to see and edit saved values even when some pricing is missing
+      // Form validity only affects submission, not viewing/editing
 
       percentControl.valueChanges
         .pipe(debounceTime(300), takeUntil(this.destroy$))
@@ -353,9 +487,7 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
             }
             this.syncAuthorPercentagesToRoyalties();
             this.calculatePublisherPercentage();
-            setTimeout(() => {
-              this.updateRoyaltyAmounts();
-            }, 100);
+            // Subscription will handle updateRoyaltyAmounts
           }
         });
 
@@ -371,41 +503,274 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       (r) => r.controls.authorId.value || r.controls.publisherId.value
     );
 
-    if (authors.length > 0) {
-      if (!hasAnyRoyalties) {
-        // No royalties exist yet, initialize them
-        setTimeout(() => {
-          this.syncAuthorPercentagesToRoyalties();
-          this.calculatePublisherPercentage();
-          // Trigger royalty amount calculation
-          setTimeout(() => {
-            this.updateRoyaltyAmounts();
-          }, 300);
-        }, 200);
-      } else {
-        // Royalties exist (prefilled from server), sync and calculate publisher percentage
-        // Use longer timeout to ensure all data is loaded
-        setTimeout(() => {
-          this.syncAuthorPercentagesToRoyalties();
-          // Always recalculate publisher percentage based on author percentages
-          // This ensures it's set correctly even when royalties are prefilled
-          this.calculatePublisherPercentage();
-          // Trigger royalty amount calculation
-          setTimeout(() => {
-            this.updateRoyaltyAmounts();
-          }, 400);
-        }, 300);
+    // After initializing controls, sync everything in one go
+    // No setTimeout needed - let the main sync handle timing
+    if (authors.length > 0 || publisher) {
+      // Sync will happen in the main sync method
+      // This ensures consistent behavior whether royalties exist or not
+    }
+  }
+
+  /**
+   * Sync author controls FROM royalties (reverse of syncAuthorPercentagesToRoyalties)
+   * Updates author percentage controls with values from existing royalties
+   */
+  private syncAuthorControlsFromRoyalties(): void {
+    console.log('[syncAuthorControlsFromRoyalties] START');
+    const authors = this.authors();
+    const authorControls = this.authorPercentageControls();
+    const accessLevel = this.accessLevel();
+    const formsValid = this.areFormsValid();
+
+    console.log(
+      '[syncAuthorControlsFromRoyalties] authors:',
+      authors.length,
+      'accessLevel:',
+      accessLevel,
+      'formsValid:',
+      formsValid
+    );
+
+    // CRITICAL FIX: Don't check formsValid - always sync if royalties exist
+    // This ensures saved values are shown even when some pricing is missing
+    if (authors.length === 0) {
+      console.log('[syncAuthorControlsFromRoyalties] No authors, returning');
+      return;
+    }
+
+    // Calculate default percentage based on author count
+    const authorCount = authors.length;
+    const defaultAuthorPercentage: number =
+      authorCount > 0
+        ? authorCount === 1
+          ? 100
+          : Math.round((100 / authorCount) * 100) / 100
+        : 0;
+
+    authors.forEach((author) => {
+      const control = authorControls.get(author.id);
+      if (!control) {
+        return;
       }
-    } else if (publisher) {
-      // If no authors but publisher exists, still calculate publisher percentage
-      // This handles edge case where publisher should get 100%
-      setTimeout(() => {
+
+      // CRITICAL FIX: For superadmin, check ALL royalties (including admin-only platforms)
+      // For publisher, only check visible platforms
+      // This ensures that when superadmin adds pricing for admin-only platforms,
+      // the saved royalty values (like 80) are found and loaded, not defaults (100)
+      let authorRoyalties;
+      if (accessLevel === 'SUPERADMIN') {
+        // Superadmin can see all royalties, including admin-only platforms
+        authorRoyalties = this.royaltiesController().controls.filter(
+          (r) =>
+            r.controls.authorId.value === author.id &&
+            r.controls.platform.value &&
+            r.controls.percentage.value !== null &&
+            r.controls.percentage.value !== undefined
+        );
+        console.log(
+          `[syncAuthorControlsFromRoyalties] Author ${author.id} (SUPERADMIN): Found ${authorRoyalties.length} royalties:`,
+          authorRoyalties.map((r) => ({
+            platform: r.controls.platform.value,
+            percentage: r.controls.percentage.value,
+          }))
+        );
+      } else {
+        // Publisher only sees visible platforms
+        const displayedPlatforms = this.displayedColumns();
+        const displayedSet = new Set(displayedPlatforms);
+        authorRoyalties = this.royaltiesController().controls.filter(
+          (r) =>
+            r.controls.authorId.value === author.id &&
+            r.controls.platform.value &&
+            displayedSet.has(r.controls.platform.value) &&
+            r.controls.percentage.value !== null &&
+            r.controls.percentage.value !== undefined
+        );
+        console.log(
+          `[syncAuthorControlsFromRoyalties] Author ${author.id} (PUBLISHER): Found ${authorRoyalties.length} royalties from visible platforms`
+        );
+      }
+
+      // Find ANY royalty with a value (including zero) - use the first one found
+      // This ensures we use existing royalties instead of defaults
+      let existingRoyalty =
+        authorRoyalties.length > 0 ? authorRoyalties[0] : null;
+
+      // Prefer non-zero values if available
+      if (authorRoyalties.length > 0) {
+        const nonZeroRoyalty = authorRoyalties.find(
+          (r) =>
+            r.controls.percentage.value !== 0 &&
+            r.controls.percentage.value !== null
+        );
+        if (nonZeroRoyalty) {
+          existingRoyalty = nonZeroRoyalty;
+        }
+      }
+
+      console.log(
+        `[syncAuthorControlsFromRoyalties] Author ${author.id}: existingRoyalty:`,
+        existingRoyalty
+          ? {
+              platform: existingRoyalty.controls.platform.value,
+              percentage: existingRoyalty.controls.percentage.value,
+            }
+          : 'none'
+      );
+
+      // Determine what value should be set
+      // CRITICAL: Use ANY existing royalty value (even 0), not default
+      const royaltyValue = existingRoyalty?.controls.percentage.value;
+      const valueToSet =
+        existingRoyalty !== null &&
+        royaltyValue !== null &&
+        royaltyValue !== undefined
+          ? royaltyValue // Use existing royalty value (even if 0)
+          : authorRoyalties.length > 0
+          ? 0
+          : defaultAuthorPercentage; // If royalties exist but all null, use 0, otherwise default
+      const roundedValue = Math.round(valueToSet);
+
+      console.log(
+        `[syncAuthorControlsFromRoyalties] Author ${author.id}: royaltyValue=${royaltyValue}, valueToSet=${valueToSet}, roundedValue=${roundedValue}, currentValue=${control.value}`
+      );
+
+      // Always update if:
+      // 1. Value is null/undefined/0 and we have royalties
+      // 2. Value doesn't match roundedValue
+      // 3. Control is disabled (should be enabled)
+      const currentValue = control.value;
+      const hasRoyalties = authorRoyalties.length > 0;
+      const shouldUpdate =
+        ((currentValue === null ||
+          currentValue === undefined ||
+          currentValue === 0) &&
+          hasRoyalties) ||
+        (currentValue !== roundedValue && hasRoyalties) ||
+        (currentValue === 100 &&
+          hasRoyalties &&
+          royaltyValue !== null &&
+          royaltyValue !== undefined &&
+          royaltyValue !== 100) ||
+        control.disabled;
+
+      console.log(
+        `[syncAuthorControlsFromRoyalties] Author ${author.id}: shouldUpdate=${shouldUpdate}, control.disabled=${control.disabled}`
+      );
+
+      if (shouldUpdate) {
+        // Ensure control is enabled
+        if (control.disabled) {
+          console.log(
+            `[syncAuthorControlsFromRoyalties] Author ${author.id}: Enabling control`
+          );
+          control.enable({ emitEvent: false });
+        }
+
+        // Use the exact royalty value if it exists, rounded for display
+        const valueToUse =
+          hasRoyalties && royaltyValue !== null && royaltyValue !== undefined
+            ? Math.round(royaltyValue)
+            : roundedValue;
+
+        console.log(
+          `[syncAuthorControlsFromRoyalties] Author ${author.id}: Updating control from ${currentValue} to ${valueToUse}`
+        );
+        control.patchValue(valueToUse, { emitEvent: false });
+      }
+    });
+    console.log('[syncAuthorControlsFromRoyalties] END');
+  }
+
+  /**
+   * SINGLE SOURCE OF TRUTH: Sync all author and publisher percentages
+   * Always uses royalties as the source of truth
+   * Order: FROM royalties -> TO royalties -> calculate publisher
+   * This ensures consistent behavior and prevents conflicts
+   * Uses a flag to prevent concurrent syncs
+   */
+  private syncAllAuthorAndPublisherPercentages(): void {
+    console.log(
+      '[syncAllAuthorAndPublisherPercentages] START, isSyncing:',
+      this.isSyncing
+    );
+
+    // Prevent concurrent syncs
+    if (this.isSyncing) {
+      console.log(
+        '[syncAllAuthorAndPublisherPercentages] Already syncing, returning'
+      );
+      return;
+    }
+
+    this.isSyncing = true;
+
+    try {
+      const formsValid = this.areFormsValid();
+      const authors = this.authors();
+      const publisher = this.publisher();
+
+      console.log(
+        '[syncAllAuthorAndPublisherPercentages] formsValid:',
+        formsValid,
+        'authors:',
+        authors.length,
+        'publisher:',
+        !!publisher
+      );
+
+      // CRITICAL FIX: Always sync FROM royalties, even if forms are invalid
+      // This ensures saved values are loaded
+      if (authors.length === 0 && !publisher) {
+        console.log(
+          '[syncAllAuthorAndPublisherPercentages] No authors or publisher, returning'
+        );
+        return;
+      }
+
+      // Step 1: Ensure author controls exist
+      if (authors.length > 0) {
+        const authorControls = this.authorPercentageControls();
+        const hasAllAuthorControls = authors.every((author) =>
+          authorControls.has(author.id)
+        );
+        if (!hasAllAuthorControls) {
+          this.initializeAuthorPercentageControls();
+        }
+      }
+
+      // Step 2: Sync FROM royalties FIRST (load saved values like 80, not defaults like 100)
+      // This is the source of truth - if royalties exist, use them
+      // CRITICAL: This must happen before syncing TO royalties
+      // CRITICAL: Do this even if forms are invalid - we want to show saved values
+      if (authors.length > 0) {
+        console.log(
+          '[syncAllAuthorAndPublisherPercentages] Step 2: Syncing FROM royalties'
+        );
+        this.syncAuthorControlsFromRoyalties();
+      }
+
+      // Step 3: Sync TO royalties (ensure all platforms have same percentage)
+      // This ensures consistency across platforms
+      // Only do this if forms are valid (don't create new royalties when invalid)
+      if (authors.length > 0 && formsValid) {
+        console.log(
+          '[syncAllAuthorAndPublisherPercentages] Step 3: Syncing TO royalties'
+        );
+        this.syncAuthorPercentagesToRoyalties();
+      }
+
+      // Step 4: Calculate publisher percentage (based on author percentages)
+      // Calculate even if forms are invalid - publisher percentage is based on author percentages, not pricing
+      if (publisher) {
+        console.log(
+          '[syncAllAuthorAndPublisherPercentages] Step 4: Calculating publisher percentage'
+        );
         this.calculatePublisherPercentage();
-        // Trigger royalty amount calculation
-        setTimeout(() => {
-          this.updateRoyaltyAmounts();
-        }, 400);
-      }, 300);
+      }
+    } finally {
+      this.isSyncing = false;
+      console.log('[syncAllAuthorAndPublisherPercentages] END');
     }
   }
 
@@ -460,10 +825,17 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       });
     });
 
-    // Manually trigger royalty amount calculation since we update with emitEvent: false
-    setTimeout(() => {
-      this.updateRoyaltyAmounts();
-    }, 100);
+    // Since we use emitEvent: false, we need to manually trigger update
+    // But only do this if forms are valid to avoid unnecessary calls
+    if (this.areFormsValid()) {
+      // Use a small delay to batch multiple sync operations
+      setTimeout(() => {
+        // Only update if forms are still valid (avoid race conditions)
+        if (this.areFormsValid()) {
+          this.updateRoyaltyAmounts();
+        }
+      }, 200);
+    }
   }
 
   /**
@@ -471,30 +843,18 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
    * Publisher gets: 100 - sum of all author percentages
    */
   private calculatePublisherPercentage(): void {
+    console.log('[calculatePublisherPercentage] START');
     const publisher = this.publisher();
     if (!publisher) {
+      console.log('[calculatePublisherPercentage] No publisher, returning');
       return; // No publisher, nothing to calculate
     }
 
-    // If forms are not valid, set publisher percentage to 0
-    if (!this.areFormsValid()) {
-      this.publisherPercentage.set(0);
-      // Also update all publisher royalty controls to 0
-      const platforms = this.displayedColumns();
-      platforms.forEach((platform) => {
-        const royaltyControl = this.royaltiesController().controls.find(
-          (r) =>
-            r.controls.publisherId.value === publisher.id &&
-            r.controls.platform.value === platform
-        );
-        if (royaltyControl) {
-          royaltyControl.controls.percentage.patchValue(0, {
-            emitEvent: false,
-          });
-        }
-      });
-      return;
-    }
+    // CRITICAL FIX: Calculate publisher percentage even if forms are invalid
+    // Publisher percentage is based on author percentages, not pricing validity
+    // We want to show the calculated percentage even when some pricing is missing
+    const formsValid = this.areFormsValid();
+    console.log('[calculatePublisherPercentage] formsValid:', formsValid);
 
     const authorControls = this.authorPercentageControls();
     let totalAuthorPercentage = 0;
@@ -518,9 +878,37 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     this.publisherPercentage.set(roundedPublisherPercentage);
 
     // Sync publisher percentage to all platform royalties
-    const platforms = this.displayedColumns();
+    // CRITICAL: Use ALL platforms that have royalties, not just displayed ones
+    // This ensures publisher percentage is set even for admin-only platforms
+    const accessLevel = this.accessLevel();
+    let platforms: string[];
+
+    if (accessLevel === 'SUPERADMIN') {
+      // Superadmin: Get all platforms that have royalties or are in displayed columns
+      const displayedPlatforms = this.displayedColumns();
+      const platformsWithRoyalties = new Set(
+        this.royaltiesController()
+          .controls.map((r) => r.controls.platform.value)
+          .filter((p): p is string => p !== null)
+      );
+      platforms = Array.from(
+        new Set([...displayedPlatforms, ...platformsWithRoyalties])
+      );
+      console.log(
+        '[calculatePublisherPercentage] SUPERADMIN: Using all platforms:',
+        platforms
+      );
+    } else {
+      // Publisher: Only use displayed platforms
+      platforms = this.displayedColumns();
+      console.log(
+        '[calculatePublisherPercentage] PUBLISHER: Using displayed platforms:',
+        platforms
+      );
+    }
 
     if (platforms.length === 0) {
+      console.log('[calculatePublisherPercentage] No platforms available');
       return; // No platforms available yet
     }
 
@@ -568,12 +956,10 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
         );
       }
     });
-    // Auto convert % → ₹ amount for publisher
-
-    // Manually trigger royalty amount calculation since we update with emitEvent: false
-    setTimeout(() => {
-      this.updateRoyaltyAmounts();
-    }, 100);
+    console.log(
+      '[calculatePublisherPercentage] END, percentage:',
+      roundedPublisherPercentage
+    );
   }
 
   /**
@@ -634,10 +1020,88 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       this.royaltiesController().valueChanges,
       this.pricingControls().valueChanges,
     ])
-      .pipe(debounceTime(600), takeUntil(this.destroy$))
+      .pipe(debounceTime(800), takeUntil(this.destroy$))
       .subscribe(() => {
+        // CRITICAL FIX: Always calculate royalties if there are platforms with both pricing and royalties
+        // Don't wait for all forms to be valid - calculate for available platforms
+        // This ensures royalties are shown even when some platforms are missing pricing
         this.updateRoyaltyAmounts();
       });
+
+    // Setup subscription to track pricing validity for publishers
+    // This updates the signal reactively when form validity changes
+    const pricingControls = this.pricingControls();
+    const statusChangesArray = pricingControls.controls.map((control) =>
+      combineLatest([
+        control.statusChanges,
+        control.controls.mrp.statusChanges,
+        control.controls.salesPrice.statusChanges,
+      ])
+    );
+
+    if (statusChangesArray.length > 0) {
+      combineLatest([
+        pricingControls.statusChanges,
+        pricingControls.valueChanges,
+        ...statusChangesArray,
+      ])
+        .pipe(debounceTime(100), takeUntil(this.destroy$))
+        .subscribe(() => {
+          const accessLevel = this.accessLevel();
+          if (accessLevel === 'PUBLISHER') {
+            const isValid = this.checkPricingValidityForPublisher();
+            this.pricingValidityForPublisher.set(isValid);
+          }
+        });
+    }
+
+    // Also subscribe to valueChanges as a fallback
+    pricingControls.valueChanges
+      .pipe(debounceTime(100), takeUntil(this.destroy$))
+      .subscribe(() => {
+        const accessLevel = this.accessLevel();
+        if (accessLevel === 'PUBLISHER') {
+          const isValid = this.checkPricingValidityForPublisher();
+          this.pricingValidityForPublisher.set(isValid);
+        }
+      });
+
+    // Initial check for publishers - run after a delay to ensure all data is loaded
+    const accessLevel = this.accessLevel();
+    if (accessLevel === 'PUBLISHER') {
+      // Run multiple checks to ensure validity is updated after data loads
+      setTimeout(() => {
+        const isValid = this.checkPricingValidityForPublisher();
+        this.pricingValidityForPublisher.set(isValid);
+      }, 200);
+
+      // Also check after a longer delay to catch late-loading data
+      setTimeout(() => {
+        const isValid = this.checkPricingValidityForPublisher();
+        this.pricingValidityForPublisher.set(isValid);
+      }, 800);
+    }
+
+    // Add an effect to watch pricing controls and update validity for publishers
+    runInInjectionContext(this.injector, () => {
+      effect(() => {
+        const accessLevel = this.accessLevel();
+        if (accessLevel === 'PUBLISHER') {
+          // Access pricing controls to make effect reactive
+          const pricingControls = this.pricingControls();
+          const displayedPlatforms = this.displayedColumns();
+
+          // Trigger validity check when pricing controls or displayed platforms change
+          setTimeout(() => {
+            const isValid = this.checkPricingValidityForPublisher();
+            this.pricingValidityForPublisher.set(isValid);
+          }, 100);
+        }
+      });
+    });
+
+    // Note: Disabled state is now handled by the effect() above
+    // This subscription is no longer needed as the effect handles all cases
 
     // Watch for changes in printing price or custom print cost
     // Use effect to watch signal changes
@@ -647,19 +1111,122 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
         const printingPrice = this.printingPrice();
         const customPrintCost = this.customPrintCost();
 
-        // Recalculate royalties when printing costs change
-        if (printingPrice !== null || customPrintCost !== null) {
-          setTimeout(() => {
-            this.updateRoyaltyAmounts();
-          }, 300);
+        // Subscription will handle recalculation when printing costs change
+        // No need to manually call here
+      });
+
+      // Effect to disable/enable pricing controls based on user access level
+      effect(() => {
+        const accessLevel = this.accessLevel();
+        const pricingControls = this.pricingControls();
+        const platforms = this.platformService.platforms();
+
+        // Default: enable all controls unless explicitly should be disabled
+        const controls = pricingControls.controls;
+
+        // If access level not set yet, ensure all controls are enabled
+        if (!accessLevel) {
+          controls.forEach((control) => {
+            if (control.controls.mrp.disabled) {
+              control.controls.mrp.enable({ emitEvent: false });
+            }
+            if (control.controls.salesPrice.disabled) {
+              control.controls.salesPrice.enable({ emitEvent: false });
+            }
+          });
+          return;
         }
+
+        // If platforms aren't loaded yet, ensure all controls are enabled
+        if (!platforms || platforms.length === 0) {
+          controls.forEach((control) => {
+            if (control.controls.mrp.disabled) {
+              control.controls.mrp.enable({ emitEvent: false });
+            }
+            if (control.controls.salesPrice.disabled) {
+              control.controls.salesPrice.enable({ emitEvent: false });
+            }
+          });
+          return;
+        }
+
+        // Process each control
+        controls.forEach((control) => {
+          // Access control values to make effect reactive
+          const platform = control.controls.platform.value;
+          const id = control.controls.id.value;
+          const salesPrice = control.controls.salesPrice.value;
+          const mrp = control.controls.mrp.value;
+
+          // Only check if should disable for publishers
+          const shouldDisable =
+            accessLevel === 'PUBLISHER'
+              ? this.isPricingDisabled(control)
+              : false;
+
+          // Check current disabled state
+          const mrpDisabled = control.controls.mrp.disabled;
+          const salesPriceDisabled = control.controls.salesPrice.disabled;
+
+          if (shouldDisable) {
+            // Need to disable - store original values first if not already stored
+            if (!mrpDisabled) {
+              if (!this.disabledControlValues.has(control.controls.mrp)) {
+                this.disabledControlValues.set(control.controls.mrp, mrp);
+              }
+              control.controls.mrp.disable({ emitEvent: false });
+            }
+            if (!salesPriceDisabled) {
+              if (
+                !this.disabledControlValues.has(control.controls.salesPrice)
+              ) {
+                this.disabledControlValues.set(
+                  control.controls.salesPrice,
+                  salesPrice
+                );
+              }
+              control.controls.salesPrice.disable({ emitEvent: false });
+            }
+
+            // Restore original values if changed
+            const originalMrp = this.disabledControlValues.get(
+              control.controls.mrp
+            );
+            const originalSalesPrice = this.disabledControlValues.get(
+              control.controls.salesPrice
+            );
+
+            if (
+              originalMrp !== undefined &&
+              control.controls.mrp.value !== originalMrp
+            ) {
+              control.controls.mrp.setValue(originalMrp, { emitEvent: false });
+            }
+            if (
+              originalSalesPrice !== undefined &&
+              control.controls.salesPrice.value !== originalSalesPrice
+            ) {
+              control.controls.salesPrice.setValue(originalSalesPrice, {
+                emitEvent: false,
+              });
+            }
+          } else {
+            // Should be enabled - enable if currently disabled
+            if (mrpDisabled) {
+              this.disabledControlValues.delete(control.controls.mrp);
+              control.controls.mrp.enable({ emitEvent: false });
+            }
+            if (salesPriceDisabled) {
+              this.disabledControlValues.delete(control.controls.salesPrice);
+              control.controls.salesPrice.enable({ emitEvent: false });
+            }
+          }
+        });
       });
     });
 
-    // Also calculate immediately on initialization
-    setTimeout(() => {
-      this.updateRoyaltyAmounts();
-    }, 500);
+    // Initial calculation will be handled by subscription after forms are valid
+    // No need for manual call here
   }
 
   /**
@@ -667,8 +1234,15 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
    * This is called when royalties are updated with emitEvent: false
    */
   private async updateRoyaltyAmounts(): Promise<void> {
+    console.log('[updateRoyaltyAmounts] START');
     const data = this.royaltiesController().value;
     const pricingData = this.pricingControls().value;
+    console.log(
+      '[updateRoyaltyAmounts] Royalties:',
+      data.length,
+      'Pricing:',
+      pricingData.length
+    );
 
     // Group by platform: collect price and all unique percentages
     const platformMap = new Map<
@@ -677,8 +1251,9 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     >();
 
     // First, collect all platforms and their MRP (not salesPrice, we need MRP for calculation)
+    // CRITICAL: Only collect platforms that have valid pricing (mrp > 0)
     pricingData.forEach((pricing) => {
-      if (!pricing.platform || !pricing.mrp) return;
+      if (!pricing.platform || !pricing.mrp || pricing.mrp <= 0) return;
 
       const platform = pricing.platform;
       const mrp = pricing.mrp; // Use MRP for calculation
@@ -694,13 +1269,19 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     });
 
     // Collect all percentages for each platform
+    // CRITICAL FIX: Only add percentages for platforms that already have pricing
+    // This ensures we only calculate for platforms with BOTH pricing AND royalties
+    // Skip platforms that are missing pricing (they'll show 0 in the table, which is correct)
     data.forEach(({ percentage, platform }) => {
       if (!platform || percentage === null || percentage === undefined) return;
 
       const platformData = platformMap.get(platform);
-      if (platformData) {
+      if (platformData && platformData.price > 0) {
+        // Only add percentage if platform has valid pricing
         platformData.percentages.add(percentage.toString());
       }
+      // If platform doesn't have pricing, skip it - don't add to platformMap
+      // This ensures we only calculate for platforms with both pricing and royalties
     });
 
     // Prepare API request - one item per platform with all percentages
@@ -710,18 +1291,44 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       division: string[];
     }> = [];
 
+    // CRITICAL: Only include platforms that have BOTH pricing (price > 0) AND royalties (percentages > 0)
     platformMap.forEach((platformData, platform) => {
-      if (platformData.percentages.size > 0) {
+      if (platformData.price > 0 && platformData.percentages.size > 0) {
         apiItems.push({
           platform,
           price: platformData.price,
           division: Array.from(platformData.percentages).sort(),
         });
+        console.log(
+          `[updateRoyaltyAmounts] Including platform ${platform} with price ${platformData.price} and ${platformData.percentages.size} percentages`
+        );
+      } else {
+        console.log(
+          `[updateRoyaltyAmounts] Skipping platform ${platform} - price: ${platformData.price}, percentages: ${platformData.percentages.size}`
+        );
       }
     });
 
+    // CRITICAL: Even if no platforms have both pricing and royalties,
+    // we should still initialize the structure so platforms without pricing show 0
     if (apiItems.length === 0) {
-      this.totalRoyaltiesAmount.set({});
+      console.log(
+        '[updateRoyaltyAmounts] No platforms with both pricing and royalties'
+      );
+      // Initialize structure with 0 for all platforms that have royalties
+      const temp: Record<string, Partial<Record<string, number>>> = {};
+      data.forEach(({ authorId, publisherId, percentage, platform }) => {
+        if (!platform || percentage === null || percentage === undefined)
+          return;
+
+        const key = authorId ? 'author' + authorId : 'publisher' + publisherId;
+        if (!temp[key]) {
+          temp[key] = {};
+        }
+        // Set to 0 for platforms without pricing
+        temp[key][platform] = 0;
+      });
+      this.totalRoyaltiesAmount.set(temp);
       return;
     }
 
@@ -765,6 +1372,8 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
         });
       }
 
+      // CRITICAL: Only set amounts for platforms that were calculated (have pricing)
+      // Platforms without pricing will show 0 (which is correct)
       data.forEach(
         ({
           authorId,
@@ -783,10 +1392,15 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
             temp[key] = {};
           }
 
+          // Only get amount if platform was included in calculation (has pricing)
           const divisionValue = platformDivisionMap.get(platform);
           let baseAmount = 0;
           if (divisionValue) {
+            // Platform has pricing and was calculated
             baseAmount = divisionValue[percentage.toString()] || 0;
+          } else {
+            // Platform doesn't have pricing - show 0
+            baseAmount = 0;
           }
 
           // Add extra margin to publisher's royalty amount for print platforms
@@ -852,46 +1466,84 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
    * Returns 0 and disabled if forms are not valid
    */
   getAuthorPercentageControl(authorId: number): FormControl<number | null> {
+    // CRITICAL: Don't add any logic here that triggers change detection
+    // This getter is called on every change detection cycle from the template
+    // Just return the control - sync happens through effects/subscriptions
     const controls = this.authorPercentageControls();
     let control = controls.get(authorId);
-    const formsValid = this.areFormsValid();
 
-    // If control doesn't exist, create it immediately
+    // If control doesn't exist, create it (this should rarely happen as controls are initialized)
     if (!control) {
+      const formsValid = this.areFormsValid();
+      const accessLevel = this.accessLevel();
       // Check if author exists
       const author = this.authors().find((a) => a.id === authorId);
       if (author) {
-        // If forms are not valid, set to 0
-        // Otherwise, find existing royalty value or calculate default based on author count
+        // CRITICAL FIX: Always check for existing royalties first, regardless of form validity
         let initialValue = 0;
-        if (formsValid) {
-          const existingRoyalty = this.royaltiesController().controls.find(
+
+        // Check for existing royalties - always do this, even if forms are invalid
+        let authorRoyalties;
+        if (accessLevel === 'SUPERADMIN') {
+          // Superadmin can see all royalties
+          authorRoyalties = this.royaltiesController().controls.filter(
             (r) =>
               r.controls.authorId.value === authorId &&
               r.controls.platform.value &&
               r.controls.percentage.value !== null &&
-              r.controls.percentage.value !== undefined &&
-              r.controls.percentage.value !== 0 // Don't use 0 as existing value
+              r.controls.percentage.value !== undefined
           );
+          console.log(
+            `[getAuthorPercentageControl] Author ${authorId} (SUPERADMIN): Found ${authorRoyalties.length} royalties`
+          );
+        } else {
+          // Publisher only sees visible platforms
+          const displayedPlatforms = this.displayedColumns();
+          const displayedSet = new Set(displayedPlatforms);
+          authorRoyalties = this.royaltiesController().controls.filter(
+            (r) =>
+              r.controls.authorId.value === authorId &&
+              r.controls.platform.value &&
+              displayedSet.has(r.controls.platform.value) &&
+              r.controls.percentage.value !== null &&
+              r.controls.percentage.value !== undefined
+          );
+          console.log(
+            `[getAuthorPercentageControl] Author ${authorId} (PUBLISHER): Found ${authorRoyalties.length} royalties`
+          );
+        }
 
-          if (
-            existingRoyalty?.controls.percentage.value !== null &&
-            existingRoyalty?.controls.percentage.value !== undefined &&
-            existingRoyalty.controls.percentage.value !== 0
-          ) {
-            // Use existing royalty value if it's not 0
-            initialValue = existingRoyalty.controls.percentage.value;
-          } else {
-            // Calculate default based on author count
-            const authors = this.authors();
-            const authorCount = authors.length;
-            initialValue =
-              authorCount > 0
-                ? authorCount === 1
-                  ? 100
-                  : Math.round((100 / authorCount) * 100) / 100 // Round to 2 decimal places
-                : 0;
+        // Use ANY existing royalty value (even 0) if royalties exist
+        if (authorRoyalties.length > 0) {
+          const existingRoyalty =
+            authorRoyalties.find(
+              (r) =>
+                r.controls.percentage.value !== 0 &&
+                r.controls.percentage.value !== null
+            ) || authorRoyalties[0]; // Use first one if all are 0
+
+          if (existingRoyalty) {
+            const royaltyValue = existingRoyalty.controls.percentage.value;
+            if (royaltyValue !== null && royaltyValue !== undefined) {
+              initialValue = royaltyValue;
+              console.log(
+                `[getAuthorPercentageControl] Author ${authorId}: Using existing royalty value ${initialValue}`
+              );
+            }
           }
+        } else if (formsValid) {
+          // Only use default if no royalties exist AND forms are valid
+          const authors = this.authors();
+          const authorCount = authors.length;
+          initialValue =
+            authorCount > 0
+              ? authorCount === 1
+                ? 100
+                : Math.round((100 / authorCount) * 100) / 100
+              : 0;
+          console.log(
+            `[getAuthorPercentageControl] Author ${authorId}: Using default value ${initialValue}`
+          );
         }
 
         control = new FormControl<number | null>(Math.round(initialValue), [
@@ -900,10 +1552,16 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
           Validators.max(100),
         ]);
 
-        // Disable control if forms are not valid
-        if (!formsValid) {
-          control.disable();
-        }
+        // CRITICAL FIX: Always keep controls enabled
+        // This allows users to see and edit saved values even when some pricing is missing
+        console.log(
+          `[getAuthorPercentageControl] Author ${authorId}: Control created with value ${
+            control.value
+          }, enabled=${!control.disabled}`
+        );
+
+        // Store control in the map
+        controls.set(authorId, control);
 
         // Subscribe to changes
         // Round values to whole numbers on change
@@ -919,10 +1577,7 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
               }
               this.syncAuthorPercentagesToRoyalties();
               this.calculatePublisherPercentage();
-              // Manually trigger royalty amount calculation since we update with emitEvent: false
-              setTimeout(() => {
-                this.updateRoyaltyAmounts();
-              }, 100);
+              // Subscription will handle updateRoyaltyAmounts
             });
         }
 
@@ -939,63 +1594,10 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       }
     }
 
-    // Update control state based on form validity
-    if (control) {
-      if (!formsValid) {
-        // Set to 0 and disable if forms are invalid
-        if (control.value !== 0) {
-          control.patchValue(0, { emitEvent: false });
-        }
-        if (control.enabled) {
-          control.disable();
-        }
-      } else {
-        // Enable if forms are valid
-        if (control.disabled) {
-          control.enable();
-        }
-
-        // If control value is 0 or null (from when it was disabled), set to default
-        // But only if there's no existing royalty value
-        if (control.value === 0 || control.value === null) {
-          // Check if there's an existing royalty value for this author
-          const existingRoyalty = this.royaltiesController().controls.find(
-            (r) =>
-              r.controls.authorId.value === authorId &&
-              r.controls.percentage.value !== null &&
-              r.controls.percentage.value !== undefined &&
-              r.controls.percentage.value !== 0
-          );
-
-          // Calculate default based on author count if no existing value
-          if (
-            !existingRoyalty ||
-            existingRoyalty.controls.percentage.value === 0 ||
-            existingRoyalty.controls.percentage.value === null ||
-            existingRoyalty.controls.percentage.value === undefined
-          ) {
-            const authors = this.authors();
-            const authorCount = authors.length;
-            const defaultAuthorPercentage: number =
-              authorCount > 0
-                ? authorCount === 1
-                  ? 100
-                  : Math.round((100 / authorCount) * 100) / 100 // Round to 2 decimal places
-                : 0;
-
-            control.patchValue(Math.round(defaultAuthorPercentage), {
-              emitEvent: false,
-            });
-          } else {
-            // Use existing royalty value
-            control.patchValue(
-              Math.round(existingRoyalty.controls.percentage.value),
-              { emitEvent: false }
-            );
-          }
-        }
-      }
-    }
+    // CRITICAL: Don't modify control in getter - this causes infinite loops
+    // The getter is called on every change detection cycle
+    // All control updates (enable/disable, value changes) should happen in effects/subscriptions
+    // Just return the control as-is
 
     return control;
   }
@@ -1021,9 +1623,12 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
 
   /**
    * Filter pricing controls to only show platforms relevant to the publishing type
+   * For publishers: completely hide superadmin-only platforms (never show them in pricing section)
    */
   visiblePricingControls(): PricingGroup[] {
     const allowedPlatforms = this.displayedColumns();
+    const accessLevel = this.accessLevel();
+    const isPublisher = accessLevel === 'PUBLISHER';
 
     if (!allowedPlatforms.length) {
       return this.pricingControls().controls;
@@ -1036,8 +1641,61 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       if (!platform) {
         return true;
       }
-      return allowedSet.has(platform);
+
+      // Check if platform is in allowed list
+      if (!allowedSet.has(platform)) {
+        return false;
+      }
+
+      // For publishers, completely hide superadmin-only platforms from pricing section
+      if (isPublisher) {
+        const platformData = this.platformService.getPlatformByName(platform);
+        if (platformData?.isSuperAdminPricingOnly) {
+          return false; // Never show superadmin-only platforms to publishers in pricing
+        }
+      }
+
+      return true;
     });
+  }
+
+  /**
+   * Check if pricing control should be disabled for the current user
+   * Publishers cannot edit superadmin-only pricing that already exists
+   */
+  isPricingDisabled(control: PricingGroup): boolean {
+    const accessLevel = this.accessLevel();
+    const isPublisher = accessLevel === 'PUBLISHER';
+
+    // Superadmins can always edit
+    if (!isPublisher) {
+      return false;
+    }
+
+    const platform = control.controls.platform.value as string | null;
+    if (!platform) {
+      return false;
+    }
+
+    // Get platform data - if not found, don't disable (allow editing)
+    const platformData = this.platformService.getPlatformByName(platform);
+    if (!platformData) {
+      return false; // Platform not found, don't disable
+    }
+
+    // Only disable if platform is superadmin-only AND pricing exists
+    if (!platformData.isSuperAdminPricingOnly) {
+      return false; // Not a superadmin-only platform, allow editing
+    }
+
+    // Only disable if pricing exists (has id or has values)
+    // This means superadmin has already set the pricing
+    const hasPricing =
+      control.controls.id.value != null ||
+      (control.controls.salesPrice.value != null &&
+        control.controls.salesPrice.value !== 0) ||
+      (control.controls.mrp.value != null && control.controls.mrp.value !== 0);
+    return hasPricing;
   }
 
   isEbookPlatform(platform: string | null | undefined): boolean {
@@ -1046,6 +1704,52 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     }
     const platformData = this.platformService.getPlatformByName(platform);
     return platformData?.isEbookPlatform ?? false;
+  }
+
+  /**
+   * Check if platform is superadmin pricing only
+   */
+  isSuperAdminPricingOnly(platform: string | null | undefined): boolean {
+    if (!platform) {
+      return false;
+    }
+    const platformData = this.platformService.getPlatformByName(platform);
+    return platformData?.isSuperAdminPricingOnly ?? false;
+  }
+
+  /**
+   * Check if royalty should show N/A for publisher
+   * Show N/A only if platform is superadmin-only AND pricing doesn't exist yet
+   */
+  shouldShowRoyaltyNA(platform: string | null | undefined): boolean {
+    const accessLevel = this.accessLevel();
+    const isPublisher = accessLevel === 'PUBLISHER';
+
+    if (!isPublisher) {
+      return false; // Superadmins always see royalty amounts
+    }
+
+    if (!this.isSuperAdminPricingOnly(platform)) {
+      return false; // Not a superadmin-only platform
+    }
+
+    // Check if pricing exists for this platform
+    const pricingControl = this.pricingControls().controls.find(
+      (control) => control.controls.platform.value === platform
+    );
+
+    if (!pricingControl) {
+      return true; // No pricing control found, show N/A
+    }
+
+    // Check if pricing has been set (has id or has values)
+    const hasPricing =
+      pricingControl.controls.id.value != null ||
+      pricingControl.controls.salesPrice.value != null ||
+      pricingControl.controls.mrp.value != null;
+
+    // Show N/A only if pricing doesn't exist yet
+    return !hasPricing;
   }
   getTotalRevenue(): number {
     let revenue = 0;
