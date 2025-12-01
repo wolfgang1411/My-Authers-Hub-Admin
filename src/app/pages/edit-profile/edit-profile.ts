@@ -18,6 +18,8 @@ import {
   UpdateUser,
   UpdateUserWithTicket,
   User,
+  Publishers,
+  Author,
 } from '../../interfaces';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButton } from '@angular/material/button';
@@ -31,6 +33,8 @@ import { UserService } from '../../services/user';
 import Swal from 'sweetalert2';
 import { AuthService } from '../../services/auth';
 import { SafeUrlPipe } from 'src/app/pipes/safe-url-pipe';
+import { PublisherService } from '../publisher/publisher-service';
+import { AuthorsService } from '../authors/authors-service';
 
 @Component({
   selector: 'app-edit-profile',
@@ -53,15 +57,28 @@ export class EditProfile {
   constructor(
     public userService: UserService,
     private authService: AuthService,
-    private renderrer: Renderer2
+    private renderrer: Renderer2,
+    private publisherService: PublisherService,
+    private autherService: AuthorsService
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
     effect(() => {
       console.log(this.loggedInUser(), 'logged inuser');
-      this.settingData(this.loggedInUser());
+      const user = this.loggedInUser() || ({} as User);
+      const publisher = this.publisher();
+      const author = this.author();
+      if (user) {
+        this.settingData({
+          ...user,
+          publisher: publisher || undefined,
+          auther: author || undefined,
+        });
+      }
     });
   }
 
+  publisher = signal<Publishers | null>(null);
+  author = signal<Author | null>(null);
   loggedInUser!: Signal<User | null>;
   isEditing = signal(true);
   showTicketForm = signal(false);
@@ -167,7 +184,27 @@ export class EditProfile {
     });
   }
 
-  async ngOnInit() {}
+  async ngOnInit() {
+    await this.fetchAndSetPublisher();
+    await this.fetchAndSetAuthor();
+  }
+  async fetchAndSetPublisher() {
+    const user = this.loggedInUser();
+    if (!user?.publisher?.id) return;
+    const response = await this.publisherService.getPublisherById(
+      user.publisher?.id as number
+    );
+    this.publisher.set(response);
+  }
+
+  async fetchAndSetAuthor() {
+    const user = this.loggedInUser();
+    if (!user?.auther?.id) return;
+    const response = await this.autherService.getAuthorrById(
+      user.auther?.id as number
+    );
+    this.author.set(response);
+  }
 
   async settingData(userData?: User | null) {
     if (!userData) return;

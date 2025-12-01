@@ -25,6 +25,8 @@
       </button>
     </div>
     <div class="flex gap-2">
+      @if (userService.loggedInUser$()?.accessLevel === 'SUPERADMIN') {
+
       <button
         class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
         matButton="filled"
@@ -34,7 +36,6 @@
         <mat-icon class="material-icons">person_add</mat-icon>
         {{ "uploadroyaltieswithcsv" | translate }}
       </button>
-      @if (userService.loggedInUser$()?.accessLevel === 'SUPERADMIN') {
       <button
         class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
         matButton="filled"
