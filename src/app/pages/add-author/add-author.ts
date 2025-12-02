@@ -46,6 +46,7 @@ import {
   Cities,
   Media,
   AuthorStatus,
+  BankDetails,
 } from '../../interfaces';
 import { AddressService } from '../../services/address-service';
 import { BankDetailService } from '../../services/bank-detail-service';
@@ -619,15 +620,237 @@ export class AddAuthor implements OnInit {
       heightAuto: false,
     });
   }
-  async handleAuthorUpdateFlow(authorData: Author) {
+  /**
+   * Compare two values, handling string trimming and null/undefined
+   */
+  private compareValues(newValue: any, existingValue: any): boolean {
+    if (newValue === undefined || newValue === null || newValue === '') {
+      return false; // No new value provided, no change
+    }
+    const newStr = String(newValue).trim();
+    const existingStr = existingValue ? String(existingValue).trim() : '';
+    return newStr !== existingStr;
+  }
+
+  /**
+   * Check if address has changes
+   */
+  private hasAddressChanges(existingAddress: Address | undefined): boolean {
+    if (!existingAddress) return false;
+
+    const formValue = this.authorAddressDetails.value;
+    return (
+      this.compareValues(formValue.address, existingAddress.address) ||
+      this.compareValues(formValue.city, existingAddress.city) ||
+      this.compareValues(formValue.state, existingAddress.state) ||
+      this.compareValues(formValue.country, existingAddress.country) ||
+      this.compareValues(formValue.pincode, existingAddress.pincode)
+    );
+  }
+
+  /**
+   * Check if bank details have changes
+   */
+  private hasBankChanges(existingBank: BankDetails | undefined): boolean {
+    if (!existingBank) return false;
+
+    const formValue = this.authorBankDetails.value as any; // Use any to access gstNumber if it exists
+    return (
+      this.compareValues(formValue.name, existingBank.name) ||
+      this.compareValues(
+        formValue.accountHolderName,
+        existingBank.accountHolderName
+      ) ||
+      this.compareValues(formValue.accountNo, existingBank.accountNo) ||
+      this.compareValues(formValue.ifsc, existingBank.ifsc) ||
+      this.compareValues(formValue.panCardNo, existingBank.panCardNo) ||
+      this.compareValues(formValue.accountType, existingBank.accountType) ||
+      // gstNumber might not be in form, so only compare if it exists in form value
+      (formValue.gstNumber !== undefined &&
+        formValue.gstNumber !== null &&
+        this.compareValues(formValue.gstNumber, existingBank.gstNumber))
+    );
+  }
+
+  /**
+   * Check if author details have changes
+   */
+  private hasAuthorChanges(existingAuthor: Author | undefined): boolean {
+    if (!existingAuthor) return false;
+
+    const formValue = this.authorFormGroup.value;
+    const authorName = formValue.name || '';
+    const nameParts = authorName.split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    return (
+      this.compareValues(firstName, existingAuthor.user?.firstName) ||
+      this.compareValues(lastName, existingAuthor.user?.lastName) ||
+      this.compareValues(formValue.email, existingAuthor.user?.email) ||
+      this.compareValues(
+        formValue.phoneNumber,
+        existingAuthor.user?.phoneNumber
+      ) ||
+      this.compareValues(formValue.about, existingAuthor.about) ||
+      this.compareValues(formValue.username, existingAuthor.username)
+    );
+  }
+
+  /**
+   * Check if media has changes
+   */
+  private hasMediaChanges(existingMedia: Media | undefined): boolean {
+    const newMedia = this.mediaControl.value;
+    if (!newMedia?.file) {
+      return false; // No new file, no change
+    }
+    if (!existingMedia) {
+      return true; // New file and no existing media = change
+    }
+    // Compare file name and size
+    return (
+      newMedia.file.name !== existingMedia.name ||
+      newMedia.file.size !== (existingMedia as any).size
+    );
+  }
+
+  /**
+   * Check if social media has changes
+   */
+  private hasSocialMediaChanges(
+    existingSocialMedia: socialMediaGroup[]
+  ): boolean {
+    const newSocialMedia = this.socialMediaArray.controls
+      .map((group) => ({
+        type: group.value.type,
+        url: group.value.url?.trim() || '',
+      }))
+      .filter((item) => item.type && item.url);
+
+    const existing = (existingSocialMedia || []).map((item) => ({
+      type: item.type,
+      url: item.url?.trim() || '',
+    }));
+
+    if (newSocialMedia.length !== existing.length) {
+      return true;
+    }
+
+    // Sort both arrays for comparison
+    const sortedNew = [...newSocialMedia].sort((a, b) =>
+      `${a.type}-${a.url}`.localeCompare(`${b.type}-${b.url}`)
+    );
+    const sortedExisting = [...existing].sort((a, b) =>
+      `${a.type}-${a.url}`.localeCompare(`${b.type}-${b.url}`)
+    );
+
+    return sortedNew.some(
+      (newItem, index) =>
+        newItem.type !== sortedExisting[index]?.type ||
+        newItem.url !== sortedExisting[index]?.url
+    );
+  }
+
+  /**
+   * Get existing value for a field based on field name
+   */
+  private getExistingValueForField(
+    field: string,
+    existingAuthor?: Author,
+    existingAddress?: Address,
+    existingBank?: BankDetails
+  ): any {
+    const fieldMap: Record<string, () => any> = {
+      // Address fields
+      address: () => existingAddress?.address,
+      city: () => existingAddress?.city,
+      state: () => existingAddress?.state,
+      country: () => existingAddress?.country,
+      pincode: () => existingAddress?.pincode,
+      // Bank fields
+      bankName: () => existingBank?.name,
+      accountHolderName: () => existingBank?.accountHolderName,
+      accountNo: () => existingBank?.accountNo,
+      ifsc: () => existingBank?.ifsc,
+      panCardNo: () => existingBank?.panCardNo,
+      accountType: () => existingBank?.accountType,
+      gstNumber: () => existingBank?.gstNumber,
+      // Author fields
+      authorName: () =>
+        existingAuthor
+          ? `${existingAuthor.user?.firstName || ''} ${
+              existingAuthor.user?.lastName || ''
+            }`.trim()
+          : '',
+      authorEmail: () => existingAuthor?.user?.email,
+      authorContactNumber: () => existingAuthor?.user?.phoneNumber,
+      authorAbout: () => existingAuthor?.about,
+      authorUsername: () => existingAuthor?.username,
+    };
+
+    const getter = fieldMap[field];
+    return getter ? getter() : undefined;
+  }
+
+  async handleAuthorUpdateFlow(
+    authorData: Author
+  ): Promise<{ ticketsRaised: boolean; shouldNavigateBack: boolean }> {
     // Publishers can only raise ADDRESS and BANK tickets
     // AUTHOR type tickets are only for authors updating their own info
     const isPublisher = this.loggedInUser()?.accessLevel === 'PUBLISHER';
+
+    // Fetch existing author data if not already loaded
+    let existingAuthor = this.authorDetails();
+    if (!existingAuthor && this.authorId) {
+      try {
+        existingAuthor = await this.authorsService.getAuthorrById(
+          this.authorId
+        );
+        this.authorDetails.set(existingAuthor);
+      } catch (error) {
+        console.error('Error fetching author details:', error);
+        // Fall back to current behavior if fetch fails
+        existingAuthor = undefined;
+      }
+    }
+
+    const existingAddress = existingAuthor?.address?.[0];
+    const existingBank = existingAuthor?.bankDetails?.[0];
+    const existingMedia = existingAuthor?.medias?.[0];
+    const existingSocialMedia = existingAuthor?.socialMedias || [];
+
+    // Check for changes in each section
+    const hasAddressChange = this.hasAddressChanges(existingAddress);
+    const hasBankChange = this.hasBankChanges(existingBank);
+    // Publishers can also raise AUTHOR tickets when updating active authors
+    const hasAuthorChange = this.hasAuthorChanges(existingAuthor);
+    const hasMediaChange = this.hasMediaChanges(existingMedia);
+    const hasSocialMediaChange =
+      this.hasSocialMediaChanges(existingSocialMedia);
+
+    // Debug logging
+    console.log('Change detection results:', {
+      isPublisher,
+      hasAddressChange,
+      hasBankChange,
+      hasAuthorChange,
+      hasMediaChange,
+      hasSocialMediaChange,
+      formName: this.authorFormGroup.value.name,
+      existingName: existingAuthor
+        ? `${existingAuthor.user?.firstName || ''} ${
+            existingAuthor.user?.lastName || ''
+          }`.trim()
+        : 'N/A',
+      authorStatus: existingAuthor?.status,
+    });
 
     const sections = [
       {
         type: UpdateTicketType.ADDRESS,
         fields: ['address', 'city', 'state', 'country', 'pincode'],
+        hasChange: hasAddressChange,
       },
       {
         type: UpdateTicketType.BANK,
@@ -640,28 +863,27 @@ export class AddAuthor implements OnInit {
           'accountType',
           'gstNumber',
         ],
+        hasChange: hasBankChange,
       },
-      // Only include AUTHOR type ticket if user is an author (not publisher)
-      ...(isPublisher
-        ? []
-        : [
-            {
-              type: UpdateTicketType.AUTHOR,
-              fields: [
-                'authorName',
-                'authorEmail',
-                'authorContactNumber',
-                'authorAbout',
-                'authorUsername',
-              ],
-            },
-          ]),
+      // Include AUTHOR type ticket for all users when author details change
+      // Publishers can raise AUTHOR tickets for active authors they manage
+      {
+        type: UpdateTicketType.AUTHOR,
+        fields: [
+          'authorName',
+          'authorEmail',
+          'authorContactNumber',
+          'authorAbout',
+          'authorUsername',
+        ],
+        hasChange: hasAuthorChange,
+      },
     ];
 
+    // Build rawValue from current form values (not from authorData which might be stale)
     const rawValue = {
       ...this.authorAddressDetails.value,
       ...this.authorBankDetails.value,
-      ...authorData,
       authorName: this.authorFormGroup.value.name,
       authorEmail: this.authorFormGroup.value.email,
       authorContactNumber: this.authorFormGroup.value.phoneNumber,
@@ -674,56 +896,188 @@ export class AddAuthor implements OnInit {
 
     let ticketsRaised = false;
 
+    // Only create tickets for sections with actual changes
     for (const section of sections) {
+      console.log(
+        `Processing section: ${section.type}, hasChange: ${section.hasChange}`
+      );
+
+      if (!section.hasChange) {
+        console.log(`Skipping section ${section.type} - no changes detected`);
+        continue; // Skip if no changes detected
+      }
+
       const payload: any = { type: section.type };
       let hasValues = false;
 
       section.fields.forEach((field: string) => {
         const value = rawValue[field as keyof typeof rawValue];
         if (value !== undefined && value !== null && value !== '') {
-          payload[field] = value;
-          hasValues = true;
-        } else {
-          payload[field] = null;
+          // Only include field if it's different from existing value
+          const existingValue = this.getExistingValueForField(
+            field,
+            existingAuthor,
+            existingAddress,
+            existingBank
+          );
+
+          // For authorName, compare by splitting into first/last name parts
+          if (field === 'authorName') {
+            const newName = String(value).trim();
+            const existingName = existingValue
+              ? String(existingValue).trim()
+              : '';
+            const newParts = newName.split(/\s+/);
+            const existingParts = existingName.split(/\s+/);
+            const newFirstName = newParts[0] || '';
+            const newLastName = newParts.slice(1).join(' ') || '';
+            const existingFirstName = existingParts[0] || '';
+            const existingLastName = existingParts.slice(1).join(' ') || '';
+
+            console.log(`Comparing authorName:`, {
+              field,
+              newName,
+              existingName,
+              newFirstName,
+              newLastName,
+              existingFirstName,
+              existingLastName,
+              isDifferent:
+                newFirstName !== existingFirstName ||
+                newLastName !== existingLastName,
+            });
+
+            if (
+              newFirstName !== existingFirstName ||
+              newLastName !== existingLastName
+            ) {
+              payload[field] = value;
+              hasValues = true;
+            }
+          } else {
+            const isDifferent = this.compareValues(value, existingValue);
+            console.log(`Comparing ${field}:`, {
+              field,
+              value,
+              existingValue,
+              isDifferent,
+            });
+
+            if (isDifferent) {
+              payload[field] = value;
+              hasValues = true;
+            }
+          }
         }
       });
 
+      console.log(
+        `Section ${section.type} payload:`,
+        payload,
+        `hasValues: ${hasValues}`
+      );
+
       if (hasValues) {
+        console.log(`Creating ticket for ${section.type}:`, payload);
+
+        // Add target IDs when publisher is editing an author
+        // This ensures the backend knows which entity's address/bank/details to update
+        if (this.authorId) {
+          if (section.type === UpdateTicketType.ADDRESS) {
+            payload.targetAuthorId = this.authorId;
+          }
+          if (section.type === UpdateTicketType.BANK) {
+            payload.targetAuthorId = this.authorId;
+          }
+          if (section.type === UpdateTicketType.AUTHOR) {
+            payload.authorId = this.authorId;
+          }
+        }
+
         await this.userService.raisingTicket(payload);
         ticketsRaised = true;
+        console.log(`Ticket created successfully for ${section.type}`);
+      } else {
+        console.log(`No values to include for ${section.type} ticket`);
       }
     }
 
-    const socialMediaData = this.socialMediaArray.controls
-      .map((group) => ({
-        ...group.value,
-        autherId: this.authorId,
-      }))
-      .filter((item) => item.type && item.url?.trim());
+    // Update author directly if status is Pending (can be updated without tickets)
+    // For Active authors, tickets will handle the update when approved
+    if (this.authorId && existingAuthor?.status === AuthorStatus.Pending) {
+      try {
+        // Update author basic info
+        const authorUpdateData = {
+          id: this.authorId,
+          name: this.authorFormGroup.value.name,
+          email: this.authorFormGroup.value.email,
+          phoneNumber: this.authorFormGroup.value.phoneNumber,
+          about: this.authorFormGroup.value.about,
+          username: this.authorFormGroup.value.username,
+        } as Author;
 
-    if (socialMediaData.length > 0) {
-      await this.socialService.createOrUpdateSocialMediaLinks(
-        socialMediaData as socialMediaGroup[]
-      );
+        await this.authorsService.createAuthor(authorUpdateData);
+
+        // Update address if changed
+        if (hasAddressChange && existingAddress) {
+          await this.addressService.createOrUpdateAddress({
+            ...this.authorAddressDetails.value,
+            id: existingAddress.id,
+            autherId: this.authorId,
+          } as Address);
+        }
+
+        // Update bank details if changed
+        if (hasBankChange && existingBank) {
+          await this.bankDetailService.createOrUpdateBankDetail({
+            ...this.authorBankDetails.value,
+            id: existingBank.id,
+            autherId: this.authorId,
+          } as createBankDetails);
+        }
+      } catch (error) {
+        console.error('Error updating author directly:', error);
+      }
     }
 
-    const media = this.mediaControl.value;
-    if (this.mediaToDeleteId && media?.file) {
-      await this.authorsService.removeImage(this.mediaToDeleteId);
-      console.log('🗑 Old image deleted');
+    // Only update social media if there are changes
+    if (hasSocialMediaChange) {
+      const socialMediaData = this.socialMediaArray.controls
+        .map((group) => ({
+          ...group.value,
+          autherId: this.authorId,
+        }))
+        .filter((item) => item.type && item.url?.trim());
 
-      await this.authorsService.updateMyImage(
-        media.file,
-        this.authorId as number
-      );
-      console.log('⬆ New image uploaded');
-    } else if (!this.mediaToDeleteId && media?.file) {
-      await this.authorsService.updateMyImage(
-        media.file,
-        this.authorId as number
-      );
-      console.log('📤 New image uploaded (no old media existed)');
+      if (socialMediaData.length > 0) {
+        await this.socialService.createOrUpdateSocialMediaLinks(
+          socialMediaData as socialMediaGroup[]
+        );
+      }
     }
+
+    // Only update media if there are changes
+    if (hasMediaChange) {
+      const media = this.mediaControl.value;
+      if (this.mediaToDeleteId && media?.file) {
+        await this.authorsService.removeImage(this.mediaToDeleteId);
+        console.log('🗑 Old image deleted');
+
+        await this.authorsService.updateMyImage(
+          media.file,
+          this.authorId as number
+        );
+        console.log('⬆ New image uploaded');
+      } else if (!this.mediaToDeleteId && media?.file) {
+        await this.authorsService.updateMyImage(
+          media.file,
+          this.authorId as number
+        );
+        console.log('📤 New image uploaded (no old media existed)');
+      }
+    }
+
+    console.log('🎫 Tickets raised:', ticketsRaised);
 
     if (ticketsRaised) {
       await Swal.fire({
@@ -732,6 +1086,28 @@ export class AddAuthor implements OnInit {
         title: 'Success',
         heightAuto: false,
       });
+      return { ticketsRaised: true, shouldNavigateBack: false };
+    } else {
+      // No changes detected - show message with options
+      const result = await Swal.fire({
+        icon: 'info',
+        title: 'No Changes Detected',
+        text: 'You have not made any changes to submit.',
+        showCancelButton: true,
+        confirmButtonText: 'Go Back',
+        cancelButtonText: 'Stay Here',
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#6c757d',
+        heightAuto: false,
+      });
+
+      if (result.isConfirmed) {
+        // User clicked "Go Back"
+        return { ticketsRaised: false, shouldNavigateBack: true };
+      } else {
+        // User clicked "Stay Here" or dismissed
+        return { ticketsRaised: false, shouldNavigateBack: false };
+      }
     }
   }
 
@@ -805,6 +1181,11 @@ export class AddAuthor implements OnInit {
           : undefined,
       } as Author;
 
+      let updateFlowResult = {
+        ticketsRaised: false,
+        shouldNavigateBack: false,
+      };
+
       if (this.loggedInUser()?.accessLevel === 'SUPERADMIN' || !this.authorId) {
         await this.handleNewOrSuperAdminAuthorSubmission(authorData);
       } else {
@@ -813,14 +1194,46 @@ export class AddAuthor implements OnInit {
         if (this.authorDetails()?.status === AuthorStatus.Pending) {
           await this.handleNewOrSuperAdminAuthorSubmission(authorData);
         } else {
-          await this.handleAuthorUpdateFlow(authorData);
+          updateFlowResult = await this.handleAuthorUpdateFlow(authorData);
         }
       }
+
+      // Redirect based on whether tickets were raised
+      console.log('🔀 Redirect logic:', {
+        signupCode: this.signupCode,
+        ticketsRaised: updateFlowResult.ticketsRaised,
+        shouldNavigateBack: updateFlowResult.shouldNavigateBack,
+        accessLevel: this.loggedInUser()?.accessLevel,
+      });
+
       if (this.signupCode) {
+        console.log('➡️ Redirecting to login');
         this.router.navigate(['/login']);
-      } else {
-        this.router.navigate(['/author']);
+        return;
       }
-    } catch (error: any) {}
+
+      if (updateFlowResult.shouldNavigateBack) {
+        console.log('➡️ Going back to previous page');
+        window.history.back();
+        return;
+      }
+
+      if (updateFlowResult.ticketsRaised) {
+        // Navigate to update tickets page with appropriate tab
+        const isAuthor = this.loggedInUser()?.accessLevel === 'AUTHER';
+        const tab = isAuthor ? 'author' : 'publisher';
+        console.log('➡️ Redirecting to update-tickets with tab:', tab);
+        this.router.navigate(['/update-tickets'], {
+          queryParams: { tab },
+        });
+        return;
+      }
+
+      // Only redirect to author list if user chose "Stay Here" but no tickets were raised
+      // This shouldn't normally happen, but it's a fallback
+      console.log('➡️ No action taken, staying on page');
+    } catch (error: any) {
+      console.error('❌ Error in onSubmit:', error);
+    }
   }
 }

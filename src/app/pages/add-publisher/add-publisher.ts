@@ -624,7 +624,8 @@ export class AddPublisher {
       heightAuto: false,
     });
   }
-  async handlePublisherUpdateFlow(publisherData: Publishers) {
+  async handlePublisherUpdateFlow(publisherData: Publishers): Promise<{ ticketsRaised: boolean; shouldNavigateBack: boolean }> {
+    let ticketsRaised = false;
     const sections = [
       {
         type: UpdateTicketType.ADDRESS,
@@ -676,45 +677,85 @@ export class AddPublisher {
       });
 
       if (hasValues) {
+        // Add target IDs when publisher is editing a sub-publisher
+        // This ensures the backend knows which entity's address/bank/details to update
+        if (this.publisherId) {
+          if (section.type === UpdateTicketType.ADDRESS) {
+            payload.targetPublisherId = this.publisherId;
+          }
+          if (section.type === UpdateTicketType.BANK) {
+            payload.targetPublisherId = this.publisherId;
+          }
+          if (section.type === UpdateTicketType.PUBLISHER) {
+            payload.publisherId = this.publisherId;
+          }
+        }
+        
         await this.userService.raisingTicket(payload);
+        ticketsRaised = true;
       }
+    }
 
-      const socialMediaData = this.socialMediaArray.controls
-        .map((group) => ({
-          ...group.value,
-          publisherId: this.publisherId,
-        }))
-        .filter((item) => item.type && item.url?.trim());
+    const socialMediaData = this.socialMediaArray.controls
+      .map((group) => ({
+        ...group.value,
+        publisherId: this.publisherId,
+      }))
+      .filter((item) => item.type && item.url?.trim());
 
-      if (socialMediaData.length > 0) {
-        await this.socialService.createOrUpdateSocialMediaLinks(
-          socialMediaData as socialMediaGroup[]
-        );
-      }
-      const media = this.mediaControl.value;
-      if (this.mediaToDeleteId && media?.file) {
-        await this.publisherService.removeImage(this.mediaToDeleteId);
-        console.log('🗑 Old image deleted');
+    if (socialMediaData.length > 0) {
+      await this.socialService.createOrUpdateSocialMediaLinks(
+        socialMediaData as socialMediaGroup[]
+      );
+    }
+    
+    const media = this.mediaControl.value;
+    if (this.mediaToDeleteId && media?.file) {
+      await this.publisherService.removeImage(this.mediaToDeleteId);
+      console.log('🗑 Old image deleted');
 
-        await this.publisherService.updateMyImage(
-          media.file,
-          this.publisherId as number
-        );
-        console.log('⬆ New image uploaded');
-      } else if (!this.mediaToDeleteId && media?.file) {
-        await this.publisherService.updateMyImage(
-          media.file,
-          this.publisherId as number
-        );
-        console.log('📤 New image uploaded (no old media existed)');
-      }
+      await this.publisherService.updateMyImage(
+        media.file,
+        this.publisherId as number
+      );
+      console.log('⬆ New image uploaded');
+    } else if (!this.mediaToDeleteId && media?.file) {
+      await this.publisherService.updateMyImage(
+        media.file,
+        this.publisherId as number
+      );
+      console.log('📤 New image uploaded (no old media existed)');
+    }
 
+    if (ticketsRaised) {
       await Swal.fire({
         icon: 'success',
         title: 'Success',
         text: 'Update ticket raised successfully',
         heightAuto: false,
       });
+      return { ticketsRaised: true, shouldNavigateBack: false };
+    } else {
+      // No changes detected - show message with options
+      const result = await Swal.fire({
+        icon: 'info',
+        title: 'No Changes Detected',
+        text: 'You have not made any changes to submit.',
+        showCancelButton: true,
+        confirmButtonText: 'Go Back',
+        cancelButtonText: 'Stay Here',
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#6c757d',
+        heightAuto: false,
+      });
+
+      if (result.isConfirmed) {
+        // User clicked "Go Back"
+        return { ticketsRaised: false, shouldNavigateBack: true };
+      } else {
+        // User clicked "Stay Here" or dismissed
+        return { ticketsRaised: false, shouldNavigateBack: false };
+      }
     }
   }
 
@@ -788,19 +829,38 @@ export class AddPublisher {
           ? md5(this.publisherFormGroup.controls.userPassword.value)
           : undefined,
       } as any;
+      let updateFlowResult = { ticketsRaised: false, shouldNavigateBack: false };
+
       if (
         this.loggedInUser()?.accessLevel === 'SUPERADMIN' ||
         !this.publisherId
       ) {
         await this.handleNewOrSuperAdminSubmission(publisherData);
       } else {
-        await this.handlePublisherUpdateFlow(publisherData);
+        updateFlowResult = await this.handlePublisherUpdateFlow(publisherData);
       }
+
+      // Redirect based on whether tickets were raised
       if (this.signupCode) {
         this.router.navigate(['/login']);
-      } else {
-        this.router.navigate(['/publisher']);
+        return;
       }
+      
+      if (updateFlowResult.shouldNavigateBack) {
+        window.history.back();
+        return;
+      }
+      
+      if (updateFlowResult.ticketsRaised) {
+        // Navigate to update tickets page
+        this.router.navigate(['/update-tickets'], {
+          queryParams: { tab: 'publisher' }
+        });
+        return;
+      }
+      
+      // Only redirect to publisher list if no other condition was met
+      // This shouldn't normally happen (user chose "Stay Here")
     } catch (error) {
       console.log(error);
     }

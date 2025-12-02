@@ -111,6 +111,8 @@
       >
         <mat-icon class="!text-white">visibility</mat-icon>
       </button>
+      @if(loggedInUser()?.accessLevel === 'SUPERADMIN' || 
+          (loggedInUser()?.accessLevel === 'PUBLISHER' && element.status === PublisherStatus.Pending)) {
       <button
         class="!bg-primary"
         mat-icon-button
@@ -119,6 +121,7 @@
       >
         <mat-icon class="!text-white">edit</mat-icon>
       </button>
+      }
 
       <button
         class="!bg-primary"
@@ -129,7 +132,7 @@
         <mat-icon class="!text-white">lock_reset</mat-icon>
       </button>
       @if(element.status === PublisherStatus.Active &&
-      loggedInUser()?.accessLevel !== 'SUPERADMIN') {
+      loggedInUser()?.accessLevel === 'PUBLISHER') {
       <button
         class="!bg-primary"
         mat-icon-button
@@ -174,7 +177,29 @@
       >
         <mat-icon class="!text-white">lock_open</mat-icon>
       </button>
-      } }
+      } } @if(loggedInUser()?.accessLevel === 'PUBLISHER' && 
+          element.status !== PublisherStatus.Pending && 
+          element.status !== PublisherStatus.Deactivated &&
+          element.status !== PublisherStatus.Rejected) {
+      <button
+        class="!bg-accent active:bg-accent/60"
+        mat-icon-button
+        [title]="'deactivate' | translate"
+        (click)="updateStatus(element.id, 'Deactivated')"
+      >
+        <mat-icon class="!text-white">lock</mat-icon>
+      </button>
+      } @if(loggedInUser()?.accessLevel === 'PUBLISHER' && 
+          element.status === PublisherStatus.Deactivated) {
+      <button
+        (click)="updateStatus(element.id, 'Active')"
+        class="!bg-purple"
+        mat-icon-button
+        [title]="'active' | translate"
+      >
+        <mat-icon class="!text-white">lock_open</mat-icon>
+      </button>
+      }
     </div>
   </ng-template>
 </div>

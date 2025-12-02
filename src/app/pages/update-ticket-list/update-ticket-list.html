@@ -258,7 +258,8 @@
       </div>
     </mat-tab>
 
-    <!-- Publisher Tab -->
+    <!-- Publisher Tab (hidden for authors) -->
+    @if(loggedInUser()?.accessLevel !== 'AUTHER') {
     <mat-tab label="{{ 'publisher' | translate }}">
       <div class="pt-6">
         <app-list-table
@@ -312,5 +313,6 @@
         </ng-template>
       </div>
     </mat-tab>
+    }
   </mat-tab-group>
 </div>

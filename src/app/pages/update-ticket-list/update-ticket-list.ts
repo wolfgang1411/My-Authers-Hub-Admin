@@ -211,6 +211,23 @@ export class UpdateTicketList implements OnInit, OnDestroy {
   }
 
   private getTabNameByIndex(index: number): string | undefined {
+    const isAuthor = this.loggedInUser()?.accessLevel === 'AUTHER';
+    
+    // For authors, publisher tab is hidden, so indices shift
+    if (isAuthor) {
+      switch (index) {
+        case 0:
+          return 'address';
+        case 1:
+          return 'bank';
+        case 2:
+          return 'author';
+        default:
+          return undefined;
+      }
+    }
+    
+    // For publishers and superadmins, all tabs are visible
     switch (index) {
       case 0:
         return 'address';
@@ -226,6 +243,8 @@ export class UpdateTicketList implements OnInit, OnDestroy {
   }
 
   private getTabIndexFromName(tabName: string | undefined): number {
+    const isAuthor = this.loggedInUser()?.accessLevel === 'AUTHER';
+    
     switch (tabName) {
       case 'address':
         return 0;
@@ -234,7 +253,8 @@ export class UpdateTicketList implements OnInit, OnDestroy {
       case 'author':
         return 2;
       case 'publisher':
-        return 3;
+        // For authors, publisher tab doesn't exist, default to author tab
+        return isAuthor ? 2 : 3;
       default:
         return 0; // Default to ADDRESS tab
     }
@@ -525,7 +545,7 @@ export class UpdateTicketList implements OnInit, OnDestroy {
           ticket.requestedBy?.firstName && ticket.requestedBy?.lastName
             ? `${ticket.requestedBy.firstName} ${ticket.requestedBy.lastName}`
             : ticket.requestedBy?.email || 'N/A',
-        changes: changes.length > 0 ? changes.length : 0,
+        changes: changes.length,
         changesList: changes,
         status: ticket.status,
         createdAt: ticket.createdAt
@@ -543,6 +563,7 @@ export class UpdateTicketList implements OnInit, OnDestroy {
       const changes: string[] = [];
       const data = ticket.data || {};
 
+      // Backend stores with specific field names
       if (data['bankName']) changes.push('Bank Name');
       if (data['accountNo']) changes.push('Account No');
       if (data['ifsc']) changes.push('IFSC');
@@ -557,7 +578,7 @@ export class UpdateTicketList implements OnInit, OnDestroy {
           ticket.requestedBy?.firstName && ticket.requestedBy?.lastName
             ? `${ticket.requestedBy.firstName} ${ticket.requestedBy.lastName}`
             : ticket.requestedBy?.email || 'N/A',
-        changes: changes.length > 0 ? changes.length : 0,
+        changes: changes.length,
         changesList: changes,
         status: ticket.status,
         createdAt: ticket.createdAt
@@ -575,6 +596,7 @@ export class UpdateTicketList implements OnInit, OnDestroy {
       const changes: string[] = [];
       const data = ticket.data || {};
 
+      // Backend stores with 'author' prefix
       if (data['authorName']) changes.push('Name');
       if (data['authorEmail']) changes.push('Email');
       if (data['authorContactNumber']) changes.push('Contact Number');
@@ -587,7 +609,7 @@ export class UpdateTicketList implements OnInit, OnDestroy {
           ticket.requestedBy?.firstName && ticket.requestedBy?.lastName
             ? `${ticket.requestedBy.firstName} ${ticket.requestedBy.lastName}`
             : ticket.requestedBy?.email || 'N/A',
-        changes: changes.length > 0 ? changes.length : 0,
+        changes: changes.length,
         changesList: changes,
         status: ticket.status,
         createdAt: ticket.createdAt
@@ -605,6 +627,7 @@ export class UpdateTicketList implements OnInit, OnDestroy {
       const changes: string[] = [];
       const data = ticket.data || {};
 
+      // Backend stores with 'publisher' prefix
       if (data['publisherName']) changes.push('Name');
       if (data['publisherEmail']) changes.push('Email');
       if (data['publisherPocName']) changes.push('POC Name');
@@ -618,7 +641,7 @@ export class UpdateTicketList implements OnInit, OnDestroy {
           ticket.requestedBy?.firstName && ticket.requestedBy?.lastName
             ? `${ticket.requestedBy.firstName} ${ticket.requestedBy.lastName}`
             : ticket.requestedBy?.email || 'N/A',
-        changes: changes.length > 0 ? changes.length : 0,
+        changes: changes.length,
         changesList: changes,
         status: ticket.status,
         createdAt: ticket.createdAt
@@ -735,7 +758,12 @@ export class UpdateTicketList implements OnInit, OnDestroy {
   onViewTicket(ticket: any) {
     this.dialog.open(TicketDetailsDialog, {
       width: '550px',
-      data: ticket,
+      data: {
+        ...ticket,
+        onApprove: (t: any) => this.onApproveTicket(t),
+        onReject: (t: any) => this.onRejectTicket(t),
+        isSuperAdmin: this.isSuperAdmin(),
+      },
       panelClass: 'custom-dialog',
     });
   }

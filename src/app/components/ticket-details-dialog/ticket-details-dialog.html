@@ -1,76 +1,161 @@
 <div
-  class="bg-white rounded-2xl shadow-2xl overflow-hidden animate-[fadeUp_.35s_ease]"
+  class="bg-white rounded-2xl shadow-2xl overflow-hidden animate-[fadeUp_.35s_ease] max-h-[90vh] overflow-y-auto"
 >
   <!-- HEADER -->
   <div
-    class="bg-gradient-to-r from-primary/90 to-primary/80 text-white text-center py-8"
+    class="bg-gradient-to-r from-primary/90 to-primary/80 text-white px-6 py-4 sticky top-0 z-10 flex items-center justify-between"
   >
-    <div
-      class="w-20 h-20 mx-auto bg-white text-primary rounded-full flex items-center justify-center shadow-lg text-4xl font-semibold"
-    >
-      i
+    <div class="flex items-center gap-3">
+      <div
+        class="w-10 h-10 bg-white text-primary rounded-full flex items-center justify-center shadow-lg"
+      >
+        <mat-icon class="!text-2xl">receipt_long</mat-icon>
+      </div>
+      <div>
+        <h2 class="text-xl font-medium tracking-wide">Update Ticket #{{ data?.ticket?.id }}</h2>
+        <p class="text-xs opacity-90">Review requested changes</p>
+      </div>
     </div>
-    <h2 class="text-3xl font-medium mt-4 tracking-wide">Ticket Details</h2>
-    <p class="text-sm opacity-90">Full ticket summary & update history</p>
+    <button
+      mat-icon-button
+      (click)="close()"
+      class="!text-white hover:bg-white/10 transition"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
   </div>
 
-  <!-- main body -->
-  <div class="px-10 py-8 space-y-8 text-gray-700">
-    <div class="flex justify-between border-b pb-3">
-      <span class="text-gray-500">Type</span>
-      <h4 class="font-medium">{{ data.ticket.type }}</h4>
-    </div>
+  <!-- MAIN BODY -->
+  <div class="px-8 py-6 space-y-6 text-gray-700">
+    <!-- Ticket Info Section -->
+    <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+      <div class="flex justify-between items-center">
+        <span class="text-gray-600 font-medium">Ticket Type</span>
+        <span class="px-3 py-1 bg-primary/10 text-primary rounded-full font-medium text-sm">
+          {{ ticketType() }}
+        </span>
+      </div>
 
-    <div class="flex justify-between border-b pb-3">
-      <span class="text-gray-500">Status</span>
-      <span
-        class="px-4 py-1 rounded-full text-white font-medium text-sm"
-        [ngClass]="{
-          'bg-yellow-500': data.ticket.status === 'PENDING',
-          'bg-green-600': data.ticket.status === 'APPROVED',
-          'bg-red-500': data.ticket.status === 'REJECTED'
-        }"
-      >
-        {{ data.ticket.status }}
-      </span>
-    </div>
-
-    <div class="flex justify-between border-b pb-3">
-      <span class="text-gray-500">Requested By</span>
-      <h4 class="font-medium">{{ data.requestedBy }}</h4>
-    </div>
-
-    <div class="flex justify-between border-b pb-3">
-      <span class="text-gray-500">Created At</span>
-      <h4 class="font-medium">{{ data.createdAt || "--" }}</h4>
-    </div>
-    <div>
-      <p class="font-medium text-gray-800 mb-3">Change Logs</p>
-      @if (data.changesList?.lengthdata.changesList?.length) {
-      <div class="space-y-3">
-        @for (item of data.changesList; track $index) {
-        <div
-          class="flex items-center gap-3 p-3 bg-gray-100 rounded-xl hover:bg-violet-50 transition"
+      <div class="flex justify-between items-center">
+        <span class="text-gray-600 font-medium">Status</span>
+        <span
+          class="px-3 py-1 rounded-full text-white font-medium text-sm"
+          [ngClass]="{
+            'bg-yellow-500': ticketStatus() === 'PENDING',
+            'bg-green-600': ticketStatus() === 'APPROVED',
+            'bg-red-500': ticketStatus() === 'REJECTED'
+          }"
         >
-          <div class="w-3 h-3 rounded-full bg-primary"></div>
-          <p class="text-gray-700">{{ item }}</p>
+          {{ ticketStatus() }}
+        </span>
+      </div>
+
+      <div class="flex justify-between items-center">
+        <span class="text-gray-600 font-medium">Requested By</span>
+        <span class="font-medium">{{ requestedBy() }}</span>
+      </div>
+
+      <div class="flex justify-between items-center">
+        <span class="text-gray-600 font-medium">Requested On</span>
+        <span class="font-medium">{{ createdAt() }}</span>
+      </div>
+
+      @if(approvedBy()) {
+      <div class="flex justify-between items-center">
+        <span class="text-gray-600 font-medium">Approved/Rejected By</span>
+        <span class="font-medium">{{ approvedBy() }}</span>
+      </div>
+      }
+
+      @if(approvedAt()) {
+      <div class="flex justify-between items-center">
+        <span class="text-gray-600 font-medium">Approved/Rejected On</span>
+        <span class="font-medium">{{ approvedAt() }}</span>
+      </div>
+      }
+    </div>
+
+    <!-- Changes Section -->
+    <div>
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <mat-icon class="text-primary">compare_arrows</mat-icon>
+        Requested Changes ({{ changes().length }})
+      </h3>
+
+      @if (changes().length > 0) {
+      <div class="space-y-4">
+        @for (change of changes(); track $index) {
+        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+          <div class="flex items-center gap-2 mb-3">
+            <mat-icon class="text-primary !text-xl">edit</mat-icon>
+            <span class="font-semibold text-gray-800">{{ change.label }}</span>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <!-- Before -->
+            <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+              <div class="flex items-center gap-2 mb-2">
+                <mat-icon class="text-red-600 !text-lg">remove_circle</mat-icon>
+                <span class="text-xs font-medium text-red-700 uppercase">Before</span>
+              </div>
+              <p class="text-sm text-gray-700 break-words">{{ change.before }}</p>
+            </div>
+
+            <!-- After -->
+            <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+              <div class="flex items-center gap-2 mb-2">
+                <mat-icon class="text-green-600 !text-lg">add_circle</mat-icon>
+                <span class="text-xs font-medium text-green-700 uppercase">After</span>
+              </div>
+              <p class="text-sm text-gray-700 break-words">{{ change.after }}</p>
+            </div>
+          </div>
         </div>
         }
       </div>
-      }@else {
-      <ng-template #noChanges>
-        <p class="text-gray-400 text-sm italic">No changes recorded</p>
-      </ng-template>
+      } @else {
+      <div class="text-center py-8 text-gray-400">
+        <mat-icon class="!text-5xl mb-2">info</mat-icon>
+        <p class="text-sm italic">No changes recorded</p>
+      </div>
       }
     </div>
   </div>
 
   <!-- FOOTER -->
-  <div class="flex justify-center py-4 bg-gray-50 border-t">
+  <div class="flex justify-center gap-3 py-4 bg-gray-50 border-t sticky bottom-0">
+    @if(isSuperAdmin() && isPending()) {
     <button
-      class="px-8 py-2 bg-primary hover:bg-primary/80 text-white rounded-lg font-medium transition"
-      (click)="close()"
+      class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition flex items-center gap-2"
+      (click)="onApprove()"
+      [disabled]="isApproving() || isRejecting()"
     >
+      @if(isApproving()) {
+      <mat-icon class="animate-spin">refresh</mat-icon>
+      } @else {
+      <mat-icon>check_circle</mat-icon>
+      }
+      Approve
+    </button>
+    <button
+      class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition flex items-center gap-2"
+      (click)="onReject()"
+      [disabled]="isApproving() || isRejecting()"
+    >
+      @if(isRejecting()) {
+      <mat-icon class="animate-spin">refresh</mat-icon>
+      } @else {
+      <mat-icon>cancel</mat-icon>
+      }
+      Reject
+    </button>
+    }
+    <button
+      class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition flex items-center gap-2"
+      (click)="close()"
+      [disabled]="isApproving() || isRejecting()"
+    >
+      <mat-icon>close</mat-icon>
       Close
     </button>
   </div>

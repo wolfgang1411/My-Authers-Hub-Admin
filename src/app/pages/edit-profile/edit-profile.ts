@@ -1,4 +1,4 @@
-import { Component, effect, Renderer2, Signal, signal } from '@angular/core';
+import { Component, computed, effect, Renderer2, Signal, signal } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -28,7 +28,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { UserService } from '../../services/user';
 import Swal from 'sweetalert2';
 import { AuthService } from '../../services/auth';
@@ -59,7 +59,8 @@ export class EditProfile {
     private authService: AuthService,
     private renderrer: Renderer2,
     private publisherService: PublisherService,
-    private autherService: AuthorsService
+    private autherService: AuthorsService,
+    private router: Router
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
     effect(() => {
@@ -81,7 +82,6 @@ export class EditProfile {
   author = signal<Author | null>(null);
   loggedInUser!: Signal<User | null>;
   isEditing = signal(true);
-  showTicketForm = signal(false);
   loading = signal(false);
   userId!: number;
   userDetails = signal<UpdateUser | null>(null);
@@ -113,30 +113,6 @@ export class EditProfile {
     phoneNumber: new FormControl<string | null>(null, { nonNullable: false }),
   });
 
-  ticketForm = new FormGroup({
-    address: new FormControl<string | null>(null),
-    city: new FormControl<string | null>(null),
-    state: new FormControl<string | null>(null),
-    country: new FormControl<string | null>(null),
-    pincode: new FormControl<string | null>(null),
-    bankName: new FormControl<string | null>(null),
-    accountHolderName: new FormControl<string | null>(null),
-    accountNo: new FormControl<string | null>(null),
-    ifsc: new FormControl<string | null>(null),
-    panCardNo: new FormControl<string | null>(null),
-    accountType: new FormControl<BankDetailsType | null>(null),
-    gstNumber: new FormControl<string | null>(null, [
-      this.gstFormatValidator(),
-    ]),
-    publisherName: new FormControl<string | null>(null),
-    publisherEmail: new FormControl<string | null>(null),
-    authorName: new FormControl<string | null>(null),
-    authorEmail: new FormControl<string | null>(null),
-    authorContactNumber: new FormControl<string | null>(null),
-    authorAbout: new FormControl<string | null>(null),
-    authorUsername: new FormControl<string | null>(null),
-    type: new FormControl<UpdateTicketType | null>(null),
-  });
 
   passwordForm = new FormGroup({
     oldPassword: new FormControl<string | null>(null, {
@@ -158,29 +134,6 @@ export class EditProfile {
       lastName: userData.lastName,
       email: userData.email,
       phoneNumber: userData.phoneNumber,
-    });
-  }
-  prefillTicketForm(userData: UpdateUserWithTicket) {
-    this.ticketForm.patchValue({
-      address: userData.address,
-      city: userData.city,
-      state: userData.state,
-      country: userData.country,
-      pincode: userData.pincode,
-      bankName: userData.bankName,
-      accountNo: userData.accountNo,
-      accountHolderName: userData.accountHolderName,
-      ifsc: userData.ifsc,
-      panCardNo: userData.panCardNo,
-      accountType: userData.accountType,
-      gstNumber: userData.gstNumber,
-      publisherName: userData.publisherName,
-      publisherEmail: userData.publisherEmail,
-      authorName: userData.authorName,
-      authorEmail: userData.authorEmail,
-      authorContactNumber: userData.authorContactNumber,
-      authorAbout: userData.authorAbout,
-      authorUsername: userData.authorUsername,
     });
   }
 
@@ -251,29 +204,7 @@ export class EditProfile {
       authorAbout: userData?.auther ? userData?.auther?.about : undefined,
       authorUsername: userData?.auther ? userData?.auther?.username : undefined,
     };
-    this.prefillTicketForm(UpdateUserWithTicket as UpdateUserWithTicket);
-
     this.prefillPersonalForm(userData as UpdateUser);
-  }
-  gstFormatValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const value = control.value;
-
-      if (!value || value.trim() === '') {
-        return null;
-      }
-
-      const gstRegex =
-        /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[A-Z0-9]{1}Z[A-Z0-9]{1}$/;
-
-      if (!gstRegex.test(value)) {
-        return {
-          gstNumber:
-            'Invalid GST Number. Format: 15 characters (e.g., 22ABCDE1234F1Z5)',
-        };
-      }
-      return null;
-    };
   }
 
   async updateUserProfile() {
@@ -301,65 +232,6 @@ export class EditProfile {
     this.isEditing.set(false);
   }
 
-  async raiseUserTicket() {
-    if (this.ticketForm.invalid) {
-      this.ticketForm.markAllAsTouched();
-      return;
-    }
-    const rawValue = this.ticketForm.value;
-    const sections = [
-      {
-        type: UpdateTicketType.ADDRESS,
-        fields: ['address', 'city', 'state', 'country', 'pincode'],
-      },
-      {
-        type: UpdateTicketType.BANK,
-        fields: [
-          'bankName',
-          'accountHolderName',
-          'accountNo',
-          'ifsc',
-          'panCardNo',
-          'accountType',
-          'gstNumber',
-        ],
-      },
-      {
-        type: UpdateTicketType.PUBLISHER,
-        fields: ['publisherName', 'publisherEmail'],
-      },
-      {
-        type: UpdateTicketType.AUTHOR,
-        fields: ['authorAbout', 'authorUsername'],
-      },
-    ];
-    for (const section of sections) {
-      const payload: any = { type: section.type };
-      let hasValues = false;
-      section.fields.forEach((field: string) => {
-        const value = rawValue[field as keyof typeof rawValue];
-        if (value !== undefined && value !== null && value !== '') {
-          payload[field as keyof typeof payload] = value;
-          hasValues = true;
-        } else {
-          payload[field as keyof typeof payload] = null;
-        }
-      });
-
-      if (hasValues) {
-        await this.userService.raisingTicket(payload);
-      }
-    }
-
-    Swal.fire({
-      icon: 'success',
-      text: 'Support ticket raised successfully',
-      title: 'Success',
-      heightAuto: false,
-    });
-    this.ticketForm.reset();
-    this.showTicketForm.set(false);
-  }
 
   async changePassword() {
     if (this.passwordForm.invalid) {
@@ -409,6 +281,26 @@ export class EditProfile {
       newInput.type = 'password';
       confirmInput.type = 'password';
     }
+  }
+
+  navigateToEditPublisher() {
+    const publisherId = this.loggedInUser()?.publisher?.id;
+    if (publisherId) {
+      this.router.navigate(['/publisher', publisherId]);
+    }
+  }
+
+  navigateToEditAuthor() {
+    const authorId = this.loggedInUser()?.auther?.id;
+    if (authorId) {
+      this.router.navigate(['/author', authorId]);
+    }
+  }
+
+  navigateToUpdateTickets(tab: 'author' | 'publisher') {
+    this.router.navigate(['/update-tickets'], {
+      queryParams: { tab }
+    });
   }
 
   deactivateAccount() {

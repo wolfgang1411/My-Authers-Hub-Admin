@@ -121,6 +121,8 @@
       >
         <mat-icon class="!text-white">visibility</mat-icon>
       </button>
+      @if(loggedInUser()?.accessLevel === 'SUPERADMIN' || 
+          (loggedInUser()?.accessLevel === 'PUBLISHER' && element.status === AuthorStatus.Pending)) {
       <button
         class="!bg-primary"
         mat-icon-button
@@ -129,7 +131,7 @@
       >
         <mat-icon class="!text-white">edit</mat-icon>
       </button>
-      @if(element.status !== AuthorStatus.Rejected) {
+      } @if(element.status !== AuthorStatus.Rejected) {
       <button
         class="!bg-primary"
         mat-icon-button
@@ -175,7 +177,8 @@
         <mat-icon class="!text-white">lock_up</mat-icon>
       </button>
 
-      } @if(element.status === AuthorStatus.Active) {
+      } @if(element.status === AuthorStatus.Active && 
+          loggedInUser()?.accessLevel === 'PUBLISHER') {
       <button
         class="!bg-primary"
         mat-icon-button
