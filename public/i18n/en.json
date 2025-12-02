@@ -22,6 +22,7 @@
   "delete": "Delete",
   "view": "View",
   "add": "Add",
+  "create": "Create",
   "update": "Update",
   "numberofauthors": "Number of Authors",
   "resetpassword": "Reset Password",
@@ -618,5 +619,5 @@
   "pointssuccessfullyassigned": "Points successfully assigned to publisher.",
   "purchaserequestsent": "Purchase request has been sent to admin for approval.",
   "errorbuyingpoints": "Failed to buy/assign points. Please try again.",
-  "titleapprovewarning":"Title Approve Warning"
+  "titleapprovewarning": "Title Approve Warning"
 }

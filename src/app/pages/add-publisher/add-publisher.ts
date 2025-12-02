@@ -157,6 +157,40 @@ export class AddPublisher {
     return this.selectedTypes().length >= this.socialMediaArray.length;
   });
 
+  // Computed property to determine submit button text
+  submitButtonText = computed(() => {
+    const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
+    const isNewPublisher = !this.publisherId;
+    const publisherStatus = this.publisherDetails?.status;
+    const isActivePublisher = publisherStatus === 'Active';
+
+    // When adding a new publisher
+    if (isNewPublisher) {
+      if (isSuperAdmin) {
+        return this.translateService.instant('create') || 'Create';
+      }
+      return this.translateService.instant('create') || 'Create';
+    }
+
+    // Superadmin editing existing publisher
+    if (isSuperAdmin) {
+      return this.translateService.instant('update') || 'Update';
+    }
+
+    // When updating an existing pending publisher → show "Update"
+    if (publisherStatus === 'Pending') {
+      return this.translateService.instant('update') || 'Update';
+    }
+
+    // Active publisher being edited → show "Raise a Ticket"
+    if (isActivePublisher) {
+      return this.translateService.instant('raiseaticket') || 'Raise a Ticket';
+    }
+
+    // Default fallback
+    return this.translateService.instant('submit') || 'Submit';
+  });
+
   async ngOnInit() {
     this.publisherFormGroup.controls.signupCode.patchValue(
       this.signupCode || null
@@ -624,12 +658,73 @@ export class AddPublisher {
       heightAuto: false,
     });
   }
-  async handlePublisherUpdateFlow(publisherData: Publishers): Promise<{ ticketsRaised: boolean; shouldNavigateBack: boolean }> {
+  // Helper method to compare values
+  private compareValues(newVal: any, oldVal: any): boolean {
+    if (newVal === oldVal) return false;
+    if (newVal == null && oldVal == null) return false;
+    if (newVal == null || oldVal == null) return true;
+    return String(newVal).trim() !== String(oldVal).trim();
+  }
+
+  // Check if publisher details have changed
+  private hasPublisherChanges(): boolean {
+    if (!this.publisherDetails) return false;
+
+    const newName = this.publisherFormGroup.value.name;
+    const newEmail = this.publisherFormGroup.value.email;
+
+    return (
+      this.compareValues(newName, this.publisherDetails.name) ||
+      this.compareValues(newEmail, this.publisherDetails.email)
+    );
+  }
+
+  // Check if address has changed
+  private hasAddressChanges(): boolean {
+    if (!this.publisherDetails?.address?.[0]) return false;
+
+    const existingAddress = this.publisherDetails.address[0];
+    const formAddress = this.publisherAddressDetails.value;
+
+    return (
+      this.compareValues(formAddress.address, existingAddress.address) ||
+      this.compareValues(formAddress.city, existingAddress.city) ||
+      this.compareValues(formAddress.state, existingAddress.state) ||
+      this.compareValues(formAddress.country, existingAddress.country) ||
+      this.compareValues(formAddress.pincode, existingAddress.pincode)
+    );
+  }
+
+  // Check if bank details have changed
+  private hasBankChanges(): boolean {
+    if (!this.publisherDetails?.bankDetails?.[0]) return false;
+
+    const existingBank = this.publisherDetails.bankDetails[0];
+    const formBank = this.publisherBankDetails.value;
+
+    return (
+      this.compareValues(formBank.name, existingBank.name) ||
+      this.compareValues(formBank.accountNo, existingBank.accountNo) ||
+      this.compareValues(formBank.ifsc, existingBank.ifsc) ||
+      this.compareValues(formBank.panCardNo, existingBank.panCardNo) ||
+      this.compareValues(formBank.accountType, existingBank.accountType) ||
+      this.compareValues(
+        formBank.accountHolderName,
+        existingBank.accountHolderName
+      ) ||
+      this.compareValues((formBank as any).gstNumber, existingBank.gstNumber)
+    );
+  }
+
+  async handlePublisherUpdateFlow(
+    publisherData: Publishers
+  ): Promise<{ ticketsRaised: boolean; shouldNavigateBack: boolean }> {
     let ticketsRaised = false;
     const sections = [
       {
         type: UpdateTicketType.ADDRESS,
         fields: ['address', 'city', 'state', 'country', 'pincode'],
+        hasChanges: this.hasAddressChanges(),
       },
       {
         type: UpdateTicketType.BANK,
@@ -641,10 +736,12 @@ export class AddPublisher {
           'accountType',
           'gstNumber',
         ],
+        hasChanges: this.hasBankChanges(),
       },
       {
         type: UpdateTicketType.PUBLISHER,
         fields: ['publisherName', 'publisherEmail'],
+        hasChanges: this.hasPublisherChanges(),
       },
     ];
 
@@ -663,6 +760,12 @@ export class AddPublisher {
     };
 
     for (const section of sections) {
+      // Skip if no changes detected for this section
+      if (!section.hasChanges) {
+        console.log(`⏭️ Skipping ${section.type} - no changes detected`);
+        continue;
+      }
+
       const payload: any = { type: section.type };
       let hasValues = false;
 
@@ -671,12 +774,11 @@ export class AddPublisher {
         if (value !== undefined && value !== null && value !== '') {
           payload[field] = value;
           hasValues = true;
-        } else {
-          payload[field] = null;
         }
       });
 
       if (hasValues) {
+        console.log(`✅ Creating ${section.type} ticket with changes`);
         // Add target IDs when publisher is editing a sub-publisher
         // This ensures the backend knows which entity's address/bank/details to update
         if (this.publisherId) {
@@ -690,7 +792,7 @@ export class AddPublisher {
             payload.publisherId = this.publisherId;
           }
         }
-        
+
         await this.userService.raisingTicket(payload);
         ticketsRaised = true;
       }
@@ -708,7 +810,7 @@ export class AddPublisher {
         socialMediaData as socialMediaGroup[]
       );
     }
-    
+
     const media = this.mediaControl.value;
     if (this.mediaToDeleteId && media?.file) {
       await this.publisherService.removeImage(this.mediaToDeleteId);
@@ -829,38 +931,76 @@ export class AddPublisher {
           ? md5(this.publisherFormGroup.controls.userPassword.value)
           : undefined,
       } as any;
-      let updateFlowResult = { ticketsRaised: false, shouldNavigateBack: false };
+      let updateFlowResult = {
+        ticketsRaised: false,
+        shouldNavigateBack: false,
+      };
+
+      // Check if publisher is editing their own profile
+      const isEditingSelf =
+        this.publisherId === this.loggedInUser()?.publisher?.id;
 
       if (
         this.loggedInUser()?.accessLevel === 'SUPERADMIN' ||
         !this.publisherId
       ) {
+        // Superadmin or creating new publisher → direct save
         await this.handleNewOrSuperAdminSubmission(publisherData);
       } else {
-        updateFlowResult = await this.handlePublisherUpdateFlow(publisherData);
+        // If publisher status is Pending, allow direct update (no tickets needed)
+        // Otherwise, raise update ticket
+        if (this.publisherDetails?.status === 'Pending') {
+          console.log(
+            '📝 Publisher is pending - direct update without tickets'
+          );
+          await this.handleNewOrSuperAdminSubmission(publisherData);
+        } else {
+          // Existing active/approved publisher being edited → raise tickets
+          updateFlowResult = await this.handlePublisherUpdateFlow(
+            publisherData
+          );
+        }
       }
 
       // Redirect based on whether tickets were raised
+      console.log('🔀 Publisher redirect logic:', {
+        signupCode: this.signupCode,
+        ticketsRaised: updateFlowResult.ticketsRaised,
+        shouldNavigateBack: updateFlowResult.shouldNavigateBack,
+        isEditingSelf,
+        accessLevel: this.loggedInUser()?.accessLevel,
+      });
+
       if (this.signupCode) {
+        console.log('➡️ Redirecting to login (signup flow)');
         this.router.navigate(['/login']);
         return;
       }
-      
+
       if (updateFlowResult.shouldNavigateBack) {
+        console.log('➡️ Going back to previous page');
         window.history.back();
         return;
       }
-      
+
       if (updateFlowResult.ticketsRaised) {
-        // Navigate to update tickets page
-        this.router.navigate(['/update-tickets'], {
-          queryParams: { tab: 'publisher' }
-        });
+        if (isEditingSelf) {
+          // Publisher edited their own profile → return to profile
+          console.log('➡️ Redirecting to profile (self-edit)');
+          this.router.navigate(['/profile']);
+        } else {
+          // Publisher edited sub-publisher → go to tickets
+          console.log('➡️ Redirecting to update-tickets (sub-publisher edit)');
+          this.router.navigate(['/update-tickets'], {
+            queryParams: { tab: 'publisher' },
+          });
+        }
         return;
       }
-      
-      // Only redirect to publisher list if no other condition was met
-      // This shouldn't normally happen (user chose "Stay Here")
+
+      // Direct save (superadmin or new publisher) → redirect to list
+      console.log('➡️ Redirecting to publisher list (direct save)');
+      this.router.navigate(['/publisher']);
     } catch (error) {
       console.log(error);
     }

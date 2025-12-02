@@ -312,11 +312,7 @@
         matButton
         (click)="onSubmit()"
       >
-        {{
-          loggedInUser()?.accessLevel === "SUPERADMIN" || !this.publisherId
-            ? ("submit" | translate)
-            : ("raiseaticket" | translate)
-        }}
+        {{ submitButtonText() }}
       </button>
     </div>
   </mat-step>

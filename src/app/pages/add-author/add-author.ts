@@ -1186,7 +1186,11 @@ export class AddAuthor implements OnInit {
         shouldNavigateBack: false,
       };
 
+      // Check if author is editing their own profile
+      const isEditingSelf = this.authorId === this.loggedInUser()?.auther?.id;
+
       if (this.loggedInUser()?.accessLevel === 'SUPERADMIN' || !this.authorId) {
+        // Superadmin or creating new author → direct save
         await this.handleNewOrSuperAdminAuthorSubmission(authorData);
       } else {
         // If author status is Pending, allow direct update (like titles)
@@ -1199,15 +1203,16 @@ export class AddAuthor implements OnInit {
       }
 
       // Redirect based on whether tickets were raised
-      console.log('🔀 Redirect logic:', {
+      console.log('🔀 Author redirect logic:', {
         signupCode: this.signupCode,
         ticketsRaised: updateFlowResult.ticketsRaised,
         shouldNavigateBack: updateFlowResult.shouldNavigateBack,
+        isEditingSelf,
         accessLevel: this.loggedInUser()?.accessLevel,
       });
 
       if (this.signupCode) {
-        console.log('➡️ Redirecting to login');
+        console.log('➡️ Redirecting to login (signup flow)');
         this.router.navigate(['/login']);
         return;
       }
@@ -1219,19 +1224,26 @@ export class AddAuthor implements OnInit {
       }
 
       if (updateFlowResult.ticketsRaised) {
-        // Navigate to update tickets page with appropriate tab
         const isAuthor = this.loggedInUser()?.accessLevel === 'AUTHER';
-        const tab = isAuthor ? 'author' : 'publisher';
-        console.log('➡️ Redirecting to update-tickets with tab:', tab);
-        this.router.navigate(['/update-tickets'], {
-          queryParams: { tab },
-        });
+
+        if (isEditingSelf) {
+          // Author/Publisher edited their own profile → return to profile
+          console.log('➡️ Redirecting to profile (self-edit)');
+          this.router.navigate(['/profile']);
+        } else {
+          // Publisher editing an author → go to tickets
+          const tab = isAuthor ? 'author' : 'publisher';
+          console.log('➡️ Redirecting to update-tickets with tab:', tab);
+          this.router.navigate(['/update-tickets'], {
+            queryParams: { tab },
+          });
+        }
         return;
       }
 
-      // Only redirect to author list if user chose "Stay Here" but no tickets were raised
-      // This shouldn't normally happen, but it's a fallback
-      console.log('➡️ No action taken, staying on page');
+      // Direct save (superadmin or new author or pending) → redirect to list
+      console.log('➡️ Redirecting to author list (direct save)');
+      this.router.navigate(['/author']);
     } catch (error: any) {
       console.error('❌ Error in onSubmit:', error);
     }
