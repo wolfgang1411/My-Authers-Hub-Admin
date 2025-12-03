@@ -38,6 +38,7 @@ import { UploadFile } from '../../components/upload-file/upload-file';
 import { PublisherService } from '../publisher/publisher-service';
 import {
   Address,
+  BankDetails,
   BankOption,
   Cities,
   Countries,
@@ -659,11 +660,55 @@ export class AddPublisher {
     });
   }
   // Helper method to compare values
-  private compareValues(newVal: any, oldVal: any): boolean {
-    if (newVal === oldVal) return false;
-    if (newVal == null && oldVal == null) return false;
-    if (newVal == null || oldVal == null) return true;
-    return String(newVal).trim() !== String(oldVal).trim();
+  private compareValues(newValue: any, existingValue: any): boolean {
+    if (newValue === undefined || newValue === null || newValue === '') {
+      return false; // No new value provided, no change
+    }
+    const newStr = String(newValue).trim();
+    const existingStr = existingValue ? String(existingValue).trim() : '';
+    return newStr !== existingStr;
+  }
+
+  /**
+   * Get existing value for a field based on field name
+   */
+  private getExistingValueForField(
+    field: string,
+    existingPublisher?: Publishers,
+    existingAddress?: Address,
+    existingBank?: BankDetails
+  ): any {
+    const fieldMap: Record<string, () => any> = {
+      // Address fields
+      address: () => existingAddress?.address,
+      city: () => existingAddress?.city,
+      state: () => existingAddress?.state,
+      country: () => existingAddress?.country,
+      pincode: () => existingAddress?.pincode,
+      // Bank fields
+      bankName: () => existingBank?.name,
+      accountHolderName: () => existingBank?.accountHolderName,
+      accountNo: () => existingBank?.accountNo,
+      ifsc: () => existingBank?.ifsc,
+      panCardNo: () => existingBank?.panCardNo,
+      accountType: () => existingBank?.accountType,
+      gstNumber: () => existingBank?.gstNumber,
+      // Publisher fields
+      publisherName: () => existingPublisher?.name,
+      publisherEmail: () => existingPublisher?.email,
+      publisherDesignation: () => existingPublisher?.designation,
+      publisherPocName: () =>
+        existingPublisher
+          ? `${existingPublisher.user?.firstName || ''} ${
+              existingPublisher.user?.lastName || ''
+            }`.trim()
+          : '',
+      publisherPocEmail: () => existingPublisher?.user?.email,
+      publisherPocPhoneNumber: () => existingPublisher?.user?.phoneNumber,
+    };
+
+    const getter = fieldMap[field];
+    return getter ? getter() : undefined;
   }
 
   // Check if publisher details have changed
@@ -720,6 +765,12 @@ export class AddPublisher {
     publisherData: Publishers
   ): Promise<{ ticketsRaised: boolean; shouldNavigateBack: boolean }> {
     let ticketsRaised = false;
+
+    // Get existing data
+    const existingPublisher = this.publisherDetails;
+    const existingAddress = existingPublisher?.address?.[0];
+    const existingBank = existingPublisher?.bankDetails?.[0];
+
     const sections = [
       {
         type: UpdateTicketType.ADDRESS,
@@ -730,6 +781,7 @@ export class AddPublisher {
         type: UpdateTicketType.BANK,
         fields: [
           'bankName',
+          'accountHolderName',
           'accountNo',
           'ifsc',
           'panCardNo',
@@ -740,7 +792,14 @@ export class AddPublisher {
       },
       {
         type: UpdateTicketType.PUBLISHER,
-        fields: ['publisherName', 'publisherEmail'],
+        fields: [
+          'publisherName',
+          'publisherEmail',
+          'publisherDesignation',
+          'publisherPocName',
+          'publisherPocEmail',
+          'publisherPocPhoneNumber',
+        ],
         hasChanges: this.hasPublisherChanges(),
       },
     ];
@@ -748,7 +807,6 @@ export class AddPublisher {
     const rawValue = {
       ...this.publisherAddressDetails.value,
       ...this.publisherBankDetails.value,
-      ...publisherData,
       accountHolderName: this.publisherBankDetails.value.accountHolderName,
       bankName: this.publisherBankDetails.value.name,
       publisherName: this.publisherFormGroup.value.name,
@@ -760,6 +818,10 @@ export class AddPublisher {
     };
 
     for (const section of sections) {
+      console.log(
+        `Processing section: ${section.type}, hasChanges: ${section.hasChanges}`
+      );
+
       // Skip if no changes detected for this section
       if (!section.hasChanges) {
         console.log(`⏭️ Skipping ${section.type} - no changes detected`);
@@ -772,10 +834,69 @@ export class AddPublisher {
       section.fields.forEach((field: string) => {
         const value = rawValue[field as keyof typeof rawValue];
         if (value !== undefined && value !== null && value !== '') {
-          payload[field] = value;
-          hasValues = true;
+          // Only include field if it's different from existing value
+          const existingValue = this.getExistingValueForField(
+            field,
+            existingPublisher,
+            existingAddress,
+            existingBank
+          );
+
+          // For publisherPocName, compare by splitting into first/last name parts
+          if (field === 'publisherPocName') {
+            const newName = String(value).trim();
+            const existingName = existingValue
+              ? String(existingValue).trim()
+              : '';
+            const newParts = newName.split(/\s+/);
+            const existingParts = existingName.split(/\s+/);
+            const newFirstName = newParts[0] || '';
+            const newLastName = newParts.slice(1).join(' ') || '';
+            const existingFirstName = existingParts[0] || '';
+            const existingLastName = existingParts.slice(1).join(' ') || '';
+
+            console.log(`Comparing publisherPocName:`, {
+              field,
+              newName,
+              existingName,
+              newFirstName,
+              newLastName,
+              existingFirstName,
+              existingLastName,
+              isDifferent:
+                newFirstName !== existingFirstName ||
+                newLastName !== existingLastName,
+            });
+
+            if (
+              newFirstName !== existingFirstName ||
+              newLastName !== existingLastName
+            ) {
+              payload[field] = value;
+              hasValues = true;
+            }
+          } else {
+            const isDifferent = this.compareValues(value, existingValue);
+            console.log(`Comparing ${field}:`, {
+              field,
+              value,
+              existingValue,
+              isDifferent,
+            });
+
+            if (isDifferent) {
+              payload[field] = value;
+              hasValues = true;
+            }
+          }
         }
       });
+
+      console.log(
+        `Section ${section.type} payload:`,
+        payload,
+        `hasValues: ${hasValues}`
+      );
 
       if (hasValues) {
         console.log(`✅ Creating ${section.type} ticket with changes`);
@@ -795,6 +916,9 @@ export class AddPublisher {
 
         await this.userService.raisingTicket(payload);
         ticketsRaised = true;
+        console.log(`Ticket created successfully for ${section.type}`);
+      } else {
+        console.log(`No values to include for ${section.type} ticket`);
       }
     }
 
