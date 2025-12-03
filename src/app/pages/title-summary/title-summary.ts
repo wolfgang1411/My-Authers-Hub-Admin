@@ -15,7 +15,7 @@ import {
   NgClass,
   UpperCasePipe,
 } from '@angular/common';
-import { PlatForm, Title } from '../../interfaces';
+import { CreatePlatformIdentifier, PlatForm, Title } from '../../interfaces';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -26,6 +26,11 @@ import { User } from '../../interfaces';
 import { Signal } from '@angular/core';
 import Swal from 'sweetalert2';
 import { RoyaltyService } from '../../services/royalty-service';
+import { SharedModule } from 'src/app/modules/shared/shared-module';
+import { TranslateService } from '@ngx-translate/core';
+import { MatDialog } from '@angular/material/dialog';
+import { SelectDistributionLinks } from 'src/app/components/select-distribution-links/select-distribution-links';
+import { ApproveTitle } from 'src/app/components/approve-title/approve-title';
 
 @Component({
   selector: 'app-title-summary',
@@ -39,6 +44,7 @@ import { RoyaltyService } from '../../services/royalty-service';
     CommonModule,
     SafeUrlPipe,
     CurrencyPipe,
+    SharedModule,
   ],
   templateUrl: './title-summary.html',
   styleUrl: './title-summary.css',
@@ -54,6 +60,8 @@ export class TitleSummary {
     private titleService: TitleService,
     private staticValueService: StaticValuesService,
     private userService: UserService,
+    private translateService: TranslateService,
+    private matDialog: MatDialog,
     private royaltyService: RoyaltyService
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
@@ -84,9 +92,7 @@ export class TitleSummary {
     const royaltiesByPlatform = new Map<string, any[]>();
     royalties.forEach((r: any) => {
       const platformName =
-        typeof r.platform === 'string'
-          ? r.platform
-          : r.platform?.name || null;
+        typeof r.platform === 'string' ? r.platform : r.platform?.name || null;
       if (platformName) {
         if (!royaltiesByPlatform.has(platformName)) {
           royaltiesByPlatform.set(platformName, []);
@@ -100,7 +106,7 @@ export class TitleSummary {
       .map((p: any) => {
         const platformRoyalties = royaltiesByPlatform.get(p.platform) || [];
         if (platformRoyalties.length === 0) return null;
-        
+
         const percentages = platformRoyalties.map((r: any) =>
           String(r.percentage || 0)
         );
@@ -110,7 +116,12 @@ export class TitleSummary {
           division: percentages,
         };
       })
-      .filter((item): item is { platform: string; price: number; division: string[] } => item !== null);
+      .filter(
+        (
+          item
+        ): item is { platform: string; price: number; division: string[] } =>
+          item !== null
+      );
 
     if (items.length === 0) {
       this.royaltyAmountsCache.set(new Map());
@@ -130,7 +141,9 @@ export class TitleSummary {
         platformRoyalties.forEach((r: any) => {
           const percentage = String(r.percentage || 0);
           const amount = item.divisionValue[percentage] || 0;
-          const key = `${item.platform}_${r.authorId || r.publisherId}_${percentage}`;
+          const key = `${item.platform}_${
+            r.authorId || r.publisherId
+          }_${percentage}`;
           cache.set(key, amount);
         });
       });
@@ -151,11 +164,7 @@ export class TitleSummary {
                 const key = `${p.platform}_${r.publisherId}_${percentage}`;
                 const existingAmount = cache.get(key) || 0;
                 // Check if it's a print platform (not ebook)
-                const ebookPlatforms = [
-                  'MAH_EBOOK',
-                  'KINDLE',
-                  'GOOGLE_PLAY',
-                ];
+                const ebookPlatforms = ['MAH_EBOOK', 'KINDLE', 'GOOGLE_PLAY'];
                 if (!ebookPlatforms.includes(p.platform)) {
                   cache.set(key, existingAmount + margin);
                 }
@@ -184,12 +193,12 @@ export class TitleSummary {
   platformsWithData = computed(() => {
     const pricing = this.titleDetails()?.pricing ?? [];
     const royalties = this.titleDetails()?.royalties ?? [];
-    
+
     // Get unique platforms from pricing data (platform is a string)
     const platformsFromPricing = new Set(
       pricing.map((p: any) => p.platform).filter(Boolean)
     );
-    
+
     // Get unique platforms from royalties data (platform is an object with name property)
     const platformsFromRoyalties = new Set(
       royalties
@@ -197,20 +206,24 @@ export class TitleSummary {
           // Handle both cases: platform as string or platform as object with name
           if (typeof r.platform === 'string') {
             return r.platform;
-          } else if (r.platform && typeof r.platform === 'object' && r.platform.name) {
+          } else if (
+            r.platform &&
+            typeof r.platform === 'object' &&
+            r.platform.name
+          ) {
             return r.platform.name;
           }
           return null;
         })
         .filter((p: any) => p !== null && p !== undefined)
     );
-    
+
     // Combine both sets and convert to array
     const allPlatformsWithData = new Set([
       ...Array.from(platformsFromPricing),
       ...Array.from(platformsFromRoyalties),
     ]);
-    
+
     return Array.from(allPlatformsWithData) as PlatForm[];
   });
   getRoyaltyByPlatform(platform: PlatForm) {
@@ -219,7 +232,11 @@ export class TitleSummary {
       // Handle both cases: platform as string or platform as object with name
       if (typeof r.platform === 'string') {
         return r.platform === platform;
-      } else if (r.platform && typeof r.platform === 'object' && r.platform.name) {
+      } else if (
+        r.platform &&
+        typeof r.platform === 'object' &&
+        r.platform.name
+      ) {
         return r.platform.name === platform;
       }
       return false;
@@ -336,5 +353,41 @@ export class TitleSummary {
         position: 'top-end',
       });
     }
+  }
+  async addPlatformIdentifier() {
+    const title = this.titleDetails();
+    if (!title) return;
+
+    const dialog = this.matDialog.open(ApproveTitle, {
+      maxWidth: '95vw',
+      width: '90vw',
+      maxHeight: '90vh',
+      data: {
+        onClose: () => dialog.close(),
+        publishingType: title.publishingType,
+        existingIdentifiers: title.titlePlatformIdentifier ?? [],
+        onSubmit: async (data: {
+          platformIdentifier: CreatePlatformIdentifier[];
+        }) => {
+          try {
+            const payload = {
+              platformIdentifier: data.platformIdentifier,
+            };
+
+            const response =
+              await this.titleService.createUpdateTitlePlatformIdentifier(
+                title.id,
+                payload
+              );
+
+            this.titleDetails.set(response as Title);
+
+            dialog.close();
+          } catch (error) {
+            console.log(error);
+          }
+        },
+      },
+    });
   }
 }

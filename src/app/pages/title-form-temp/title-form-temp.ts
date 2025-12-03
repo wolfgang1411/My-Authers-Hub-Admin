@@ -2159,6 +2159,31 @@ export class TitleFormTemp implements OnDestroy {
       });
     }
   }
+  private removeEmptyStrings<T>(value: T): T {
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => this.removeEmptyStrings(item))
+        .filter((item) => item !== undefined) as unknown as T;
+    }
+
+    // Handle objects
+    if (value !== null && typeof value === 'object') {
+      const result: any = {};
+      Object.entries(value as any).forEach(([key, val]) => {
+        const cleaned = this.removeEmptyStrings(val);
+        // Drop keys where final value is an empty string or undefined
+        if (cleaned === '' || cleaned === undefined) {
+          return;
+        }
+        result[key] = cleaned;
+      });
+      return result as T;
+    }
+    if (value === '') {
+      return undefined as T;
+    }
+    return value;
+  }
 
   async onTitleSubmit() {
     // Mark all fields as touched to show validation errors
@@ -2218,6 +2243,7 @@ export class TitleFormTemp implements OnDestroy {
       ...(validAuthors.length > 0 && { authorIds: validAuthors }),
       id: this.titleId,
     } as TitleCreate;
+    const finalbasicData = this.removeEmptyStrings(basicData) as TitleCreate;
     try {
       this.isLoading.set(true);
       this.errorMessage.set(null);
@@ -2231,7 +2257,7 @@ export class TitleFormTemp implements OnDestroy {
         // Create update ticket for approved titles when user is publisher
         await this.titleService.createTitleUpdateTicket(
           this.titleId,
-          basicData
+          finalbasicData
         );
 
         // Show success message
@@ -2257,10 +2283,8 @@ export class TitleFormTemp implements OnDestroy {
 
         return; // Don't proceed with normal update flow
       }
-
-      // Normal create/update flow for non-approved titles or non-publishers
       const res: { id: number } = await this.titleService.createTitle(
-        basicData
+        finalbasicData
       );
 
       if (!res?.id || isNaN(Number(res.id))) {
@@ -4162,7 +4186,6 @@ export class TitleFormTemp implements OnDestroy {
       }
 
       if (distributionsToCreate.length > 0) {
-        // Normal update flow - only create new distributions
         await this.titleService.createTitleDistribution(
           this.titleId,
           distributionsToCreate

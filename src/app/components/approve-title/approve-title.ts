@@ -48,34 +48,43 @@ export class ApproveTitle implements OnInit {
   });
 
   ngOnInit(): void {
+    this.prefillPlatformIdentifierForm();
+  }
+
+  prefillPlatformIdentifierForm() {
     const allPlatforms = this.platformService.platforms();
-
-    // Filter platforms based on publishing type
     const publishingType = this.data.publishingType;
-    const isOnlyEbook = publishingType === PublishingType.ONLY_EBOOK;
-    const isOnlyPrint = publishingType === PublishingType.ONLY_PRINT;
 
-    let platforms: typeof allPlatforms;
-    if (isOnlyEbook) {
-      // For ebook-only titles, only show ebook platforms
-      platforms = allPlatforms.filter((p) => p.isEbookPlatform);
-    } else if (isOnlyPrint) {
-      // For print-only titles, only show print platforms
-      platforms = allPlatforms.filter((p) => !p.isEbookPlatform);
-    } else {
-      // For PRINT_EBOOK, show all platforms
-      platforms = allPlatforms;
+    let platforms = allPlatforms;
+
+    if (publishingType === PublishingType.ONLY_EBOOK) {
+      platforms = platforms.filter((p) => p.isEbookPlatform);
+    } else if (publishingType === PublishingType.ONLY_PRINT) {
+      platforms = platforms.filter((p) => !p.isEbookPlatform);
     }
 
+    const existing = this.data.existingIdentifiers ?? [];
+
     platforms.forEach((platform) => {
+      const platformType = platform.isEbookPlatform ? 'EBOOK' : 'PRINT';
+      const match = existing.find(
+        (pi) =>
+          pi.platform === platform.name &&
+          (pi.type === platformType || !pi.type)
+      );
       this.form.controls.platformIdentifier.push(
-        new FormGroup({
-          platform: new FormControl<string | null | undefined>(platform.name),
-          type: new FormControl(platform.isEbookPlatform ? 'EBOOK' : 'PRINT', {
-            nonNullable: true,
-          }),
-          uniqueIdentifier: new FormControl<string | null>(''),
-          distributionLink: new FormControl<string | null>(''),
+        new FormGroup<PlatFormIndetifierGroup>({
+          platform: new FormControl<string | null>(platform.name),
+          type: new FormControl<'EBOOK' | 'PRINT'>(
+            platformType as 'EBOOK' | 'PRINT',
+            { nonNullable: true }
+          ),
+          uniqueIdentifier: new FormControl<string | null>(
+            match?.uniqueIdentifier ?? null
+          ),
+          distributionLink: new FormControl<string | null>(
+            match?.distributionLink ?? null
+          ),
         })
       );
     });
@@ -109,6 +118,7 @@ export class ApproveTitle implements OnInit {
 
 interface Inputs {
   onSubmit: (data: { platformIdentifier: CreatePlatformIdentifier[] }) => void;
+  existingIdentifiers: CreatePlatformIdentifier[];
   distribution: TitleDistribution[];
   onClose: () => void;
   publishingType?: PublishingType;
