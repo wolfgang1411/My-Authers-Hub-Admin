@@ -120,12 +120,7 @@
       <div class="grid grid-cols-2 gap-4 items-start">
         <mat-form-field>
           <mat-label>{{ "themeofbooksubject" | translate }}</mat-label>
-          <input matInput formControlName="subject" required />
-          @if(titleDetailsGroup().controls.subject.hasError('minWords')) {
-          <mat-error> Subject must be at least 5 words. </mat-error>
-          } @if(titleDetailsGroup().controls.subject.hasError('maxlength')) {
-          <mat-error> Subject cannot exceed 50 characters </mat-error>
-          }
+          <input matInput formControlName="subject" />
         </mat-form-field>
         <div class="grid grid-cols-2 gap-4">
           <mat-form-field>
@@ -138,7 +133,7 @@
           </mat-form-field>
           <mat-form-field>
             <mat-label>{{ "bookedition" | translate }}</mat-label>
-            <input matInput formControlName="edition" type="number" required />
+            <input matInput formControlName="edition" type="number" />
           </mat-form-field>
         </div>
       </div>
@@ -165,6 +160,12 @@
             formControlName="shortDescription"
             rows="4"
           ></textarea>
+          @if(titleDetailsGroup().controls.shortDescription.hasError('maxWords'))
+          {
+          <mat-error>
+            {{ "shortdescriptionmaxwords" | translate }}
+          </mat-error>
+          }
         </mat-form-field>
       </div>
       <div class="grid grid-cols-4 gap-4 items-start">

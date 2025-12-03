@@ -782,18 +782,20 @@ export class TitleFormTemp implements OnDestroy {
     // Royalty distribution is independent of pricing - authors are creators and should get royalty by default
     const authorCount = authors.length;
 
-    const defaultAuthorPercentage: number = authorCount > 0
-      ? authorCount === 1
-        ? 100
-        : Math.round((100 / authorCount) * 100) / 100 // Round to 2 decimal places
-      : 0;
+    const defaultAuthorPercentage: number =
+      authorCount > 0
+        ? authorCount === 1
+          ? 100
+          : Math.round((100 / authorCount) * 100) / 100 // Round to 2 decimal places
+        : 0;
 
     // 🧱 STEP 2: Ensure publisher royalties per platform
     // Publisher gets remainder: 100% only if no authors exist, 0% if authors exist
     // FIXED: Calculate regardless of pricing/form validity
-    const defaultPublisherPercentage = authorCount > 0
-      ? 0 // Authors exist, publisher gets remainder (0% by default)
-      : 100; // No authors, publisher gets everything
+    const defaultPublisherPercentage =
+      authorCount > 0
+        ? 0 // Authors exist, publisher gets remainder (0% by default)
+        : 100; // No authors, publisher gets everything
 
     for (const platform of platforms) {
       let control = royalties.controls.find(
@@ -1227,8 +1229,25 @@ export class TitleFormTemp implements OnDestroy {
       const value = (control.value || '').trim();
       const wordCount = value.split(/\s+/).filter(Boolean).length;
 
-      return wordCount < minWords
+      return value.length && wordCount < minWords
         ? { minWords: { required: minWords, actual: wordCount } }
+        : null;
+    };
+  }
+
+  maxWordsValidator(maxWords: number): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = (control.value || '').trim();
+      const wordCount = value.split(/\s+/).filter(Boolean).length;
+
+      return value.length && wordCount && wordCount > maxWords
+        ? {
+            maxWords: {
+              required: maxWords,
+              actual: wordCount,
+              maxWords: maxWords,
+            },
+          }
         : null;
     };
   }
@@ -1253,7 +1272,7 @@ export class TitleFormTemp implements OnDestroy {
         // Update existing control values
         // Set isSameAsMrp to false if values differ, true if they're the same
         const isSameAsMrp = mrp === salesPrice;
-        
+
         pricingControl.patchValue(
           {
             id,
@@ -1568,24 +1587,21 @@ export class TitleFormTemp implements OnDestroy {
 
     // Add missing platforms only
     const isPublisher = this.loggedInUser()?.accessLevel === 'PUBLISHER';
-    
+
     platforms.forEach((platform) => {
       // Check if platform already exists - don't create duplicate
       if (!existingPlatforms.has(platform.name)) {
         // For publishers, don't set validators for superadmin-only platforms without pricing
         const isSuperAdminOnly = platform.isSuperAdminPricingOnly ?? false;
         const shouldSetValidators = !isPublisher || !isSuperAdminOnly;
-        
+
         const newControl = new FormGroup({
           id: new FormControl<number | null | undefined>(null),
           platform: new FormControl<string>(platform.name, Validators.required),
           salesPrice: new FormControl<number | null | undefined>(
             null,
             shouldSetValidators
-              ? [
-                  Validators.required,
-                  this.salesPriceValidator() as ValidatorFn,
-                ]
+              ? [Validators.required, this.salesPriceValidator() as ValidatorFn]
               : []
           ),
           mrp: new FormControl<number | null | undefined>(
@@ -1634,14 +1650,15 @@ export class TitleFormTemp implements OnDestroy {
       const isEbookPlatform = platform?.isEbookPlatform ?? false;
       const isPrintPlatform = !isEbookPlatform;
       const isSuperAdminOnly = platform?.isSuperAdminPricingOnly ?? false;
-      
+
       // Helper function to check if validators should be set for this platform
       const shouldSetValidators = () => {
         // For publishers with superadmin-only platforms without pricing, don't set validators
         if (isPublisher && isSuperAdminOnly) {
-          const hasPricing = control.controls.id.value != null || 
-                            control.controls.salesPrice.value != null ||
-                            control.controls.mrp.value != null;
+          const hasPricing =
+            control.controls.id.value != null ||
+            control.controls.salesPrice.value != null ||
+            control.controls.mrp.value != null;
           return hasPricing; // Only set validators if pricing already exists
         }
         return true; // For all other cases, set validators
@@ -1736,14 +1753,12 @@ export class TitleFormTemp implements OnDestroy {
         Validators.required,
         this.minWordsValidator(40),
       ]),
-      shortDescription: new FormControl<string>('', Validators.required),
-      edition: new FormControl<number | null>(null),
-      language: new FormControl<string>(''),
-      subject: new FormControl<string>('', [
-        Validators.required,
-        this.minWordsValidator(5),
-        Validators.maxLength(50),
+      shortDescription: new FormControl<string>('', [
+        this.maxWordsValidator(40), // Max 40 words
       ]),
+      edition: new FormControl<number>(1), // Default to 1
+      language: new FormControl<string>(''),
+      subject: new FormControl<string>(''), // Made optional - no validators
       status: new FormControl<TitleStatus>(TitleStatus.DRAFT),
       category: new FormControl<number | null>(null),
       subCategory: new FormControl<number | null>(null),
@@ -2538,20 +2553,21 @@ export class TitleFormTemp implements OnDestroy {
         }
         const platform = this.platformService.getPlatformByName(platformName);
         const isSuperAdminOnly = platform?.isSuperAdminPricingOnly ?? false;
-        
+
         // Skip validation for superadmin-only platforms without pricing
         if (isSuperAdminOnly) {
-          const hasPricing = control.controls.id.value != null || 
-                            control.controls.salesPrice.value != null ||
-                            control.controls.mrp.value != null;
+          const hasPricing =
+            control.controls.id.value != null ||
+            control.controls.salesPrice.value != null ||
+            control.controls.mrp.value != null;
           if (!hasPricing) {
             return false; // Don't count as invalid
           }
         }
-        
+
         return !control.valid;
       });
-      
+
       if (hasInvalidControl) {
         return;
       }
@@ -2640,9 +2656,8 @@ export class TitleFormTemp implements OnDestroy {
         // For publishers, skip validation for superadmin-only platforms without pricing
         const isPublisher = this.loggedInUser()?.accessLevel === 'PUBLISHER';
         if (isPublisher && platformObj.isSuperAdminPricingOnly) {
-          const hasPricing = id.value != null || 
-                            salesPrice.value != null ||
-                            mrp.value != null;
+          const hasPricing =
+            id.value != null || salesPrice.value != null || mrp.value != null;
           // If pricing doesn't exist, skip this platform (publisher can't fill it)
           if (!hasPricing) {
             continue;
@@ -2916,7 +2931,7 @@ export class TitleFormTemp implements OnDestroy {
       : pricingControls.controls;
 
     const isPublisher = this.loggedInUser()?.accessLevel === 'PUBLISHER';
-    
+
     // For publishers, exclude superadmin-only platforms without pricing from validation
     const hasInvalidRelevantControl = relevantControls.some((control) => {
       if (isPublisher) {
@@ -2924,19 +2939,20 @@ export class TitleFormTemp implements OnDestroy {
         if (platformName) {
           const platform = this.platformService.getPlatformByName(platformName);
           const isSuperAdminOnly = platform?.isSuperAdminPricingOnly ?? false;
-          
+
           // Skip validation for superadmin-only platforms without pricing
           if (isSuperAdminOnly) {
-            const hasPricing = control.controls.id.value != null || 
-                              control.controls.salesPrice.value != null ||
-                              control.controls.mrp.value != null;
+            const hasPricing =
+              control.controls.id.value != null ||
+              control.controls.salesPrice.value != null ||
+              control.controls.mrp.value != null;
             if (!hasPricing) {
               return false; // Don't count as invalid
             }
           }
         }
       }
-      
+
       return !control.valid;
     });
 
@@ -3031,9 +3047,8 @@ export class TitleFormTemp implements OnDestroy {
         // For publishers, skip validation for superadmin-only platforms without pricing
         const isPublisher = this.loggedInUser()?.accessLevel === 'PUBLISHER';
         if (isPublisher && platformObj.isSuperAdminPricingOnly) {
-          const hasPricing = id.value != null || 
-                            salesPrice.value != null ||
-                            mrp.value != null;
+          const hasPricing =
+            id.value != null || salesPrice.value != null || mrp.value != null;
           // If pricing doesn't exist, skip this platform (publisher can't fill it)
           if (!hasPricing) {
             continue;
@@ -3802,8 +3817,9 @@ export class TitleFormTemp implements OnDestroy {
                   (pricingValue.mrp || pricingValue.salesPrice)
                 ) {
                   // Set isSameAsMrp to false if values differ, true if they're the same
-                  const isSameAsMrp = pricingValue.mrp === pricingValue.salesPrice;
-                  
+                  const isSameAsMrp =
+                    pricingValue.mrp === pricingValue.salesPrice;
+
                   pricingControl.patchValue({
                     id: pricingValue.id,
                     platform: pricingValue.platform,

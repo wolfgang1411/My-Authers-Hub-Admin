@@ -128,6 +128,7 @@
   "isbnnumber": "ISBN Number",
   "longdescription": "Long Description",
   "shortdescription": "Short Description",
+  "shortdescriptionmaxwords": "Short Description cannot exceed 40 words",
   "subtitle": "Sub Title",
   "titlename": "Title Name",
   "verify": "Verify",
