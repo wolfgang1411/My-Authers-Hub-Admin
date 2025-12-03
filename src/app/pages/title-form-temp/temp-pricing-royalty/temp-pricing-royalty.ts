@@ -323,15 +323,6 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
           });
         }
 
-        // Calculate default percentage based on author count
-        const authorCount = authors.length;
-        const defaultAuthorPercentage: number =
-          authorCount > 0
-            ? authorCount === 1
-              ? 100
-              : Math.round((100 / authorCount) * 100) / 100 // Round to 2 decimal places
-            : 0;
-
         // SIMPLIFIED: Effect only ensures controls are enabled and triggers sync
         // The actual sync logic is in syncAllAuthorAndPublisherPercentages()
         // This prevents conflicts and ensures single source of truth
@@ -362,20 +353,50 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
             console.log('[Effect] Calling syncAuthorControlsFromRoyalties');
             // Only sync FROM royalties, not TO royalties (don't create new royalties when forms invalid)
             this.syncAuthorControlsFromRoyalties();
-            // Only calculate publisher percentage if forms are valid
-            if (formsValid && this.publisher()) {
+            // FIXED: Always calculate publisher percentage if we have publisher and authors
+            // This ensures publisher gets correct percentage even when forms invalid (no pricing)
+            if (this.publisher() && authors.length > 0) {
               this.calculatePublisherPercentage();
             }
           }, 50);
         } else {
           console.log('[Effect] No royalties found');
           if (!formsValid) {
-            // Only set to 0 if there are NO royalties at all
-            authorControls.forEach((control) => {
-              if (control.value !== 0 && control.value !== null) {
-                control.patchValue(0, { emitEvent: false });
-              }
-            });
+            // CRITICAL: Need both authors AND publisher for valid royalty calculation
+            // If either is missing, don't set default percentages
+            const hasAuthors = authors.length > 0;
+            const hasPublisher = this.publisher() !== null;
+            
+            if (hasAuthors && hasPublisher) {
+              // FIXED: When no pricing and no royalties, authors should get default percentage (not 0)
+              // Authors are the creators and should get royalty by default, not publisher
+              // Calculate default percentage based on author count (ONLY when both authors and publisher exist)
+              const authorCount = authors.length;
+              const defaultAuthorPercentage: number =
+                authorCount > 0
+                  ? authorCount === 1
+                    ? 100
+                    : Math.round((100 / authorCount) * 100) / 100
+                  : 0;
+              
+              authorControls.forEach((control) => {
+                // Set to default percentage (split equally among authors)
+                if (control.value !== defaultAuthorPercentage) {
+                  control.patchValue(defaultAuthorPercentage, { emitEvent: false });
+                }
+              });
+              // Also calculate publisher percentage to ensure it's set to 0 when forms invalid
+              setTimeout(() => {
+                this.calculatePublisherPercentage();
+              }, 50);
+            } else {
+              // No authors or no publisher - set all to 0, can't calculate royalties
+              authorControls.forEach((control) => {
+                if (control.value !== 0) {
+                  control.patchValue(0, { emitEvent: false });
+                }
+              });
+            }
           }
         }
       });
@@ -453,18 +474,27 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       if (existingRoyalty) {
         // Use existing royalty value if found (this is the saved value like 80)
         percent = existingRoyalty.controls.percentage.value ?? 0;
-      } else if (formsValid) {
-        // Only use default if forms are valid and no royalties exist
-        const authorCount = authors.length;
-        const defaultAuthorPercentage: number =
-          authorCount > 0
-            ? authorCount === 1
-              ? 100
-              : Math.round((100 / authorCount) * 100) / 100
-            : 0;
-        percent = defaultAuthorPercentage;
+      } else {
+        // CRITICAL: Need both authors AND publisher for valid royalty calculation
+        // If no publisher, set to 0 (can't distribute royalties without publisher)
+        const hasPublisher = this.publisher() !== null;
+        
+        if (hasPublisher) {
+          // FIXED: Always use default percentage (authors get 100% by default, not 0%)
+          // Authors are the creators and should get royalty by default, regardless of pricing status
+          const authorCount = authors.length;
+          const defaultAuthorPercentage: number =
+            authorCount > 0
+              ? authorCount === 1
+                ? 100
+                : Math.round((100 / authorCount) * 100) / 100
+              : 0;
+          percent = defaultAuthorPercentage;
+        } else {
+          // No publisher - can't calculate royalties, set to 0
+          percent = 0;
+        }
       }
-      // If forms invalid and no royalties, keep percent = 0
 
       // Create % control
       const percentControl = new FormControl(Math.round(percent), [
@@ -537,11 +567,16 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       console.log('[syncAuthorControlsFromRoyalties] No authors, returning');
       return;
     }
+    
+    // Don't check for publisher here - let the parent sync method handle validation
+    // This method should just sync the values from royalties to controls
 
     // Calculate default percentage based on author count
+    // CRITICAL: Only use default if publisher exists, otherwise use 0
+    const publisher = this.publisher();
     const authorCount = authors.length;
     const defaultAuthorPercentage: number =
-      authorCount > 0
+      publisher && authorCount > 0
         ? authorCount === 1
           ? 100
           : Math.round((100 / authorCount) * 100) / 100
@@ -639,6 +674,7 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       // 1. Value is null/undefined/0 and we have royalties
       // 2. Value doesn't match roundedValue
       // 3. Control is disabled (should be enabled)
+      // 4. FIXED: No royalties exist and current value doesn't match default
       const currentValue = control.value;
       const hasRoyalties = authorRoyalties.length > 0;
       const shouldUpdate =
@@ -652,7 +688,9 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
           royaltyValue !== null &&
           royaltyValue !== undefined &&
           royaltyValue !== 100) ||
-        control.disabled;
+        control.disabled ||
+        // FIXED: When no royalties exist, update if current doesn't match default
+        (!hasRoyalties && currentValue !== roundedValue);
 
       console.log(
         `[syncAuthorControlsFromRoyalties] Author ${author.id}: shouldUpdate=${shouldUpdate}, control.disabled=${control.disabled}`
@@ -719,14 +757,37 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
         !!publisher
       );
 
-      // CRITICAL FIX: Always sync FROM royalties, even if forms are invalid
-      // This ensures saved values are loaded
+      // CRITICAL: Need BOTH authors AND publisher for valid royalty calculation
+      // If BOTH are missing, return early
       if (authors.length === 0 && !publisher) {
         console.log(
-          '[syncAllAuthorAndPublisherPercentages] No authors or publisher, returning'
+          '[syncAllAuthorAndPublisherPercentages] No authors AND no publisher, returning'
         );
         return;
       }
+      
+      // If ONLY one is missing, we can still initialize controls but set to 0
+      if (authors.length === 0) {
+        console.log('[syncAllAuthorAndPublisherPercentages] No authors, setting publisher to 0');
+        if (publisher) {
+          this.publisherPercentage.set(0);
+        }
+        return;
+      }
+      
+      if (!publisher) {
+        console.log('[syncAllAuthorAndPublisherPercentages] No publisher, setting authors to 0');
+        const authorControls = this.authorPercentageControls();
+        authorControls.forEach((control) => {
+          if (control.value !== 0) {
+            control.patchValue(0, { emitEvent: false });
+          }
+        });
+        return;
+      }
+      
+      // If we reach here, we have BOTH authors AND publisher
+      console.log('[syncAllAuthorAndPublisherPercentages] Have both authors and publisher, proceeding with sync');
 
       // Step 1: Ensure author controls exist
       if (authors.length > 0) {
@@ -848,6 +909,15 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     if (!publisher) {
       console.log('[calculatePublisherPercentage] No publisher, returning');
       return; // No publisher, nothing to calculate
+    }
+
+    // CRITICAL: Need authors for valid royalty calculation
+    // If no authors, publisher should get 0% (not 100%)
+    const authors = this.authors();
+    if (!authors || authors.length === 0) {
+      console.log('[calculatePublisherPercentage] No authors, setting publisher to 0%');
+      this.publisherPercentage.set(0);
+      return;
     }
 
     // CRITICAL FIX: Calculate publisher percentage even if forms are invalid
@@ -1531,19 +1601,32 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
               );
             }
           }
-        } else if (formsValid) {
-          // Only use default if no royalties exist AND forms are valid
-          const authors = this.authors();
-          const authorCount = authors.length;
-          initialValue =
-            authorCount > 0
-              ? authorCount === 1
-                ? 100
-                : Math.round((100 / authorCount) * 100) / 100
-              : 0;
-          console.log(
-            `[getAuthorPercentageControl] Author ${authorId}: Using default value ${initialValue}`
-          );
+        } else {
+          // CRITICAL: Need both authors AND publisher for valid royalty calculation
+          // If no publisher, set to 0 (can't distribute royalties without publisher)
+          const hasPublisher = this.publisher() !== null;
+          
+          if (hasPublisher) {
+            // FIXED: Always use default percentage (authors get 100% by default, not 0%)
+            // Authors are the creators and should get royalty by default, regardless of pricing status
+            const authors = this.authors();
+            const authorCount = authors.length;
+            initialValue =
+              authorCount > 0
+                ? authorCount === 1
+                  ? 100
+                  : Math.round((100 / authorCount) * 100) / 100
+                : 0;
+            console.log(
+              `[getAuthorPercentageControl] Author ${authorId}: Using default value ${initialValue}`
+            );
+          } else {
+            // No publisher - can't calculate royalties, set to 0
+            initialValue = 0;
+            console.log(
+              `[getAuthorPercentageControl] Author ${authorId}: No publisher, setting to 0`
+            );
+          }
         }
 
         control = new FormControl<number | null>(Math.round(initialValue), [

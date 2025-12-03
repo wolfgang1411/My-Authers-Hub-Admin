@@ -739,15 +739,16 @@ export class TitleFormTemp implements OnDestroy {
   mapRoyaltiesArray(publisher: Publishers | null, authors: Author[]) {
     const { printing, pricing, royalties } = this.tempForm.controls;
 
-    // Check if forms are valid - if not, set royalties to 0% but don't exit
-    // This allows UI to show 0% and disabled state when forms are invalid
+    // FIXED: Royalty distribution is independent of pricing validity
+    // Authors should get their default percentage (100% split) regardless of whether pricing exists
+    // This is because royalty % is a creative/contractual split, not dependent on actual pricing
     const isPrintingValid = printing?.valid ?? false;
     const isPricingValid = pricing?.valid ?? false;
     const hasPricing = pricing.length > 0;
     const areFormsValid = isPrintingValid && isPricingValid && hasPricing;
 
     // Only exit if publisher or authors are missing (required data)
-    // If forms are invalid, continue but set percentages to 0
+    // Continue even if forms are invalid - set default percentages based on author count
     if (!publisher || !Array.isArray(authors)) {
       return;
     }
@@ -777,27 +778,22 @@ export class TitleFormTemp implements OnDestroy {
     }
 
     // Calculate default author percentage: 100% if 1 author, equally divided if more than 1
-    // BUT: If forms are not valid, set to 0% instead
+    // FIXED: Authors get default percentage REGARDLESS of pricing/form validity
+    // Royalty distribution is independent of pricing - authors are creators and should get royalty by default
     const authorCount = authors.length;
 
-    // If forms are not valid, set all percentages to 0
-    // Otherwise, calculate normal defaults
-    const defaultAuthorPercentage: number = areFormsValid
-      ? authorCount > 0
-        ? authorCount === 1
-          ? 100
-          : Math.round((100 / authorCount) * 100) / 100 // Round to 2 decimal places
-        : 0
-      : 0; // Set to 0 if forms are invalid
+    const defaultAuthorPercentage: number = authorCount > 0
+      ? authorCount === 1
+        ? 100
+        : Math.round((100 / authorCount) * 100) / 100 // Round to 2 decimal places
+      : 0;
 
     // 🧱 STEP 2: Ensure publisher royalties per platform
-    // Publisher gets 100% by default only if no authors exist AND forms are valid
-    // If forms are invalid, set to 0%
-    const defaultPublisherPercentage = areFormsValid
-      ? authorCount > 0
-        ? 0
-        : 100
-      : 0; // Set to 0 if forms are invalid
+    // Publisher gets remainder: 100% only if no authors exist, 0% if authors exist
+    // FIXED: Calculate regardless of pricing/form validity
+    const defaultPublisherPercentage = authorCount > 0
+      ? 0 // Authors exist, publisher gets remainder (0% by default)
+      : 100; // No authors, publisher gets everything
 
     for (const platform of platforms) {
       let control = royalties.controls.find(
