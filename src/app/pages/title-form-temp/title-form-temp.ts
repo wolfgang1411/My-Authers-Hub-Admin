@@ -1251,12 +1251,16 @@ export class TitleFormTemp implements OnDestroy {
 
       if (pricingControl) {
         // Update existing control values
+        // Set isSameAsMrp to false if values differ, true if they're the same
+        const isSameAsMrp = mrp === salesPrice;
+        
         pricingControl.patchValue(
           {
             id,
             platform,
             mrp,
             salesPrice,
+            isSameAsMrp,
           },
           { emitEvent: false }
         );
@@ -1532,6 +1536,7 @@ export class TitleFormTemp implements OnDestroy {
               Validators.required,
               this.mrpValidator() as ValidatorFn,
             ]),
+            isSameAsMrp: new FormControl<boolean>(true), // Default to true
           }) as PricingGroup
       )
     );
@@ -1589,6 +1594,7 @@ export class TitleFormTemp implements OnDestroy {
               ? [Validators.required, this.mrpValidator() as ValidatorFn]
               : []
           ),
+          isSameAsMrp: new FormControl<boolean>(true), // Default to true
         }) as PricingGroup;
 
         pricingArray.push(newControl);
@@ -3795,11 +3801,15 @@ export class TitleFormTemp implements OnDestroy {
                   pricingControl &&
                   (pricingValue.mrp || pricingValue.salesPrice)
                 ) {
+                  // Set isSameAsMrp to false if values differ, true if they're the same
+                  const isSameAsMrp = pricingValue.mrp === pricingValue.salesPrice;
+                  
                   pricingControl.patchValue({
                     id: pricingValue.id,
                     platform: pricingValue.platform,
                     mrp: pricingValue.mrp,
                     salesPrice: pricingValue.salesPrice,
+                    isSameAsMrp,
                   });
                 }
               });

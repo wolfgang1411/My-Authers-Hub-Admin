@@ -445,6 +445,7 @@ export type PricingGroup = FormGroup<{
   platform: FormControl;
   salesPrice: FormControl;
   mrp: FormControl;
+  isSameAsMrp: FormControl<boolean | null>; // Track if sales price should equal MRP
 }>;
 
 export interface TitleFormGroup {

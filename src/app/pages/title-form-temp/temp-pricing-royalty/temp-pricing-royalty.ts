@@ -225,6 +225,9 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     // Setup reactive calculations first
     this.calculateTotalRoyalties();
     this.calculateRoyaltyAmountPerPerson();
+    
+    // Setup "Same as MRP" feature - sync Sales Price when checkbox is checked
+    this.setupSameAsMrpSync();
 
     // Initialize author percentage controls from existing royalties
     this.initializeAuthorPercentageControls();
@@ -1320,21 +1323,21 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       { price: number; percentages: Set<string> }
     >();
 
-    // First, collect all platforms and their MRP (not salesPrice, we need MRP for calculation)
-    // CRITICAL: Only collect platforms that have valid pricing (mrp > 0)
+    // First, collect all platforms and their Sales Price (this is what customers actually pay)
+    // CRITICAL: Only collect platforms that have valid pricing (salesPrice > 0)
     pricingData.forEach((pricing) => {
-      if (!pricing.platform || !pricing.mrp || pricing.mrp <= 0) return;
+      if (!pricing.platform || !pricing.salesPrice || pricing.salesPrice <= 0) return;
 
       const platform = pricing.platform;
-      const mrp = pricing.mrp; // Use MRP for calculation
+      const salesPrice = pricing.salesPrice; // Use Sales Price for royalty calculation
 
       if (!platformMap.has(platform)) {
         platformMap.set(platform, {
-          price: mrp,
+          price: salesPrice,
           percentages: new Set(),
         });
       } else {
-        platformMap.get(platform)!.price = mrp;
+        platformMap.get(platform)!.price = salesPrice;
       }
     });
 
@@ -1839,5 +1842,44 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     const pricing = this.pricingControls().value;
     pricing.forEach((p) => (revenue += Number(p?.mrp ?? 0)));
     return revenue;
+  }
+
+  /**
+   * Setup "Same as MRP" feature
+   * When checkbox is checked, automatically sync Sales Price to match MRP
+   */
+  private setupSameAsMrpSync(): void {
+    this.pricingControls().controls.forEach((control) => {
+      // Watch MRP changes - if checkbox is checked, update Sales Price
+      control.controls.mrp.valueChanges
+        .pipe(takeUntil(this.destroy$))
+        .subscribe((mrp) => {
+          const isSameAsMrp = control.controls.isSameAsMrp?.value;
+          if (isSameAsMrp && !control.controls.salesPrice.disabled) {
+            control.controls.salesPrice.setValue(mrp, { emitEvent: false });
+          }
+        });
+      
+      // Watch checkbox changes
+      control.controls.isSameAsMrp?.valueChanges
+        .pipe(takeUntil(this.destroy$))
+        .subscribe((isSame) => {
+          if (isSame) {
+            // Copy MRP to Sales Price when checked
+            const mrp = control.controls.mrp.value;
+            if (!control.controls.salesPrice.disabled) {
+              control.controls.salesPrice.setValue(mrp, { emitEvent: false });
+            }
+          }
+        });
+    });
+  }
+
+  /**
+   * Check if sales price equals MRP for a platform
+   * Uses the form control value directly
+   */
+  isSalesPriceSameAsMrp(control: PricingGroup): boolean {
+    return control.controls.isSameAsMrp?.value ?? false;
   }
 }
