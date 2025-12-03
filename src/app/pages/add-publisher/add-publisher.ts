@@ -1068,7 +1068,6 @@ export class AddPublisher {
         this.loggedInUser()?.accessLevel === 'SUPERADMIN' ||
         !this.publisherId
       ) {
-        // Superadmin or creating new publisher → direct save
         await this.handleNewOrSuperAdminSubmission(publisherData);
       } else {
         // If publisher status is Pending, allow direct update (no tickets needed)
@@ -1085,8 +1084,6 @@ export class AddPublisher {
           );
         }
       }
-
-      // Redirect based on whether tickets were raised
       console.log('🔀 Publisher redirect logic:', {
         signupCode: this.signupCode,
         ticketsRaised: updateFlowResult.ticketsRaised,
