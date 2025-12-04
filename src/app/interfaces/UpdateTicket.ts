@@ -10,6 +10,7 @@ export interface UpdateTicket {
   type: UpdateTicketType;
   status: UpdateTicketStatus;
   data: Record<string, any>;
+  currentData?: Record<string, any>;
   requestedBy: User;
   approvedBy?: User;
   approvedAt?: string;
