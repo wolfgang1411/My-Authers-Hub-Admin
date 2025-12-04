@@ -28,6 +28,7 @@ import {
   TitleUpdateTicket,
   PricingUpdateTicket,
   RoyaltyUpdateTicket,
+  CreatePlatformIdentifier,
 } from '../../interfaces/Titles';
 import { Logger } from '../../services/logger';
 import { LoaderService } from '../../services/loader';
@@ -348,6 +349,24 @@ export class TitleService {
       return await this.loader.loadPromise(
         this.server.post(`title-distribution-update-ticket/title/${titleId}`, {
           distributions,
+        })
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async createUpdateTitlePlatformIdentifier(
+    titleId: number,
+    data: {
+      platformIdentifier: CreatePlatformIdentifier[];
+    }
+  ) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post(`title-platform-identifier/title/${titleId}`, {
+          ...data,
         })
       );
     } catch (error) {

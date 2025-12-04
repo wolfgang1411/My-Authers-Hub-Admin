@@ -27,6 +27,7 @@ import {
 } from '../../interfaces';
 import { UpdateTicketFilter } from '../../interfaces/Titles';
 import { TicketDetailsDialog } from 'src/app/components/ticket-details-dialog/ticket-details-dialog';
+import { Back } from 'src/app/components/back/back';
 
 @Component({
   selector: 'app-update-ticket-list',
@@ -38,6 +39,7 @@ import { TicketDetailsDialog } from 'src/app/components/ticket-details-dialog/ti
     MatIconButton,
     MatDialogModule,
     ListTable,
+    Back,
   ],
   templateUrl: './update-ticket-list.html',
   styleUrl: './update-ticket-list.css',
@@ -212,7 +214,7 @@ export class UpdateTicketList implements OnInit, OnDestroy {
 
   private getTabNameByIndex(index: number): string | undefined {
     const isAuthor = this.loggedInUser()?.accessLevel === 'AUTHER';
-    
+
     // For authors, publisher tab is hidden, so indices shift
     if (isAuthor) {
       switch (index) {
@@ -226,7 +228,7 @@ export class UpdateTicketList implements OnInit, OnDestroy {
           return undefined;
       }
     }
-    
+
     // For publishers and superadmins, all tabs are visible
     switch (index) {
       case 0:
@@ -244,7 +246,7 @@ export class UpdateTicketList implements OnInit, OnDestroy {
 
   private getTabIndexFromName(tabName: string | undefined): number {
     const isAuthor = this.loggedInUser()?.accessLevel === 'AUTHER';
-    
+
     switch (tabName) {
       case 'address':
         return 0;

@@ -286,11 +286,12 @@
               Overview of your book’s printing configuration
             </p>
           </div>
-          <span
+          <!-- <span
             class="bg-[var(--primary)] text-white px-4 py-2 rounded-lg text-sm font-medium shadow hover:bg-[var(--purple)] transition-all"
-          >
+          
+            >
             PRINT CONFIGURATION
-          </span>
+          </span> -->
         </div>
         @if (titleDetails()?.printing?.length) { @let p =
         titleDetails()?.printing?.[0];
@@ -739,11 +740,11 @@
               identifiers
             </p>
           </div>
-          <span
+          <!-- <span
             class="bg-[var(--primary)] text-white px-4 py-2 rounded-lg text-sm font-medium shadow hover:bg-[var(--purple)] transition-all"
           >
             DISTRIBUTION INFO
-          </span>
+          </span> -->
         </div>
 
         <!-- Distribution Channels Card -->
@@ -786,14 +787,25 @@
             >
               <mat-icon>dns</mat-icon>
             </div>
-            <div>
-              <h4 class="font-medium text-[var(--text-heading)] text-lg">
-                Platform Identifiers
-              </h4>
-              <p class="text-[var(--text-primary)] text-sm">
-                Platform-specific identifiers and publishing types
-              </p>
-            </div>
+            <div class="flex justify-between items-center w-full">
+              <div >
+                <h4 class="font-medium text-[var(--text-heading)] text-lg">
+                  Platform Identifiers
+                </h4>
+                <p class="text-[var(--text-primary)] text-sm">
+                  Platform-specific identifiers and publishing types
+                </p>
+              </div>
+              <button
+              mat-raised-button
+              color="primary"
+              (click)="addPlatformIdentifier()"
+              class="!px-4 flex gap-1 items-center"
+              >
+              <mat-icon>add</mat-icon>
+              {{ "addmore" | translate }}
+            </button>
+          </div>
           </div>
 
           @if (titleDetails()?.titlePlatformIdentifier?.length) {
