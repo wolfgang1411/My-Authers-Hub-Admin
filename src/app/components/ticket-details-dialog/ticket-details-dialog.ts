@@ -68,20 +68,21 @@ export class TicketDetailsDialog {
     if (!ticket) return;
 
     const ticketData = ticket.data || {};
+    const currentData = ticket.currentData || {};
     const changes: FieldChange[] = [];
 
     switch (ticket.type) {
       case UpdateTicketType.ADDRESS:
-        this.processAddressChanges(ticketData, ticket.addressToUpdate, changes);
+        this.processAddressChanges(ticketData, currentData, changes);
         break;
       case UpdateTicketType.BANK:
-        this.processBankChanges(ticketData, ticket.bankDetailsToUpdate, changes);
+        this.processBankChanges(ticketData, currentData, changes);
         break;
       case UpdateTicketType.AUTHOR:
-        this.processAuthorChanges(ticketData, ticket.authorToUpdate, changes);
+        this.processAuthorChanges(ticketData, currentData, changes);
         break;
       case UpdateTicketType.PUBLISHER:
-        this.processPublisherChanges(ticketData, ticket.publisherToUpdate, changes);
+        this.processPublisherChanges(ticketData, currentData, changes);
         break;
     }
 
@@ -90,14 +91,14 @@ export class TicketDetailsDialog {
 
   private processAddressChanges(
     ticketData: any,
-    existingAddress: any,
+    currentData: any,
     changes: FieldChange[]
   ): void {
     if (ticketData.address) {
       changes.push({
         field: 'address',
         label: 'Address',
-        before: existingAddress?.address || 'N/A',
+        before: currentData?.address || 'N/A',
         after: ticketData.address,
       });
     }
@@ -105,7 +106,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'city',
         label: 'City',
-        before: existingAddress?.city || 'N/A',
+        before: currentData?.city || 'N/A',
         after: ticketData.city,
       });
     }
@@ -113,7 +114,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'state',
         label: 'State',
-        before: existingAddress?.state || 'N/A',
+        before: currentData?.state || 'N/A',
         after: ticketData.state,
       });
     }
@@ -121,7 +122,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'country',
         label: 'Country',
-        before: existingAddress?.country || 'N/A',
+        before: currentData?.country || 'N/A',
         after: ticketData.country,
       });
     }
@@ -129,7 +130,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'pincode',
         label: 'Pincode',
-        before: existingAddress?.pincode || 'N/A',
+        before: currentData?.pincode || 'N/A',
         after: ticketData.pincode,
       });
     }
@@ -137,14 +138,14 @@ export class TicketDetailsDialog {
 
   private processBankChanges(
     ticketData: any,
-    existingBank: any,
+    currentData: any,
     changes: FieldChange[]
   ): void {
     if (ticketData.bankName) {
       changes.push({
         field: 'bankName',
         label: 'Bank Name',
-        before: existingBank?.name || 'N/A',
+        before: currentData?.bankName || 'N/A',
         after: ticketData.bankName,
       });
     }
@@ -152,7 +153,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'accountHolderName',
         label: 'Account Holder Name',
-        before: existingBank?.accountHolderName || 'N/A',
+        before: currentData?.accountHolderName || 'N/A',
         after: ticketData.accountHolderName,
       });
     }
@@ -160,7 +161,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'accountNo',
         label: 'Account Number',
-        before: existingBank?.accountNo || 'N/A',
+        before: currentData?.accountNo || 'N/A',
         after: ticketData.accountNo,
       });
     }
@@ -168,7 +169,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'ifsc',
         label: 'IFSC Code',
-        before: existingBank?.ifsc || 'N/A',
+        before: currentData?.ifsc || 'N/A',
         after: ticketData.ifsc,
       });
     }
@@ -176,7 +177,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'panCardNo',
         label: 'PAN Card Number',
-        before: existingBank?.panCardNo || 'N/A',
+        before: currentData?.panCardNo || 'N/A',
         after: ticketData.panCardNo,
       });
     }
@@ -184,7 +185,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'accountType',
         label: 'Account Type',
-        before: existingBank?.accountType || 'N/A',
+        before: currentData?.accountType || 'N/A',
         after: ticketData.accountType,
       });
     }
@@ -192,7 +193,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'gstNumber',
         label: 'GST Number',
-        before: existingBank?.gstNumber || 'N/A',
+        before: currentData?.gstNumber || 'N/A',
         after: ticketData.gstNumber,
       });
     }
@@ -200,18 +201,15 @@ export class TicketDetailsDialog {
 
   private processAuthorChanges(
     ticketData: any,
-    existingAuthor: any,
+    currentData: any,
     changes: FieldChange[]
   ): void {
     // Backend stores with 'author' prefix
     if (ticketData.authorName) {
-      const existingName = existingAuthor?.user
-        ? `${existingAuthor.user.firstName || ''} ${existingAuthor.user.lastName || ''}`.trim()
-        : 'N/A';
       changes.push({
         field: 'authorName',
         label: 'Name',
-        before: existingName,
+        before: currentData?.authorName || 'N/A',
         after: ticketData.authorName,
       });
     }
@@ -219,7 +217,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'authorEmail',
         label: 'Email',
-        before: existingAuthor?.user?.email || 'N/A',
+        before: currentData?.authorEmail || 'N/A',
         after: ticketData.authorEmail,
       });
     }
@@ -227,7 +225,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'authorContactNumber',
         label: 'Phone Number',
-        before: existingAuthor?.user?.phoneNumber || 'N/A',
+        before: currentData?.authorContactNumber || 'N/A',
         after: ticketData.authorContactNumber,
       });
     }
@@ -235,7 +233,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'authorAbout',
         label: 'About',
-        before: existingAuthor?.about || 'N/A',
+        before: currentData?.authorAbout || 'N/A',
         after: ticketData.authorAbout,
       });
     }
@@ -243,7 +241,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'authorUsername',
         label: 'Username',
-        before: existingAuthor?.username || 'N/A',
+        before: currentData?.authorUsername || 'N/A',
         after: ticketData.authorUsername,
       });
     }
@@ -251,7 +249,7 @@ export class TicketDetailsDialog {
 
   private processPublisherChanges(
     ticketData: any,
-    existingPublisher: any,
+    currentData: any,
     changes: FieldChange[]
   ): void {
     // Backend stores with 'publisher' prefix
@@ -259,7 +257,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'publisherName',
         label: 'Publisher Name',
-        before: existingPublisher?.name || 'N/A',
+        before: currentData?.publisherName || 'N/A',
         after: ticketData.publisherName,
       });
     }
@@ -267,7 +265,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'publisherEmail',
         label: 'Email',
-        before: existingPublisher?.email || 'N/A',
+        before: currentData?.publisherEmail || 'N/A',
         after: ticketData.publisherEmail,
       });
     }
@@ -275,7 +273,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'publisherDesignation',
         label: 'Designation',
-        before: existingPublisher?.designation || 'N/A',
+        before: currentData?.publisherDesignation || 'N/A',
         after: ticketData.publisherDesignation,
       });
     }
@@ -283,9 +281,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'publisherPocName',
         label: 'POC Name',
-        before: existingPublisher?.user?.firstName && existingPublisher?.user?.lastName
-          ? `${existingPublisher.user.firstName} ${existingPublisher.user.lastName}`
-          : 'N/A',
+        before: currentData?.publisherPocName || 'N/A',
         after: ticketData.publisherPocName,
       });
     }
@@ -293,7 +289,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'publisherPocEmail',
         label: 'POC Email',
-        before: existingPublisher?.user?.email || 'N/A',
+        before: currentData?.publisherPocEmail || 'N/A',
         after: ticketData.publisherPocEmail,
       });
     }
@@ -301,7 +297,7 @@ export class TicketDetailsDialog {
       changes.push({
         field: 'publisherPocPhoneNumber',
         label: 'POC Phone',
-        before: existingPublisher?.user?.phoneNumber || 'N/A',
+        before: currentData?.publisherPocPhoneNumber || 'N/A',
         after: ticketData.publisherPocPhoneNumber,
       });
     }
