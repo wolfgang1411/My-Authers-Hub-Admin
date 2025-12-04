@@ -620,5 +620,7 @@
   "pointssuccessfullyassigned": "Points successfully assigned to publisher.",
   "purchaserequestsent": "Purchase request has been sent to admin for approval.",
   "errorbuyingpoints": "Failed to buy/assign points. Please try again.",
-  "titleapprovewarning": "Title Approve Warning"
+  "titleapprovewarning": "Title Approve Warning",
+  "sharedTitles" : "Shared Titles",  "code": "Code",
+  "createdAt": "Created At"
 }

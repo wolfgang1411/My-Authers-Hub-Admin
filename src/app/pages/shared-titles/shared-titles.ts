@@ -13,7 +13,6 @@ import Swal from 'sweetalert2';
 import { TranslateService } from '@ngx-translate/core';
 import { format } from 'date-fns';
 import { TitleService } from '../titles/title-service';
-import { Title } from '../../interfaces/Titles';
 
 @Component({
   selector: 'app-shared-titles',
@@ -157,12 +156,14 @@ export class SharedTitles implements OnInit {
 
   async onClickCreate() {
     const { value: titleId } = await Swal.fire({
+      icon: 'info',
       title: 'Select Title to Share',
       input: 'number',
       inputLabel: 'Title ID',
       inputPlaceholder: 'Enter title ID',
       showCancelButton: true,
       confirmButtonText: 'Share',
+      confirmButtonColor: '#3d1a5d',
       cancelButtonText: 'Cancel',
       inputValidator: (value) => {
         if (!value) {
