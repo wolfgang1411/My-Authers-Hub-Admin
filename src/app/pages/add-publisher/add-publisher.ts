@@ -957,7 +957,7 @@ export class AddPublisher {
       await Swal.fire({
         icon: 'success',
         title: 'Success',
-        text: 'Update ticket raised successfully',
+        text: 'Ticket has been raised successfully and sent to Admin for approval .',
         heightAuto: false,
       });
       return { ticketsRaised: true, shouldNavigateBack: false };
@@ -1106,11 +1106,9 @@ export class AddPublisher {
 
       if (updateFlowResult.ticketsRaised) {
         if (isEditingSelf) {
-          // Publisher edited their own profile → return to profile
           console.log('➡️ Redirecting to profile (self-edit)');
           this.router.navigate(['/profile']);
         } else {
-          // Publisher edited sub-publisher → go to tickets
           console.log('➡️ Redirecting to update-tickets (sub-publisher edit)');
           this.router.navigate(['/update-tickets'], {
             queryParams: { tab: 'publisher' },

@@ -24,7 +24,6 @@ import {
   selector: 'app-title-config',
   imports: [
     SharedModule,
-    MatAnchor,
     MatCardModule,
     MatExpansionModule,
     MatIconModule,
