@@ -127,6 +127,8 @@
   "uploadtitle": "Upload Title",
   "isbnnumber": "ISBN Number",
   "longdescription": "Long Description",
+  "longdescriptionisrequired": "Long description is required",
+  "longdescriptionmustbeatleast40words": "Long description must be at least 40 words",
   "shortdescription": "Short Description",
   "shortdescriptionmaxwords": "Short Description cannot exceed 40 words",
   "subtitle": "Sub Title",
