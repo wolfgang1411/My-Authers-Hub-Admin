@@ -10,6 +10,7 @@ export interface PlatformPayload {
   extraFlatMargin?: number;
   isEbookPlatform?: boolean;
   isSuperAdminPricingOnly?: boolean;
+  isInventoryPlatform?: boolean;
   status?: PlatformStatus;
 }
 

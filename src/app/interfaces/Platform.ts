@@ -13,7 +13,6 @@ export interface Platform {
   isSuperAdminPricingOnly?: boolean;
   status: PlatformStatus;
   createdAt: string;
+  isInventoryPlatform?: boolean;
   updatedAt: string;
 }
-
-
