@@ -217,7 +217,9 @@ export class AddSales implements OnInit {
     // Fetch platforms from API first - use a loader key to make it visible
     try {
       console.log('Fetching platforms...');
-      const fetchedPlatforms = await this.platformService.fetchPlatforms();
+      const fetchedPlatforms = await this.platformService.fetchPlatforms({
+        isInventoryPlatform: true,
+      });
       this.platforms.set(fetchedPlatforms);
       console.log(
         'Platforms fetched successfully:',
@@ -335,6 +337,8 @@ export class AddSales implements OnInit {
       FormControl<Platform>
     >;
 
+    const saleType = group.controls.type.value;
+
     // Clear existing options
     while (platformOptionsArray.length > 0) {
       platformOptionsArray.removeAt(0);
@@ -358,18 +362,25 @@ export class AddSales implements OnInit {
       ({ isEbookPlatform }) => !isEbookPlatform
     );
 
-    [
+    // Include all platforms that match publishing type
+    // Inventory platforms are available for all sale types (they don't require pricing)
+    const filteredPlatforms = [
       ...ebooPlatofrm.filter(
         () => title?.publishingType !== PublishingType.ONLY_PRINT
       ),
       ...printPlatforms.filter(
         () => title?.publishingType !== PublishingType.ONLY_EBOOK
       ),
-    ].forEach((p) => {
-      platformOptionsArray.push(
-        new FormControl<Platform>(p, { nonNullable: true })
-      );
-    });
+    ]
+      .filter(
+        ({ isInventoryPlatform }) =>
+          !isInventoryPlatform || saleType === SalesType.INVENTORY
+      )
+      .forEach((p) => {
+        platformOptionsArray.push(
+          new FormControl<Platform>(p, { nonNullable: true })
+        );
+      });
   }
 
   /**
@@ -393,6 +404,16 @@ export class AddSales implements OnInit {
 
     if (!titleId || !platform) {
       group.get('amount')?.patchValue(null);
+      return;
+    }
+
+    // Check if the platform is an inventory platform
+    const platformRecord = this.platforms().find((p) => p.name === platform);
+    const isInventoryPlatform = platformRecord?.isInventoryPlatform ?? false;
+
+    // For inventory platforms, don't try to get pricing - amount must be entered manually
+    if (isInventoryPlatform) {
+      // Don't auto-fill for inventory platforms, amount must be entered manually
       return;
     }
 
@@ -522,12 +543,30 @@ export class AddSales implements OnInit {
       this.updatePlatformOptionsForGroup(group, initialTitleId);
     }
     group.get('platform')?.valueChanges.subscribe((platform) => {
-      // Only update amount for non-INVENTORY sales (auto-calculate)
       const saleType = group.get('type')?.value;
-      if (platform && saleType !== 'INVENTORY') {
-        this.updateAmountBasedOnPlatform(group, platform);
-      } else if (!platform) {
+      const amountControl = group.get('amount');
+
+      if (!platform) {
         group.patchValue({ amount: null });
+        return;
+      }
+
+      // Check if the platform is an inventory platform
+      const platformRecord = this.platforms().find((p) => p.name === platform);
+      const isInventoryPlatform = platformRecord?.isInventoryPlatform ?? false;
+
+      // For inventory platforms, amount is required
+      if (isInventoryPlatform) {
+        amountControl?.setValidators([Validators.required, Validators.min(0)]);
+        amountControl?.updateValueAndValidity();
+        // Don't auto-fill amount for inventory platforms
+        return;
+      }
+
+      // For INVENTORY sales type, amount is already required (handled in type subscription)
+      // For other sales types on non-inventory platforms, auto-calculate from pricing
+      if (saleType !== 'INVENTORY') {
+        this.updateAmountBasedOnPlatform(group, platform);
       }
     });
 
@@ -572,8 +611,17 @@ export class AddSales implements OnInit {
             type: type.value as SalesType,
           };
 
-          // Only include amount for INVENTORY sales
-          if (type.value === 'INVENTORY' && amount.value) {
+          // Include amount for INVENTORY sales or inventory platforms
+          const platformRecord = this.platforms().find(
+            (p) => p.name === platform.value
+          );
+          const isInventoryPlatform =
+            platformRecord?.isInventoryPlatform ?? false;
+
+          if (
+            (type.value === 'INVENTORY' || isInventoryPlatform) &&
+            amount.value
+          ) {
             saleData.amount = Number(amount.value);
           }
 

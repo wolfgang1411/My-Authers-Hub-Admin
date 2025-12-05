@@ -225,7 +225,7 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     // Setup reactive calculations first
     this.calculateTotalRoyalties();
     this.calculateRoyaltyAmountPerPerson();
-    
+
     // Setup "Same as MRP" feature - sync Sales Price when checkbox is checked
     this.setupSameAsMrpSync();
 
@@ -369,7 +369,7 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
             // If either is missing, don't set default percentages
             const hasAuthors = authors.length > 0;
             const hasPublisher = this.publisher() !== null;
-            
+
             if (hasAuthors && hasPublisher) {
               // FIXED: When no pricing and no royalties, authors should get default percentage (not 0)
               // Authors are the creators and should get royalty by default, not publisher
@@ -381,11 +381,13 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
                     ? 100
                     : Math.round((100 / authorCount) * 100) / 100
                   : 0;
-              
+
               authorControls.forEach((control) => {
                 // Set to default percentage (split equally among authors)
                 if (control.value !== defaultAuthorPercentage) {
-                  control.patchValue(defaultAuthorPercentage, { emitEvent: false });
+                  control.patchValue(defaultAuthorPercentage, {
+                    emitEvent: false,
+                  });
                 }
               });
               // Also calculate publisher percentage to ensure it's set to 0 when forms invalid
@@ -481,7 +483,7 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
         // CRITICAL: Need both authors AND publisher for valid royalty calculation
         // If no publisher, set to 0 (can't distribute royalties without publisher)
         const hasPublisher = this.publisher() !== null;
-        
+
         if (hasPublisher) {
           // FIXED: Always use default percentage (authors get 100% by default, not 0%)
           // Authors are the creators and should get royalty by default, regardless of pricing status
@@ -570,7 +572,7 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       console.log('[syncAuthorControlsFromRoyalties] No authors, returning');
       return;
     }
-    
+
     // Don't check for publisher here - let the parent sync method handle validation
     // This method should just sync the values from royalties to controls
 
@@ -768,18 +770,22 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
         );
         return;
       }
-      
+
       // If ONLY one is missing, we can still initialize controls but set to 0
       if (authors.length === 0) {
-        console.log('[syncAllAuthorAndPublisherPercentages] No authors, setting publisher to 0');
+        console.log(
+          '[syncAllAuthorAndPublisherPercentages] No authors, setting publisher to 0'
+        );
         if (publisher) {
           this.publisherPercentage.set(0);
         }
         return;
       }
-      
+
       if (!publisher) {
-        console.log('[syncAllAuthorAndPublisherPercentages] No publisher, setting authors to 0');
+        console.log(
+          '[syncAllAuthorAndPublisherPercentages] No publisher, setting authors to 0'
+        );
         const authorControls = this.authorPercentageControls();
         authorControls.forEach((control) => {
           if (control.value !== 0) {
@@ -788,9 +794,11 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
         });
         return;
       }
-      
+
       // If we reach here, we have BOTH authors AND publisher
-      console.log('[syncAllAuthorAndPublisherPercentages] Have both authors and publisher, proceeding with sync');
+      console.log(
+        '[syncAllAuthorAndPublisherPercentages] Have both authors and publisher, proceeding with sync'
+      );
 
       // Step 1: Ensure author controls exist
       if (authors.length > 0) {
@@ -918,7 +926,9 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     // If no authors, publisher should get 0% (not 100%)
     const authors = this.authors();
     if (!authors || authors.length === 0) {
-      console.log('[calculatePublisherPercentage] No authors, setting publisher to 0%');
+      console.log(
+        '[calculatePublisherPercentage] No authors, setting publisher to 0%'
+      );
       this.publisherPercentage.set(0);
       return;
     }
@@ -1326,7 +1336,8 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     // First, collect all platforms and their Sales Price (this is what customers actually pay)
     // CRITICAL: Only collect platforms that have valid pricing (salesPrice > 0)
     pricingData.forEach((pricing) => {
-      if (!pricing.platform || !pricing.salesPrice || pricing.salesPrice <= 0) return;
+      if (!pricing.platform || !pricing.salesPrice || pricing.salesPrice <= 0)
+        return;
 
       const platform = pricing.platform;
       const salesPrice = pricing.salesPrice; // Use Sales Price for royalty calculation
@@ -1410,7 +1421,7 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       // Custom print cost margin is calculated separately for display
       const response = await this.royaltyService.calculateRoyalties({
         items: apiItems,
-        printingPrice: this.printingPrice() || 0, // Use actual print cost for calculations
+        printingPrice: this.customPrintCost() || this.printingPrice() || 0, // Use actual print cost for calculations
       });
 
       // Create a map: platform -> divisionValue (percentage -> amount)
@@ -1608,7 +1619,7 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
           // CRITICAL: Need both authors AND publisher for valid royalty calculation
           // If no publisher, set to 0 (can't distribute royalties without publisher)
           const hasPublisher = this.publisher() !== null;
-          
+
           if (hasPublisher) {
             // FIXED: Always use default percentage (authors get 100% by default, not 0%)
             // Authors are the creators and should get royalty by default, regardless of pricing status
@@ -1859,7 +1870,7 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
             control.controls.salesPrice.setValue(mrp, { emitEvent: false });
           }
         });
-      
+
       // Watch checkbox changes
       control.controls.isSameAsMrp?.valueChanges
         .pipe(takeUntil(this.destroy$))

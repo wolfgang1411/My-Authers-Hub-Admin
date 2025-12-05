@@ -16,3 +16,7 @@ export interface Platform {
   isInventoryPlatform?: boolean;
   updatedAt: string;
 }
+
+export interface PlatformFilter {
+  isInventoryPlatform?: boolean;
+}
