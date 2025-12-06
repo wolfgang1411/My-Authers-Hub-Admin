@@ -196,6 +196,48 @@ export class TitleFormTemp implements OnDestroy {
         this.ensurePricingArrayHasAllPlatforms();
       }
     });
+
+    // CRITICAL: Watch for changes to authorIds form array and sync authorsSignal
+    // This ensures that when authors are removed or changed, old author royalties are cleaned up
+    this.tempForm.controls.titleDetails.controls.authorIds.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        const authorIdsArray = this.tempForm.controls.titleDetails.controls.authorIds;
+        if (!authorIdsArray) return;
+
+        // Get current author IDs from the form
+        const currentAuthorIds = authorIdsArray.controls
+          .map(control => control.controls.id.value)
+          .filter(id => id != null && id > 0) as number[];
+
+        // Get current authors from signal
+        const currentAuthors = this.authorsSignal();
+
+        // Check if the authors have changed
+        const currentAuthorIdsFromSignal = currentAuthors.map(a => a.id);
+        const idsMatch =
+          currentAuthorIds.length === currentAuthorIdsFromSignal.length &&
+          currentAuthorIds.every(id => currentAuthorIdsFromSignal.includes(id)) &&
+          currentAuthorIdsFromSignal.every(id => currentAuthorIds.includes(id));
+
+        // Only update if authors have actually changed
+        if (!idsMatch) {
+          // Find author objects for the current IDs
+          const updatedAuthors = currentAuthorIds
+            .map(id => {
+              // First try to find in current authors signal
+              const existing = currentAuthors.find(a => a.id === id);
+              if (existing) return existing;
+              // If not found, try to find in authorsList
+              return this.authorsList().find(a => a.id === id);
+            })
+            .filter((a): a is Author => a != null);
+
+          // Update authorsSignal to match the form array
+          // This will trigger the effect that calls mapRoyaltiesArray, which will remove old author royalties
+          this.authorsSignal.set(updatedAuthors);
+        }
+      });
   }
 
   ngOnDestroy(): void {
@@ -816,9 +858,19 @@ export class TitleFormTemp implements OnDestroy {
       return;
     }
 
+    // Early return if publisher or authors are missing
+    if (!publisher || !Array.isArray(authors)) {
+      return;
+    }
+
+    const authorIds = authors.map((a) => a.id);
+    const normalizedAuthorIdsForLog = authorIds.map(id => Number(id)).filter(id => !isNaN(id));
+
     console.log('[mapRoyaltiesArray] START', {
       publisherId: publisher?.id,
       authorCount: authors.length,
+      authorIds: authorIds,
+      normalizedAuthorIds: normalizedAuthorIdsForLog,
       totalRoyalties: royalties.length,
       royaltiesWithIds: royalties.controls.filter(c => (c.controls.id.value ?? c.value.id) != null).length,
       publisherRoyalties: royalties.controls
@@ -836,6 +888,7 @@ export class TitleFormTemp implements OnDestroy {
         id: c.controls.id.value ?? c.value.id,
         publisherId: c.controls.publisherId.value ?? c.value.publisherId,
         authorId: c.controls.authorId.value ?? c.value.authorId,
+        authorIdType: typeof (c.controls.authorId.value ?? c.value.authorId),
         platform: c.controls.platform.value ?? c.value.platform,
         percentage: c.controls.percentage.value ?? c.value.percentage
       }))
@@ -854,14 +907,8 @@ export class TitleFormTemp implements OnDestroy {
     const hasPricing = pricing.length > 0;
     const areFormsValid = isPrintingValid && isPricingValid && hasPricing;
 
-    // Only exit if publisher or authors are missing (required data)
-    // Continue even if forms are invalid - set default percentages based on author count
-    if (!publisher || !Array.isArray(authors)) {
-      return;
-    }
-
+    // publisher and authors already validated above before START log
     const publisherId = publisher.id;
-    const authorIds = authors.map((a) => a.id);
 
     // REMOVED: Duplicate removal logic that was incorrectly reading from control.value
     // STEP 1 below handles this properly by reading from control.controls.*.value
@@ -876,6 +923,66 @@ export class TitleFormTemp implements OnDestroy {
     // 🧹 STEP 1: Remove royalties not related to current publisher or authors
     // CRITICAL: Read from form controls directly, not from value property
     // The value property might not be updated immediately after prefill
+
+    // Normalize authorIds to numbers for reliable comparison, filter out invalid values
+    // Calculate once outside the loop for efficiency
+    const normalizedAuthorIds = authorIds
+      .map(id => Number(id))
+      .filter(id => !isNaN(id));
+
+    // Log all author royalties BEFORE removal to see what we're working with
+    const authorIdsStr = authorIds.join(', ');
+    const normalizedAuthorIdsStr = normalizedAuthorIds.join(', ');
+    const allAuthorRoyaltiesBeforeRemoval = royalties.controls
+      .map((control, index) => {
+        const aid = control.controls.authorId.value ?? control.value.authorId;
+        const normalizedAid = aid != null && !isNaN(Number(aid)) ? Number(aid) : null;
+        const platform = control.controls.platform.value ?? control.value.platform;
+        const controlId = control.controls.id.value ?? control.value.id;
+        return { index, aid, normalizedAid, platform, controlId };
+      })
+      .filter(r => r.normalizedAid != null);
+
+    const authorRoyaltiesByAuthorId = allAuthorRoyaltiesBeforeRemoval.reduce((acc, royalty) => {
+      const aid = String(royalty.normalizedAid);
+      if (!acc[aid]) acc[aid] = [];
+      acc[aid].push(royalty);
+      return acc;
+    }, {} as Record<string, typeof allAuthorRoyaltiesBeforeRemoval>);
+
+    const authorsToRemove = Object.keys(authorRoyaltiesByAuthorId)
+      .filter(aid => !normalizedAuthorIds.includes(Number(aid)))
+      .map(aid => ({
+        authorId: aid,
+        count: authorRoyaltiesByAuthorId[aid].length,
+        platforms: authorRoyaltiesByAuthorId[aid].map(r => r.platform)
+      }));
+
+    const authorsToKeep = Object.keys(authorRoyaltiesByAuthorId)
+      .filter(aid => normalizedAuthorIds.includes(Number(aid)))
+      .map(aid => ({
+        authorId: aid,
+        count: authorRoyaltiesByAuthorId[aid].length,
+        platforms: authorRoyaltiesByAuthorId[aid].map(r => r.platform)
+      }));
+
+    console.log(`[mapRoyaltiesArray] STEP 1: BEFORE removal - Analyzing ${royalties.length} royalties`, {
+      currentAuthorIds: authorIdsStr,
+      currentNormalizedAuthorIds: normalizedAuthorIdsStr,
+      totalAuthorRoyalties: allAuthorRoyaltiesBeforeRemoval.length,
+      authorsToKeep: authorsToKeep.length > 0 ? authorsToKeep : 'None (no author royalties yet)',
+      authorsToRemove: authorsToRemove.length > 0 ? authorsToRemove : 'None (all author royalties are valid)',
+      summary: authorsToRemove.length > 0
+        ? `Will remove ${authorsToRemove.reduce((sum, a) => sum + a.count, 0)} royalties for ${authorsToRemove.length} author(s) not in current list`
+        : `All ${allAuthorRoyaltiesBeforeRemoval.length} author royalties are valid (will keep all)`,
+      allAuthorRoyaltiesByAuthorId: Object.keys(authorRoyaltiesByAuthorId).map(aid => ({
+        authorId: aid,
+        count: authorRoyaltiesByAuthorId[aid].length,
+        platforms: authorRoyaltiesByAuthorId[aid].map(r => r.platform),
+        willBeRemoved: !normalizedAuthorIds.includes(Number(aid))
+      }))
+    });
+
     let removedCount = 0;
     const beforeRemoval = royalties.length;
     for (let i = royalties.length - 1; i >= 0; i--) {
@@ -885,35 +992,108 @@ export class TitleFormTemp implements OnDestroy {
       const aid = control.controls.authorId.value ?? control.value.authorId;
       const controlId = control.controls.id.value ?? control.value.id;
 
-      // Normalize for comparison
+      // Normalize for comparison - handle both string and number types
       const normalizedPid = pid != null ? Number(pid) : null;
       const normalizedPublisherId = publisherId != null ? Number(publisherId) : null;
-      const normalizedAid = aid != null ? Number(aid) : null;
+      const normalizedAid = aid != null && !isNaN(Number(aid)) ? Number(aid) : null;
 
-      const isValid = normalizedPid === normalizedPublisherId ||
-        (normalizedAid != null && authorIds.includes(normalizedAid));
+      // CRITICAL: A royalty is valid if:
+      // 1. It's a publisher royalty (publisherId matches and no authorId) - keep it
+      // 2. It's an author royalty AND the authorId is in the current authors list - keep it
+      // Otherwise, it's an old author royalty (authorId not in current list) or unrelated royalty - remove it
+      const hasAuthorId = normalizedAid != null;
+      const isPublisherRoyalty = normalizedPid === normalizedPublisherId && normalizedPid != null && !hasAuthorId;
+      const isCurrentAuthorRoyalty = hasAuthorId && normalizedAuthorIds.length > 0 && normalizedAuthorIds.includes(normalizedAid);
+      const isValid = isPublisherRoyalty || isCurrentAuthorRoyalty;
+
+      // Log all controls for debugging - always log author royalties to see why they're kept/removed
+      if (hasAuthorId) {
+        const isInList = normalizedAuthorIds.length > 0 && normalizedAuthorIds.includes(normalizedAid);
+        const aidFromControl = control.controls.authorId.value;
+        const aidFromValue = control.value.authorId;
+        const authorIdsStr = authorIds.join(', ');
+        const normalizedAuthorIdsStr = normalizedAuthorIds.join(', ');
+        console.log(`[mapRoyaltiesArray] STEP 1: Checking author royalty`, {
+          controlId,
+          aidFromControl,
+          aidFromValue,
+          aid,
+          normalizedAid,
+          authorIds: authorIdsStr, // String representation for visibility
+          normalizedAuthorIds: normalizedAuthorIdsStr, // String representation for visibility
+          authorIdsArray: [...authorIds], // Spread to show actual values
+          normalizedAuthorIdsArray: [...normalizedAuthorIds], // Spread to show actual values
+          isInList,
+          isCurrentAuthorRoyalty,
+          isValid,
+          willBeRemoved: !isValid,
+          reason: !isValid ? 'authorId not in current authors list' : 'authorId is in current authors list',
+          comparison: `Checking if ${normalizedAid} is in [${normalizedAuthorIdsStr}]`
+        });
+      }
 
       if (!isValid) {
+        const platform = control.controls.platform.value ?? control.value.platform;
+        const authorIdsStr = authorIds.join(', ');
+        const normalizedAuthorIdsStr = normalizedAuthorIds.join(', ');
         console.log(`[mapRoyaltiesArray] STEP 1: Removing unrelated royalty`, {
           controlId,
+          platform,
           pid,
           normalizedPid,
           publisherId,
           normalizedPublisherId,
           aid,
           normalizedAid,
-          authorIds,
-          isValid
+          authorIds: authorIdsStr,
+          normalizedAuthorIds: normalizedAuthorIdsStr,
+          hasAuthorId,
+          isPublisherRoyalty,
+          isCurrentAuthorRoyalty,
+          isValid,
+          reason: hasAuthorId
+            ? `Author ${normalizedAid} is NOT in current authors list [${normalizedAuthorIdsStr}]`
+            : `Not a publisher royalty and no valid authorId`
         });
         royalties.removeAt(i);
         removedCount++;
       }
     }
+    // Log all author royalties AFTER removal to verify removal worked
+    const allAuthorRoyaltiesAfterRemoval = royalties.controls
+      .map((control, index) => {
+        const aid = control.controls.authorId.value ?? control.value.authorId;
+        const normalizedAid = aid != null && !isNaN(Number(aid)) ? Number(aid) : null;
+        const platform = control.controls.platform.value ?? control.value.platform;
+        const controlId = control.controls.id.value ?? control.value.id;
+        return { index, aid, normalizedAid, platform, controlId };
+      })
+      .filter(r => r.normalizedAid != null);
+
+    const authorRoyaltiesByAuthorIdAfter = allAuthorRoyaltiesAfterRemoval.reduce((acc, royalty) => {
+      const aid = String(royalty.normalizedAid);
+      if (!acc[aid]) acc[aid] = [];
+      acc[aid].push(royalty);
+      return acc;
+    }, {} as Record<string, typeof allAuthorRoyaltiesAfterRemoval>);
+
     console.log(`[mapRoyaltiesArray] STEP 1: Removed ${removedCount} unrelated royalties`, {
       beforeRemoval,
       afterRemoval: royalties.length,
       publisherId,
-      authorIds
+      authorIds: authorIdsStr, // String for visibility
+      normalizedAuthorIds: normalizedAuthorIdsStr, // String for visibility
+      authorIdsArray: [...authorIds], // Array for inspection
+      normalizedAuthorIdsArray: [...normalizedAuthorIds], // Array for inspection
+      summary: removedCount > 0
+        ? `Removed ${removedCount} old author royalties (authors not in current list: ${normalizedAuthorIdsStr})`
+        : `All royalties are valid (current authors: ${normalizedAuthorIdsStr})`,
+      authorRoyaltiesAfterRemoval: Object.keys(authorRoyaltiesByAuthorIdAfter).map(aid => ({
+        authorId: aid,
+        count: authorRoyaltiesByAuthorIdAfter[aid].length,
+        platforms: authorRoyaltiesByAuthorIdAfter[aid].map(r => r.platform),
+        isCurrentAuthor: normalizedAuthorIds.includes(Number(aid))
+      }))
     });
 
     // Calculate default author percentage: 100% if 1 author, equally divided if more than 1
@@ -1359,11 +1539,21 @@ export class TitleFormTemp implements OnDestroy {
         });
 
         // Look up author control - use form control values for reliable lookup
+        // CRITICAL: Normalize platform for comparison (can be string or object)
         let control = royalties.controls.find(
           (ctrl) => {
             const controlAuthorId = ctrl.controls.authorId.value;
-            const controlPlatform = ctrl.controls.platform.value;
-            return controlAuthorId === authorId && controlPlatform === platform;
+            const controlPlatformRaw = ctrl.controls.platform.value ?? ctrl.value.platform;
+            // Normalize platform: if it's an object, use the name property; if it's a string, use as-is
+            const controlPlatform = (typeof controlPlatformRaw === 'object' && controlPlatformRaw !== null && 'name' in controlPlatformRaw)
+              ? (controlPlatformRaw as { name: string }).name
+              : String(controlPlatformRaw ?? '');
+
+            // Normalize authorId for comparison (handle string/number mismatch)
+            const normalizedControlAuthorId = controlAuthorId != null ? Number(controlAuthorId) : null;
+            const normalizedAuthorId = authorId != null ? Number(authorId) : null;
+
+            return normalizedControlAuthorId === normalizedAuthorId && controlPlatform === platform;
           }
         );
 
@@ -2950,7 +3140,7 @@ export class TitleFormTemp implements OnDestroy {
 
         return; // Don't proceed with normal update flow
       }
-      const res: { id: number } = await this.titleService.createTitle(
+      const res = await this.titleService.createTitle(
         finalbasicData
       );
 
