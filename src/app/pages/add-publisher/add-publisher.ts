@@ -75,6 +75,8 @@ import { Back } from '../../components/back/back';
 import { HttpClient } from '@angular/common/http';
 import { City, Country, State } from 'country-state-city';
 import md5 from 'md5';
+import { NgxMaterialIntlTelInputComponent } from 'ngx-material-intl-tel-input';
+
 @Component({
   selector: 'app-add-publisher',
   imports: [
@@ -93,6 +95,7 @@ import md5 from 'md5';
     NgxIntlTelInputModule,
     MatIcon,
     Back,
+    NgxMaterialIntlTelInputComponent,
   ],
   templateUrl: './add-publisher.html',
   styleUrl: './add-publisher.css',
@@ -127,7 +130,7 @@ export class AddPublisher {
     });
     this.loggedInUser = this.userService.loggedInUser$;
   }
-  private http = inject(HttpClient);
+  countryISO = CountryISO;
 
   bankOptions = signal<BankOption[]>([]);
   signupCode?: string;
@@ -394,7 +397,7 @@ export class AddPublisher {
     id: <number | null>null,
     pocName: ['', Validators.required],
     pocEmail: ['', [Validators.required, Validators.email]],
-    pocPhoneNumber: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
+    pocPhoneNumber: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
     name: ['', Validators.required],
     designation: ['', Validators.required],
@@ -997,6 +1000,9 @@ export class AddPublisher {
       });
       return false;
     }
+
+    console.log(this.publisherFormGroup);
+
     if (stepper) {
       stepper.next();
     }
@@ -1052,6 +1058,11 @@ export class AddPublisher {
         userPassword: this.publisherFormGroup.controls.userPassword.value
           ? md5(this.publisherFormGroup.controls.userPassword.value)
           : undefined,
+        pocPhoneNumber:
+          this.publisherFormGroup.controls.pocPhoneNumber.value?.replaceAll(
+            ' ',
+            ''
+          ),
       } as any;
       let updateFlowResult = {
         ticketsRaised: false,

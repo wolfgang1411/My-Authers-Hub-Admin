@@ -627,6 +627,10 @@ mat-label {
   --mat-sys-on-primary: white;
   --mat-sys-primary-container: #ebe3f7;
   --mat-sys-on-primary-container: #3d1a5d;
+  --mat-filled-tel-form-background: var(
+    --mat-form-field-filled-container-color,
+    var(--mat-sys-surface-variant)
+  );
 }
 
 @keyframes fadeUp {
@@ -638,4 +642,8 @@ mat-label {
     transform: translateY(0);
     opacity: 1;
   }
+}
+
+.tel-input .tel-form {
+  background: red !important;
 }

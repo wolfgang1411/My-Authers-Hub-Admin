@@ -68,14 +68,22 @@
                 />
               </mat-form-field>
 
-              <mat-form-field class="w-full">
-                <mat-label>{{ "poccontactnumber" | translate }}</mat-label>
-                <input
+              <div class="w-full">
+                <ngx-material-intl-tel-input
                   matInput
-                  placeholder="+91-9876543210"
-                  formControlName="phoneNumber"
+                  [preferredCountries]="['IN']"
+                  [appearance]="'fill'"
+                  [fieldControl]="authorFormGroup.controls.phoneNumber"
+                  [autoSelectedCountry]="countryISO.India"
+                  [autoSelectCountry]="true"
+                  [hidePhoneIcon]="true"
+                  [iconMakeCall]="false"
+                  [autoIpLookup]="false"
+                  [mainLabel]="' '"
+                  [enablePlaceholder]="false"
+                  class="tel-input"
                 />
-              </mat-form-field>
+              </div>
 
               @if(authorFormGroup.get('id')?.value===null){
               <mat-form-field class="w-full">

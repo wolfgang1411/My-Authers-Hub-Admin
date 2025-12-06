@@ -68,6 +68,10 @@ import { HttpClient } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import md5 from 'md5';
+import {
+  CountryISO,
+  NgxMaterialIntlTelInputComponent,
+} from 'ngx-material-intl-tel-input';
 
 @Component({
   selector: 'app-add-author',
@@ -86,6 +90,7 @@ import md5 from 'md5';
     Back,
     FormsModule,
     ReactiveFormsModule,
+    NgxMaterialIntlTelInputComponent,
   ],
   templateUrl: './add-author.html',
   styleUrls: ['./add-author.css'],
@@ -120,7 +125,8 @@ export class AddAuthor implements OnInit {
     });
     this.loggedInUser = this.userService.loggedInUser$;
   }
-  private http = inject(HttpClient);
+
+  countryISO = CountryISO;
   authorId?: number;
   signupCode?: string;
   authorDetails = signal<Author | undefined>(undefined);
@@ -1179,6 +1185,8 @@ export class AddAuthor implements OnInit {
         userPassword: this.authorFormGroup.controls.userPassword.value
           ? md5(this.authorFormGroup.controls.userPassword.value)
           : undefined,
+        phoneNumber:
+          this.authorFormGroup.controls.phoneNumber.value?.replaceAll(' ', ''),
       } as Author;
 
       let updateFlowResult = {

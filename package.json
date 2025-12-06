@@ -39,6 +39,7 @@
     "ng2-charts": "^3.0.2",
     "ngx-intl-tel-input": "^17.0.0",
     "ngx-material-date-fns-adapter": "^20.0.0",
+    "ngx-material-intl-tel-input": "^20.1.2",
     "ngx-papaparse": "^8.0.0",
     "pdfjs-dist": "^5.4.296",
     "pdfjs-lib": "^0.0.149",

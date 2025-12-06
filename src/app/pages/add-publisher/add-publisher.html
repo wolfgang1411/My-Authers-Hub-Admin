@@ -63,7 +63,23 @@
                 />
               </mat-form-field>
 
-              <mat-form-field class="w-full">
+              <div class="w-full">
+                <ngx-material-intl-tel-input
+                  matInput
+                  [preferredCountries]="['IN']"
+                  [appearance]="'fill'"
+                  [fieldControl]="publisherFormGroup.controls.pocPhoneNumber"
+                  [autoSelectedCountry]="countryISO.India"
+                  [autoSelectCountry]="true"
+                  [hidePhoneIcon]="true"
+                  [iconMakeCall]="false"
+                  [autoIpLookup]="false"
+                  [mainLabel]="' '"
+                  [enablePlaceholder]="false"
+                  class="tel-input"
+                />
+              </div>
+              <!-- <mat-form-field class="w-full">
                 <mat-label>Phone Number</mat-label>
                 <input
                   matInput
@@ -71,7 +87,7 @@
                   formControlName="pocPhoneNumber"
                   placeholder="9876543210"
                 />
-              </mat-form-field>
+              </mat-form-field> -->
               <mat-form-field>
                 <mat-label>Contact Person Email</mat-label>
                 <input
