@@ -1,8 +1,6 @@
 <div class="distribution-dialog-container">
   <div class="dialog-header">
-    <h2 mat-dialog-title class="dialog-title">
-      Manage Distribution Types
-    </h2>
+    <h2 mat-dialog-title class="dialog-title">Manage Distribution Types</h2>
   </div>
 
   <mat-dialog-content class="dialog-content">
@@ -25,10 +23,13 @@
             <div class="table-row table-body">
               @for(dist of distributions.controls; track $index){
               <div [formGroupName]="$index" class="table-cell value-cell">
-                <mat-form-field 
-                  class="amount-field" 
+                <mat-form-field
+                  class="amount-field"
                   appearance="outline"
-                  [class.field-invalid]="dist.controls.amount.invalid && dist.controls.amount.touched">
+                  [class.field-invalid]="
+                    dist.controls.amount.invalid && dist.controls.amount.touched
+                  "
+                >
                   <input
                     matInput
                     type="number"
@@ -47,11 +48,21 @@
       </div>
 
       <div class="checkbox-section">
-        <mat-checkbox formControlName="allowCustomPrintingPrice" class="custom-checkbox">
-          <span class="checkbox-label">{{ "allowCustomPrintingPrice" | translate }}</span>
+        <mat-checkbox
+          formControlName="allowCustomPrintingPrice"
+          class="custom-checkbox"
+        >
+          <span class="checkbox-label">{{
+            "allowCustomPrintingPrice" | translate
+          }}</span>
         </mat-checkbox>
-        <mat-checkbox formControlName="allowAuthorCopyPrice" class="custom-checkbox">
-          <span class="checkbox-label">{{ "allowAuthorCopyPrice" | translate }}</span>
+        <mat-checkbox
+          formControlName="allowAuthorCopyPrice"
+          class="custom-checkbox"
+        >
+          <span class="checkbox-label">{{
+            "allowAuthorCopyorder" | translate
+          }}</span>
         </mat-checkbox>
       </div>
     </form>

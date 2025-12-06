@@ -483,7 +483,7 @@
   "royaltiesearned/totalsales": "Royalties Earned / Total Sales",
   "SelectedDistrbutions": "Selected Distrbutions",
   "allowCustomPrintingPrice": " Allow Custom Printing Price",
-  "allowAuthorCopyPrice": " Allow Author Copy Price",
+  "allowAuthorCopyorder": " Allow Author Copy Order",
   "customPrintCostCannotBeLowerThanActualPrintCost": "Custom print cost cannot be lower than actual print cost",
   "authorroyalties": "Author Royalties",
   "printingPrice": "Printing Price",
