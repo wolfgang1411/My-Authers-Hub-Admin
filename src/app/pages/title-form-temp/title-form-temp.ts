@@ -1813,7 +1813,7 @@ export class TitleFormTemp implements OnDestroy {
         validators: [Validators.required],
         nonNullable: true,
       }),
-      isColorPagesRandom: new FormControl<boolean>(false, {
+      isColorPagesRandom: new FormControl<boolean>(true, {
         nonNullable: true,
       }),
       bwPages: new FormControl<number>(0, {
