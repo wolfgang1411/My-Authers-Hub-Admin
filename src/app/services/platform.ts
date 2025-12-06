@@ -2,7 +2,11 @@ import { inject, Injectable, signal } from '@angular/core';
 import { Server } from './server';
 import { Logger } from './logger';
 import { LoaderService } from './loader';
-import { Platform, PlatformStatus } from '../interfaces/Platform';
+import {
+  Platform,
+  PlatformFilter,
+  PlatformStatus,
+} from '../interfaces/Platform';
 
 export interface PlatformPayload {
   name: string;
@@ -10,6 +14,7 @@ export interface PlatformPayload {
   extraFlatMargin?: number;
   isEbookPlatform?: boolean;
   isSuperAdminPricingOnly?: boolean;
+  isInventoryPlatform?: boolean;
   status?: PlatformStatus;
 }
 
@@ -26,11 +31,11 @@ export class PlatformService {
   /**
    * Fetch all active platforms from the API
    */
-  async fetchPlatforms(): Promise<Platform[]> {
+  async fetchPlatforms(filter?: PlatformFilter): Promise<Platform[]> {
     try {
       // Use a specific loader key to make the network call visible
       const platforms = await this.loaderService.loadPromise(
-        this.serverService.get<Platform[]>('platforms'),
+        this.serverService.get<Platform[]>('platforms', filter),
         'fetch-platforms'
       );
       this.platforms.set(this.sortPlatforms(platforms));
@@ -123,5 +128,3 @@ export class PlatformService {
     return [...platforms].sort((a, b) => a.name.localeCompare(b.name));
   }
 }
-
-

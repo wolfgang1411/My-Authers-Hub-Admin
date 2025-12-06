@@ -19,31 +19,35 @@
         Basic Information
       </h3>
       <div class="grid gap-4 md:grid-cols-2">
-        <label
-          class="flex flex-col gap-[0.35rem] text-[0.9rem] text-[#0f172a] font-medium"
-        >
-          <span>{{ "totalpages" | translate }}</span>
-          <input
-            type="number"
-            min="0"
-            placeholder="0"
-            formControlName="totalPages"
-            class="border border-[rgba(15,23,42,0.1)] rounded-lg px-3 py-[0.65rem] text-[0.95rem] focus:outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_var(--primary-superlight)]"
-          />
-        </label>
+        <div class="flex flex-col gap-[0.35rem]">
+          <label class="text-[0.9rem] text-[#0f172a] font-medium">
+            {{ "totalpages" | translate }}
+          </label>
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-icon matPrefix>description</mat-icon>
+            <input
+              type="number"
+              matInput
+              min="0"
+              formControlName="totalPages"
+            />
+          </mat-form-field>
+        </div>
 
-        <label
-          class="flex flex-col gap-[0.35rem] text-[0.9rem] text-[#0f172a] font-medium"
-        >
-          <span>{{ "colourpages" | translate }}</span>
-          <input
-            type="number"
-            min="0"
-            placeholder="0"
-            formControlName="colorPages"
-            class="border border-[rgba(15,23,42,0.1)] rounded-lg px-3 py-[0.65rem] text-[0.95rem] focus:outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_var(--primary-superlight)]"
-          />
-        </label>
+        <div class="flex flex-col gap-[0.35rem]">
+          <label class="text-[0.9rem] text-[#0f172a] font-medium">
+            {{ "colourpages" | translate }}
+          </label>
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-icon matPrefix>color_lens</mat-icon>
+            <input
+              type="number"
+              matInput
+              min="0"
+              formControlName="colorPages"
+            />
+          </mat-form-field>
+        </div>
       </div>
     </div>
 
@@ -53,69 +57,48 @@
         Customization Options
       </h3>
       <div class="grid gap-4 md:grid-cols-2">
-        <label
-          class="flex flex-col gap-[0.35rem] text-[0.9rem] text-[#0f172a] font-medium"
-        >
-          <span>{{ "sizecategory" | translate }}</span>
-          <select
-            formControlName="sizeCategoryId"
-            class="border border-[rgba(15,23,42,0.1)] rounded-lg px-3 py-[0.65rem] text-[0.95rem] focus:outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_var(--primary-superlight)]"
-          >
-            <option value="" disabled>Select size category</option>
+        <mat-form-field appearance="fill" class="w-full">
+          <mat-icon matPrefix>straighten</mat-icon>
+          <mat-label>{{ "sizecategory" | translate }}</mat-label>
+          <mat-select formControlName="sizeCategoryId">
             @for (size of sizeTypes(); track size.id) {
-            <option [value]="size.id">{{ size.size }}</option>
+            <mat-option [value]="size.id">{{ size.size }}</mat-option>
             }
-          </select>
-        </label>
+          </mat-select>
+        </mat-form-field>
 
-        <label
-          class="flex flex-col gap-[0.35rem] text-[0.9rem] text-[#0f172a] font-medium"
-        >
-          <span>{{ "bindingtype" | translate }}</span>
-          <select
-            formControlName="bindingTypeId"
-            [disabled]="!isSizeCategorySelected()"
-            class="border border-[rgba(15,23,42,0.1)] rounded-lg px-3 py-[0.65rem] text-[0.95rem] focus:outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_var(--primary-superlight)] disabled:bg-[#f1f5f9] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <option value="" disabled>Select binding type</option>
-            @for (type of filteredBindingTypes(); track type.id) {
-            <option [value]="type.id">{{ type.name }}</option>
+        <mat-form-field appearance="fill" class="w-full">
+          <mat-icon matPrefix>book</mat-icon>
+          <mat-label>{{ "bindingtype" | translate }}</mat-label>
+          <mat-select formControlName="bindingTypeId">
+            @for (type of availableBindingTypes(); track type.id) {
+            <mat-option [value]="type.id">{{ type.name }}</mat-option>
             }
-          </select>
-        </label>
+          </mat-select>
+        </mat-form-field>
 
-        <label
-          class="flex flex-col gap-[0.35rem] text-[0.9rem] text-[#0f172a] font-medium"
-        >
-          <span>{{ "papertype" | translate }}</span>
-          <select
-            formControlName="paperQuailtyId"
-            [disabled]="!isSizeCategorySelected()"
-            class="border border-[rgba(15,23,42,0.1)] rounded-lg px-3 py-[0.65rem] text-[0.95rem] focus:outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_var(--primary-superlight)] disabled:bg-[#f1f5f9] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <option value="" disabled>Select paper quality</option>
-            @for (paper of filteredPaperQualityTypes(); track paper.id) {
-            <option [value]="paper.id">{{ paper.name }}</option>
+        <mat-form-field appearance="fill" class="w-full">
+          <mat-icon matPrefix>description</mat-icon>
+          <mat-label>{{ "papertype" | translate }}</mat-label>
+          <mat-select formControlName="paperQuailtyId">
+            @for (paper of availablePaperQualities(); track paper.id) {
+            <mat-option [value]="paper.id">{{ paper.name }}</mat-option>
             }
-          </select>
-        </label>
+          </mat-select>
+        </mat-form-field>
 
-        <label
-          class="flex flex-col gap-[0.35rem] text-[0.9rem] text-[#0f172a] font-medium"
-        >
-          <span>{{ "laminationtype" | translate }}</span>
-          <select
-            formControlName="laminationTypeId"
-            [disabled]="!isSizeCategorySelected()"
-            class="border border-[rgba(15,23,42,0.1)] rounded-lg px-3 py-[0.65rem] text-[0.95rem] focus:outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_var(--primary-superlight)] disabled:bg-[#f1f5f9] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <option value="" disabled>Select lamination type</option>
-            @for (lamination of filteredLaminationTypes(); track lamination.id)
+        <mat-form-field appearance="fill" class="w-full">
+          <mat-icon matPrefix>layers</mat-icon>
+          <mat-label>{{ "laminationtype" | translate }}</mat-label>
+          <mat-select formControlName="laminationTypeId">
+            @for (lamination of availableLaminationTypes(); track lamination.id)
             {
-            <option [value]="lamination.id">{{ lamination.name }}</option>
+            <mat-option [value]="lamination.id">{{
+              lamination.name
+            }}</mat-option>
             }
-          </select>
-        </label>
+          </mat-select>
+        </mat-form-field>
       </div>
     </div>
 

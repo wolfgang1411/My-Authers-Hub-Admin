@@ -23,6 +23,8 @@
     "@angular/platform-browser": "^20.3.11",
     "@angular/router": "^20.3.11",
     "@angular/ssr": "20.3",
+    "@ckeditor/ckeditor5-angular": "^11.0.0",
+    "@ckeditor/ckeditor5-build-classic": "^41.4.2",
     "@ngx-translate/core": "^17.0.0",
     "@ngx-translate/http-loader": "^17.0.0",
     "@ngxmc/datetime-picker": "^20.1.0",

@@ -390,4 +390,21 @@ export class TitleSummary {
       },
     });
   }
+
+  async onClickCopy(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      Swal.fire({
+        icon: 'success',
+        title: 'Copied!',
+        text: 'HTML copied to clipboard',
+        timer: 2000,
+        position: 'bottom-end',
+        showConfirmButton: false,
+        toast: true,
+      });
+    } catch (error) {
+      console.error('Failed to copy text:', error);
+    }
+  }
 }

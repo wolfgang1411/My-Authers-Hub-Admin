@@ -1,4 +1,5 @@
 import {
+  ChangeDetectorRef,
   Component,
   computed,
   effect,
@@ -36,13 +37,8 @@ import { SharedModule } from '../../modules/shared/shared-module';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonModule } from '@angular/material/button';
-import {
-  debounceTime,
-  firstValueFrom,
-  startWith,
-  Subject,
-  takeUntil,
-} from 'rxjs';
+import { MatIconModule } from '@angular/material/icon';
+import { debounceTime, firstValueFrom, Subject, takeUntil } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { AddUpdatePaperQuality } from '../add-update-paper-quality/add-update-paper-quality';
 import { AddUpdateBindingType } from '../add-update-binding-type/add-update-binding-type';
@@ -65,18 +61,21 @@ type ModuleType =
     SharedModule,
     ReactiveFormsModule,
     MatLabel,
-    MatInput,
     MatFormField,
+    MatInput,
     MatOption,
     MatSelect,
     MatCheckboxModule,
     MatButtonModule,
+    MatIconModule,
   ],
   templateUrl: './printing-calculator.html',
   styleUrl: './printing-calculator.css',
 })
 export class PrintingCalculator implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
+  private isInitialized = false;
+  private sizeChangeTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   bindingTypes = input.required<BookBindings[]>();
   paperQualityTypes = input.required<PaperQuailty[]>();
@@ -90,30 +89,37 @@ export class PrintingCalculator implements OnInit, OnDestroy {
   onLaminationTypesUpdate = output<{ data: LaminationType; isNew: boolean }>();
   onMarginPercentUpdate = output<number>();
 
-  // Filtered options based on selected size category
-  filteredBindingTypes = signal<BookBindings[]>([]);
-  filteredLaminationTypes = signal<LaminationType[]>([]);
-  filteredPaperQualityTypes = signal<PaperQuailty[]>([]);
+  // Selected size - used to access bindingTypes, laminationTypes, paperQualities in template
+  selectedSize = signal<Size | null>(null);
 
-  // Store all options for fallback
+  // All available options (from inputs) - kept for updateRate dialogs
   allBindingTypes = signal<BookBindings[]>([]);
   allLaminationTypes = signal<LaminationType[]>([]);
   allPaperQualityTypes = signal<PaperQuailty[]>([]);
 
   form = new FormGroup({
-    bindingTypeId: new FormControl<number | null>(null, {
-      validators: [Validators.required],
-    }),
+    bindingTypeId: new FormControl<number | null>(
+      { value: null, disabled: true },
+      {
+        validators: [Validators.required],
+      }
+    ),
     quantity: new FormControl<number>(1, [Validators.required]),
     colorPages: new FormControl<number>(0, {
       validators: [Validators.required],
     }),
-    laminationTypeId: new FormControl<number | null>(null, {
-      validators: [Validators.required],
-    }),
-    paperQuailtyId: new FormControl<number | null>(null, {
-      validators: [Validators.required],
-    }),
+    laminationTypeId: new FormControl<number | null>(
+      { value: null, disabled: true },
+      {
+        validators: [Validators.required],
+      }
+    ),
+    paperQuailtyId: new FormControl<number | null>(
+      { value: null, disabled: true },
+      {
+        validators: [Validators.required],
+      }
+    ),
     sizeCategoryId: new FormControl<number | null>(null, {
       validators: [Validators.required],
     }),
@@ -124,19 +130,29 @@ export class PrintingCalculator implements OnInit, OnDestroy {
     isColorPagesRandom: new FormControl<boolean>(false, {}),
   });
 
+  // Computed to get available options from selected size
+  availableBindingTypes = computed(() => {
+    return this.selectedSize()?.sizeCategory?.bindingTypes || [];
+  });
+
+  availablePaperQualities = computed(() => {
+    return this.selectedSize()?.sizeCategory?.paperQualities || [];
+  });
+
+  availableLaminationTypes = computed(() => {
+    return this.selectedSize()?.sizeCategory?.laminationTypes || [];
+  });
+
   calculation = signal<TitlePrintingCostResponse | null>(null);
 
   // Computed to check if size category is selected
   isSizeCategorySelected = computed(() => {
-    return !!this.form.controls.sizeCategoryId.value;
+    return !!this.selectedSize();
   });
 
   // Computed to get selected size category's insideCoverPrice
   selectedSizeCategoryInsideCoverPrice = computed(() => {
-    const sizeId = this.form.controls.sizeCategoryId.value;
-    if (!sizeId) return 0;
-    const selectedSize = this.sizeTypes().find((s) => s.id === sizeId);
-    return selectedSize?.sizeCategory?.insideCoverPrice ?? 0;
+    return this.selectedSize()?.sizeCategory?.insideCoverPrice ?? 0;
   });
 
   // Computed to check if user is superadmin
@@ -149,36 +165,41 @@ export class PrintingCalculator implements OnInit, OnDestroy {
     private printingService: PrintingService,
     private matDialog: MatDialog,
     private translateServie: TranslateService,
-    private userService: UserService
+    private userService: UserService,
+    private cdr: ChangeDetectorRef
   ) {
-    // Watch for input changes and update all* signals
+    // Watch for input changes and update all* signals (for updateRate dialogs)
     effect(() => {
-      // Watch sizeTypes to set default when available
-      const sizes = this.sizeTypes();
-      
       this.allBindingTypes.set(this.bindingTypes());
       this.allLaminationTypes.set(this.laminationTypes());
       this.allPaperQualityTypes.set(this.paperQualityTypes());
 
-      // Set default size to 5.5*8.5 if not already set and sizeTypes are available
-      if (!this.form.controls.sizeCategoryId.value && sizes.length > 0) {
-        const defaultSize = sizes.find((s) => s.size === '5.5*8.5');
-        if (defaultSize) {
-          // Set the default size - emitEvent: true so valueChanges fires and loads options
-          this.form.controls.sizeCategoryId.setValue(defaultSize.id);
-          return; // Exit early to avoid reloading with the same value
+      // If initialized and a size is selected, reload when inputs change
+      if (this.isInitialized) {
+        const currentSizeId = this.form.controls.sizeCategoryId.value;
+        if (currentSizeId) {
+          this.handleSizeChange(currentSizeId);
         }
       }
+    });
 
-      // Reload filtered options if size category is selected
-      const sizeCategoryId = this.form.controls.sizeCategoryId.value;
-      if (sizeCategoryId) {
-        this.loadOptionsBySizeCategory(sizeCategoryId);
-      } else {
-        // If no size selected, show all options
-        this.filteredBindingTypes.set(this.allBindingTypes());
-        this.filteredLaminationTypes.set(this.allLaminationTypes());
-        this.filteredPaperQualityTypes.set(this.allPaperQualityTypes());
+    // Watch for sizeTypes to become available and set default size
+    effect(() => {
+      const sizeTypes = this.sizeTypes();
+
+      // Only set default if initialized, sizeTypes is available, and no size is currently selected
+      if (this.isInitialized && sizeTypes && sizeTypes.length > 0) {
+        const currentSizeId = this.form.controls.sizeCategoryId.value;
+
+        if (!currentSizeId) {
+          const defaultSize = sizeTypes.find((s) => s.size === '5.5*8.5');
+          if (defaultSize) {
+            this.form.controls.sizeCategoryId.patchValue(defaultSize.id);
+          }
+        } else {
+          // Handle initial value if already set (manually call since valueChanges won't fire)
+          this.handleSizeChange(currentSizeId);
+        }
       }
     });
   }
@@ -189,187 +210,223 @@ export class PrintingCalculator implements OnInit, OnDestroy {
     this.allLaminationTypes.set(this.laminationTypes());
     this.allPaperQualityTypes.set(this.paperQualityTypes());
 
-    // Set default quantity to 1 (hidden field)
+    // Set default quantity to 1
     this.form.controls.quantity.setValue(1);
-
-    // Set default size to 5.5*8.5 if not already set and sizeTypes are available
-    if (!this.form.controls.sizeCategoryId.value && this.sizeTypes().length > 0) {
-      const defaultSize = this.sizeTypes().find((s) => s.size === '5.5*8.5');
-      if (defaultSize) {
-        this.form.controls.sizeCategoryId.setValue(defaultSize.id);
-      }
-    }
 
     // Set up listener for size category changes
     this.form.controls.sizeCategoryId.valueChanges
-      .pipe(
-        startWith(this.form.controls.sizeCategoryId.value),
-        takeUntil(this.destroy$)
-      )
-      .subscribe(async (sizeCategoryId) => {
-        await this.loadOptionsBySizeCategory(sizeCategoryId);
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((sizeCategoryId) => {
+        this.handleSizeChange(sizeCategoryId);
       });
 
-    // Load options for initial size category if set
-    const initialSizeCategoryId = this.form.controls.sizeCategoryId.value;
-    if (initialSizeCategoryId) {
-      await this.loadOptionsBySizeCategory(initialSizeCategoryId);
-    } else {
-      // If no size selected, show all options
-      this.filteredBindingTypes.set(this.allBindingTypes());
-      this.filteredLaminationTypes.set(this.allLaminationTypes());
-      this.filteredPaperQualityTypes.set(this.allPaperQualityTypes());
-    }
+    // Mark as initialized - this will trigger the effect() to set default size
+    this.isInitialized = true;
 
+    // Set up price calculation on form changes
     this.form.valueChanges
       .pipe(debounceTime(600), takeUntil(this.destroy$))
       .subscribe(() => {
         this.updatePrice();
       });
+
+    // Validate colorPages doesn't exceed totalPages
+    this.form.controls.totalPages.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((totalPages) => {
+        const colorPages = this.form.controls.colorPages.value;
+        if (
+          totalPages !== null &&
+          colorPages !== null &&
+          colorPages > totalPages
+        ) {
+          this.form.controls.colorPages.setValue(totalPages, {
+            emitEvent: false,
+          });
+        }
+      });
+
+    this.form.controls.colorPages.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((colorPages) => {
+        const totalPages = this.form.controls.totalPages.value;
+        if (
+          totalPages !== null &&
+          colorPages !== null &&
+          colorPages > totalPages
+        ) {
+          this.form.controls.colorPages.setValue(totalPages, {
+            emitEvent: false,
+          });
+        }
+      });
   }
 
   ngOnDestroy(): void {
+    // Clear any pending timeouts
+    if (this.sizeChangeTimeoutId) {
+      clearTimeout(this.sizeChangeTimeoutId);
+      this.sizeChangeTimeoutId = null;
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }
 
   /**
-   * Update field states based on size category selection
+   * Handle size change - set selected size, reset invalid selections, and set defaults
+   * This is the single method that handles all size-related logic
    */
-  private updateFieldStates(sizeCategoryId: number | null): void {
-    if (!sizeCategoryId) {
-      // Disable fields when no size category is selected
-      this.form.controls.bindingTypeId.disable();
-      this.form.controls.laminationTypeId.disable();
-      this.form.controls.paperQuailtyId.disable();
-    } else {
-      // Enable fields when size category is selected
-      this.form.controls.bindingTypeId.enable();
-      this.form.controls.laminationTypeId.enable();
-      this.form.controls.paperQuailtyId.enable();
-    }
-  }
-
-  /**
-   * Load binding types, lamination types, and paper qualities based on selected size
-   */
-  private async loadOptionsBySizeCategory(
-    sizeId: number | null
-  ): Promise<void> {
-    // Update field states
-    this.updateFieldStates(sizeId);
-
+  private handleSizeChange(sizeId: number | null): void {
     if (!sizeId) {
-      // If no size selected, show all options
-      this.filteredBindingTypes.set(this.allBindingTypes());
-      this.filteredLaminationTypes.set(this.allLaminationTypes());
-      this.filteredPaperQualityTypes.set(this.allPaperQualityTypes());
+      // No size selected - clear selected size and disable fields
+      this.selectedSize.set(null);
+      this.form.controls.bindingTypeId.disable({ emitEvent: false });
+      this.form.controls.laminationTypeId.disable({ emitEvent: false });
+      this.form.controls.paperQuailtyId.disable({ emitEvent: false });
+      // Clear all dependent field values
+      this.form.controls.bindingTypeId.setValue(null, { emitEvent: false });
+      this.form.controls.laminationTypeId.setValue(null, { emitEvent: false });
+      this.form.controls.paperQuailtyId.setValue(null, { emitEvent: false });
       return;
     }
 
+    // Get the selected size
+    const size = this.sizeTypes().find((s) => s.id === sizeId);
+
+    if (!size || !size.sizeCategory) {
+      // Size or sizeCategory not found - clear selected size and disable fields
+      this.selectedSize.set(null);
+      this.form.controls.bindingTypeId.disable({ emitEvent: false });
+      this.form.controls.laminationTypeId.disable({ emitEvent: false });
+      this.form.controls.paperQuailtyId.disable({ emitEvent: false });
+      // Clear all dependent field values
+      this.form.controls.bindingTypeId.setValue(null, { emitEvent: false });
+      this.form.controls.laminationTypeId.setValue(null, { emitEvent: false });
+      this.form.controls.paperQuailtyId.setValue(null, { emitEvent: false });
+      return;
+    }
+
+    // Get filtered options from the size's sizeCategory
+    const bindings = size.sizeCategory.bindingTypes || [];
+    const laminations = size.sizeCategory.laminationTypes || [];
+    const qualities = size.sizeCategory.paperQualities || [];
+
+    // Set selected size - template will use this to access bindingTypes, etc.
+    this.selectedSize.set(size);
+
+    // Enable fields when size is selected
+    this.form.controls.bindingTypeId.enable({ emitEvent: false });
+    this.form.controls.laminationTypeId.enable({ emitEvent: false });
+    this.form.controls.paperQuailtyId.enable({ emitEvent: false });
+
+    // Reset selections if current selection is not in filtered list
+    const currentBindingId = this.form.controls.bindingTypeId.value;
+    if (currentBindingId && !bindings.find((b) => b.id === currentBindingId)) {
+      this.form.controls.bindingTypeId.setValue(null, { emitEvent: false });
+    }
+
+    const currentLaminationId = this.form.controls.laminationTypeId.value;
+    if (
+      currentLaminationId &&
+      !laminations.find((l) => l.id === currentLaminationId)
+    ) {
+      this.form.controls.laminationTypeId.setValue(null, { emitEvent: false });
+    }
+
+    const currentPaperQualityId = this.form.controls.paperQuailtyId.value;
+    if (
+      currentPaperQualityId &&
+      !qualities.find((q) => q.id === currentPaperQualityId)
+    ) {
+      this.form.controls.paperQuailtyId.setValue(null, { emitEvent: false });
+    }
+
+    // Set default values after a brief delay to ensure mat-select has rendered options
+    // Use setTimeout to allow Angular to render the mat-options first
+    // Clear any existing timeout to prevent memory leaks
+    if (this.sizeChangeTimeoutId) {
+      clearTimeout(this.sizeChangeTimeoutId);
+    }
+    this.sizeChangeTimeoutId = setTimeout(() => {
+      // Check if value is null or undefined (not just falsy, to avoid 0 issues)
+      if (
+        (this.form.controls.bindingTypeId.value === null ||
+          this.form.controls.bindingTypeId.value === undefined) &&
+        bindings.length > 0
+      ) {
+        const defaultBinding =
+          bindings.find((b) => b.name === 'Paperback') || bindings[0];
+        if (defaultBinding) {
+          this.form.controls.bindingTypeId.setValue(defaultBinding.id, {
+            emitEvent: false,
+          });
+        }
+      }
+
+      if (
+        (this.form.controls.paperQuailtyId.value === null ||
+          this.form.controls.paperQuailtyId.value === undefined) &&
+        qualities.length > 0
+      ) {
+        const defaultPaper =
+          qualities.find((p) => p.name === '80 GSM') || qualities[0];
+        if (defaultPaper) {
+          this.form.controls.paperQuailtyId.setValue(defaultPaper.id, {
+            emitEvent: false,
+          });
+        }
+      }
+
+      if (
+        (this.form.controls.laminationTypeId.value === null ||
+          this.form.controls.laminationTypeId.value === undefined) &&
+        laminations.length > 0
+      ) {
+        const defaultLamination =
+          laminations.find((l) => l.name === 'Matte') || laminations[0];
+        if (defaultLamination) {
+          this.form.controls.laminationTypeId.setValue(defaultLamination.id, {
+            emitEvent: false,
+          });
+        }
+      }
+
+      // Trigger change detection to update mat-select display
+      this.cdr.detectChanges();
+      this.sizeChangeTimeoutId = null;
+    }, 50);
+  }
+
+  async updatePrice(): Promise<void> {
     try {
-      // Get the selected size from the already loaded data
-      const selectedSize = this.sizeTypes().find((s) => s.id === sizeId);
+      // Always ensure quantity is 1
+      this.form.controls.quantity.setValue(1, { emitEvent: false });
 
-      if (!selectedSize || !selectedSize.sizeCategory) {
-        // Fallback to all options if size or sizeCategory not found
-        this.filteredBindingTypes.set(this.allBindingTypes());
-        this.filteredLaminationTypes.set(this.allLaminationTypes());
-        this.filteredPaperQualityTypes.set(this.allPaperQualityTypes());
-        return;
-      }
+      // Validate that colorPages doesn't exceed totalPages
+      const totalPages = this.form.controls.totalPages.value;
+      const colorPages = this.form.controls.colorPages.value;
 
-      // Use the nested arrays from the size's sizeCategory
-      const bindings = selectedSize.sizeCategory.bindingTypes || [];
-      const laminations = selectedSize.sizeCategory.laminationTypes || [];
-      const qualities = selectedSize.sizeCategory.paperQualities || [];
-
-      this.filteredBindingTypes.set(bindings);
-      this.filteredLaminationTypes.set(laminations);
-      this.filteredPaperQualityTypes.set(qualities);
-
-      // Reset selections if current selection is not in filtered list
-      const currentBindingId = this.form.controls.bindingTypeId.value;
       if (
-        currentBindingId &&
-        !bindings.find((b) => b.id === currentBindingId)
+        totalPages !== null &&
+        colorPages !== null &&
+        colorPages > totalPages
       ) {
-        this.form.controls.bindingTypeId.setValue(null);
+        // Reset colorPages to totalPages if it exceeds
+        this.form.controls.colorPages.setValue(totalPages, {
+          emitEvent: false,
+        });
       }
 
-      const currentLaminationId = this.form.controls.laminationTypeId.value;
-      if (
-        currentLaminationId &&
-        !laminations.find((l) => l.id === currentLaminationId)
-      ) {
-        this.form.controls.laminationTypeId.setValue(null);
+      if (this.form.valid) {
+        const formValue = { ...this.form.value, quantity: 1 };
+        const res = await this.settingService.fetchPrintingCost(
+          formValue as any
+        );
+        this.calculation.set(res);
       }
-
-      const currentPaperQualityId = this.form.controls.paperQuailtyId.value;
-      if (
-        currentPaperQualityId &&
-        !qualities.find((q) => q.id === currentPaperQualityId)
-      ) {
-        this.form.controls.paperQuailtyId.setValue(null);
-      }
-
-      // Set default values after filtered options are loaded
-      // Always call to ensure defaults are set if values are null
-      this.setDefaultValues();
     } catch (error) {
-      console.error('Error loading options by size:', error);
-      // Fallback to all options on error
-      this.filteredBindingTypes.set(this.allBindingTypes());
-      this.filteredLaminationTypes.set(this.allLaminationTypes());
-      this.filteredPaperQualityTypes.set(this.allPaperQualityTypes());
-    }
-  }
-
-  /**
-   * Set default values for binding type, paper quality, and lamination type
-   */
-  private setDefaultValues(): void {
-    // Set default binding type to Paperback
-    if (!this.form.controls.bindingTypeId.value) {
-      const defaultBinding = this.filteredBindingTypes().find(
-        (b) => b.name === 'Paperback'
-      );
-      if (defaultBinding) {
-        this.form.controls.bindingTypeId.setValue(defaultBinding.id);
-      }
-    }
-
-    // Set default paper quality to 80 GSM
-    if (!this.form.controls.paperQuailtyId.value) {
-      const defaultPaper = this.filteredPaperQualityTypes().find(
-        (p) => p.name === '80 GSM'
-      );
-      if (defaultPaper) {
-        this.form.controls.paperQuailtyId.setValue(defaultPaper.id);
-      }
-    }
-
-    // Set default lamination type to Matte
-    if (!this.form.controls.laminationTypeId.value) {
-      const defaultLamination = this.filteredLaminationTypes().find(
-        (l) => l.name === 'Matte'
-      );
-      if (defaultLamination) {
-        this.form.controls.laminationTypeId.setValue(defaultLamination.id);
-      }
-    }
-  }
-
-  async updatePrice() {
-    // Always ensure quantity is 1
-    this.form.controls.quantity.setValue(1, { emitEvent: false });
-    
-    if (this.form.valid) {
-      const formValue = { ...this.form.value, quantity: 1 };
-      const res = await this.settingService.fetchPrintingCost(
-        formValue as any
-      );
-      this.calculation.set(res);
+      console.error('Error updating price:', error);
+      // Don't set calculation on error - keep previous value
     }
   }
 
@@ -466,7 +523,14 @@ export class PrintingCalculator implements OnInit, OnDestroy {
                 });
                 sizeDialog.close();
               } catch (error) {
-                console.log(error);
+                console.error('Error updating size type:', error);
+                Swal.fire({
+                  icon: 'error',
+                  title: await firstValueFrom(
+                    this.translateServie.get('error')
+                  ),
+                  text: 'An error occurred while updating size type',
+                });
               }
             },
           },
@@ -498,7 +562,14 @@ export class PrintingCalculator implements OnInit, OnDestroy {
                 });
                 laminationDialog.close();
               } catch (error) {
-                console.log(error);
+                console.error('Error updating lamination type:', error);
+                Swal.fire({
+                  icon: 'error',
+                  title: await firstValueFrom(
+                    this.translateServie.get('error')
+                  ),
+                  text: 'An error occurred while updating lamination type',
+                });
               }
             },
           },
@@ -530,7 +601,14 @@ export class PrintingCalculator implements OnInit, OnDestroy {
                 });
                 bindingDialog.close();
               } catch (error) {
-                console.log(error);
+                console.error('Error updating binding type:', error);
+                Swal.fire({
+                  icon: 'error',
+                  title: await firstValueFrom(
+                    this.translateServie.get('error')
+                  ),
+                  text: 'An error occurred while updating binding type',
+                });
               }
             },
           },
@@ -562,7 +640,14 @@ export class PrintingCalculator implements OnInit, OnDestroy {
                 });
                 qualityDialog.close();
               } catch (error) {
-                console.log(error);
+                console.error('Error updating paper quality type:', error);
+                Swal.fire({
+                  icon: 'error',
+                  title: await firstValueFrom(
+                    this.translateServie.get('error')
+                  ),
+                  text: 'An error occurred while updating paper quality type',
+                });
               }
             },
           },

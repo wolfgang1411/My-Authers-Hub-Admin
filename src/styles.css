@@ -1,5 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
 @import "tailwindcss";
+/* app.component.css */
+@import "ckeditor5/ckeditor5.css";
 
 :root {
   --primary: #3d1a5d;

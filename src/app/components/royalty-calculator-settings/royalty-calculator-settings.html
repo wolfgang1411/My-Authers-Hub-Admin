@@ -166,10 +166,10 @@
       <thead>
         <tr>
           <th>Name</th>
-          <th>Type</th>
           <th>Margin %</th>
           <th>Extra flat margin</th>
           <th>Ebook</th>
+          <th>Only Inventory</th>
           <th></th>
         </tr>
       </thead>
@@ -181,6 +181,7 @@
           <td>{{ platform.marginPercent }}%</td>
           <td>{{ platform.extraFlatMargin || 0 }}</td>
           <td>{{ platform.isEbookPlatform ? "Yes" : "No" }}</td>
+          <td>{{ platform.isInventoryPlatform ? "Yes" : "No" }}</td>
           <td>
             <button
               type="button"

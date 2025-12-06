@@ -137,36 +137,30 @@
           </mat-form-field>
         </div>
       </div>
-      <div class="grid grid-cols-2 gap-4 items-start">
-        <mat-form-field>
-          <mat-label>
-            {{ "longdescription" | translate }}
-          </mat-label>
-          <textarea
-            matInput
-            formControlName="longDescription"
-            rows="4"
-            required
-          ></textarea>
-          @if(titleDetailsGroup().controls.longDescription.hasError('minWords'))
-          {
-          <mat-error> longDescription must be at least 40 words. </mat-error>
-          }
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label> {{ "shortdescription" | translate }} </mat-label>
-          <textarea
-            matInput
-            formControlName="shortDescription"
-            rows="4"
-          ></textarea>
-          @if(titleDetailsGroup().controls.shortDescription.hasError('maxWords'))
-          {
-          <mat-error>
-            {{ "shortdescriptionmaxwords" | translate }}
-          </mat-error>
-          }
-        </mat-form-field>
+      <div class="flex flex-col gap-2 my-4">
+        <mat-label class="text-sm font-medium mb-1">
+          {{ "longdescription" | translate }}
+          <span class="text-red-500">*</span>
+        </mat-label>
+        <div class="ckeditor-wrapper">
+          <ckeditor
+            [editor]="Editor"
+            [config]="editorConfig"
+            (ready)="onEditorReady($event)"
+            [formControl]="titleDetailsGroup().controls.longDescription"
+          ></ckeditor>
+        </div>
+        @if(titleDetailsGroup().controls.longDescription.hasError('minWords') &&
+        titleDetailsGroup().controls.longDescription.touched) {
+        <mat-error class="text-sm">
+          {{ "longdescriptionmustbeatleast40words" | translate }}
+        </mat-error>
+        } @if(titleDetailsGroup().controls.longDescription.hasError('required')
+        && titleDetailsGroup().controls.longDescription.touched) {
+        <mat-error class="text-sm">
+          {{ "longdescriptionisrequired" | translate }}
+        </mat-error>
+        }
       </div>
       <div class="grid grid-cols-4 gap-4 items-start">
         <mat-form-field>

@@ -1,2 +1,84 @@
 /* Styles for temp-book-details component */
 
+/* CKEditor Styling to match Material Design */
+.ckeditor-wrapper {
+  width: 100%;
+}
+
+.ckeditor-wrapper ::ng-deep .ck-editor {
+  width: 100%;
+}
+
+.ckeditor-wrapper ::ng-deep .ck-editor__editable {
+  min-height: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid rgba(0, 0, 0, 0.38);
+  border-radius: 4px;
+  padding: 12px;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  background-color: #fafafa;
+  color: rgba(0, 0, 0, 0.87);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.ckeditor-wrapper ::ng-deep .ck-editor__editable:focus {
+  background-color: #fff;
+}
+
+.ckeditor-wrapper ::ng-deep .ck-editor__editable:focus {
+  outline: none;
+  border-color: var(--primary, #3d1a5d);
+  border-width: 2px;
+}
+
+.ckeditor-wrapper ::ng-deep .ck-editor__editable.ck-error {
+  border-color: var(--accent, #ce0000);
+}
+
+.ckeditor-wrapper ::ng-deep .ck-toolbar {
+  border: 1px solid rgba(0, 0, 0, 0.38);
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  background-color: #f5f5f5;
+  padding: 8px;
+}
+
+.ckeditor-wrapper ::ng-deep .ck-toolbar__separator {
+  background-color: rgba(0, 0, 0, 0.12);
+}
+
+.ckeditor-wrapper ::ng-deep .ck-button {
+  color: rgba(0, 0, 0, 0.87);
+  transition: background-color 0.2s ease;
+}
+
+.ckeditor-wrapper ::ng-deep .ck-button:hover:not(.ck-disabled) {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.ckeditor-wrapper ::ng-deep .ck-button.ck-on {
+  background-color: rgba(61, 26, 93, 0.12);
+  color: var(--primary, #3d1a5d);
+}
+
+.ckeditor-wrapper ::ng-deep .ck-button__label {
+  font-size: 13px;
+}
+
+/* Match Material Design input styling */
+.ckeditor-wrapper ::ng-deep .ck-editor__editable p {
+  margin: 0 0 8px 0;
+}
+
+.ckeditor-wrapper ::ng-deep .ck-editor__editable p:last-child {
+  margin-bottom: 0;
+}
+
+/* Error state styling */
+.ckeditor-wrapper.error ::ng-deep .ck-editor__editable {
+  border-color: var(--accent, #ce0000);
+}
+

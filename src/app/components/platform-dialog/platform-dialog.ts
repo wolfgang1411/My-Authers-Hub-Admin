@@ -62,6 +62,7 @@ export class PlatformDialog implements OnInit {
     extraFlatMargin: this.fb.control<number | null>(0),
     isEbookPlatform: this.fb.control(false),
     isSuperAdminPricingOnly: this.fb.control(false),
+    isInventoryPlatform: this.fb.control(false),
   });
 
   ngOnInit() {
@@ -73,6 +74,7 @@ export class PlatformDialog implements OnInit {
         extraFlatMargin: this.dialogData.extraFlatMargin ?? 0,
         isEbookPlatform: this.dialogData.isEbookPlatform,
         isSuperAdminPricingOnly: this.dialogData.isSuperAdminPricingOnly ?? false,
+        isInventoryPlatform: this.dialogData.isInventoryPlatform ?? false,
       });
     }
   }
@@ -93,6 +95,7 @@ export class PlatformDialog implements OnInit {
           : Number(value.extraFlatMargin),
       isEbookPlatform: value.isEbookPlatform ?? false,
       isSuperAdminPricingOnly: value.isSuperAdminPricingOnly ?? false,
+      isInventoryPlatform: value.isInventoryPlatform ?? false,
     };
 
     if (!payload.name) {

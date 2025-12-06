@@ -324,11 +324,11 @@
         {{
           !this.authorId
             ? ("create" | translate)
-            : (loggedInUser()?.accessLevel === "SUPERADMIN"
-                ? ("update" | translate)
-                : (authorDetails()?.status === AuthorStatus.Pending
-                    ? ("update" | translate)
-                    : ("raiseaticket" | translate)))
+            : loggedInUser()?.accessLevel === "SUPERADMIN"
+            ? ("update" | translate)
+            : authorDetails()?.status === AuthorStatus.Pending
+            ? ("update" | translate)
+            : ("raiseaticket" | translate)
         }}
       </button>
     </div>
