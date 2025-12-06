@@ -303,7 +303,8 @@ export class AddPublisher {
   validatePincode(): AsyncValidatorFn {
     return async (control) => {
       const pin = control.value;
-      const country = this.publisherAddressDetails.controls.country.value;
+      const country = this.publisherAddressDetails.controls?.country?.value;
+      const state = this.publisherAddressDetails.controls?.state?.value;
       const isIndia = ['IN', 'INDIA', 'india', 'India', 'in'].includes(
         country || ''
       );
@@ -314,12 +315,12 @@ export class AddPublisher {
       }
 
       // Optional: basic length check (India)
-      if (pin?.length !== 6) {
+      if (pin?.length !== 6 || !state || !state.length) {
         return { invalidPincode: true };
       }
 
       try {
-        const { valid } = await this.addressService.validatePincode(pin);
+        const { valid } = await this.addressService.validatePincode(pin, state);
         // Expecting: { valid: boolean } or similar
         if (valid) {
           return null; // Valid pincode
