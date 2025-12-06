@@ -631,6 +631,24 @@ mat-label {
     --mat-form-field-filled-container-color,
     var(--mat-sys-surface-variant)
   );
+  --ck-color-base-background: var(
+    --mat-form-field-filled-container-color,
+    var(--mat-sys-surface-variant)
+  )
+}
+.ck.ck-editor__main > .ck-editor__editable {
+  background-color: var(
+    --mat-form-field-filled-container-color,
+    var(--mat-sys-surface-variant)
+  ) !important;
+}
+
+
+.ck .ck-toolbar {
+  background-color: var(
+    --mat-form-field-filled-container-color,
+    var(--mat-sys-surface-variant)
+  ) !important;
 }
 
 @keyframes fadeUp {
@@ -644,6 +662,3 @@ mat-label {
   }
 }
 
-.tel-input .tel-form {
-  background: red !important;
-}

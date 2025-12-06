@@ -21,10 +21,7 @@
               matInput
               placeholder=""
               formControlName="isbnPrint"
-              appIsbnFormat
-              appIsbnClean
-              [maxlength]="13"
-              [minlength]="13"
+              [maxlength]="17"
             />
           </mat-form-field>
           <div class="text-sm">
@@ -45,8 +42,7 @@
               matInput
               placeholder=""
               formControlName="isbnEbook"
-              [maxlength]="13"
-              [minlength]="13"
+              [maxlength]="17"
             />
             <button
               type="button"
@@ -149,7 +145,7 @@
             [editor]="Editor"
             [config]="editorConfig"
             (ready)="onEditorReady($event)"
-            [formControl]="titleDetailsGroup().controls.longDescription"
+            (change)="onEditorChange($event)"
           ></ckeditor>
         </div>
         @if(titleDetailsGroup().controls.longDescription.hasError('minWords') &&
