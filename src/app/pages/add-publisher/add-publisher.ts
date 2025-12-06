@@ -206,6 +206,7 @@ export class AddPublisher {
       name: c.name,
       isoCode: c.isoCode,
     }));
+
     this.publisherAddressDetails
       .get('country')
       ?.valueChanges.subscribe((countryIso) => {
