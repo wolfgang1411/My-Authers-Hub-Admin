@@ -485,6 +485,7 @@
           ? `title/${titleId}?step=distribution`
           : getCurrentUrl()
       "
+      [isHardBoundAllowed]="isHardBoundAllowed()"
       (onClickPurchasePoint)="onClickPurchasePoint($event)"
       (onPointsPurchased)="fetchAndUpdatePublishingPoints()"
     ></app-temp-title-distribution>

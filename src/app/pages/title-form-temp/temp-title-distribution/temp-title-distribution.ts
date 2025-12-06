@@ -27,6 +27,7 @@ export class TempTitleDistribution {
   publisherId = input<number | undefined>(undefined);
   publisherName = input<string | undefined>(undefined);
   returnUrl = input<string | undefined>(undefined);
+  isHardBoundAllowed = input<boolean>(false);
 
   onClickPurchasePoint = output<DistributionType>();
   onPointsPurchased = output<void>();
@@ -87,7 +88,11 @@ export class TempTitleDistribution {
 
   /**
    * Check if a distribution option should be hidden
-   * Hide Hardbound_National if National is selected/created, and vice versa
+   * Logic:
+   * - If hardbound NOT allowed: always show National, never show Hardbound_National
+   * - If hardbound IS allowed:
+   *   - Show both if neither is selected/created
+   *   - Hide the opposite one if one is selected OR already created (has id)
    */
   shouldHideDistribution(group: FormGroup<TitleDistributionGroup>): boolean {
     const type = group.controls.type.value;
@@ -98,27 +103,61 @@ export class TempTitleDistribution {
       return false;
     }
 
-    // Check if the opposite type is selected or already created
+    const isHardBoundAllowed = this.isHardBoundAllowed();
+
+    // If hardbound is NOT allowed
+    if (!isHardBoundAllowed) {
+      // Always show National
+      if (type === DistributionType.National) {
+        return false;
+      }
+      // Never show Hardbound_National
+      if (type === DistributionType.Hardbound_National) {
+        return true;
+      }
+      return false;
+    }
+
+    // If hardbound IS allowed - check selection state and creation state
+    // Get the distribution controls once to avoid repeated lookups
+    const controls = this.distributionControl().controls;
+    const nationalGroup = controls.find(
+      (g) => g.controls.type.value === DistributionType.National
+    );
+    const hardboundGroup = controls.find(
+      (g) => g.controls.type.value === DistributionType.Hardbound_National
+    );
+
+    // Check if groups exist, are selected, or already created (has id)
+    const nationalIsSelected =
+      nationalGroup?.controls.isSelected.value === true;
+    const hardboundIsSelected =
+      hardboundGroup?.controls.isSelected.value === true;
+
+    // Check if distributions are already created (have valid id > 0)
+    const nationalHasId =
+      nationalGroup?.controls.id.value !== null &&
+      nationalGroup?.controls.id.value !== undefined &&
+      typeof nationalGroup.controls.id.value === 'number' &&
+      nationalGroup.controls.id.value > 0;
+
+    const hardboundHasId =
+      hardboundGroup?.controls.id.value !== null &&
+      hardboundGroup?.controls.id.value !== undefined &&
+      typeof hardboundGroup.controls.id.value === 'number' &&
+      hardboundGroup.controls.id.value > 0;
+
+    // For National: hide if Hardbound is selected OR already created (has id)
     if (type === DistributionType.National) {
-      const hardboundGroup = this.distributionControl().controls.find(
-        (g) => g.controls.type.value === DistributionType.Hardbound_National
-      );
-      return (
-        hardboundGroup?.controls.isSelected.value === true ||
-        hardboundGroup?.controls.id.value !== null
-      );
+      return hardboundIsSelected || hardboundHasId;
     }
 
+    // For Hardbound_National: hide if National is selected OR already created (has id)
     if (type === DistributionType.Hardbound_National) {
-      const nationalGroup = this.distributionControl().controls.find(
-        (g) => g.controls.type.value === DistributionType.National
-      );
-      return (
-        nationalGroup?.controls.isSelected.value === true ||
-        nationalGroup?.controls.id.value !== null
-      );
+      return nationalIsSelected || nationalHasId;
     }
 
+    // For all other types, don't hide
     return false;
   }
 

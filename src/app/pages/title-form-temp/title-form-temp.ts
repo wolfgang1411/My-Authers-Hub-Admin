@@ -500,6 +500,12 @@ export class TitleFormTemp implements OnDestroy {
     );
   });
 
+  // Signal to track if hardbound is allowed based on binding type
+  private isHardBoundAllowedSignal = signal<boolean>(false);
+
+  // Computed property to check if hardbound is allowed based on binding type
+  isHardBoundAllowed = computed(() => this.isHardBoundAllowedSignal());
+
   private stepper = viewChild<MatStepper>('stepperForm');
 
   onAuthorChangeChild(authorId: number) {
@@ -691,6 +697,59 @@ export class TitleFormTemp implements OnDestroy {
       this.tempForm.controls.publishingType.value
     );
 
+    this.tempForm.controls.printing.controls.bookBindingsId.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((value) => {
+        const isHardBound = this.bindingType
+          .find(({ id }) => id === value)
+          ?.name.toLowerCase()
+          .includes('hardbound');
+
+        // Update the signal for hardbound allowed state
+        this.isHardBoundAllowedSignal.set(isHardBound ?? false);
+
+        const hardBoundController =
+          this.tempForm.controls.distribution.controls.find(
+            ({ controls: { type } }) =>
+              type.value === DistributionType.Hardbound_National
+          );
+        if (isHardBound) {
+          if (!hardBoundController) {
+            this.tempForm.controls.distribution.insert(
+              0,
+              new FormGroup<TitleDistributionGroup>({
+                id: new FormControl<number | null>(null),
+                isSelected: new FormControl(false, { nonNullable: true }),
+                type: new FormControl(DistributionType.Hardbound_National, {
+                  nonNullable: true,
+                }),
+                availablePoints: new FormControl(0, { nonNullable: true }),
+                name: new FormControl('Hard Bound National', {
+                  nonNullable: true,
+                }),
+              })
+            );
+            this.fetchAndUpdatePublishingPoints();
+          }
+        } else if (hardBoundController) {
+          this.tempForm.controls.distribution.removeAt(
+            this.tempForm.controls.distribution.controls.indexOf(
+              hardBoundController
+            )
+          );
+        }
+      });
+
+    // Initialize hardbound allowed state based on current binding type
+    const initialBookBindingsId =
+      this.tempForm.controls.printing.controls.bookBindingsId.value;
+    if (initialBookBindingsId && this.bindingType) {
+      const isHardBound = this.bindingType
+        .find(({ id }) => id === initialBookBindingsId)
+        ?.name.toLowerCase()
+        .includes('hardbound');
+      this.isHardBoundAllowedSignal.set(isHardBound ?? false);
+    }
     // Setup stepper step tracking after everything is initialized
     this.setupStepperStepTracking();
   }
@@ -1216,13 +1275,97 @@ export class TitleFormTemp implements OnDestroy {
       }
     });
 
+    if (
+      data.distribution?.find(
+        ({ type }) => type === DistributionType.Hardbound_National
+      )
+    ) {
+      this.tempForm.controls.printing.controls.bookBindingsId.disable();
+    }
+
+    if (
+      data.printing?.[0]?.bindingType?.name?.toLowerCase().includes('hardbound')
+    ) {
+      // Update signal to reflect hardbound is allowed
+      this.isHardBoundAllowedSignal.set(true);
+      this.tempForm.controls.distribution.insert(
+        0,
+        new FormGroup<TitleDistributionGroup>({
+          id: new FormControl<number | null>(null),
+          isSelected: new FormControl(false, { nonNullable: true }),
+          type: new FormControl(DistributionType.Hardbound_National, {
+            nonNullable: true,
+          }),
+          availablePoints: new FormControl(0, { nonNullable: true }),
+          name: new FormControl(DistributionType.Hardbound_National, {
+            nonNullable: true,
+          }),
+        })
+      );
+    } else {
+      // Update signal to reflect hardbound is not allowed
+      this.isHardBoundAllowedSignal.set(false);
+    }
+
+    // Check if National or Hardbound_National exists in saved distributions
+    const hasNationalDistribution = data.distribution?.some(
+      ({ type }) => type === DistributionType.National
+    );
+    const hasHardboundDistribution = data.distribution?.some(
+      ({ type }) => type === DistributionType.Hardbound_National
+    );
+
+    // Remove opposite control if one is found
+    if (hasNationalDistribution) {
+      // If National is saved, remove Hardbound_National control if it exists
+      const hardboundControl =
+        this.tempForm.controls.distribution.controls.find(
+          ({ controls }) =>
+            controls.type.value === DistributionType.Hardbound_National
+        );
+      if (hardboundControl) {
+        const hardboundIndex =
+          this.tempForm.controls.distribution.controls.indexOf(
+            hardboundControl
+          );
+        if (hardboundIndex >= 0) {
+          this.tempForm.controls.distribution.removeAt(hardboundIndex);
+        }
+      }
+    } else if (hasHardboundDistribution) {
+      // If Hardbound_National is saved, remove National control if it exists
+      const nationalControl = this.tempForm.controls.distribution.controls.find(
+        ({ controls }) => controls.type.value === DistributionType.National
+      );
+      if (nationalControl) {
+        const nationalIndex =
+          this.tempForm.controls.distribution.controls.indexOf(nationalControl);
+        if (nationalIndex >= 0) {
+          this.tempForm.controls.distribution.removeAt(nationalIndex);
+        }
+      }
+    }
+
     data.distribution?.forEach(({ id, type }) => {
       const disTypeControl = this.tempForm.controls.distribution.controls.find(
         ({ controls }) => controls.type.value === type
       );
+
       if (disTypeControl) {
         disTypeControl.controls.isSelected.patchValue(true);
         disTypeControl.controls.id.patchValue(id);
+      } else {
+        this.tempForm.controls.distribution.insert(
+          0,
+          new FormGroup<TitleDistributionGroup>({
+            id: new FormControl<number | null>(id),
+            isSelected: new FormControl(true, { nonNullable: true }),
+            type: new FormControl(type, { nonNullable: true }),
+            availablePoints: new FormControl(0, { nonNullable: true }),
+            name: new FormControl(type, { nonNullable: true }),
+          })
+        );
+        this.fetchAndUpdatePublishingPoints();
       }
     });
 
@@ -1490,9 +1633,21 @@ export class TitleFormTemp implements OnDestroy {
           type === DistributionType.Hardbound_National && isSelected
       );
 
+      const isHardBoundAllowed =
+        this.bindingType
+          ?.find(
+            ({ id }) =>
+              id ===
+              this.tempForm.controls?.printing?.controls?.bookBindingsId?.value
+          )
+          ?.name?.toLowerCase()
+          ?.includes('hardbound') ?? false;
+
       if (!national && !hardboundNational) {
         return {
-          invalid: 'Either choose national or hardbound national atleast.',
+          invalid: isHardBoundAllowed
+            ? 'Either choose national or hardbound national atleast.'
+            : 'National distribution is required.',
         };
       }
 
@@ -1522,18 +1677,20 @@ export class TitleFormTemp implements OnDestroy {
 
   createDistributionOptions(): FormArray<FormGroup<TitleDistributionGroup>> {
     return new FormArray<FormGroup<TitleDistributionGroup>>(
-      Object.keys(DistributionType).map(
-        (type) =>
-          new FormGroup<TitleDistributionGroup>({
-            id: new FormControl<number | null>(null),
-            isSelected: new FormControl(false, { nonNullable: true }),
-            name: new FormControl(type, { nonNullable: true }),
-            type: new FormControl(type as DistributionType, {
-              nonNullable: true,
-            }),
-            availablePoints: new FormControl(0, { nonNullable: true }),
-          })
-      ),
+      Object.keys(DistributionType)
+        .filter((type) => type !== DistributionType.Hardbound_National)
+        .map(
+          (type) =>
+            new FormGroup<TitleDistributionGroup>({
+              id: new FormControl<number | null>(null),
+              isSelected: new FormControl(false, { nonNullable: true }),
+              name: new FormControl(type, { nonNullable: true }),
+              type: new FormControl(type as DistributionType, {
+                nonNullable: true,
+              }),
+              availablePoints: new FormControl(0, { nonNullable: true }),
+            })
+        ),
       { validators: [this.distributionValidator()] }
     );
   }
