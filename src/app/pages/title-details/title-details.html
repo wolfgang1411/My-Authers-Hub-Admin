@@ -66,11 +66,15 @@
           <div class="mt-1 text-xs text-[var(--text-secondary)]">
             <p>
               <span class="font-medium">ISBN (Print):</span>
-              {{ title.isbnPrint || "Not Assigned" }}
+              {{
+                title.isbnPrint
+                  ? (title.isbnPrint | isbnFormat)
+                  : "Not Assigned"
+              }}
             </p>
             <p>
               <span class="font-medium">ISBN (eBook):</span>
-              {{ title.isbnEbook || "Not Assigned" }}
+              {{ title.isbnEbook ? title.isbnEbook : "Not Assigned" }}
             </p>
           </div>
         </div>

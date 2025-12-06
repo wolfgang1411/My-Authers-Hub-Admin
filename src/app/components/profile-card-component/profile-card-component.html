@@ -61,6 +61,8 @@
         <mat-icon>edit</mat-icon>
         Edit Profile
       </button>
+      @if (userService.loggedInUser$()?.accessLevel !== 'AUTHER') {
+
       <button
         matButton="filled"
         class="flex-1 py-2 bg-primary-superlight border rounded hover:bg-primary-light"
@@ -71,6 +73,7 @@
         <mat-icon>settings</mat-icon>
         Settings
       </button>
+      }
     </div>
   </div>
 </div>

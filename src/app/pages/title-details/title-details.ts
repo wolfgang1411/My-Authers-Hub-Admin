@@ -9,6 +9,7 @@ import { MatButtonModule, MatIconButton } from '@angular/material/button';
 import { MatStepperModule } from '@angular/material/stepper';
 import { RouterLink } from '@angular/router';
 import { SharedModule } from '../../modules/shared/shared-module';
+import { IsbnFormatPipe } from 'src/app/pipes/isbn-format-pipe';
 
 @Component({
   selector: 'app-title-details',
@@ -24,6 +25,7 @@ import { SharedModule } from '../../modules/shared/shared-module';
     CommonModule,
     MatIconModule,
     MatIconButton,
+    IsbnFormatPipe,
   ],
   templateUrl: './title-details.html',
   styleUrl: './title-details.css',

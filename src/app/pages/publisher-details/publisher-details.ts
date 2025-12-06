@@ -29,6 +29,7 @@ import { StaticValuesService } from '../../services/static-values';
 import { MatButtonModule } from '@angular/material/button';
 import { SafeUrlPipe } from 'src/app/pipes/safe-url-pipe';
 import { BuyAssignPointsButton } from '../../components/buy-assign-points-button/buy-assign-points-button';
+import { formatIsbn } from 'src/app/shared/utils/isbn.utils';
 @Component({
   selector: 'app-publisher-details',
   imports: [
@@ -240,9 +241,13 @@ export class PublisherDetails implements OnInit, OnDestroy {
           title: title.name,
           distribution: title.distribution,
           isbnPrint:
-            title.isbnPrint && title.isbnPrint ? title.isbnPrint : 'N/A',
+            title.isbnPrint && title.isbnPrint
+              ? formatIsbn(title.isbnPrint)
+              : 'N/A',
           isbnEbook:
-            title.isbnEbook && title.isbnEbook ? title.isbnEbook : 'N/A',
+            title.isbnEbook && title.isbnEbook
+              ? formatIsbn(title.isbnEbook)
+              : 'N/A',
           pages:
             title.printing && title.printing.length
               ? title.printing[0].totalPages

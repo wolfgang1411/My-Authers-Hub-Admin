@@ -19,25 +19,27 @@
   <mat-nav-list class="!p-3 space-y-1">
     @for (item of sidebarMenu(); track $index + item.name) {
     <mat-list-item class="!p-0" (click)="onMenuClick(item)">
-      <button
+      <a
         [routerLink]="item.url"
         routerLinkActive="!bg-primary !text-white"
         [routerLinkActiveOptions]="{ exact: true }"
-        class="flex items-center w-full rounded-xl px-4 py-3 text-slate-700 fill-slate-600 hover:!bg-primary hover:!text-white hover:fill-white transition-all duration-300"
+        class="group flex items-center w-full rounded-xl px-4 py-3 text-slate-700 fill-slate-600 hover:!bg-primary hover:!text-white hover:fill-white transition-all duration-300"
+        style="text-decoration: none"
       >
-        <!-- ✅ Icon always visible -->
+        <!-- Icon -->
         <mat-icon class="text-xl min-w-[24px] transition-colors duration-300">
           {{ item.icon }}
         </mat-icon>
 
-        <!-- ✅ Text label fades in only on hover -->
+        <!-- Text (fade on hover) -->
         <span
           class="ml-4 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300"
         >
           {{ item.name | translate }}
         </span>
-      </button>
+      </a>
     </mat-list-item>
+
     }
 
     <!-- Logout -->

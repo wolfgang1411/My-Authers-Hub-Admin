@@ -40,6 +40,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
 import { LanguageService } from '../../services/languages';
+import { IsbnFormat } from 'src/app/directives/isbn-format';
+import { IsbnClean } from 'src/app/directives/isbn-clean';
 
 @Component({
   selector: 'app-book-details',
@@ -53,6 +55,8 @@ import { LanguageService } from '../../services/languages';
     MatIconModule,
     MatProgressSpinnerModule,
     MatButtonModule,
+    IsbnFormat,
+    IsbnClean,
   ],
   templateUrl: './book-details.html',
   styleUrl: './book-details.css',

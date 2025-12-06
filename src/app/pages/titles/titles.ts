@@ -26,6 +26,7 @@ import { UserService } from '../../services/user';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { StaticValuesService } from '../../services/static-values';
+import { formatIsbn } from 'src/app/shared/utils/isbn.utils';
 
 @Component({
   selector: 'app-titles',
@@ -109,7 +110,9 @@ export class Titles {
   mapDataList() {
     const mapped = this.titles().map((title, idx) => ({
       ...title,
-      isbn: `${title.isbnPrint || 'N/A'}<br>${title.isbnEbook || ''}`,
+      isbn: `${title.isbnPrint ? formatIsbn(title.isbnPrint) : 'N/A'}<br>${
+        title.isbnEbook ? formatIsbn(title.isbnEbook) : ''
+      }`,
       pages:
         title.printing && title.printing.length
           ? title.printing[0].totalPages

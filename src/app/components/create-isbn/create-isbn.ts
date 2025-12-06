@@ -93,9 +93,7 @@ export class CreateIsbn {
   }
 
   createIsbnForm = new FormGroup({
-    isbnNumber: new FormControl<string | null>(null, {
-      asyncValidators: [this.validateIsbn()],
-    }),
+    isbnNumber: new FormControl<string | null>(null),
     type: new FormControl<ISBNType | null>(null, [Validators.required]),
     titleName: new FormControl('', { validators: [Validators.required] }),
     authorIds: new FormControl([]),
@@ -121,7 +119,6 @@ export class CreateIsbn {
       const {
         authorIds,
         edition,
-        isbnNumber,
         language,
         mrp,
         noOfPages,
@@ -133,7 +130,6 @@ export class CreateIsbn {
         authorIds: authorIds.value || [],
         publisherId: publisherId.value as number,
         edition: edition.value?.toString() as string,
-        isbnNumber: isbnNumber.value as string,
         language: language.value as string,
         mrp: mrp.value as number,
         noOfPages: noOfPages.value as number,

@@ -52,13 +52,19 @@
                 <span class="font-medium text-[var(--text-heading)]"
                   >ISBN (Print):</span
                 >
-                {{ titleDetails()?.isbnPrint || "Not Assigned" }}
+{{ titleDetails()?.isbnPrint 
+     ? (titleDetails()?.isbnPrint || '' | isbnFormat) 
+     : "Not Assigned" 
+}}
               </p>
               <p>
                 <span class="font-medium text-[var(--text-heading)]"
                   >ISBN (eBook):</span
                 >
-                {{ titleDetails()?.isbnEbook || "Not Assigned" }}
+{{ titleDetails()?.isbnEbook 
+     ? (titleDetails()?.isbnEbook || '' | isbnFormat) 
+     : "Not Assigned" 
+}}
               </p>
               <p>
                 <span class="font-medium text-[var(--text-heading)]"
@@ -66,6 +72,7 @@
                 >
                 {{ titleDetails()?.publisherDisplay }}
               </p>
+
               <p>
                 <span class="font-medium text-[var(--text-heading)]"
                   >Edition:</span
@@ -86,22 +93,36 @@
               </p>
             </div>
 
-            <div class="mt-4">
-              <span
-                class="inline-flex items-center gap-2 p-4 text-xs font-medium rounded-full"
-                [ngClass]="{
-                  'bg-[var(--light-green-bg)] text-[var(--green-2)] border border-[var(--light-green-2)]':
-                    titleDetails()?.status === 'APPROVED',
-                  'bg-[var(--light-purple-bg)] text-[var(--primary)] border border-[var(--primary-light)]':
-                    titleDetails()?.status !== 'APPROVED'
-                }"
-              >
-                @if(titleDetails()?.status !== 'APPROVED') {
-                <mat-icon class="text-sm">check_circle</mat-icon>
-                }
-                {{ titleDetails()?.status }}
-              </span>
-            </div>
+        
+            <!-- AUTHORS LIST WITH PRINT PRICE -->
+@if (titleDetails()?.authors?.length) {
+<div class="mt-6">
+  <h3 class="text-sm font-medium text-[var(--text-heading)] mb-2 underline">
+    Authors
+  </h3>
+
+  <ul class="text-sm text-[var(--text-primary)] space-y-2">
+    @for (a of titleDetails()?.authors; track a.id) {
+    <li class="flex flex-col">
+      
+      <!-- Author Name -->
+      <span class="font-medium text-[var(--text-heading)] capitalize">
+        {{ a.display_name }}
+      </span>
+
+      <!-- Author Print Price -->
+      @if (a.authorPrintPrice  !== null && a.authorPrintPrice !== undefined) {
+      <span class="text-[var(--green-2)] font-medium">
+                  Author Copies Price
+: ₹{{ a.authorPrintPrice | number : "1.2-2" }}
+      </span>
+      }
+    </li>
+    }
+  </ul>
+</div>
+}
+
 
             <!-- PLATFORM LINKS (BASIC DETAILS) -->
 @if (titleDetails()?.titlePlatformIdentifier?.length ) {
@@ -142,6 +163,22 @@
   </ul>
 </div>
 }
+    <div class="mt-4">
+              <span
+                class="inline-flex items-center gap-2 p-4 text-xs font-medium rounded-full"
+                [ngClass]="{
+                  'bg-[var(--light-green-bg)] text-[var(--green-2)] border border-[var(--light-green-2)]':
+                    titleDetails()?.status === 'APPROVED',
+                  'bg-[var(--light-purple-bg)] text-[var(--primary)] border border-[var(--primary-light)]':
+                    titleDetails()?.status !== 'APPROVED'
+                }"
+              >
+                @if(titleDetails()?.status !== 'APPROVED') {
+                <mat-icon class="text-sm">check_circle</mat-icon>
+                }
+                {{ titleDetails()?.status }}
+              </span>
+            </div>
 
           </div>
         </div>
@@ -361,7 +398,7 @@
           <div
             class="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-5 text-sm leading-6"
           >
-
+        
            <div class="flex items-center gap-2">
               <mat-icon class="text-[var(--primary)] text-base">money</mat-icon>
               <p  class="font-semibold">
@@ -958,7 +995,7 @@
                     {{ pid.uniqueIdentifier || "N/A" }}
                   </span>
                 </p>
-                <p class="flex gap-1 items-center">
+                <p class="flex gap-1 items-start">
                   <span class="font-medium text-[var(--text-heading)]">
                     Link:
                   </span>

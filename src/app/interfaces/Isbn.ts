@@ -24,7 +24,7 @@ export interface ISBN {
 
 export interface createIsbn {
   id?: number;
-  isbnNumber: string;
+  isbnNumber?: string;
   type: ISBNType;
   titleName: string;
   authorIds: number[];

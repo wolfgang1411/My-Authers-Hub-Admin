@@ -20,6 +20,9 @@
         <th class="px-5 py-3 text-left text-sm font-medium">Title</th>
         <th class="px-5 py-3 text-left text-sm font-medium">Published By</th>
         <th class="px-5 py-3 text-left text-sm font-medium">Books Sold</th>
+        <th class="px-5 py-3 text-left text-sm font-medium">
+          Author Copies Price
+        </th>
         <th class="px-5 py-3 text-left text-sm font-medium">ISBN</th>
         <th class="px-5 py-3 text-left text-sm font-medium">Status</th>
         <th class="px-5 py-3 text-left text-sm font-medium">View</th>
@@ -39,9 +42,18 @@
         </td>
 
         <td class="px-5 py-3">{{ t.copiesSold }}</td>
+        @if (t.authors?.[0]?.authorPrintPrice !== null) {
+        <td class="px-5 py-3">
+          ₹{{ t.authors?.[0]?.authorPrintPrice |  number : "1.2-2"  }}
+        </td>
+        }@else{
+        <td class="px-5 py-3">
+          {{ "N/A" }}
+        </td>
+        }
 
         <td class="px-5 py-3 leading-tight">
-          <div>{{ t.isbnPrint || "—" }}</div>
+          <div>{{ t.isbnPrint ? (t.isbnPrint | isbnFormat) : "—" }}</div>
           <div>{{ t.isbnEbook || "" }}</div>
         </td>
 

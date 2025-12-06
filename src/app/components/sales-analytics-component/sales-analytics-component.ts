@@ -59,7 +59,7 @@ export class SalesAnalyticsComponent implements OnInit {
         const values = res.map((item) => {
           const key = Object.keys(item)[0];
           const dayData = item[key] as Record<string, any>;
-          return dayData?.[platform?.name]?.amount ?? 0;
+          return dayData?.[platform?.name]?.count ?? 0;
         });
 
         return {

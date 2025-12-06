@@ -44,7 +44,7 @@ export class Dashboard {
     private titleService: TitleService,
     private authorService: AuthorsService,
     private salesService: SalesService,
-    private userService: UserService
+    public userService: UserService
   ) {}
 
   date = new FormControl(formatDate(new Date(), 'yyyy-MM-dd'));

@@ -35,6 +35,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { StaticValuesService } from '../../services/static-values';
 import { UserService } from '../../services/user';
 import { stat } from 'fs';
+import { AssignIsbn } from 'src/app/components/assign-isbn/assign-isbn';
+import { formatIsbn } from 'src/app/shared/utils/isbn.utils';
 
 @Component({
   selector: 'app-isbn-list',
@@ -91,7 +93,7 @@ export class ISBNList {
     ).filter((v) => v !== 'DELETED');
   });
 
-  lastSelectedStatus: ISBNStatus | 'ALL' = 'ALL';
+  lastSelectedStatus: ISBNStatus | 'ALL' = ISBNStatus.PENDING;
   isbnStatusEnum = ISBNStatus;
   dataSource = new MatTableDataSource<any>();
   searchStr = new Subject<string>();
@@ -228,6 +230,47 @@ export class ISBNList {
     this.updateISBNList();
   }
 
+  async assignISBN(isbn: ISBN) {
+    const dialogRef = this.dialog.open(AssignIsbn, {
+      maxWidth: '90vw',
+      data: {
+        isbn,
+        authorsList: this.authorsList(),
+        publishersList: this.publisherList(),
+        onSubmit: async (createIsbn: createIsbn) => {
+          const response = await this.isbnService.createOrUpdateIsbn({
+            ...createIsbn,
+            id: isbn.id,
+          });
+          this.isbnList.update((list) => {
+            if (isbn) {
+              list = list.map((item) =>
+                item.id === response.id ? response : item
+              );
+            } else {
+              list.unshift(response);
+            }
+
+            return list;
+          });
+          this.updateISBNList();
+          if (response) {
+            dialogRef.close();
+            let html = 'The ISBN has been generated';
+            Swal.fire({
+              title: 'success',
+              html,
+              icon: 'success',
+              heightAuto: false,
+            });
+          }
+        },
+        onClose: () => {
+          dialogRef.close();
+        },
+      },
+    });
+  }
   fetchIsbnList() {
     const filter = { ...this.filter };
     console.log(filter);
@@ -251,7 +294,7 @@ export class ISBNList {
       return {
         ...isbn,
         id: isbn.id,
-        isbnnumber: isbn.isbnNumber,
+        isbnnumber: formatIsbn(isbn.isbnNumber),
         isbntype: isbn.type,
         titlename: isbn.titleName,
         authorname: isbn.authors

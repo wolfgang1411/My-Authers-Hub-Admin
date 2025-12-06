@@ -33,6 +33,7 @@
         class="bg-white p-6 rounded-xl shadow-md border border-gray-200"
       ></app-sales-analytics-component>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[250px]">
+        @if (userService.loggedInUser$()?.accessLevel !== 'AUTHER') {
         <app-recent-authors
           class="bg-white p-6 rounded-xl shadow-md border border-gray-200"
         >
@@ -44,6 +45,7 @@
             </div>
           </ng-template>
         </app-recent-authors>
+        }
         <app-title-preview-component
           [heading]="titleConfigs().bestSelling.heading"
           [filter]="titleConfigs().bestSelling.filter"

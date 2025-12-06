@@ -22,6 +22,7 @@ import { ListTable } from '../../components/list-table/list-table';
 import { MatInputModule } from '@angular/material/input';
 import { PublisherService } from '../publisher/publisher-service';
 import { SafeUrlPipe } from 'src/app/pipes/safe-url-pipe';
+import { formatIsbn } from 'src/app/shared/utils/isbn.utils';
 
 @Component({
   selector: 'app-author-details',
@@ -176,9 +177,13 @@ export class AuthorDetails {
           title: title.name,
           distribution: title.distribution,
           isbnPrint:
-            title.isbnPrint && title.isbnPrint ? title.isbnPrint : 'N/A',
+            title.isbnPrint && title.isbnPrint
+              ? formatIsbn(title.isbnPrint)
+              : 'N/A',
           isbnEbook:
-            title.isbnEbook && title.isbnEbook ? title.isbnEbook : 'N/A',
+            title.isbnEbook && title.isbnEbook
+              ? formatIsbn(title.isbnEbook)
+              : 'N/A',
           pages:
             title.printing && title.printing.length
               ? title.printing[0].totalPages

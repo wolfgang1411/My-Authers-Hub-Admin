@@ -625,5 +625,8 @@
   "titleapprovewarning": "Title Approve Warning",
   "sharedTitles" : "Shared Titles",  "code": "Code",
   "createdAt": "Created At",
-  "usertype":"User Type"
+  "usertype":"User Type",
+  "applyisbn": "Apply ISBN",
+  "assignisbn":"Assign ISBN",
+  "generate":"Generate"
 }

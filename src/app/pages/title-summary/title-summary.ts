@@ -31,6 +31,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { SelectDistributionLinks } from 'src/app/components/select-distribution-links/select-distribution-links';
 import { ApproveTitle } from 'src/app/components/approve-title/approve-title';
+import { IsbnFormatPipe } from 'src/app/pipes/isbn-format-pipe';
 
 @Component({
   selector: 'app-title-summary',
@@ -45,6 +46,7 @@ import { ApproveTitle } from 'src/app/components/approve-title/approve-title';
     SafeUrlPipe,
     CurrencyPipe,
     SharedModule,
+    IsbnFormatPipe,
   ],
   templateUrl: './title-summary.html',
   styleUrl: './title-summary.css',

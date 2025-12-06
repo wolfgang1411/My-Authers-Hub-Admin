@@ -5,10 +5,20 @@ import { MatIconModule } from '@angular/material/icon';
 import { AuthorsService } from '../../pages/authors/authors-service';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule, MatIconButton } from '@angular/material/button';
+import { DecimalPipe } from '@angular/common';
+import { IsbnFormat } from 'src/app/directives/isbn-format';
+import { IsbnFormatPipe } from 'src/app/pipes/isbn-format-pipe';
 
 @Component({
   selector: 'app-author-title-list',
-  imports: [MatIconModule, RouterLink, MatIconButton, MatButtonModule],
+  imports: [
+    MatIconModule,
+    RouterLink,
+    MatIconButton,
+    MatButtonModule,
+    DecimalPipe,
+    IsbnFormatPipe,
+  ],
   templateUrl: './author-title-list.html',
   styleUrl: './author-title-list.css',
 })

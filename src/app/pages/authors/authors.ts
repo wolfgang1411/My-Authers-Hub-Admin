@@ -123,7 +123,7 @@ export class Authors {
           name: author.user.firstName + ' ' + author.user.lastName,
           numberoftitles: author.noOfTitles,
           bookssold: author.booksSold,
-          royaltiesearned: author.totalEarning || 0,
+          royaltiesearned: Number(author.totalEarning || 0).toFixed(2),
           actions: '',
         }));
         const exisitingData = this.dataSource.data;
