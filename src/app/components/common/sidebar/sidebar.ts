@@ -94,6 +94,12 @@ export class Sidebar implements OnInit {
       if (accessLevel !== 'SUPERADMIN' && item.name === 'Bookings') {
         return false;
       }
+      if (
+        (accessLevel === 'AUTHER' || accessLevel === 'PUBLISHER') &&
+        item.name === 'Settings'
+      ) {
+        return false;
+      }
       return true;
     });
   }

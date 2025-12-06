@@ -38,6 +38,12 @@
           }}
         </span>
       </p>
+      <p class="text-sm text-[var(--text-primary)] mt-1">
+        Amount on Hold :
+        <span class="font-medium text-[var(--primary)]">
+          {{ loggedInUser()?.wallet?.holdAmount ?? 0 | currency : "INR" }}</span
+        >
+      </p>
     </div>
     <div
       class="bg-gradient-to-br from-[var(--primary-superlight)] to-white p-6 rounded-2xl shadow-md hover:shadow-xl border border-[var(--primary-superlight)] transition-all"

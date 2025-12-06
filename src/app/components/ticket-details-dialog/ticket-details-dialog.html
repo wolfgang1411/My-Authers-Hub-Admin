@@ -12,7 +12,9 @@
         <mat-icon class="!text-2xl">receipt_long</mat-icon>
       </div>
       <div>
-        <h2 class="text-xl font-medium tracking-wide">Update Ticket #{{ data?.ticket?.id }}</h2>
+        <h2 class="text-xl font-medium tracking-wide">
+          Update Ticket #{{ data.ticket.id }}
+        </h2>
         <p class="text-xs opacity-90">Review requested changes</p>
       </div>
     </div>
@@ -31,7 +33,9 @@
     <div class="bg-gray-50 rounded-lg p-4 space-y-3">
       <div class="flex justify-between items-center">
         <span class="text-gray-600 font-medium">Ticket Type</span>
-        <span class="px-3 py-1 bg-primary/10 text-primary rounded-full font-medium text-sm">
+        <span
+          class="px-3 py-1 bg-primary/10 text-primary rounded-full font-medium text-sm"
+        >
           {{ ticketType() }}
         </span>
       </div>
@@ -65,9 +69,7 @@
         <span class="text-gray-600 font-medium">Approved/Rejected By</span>
         <span class="font-medium">{{ approvedBy() }}</span>
       </div>
-      }
-
-      @if(approvedAt()) {
+      } @if(approvedAt()) {
       <div class="flex justify-between items-center">
         <span class="text-gray-600 font-medium">Approved/Rejected On</span>
         <span class="font-medium">{{ approvedAt() }}</span>
@@ -77,7 +79,9 @@
 
     <!-- Changes Section -->
     <div>
-      <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+      <h3
+        class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2"
+      >
         <mat-icon class="text-primary">compare_arrows</mat-icon>
         Requested Changes ({{ changes().length }})
       </h3>
@@ -85,29 +89,39 @@
       @if (changes().length > 0) {
       <div class="space-y-4">
         @for (change of changes(); track $index) {
-        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+        <div
+          class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+        >
           <div class="flex items-center gap-2 mb-3">
             <mat-icon class="text-primary !text-xl">edit</mat-icon>
             <span class="font-semibold text-gray-800">{{ change.label }}</span>
           </div>
-          
+
           <div class="grid grid-cols-2 gap-4">
             <!-- Before -->
             <div class="bg-red-50 border border-red-200 rounded-lg p-3">
               <div class="flex items-center gap-2 mb-2">
                 <mat-icon class="text-red-600 !text-lg">remove_circle</mat-icon>
-                <span class="text-xs font-medium text-red-700 uppercase">Before</span>
+                <span class="text-xs font-medium text-red-700 uppercase"
+                  >Before</span
+                >
               </div>
-              <p class="text-sm text-gray-700 break-words">{{ change.before }}</p>
+              <p class="text-sm text-gray-700 break-words">
+                {{ change.before }}
+              </p>
             </div>
 
             <!-- After -->
             <div class="bg-green-50 border border-green-200 rounded-lg p-3">
               <div class="flex items-center gap-2 mb-2">
                 <mat-icon class="text-green-600 !text-lg">add_circle</mat-icon>
-                <span class="text-xs font-medium text-green-700 uppercase">After</span>
+                <span class="text-xs font-medium text-green-700 uppercase"
+                  >After</span
+                >
               </div>
-              <p class="text-sm text-gray-700 break-words">{{ change.after }}</p>
+              <p class="text-sm text-gray-700 break-words">
+                {{ change.after }}
+              </p>
             </div>
           </div>
         </div>
@@ -123,7 +137,9 @@
   </div>
 
   <!-- FOOTER -->
-  <div class="flex justify-center gap-3 py-4 bg-gray-50 border-t sticky bottom-0">
+  <div
+    class="flex justify-center gap-3 py-4 bg-gray-50 border-t sticky bottom-0"
+  >
     @if(isSuperAdmin() && isPending()) {
     <button
       class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition flex items-center gap-2"
@@ -134,8 +150,7 @@
       <mat-icon class="animate-spin">refresh</mat-icon>
       } @else {
       <mat-icon>check_circle</mat-icon>
-      }
-      Approve
+      } Approve
     </button>
     <button
       class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition flex items-center gap-2"
@@ -146,8 +161,7 @@
       <mat-icon class="animate-spin">refresh</mat-icon>
       } @else {
       <mat-icon>cancel</mat-icon>
-      }
-      Reject
+      } Reject
     </button>
     }
     <button

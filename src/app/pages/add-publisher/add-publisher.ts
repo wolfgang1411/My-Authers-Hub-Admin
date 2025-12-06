@@ -1015,8 +1015,6 @@ export class AddPublisher {
         });
         return;
       }
-
-      // Social media is optional, so we don't check its validity
       const invalid =
         this.publisherFormGroup.invalid ||
         this.publisherAddressDetails.invalid ||
@@ -1025,7 +1023,6 @@ export class AddPublisher {
         this.publisherFormGroup.markAllAsTouched();
         this.publisherAddressDetails.markAllAsTouched();
         this.publisherBankDetails.markAllAsTouched();
-        // Don't mark social media as touched since fields are optional
         await Swal.fire({
           title: 'Error',
           text: 'Please fill all required fields correctly.',

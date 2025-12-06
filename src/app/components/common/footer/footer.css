@@ -1,0 +1,3 @@
+.footer-link {
+  @apply text-primary-light hover:text-white transition-colors duration-200;
+}
