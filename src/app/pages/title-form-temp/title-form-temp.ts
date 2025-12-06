@@ -200,6 +200,13 @@ export class TitleFormTemp implements OnDestroy {
 
   onSelectDocumentsReady() {
     this.tempForm.get('hasFiles')?.setValue(true);
+    if (
+      this.tempForm.controls.publishingType.value === PublishingType.ONLY_EBOOK
+    ) {
+      this.tempForm.controls.printingFormat.patchValue('publish&print');
+      this.stepper()?.next();
+      return;
+    }
 
     // Use queueMicrotask for DOM access after change detection
     queueMicrotask(() => {

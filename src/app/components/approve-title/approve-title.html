@@ -10,7 +10,10 @@
       <mat-icon>dns</mat-icon>
     </div>
     <div>
-      <h1 mat-dialog-title class="text-xl font-semibold text-[var(--text-heading)] m-0">
+      <h1
+        mat-dialog-title
+        class="text-xl font-semibold text-[var(--text-heading)] m-0"
+      >
         {{ "platformdetails" | translate }}
       </h1>
       <p class="text-sm text-[var(--text-secondary)] mt-1">
@@ -20,9 +23,11 @@
   </div>
 
   <mat-dialog-content class="!p-0 !m-0">
-    <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto pr-2">
+    <div
+      class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto pr-2"
+    >
       @for (platformIdentifier of form.controls.platformIdentifier.controls;
-      track platformIdentifier.controls.platform.value) {
+      track platformIdentifier.controls.platformName.value) {
       <div
         class="group border border-[var(--primary-superlight)] rounded-xl p-5 bg-gradient-to-br from-white to-[var(--light-purple-bg)] hover:shadow-lg hover:scale-[1.02] transition-all"
       >
@@ -34,7 +39,7 @@
               <mat-icon class="!text-lg">storefront</mat-icon>
             </div>
             <h5 class="font-medium text-[var(--text-heading)] text-base">
-              {{ platformIdentifier.controls.platform.value | translate }}
+              {{ platformIdentifier.controls.platformName.value | translate }}
             </h5>
           </div>
           <span

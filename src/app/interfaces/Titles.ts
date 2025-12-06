@@ -540,13 +540,13 @@ export interface TitleDetailsFormGroup {
 
 export interface PlatFormIndetifierGroup {
   uniqueIdentifier: FormControl<string | null>;
-  platform: FormControl<string | null | undefined>;
+  platformName: FormControl<string | null | undefined>;
   type: FormControl<'EBOOK' | 'PRINT'>;
   distributionLink: FormControl<string | null>;
 }
 
 export interface CreatePlatformIdentifier {
-  platform: string;
+  platformName: string;
   type: 'EBOOK' | 'PRINT';
   uniqueIdentifier?: string;
   distributionLink?: string;

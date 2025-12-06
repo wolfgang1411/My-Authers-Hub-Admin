@@ -69,12 +69,12 @@ export class ApproveTitle implements OnInit {
       const platformType = platform.isEbookPlatform ? 'EBOOK' : 'PRINT';
       const match = existing.find(
         (pi) =>
-          pi.platform === platform.name &&
+          pi.platformName === platform.name &&
           (pi.type === platformType || !pi.type)
       );
       this.form.controls.platformIdentifier.push(
         new FormGroup<PlatFormIndetifierGroup>({
-          platform: new FormControl<string | null>(platform.name),
+          platformName: new FormControl<string | null>(platform.name),
           type: new FormControl<'EBOOK' | 'PRINT'>(
             platformType as 'EBOOK' | 'PRINT',
             { nonNullable: true }

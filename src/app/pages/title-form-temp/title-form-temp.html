@@ -205,6 +205,8 @@
           </button>
 
           <!-- Print Only -->
+          @if (tempForm.controls.publishingType.value !==
+          PublishingType.ONLY_EBOOK) {
           <button
             type="button"
             class="btn flex flex-col gap-4 items-center justify-center !py-7 text-base !bg-white !text-primary hover:!bg-primary hover:!text-white hover:shadow-lg border-2 !border-primary hover:!fill-white fill-primary transition-all duration-300 ease-in-out"
@@ -223,6 +225,7 @@
             ></svg-icon>
             {{ "onlyprinting" | translate }}
           </button>
+          }
         </div>
         }
       </div>
