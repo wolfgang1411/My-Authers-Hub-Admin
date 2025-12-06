@@ -133,6 +133,7 @@ export class TitleFormTemp implements OnDestroy {
   private readonly destroy$ = new Subject<void>();
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
+  private isPrefillingRoyalties = false; // Flag to prevent mapRoyaltiesArray from overriding during prefill
 
   constructor(
     private printingService: PrintingService,
@@ -166,6 +167,11 @@ export class TitleFormTemp implements OnDestroy {
     // This will be called in ngOnInit after form is ready
 
     effect(() => {
+      // Skip if we're currently prefilling royalties to prevent overriding API values
+      if (this.isPrefillingRoyalties) {
+        return;
+      }
+
       let publisher = this.publisherSignal();
 
       // If publisher is not set but user is a publisher, set it from logged in user
@@ -805,6 +811,41 @@ export class TitleFormTemp implements OnDestroy {
   mapRoyaltiesArray(publisher: Publishers | null, authors: Author[]) {
     const { printing, pricing, royalties } = this.tempForm.controls;
 
+    // Skip if we're currently prefilling royalties to prevent overriding API values
+    if (this.isPrefillingRoyalties) {
+      return;
+    }
+
+    console.log('[mapRoyaltiesArray] START', {
+      publisherId: publisher?.id,
+      authorCount: authors.length,
+      totalRoyalties: royalties.length,
+      royaltiesWithIds: royalties.controls.filter(c => (c.controls.id.value ?? c.value.id) != null).length,
+      publisherRoyalties: royalties.controls
+        .filter(c => {
+          const pid = c.controls.publisherId.value ?? c.value.publisherId;
+          return pid != null && Number(pid) === Number(publisher?.id);
+        })
+        .map(c => ({
+          platform: c.controls.platform.value ?? c.value.platform,
+          percentage: c.controls.percentage.value ?? c.value.percentage,
+          id: c.controls.id.value ?? c.value.id,
+          publisherId: c.controls.publisherId.value ?? c.value.publisherId
+        })),
+      allRoyalties: royalties.controls.map(c => ({
+        id: c.controls.id.value ?? c.value.id,
+        publisherId: c.controls.publisherId.value ?? c.value.publisherId,
+        authorId: c.controls.authorId.value ?? c.value.authorId,
+        platform: c.controls.platform.value ?? c.value.platform,
+        percentage: c.controls.percentage.value ?? c.value.percentage
+      }))
+    });
+
+    // CRITICAL: If royalties with IDs already exist (from API), we need to be careful
+    // We should preserve existing percentages but still handle new authors
+    // Don't return early - we still need to ensure all authors have royalties
+    // The logic below will preserve existing percentages when they have IDs
+
     // FIXED: Royalty distribution is independent of pricing validity
     // Authors should get their default percentage (100% split) regardless of whether pricing exists
     // This is because royalty % is a creative/contractual split, not dependent on actual pricing
@@ -822,6 +863,9 @@ export class TitleFormTemp implements OnDestroy {
     const publisherId = publisher.id;
     const authorIds = authors.map((a) => a.id);
 
+    // REMOVED: Duplicate removal logic that was incorrectly reading from control.value
+    // STEP 1 below handles this properly by reading from control.controls.*.value
+
     // Get platform names from platform service instead of static values
     const platforms = this.platformService.getPlatformNames();
 
@@ -830,18 +874,47 @@ export class TitleFormTemp implements OnDestroy {
     }
 
     // 🧹 STEP 1: Remove royalties not related to current publisher or authors
+    // CRITICAL: Read from form controls directly, not from value property
+    // The value property might not be updated immediately after prefill
     let removedCount = 0;
+    const beforeRemoval = royalties.length;
     for (let i = royalties.length - 1; i >= 0; i--) {
       const control = royalties.at(i);
-      const { publisherId: pid, authorId: aid } = control.value;
+      // Read from form controls directly (most reliable)
+      const pid = control.controls.publisherId.value ?? control.value.publisherId;
+      const aid = control.controls.authorId.value ?? control.value.authorId;
+      const controlId = control.controls.id.value ?? control.value.id;
 
-      const isValid = pid === publisherId || (aid && authorIds.includes(aid));
+      // Normalize for comparison
+      const normalizedPid = pid != null ? Number(pid) : null;
+      const normalizedPublisherId = publisherId != null ? Number(publisherId) : null;
+      const normalizedAid = aid != null ? Number(aid) : null;
+
+      const isValid = normalizedPid === normalizedPublisherId ||
+        (normalizedAid != null && authorIds.includes(normalizedAid));
 
       if (!isValid) {
+        console.log(`[mapRoyaltiesArray] STEP 1: Removing unrelated royalty`, {
+          controlId,
+          pid,
+          normalizedPid,
+          publisherId,
+          normalizedPublisherId,
+          aid,
+          normalizedAid,
+          authorIds,
+          isValid
+        });
         royalties.removeAt(i);
         removedCount++;
       }
     }
+    console.log(`[mapRoyaltiesArray] STEP 1: Removed ${removedCount} unrelated royalties`, {
+      beforeRemoval,
+      afterRemoval: royalties.length,
+      publisherId,
+      authorIds
+    });
 
     // Calculate default author percentage: 100% if 1 author, equally divided if more than 1
     // FIXED: Authors get default percentage REGARDLESS of pricing/form validity
@@ -864,92 +937,500 @@ export class TitleFormTemp implements OnDestroy {
         : 100; // No authors, publisher gets everything
 
     for (const platform of platforms) {
+      // CRITICAL: Prioritize controls with id (from API) to preserve prefilled values
+      // First, try to find a control with id (prefilled from API) that matches
+      // Platform might be stored as string or object, normalize for comparison
+      // Get all controls with IDs for debugging
+      const allControlsWithIds = royalties.controls.map(c => {
+        const idFromValue = c.value.id;
+        const idFromControl = c.controls.id.value;
+        const idFromRaw = c.getRawValue()?.id;
+        return {
+          idFromValue,
+          idFromControl,
+          idFromRaw,
+          publisherId: c.controls.publisherId.value ?? c.value.publisherId,
+          platformRaw: c.controls.platform.value ?? c.value.platform,
+          platformType: typeof (c.controls.platform.value ?? c.value.platform),
+          hasId: (idFromValue != null) || (idFromControl != null) || (idFromRaw != null)
+        };
+      });
+
+      console.log(`[mapRoyaltiesArray] STEP 2 - Platform ${platform}: Starting lookup`, {
+        platform,
+        publisherId,
+        totalControls: royalties.length,
+        allControlsWithIds
+      });
+
+      // CRITICAL: Check ID from form control directly (most reliable)
       let control = royalties.controls.find(
-        ({ value }) =>
-          value.publisherId === publisherId && value.platform === platform
+        (ctrl) => {
+          // Check ID from form control directly - this is the most reliable way
+          const idFromControl = ctrl.controls.id.value;
+          const hasId = idFromControl != null && idFromControl !== undefined;
+
+          if (!hasId) return false; // Skip controls without id in first pass
+
+          const controlPublisherId = ctrl.controls.publisherId.value ?? ctrl.value.publisherId;
+          const controlPlatformRaw = ctrl.controls.platform.value ?? ctrl.value.platform;
+          // Normalize platform: if it's an object, use the name property; if it's a string, use as-is
+          const controlPlatform = (typeof controlPlatformRaw === 'object' && controlPlatformRaw !== null && 'name' in controlPlatformRaw)
+            ? (controlPlatformRaw as { name: string }).name
+            : String(controlPlatformRaw ?? '');
+
+          // Normalize: convert to numbers for comparison, handle null/undefined
+          const normalizedControlPublisherId = controlPublisherId != null ? Number(controlPublisherId) : null;
+          const normalizedPublisherId = publisherId != null ? Number(publisherId) : null;
+          // String comparison for platform (case-sensitive)
+          const matches = normalizedControlPublisherId === normalizedPublisherId &&
+            controlPlatform === platform;
+
+          if (matches) {
+            console.log(`[mapRoyaltiesArray] STEP 2 - Platform ${platform}: Found control with id`, {
+              idFromControl,
+              controlPublisherId,
+              normalizedControlPublisherId,
+              publisherId,
+              normalizedPublisherId,
+              controlPlatformRaw,
+              controlPlatform,
+              platform,
+              percentage: ctrl.controls.percentage.value
+            });
+          }
+
+          return matches;
+        }
       );
+
+      // If not found, try all controls (including those without id)
+      if (!control) {
+        control = royalties.controls.find(
+          (ctrl) => {
+            const controlPublisherId = ctrl.controls.publisherId.value ?? ctrl.value.publisherId;
+            const controlPlatformRaw = ctrl.controls.platform.value ?? ctrl.value.platform;
+            // Normalize platform: if it's an object, use the name property; if it's a string, use as-is
+            const controlPlatform = (typeof controlPlatformRaw === 'object' && controlPlatformRaw !== null && 'name' in controlPlatformRaw)
+              ? (controlPlatformRaw as { name: string }).name
+              : String(controlPlatformRaw ?? '');
+            // Normalize: convert to numbers for comparison, handle null/undefined
+            const normalizedControlPublisherId = controlPublisherId != null ? Number(controlPublisherId) : null;
+            const normalizedPublisherId = publisherId != null ? Number(publisherId) : null;
+            // String comparison for platform (case-sensitive)
+            return normalizedControlPublisherId === normalizedPublisherId &&
+              controlPlatform === platform;
+          }
+        );
+      }
+
+      // If still not found, try alternative lookup using value property directly with normalization
+      if (!control) {
+        control = royalties.controls.find(
+          (ctrl) => {
+            const controlValue = ctrl.value;
+            const controlPlatformRaw = controlValue.platform;
+            // Normalize platform: if it's an object, use the name property; if it's a string, use as-is
+            const controlPlatform = (typeof controlPlatformRaw === 'object' && controlPlatformRaw !== null && 'name' in controlPlatformRaw)
+              ? (controlPlatformRaw as { name: string }).name
+              : String(controlPlatformRaw ?? '');
+            const normalizedControlPublisherId = controlValue.publisherId != null ? Number(controlValue.publisherId) : null;
+            const normalizedPublisherId = publisherId != null ? Number(publisherId) : null;
+            return normalizedControlPublisherId === normalizedPublisherId &&
+              controlPlatform === platform;
+          }
+        );
+      }
 
       if (!control) {
         // ✅ Create new if missing - set publisher percentage based on author count
-        control = this.createRoyaltyGroup({
-          publisherId,
-          titleId: this.titleId,
-          name:
-            publisher.name ||
-            `${publisher.user?.firstName || ''} ${
-              publisher.user?.lastName || ''
-            }`.trim() ||
-            'Unknown Publisher',
-          platform,
-          percentage: defaultPublisherPercentage, // 100% if no authors, 0% if authors exist
-        });
+        // CRITICAL: Only create if no prefilled control exists (check by id and platform)
+        // This prevents creating duplicate controls when prefilled controls exist but lookup failed
+        const existingPrefilledControl = royalties.controls.find(
+          (ctrl) => {
+            const ctrlValue = ctrl.value;
+            const ctrlPublisherId = ctrl.controls.publisherId.value ?? ctrlValue.publisherId;
+            const ctrlPlatformRaw = ctrl.controls.platform.value ?? ctrlValue.platform;
+            // Normalize platform: if it's an object, use the name property; if it's a string, use as-is
+            const ctrlPlatform = (typeof ctrlPlatformRaw === 'object' && ctrlPlatformRaw !== null && 'name' in ctrlPlatformRaw)
+              ? (ctrlPlatformRaw as { name: string }).name
+              : String(ctrlPlatformRaw ?? '');
+            const ctrlId = ctrlValue.id;
 
-        royalties.push(control);
+            // Normalize for comparison
+            const normalizedCtrlPublisherId = ctrlPublisherId != null ? Number(ctrlPublisherId) : null;
+            const normalizedPublisherId = publisherId != null ? Number(publisherId) : null;
+
+            // Check if this is a prefilled publisher control (has id and matches publisher/platform)
+            const matches = ctrlId !== null &&
+              ctrlId !== undefined &&
+              normalizedCtrlPublisherId === normalizedPublisherId &&
+              ctrlPlatform === platform;
+
+            if (matches) {
+              console.log(`[mapRoyaltiesArray] STEP 2 - Platform ${platform}: Found prefilled control in fallback check`, {
+                id: ctrlId,
+                ctrlPublisherId,
+                normalizedCtrlPublisherId,
+                publisherId,
+                normalizedPublisherId,
+                ctrlPlatformRaw,
+                ctrlPlatform,
+                platform,
+                percentage: ctrl.controls.percentage.value
+              });
+            }
+
+            return matches;
+          }
+        );
+
+        if (existingPrefilledControl) {
+          // Use the existing prefilled control instead of creating a new one
+          control = existingPrefilledControl;
+          console.log(`[mapRoyaltiesArray] STEP 2 - Platform ${platform}: Using existing prefilled control`, {
+            id: existingPrefilledControl.value.id,
+            percentage: existingPrefilledControl.controls.percentage.value
+          });
+        } else {
+        // No prefilled control exists, create new one
+          control = this.createRoyaltyGroup({
+            publisherId,
+            titleId: this.titleId,
+            name:
+              publisher.name ||
+              `${publisher.user?.firstName || ''} ${publisher.user?.lastName || ''
+                }`.trim() ||
+              'Unknown Publisher',
+            platform,
+            percentage: defaultPublisherPercentage, // 100% if no authors, 0% if authors exist
+          });
+
+          royalties.push(control);
+          console.log(`[mapRoyaltiesArray] STEP 2 - Platform ${platform}: Created NEW publisher control`, {
+            percentage: defaultPublisherPercentage,
+            authorCount
+          });
+        }
       } else {
-        // ✅ Keep existing values, but set default if no percentage exists
+        // ✅ Keep existing values from API (if id exists) or if percentage is valid
+        // Read from both control.value and form control value to ensure we get the correct value
         const existingValue = control.value;
+        const hasId = existingValue.id !== null && existingValue.id !== undefined;
 
-        control.patchValue({
-          publisherId,
-          titleId: this.titleId,
-          name:
-            publisher.name ||
-            `${publisher.user?.firstName || ''} ${
-              publisher.user?.lastName || ''
-            }`.trim() ||
-            'Unknown Publisher',
-          platform,
-          percentage:
-            existingValue.percentage !== null &&
-            existingValue.percentage !== undefined
-              ? existingValue.percentage
-              : defaultPublisherPercentage, // Default based on author count if no existing value
+        // Read percentage from form control value (most reliable) or fallback to control.value
+        const existingPercentage = control.controls.percentage.value ?? existingValue.percentage;
+
+        const hasValidPercentage =
+          existingPercentage !== null &&
+          existingPercentage !== undefined &&
+          !isNaN(Number(existingPercentage)) &&
+          Number(existingPercentage) >= 0 &&
+          Number(existingPercentage) <= 100;
+
+        // If control has an id (from API), ALWAYS preserve the existing percentage
+        // For new titles (no id), use defaultPublisherPercentage based on author count
+        // When authors exist, publisher should get 0% (not preserve existing 100%)
+        const percentageToSet = hasId
+          ? existingPercentage // From API - always preserve
+          : defaultPublisherPercentage; // New title - use default (0% if authors exist, 100% if no authors)
+
+        console.log(`[mapRoyaltiesArray] STEP 2 - Platform ${platform}: Found existing publisher control`, {
+          hasId,
+          id: existingValue.id,
+          existingPercentage,
+          hasValidPercentage,
+          percentageToSet,
+          defaultPublisherPercentage
         });
+
+        const publisherName =
+          publisher.name ||
+          `${publisher.user?.firstName || ''} ${publisher.user?.lastName || ''
+            }`.trim() ||
+          'Unknown Publisher';
+
+        // Only update if values have changed
+        // CRITICAL: For new titles (no ID), always check if percentage needs updating
+        // This ensures publisher gets 0% when authors exist, not 100%
+        const currentPercentage = control.controls.percentage.value;
+        const needsUpdate =
+          control.controls.publisherId.value !== publisherId ||
+          control.controls.titleId.value !== this.titleId ||
+          control.controls.name.value !== publisherName ||
+          control.controls.platform.value !== platform ||
+          (!hasId && currentPercentage !== percentageToSet); // Always update percentage for new titles if different
+
+        if (needsUpdate) {
+          control.patchValue({
+            publisherId,
+            titleId: this.titleId,
+            name: publisherName,
+            platform,
+            percentage: percentageToSet, // Preserve existing or use default
+          }, { emitEvent: false }); // Prevent triggering other effects
+        }
+        // If no update needed, do nothing - preserve all existing values including percentage
       }
     }
 
     // 👥 STEP 3: Ensure author royalties per platform
-    // Authors get 100% divided equally if more than 1, or 100% if only 1
+    // Authors get remaining percentage after publisher's share
+    // If publisher has 10%, authors get 90% (divided equally if multiple authors)
     for (const author of authors) {
       const { id: authorId, name, user } = author;
       const authorName =
         name || `${user.firstName || ''} ${user.lastName || ''}`.trim();
 
       for (const platform of platforms) {
+        // Calculate publisher's percentage for this platform
+        // CRITICAL: Look up publisher control to get existing percentage (e.g., 10%)
+        // Author should get remaining (e.g., 90% = 100% - 10%)
+        // PRIORITIZE controls with id (from API) to ensure we get the correct prefilled percentage
+        let publisherControl = royalties.controls.find(
+          (control) => {
+            const controlValue = control.value;
+            const hasId = controlValue.id !== null && controlValue.id !== undefined;
+            if (!hasId) return false; // Skip controls without id in first pass
+
+            const controlPublisherId = control.controls.publisherId.value ?? controlValue.publisherId;
+            const controlPlatformRaw = control.controls.platform.value ?? controlValue.platform;
+            // Normalize platform: if it's an object, use the name property; if it's a string, use as-is
+            const controlPlatform = (typeof controlPlatformRaw === 'object' && controlPlatformRaw !== null && 'name' in controlPlatformRaw)
+              ? (controlPlatformRaw as { name: string }).name
+              : String(controlPlatformRaw ?? '');
+            // Normalize for comparison
+            const normalizedControlPublisherId = controlPublisherId != null ? Number(controlPublisherId) : null;
+            const normalizedPublisherId = publisherId != null ? Number(publisherId) : null;
+            return normalizedControlPublisherId === normalizedPublisherId &&
+              controlPlatform === platform;
+          }
+        );
+
+        // If not found, try all controls (including those without id)
+        if (!publisherControl) {
+          publisherControl = royalties.controls.find(
+            (control) => {
+              const controlPublisherId = control.controls.publisherId.value ?? control.value.publisherId;
+              const controlPlatformRaw = control.controls.platform.value ?? control.value.platform;
+              // Normalize platform: if it's an object, use the name property; if it's a string, use as-is
+              const controlPlatform = (typeof controlPlatformRaw === 'object' && controlPlatformRaw !== null && 'name' in controlPlatformRaw)
+                ? (controlPlatformRaw as { name: string }).name
+                : String(controlPlatformRaw ?? '');
+              // Normalize for comparison
+              const normalizedControlPublisherId = controlPublisherId != null ? Number(controlPublisherId) : null;
+              const normalizedPublisherId = publisherId != null ? Number(publisherId) : null;
+              return normalizedControlPublisherId === normalizedPublisherId &&
+                controlPlatform === platform;
+            }
+          );
+        }
+
+        // If still not found, try alternative lookup using value property directly
+        if (!publisherControl) {
+          publisherControl = royalties.controls.find(
+            (control) => {
+              const controlValue = control.value;
+              const controlPlatformRaw = controlValue.platform;
+              // Normalize platform: if it's an object, use the name property; if it's a string, use as-is
+              const controlPlatform = (typeof controlPlatformRaw === 'object' && controlPlatformRaw !== null && 'name' in controlPlatformRaw)
+                ? (controlPlatformRaw as { name: string }).name
+                : String(controlPlatformRaw ?? '');
+              const normalizedControlPublisherId = controlValue.publisherId != null ? Number(controlValue.publisherId) : null;
+              const normalizedPublisherId = publisherId != null ? Number(publisherId) : null;
+              return normalizedControlPublisherId === normalizedPublisherId &&
+                controlPlatform === platform;
+            }
+          );
+        }
+
+        // Get publisher percentage - use form control's value (most reliable)
+        // CRITICAL: Publisher controls are processed in STEP 2 above, so they should exist here
+        // Read the percentage from the form control to get the actual current value
+        // If publisher control exists from prefill (with id), it has the API value (e.g., 10%)
+        // If publisher control was just created in STEP 2, it has defaultPublisherPercentage (0% when authors exist)
+        let publisherPercentage = 0;
+        if (publisherControl) {
+          // Read from form control value - this is the most reliable way
+          const percentageControl = publisherControl.controls.percentage;
+          const percentageValue = percentageControl.value;
+          const controlId = publisherControl.value.id;
+
+          // If value is null/undefined, try getRawValue() as fallback
+          const finalValue = percentageValue !== null && percentageValue !== undefined
+            ? percentageValue
+            : percentageControl.getRawValue();
+
+          if (finalValue !== null &&
+            finalValue !== undefined &&
+            !isNaN(Number(finalValue))) {
+            publisherPercentage = Number(finalValue);
+          }
+
+          console.log(`[mapRoyaltiesArray] Platform ${platform}: Found publisher control`, {
+            hasId: controlId != null,
+            id: controlId,
+            percentageValue,
+            finalValue,
+            publisherPercentage,
+            controlValue: publisherControl.value
+          });
+        } else {
+          console.warn(`[mapRoyaltiesArray] Platform ${platform}: NO publisher control found!`, {
+            publisherId,
+            totalControls: royalties.length,
+            allPublisherControls: royalties.controls
+              .filter(c => {
+                const pid = c.controls.publisherId.value ?? c.value.publisherId;
+                return pid === publisherId;
+              })
+              .map(c => ({ platform: c.controls.platform.value ?? c.value.platform, id: c.value.id, percentage: c.controls.percentage.value }))
+          });
+        }
+
+        // CRITICAL FIX: If publisher percentage is 0% but we found a control,
+        // double-check if there's a prefilled control with id that has a different percentage.
+        // This handles edge cases where the lookup found a newly created control (0%) instead of prefilled one (10%).
+        if (publisherPercentage === 0 && publisherControl) {
+          const controlValue = publisherControl.value;
+          const hasId = controlValue.id !== null && controlValue.id !== undefined;
+
+          // If the control we found doesn't have an id, try to find one that does (prefilled from API)
+          if (!hasId) {
+            const prefilledControl = royalties.controls.find(
+              (ctrl) => {
+                const ctrlValue = ctrl.value;
+                const ctrlHasId = ctrlValue.id !== null && ctrlValue.id !== undefined;
+                if (!ctrlHasId) return false;
+
+                const ctrlPublisherId = ctrl.controls.publisherId.value ?? ctrlValue.publisherId;
+                const ctrlPlatformRaw = ctrl.controls.platform.value ?? ctrlValue.platform;
+                // Normalize platform: if it's an object, use the name property; if it's a string, use as-is
+                const ctrlPlatform = (typeof ctrlPlatformRaw === 'object' && ctrlPlatformRaw !== null && 'name' in ctrlPlatformRaw)
+                  ? (ctrlPlatformRaw as { name: string }).name
+                  : String(ctrlPlatformRaw ?? '');
+                const normalizedCtrlPublisherId = ctrlPublisherId != null ? Number(ctrlPublisherId) : null;
+                const normalizedPublisherId = publisherId != null ? Number(publisherId) : null;
+                return normalizedCtrlPublisherId === normalizedPublisherId &&
+                  ctrlPlatform === platform;
+              }
+            );
+
+            if (prefilledControl) {
+              // Found a prefilled control - use its percentage instead
+              publisherControl = prefilledControl;
+              const percentageControl = prefilledControl.controls.percentage;
+              const percentageValue = percentageControl.value ?? percentageControl.getRawValue();
+              if (percentageValue !== null &&
+                percentageValue !== undefined &&
+                !isNaN(Number(percentageValue))) {
+                publisherPercentage = Number(percentageValue);
+                console.log(`[mapRoyaltiesArray] Platform ${platform}: Found prefilled control in safeguard`, {
+                  id: prefilledControl.value.id,
+                  percentageValue,
+                  publisherPercentage
+                });
+              }
+            }
+          }
+        }
+
+        // If publisher control not found, it means it wasn't created in STEP 2
+        // This shouldn't happen if prefill worked correctly, but if it does, 
+        // publisher gets 0% and author gets 100% (which is correct for new controls)
+
+        // Calculate remaining percentage for authors (100% - publisher%)
+        // If publisher has 10%, authors get 90%
+        const remainingPercentage = Math.max(0, 100 - publisherPercentage);
+
+        // Calculate author percentage: remaining divided equally among authors
+        // If publisher has 10%, author gets 90% (or 45% each if 2 authors)
+        const authorPercentageForPlatform = authorCount > 0
+          ? authorCount === 1
+            ? remainingPercentage
+            : Math.round((remainingPercentage / authorCount) * 100) / 100
+          : 0;
+
+        console.log(`[mapRoyaltiesArray] Platform ${platform}: Author calculation`, {
+          publisherPercentage,
+          remainingPercentage,
+          authorCount,
+          authorPercentageForPlatform
+        });
+
+        // Look up author control - use form control values for reliable lookup
         let control = royalties.controls.find(
-          ({ value }) =>
-            value.authorId === authorId && value.platform === platform
+          (ctrl) => {
+            const controlAuthorId = ctrl.controls.authorId.value;
+            const controlPlatform = ctrl.controls.platform.value;
+            return controlAuthorId === authorId && controlPlatform === platform;
+          }
         );
 
         if (!control) {
-          // ✅ Create new if missing - set author percentage based on count
+          // ✅ Create new if missing - set author percentage to remaining after publisher
           control = this.createRoyaltyGroup({
             authorId,
             titleId: this.titleId,
             name: authorName,
             platform,
-            percentage: defaultAuthorPercentage, // 100% if 1 author, equally divided if more
+            percentage: authorPercentageForPlatform, // Remaining after publisher's share
           });
           royalties.push(control);
-        } else {
-          // ✅ Preserve existing values, but set default if no percentage exists or is 0
-          const existingValue = control.value;
-          const hasValidPercentage =
-            existingValue.percentage !== null &&
-            existingValue.percentage !== undefined &&
-            existingValue.percentage > 0;
-
-          const percentageToSet = hasValidPercentage
-            ? existingValue.percentage
-            : defaultAuthorPercentage;
-
-          control.patchValue({
+          console.log(`[mapRoyaltiesArray] Platform ${platform}: Created NEW author control`, {
             authorId,
-            titleId: this.titleId,
-            name: authorName,
-            platform,
-            percentage: percentageToSet, // Default based on author count if no valid existing value
+            authorPercentageForPlatform,
+            publisherPercentage
           });
+        } else {
+          // ✅ CRITICAL: Preserve existing values from API (if id exists)
+          // If control has an id, it came from the API - ALWAYS preserve its percentage
+          // For new titles (no id), always use calculated authorPercentageForPlatform
+          const existingValue = control.value;
+          const hasId = existingValue.id !== null && existingValue.id !== undefined;
+          const existingPercentage = existingValue.percentage;
+
+          // CRITICAL: Only preserve percentage if control has ID from API
+          // For new titles, always recalculate based on publisher's share
+          const shouldPreservePercentage = hasId;
+
+          if (shouldPreservePercentage) {
+            // Preserve existing percentage - only update non-percentage fields if they're missing
+            const needsUpdate =
+              control.controls.authorId.value !== authorId ||
+              control.controls.titleId.value !== this.titleId ||
+              control.controls.name.value !== authorName ||
+              control.controls.platform.value !== platform;
+
+            if (needsUpdate) {
+            // Only update non-percentage fields, explicitly preserve percentage
+              control.patchValue({
+                authorId,
+                titleId: this.titleId,
+                name: authorName,
+                platform,
+                percentage: existingPercentage, // CRITICAL: Preserve existing value from API
+              }, { emitEvent: false }); // Prevent triggering other effects
+            }
+            // If no update needed, do nothing - preserve all existing values including percentage
+          } else {
+            // No id and percentage is default or invalid - recalculate based on publisher's share
+            // This handles cases where controls were created with defaults or when author changes
+            // Author gets remaining percentage after publisher
+            console.log(`[mapRoyaltiesArray] Platform ${platform}: Updating author control percentage`, {
+              authorId,
+              existingPercentage,
+              authorPercentageForPlatform,
+              publisherPercentage
+            });
+            control.patchValue({
+              authorId,
+              titleId: this.titleId,
+              name: authorName,
+              platform,
+              percentage: authorPercentageForPlatform, // Remaining after publisher's share
+            }, { emitEvent: false });
+          }
         }
       }
     }
@@ -1193,6 +1674,69 @@ export class TitleFormTemp implements OnDestroy {
       this.tempForm.controls.titleDetails.controls.isbnEbook.disable();
     }
     this.tempForm.controls.titleDetails.controls.authorIds.clear();
+
+    // Prefill royalties FIRST before setting signals to prevent mapRoyaltiesArray from overriding
+    // with default values
+    this.isPrefillingRoyalties = true; // Set flag to prevent mapRoyaltiesArray from running
+    try {
+      // Clear existing royalty controls to start fresh with API data
+      // This ensures we don't have controls with default 100% values that might interfere
+      while (this.tempForm.controls.royalties.length > 0) {
+        this.tempForm.controls.royalties.removeAt(0);
+      }
+
+      data.royalties?.forEach((d) => {
+      const { authorId: aId, publisherId: pId } = d;
+
+      // Extract platform name from platform object (ViewPlatformDto has 'name' property)
+      const platformName =
+        typeof d.platform === 'string'
+          ? d.platform
+          : (d.platform as any)?.name || null;
+
+      if (!platformName) {
+        console.warn('Royalty missing platform name:', d);
+        return;
+      }
+
+      const controlExist = this.tempForm.controls.royalties.controls.find(
+        ({ controls: { authorId, publisherId, platform } }) => {
+          const controlPlatformName = platform.value as string;
+          return (
+            (aId &&
+              aId === authorId.value &&
+              controlPlatformName === platformName) ||
+            (pId &&
+              pId === publisherId.value &&
+              controlPlatformName === platformName)
+          );
+        }
+      );
+
+      if (controlExist) {
+        controlExist.patchValue({
+          id: d.id ?? null,
+          percentage: d.percentage,
+        });
+      } else {
+        this.tempForm.controls.royalties.push(
+          this.createRoyaltyGroup({
+            id: d.id ?? null,
+            platform: platformName,
+            percentage: d.percentage,
+            publisherId: pId,
+            authorId: aId,
+            titleId: this.titleId,
+          })
+        );
+      }
+    });
+    } finally {
+      this.isPrefillingRoyalties = false; // Clear flag after prefilling is complete
+    }
+
+    // Set signals AFTER royalties are prefilled to prevent mapRoyaltiesArray from overriding
+    // existing values with defaults
     this.authorsSignal.set(data.authors?.map(({ author }) => author) || []);
     this.publisherSignal.set(data.publisher);
 
@@ -1229,51 +1773,6 @@ export class TitleFormTemp implements OnDestroy {
         this.cdr.markForCheck();
       });
     }
-
-    data.royalties?.forEach((d) => {
-      const { authorId: aId, publisherId: pId } = d;
-
-      // Extract platform name from platform object (ViewPlatformDto has 'name' property)
-      const platformName =
-        typeof d.platform === 'string'
-          ? d.platform
-          : (d.platform as any)?.name || null;
-
-      if (!platformName) {
-        console.warn('Royalty missing platform name:', d);
-        return;
-      }
-
-      const controlExist = this.tempForm.controls.royalties.controls.find(
-        ({ controls: { authorId, publisherId, platform } }) => {
-          const controlPlatformName = platform.value as string;
-          return (
-            (aId &&
-              aId === authorId.value &&
-              controlPlatformName === platformName) ||
-            (pId &&
-              pId === publisherId.value &&
-              controlPlatformName === platformName)
-          );
-        }
-      );
-
-      if (controlExist) {
-        controlExist.patchValue({
-          percentage: d.percentage,
-        });
-      } else {
-        this.tempForm.controls.royalties.push(
-          this.createRoyaltyGroup({
-            platform: platformName,
-            percentage: d.percentage,
-            publisherId: pId,
-            authorId: aId,
-            titleId: this.titleId,
-          })
-        );
-      }
-    });
 
     if (
       data.distribution?.find(
@@ -2439,6 +2938,10 @@ export class TitleFormTemp implements OnDestroy {
           if (response) {
             this.titleDetails.set(response);
             this.prefillFormData(response);
+            this.mapRoyaltiesArray(
+              response.publisher,
+              response.authors?.map(({ author }) => author) || []
+            );
           }
         } catch (reloadError) {
           console.error('Error reloading title:', reloadError);
