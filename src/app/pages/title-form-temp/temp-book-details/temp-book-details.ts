@@ -456,6 +456,8 @@ export class TempBookDetails implements OnDestroy {
   }
 
   private editorInstance: any = null;
+  private isUpdatingFromEditor = false;
+  private isUpdatingFromForm = false;
 
   onEditorReady(editor: any): void {
     this.editorInstance = editor;
@@ -469,29 +471,65 @@ export class TempBookDetails implements OnDestroy {
 
     // Listen to editor changes and update form control
     editor.model.document.on('change:data', () => {
+      if (this.isUpdatingFromForm) return;
+
+      this.isUpdatingFromEditor = true;
       const data = editor.getData();
       const currentFormValue =
         this.titleDetailsGroup().controls.longDescription.value || '';
+
       // Only update if different to avoid circular updates
       if (data !== currentFormValue) {
         this.titleDetailsGroup().controls.longDescription.setValue(data, {
-          emitEvent: true,
+          emitEvent: false,
         });
         this.titleDetailsGroup().controls.longDescription.markAsTouched();
       }
+
+      // Use setTimeout to reset the flag after Angular's change detection
+      setTimeout(() => {
+        this.isUpdatingFromEditor = false;
+      }, 0);
     });
+
+    // Subscribe to form control value changes to update editor only when changed externally
+    this.titleDetailsGroup()
+      .controls.longDescription.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe((newValue) => {
+        if (this.isUpdatingFromEditor) return;
+
+        const editorData = editor.getData();
+        const formValue = newValue || '';
+
+        // Only update editor if the value is different (external change)
+        if (editorData !== formValue) {
+          this.isUpdatingFromForm = true;
+          editor.setData(formValue);
+          setTimeout(() => {
+            this.isUpdatingFromForm = false;
+          }, 0);
+        }
+      });
   }
 
   onEditorChange(event: any): void {
+    if (this.isUpdatingFromForm) return;
+
+    this.isUpdatingFromEditor = true;
     const data = event.editor.getData();
     const currentFormValue =
       this.titleDetailsGroup().controls.longDescription.value || '';
+
     // Only update if different to avoid unnecessary updates
     if (data !== currentFormValue) {
       this.titleDetailsGroup().controls.longDescription.setValue(data, {
-        emitEvent: true,
+        emitEvent: false,
       });
       this.titleDetailsGroup().controls.longDescription.markAsTouched();
     }
+
+    setTimeout(() => {
+      this.isUpdatingFromEditor = false;
+    }, 0);
   }
 }

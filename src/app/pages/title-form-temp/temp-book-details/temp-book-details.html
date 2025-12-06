@@ -147,7 +147,7 @@
             [editor]="Editor"
             [config]="editorConfig"
             (ready)="onEditorReady($event)"
-            [formControl]="titleDetailsGroup().controls.longDescription"
+            (change)="onEditorChange($event)"
           ></ckeditor>
         </div>
         @if(titleDetailsGroup().controls.longDescription.hasError('minWords') &&
