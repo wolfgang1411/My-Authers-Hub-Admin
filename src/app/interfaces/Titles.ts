@@ -18,6 +18,7 @@ import {
   TitleConfigType,
   PlatForm,
   PricingStatus,
+  Platform,
 } from './index';
 
 export interface Title {
@@ -74,7 +75,7 @@ export interface TitleStepProgress {
 
 export interface TitlePlatformIdentifier {
   id: number;
-  platform: PlatForm;
+  platform: Platform;
   type: 'EBOOK' | 'PRINT';
   sales: number;
   totalAmount: number;

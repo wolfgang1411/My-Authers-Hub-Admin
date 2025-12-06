@@ -251,6 +251,13 @@ export class TitleSummary {
     return this.getRoyaltyByPlatform(platform).filter((r) => r.authorId);
   }
 
+  getAuthorRoyaltyOnly(platform: PlatForm): number {
+    const author = this.getAuthorRoyalties(platform)?.find(
+      (a) => a.authorId === this.loggedInUser()?.auther?.id
+    );
+    return author?.percentage ?? 0;
+  }
+
   getAuthorName(authorId: number): string {
     const author = this.titleDetails()?.authors?.find(
       (a: any) => a.author?.id === authorId

@@ -60,11 +60,12 @@ export class Payouts implements OnInit {
   searchStr = new Subject<string>();
 
   displayedColumns: string[] = [
-    'amount',
-    'status',
+    'usertype',
     'user',
     'emailId',
     'bankdetails',
+    'amount',
+    'status',
     'actions',
   ];
   dataSource = new MatTableDataSource<any>([]);
@@ -72,6 +73,7 @@ export class Payouts implements OnInit {
   setDataSource() {
     this.dataSource.data =
       this.payouts()?.map((payout) => {
+        const usertype = payout.user.accessLevel;
         const firstName =
           payout.user.publisher?.name ||
           payout.user.auther?.name ||
@@ -117,12 +119,13 @@ export class Payouts implements OnInit {
         return {
           ...payout,
           orderid: '#' + payout.id,
+          usertype: `<b>${usertype}</b>`,
           user: `${firstName} ${payout.user?.lastName || ''}`,
           emailId: email,
           bankdetails: `Account Holder Name : ${accountName} <br> Bank Name : ${bankName} <br> Account No : ${accountNo} <br> IFSC Code : ${ifscCode}<br>
           `,
           amount: payout.requestedAmount + ' ' + 'INR',
-          status, // Display string for table
+          status: `<b>${status}</b>`, // Display string for table
           payoutStatus: payout.status, // Original status for logic checks
         };
       }) || [];

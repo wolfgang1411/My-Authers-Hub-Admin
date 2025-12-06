@@ -102,6 +102,47 @@
                 {{ titleDetails()?.status }}
               </span>
             </div>
+
+            <!-- PLATFORM LINKS (BASIC DETAILS) -->
+@if (titleDetails()?.titlePlatformIdentifier?.length ) {
+<div class="mt-6">
+  <h3 class="text-sm font-medium text-[var(--text-heading)] mb-2 underline">
+    Platforms & Links
+  </h3>
+
+  <ul class="text-sm text-[var(--text-primary)] space-y-2">
+    @for (pid of titleDetails()?.titlePlatformIdentifier; track pid.id) {
+    <li class="flex flex-col">
+      <span class="font-medium text-[var(--text-heading)]">
+        {{ pid.platform?.name }}
+      </span>
+
+      @if (pid.distributionLink) {
+      <div class="flex items-center gap-2">
+        <a
+          [href]="pid.distributionLink"
+          target="_blank"
+          class="underline text-[var(--primary)] hover:text-[var(--purple)] transition"
+        >
+          {{ pid.distributionLink }}
+        </a>
+
+        <mat-icon
+          class="!text-base cursor-pointer text-[var(--primary)] hover:text-[var(--purple)]"
+          (click)="copyDistributionLink(pid.distributionLink)"
+          title="Copy link"
+          >content_copy</mat-icon
+        >
+      </div>
+      } @else {
+      <span class="text-[var(--text-secondary)]">No link available</span>
+      }
+    </li>
+    }
+  </ul>
+</div>
+}
+
           </div>
         </div>
 
@@ -130,6 +171,7 @@
             </span>
           </div>
         </div>
+
       </div>
     </mat-tab>
 
@@ -179,7 +221,7 @@
               </div>
               
               <!-- 📄 MANUSCRIPT Document -->
-              @if (media.type === 'MANUSCRIPT' && media.url) {
+              @if (media.type === 'MANUSCRIPT' && media.url && loggedInUser()?.accessLevel !== 'AUTHER') {
               <div
                 class="h-48 flex flex-col items-center justify-center bg-gradient-to-br from-[var(--light-purple-bg)] to-[var(--primary-superlight)] rounded-lg border border-[var(--primary-light)]"
               >
@@ -319,6 +361,14 @@
           <div
             class="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-5 text-sm leading-6"
           >
+
+           <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--primary)] text-base">money</mat-icon>
+              <p  class="font-semibold">
+                <label>Print Cost : </label>
+                {{ p?.customPrintCost !== null ? (p?.customPrintCost | currency:"INR") : (p?.printCost | currency: "INR") }}
+              </p>
+            </div>
             <div class="flex items-center gap-2">
               <mat-icon class="text-[var(--primary)] text-base">style</mat-icon>
               <p>
@@ -458,9 +508,7 @@
 
     <!-- PRICING & ROYALTY TAB -->
     @if (
-      titleDetails()?.printingOnly !== true &&
-      loggedInUser()?.accessLevel !== 'AUTHER'
-    ) {
+      titleDetails()?.printingOnly !== true   ) {
     <mat-tab label="Pricing & Royalty">
       <div
         class="bg-white border border-[var(--primary-superlight)] rounded-2xl shadow-sm p-6 mb-6 m-6"
@@ -468,7 +516,8 @@
         <h3
           class="text-lg font-medium text-[var(--text-heading)] border-b border-[var(--primary-superlight)] pb-2 mb-4"
         >
-          Pricing & Royalty
+           {{ loggedInUser()?.accessLevel !== 'AUTHER'
+    ? 'Pricing & Royalty' : 'Royalty'}}
         </h3>
 
         @if (platformsWithData().length > 0) {
@@ -500,6 +549,8 @@
                 </div>
               </div>
 
+              @if (    loggedInUser()?.accessLevel !== 'AUTHER'
+) {
               <div class="text-right">
                 <span
                   class="text-[var(--green-2)] text-xs font-medium bg-[var(--light-green-bg)] px-3 py-1 rounded-full border border-[var(--light-green-2)]"
@@ -513,11 +564,15 @@
                   >
                 </p>
               </div>
+            }
             </div>
 
             <!-- CONTENT SECTION WITH FIXED HEIGHT -->
+          
             <div class="flex flex-col gap-4 md:gap-6 min-h-[220px]">
               <!-- LEFT: Pricing block -->
+                 @if (    loggedInUser()?.accessLevel !== 'AUTHER'
+) {
               <div class="w-full">
                 <div class="text-sm text-[var(--text-primary)] space-y-2">
                   <div class="flex justify-between">
@@ -561,6 +616,7 @@
                   </div>
                 </div>
               </div>
+            }
               <!-- RIGHT: Royalty section -->
               <div class="w-full flex flex-col">
                 <!-- Title -->
@@ -580,9 +636,22 @@
                     </p>
                   </div>
 
-                  <div class="text-xs font-semibold text-[var(--primary)]">
+                  <!-- <div class="text-xs font-semibold text-[var(--primary)]">
                     Total: {{ getTotalRoyalty(platform) }}%
-                  </div>
+                  </div> -->
+                  @if (loggedInUser()?.accessLevel !== 'AUTHER') {
+
+                  
+                  <div class="text-xs font-semibold text-[var(--primary)]">
+  Total:
+  {{
+    loggedInUser()?.accessLevel === 'AUTHER'
+      ? getAuthorRoyaltyOnly(platform)
+      : getTotalRoyalty(platform)
+  }}%
+</div>
+                  }
+
                 </div>
 
                 <!-- Table -->
@@ -595,7 +664,9 @@
                   >
                     <div class="col-span-5">Name</div>
                     <div class="col-span-3 text-center">Role</div>
-                    <div class="col-span-3 text-right">(%)</div>
+                   @if(loggedInUser()?.accessLevel !== 'AUTHER'){
+<div class="col-span-3 text-right">(%)</div>
+                   } 
                     <div class="col-span-3 text-right">(₹)</div>
                   </div>
 
@@ -603,7 +674,7 @@
                     class="divide-y divide-[var(--primary-superlight)] border border-b-[var(--primary-superlight)]"
                   >
                     <!-- Publisher row -->
-                    @if (getPublisherRoyalty(platform)) {
+                    @if (getPublisherRoyalty(platform) && loggedInUser()?.accessLevel !== 'AUTHER') {
                     <div
                       class="grid grid-cols-14 px-3 py-2 hover:bg-[var(--light-purple-bg)] transition"
                     >
@@ -652,7 +723,7 @@
                     }
 
                     <!-- Author rows -->
-                    @for (r of getAuthorRoyalties(platform); track $index) {
+                    <!-- @for (r of getAuthorRoyalties(platform); track $index) {
                     <div
                       class="grid grid-cols-14 px-3 py-2 hover:bg-[var(--light-purple-bg)] transition"
                     >
@@ -683,11 +754,48 @@
                         }}
                       </div>
                     </div>
-                    }
+                    } -->
+@for (r of getAuthorRoyalties(platform); track r.authorId) {
+
+  @if (
+    loggedInUser()?.accessLevel !== 'AUTHER' ||
+    (loggedInUser()?.accessLevel === 'AUTHER' &&
+      r.authorId === loggedInUser()?.auther?.id)
+  ) {
+    <div
+      class="grid grid-cols-14 px-3 py-2 hover:bg-[var(--light-purple-bg)] transition"
+    >
+      <div class="col-span-5 font-medium text-[var(--text-heading)]">
+        {{ getAuthorName(r.authorId) }}
+      </div>
+
+      <div class="col-span-3 text-center text-xs text-[var(--text-primary)]">
+        Author
+      </div>
+     @if (loggedInUser()?.accessLevel !== 'AUTHER') {
+
+       <div class="col-span-3 text-right font-semibold text-[var(--green-2)]">
+         {{ r.percentage }}%
+        </div>
+      }
+
+      <div class="col-span-3 text-right text-xs text-[var(--green-2)]">
+        ₹{{
+          getRoyaltyAmount(platform, r.percentage, false, r.authorId)
+            | number : "1.0-2"
+        }}
+      </div>
+    </div>
+  }
+}
+
+
                   </div>
                 </div>
 
                 <!-- Royalty Bar -->
+                   @if (    loggedInUser()?.accessLevel !== 'AUTHER'
+) {
                 <div class="mt-4">
                   <p class="text-xs text-[var(--text-secondary)] mb-1">
                     % Royalty Distribution (Total
@@ -703,8 +811,10 @@
                     ></div>
                   </div>
                 </div>
+              }
               </div>
             </div>
+          
           </div>
           }
         </div>
@@ -825,7 +935,7 @@
                     <mat-icon>storefront</mat-icon>
                   </div>
                   <h5 class="font-medium text-[var(--text-heading)] text-base">
-                    {{ pid.platform }}
+                    {{ pid.platform.name }}
                   </h5>
                 </div>
                 <span
@@ -870,6 +980,8 @@
                   <span>N/A</span>
                   }
                 </p>
+                  @if (    loggedInUser()?.accessLevel !== 'AUTHER'
+)  {
                 <p>
                   <span class="font-medium text-[var(--text-heading)]">
                     Total Sales:
@@ -896,6 +1008,7 @@
                     }
                   </span>
                 </p>
+              }
               </div>
             </div>
             }

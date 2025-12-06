@@ -624,5 +624,6 @@
   "errorbuyingpoints": "Failed to buy/assign points. Please try again.",
   "titleapprovewarning": "Title Approve Warning",
   "sharedTitles" : "Shared Titles",  "code": "Code",
-  "createdAt": "Created At"
+  "createdAt": "Created At",
+  "usertype":"User Type"
 }

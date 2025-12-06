@@ -27,21 +27,21 @@
         </div>
       </div>
       <div class="text-2xl font-medium text-[var(--text-heading)]">
-        ₹{{ loggedInUser()?.wallet?.totalAmount ?? 0 }}
+        ₹{{ loggedInUser()?.wallet?.totalAmount ?? 0 | number : "1.0-2" }}
       </div>
       <p class="text-sm text-[var(--text-primary)] mt-1">
         Withdrawable Amount :
         <span class="font-medium text-[var(--primary)]">
-          {{
+          ₹{{
             (loggedInUser()?.wallet?.totalAmount ?? 0) -
-              (loggedInUser()?.wallet?.holdAmount ?? 0) | currency : "INR"
+              (loggedInUser()?.wallet?.holdAmount ?? 0) | number : "1.0-2"
           }}
         </span>
       </p>
       <p class="text-sm text-[var(--text-primary)] mt-1">
         Amount on Hold :
         <span class="font-medium text-[var(--primary)]">
-          {{ loggedInUser()?.wallet?.holdAmount ?? 0 | currency : "INR" }}</span
+          {{ loggedInUser()?.wallet?.holdAmount ?? 0 | number : "1.0-2" }}</span
         >
       </p>
     </div>
@@ -90,7 +90,7 @@
         </div>
       </div>
       <div class="text-2xl font-medium text-[var(--text-heading)]">
-        {{ totalPaidFormatted() | currency : "INR" }}
+        ₹{{ totalPaidFormatted() | number : "1.0-2" }}
       </div>
       <!-- <button
         class="mt-4 bg-[var(--green-2)] hover:bg-[var(--green-2)] text-white py-2 px-4 rounded-lg font-medium text-sm shadow-md active:bg-green-2/80"
