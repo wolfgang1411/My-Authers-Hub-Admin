@@ -100,6 +100,9 @@ export class Sidebar implements OnInit {
       ) {
         return false;
       }
+      if (accessLevel === 'AUTHER' && item.name === 'ISBN') {
+        return false;
+      }
       return true;
     });
   }

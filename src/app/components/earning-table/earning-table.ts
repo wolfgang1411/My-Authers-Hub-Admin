@@ -1,13 +1,12 @@
 import { Component, effect, input } from '@angular/core';
 import { Earnings } from '../../interfaces/Earnings';
-import { AuthorsService } from '../../pages/authors/authors-service';
-import { PublisherService } from '../../pages/publisher/publisher-service';
 import { MatTableDataSource } from '@angular/material/table';
 import { ListTable } from '../list-table/list-table';
 import { TranslateService } from '@ngx-translate/core';
 import { formatCurrency } from '@angular/common';
 import { format } from 'date-fns';
 import { PlatForm } from '../../interfaces';
+import { UserService } from 'src/app/services/user';
 
 @Component({
   selector: 'app-earning-table',
@@ -30,9 +29,37 @@ export class EarningTable {
   ];
   dataSource = new MatTableDataSource<any>();
 
-  constructor(private translateService: TranslateService) {
+  constructor(
+    private translateService: TranslateService,
+    public userService: UserService
+  ) {
     effect(async () => {
+      const user = this.userService.loggedInUser$();
+      const isAuthor = user?.accessLevel === 'AUTHER';
       const earnings = this.earnings();
+
+      this.displayedColumns = isAuthor
+        ? [
+            'title',
+            'publisher/author',
+            'royaltyAmount',
+            'amount',
+            'platform',
+            'quantity',
+            'addedAt',
+            'holduntil',
+          ]
+        : [
+            'title',
+            'publisher/author',
+            'royaltyAmount',
+            'customPrintMargin',
+            'amount',
+            'platform',
+            'quantity',
+            'addedAt',
+            'holduntil',
+          ];
 
       const mappedData = earnings?.map((earning) => {
         // Check if this is an ebook platform
@@ -44,9 +71,6 @@ export class EarningTable {
         const isEbookPlatform = ebookPlatforms.includes(
           earning.platform.name as PlatForm
         );
-
-        // Calculate custom print margin if this is a publisher earning and printing details exist
-        // Only for print platforms (not ebook platforms)
         let customPrintMargin = 0;
         const isPublisherEarning =
           earning.royalty.publisher && !earning.royalty.author;
