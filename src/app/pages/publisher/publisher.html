@@ -34,6 +34,15 @@
         <mat-icon class="material-icons">support_agent</mat-icon>
         {{ "raisedtickets" | translate }}
       </button>
+      <button
+        matButton
+        matButton="filled"
+        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        (click)="onExportToExcel()"
+      >
+        <mat-icon class="material-icons">download</mat-icon>
+        {{ "export" | translate }}
+      </button>
     </div>
   </div>
 

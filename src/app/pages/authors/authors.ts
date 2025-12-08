@@ -32,6 +32,9 @@ import { MatMenuModule } from '@angular/material/menu';
 import { SalesService } from '../../services/sales';
 import { AuthorTitleList } from '../../components/author-title-list/author-title-list';
 import { UserService } from 'src/app/services/user';
+import { exportToExcel } from '../../common/utils/excel';
+import { format } from 'date-fns';
+import { Logger } from '../../services/logger';
 
 @Component({
   selector: 'app-authors',
@@ -60,7 +63,8 @@ export class Authors {
     private translateService: TranslateService,
     private titleService: TitleService,
     private salesService: SalesService,
-    private userService: UserService
+    private userService: UserService,
+    private logger: Logger
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -523,5 +527,93 @@ export class Authors {
         },
       },
     });
+  }
+
+  async onExportToExcel(): Promise<void> {
+    try {
+      const authors = this.authors();
+      if (!authors || authors.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: this.translateService.instant('warning') || 'Warning',
+          text:
+            this.translateService.instant('nodatatoexport') ||
+            'No data to export',
+        });
+        return;
+      }
+
+      const exportColumns = this.displayedColumns.filter(
+        (col) => col !== 'actions'
+      );
+
+      const exportData = authors.map((author) => {
+        const dataRow: Record<string, any> = {};
+
+        exportColumns.forEach((col) => {
+          switch (col) {
+            case 'name':
+              dataRow[col] =
+                author.user.firstName + ' ' + author.user.lastName;
+              break;
+            case 'numberoftitles':
+              dataRow[col] = author.noOfTitles || 0;
+              break;
+            case 'bookssold':
+              dataRow[col] = author.booksSold || 0;
+              break;
+            case 'royaltiesearned':
+              dataRow[col] = Number(author.totalEarning || 0).toFixed(2);
+              break;
+            case 'status':
+              dataRow[col] = author.status || '-';
+              break;
+            default:
+              dataRow[col] = (author as any)[col] || '-';
+          }
+        });
+
+        return dataRow;
+      });
+
+      const headers: Record<string, string> = {
+        name: this.translateService.instant('name') || 'Name',
+        numberoftitles:
+          this.translateService.instant('numberoftitles') ||
+          'Number of Titles',
+        bookssold:
+          this.translateService.instant('bookssold') || 'Books Sold',
+        royaltiesearned:
+          this.translateService.instant('royaltiesearned') ||
+          'Royalties Earned',
+        status: this.translateService.instant('status') || 'Status',
+      };
+
+      const currentPage = this.filter().page || 1;
+      const fileName = `authors-page-${currentPage}-${format(
+        new Date(),
+        'dd-MM-yyyy'
+      )}`;
+
+      exportToExcel(exportData, fileName, headers, 'Authors');
+
+      Swal.fire({
+        icon: 'success',
+        title: this.translateService.instant('success') || 'Success',
+        text:
+          this.translateService.instant('exportsuccessful') ||
+          'Data exported successfully',
+      });
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      this.logger.logError(error);
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error') || 'Error',
+        text:
+          this.translateService.instant('errorexporting') ||
+          'Failed to export data. Please try again.',
+      });
+    }
   }
 }

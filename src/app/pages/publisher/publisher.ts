@@ -37,6 +37,9 @@ import { ChangePassword } from '../../components/change-password/change-password
 import { UserService } from '../../services/user';
 import { AuthService } from '../../services/auth';
 import { TranslateService } from '@ngx-translate/core';
+import { exportToExcel } from '../../common/utils/excel';
+import { Logger } from '../../services/logger';
+import { format } from 'date-fns';
 
 @Component({
   selector: 'app-publisher',
@@ -62,7 +65,8 @@ export class Publisher implements OnInit {
     private staticValueService: StaticValuesService,
     private userService: UserService,
     private authService: AuthService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private logger: Logger
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -163,9 +167,9 @@ export class Publisher implements OnInit {
     if (mapped.length > 0) {
       const filtrCol = { ...mapped[0] };
       delete (filtrCol as any).id;
-      if (this.dataSource.data.length === 0) {
-        this.displayedColumns = Object.keys(filtrCol);
-      }
+      // if (this.dataSource.data.length === 0) {
+      //   this.displayedColumns = Object.keys(filtrCol);
+      // }
     }
     this.dataSource.data = mapped;
   }
@@ -454,5 +458,92 @@ export class Publisher implements OnInit {
         },
       },
     });
+  }
+
+  async onExportToExcel(): Promise<void> {
+    try {
+      const publishers = this.publishers();
+      if (!publishers || publishers.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: this.translateService.instant('warning') || 'Warning',
+          text:
+            this.translateService.instant('nodatatoexport') ||
+            'No data to export',
+        });
+        return;
+      }
+
+      // Only export the columns that are displayed in the UI (excluding 'actions')
+      const exportColumns = this.displayedColumns.filter(
+        (col) => col !== 'actions'
+      );
+
+      const exportData = publishers.map((publisher) => {
+        const dataRow: Record<string, any> = {};
+
+        exportColumns.forEach((col) => {
+          switch (col) {
+            case 'name':
+              dataRow[col] = publisher.name || '-';
+              break;
+            case 'nooftitles':
+              dataRow[col] = publisher.noOfTitles || 0;
+              break;
+            case 'noofauthors':
+              dataRow[col] = publisher.noOfAuthors || 0;
+              break;
+            case 'email':
+              dataRow[col] = publisher.email || publisher.user?.email || '-';
+              break;
+            case 'phonenumber':
+              dataRow[col] =
+                publisher.phoneNumber || publisher.user?.phoneNumber || '-';
+              break;
+            default:
+              dataRow[col] = (publisher as any)[col] || '-';
+          }
+        });
+
+        return dataRow;
+      });
+
+      const headers: Record<string, string> = {
+        name: this.translateService.instant('name') || 'Name',
+        nooftitles:
+          this.translateService.instant('nooftitles') || 'No. of Titles',
+        noofauthors:
+          this.translateService.instant('noofauthors') || 'No. of Authors',
+        email: this.translateService.instant('email') || 'Email',
+        phonenumber:
+          this.translateService.instant('phonenumber') || 'Phone Number',
+      };
+
+      const currentPage = this.filter().page || 1;
+      const fileName = `publishers-page-${currentPage}-${format(
+        new Date(),
+        'dd-MM-yyyy'
+      )}`;
+
+      exportToExcel(exportData, fileName, headers, 'Publishers');
+
+      Swal.fire({
+        icon: 'success',
+        title: this.translateService.instant('success') || 'Success',
+        text:
+          this.translateService.instant('exportsuccessful') ||
+          'Data exported successfully',
+      });
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      this.logger.logError(error);
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error') || 'Error',
+        text:
+          this.translateService.instant('errorexporting') ||
+          'Failed to export data. Please try again.',
+      });
+    }
   }
 }

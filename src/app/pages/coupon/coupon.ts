@@ -11,6 +11,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { TitleService } from '../titles/title-service';
 import Swal from 'sweetalert2';
+import { exportToExcel } from '../../common/utils/excel';
+import { TranslateService } from '@ngx-translate/core';
+import { format } from 'date-fns';
+import { Logger } from '../../services/logger';
 
 @Component({
   selector: 'app-coupon',
@@ -22,6 +26,8 @@ export class CouponComponent implements OnInit {
   matDialog = inject(MatDialog);
   titleService = inject(TitleService);
   couponService = inject(CouponService);
+  translateService = inject(TranslateService);
+  logger = inject(Logger);
 
   titleList = signal<Title[] | null>(null);
   dataSource = new MatTableDataSource<any>();
@@ -258,6 +264,101 @@ export class CouponComponent implements OnInit {
       });
     } catch (error) {
       console.log(error);
+    }
+  }
+
+  async onExportToExcel(): Promise<void> {
+    try {
+      const coupons = this.coupons();
+      if (!coupons || coupons.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: this.translateService.instant('warning') || 'Warning',
+          text:
+            this.translateService.instant('nodatatoexport') ||
+            'No data to export',
+        });
+        return;
+      }
+
+      const exportColumns = this.displayedColumns.filter(
+        (col) => col !== 'actions'
+      );
+
+      const exportData = coupons.map((coupon) => {
+        const dataRow: Record<string, any> = {};
+
+        exportColumns.forEach((col) => {
+          switch (col) {
+            case 'coupon':
+              dataRow[col] = coupon.code || '-';
+              break;
+            case 'discountvalue':
+              dataRow[col] = `${coupon.discountValue}${
+                coupon.discountType === DiscountType.PERCENT ? '%' : ''
+              }`;
+              break;
+            case 'startdate/enddate':
+              dataRow[col] =
+                coupon.startDate || coupon.endDate
+                  ? `${
+                      coupon.startDate
+                        ? format(new Date(coupon.startDate), 'dd-MM-yyyy')
+                        : '-'
+                    } - ${
+                      coupon.endDate
+                        ? format(new Date(coupon.endDate), 'dd-MM-yyyy')
+                        : '-'
+                    }`
+                  : '-';
+              break;
+            case 'usedcount':
+              dataRow[col] = coupon.usedCount || 0;
+              break;
+            default:
+              dataRow[col] = (coupon as any)[col] || '-';
+          }
+        });
+
+        return dataRow;
+      });
+
+      const headers: Record<string, string> = {
+        coupon: this.translateService.instant('coupon') || 'Coupon',
+        discountvalue:
+          this.translateService.instant('discountvalue') || 'Discount Value',
+        'startdate/enddate':
+          this.translateService.instant('startdate/enddate') ||
+          'Start Date/End Date',
+        usedcount:
+          this.translateService.instant('usedcount') || 'Used Count',
+      };
+
+      const currentPage = this.filter().page || 1;
+      const fileName = `coupons-page-${currentPage}-${format(
+        new Date(),
+        'dd-MM-yyyy'
+      )}`;
+
+      exportToExcel(exportData, fileName, headers, 'Coupons');
+
+      Swal.fire({
+        icon: 'success',
+        title: this.translateService.instant('success') || 'Success',
+        text:
+          this.translateService.instant('exportsuccessful') ||
+          'Data exported successfully',
+      });
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      this.logger.logError(error);
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error') || 'Error',
+        text:
+          this.translateService.instant('errorexporting') ||
+          'Failed to export data. Please try again.',
+      });
     }
   }
 }

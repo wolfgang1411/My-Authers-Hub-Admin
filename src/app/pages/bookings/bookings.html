@@ -25,18 +25,28 @@
       </button>
     </div>
   </div>
-  <div class="flex gap-2">
-    <button class="!bg-primary" matButton="filled">
-      {{ "all" | translate }}
-    </button>
-    <button class="!bg-primary" matButton="filled">
-      {{ "active" | translate }}
-    </button>
-    <button class="!bg-primary" matButton="filled">
-      {{ "inactive" | translate }}
-    </button>
-    <button class="!bg-primary" matButton="filled">
-      {{ "dormant" | translate }}
+  <div class="flex justify-between items-center">
+    <div class="flex gap-2">
+      <button class="!bg-primary" matButton="filled">
+        {{ "all" | translate }}
+      </button>
+      <button class="!bg-primary" matButton="filled">
+        {{ "active" | translate }}
+      </button>
+      <button class="!bg-primary" matButton="filled">
+        {{ "inactive" | translate }}
+      </button>
+      <button class="!bg-primary" matButton="filled">
+        {{ "dormant" | translate }}
+      </button>
+    </div>
+    <button
+      class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
+      matButton="filled"
+      (click)="onExportToExcel()"
+    >
+      <mat-icon class="material-icons">download</mat-icon>
+      {{ "export" | translate }}
     </button>
   </div>
   <app-list-table

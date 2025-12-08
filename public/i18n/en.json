@@ -633,5 +633,9 @@
   "usertype":"User Type",
   "applyisbn": "Apply ISBN",
   "assignisbn":"Assign ISBN",
-  "generate":"Generate"
+  "generate":"Generate",
+  "export": "Export",
+  "exportsuccessful": "Data exported successfully",
+  "nodatatoexport": "No data to export",
+  "errorexporting": "Failed to export data. Please try again."
 }

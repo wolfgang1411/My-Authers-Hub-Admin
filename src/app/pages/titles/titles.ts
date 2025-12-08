@@ -13,7 +13,7 @@ import { TitleService } from './title-service';
 import { RouterLink } from '@angular/router';
 import { ListTable } from '../../components/list-table/list-table';
 import { MatTableDataSource } from '@angular/material/table';
-import { MatIcon, MatIconModule } from '@angular/material/icon';
+import { MatIconModule } from '@angular/material/icon';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import Swal from 'sweetalert2';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,6 +27,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { StaticValuesService } from '../../services/static-values';
 import { formatIsbn } from 'src/app/shared/utils/isbn.utils';
+import { exportToExcel } from '../../common/utils/excel';
+import { Logger } from '../../services/logger';
 
 @Component({
   selector: 'app-titles',
@@ -50,7 +52,8 @@ export class Titles {
     private matDialog: MatDialog,
     private userService: UserService,
     private staticValueService: StaticValuesService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private logger: Logger
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -394,5 +397,87 @@ export class Titles {
     this.dataSource.data = this.dataSource.data.filter(
       ({ id }) => id !== title.id
     );
+  }
+
+  async onExportToExcel(): Promise<void> {
+    try {
+      const titles = this.titles();
+      if (!titles || titles.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: this.translateService.instant('warning') || 'Warning',
+          text:
+            this.translateService.instant('nodatatoexport') ||
+            'No data to export',
+        });
+        return;
+      }
+
+      const exportData = titles.map((title) => ({
+        name: title.name || '-',
+        isbn: `${title.isbnPrint ? formatIsbn(title.isbnPrint) : 'N/A'} / ${title.isbnEbook ? formatIsbn(title.isbnEbook) : 'N/A'}`,
+        authors:
+          title.authors && title.authors.length
+            ? title.authors
+                .map(
+                  (author) =>
+                    author.display_name ||
+                    (author.author?.user.firstName || '') +
+                      ' ' +
+                      (author.author?.user.lastName || '')
+                )
+                .join(', ')
+            : 'N/A',
+        bookssold: title.copiesSold || 0,
+        launchdate: title.launch_date
+          ? format(new Date(title.launch_date), 'dd-MM-yyyy')
+          : 'N/A',
+        status: title.status || '-',
+        SelectedDistrbutions:
+          title.distribution && title.distribution.length
+            ? title.distribution
+                .map((link) => this.translate.instant(link.type))
+                .join(', ')
+            : 'N/A',
+      }));
+
+      const headers: Record<string, string> = {
+        name: this.translateService.instant('name') || 'Name',
+        isbn: this.translateService.instant('ISBN') || 'ISBN',
+        authors: this.translateService.instant('author') || 'Authors',
+        bookssold: this.translateService.instant('bookssold') || 'Books Sold',
+        launchdate: this.translateService.instant('launchdate') || 'Launch Date',
+        status: this.translateService.instant('status') || 'Status',
+        SelectedDistrbutions:
+          this.translateService.instant('SelectedDistrbutions') ||
+          'Selected Distributions',
+      };
+
+      const currentPage = this.filter().page || 1;
+      const fileName = `titles-page-${currentPage}-${format(
+        new Date(),
+        'dd-MM-yyyy'
+      )}`;
+
+      exportToExcel(exportData, fileName, headers, 'Titles');
+
+      Swal.fire({
+        icon: 'success',
+        title: this.translateService.instant('success') || 'Success',
+        text:
+          this.translateService.instant('exportsuccessful') ||
+          'Data exported successfully',
+      });
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      this.logger.logError(error);
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error') || 'Error',
+        text:
+          this.translateService.instant('errorexporting') ||
+          'Failed to export data. Please try again.',
+      });
+    }
   }
 }

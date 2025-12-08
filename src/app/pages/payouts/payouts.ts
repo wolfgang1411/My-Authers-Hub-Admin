@@ -13,6 +13,10 @@ import { UserService } from '../../services/user';
 import { User } from '../../interfaces';
 import { MatDialog } from '@angular/material/dialog';
 import { InviteDialog } from '../../components/invite-dialog/invite-dialog';
+import { exportToExcel } from '../../common/utils/excel';
+import { TranslateService } from '@ngx-translate/core';
+import { format } from 'date-fns';
+import { Logger } from '../../services/logger';
 
 @Component({
   selector: 'app-payouts',
@@ -31,7 +35,9 @@ export class Payouts implements OnInit {
   constructor(
     private payoutService: PayoutsService,
     public userService: UserService,
-    private matDialog: MatDialog
+    private matDialog: MatDialog,
+    private translateService: TranslateService,
+    private logger: Logger
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -378,5 +384,135 @@ export class Payouts implements OnInit {
         },
       },
     });
+  }
+
+  async onExportToExcel(): Promise<void> {
+    try {
+      const payouts = this.payouts();
+      if (!payouts || payouts.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: this.translateService.instant('warning') || 'Warning',
+          text:
+            this.translateService.instant('nodatatoexport') ||
+            'No data to export',
+        });
+        return;
+      }
+
+      const exportColumns = this.displayedColumns.filter(
+        (col) => col !== 'actions'
+      );
+
+      const exportData = payouts.map((payout) => {
+        const usertype = payout.user.accessLevel;
+        const firstName =
+          payout.user.publisher?.name ||
+          payout.user.auther?.name ||
+          payout.user.firstName ||
+          '';
+        const email =
+          payout.user.publisher?.email ||
+          payout.user.auther?.email ||
+          payout.user.email ||
+          '';
+        const accountName =
+          payout.user.publisher?.bankDetails?.[0]?.accountHolderName ||
+          payout.user.auther?.bankDetails?.[0]?.accountHolderName ||
+          '-';
+        const bankName =
+          payout.user.publisher?.bankDetails?.[0]?.name ||
+          payout.user.auther?.bankDetails?.[0]?.name ||
+          '-';
+        const accountNo =
+          payout.user.publisher?.bankDetails?.[0]?.accountNo ||
+          payout.user.auther?.bankDetails?.[0]?.accountNo ||
+          '-';
+        const ifscCode =
+          payout.user.publisher?.bankDetails?.[0]?.ifsc ||
+          payout.user.auther?.bankDetails?.[0]?.ifsc ||
+          '-';
+
+        const status = (() => {
+          switch (payout.status) {
+            case 'PAID':
+              return this.loggedInUser()?.accessLevel === 'SUPERADMIN'
+                ? 'Added to wallet'
+                : 'WITHDRAWN';
+            case 'PENDING':
+              return 'On Hold';
+            case 'APPROVED':
+              return 'Approved';
+            case 'REJECTED':
+              return 'Rejected';
+          }
+          return 'Pending';
+        })();
+
+        const dataRow: Record<string, any> = {};
+        exportColumns.forEach((col) => {
+          switch (col) {
+            case 'usertype':
+              dataRow[col] = usertype;
+              break;
+            case 'user':
+              dataRow[col] = `${firstName} ${payout.user?.lastName || ''}`;
+              break;
+            case 'emailId':
+              dataRow[col] = email;
+              break;
+            case 'bankdetails':
+              dataRow[col] = `Account Holder: ${accountName}, Bank: ${bankName}, Account: ${accountNo}, IFSC: ${ifscCode}`;
+              break;
+            case 'amount':
+              dataRow[col] = `${payout.requestedAmount} INR`;
+              break;
+            case 'status':
+              dataRow[col] = status;
+              break;
+            default:
+              dataRow[col] = (payout as any)[col] || '-';
+          }
+        });
+
+        return dataRow;
+      });
+
+      const headers: Record<string, string> = {
+        usertype: this.translateService.instant('usertype') || 'User Type',
+        user: this.translateService.instant('user') || 'User',
+        emailId: this.translateService.instant('emailId') || 'Email ID',
+        bankdetails:
+          this.translateService.instant('bankdetails') || 'Bank Details',
+        amount: this.translateService.instant('amount') || 'Amount',
+        status: this.translateService.instant('status') || 'Status',
+      };
+
+      const currentPage = this.filter().page || 1;
+      const fileName = `payouts-page-${currentPage}-${format(
+        new Date(),
+        'dd-MM-yyyy'
+      )}`;
+
+      exportToExcel(exportData, fileName, headers, 'Payouts');
+
+      Swal.fire({
+        icon: 'success',
+        title: this.translateService.instant('success') || 'Success',
+        text:
+          this.translateService.instant('exportsuccessful') ||
+          'Data exported successfully',
+      });
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      this.logger.logError(error);
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error') || 'Error',
+        text:
+          this.translateService.instant('errorexporting') ||
+          'Failed to export data. Please try again.',
+      });
+    }
   }
 }

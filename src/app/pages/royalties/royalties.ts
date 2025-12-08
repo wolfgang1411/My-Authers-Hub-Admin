@@ -2,7 +2,7 @@ import { Component, Renderer2, signal } from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { RouterModule } from '@angular/router';
-import { MatButton, MatButtonModule } from '@angular/material/button';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { LayoutModule } from '@angular/cdk/layout';
@@ -14,7 +14,6 @@ import {
   CreateSale,
   EarningFilter,
   SalesCsvData,
-  SalesType,
   Title,
   TitleStatus,
 } from '../../interfaces';
@@ -29,6 +28,10 @@ import { TitleService } from '../titles/title-service';
 import { Earnings } from '../../interfaces/Earnings';
 import { EarningTable } from '../../components/earning-table/earning-table';
 import { UserService } from '../../services/user';
+import { TranslateService } from '@ngx-translate/core';
+import { exportToExcel } from '../../common/utils/excel';
+import { formatCurrency } from '@angular/common';
+import { PlatForm, SalesType } from '../../interfaces';
 
 @Component({
   selector: 'app-royalties',
@@ -37,16 +40,13 @@ import { UserService } from '../../services/user';
     SharedModule,
     AngularSvgIconModule,
     RouterModule,
-    MatButton,
+    MatButtonModule,
     MatIconModule,
     MatDialogModule,
     MatFormFieldModule,
     MatSelectModule,
-    SharedModule,
     ReactiveFormsModule,
     MatInputModule,
-    MatButtonModule,
-    MatDialogModule,
     EarningTable,
   ],
   templateUrl: './royalties.html',
@@ -60,7 +60,8 @@ export class Royalties {
     private papa: Papa,
     private logger: Logger,
     private titleService: TitleService,
-    public userService: UserService
+    public userService: UserService,
+    private translateService: TranslateService
   ) {}
 
   lastPage = signal(1);
@@ -375,5 +376,154 @@ export class Royalties {
 
     // Trigger file dialog
     input.click();
+  }
+
+  async onExportToExcel(): Promise<void> {
+    try {
+      const earnings = this.earningList();
+      if (!earnings || earnings.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: this.translateService.instant('warning') || 'Warning',
+          text:
+            this.translateService.instant('nodatatoexport') ||
+            'No data to export',
+        });
+        return;
+      }
+
+      const user = this.userService.loggedInUser$();
+      const isAuthor = user?.accessLevel === 'AUTHER';
+      const showType = this.lastSelectedSaleType === null;
+
+      // Map earnings data similar to earning-table component
+      const exportData = earnings.map((earning) => {
+        // Check if this is an ebook platform
+        const ebookPlatforms: PlatForm[] = [
+          PlatForm.MAH_EBOOK,
+          PlatForm.KINDLE,
+          PlatForm.GOOGLE_PLAY,
+        ];
+        const isEbookPlatform = ebookPlatforms.includes(
+          earning.platform.name as PlatForm
+        );
+        let customPrintMargin = 0;
+        const isPublisherEarning =
+          earning.royalty.publisher && !earning.royalty.author;
+        const printing = earning.royalty.title.printing?.[0];
+
+        if (!isEbookPlatform && isPublisherEarning && printing) {
+          const printCost = Number(printing.printCost) || 0;
+          const customPrintCost = printing.customPrintCost
+            ? Number(printing.customPrintCost)
+            : null;
+
+          if (customPrintCost !== null && customPrintCost > printCost) {
+            customPrintMargin =
+              (customPrintCost - printCost) * (earning.quantity || 1);
+          }
+        }
+
+        const salesTypeMap: Record<SalesType, string> = {
+          [SalesType.SALE]: 'Sale',
+          [SalesType.LIVE_SALE]: 'Live Sale',
+          [SalesType.INVENTORY]: 'Inventory',
+        };
+
+        const dataRow: any = {
+          title: earning.royalty.title.name || '-',
+          'publisher/author':
+            earning.royalty.publisher?.name ||
+            earning.royalty.author?.user.firstName ||
+            '-',
+          royaltyAmount: isEbookPlatform
+            ? earning.amount
+            : earning.amount - customPrintMargin,
+          amount: earning.amount,
+          platform:
+            earning.platformName ||
+            this.translateService.instant(
+              typeof earning.platform === 'string'
+                ? earning.platform
+                : (earning.platform as any)?.name || earning.platform || ''
+            ),
+          quantity: earning.quantity || 0,
+          addedAt: earning.paidAt
+            ? format(new Date(earning.paidAt), 'dd-MM-yyyy')
+            : '-',
+          holduntil: earning.holdUntil
+            ? format(new Date(earning.holdUntil), 'dd-MM-yyyy')
+            : '-',
+        };
+
+        if (!isAuthor) {
+          dataRow.customPrintMargin =
+            isEbookPlatform || customPrintMargin === 0
+              ? 0
+              : customPrintMargin;
+        }
+
+        if (showType) {
+          dataRow.type = earning.salesType
+            ? salesTypeMap[earning.salesType] || earning.salesType
+            : '-';
+        }
+
+        return dataRow;
+      });
+
+      // Define headers with translations
+      const headers: Record<string, string> = {
+        title: this.translateService.instant('title') || 'Title',
+        'publisher/author':
+          this.translateService.instant('publisher/author') ||
+          'Publisher/Author',
+        royaltyAmount:
+          this.translateService.instant('royaltyamount') || 'Royalty Amount',
+        amount: this.translateService.instant('amount') || 'Amount',
+        platform: this.translateService.instant('platform') || 'Platform',
+        quantity: this.translateService.instant('quantity') || 'Quantity',
+        addedAt: this.translateService.instant('addedAt') || 'Added At',
+        holduntil:
+          this.translateService.instant('holduntil') || 'Hold Until',
+      };
+
+      if (!isAuthor) {
+        headers['customPrintMargin'] =
+          this.translateService.instant('customPrintMargin') ||
+          'Custom Print Margin';
+      }
+
+      if (showType) {
+        headers['type'] = this.translateService.instant('salesType') || 'Type';
+      }
+
+      // Generate filename with current page
+      const currentPage = this.filter().page || 1;
+      const fileName = `royalties-page-${currentPage}-${format(
+        new Date(),
+        'dd-MM-yyyy'
+      )}`;
+
+      exportToExcel(exportData, fileName, headers, 'Royalties');
+
+      Swal.fire({
+        icon: 'success',
+        title: this.translateService.instant('success') || 'Success',
+        text:
+          this.translateService.instant('exportsuccessful') ||
+          'Data exported successfully',
+      });
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      this.logger.logError(error);
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error') || 'Error',
+        text:
+          this.translateService.instant('errorexporting') ||
+          'Failed to export data. Please try again.',
+      });
+    }
   }
 }

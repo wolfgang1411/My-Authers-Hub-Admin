@@ -25,6 +25,15 @@
       </button>
     </div>
     <div class="flex gap-2">
+      <button
+        class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
+        matButton="filled"
+        matButton
+        (click)="onExportToExcel()"
+      >
+        <mat-icon class="material-icons">download</mat-icon>
+        {{ "export" | translate }}
+      </button>
       @if (userService.loggedInUser$()?.accessLevel === 'SUPERADMIN') {
 
       <button

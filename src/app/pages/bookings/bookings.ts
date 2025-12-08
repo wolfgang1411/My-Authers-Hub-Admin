@@ -10,6 +10,11 @@ import { MatIcon } from '@angular/material/icon';
 import { BehaviorSubject, debounceTime, Subject } from 'rxjs';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatButton, MatIconButton } from '@angular/material/button';
+import { exportToExcel } from '../../common/utils/excel';
+import { TranslateService } from '@ngx-translate/core';
+import { format } from 'date-fns';
+import { Logger } from '../../services/logger';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-bookings',
@@ -27,7 +32,11 @@ import { MatButton, MatIconButton } from '@angular/material/button';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Bookings implements OnInit {
-  constructor(private bookingService: BookingService) {}
+  constructor(
+    private bookingService: BookingService,
+    private translateService: TranslateService,
+    private logger: Logger
+  ) {}
 
   lastPage = signal(1);
   
@@ -191,5 +200,90 @@ export class Bookings implements OnInit {
     }
 
     return pages;
+  }
+
+  async onExportToExcel(): Promise<void> {
+    try {
+      const bookings = this.bookings();
+      if (!bookings || bookings.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: this.translateService.instant('warning') || 'Warning',
+          text:
+            this.translateService.instant('nodatatoexport') ||
+            'No data to export',
+        });
+        return;
+      }
+
+      const exportColumns = this.displayedColumns.filter(
+        (col) => col !== 'actions'
+      );
+
+      const exportData = bookings.map((booking) => {
+        const dataRow: Record<string, any> = {};
+
+        exportColumns.forEach((col) => {
+          switch (col) {
+            case 'name':
+              dataRow[col] =
+                booking.userDetails.firstName +
+                ' ' +
+                (booking.userDetails.lastName || '');
+              break;
+            case 'email':
+              dataRow[col] = booking.userDetails.email || '-';
+              break;
+            case 'title':
+              dataRow[col] = booking.title.name || '-';
+              break;
+            case 'amount':
+              dataRow[col] = `${booking.totalAmount} INR`;
+              break;
+            case 'status':
+              dataRow[col] = booking.status || '-';
+              break;
+            default:
+              dataRow[col] = (booking as any)[col] || '-';
+          }
+        });
+
+        return dataRow;
+      });
+
+      const headers: Record<string, string> = {
+        name: this.translateService.instant('name') || 'Name',
+        email: this.translateService.instant('email') || 'Email',
+        title: this.translateService.instant('title') || 'Title',
+        amount: this.translateService.instant('amount') || 'Amount',
+        status: this.translateService.instant('status') || 'Status',
+      };
+
+      const currentPage = this.filter().page || 1;
+      const fileName = `bookings-page-${currentPage}-${format(
+        new Date(),
+        'dd-MM-yyyy'
+      )}`;
+
+      exportToExcel(exportData, fileName, headers, 'Bookings');
+
+      Swal.fire({
+        icon: 'success',
+        title: this.translateService.instant('success') || 'Success',
+        text:
+          this.translateService.instant('exportsuccessful') ||
+          'Data exported successfully',
+      });
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      this.logger.logError(error);
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error') || 'Error',
+        text:
+          this.translateService.instant('errorexporting') ||
+          'Failed to export data. Please try again.',
+      });
+    }
   }
 }

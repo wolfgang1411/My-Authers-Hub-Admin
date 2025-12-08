@@ -14,6 +14,13 @@
         Filter
       </button> -->
 
+      <button
+        class="flex items-center gap-2 bg-[var(--primary)] text-white font-medium px-4 py-2 rounded-lg hover:opacity-90 transition"
+        (click)="onExportToExcel()"
+      >
+        <mat-icon>download</mat-icon>
+        {{ "export" | translate }}
+      </button>
       @if (loggedInUser()?.accessLevel !== 'SUPERADMIN' || true) {
       <button
         (click)="onClickRequestPayout()"

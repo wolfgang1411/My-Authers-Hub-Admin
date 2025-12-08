@@ -5,16 +5,25 @@ import { TransactionTable } from '../../components/transaction-table/transaction
 import { SharedModule } from '../../modules/shared/shared-module';
 import { debounceTime, Subject } from 'rxjs';
 import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
+import { MatIconModule } from '@angular/material/icon';
+import { TranslateService } from '@ngx-translate/core';
+import { exportToExcel } from '../../common/utils/excel';
+import Swal from 'sweetalert2';
+import { format } from 'date-fns';
+import { Logger } from '../../services/logger';
 
 @Component({
   selector: 'app-transactions',
-  imports: [TransactionTable, SharedModule, MatButton, MatIcon],
+  imports: [TransactionTable, SharedModule, MatButton, MatIconModule],
   templateUrl: './transactions.html',
   styleUrl: './transactions.css',
 })
 export class Transactions implements OnInit {
-  constructor(private transactionService: TransactionService) {}
+  constructor(
+    private transactionService: TransactionService,
+    private translateService: TranslateService,
+    private logger: Logger
+  ) {}
 
   ngOnInit(): void {
     this.loadTransactions();
@@ -148,6 +157,66 @@ export class Transactions implements OnInit {
     }
 
     return pages;
+  }
+
+  async onExportToExcel(): Promise<void> {
+    try {
+      const transactions = this.transactions();
+      if (!transactions || transactions.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: this.translateService.instant('warning') || 'Warning',
+          text:
+            this.translateService.instant('nodatatoexport') ||
+            'No data to export',
+        });
+        return;
+      }
+
+      const exportData = transactions.map((transaction) => ({
+        orderid: '#' + transaction.id,
+        email: transaction.booking?.userDetails?.email || transaction.user?.email || '-',
+        title: transaction.booking?.titleDetails?.name || transaction.title || '-',
+        status: transaction.status || '-',
+        amount: transaction.amount || 0,
+        txnid: transaction.merchantTxnId || transaction.paymentGatewayTxnId || 'N/A',
+      }));
+
+      const headers: Record<string, string> = {
+        orderid: this.translateService.instant('orderid') || 'Order ID',
+        email: this.translateService.instant('email') || 'Email',
+        title: this.translateService.instant('title') || 'Title',
+        status: this.translateService.instant('status') || 'Status',
+        amount: this.translateService.instant('amount') || 'Amount',
+        txnid: this.translateService.instant('txnid') || 'Transaction ID',
+      };
+
+      const currentPage = this.filter().page || 1;
+      const fileName = `transactions-page-${currentPage}-${format(
+        new Date(),
+        'dd-MM-yyyy'
+      )}`;
+
+      exportToExcel(exportData, fileName, headers, 'Transactions');
+
+      Swal.fire({
+        icon: 'success',
+        title: this.translateService.instant('success') || 'Success',
+        text:
+          this.translateService.instant('exportsuccessful') ||
+          'Data exported successfully',
+      });
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      this.logger.logError(error);
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error') || 'Error',
+        text:
+          this.translateService.instant('errorexporting') ||
+          'Failed to export data. Please try again.',
+      });
+    }
   }
 }
 
