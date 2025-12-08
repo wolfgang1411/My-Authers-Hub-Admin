@@ -443,6 +443,10 @@
   "titleapprovedupdateticket": "This title is approved. An update ticket will be created for your changes.",
   "raiseticket": "Raise Ticket",
   "next": "Next",
+  "previous": "Previous",
+  "page": "Page",
+  "of": "of",
+  "itemsperpage": "Items per page",
   "updatetickets": "Update Tickets",
   "details": "Details",
   "print": "Print",
@@ -629,5 +633,9 @@
   "usertype":"User Type",
   "applyisbn": "Apply ISBN",
   "assignisbn":"Assign ISBN",
-  "generate":"Generate"
+  "generate":"Generate",
+  "export": "Export",
+  "exportsuccessful": "Data exported successfully",
+  "nodatatoexport": "No data to export",
+  "errorexporting": "Failed to export data. Please try again."
 }

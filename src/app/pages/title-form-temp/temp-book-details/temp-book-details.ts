@@ -43,8 +43,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { LanguageService } from '../../../services/languages';
 import { CKEditorModule } from '@ckeditor/ckeditor5-angular';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
-import { IsbnFormat } from 'src/app/directives/isbn-format';
 import { formatIsbn13 } from '../../../common/utils/isbn';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 
 @Component({
   selector: 'app-temp-book-details',
@@ -59,7 +59,7 @@ import { formatIsbn13 } from '../../../common/utils/isbn';
     MatProgressSpinnerModule,
     MatButtonModule,
     CKEditorModule,
-    IsbnFormat,
+    MatDatepickerModule,
   ],
   templateUrl: './temp-book-details.html',
   styleUrl: './temp-book-details.css',

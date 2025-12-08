@@ -5,46 +5,218 @@ import { TransactionTable } from '../../components/transaction-table/transaction
 import { SharedModule } from '../../modules/shared/shared-module';
 import { debounceTime, Subject } from 'rxjs';
 import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
+import { MatIconModule } from '@angular/material/icon';
+import { TranslateService } from '@ngx-translate/core';
+import { exportToExcel } from '../../common/utils/excel';
+import Swal from 'sweetalert2';
+import { format } from 'date-fns';
+import { Logger } from '../../services/logger';
 
 @Component({
   selector: 'app-transactions',
-  imports: [TransactionTable, SharedModule, MatButton],
+  imports: [TransactionTable, SharedModule, MatButton, MatIconModule],
   templateUrl: './transactions.html',
   styleUrl: './transactions.css',
 })
 export class Transactions implements OnInit {
-  constructor(private transactionService: TransactionService) {}
+  constructor(
+    private transactionService: TransactionService,
+    private translateService: TranslateService,
+    private logger: Logger
+  ) {}
 
   ngOnInit(): void {
     this.loadTransactions();
     this.searchStr.pipe(debounceTime(200)).subscribe((value) => {
-      this.filter.page = 1;
-      this.filter.searchStr = value;
-      if (!value?.length) {
-        delete this.filter.searchStr;
-      }
+      this.filter.update((f) => ({ ...f, searchStr: value, page: 1 }));
+      this.clearCache();
       this.loadTransactions();
     });
+  }
+  
+  private getFilterKey(): string {
+    const currentFilter = this.filter();
+    return JSON.stringify({
+      searchStr: currentFilter.searchStr,
+      itemsPerPage: this.itemsPerPage(),
+    });
+  }
+
+  private clearCache() {
+    this.pageCache.clear();
+    this.cachedFilterKey = '';
   }
 
   searchStr = new Subject<string>();
 
   transactions = signal<Transaction[] | null>(null);
-  filter: TransactionFilter = {
+  page = signal(1);
+  itemsPerPage = signal(10);
+  lastPage = signal(1);
+  
+  filter = signal<TransactionFilter>({
     page: 1,
-    itemsPerPage: 30,
-  };
-  lastPage = signal<number | null>(1);
+    itemsPerPage: 10,
+  });
+  
+  // Cache to store fetched pages
+  private pageCache = new Map<number, Transaction[]>();
+  private cachedFilterKey = '';
 
   async loadTransactions() {
     try {
-      const { items, totalCount, itemsPerPage } =
-        await this.transactionService.fetchTransactions(this.filter);
+      const currentFilter = this.filter();
+      const currentPage = currentFilter.page || 1;
+      const filterKey = this.getFilterKey();
+      
+      // Clear cache if filter changed
+      if (this.cachedFilterKey !== filterKey) {
+        this.clearCache();
+        this.cachedFilterKey = filterKey;
+      }
+
+      // Check if page is already cached
+      if (this.pageCache.has(currentPage)) {
+        this.transactions.set(this.pageCache.get(currentPage)!);
+        return;
+      }
+
+      // Fetch from API
+      const { items, totalCount, itemsPerPage: returnedItemsPerPage } =
+        await this.transactionService.fetchTransactions(currentFilter);
+      
+      // Cache the fetched page
+      this.pageCache.set(currentPage, items);
       this.transactions.set(items);
-      this.lastPage.set(Math.ceil(totalCount / itemsPerPage));
+      this.lastPage.set(Math.ceil(totalCount / returnedItemsPerPage));
     } catch (error) {
       console.error('Error loading transactions:', error);
     }
   }
+
+  nextPage() {
+    const currentPage = this.filter().page || 1;
+    if (currentPage < this.lastPage()) {
+      this.filter.update((f) => ({ ...f, page: currentPage + 1 }));
+      this.loadTransactions();
+    }
+  }
+
+  previousPage() {
+    const currentPage = this.filter().page || 1;
+    if (currentPage > 1) {
+      this.filter.update((f) => ({ ...f, page: currentPage - 1 }));
+      this.loadTransactions();
+    }
+  }
+
+  goToPage(pageNumber: number) {
+    if (pageNumber >= 1 && pageNumber <= this.lastPage()) {
+      this.filter.update((f) => ({ ...f, page: pageNumber }));
+      this.loadTransactions();
+    }
+  }
+
+  onItemsPerPageChange(itemsPerPage: number) {
+    this.filter.update((f) => ({ ...f, itemsPerPage, page: 1 }));
+    this.clearCache();
+    this.loadTransactions();
+  }
+
+  getPageNumbers(): number[] {
+    const currentPage = this.filter().page || 1;
+    const totalPages = this.lastPage();
+    const pages: number[] = [];
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        pages.push(-1);
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push(-1);
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  }
+
+  async onExportToExcel(): Promise<void> {
+    try {
+      const transactions = this.transactions();
+      if (!transactions || transactions.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: this.translateService.instant('warning') || 'Warning',
+          text:
+            this.translateService.instant('nodatatoexport') ||
+            'No data to export',
+        });
+        return;
+      }
+
+      const exportData = transactions.map((transaction) => ({
+        orderid: '#' + transaction.id,
+        email: transaction.booking?.userDetails?.email || transaction.user?.email || '-',
+        title: transaction.booking?.titleDetails?.name || transaction.title || '-',
+        status: transaction.status || '-',
+        amount: transaction.amount || 0,
+        txnid: transaction.merchantTxnId || transaction.paymentGatewayTxnId || 'N/A',
+      }));
+
+      const headers: Record<string, string> = {
+        orderid: this.translateService.instant('orderid') || 'Order ID',
+        email: this.translateService.instant('email') || 'Email',
+        title: this.translateService.instant('title') || 'Title',
+        status: this.translateService.instant('status') || 'Status',
+        amount: this.translateService.instant('amount') || 'Amount',
+        txnid: this.translateService.instant('txnid') || 'Transaction ID',
+      };
+
+      const currentPage = this.filter().page || 1;
+      const fileName = `transactions-page-${currentPage}-${format(
+        new Date(),
+        'dd-MM-yyyy'
+      )}`;
+
+      exportToExcel(exportData, fileName, headers, 'Transactions');
+
+      Swal.fire({
+        icon: 'success',
+        title: this.translateService.instant('success') || 'Success',
+        text:
+          this.translateService.instant('exportsuccessful') ||
+          'Data exported successfully',
+      });
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      this.logger.logError(error);
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error') || 'Error',
+        text:
+          this.translateService.instant('errorexporting') ||
+          'Failed to export data. Please try again.',
+      });
+    }
+  }
 }
+

@@ -2,7 +2,7 @@ import { Component, Renderer2, signal } from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { RouterModule } from '@angular/router';
-import { MatButton, MatButtonModule } from '@angular/material/button';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { LayoutModule } from '@angular/cdk/layout';
@@ -14,7 +14,6 @@ import {
   CreateSale,
   EarningFilter,
   SalesCsvData,
-  SalesType,
   Title,
   TitleStatus,
 } from '../../interfaces';
@@ -29,6 +28,10 @@ import { TitleService } from '../titles/title-service';
 import { Earnings } from '../../interfaces/Earnings';
 import { EarningTable } from '../../components/earning-table/earning-table';
 import { UserService } from '../../services/user';
+import { TranslateService } from '@ngx-translate/core';
+import { exportToExcel } from '../../common/utils/excel';
+import { formatCurrency } from '@angular/common';
+import { PlatForm, SalesType } from '../../interfaces';
 
 @Component({
   selector: 'app-royalties',
@@ -37,16 +40,13 @@ import { UserService } from '../../services/user';
     SharedModule,
     AngularSvgIconModule,
     RouterModule,
-    MatButton,
+    MatButtonModule,
     MatIconModule,
     MatDialogModule,
     MatFormFieldModule,
     MatSelectModule,
-    SharedModule,
     ReactiveFormsModule,
     MatInputModule,
-    MatButtonModule,
-    MatDialogModule,
     EarningTable,
   ],
   templateUrl: './royalties.html',
@@ -60,14 +60,17 @@ export class Royalties {
     private papa: Papa,
     private logger: Logger,
     private titleService: TitleService,
-    public userService: UserService
+    public userService: UserService,
+    private translateService: TranslateService
   ) {}
 
-  filter: EarningFilter = {
+  lastPage = signal(1);
+
+  filter = signal<EarningFilter>({
     page: 1,
-    itemsPerPage: 30,
+    itemsPerPage: 10,
     searchStr: '',
-  };
+  });
 
   titles = signal<Title[]>([]);
   searchStr = new Subject<string>();
@@ -75,44 +78,184 @@ export class Royalties {
     .asObservable()
     .pipe(debounceTime(800))
     .subscribe((value) => {
-      this.filter.searchStr = value;
-      this.filter.page = 1;
+      this.filter.update((f) => ({ ...f, searchStr: value, page: 1 }));
+      this.clearCache();
       this.updateRoyaltyList();
     });
-
-  lastPage = signal(1);
   earningList = signal<Earnings[]>([]);
-  lastSelectedSaleType: SalesType | null = SalesType.SALE;
+
+  // Cache to store fetched pages
+  private pageCache = new Map<number, Earnings[]>();
+  private cachedFilterKey = '';
+  lastSelectedSaleType: SalesType | null = null;
   salesTypes = SalesType;
   ngOnInit(): void {
-    this.filter = {
-      ...this.filter,
-      salesType: this.lastSelectedSaleType
-        ? [this.lastSelectedSaleType]
-        : [SalesType.SALE],
-    };
+    if (this.lastSelectedSaleType) {
+      const saleType = this.lastSelectedSaleType;
+      this.filter.update((f) => ({
+        ...f,
+        salesType: [saleType],
+      }));
+    }
     this.updateRoyaltyList();
+  }
+
+  private cleanFilter(filter: EarningFilter): EarningFilter {
+    const cleaned: any = {};
+    Object.keys(filter).forEach((key) => {
+      const val = (filter as any)[key];
+      if (val === undefined || val === null) {
+        return;
+      }
+      if (Array.isArray(val)) {
+        if (val.length > 0) {
+          cleaned[key] = val;
+        }
+      } else if (typeof val === 'string') {
+        if (val.trim() !== '') {
+          cleaned[key] = val;
+        }
+      } else {
+        cleaned[key] = val;
+      }
+    });
+    return cleaned;
+  }
+
+  private getFilterKey(): string {
+    const currentFilter = this.filter();
+    return JSON.stringify({
+      searchStr: currentFilter.searchStr,
+      salesType: currentFilter.salesType,
+      paidBefore: currentFilter.paidBefore,
+      paidAfter: currentFilter.paidAfter,
+      titleIds: currentFilter.titleIds,
+      authorIds: currentFilter.authorIds,
+      publisherIds: currentFilter.publisherIds,
+      status: currentFilter.status,
+      platforms: currentFilter.platforms,
+      channals: currentFilter.channals,
+      itemsPerPage: currentFilter.itemsPerPage,
+    });
+  }
+
+  private clearCache() {
+    this.pageCache.clear();
+    this.cachedFilterKey = '';
   }
 
   async updateRoyaltyList() {
-    console.log('Updating royalty list with filter:', this.filter);
-    const { items, totalCount, itemsPerPage, page } =
-      await this.salesService.fetchEarnings(this.filter);
+    const currentFilter = this.filter();
+    const currentPage = currentFilter.page || 1;
+    const filterKey = this.getFilterKey();
 
-    this.earningList.update((earningList) => {
-      return page > 1 && earningList.length
-        ? [...earningList, ...items]
-        : items;
-    });
-    this.lastPage.set(Math.ceil(totalCount / itemsPerPage));
+    // Clear cache if filter changed
+    if (this.cachedFilterKey !== filterKey) {
+      this.clearCache();
+      this.cachedFilterKey = filterKey;
+    }
+
+    // Check if page is already cached
+    if (this.pageCache.has(currentPage)) {
+      this.earningList.set(this.pageCache.get(currentPage)!);
+      return;
+    }
+
+    // Fetch from API
+    console.log('Updating royalty list with filter:', currentFilter);
+    const cleanedFilter = this.cleanFilter(currentFilter);
+    const { items, totalCount, itemsPerPage: returnedItemsPerPage } =
+      await this.salesService.fetchEarnings(cleanedFilter);
+
+    // Cache the fetched page
+    this.pageCache.set(currentPage, items);
+    this.earningList.set(items);
+    this.lastPage.set(Math.ceil(totalCount / returnedItemsPerPage));
   }
-  selectSaleType(type: SalesType) {
+  selectSaleType(type: SalesType | null) {
     this.lastSelectedSaleType = type;
-    this.filter = {
-      ...this.filter,
-      salesType: [type],
-    };
+    this.filter.update((f) => {
+      const updated = { ...f };
+      if (type === null) {
+        delete updated.salesType;
+      } else {
+        updated.salesType = [type];
+      }
+      updated.page = 1;
+      return updated;
+    });
+    this.clearCache();
     this.updateRoyaltyList();
+  }
+
+  nextPage() {
+    const currentPage = this.filter().page || 1;
+    if (currentPage < this.lastPage()) {
+      this.filter.update((f) => ({ ...f, page: currentPage + 1 }));
+      this.updateRoyaltyList();
+    }
+  }
+
+  previousPage() {
+    const currentPage = this.filter().page || 1;
+    if (currentPage > 1) {
+      this.filter.update((f) => ({ ...f, page: currentPage - 1 }));
+      this.updateRoyaltyList();
+    }
+  }
+
+  goToPage(pageNumber: number) {
+    if (pageNumber >= 1 && pageNumber <= this.lastPage()) {
+      this.filter.update((f) => ({ ...f, page: pageNumber }));
+      this.updateRoyaltyList();
+    }
+  }
+
+  onItemsPerPageChange(itemsPerPage: number) {
+    this.filter.update((f) => ({ ...f, itemsPerPage, page: 1 }));
+    this.clearCache();
+    this.updateRoyaltyList();
+  }
+
+  getPageNumbers(): number[] {
+    const currentPage = this.filter().page || 1;
+    const totalPages = this.lastPage();
+    const pages: number[] = [];
+
+    if (totalPages <= 7) {
+      // Show all pages if 7 or fewer
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show first page, last page, current page, and pages around current
+      if (currentPage <= 3) {
+        // Near the beginning
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        pages.push(-1); // Ellipsis
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        // Near the end
+        pages.push(1);
+        pages.push(-1); // Ellipsis
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // In the middle
+        pages.push(1);
+        pages.push(-1); // Ellipsis
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push(-1); // Ellipsis
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
   }
 
   addRoyalty(data?: Partial<CreateSale & { availableTitles: number[] }>[]) {
@@ -233,5 +376,154 @@ export class Royalties {
 
     // Trigger file dialog
     input.click();
+  }
+
+  async onExportToExcel(): Promise<void> {
+    try {
+      const earnings = this.earningList();
+      if (!earnings || earnings.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: this.translateService.instant('warning') || 'Warning',
+          text:
+            this.translateService.instant('nodatatoexport') ||
+            'No data to export',
+        });
+        return;
+      }
+
+      const user = this.userService.loggedInUser$();
+      const isAuthor = user?.accessLevel === 'AUTHER';
+      const showType = this.lastSelectedSaleType === null;
+
+      // Map earnings data similar to earning-table component
+      const exportData = earnings.map((earning) => {
+        // Check if this is an ebook platform
+        const ebookPlatforms: PlatForm[] = [
+          PlatForm.MAH_EBOOK,
+          PlatForm.KINDLE,
+          PlatForm.GOOGLE_PLAY,
+        ];
+        const isEbookPlatform = ebookPlatforms.includes(
+          earning.platform.name as PlatForm
+        );
+        let customPrintMargin = 0;
+        const isPublisherEarning =
+          earning.royalty.publisher && !earning.royalty.author;
+        const printing = earning.royalty.title.printing?.[0];
+
+        if (!isEbookPlatform && isPublisherEarning && printing) {
+          const printCost = Number(printing.printCost) || 0;
+          const customPrintCost = printing.customPrintCost
+            ? Number(printing.customPrintCost)
+            : null;
+
+          if (customPrintCost !== null && customPrintCost > printCost) {
+            customPrintMargin =
+              (customPrintCost - printCost) * (earning.quantity || 1);
+          }
+        }
+
+        const salesTypeMap: Record<SalesType, string> = {
+          [SalesType.SALE]: 'Sale',
+          [SalesType.LIVE_SALE]: 'Live Sale',
+          [SalesType.INVENTORY]: 'Inventory',
+        };
+
+        const dataRow: any = {
+          title: earning.royalty.title.name || '-',
+          'publisher/author':
+            earning.royalty.publisher?.name ||
+            earning.royalty.author?.user.firstName ||
+            '-',
+          royaltyAmount: isEbookPlatform
+            ? earning.amount
+            : earning.amount - customPrintMargin,
+          amount: earning.amount,
+          platform:
+            earning.platformName ||
+            this.translateService.instant(
+              typeof earning.platform === 'string'
+                ? earning.platform
+                : (earning.platform as any)?.name || earning.platform || ''
+            ),
+          quantity: earning.quantity || 0,
+          addedAt: earning.paidAt
+            ? format(new Date(earning.paidAt), 'dd-MM-yyyy')
+            : '-',
+          holduntil: earning.holdUntil
+            ? format(new Date(earning.holdUntil), 'dd-MM-yyyy')
+            : '-',
+        };
+
+        if (!isAuthor) {
+          dataRow.customPrintMargin =
+            isEbookPlatform || customPrintMargin === 0
+              ? 0
+              : customPrintMargin;
+        }
+
+        if (showType) {
+          dataRow.type = earning.salesType
+            ? salesTypeMap[earning.salesType] || earning.salesType
+            : '-';
+        }
+
+        return dataRow;
+      });
+
+      // Define headers with translations
+      const headers: Record<string, string> = {
+        title: this.translateService.instant('title') || 'Title',
+        'publisher/author':
+          this.translateService.instant('publisher/author') ||
+          'Publisher/Author',
+        royaltyAmount:
+          this.translateService.instant('royaltyamount') || 'Royalty Amount',
+        amount: this.translateService.instant('amount') || 'Amount',
+        platform: this.translateService.instant('platform') || 'Platform',
+        quantity: this.translateService.instant('quantity') || 'Quantity',
+        addedAt: this.translateService.instant('addedAt') || 'Added At',
+        holduntil:
+          this.translateService.instant('holduntil') || 'Hold Until',
+      };
+
+      if (!isAuthor) {
+        headers['customPrintMargin'] =
+          this.translateService.instant('customPrintMargin') ||
+          'Custom Print Margin';
+      }
+
+      if (showType) {
+        headers['type'] = this.translateService.instant('salesType') || 'Type';
+      }
+
+      // Generate filename with current page
+      const currentPage = this.filter().page || 1;
+      const fileName = `royalties-page-${currentPage}-${format(
+        new Date(),
+        'dd-MM-yyyy'
+      )}`;
+
+      exportToExcel(exportData, fileName, headers, 'Royalties');
+
+      Swal.fire({
+        icon: 'success',
+        title: this.translateService.instant('success') || 'Success',
+        text:
+          this.translateService.instant('exportsuccessful') ||
+          'Data exported successfully',
+      });
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      this.logger.logError(error);
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error') || 'Error',
+        text:
+          this.translateService.instant('errorexporting') ||
+          'Failed to export data. Please try again.',
+      });
+    }
   }
 }

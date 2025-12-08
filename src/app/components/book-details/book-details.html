@@ -117,6 +117,27 @@
           </mat-form-field>
         </div>
       </div>
+
+      <div class="grid grid-cols-2 gap-4 items-start">
+        <mat-form-field>
+          <mat-label>{{ "launchdate" | translate }}</mat-label>
+          <input
+            matInput
+            [matDatepicker]="launchDatePicker"
+            formControlName="launch_date"
+            required
+          />
+          <mat-datepicker-toggle
+            matSuffix
+            [for]="launchDatePicker"
+          ></mat-datepicker-toggle>
+          <mat-datepicker #launchDatePicker></mat-datepicker>
+          @if(titleDetailsGroup().controls.launch_date.hasError('required') &&
+          titleDetailsGroup().controls.launch_date.touched) {
+          <mat-error> {{ "launchdate" | translate }} is required </mat-error>
+          }
+        </mat-form-field>
+      </div>
       <div class="grid grid-cols-2 gap-4 items-start">
         <mat-form-field>
           <mat-label>
