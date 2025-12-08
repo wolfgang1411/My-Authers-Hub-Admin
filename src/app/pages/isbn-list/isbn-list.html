@@ -3,6 +3,7 @@
     {{ "ISBN List" | translate }}
   </h3>
 
+  <!-- Search + Apply ISBN -->
   <div class="flex justify-between w-full gap-4">
     <div
       class="flex h-[38px] items-center justify-center md:min-w-[480px] min-w-full gap-2"
@@ -25,6 +26,7 @@
         {{ "search" | translate }}
       </button>
     </div>
+
     <div class="flex gap-4 items-center justify-center">
       <button
         class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
@@ -37,6 +39,8 @@
       </button>
     </div>
   </div>
+
+  <!-- Status filter buttons -->
   <div class="flex w-full gap-4 mt-4">
     <button
       class="btn rounded-md !text-primary"
@@ -51,8 +55,22 @@
       (click)="selectStatus(isbnStatusEnum.PENDING)"
     >
       <mat-icon>hourglass_top</mat-icon>
-
       PENDING
+    </button>
+    <button
+      class="btn rounded-md !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white':
+          lastSelectedStatus === isbnStatusEnum.APPLIED,
+        '!bg-primary-superlight': lastSelectedStatus !== isbnStatusEnum.APPLIED
+      }"
+      (click)="selectStatus(isbnStatusEnum.APPLIED)"
+    >
+      <mat-icon color="primary">verified</mat-icon>
+      APPLIED
     </button>
 
     <button
@@ -68,7 +86,6 @@
       (click)="selectStatus(isbnStatusEnum.APPROVED)"
     >
       <mat-icon>check_circle</mat-icon>
-
       APPROVED
     </button>
 
@@ -85,9 +102,9 @@
       (click)="selectStatus(isbnStatusEnum.DELETED)"
     >
       <mat-icon>delete</mat-icon>
-
       DELETED
     </button>
+
     <button
       class="btn rounded-md !text-primary"
       matButton="filled"
@@ -104,25 +121,55 @@
     </button>
   </div>
 
+  <!-- Table -->
   <app-list-table
     [dataSource]="dataSource"
     [displayedColumns]="displayedColumns"
     [actionTemplate]="actionButtons"
+    [editIsbnTemplate]="assignisbn"
   >
   </app-list-table>
+
+  <!-- Inline ISBN column template (only for APPLIED) -->
+  <ng-template #assignisbn let-element>
+    @if (lastSelectedStatus === isbnStatusEnum.APPLIED) {
+
+    <div class="flex items-center gap-2">
+      <input
+        type="text"
+        class="border border-primary rounded-md px-2 py-1 w-40"
+        [formControl]="getIsbnControl(element.id)"
+        placeholder="Enter ISBN"
+        appIsbnFormat
+        appIsbnClean
+      />
+
+      <!-- Validation message -->
+      @if (getIsbnControl(element.id).errors?.['invalid']) {
+      <small class="text-red-600">
+        {{ getIsbnControl(element.id).errors?.['invalid'] }}
+      </small>
+      }
+      <button
+        matIconButton
+        class="!bg-green-600 text-white rounded-full p-1"
+        [disabled]="
+          getIsbnControl(element.id).invalid ||
+          getIsbnControl(element.id).pending
+        "
+        (click)="saveInlineISBN(element)"
+      >
+        <mat-icon class="material-icons text-sm !text-white">check</mat-icon>
+      </button>
+    </div>
+
+    }
+  </ng-template>
+
+  <!-- Action buttons column -->
   <ng-template #actionButtons let-element>
     <div class="flex gap-2 text-sm items-center lg:flex-wrap">
-      @if (!element.isbnNumber && element.status === 'PENDING' &&
-      loggedInUser$()?.accessLevel === 'SUPERADMIN' ) {
-      <button
-        class="!bg-green-600 flex items-center gap-2 !text-white rounded-full p-2"
-        matButton="filled"
-        (click)="assignISBN(element)"
-      >
-        <mat-icon class="material-icons">how_to_reg</mat-icon>
-        {{ "assignisbn" | translate }}
-      </button>
-      } @if (element.image && element.status !== 'REJECTED') {
+      @if (element.image && element.status !== 'REJECTED') {
       <button
         class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
         matButton="filled"
@@ -130,7 +177,6 @@
         (click)="downloadBarCode(element.isbnnumber)"
       >
         <mat-icon class="material-icons">download</mat-icon>
-
         {{ "barcode" | translate }}
       </button>
       } @if (element.bunko && element.status !== 'REJECTED') {
@@ -141,7 +187,6 @@
         (click)="downloadBunko(element)"
       >
         <mat-icon class="material-icons">download</mat-icon>
-
         {{ "bunko" | translate }}
       </button>
       } @if (element.status === 'PENDING') {
@@ -154,6 +199,7 @@
       </button>
       } @if (element.isbnNumber && element.status === 'PENDING' &&
       loggedInUser$()?.accessLevel === 'SUPERADMIN') {
+
       <button
         class="!bg-green-600 flex items-center gap-2 !text-white rounded-full p-2"
         matIconButton

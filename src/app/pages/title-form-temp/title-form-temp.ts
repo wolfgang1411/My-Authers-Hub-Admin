@@ -1464,7 +1464,7 @@ export class TitleFormTemp implements OnDestroy {
 
     // 👥 STEP 3: Ensure author royalties per platform
     // Authors get remaining percentage after publisher's share
-    // If publisher has 10%, authors get 90% (divided equally if multiple authors)
+    // If publisher has 10%, authors get 90% (divided equally if multiple authors
     for (const author of authors) {
       const { id: authorId, name, user } = author;
       const authorName =

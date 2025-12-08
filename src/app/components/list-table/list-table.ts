@@ -36,6 +36,7 @@ export class ListTable implements AfterViewInit {
   @Input() dataSource!: MatTableDataSource<any>;
   @Input() actionTemplate!: TemplateRef<any>;
   @Input() cellTemplate?: TemplateRef<any>;
+  @Input() editIsbnTemplate!: TemplateRef<any>;
   @ViewChild(MatSort) sort!: MatSort;
 
   ngAfterViewInit() {

@@ -6,7 +6,15 @@ import { RouterModule } from '@angular/router';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatTableDataSource } from '@angular/material/table';
 import { IsbnService } from '../../services/isbn-service';
-import { debounceTime, Subject } from 'rxjs';
+import {
+  catchError,
+  debounceTime,
+  map,
+  of,
+  Subject,
+  switchMap,
+  timer,
+} from 'rxjs';
 import {
   Author,
   AuthorStatus,
@@ -23,20 +31,22 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { CreateIsbn } from '../../components/create-isbn/create-isbn';
 import Swal from 'sweetalert2';
-import {
-  downloadFile,
-  getFileToBase64,
-  urlToFile,
-} from '../../common/utils/file';
+import { downloadFile, urlToFile } from '../../common/utils/file';
 import { PublisherService } from '../publisher/publisher-service';
 import { AuthorsService } from '../authors/authors-service';
-import { MatOption, MatSelectModule } from '@angular/material/select';
+import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { StaticValuesService } from '../../services/static-values';
 import { UserService } from '../../services/user';
-import { stat } from 'fs';
 import { AssignIsbn } from 'src/app/components/assign-isbn/assign-isbn';
-import { formatIsbn } from 'src/app/shared/utils/isbn.utils';
+import { cleanIsbn, formatIsbn } from 'src/app/shared/utils/isbn.utils';
+import {
+  AbstractControl,
+  AsyncValidatorFn,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+} from '@angular/forms';
 
 @Component({
   selector: 'app-isbn-list',
@@ -51,6 +61,7 @@ import { formatIsbn } from 'src/app/shared/utils/isbn.utils';
     MatSelectModule,
     MatFormFieldModule,
     MatIconButton,
+    ReactiveFormsModule,
   ],
   templateUrl: './isbn-list.html',
   styleUrl: './isbn-list.css',
@@ -70,7 +81,8 @@ export class ISBNList {
 
   loggedInUser$!: Signal<User | null>;
 
-  displayedColumns: string[] = [
+  // Base columns used for all statuses except APPLIED
+  displayedColumnsBase = [
     'titlename',
     'authorname',
     'publishername',
@@ -80,6 +92,9 @@ export class ISBNList {
     'isbnnumber',
     'actions',
   ];
+
+  displayedColumns = [...this.displayedColumnsBase];
+
   filter: ISBNFilter = {
     page: 1,
     itemsPerPage: 30,
@@ -95,6 +110,7 @@ export class ISBNList {
 
   lastSelectedStatus: ISBNStatus | 'ALL' = ISBNStatus.PENDING;
   isbnStatusEnum = ISBNStatus;
+
   dataSource = new MatTableDataSource<any>();
   searchStr = new Subject<string>();
   searchStr$ = this.searchStr
@@ -108,27 +124,88 @@ export class ISBNList {
 
   lastPage = signal(1);
   isbnList = signal<ISBN[]>([]);
+  publisherList = signal<Publishers[] | null>(null);
+  authorsList = signal<Author[] | null>(null);
+  isbnInputs = new Map<number, FormControl<string | null>>();
+
+  // Single form used for inline ISBN entry (APPLIED tab)
+  createIsbnForm = new FormGroup({
+    isbnNumber: new FormControl<string | null>(null, {
+      asyncValidators: this.validateIsbn(),
+    }),
+  });
+
   ngOnInit(): void {
     this.fetchIsbnList();
     this.fetchAndUpdateAuthorsList();
     this.fetchAndUpdatePublishersList();
   }
+
+  // Async validator for ISBN
+  validateIsbn(): AsyncValidatorFn {
+    return (control: AbstractControl) => {
+      let isbn = cleanIsbn(control.value || '');
+
+      if (isbn.length === 0) return of(null);
+
+      // allow typing until it reaches 13
+      if (isbn.length < 13) return of(null);
+      if (isbn.length !== 13) return of({ invalid: 'ISBN must be 13 digits' });
+
+      return timer(500).pipe(
+        switchMap(() => this.isbnService.verifyIsbn(isbn)),
+        map(({ verified }) => (verified ? null : { invalid: 'Invalid ISBN' })),
+        catchError(() => of({ invalid: 'Invalid ISBN' }))
+      );
+    };
+  }
+
   selectStatus(status: ISBNStatus | 'ALL') {
     this.lastSelectedStatus = status;
-    if (status === 'ALL') {
-      this.filter = {
-        ...this.filter,
-        status: undefined,
-      };
-    } else {
-      this.filter = {
-        ...this.filter,
-        page: 1,
-        status: status as ISBNStatus,
-      };
+
+    // Base columns restored first
+    this.displayedColumns = [...this.displayedColumnsBase];
+
+    // APPLIED: remove isbnnumber column and add editisbn column
+    if (status === ISBNStatus.APPLIED) {
+      this.displayedColumns = this.displayedColumns.filter(
+        (col) => col !== 'isbnnumber'
+      );
+
+      const idx = this.displayedColumns.indexOf('status');
+      if (idx !== -1) {
+        this.displayedColumns.splice(idx + 1, 0, 'assignisbn');
+      }
     }
+
+    // Reset form when switching status/tab
+    this.createIsbnForm.reset({ isbnNumber: null });
+
+    this.filter.status = status === 'ALL' ? undefined : status;
+    this.filter.page = 1;
     this.fetchIsbnList();
   }
+  getIsbnControl(id: number) {
+    if (!this.isbnInputs.has(id)) {
+      const control = new FormControl<string | null>(null, {
+        asyncValidators: this.validateIsbn(),
+        updateOn: 'change',
+      });
+
+      control.valueChanges.subscribe((value) => {
+        if (!value) return;
+        const cleaned = cleanIsbn(value);
+        const formatted = formatIsbn(cleaned);
+        if (formatted !== value) {
+          control.setValue(formatted, { emitEvent: false });
+        }
+      });
+
+      this.isbnInputs.set(id, control);
+    }
+    return this.isbnInputs.get(id)!;
+  }
+
   async fetchAndUpdatePublishersList() {
     const { items } = await this.publisherService.getPublishers({
       status: PublisherStatus.Active,
@@ -144,9 +221,6 @@ export class ISBNList {
     });
     this.authorsList.set(items);
   }
-
-  publisherList = signal<Publishers[] | null>(null);
-  authorsList = signal<Author[] | null>(null);
 
   async createIsbn(isbn?: ISBN) {
     const dialogRef = this.dialog.open(CreateIsbn, {
@@ -168,16 +242,14 @@ export class ISBNList {
             } else {
               list.unshift(response);
             }
-
             return list;
           });
           this.updateISBNList();
           if (response) {
             dialogRef.close();
-            let html = 'The ISBN has been applied';
             Swal.fire({
               title: 'success',
-              html,
+              html: 'The ISBN has been applied',
               icon: 'success',
               heightAuto: false,
             });
@@ -192,16 +264,14 @@ export class ISBNList {
 
   async onISBNStatusChange(id: number, status: string) {
     let html = '';
-    let title = '';
+    let title = 'Are you sure?';
 
     if (status === 'APPROVED') {
       html =
         'The ISBN will be approved. <br> once approved it cannot be changed.';
-      title = 'Are you sure?';
     } else if (status === 'REJECTED') {
       html =
         'The ISBN will be rejected. <br> once rejected it cannot be changed.';
-      title = 'Are you sure?';
     }
 
     const { value } = await Swal.fire({
@@ -224,10 +294,48 @@ export class ISBNList {
       status,
     } as any);
 
-    this.isbnList.update((list) => {
-      return list.map((item) => (item.id === response.id ? response : item));
-    });
+    this.isbnList.update((list) =>
+      list.map((item) => (item.id === response.id ? response : item))
+    );
     this.updateISBNList();
+  }
+  async saveInlineISBN(element: any) {
+    const control = this.getIsbnControl(element.id);
+    const isbnNumber = cleanIsbn(control.value || '');
+
+    if (!isbnNumber || control.invalid) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Invalid ISBN',
+        text: 'Please enter a valid ISBN number.',
+      });
+      return;
+    }
+
+    const payload: createIsbn = {
+      id: element.id,
+      type: element.type,
+      titleName: element.titleName,
+      authorIds: element.authors?.map((a: Author) => a.id) || [],
+      publisherId: element.publisher?.id,
+      edition: element.edition,
+      language: element.language,
+      status: element.status,
+      isbnNumber,
+      noOfPages: element.noOfPages ?? null,
+      mrp: element.mrp ?? null,
+    };
+
+    const response = await this.isbnService.createOrUpdateIsbn(payload);
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Assigned',
+      text: 'ISBN number assigned successfully!',
+    });
+
+    // CLEAR FIELD AFTER SAVE
+    control.reset();
   }
 
   async assignISBN(isbn: ISBN) {
@@ -250,16 +358,14 @@ export class ISBNList {
             } else {
               list.unshift(response);
             }
-
             return list;
           });
           this.updateISBNList();
           if (response) {
             dialogRef.close();
-            let html = 'The ISBN has been generated';
             Swal.fire({
               title: 'success',
-              html,
+              html: 'The ISBN has been generated',
               icon: 'success',
               heightAuto: false,
             });
@@ -271,13 +377,13 @@ export class ISBNList {
       },
     });
   }
+
   fetchIsbnList() {
     const filter = { ...this.filter };
-    console.log(filter);
-
     if (!filter.status) {
       delete filter.status;
     }
+
     this.isbnService.getAllISBN(filter).then((response) => {
       this.isbnList.set(response.items);
       this.lastPage.set(
@@ -287,28 +393,27 @@ export class ISBNList {
     });
   }
 
+  // 🔹 Map backend ISBN into table row shape
   updateISBNList() {
     const isbnList = this.isbnList();
 
-    this.dataSource.data = isbnList.map((isbn, index) => {
-      return {
-        ...isbn,
-        id: isbn.id,
-        isbnnumber: formatIsbn(isbn.isbnNumber),
-        isbntype: isbn.type,
-        titlename: isbn.titleName,
-        authorname: isbn.authors
-          .map(({ user: { fullName } }) => fullName)
-          .join(','),
-        publishername: isbn.publisher.name,
-        verso: isbn.edition,
-        language: isbn.language,
-        status: isbn.status,
-        createdby: isbn.admin
-          ? isbn.admin.firstName + ' ' + isbn.admin.lastName
-          : 'N/A',
-      };
-    });
+    this.dataSource.data = isbnList.map((isbn) => ({
+      ...isbn, // keep original fields for payload
+      id: isbn.id,
+      isbnnumber: formatIsbn(isbn.isbnNumber) || 'N/A',
+      isbntype: isbn.type,
+      titlename: isbn.titleName,
+      authorname: isbn.authors
+        .map(({ user: { fullName } }) => fullName)
+        .join(', '),
+      publishername: isbn.publisher?.name,
+      verso: isbn.edition,
+      language: isbn.language,
+      status: isbn.status,
+      createdby: isbn.admin
+        ? isbn.admin.firstName + ' ' + isbn.admin.lastName
+        : 'N/A',
+    }));
   }
 
   downloadBarCode(isbnNumber: string) {

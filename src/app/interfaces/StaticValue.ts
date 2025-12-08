@@ -210,6 +210,7 @@ export enum ISBNType {
 export enum VerifiedISBNStatus {
   ACTIVE = 'ACTIVE',
   DELETED = 'DELETED',
+  APPLIED = 'APPLIED',
 }
 
 export enum PlatForm {
@@ -363,6 +364,7 @@ export enum ISBNStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
   DELETED = 'DELETED',
+  APPLIED = 'APPLIED',
 }
 
 export const EBOOK_MSP = '69';
