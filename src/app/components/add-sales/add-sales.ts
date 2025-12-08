@@ -213,6 +213,23 @@ export class AddSales implements OnInit {
     this.salesArrayUpdateTrigger.update((v) => v + 1);
   }
 
+  // Computed signal that maps platform names to their isOtherPlatform status
+  // This ensures reactivity when platforms are loaded or when platform selection changes
+  platformIsOtherPlatformMap = computed(() => {
+    const allPlatforms = this.platforms();
+    const map = new Map<string, boolean>();
+
+    if (!allPlatforms || allPlatforms.length === 0) {
+      return map;
+    }
+
+    allPlatforms.forEach((platform) => {
+      map.set(platform.name, platform.isOtherPlatform ?? false);
+    });
+
+    return map;
+  });
+
   async ngOnInit() {
     // Fetch platforms from API first - use a loader key to make it visible
     try {
@@ -477,6 +494,11 @@ export class AddSales implements OnInit {
 
       platformOptions: new FormArray<FormControl<Platform>>([]),
 
+      platformName: new FormControl<string | undefined | null>(null, {
+        validators: [],
+        nonNullable: false,
+      }),
+
       amount: new FormControl(data?.amount || null, {
         validators: [],
         nonNullable: true,
@@ -520,7 +542,7 @@ export class AddSales implements OnInit {
 
     // Subscribe to title changes and update platformOptions
     group.get('title.id')?.valueChanges.subscribe(async (titleId) => {
-      group.patchValue({ platform: null, amount: null });
+      group.patchValue({ platform: null, amount: null, platformName: null });
 
       // Calculate and set platformOptions
       await this.updatePlatformOptionsForGroup(group, titleId);
@@ -542,18 +564,46 @@ export class AddSales implements OnInit {
     if (initialTitleId) {
       this.updatePlatformOptionsForGroup(group, initialTitleId);
     }
+
+    // Initialize platformName validation if platform is already set
+    const initialPlatform = group.get('platform')?.value;
+    if (initialPlatform) {
+      const platformRecord = this.platforms().find((p) => p.name === initialPlatform);
+      const isOtherPlatform = platformRecord?.isOtherPlatform ?? false;
+      const platformNameControl = group.get('platformName');
+      if (isOtherPlatform) {
+        platformNameControl?.setValidators([Validators.required]);
+      } else {
+        platformNameControl?.setValidators([]);
+      }
+      platformNameControl?.updateValueAndValidity();
+    }
+
     group.get('platform')?.valueChanges.subscribe((platform) => {
       const saleType = group.get('type')?.value;
       const amountControl = group.get('amount');
+      const platformNameControl = group.get('platformName');
 
       if (!platform) {
-        group.patchValue({ amount: null });
+        group.patchValue({ amount: null, platformName: null });
+        platformNameControl?.setValidators([]);
+        platformNameControl?.updateValueAndValidity();
         return;
       }
 
       // Check if the platform is an inventory platform
       const platformRecord = this.platforms().find((p) => p.name === platform);
       const isInventoryPlatform = platformRecord?.isInventoryPlatform ?? false;
+      const isOtherPlatform = platformRecord?.isOtherPlatform ?? false;
+
+      // For other platforms, platformName is required
+      if (isOtherPlatform) {
+        platformNameControl?.setValidators([Validators.required]);
+      } else {
+        platformNameControl?.setValidators([]);
+        platformNameControl?.patchValue(null);
+      }
+      platformNameControl?.updateValueAndValidity();
 
       // For inventory platforms, amount is required
       if (isInventoryPlatform) {
@@ -591,17 +641,18 @@ export class AddSales implements OnInit {
   onSubmit() {
     if (this.form.valid) {
       const data: CreateSale[] = this.form.controls.salesArray.controls.map(
-        ({
-          controls: {
-            amount,
-            delivery,
-            platform,
-            quantity,
-            soldAt,
-            title,
-            type,
-          },
-        }) => {
+        (group) => {
+          const {
+            controls: {
+              amount,
+              delivery,
+              platform,
+              quantity,
+              soldAt,
+              title,
+              type,
+            },
+          } = group;
           const saleData: CreateSale = {
             delivery: Number(delivery.value) || 0,
             quantity: Number(quantity.value) || 1,
@@ -623,6 +674,12 @@ export class AddSales implements OnInit {
             amount.value
           ) {
             saleData.amount = Number(amount.value);
+          }
+
+          // Include platformName for other platforms
+          const platformNameValue = group.get('platformName')?.value;
+          if (platformNameValue) {
+            saleData.platformName = platformNameValue;
           }
 
           return saleData;

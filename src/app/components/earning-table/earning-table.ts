@@ -109,7 +109,7 @@ export class EarningTable {
                 '',
                 'INR'
               ),
-          platform: this.translateService.instant(
+          platform: earning.platformName || this.translateService.instant(
             typeof earning.platform === 'string'
               ? earning.platform
               : (earning.platform as any)?.name || earning.platform || ''

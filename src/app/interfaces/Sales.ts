@@ -48,6 +48,7 @@ export interface CreateSale {
   type: SalesType;
   titleId: number;
   platform: PlatForm;
+  platformName?: string;
   amount?: number;
   quantity: number;
   delivery?: number;
@@ -62,6 +63,7 @@ export interface CreateSaleForm {
   }>;
   platform: FormControl<PlatForm | undefined | null>;
   platformOptions: FormArray<FormControl<Platform>>;
+  platformName: FormControl<string | undefined | null>;
   amount: FormControl<number | undefined | null>;
   quantity: FormControl<number | undefined>;
   delivery: FormControl<number | undefined>;

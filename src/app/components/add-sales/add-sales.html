@@ -119,6 +119,25 @@
               }
             </mat-form-field>
 
+            <!-- Platform Name Field (Only for Other Platforms) -->
+            @if (saleGroup.controls.platform.value && platformIsOtherPlatformMap().get(saleGroup.controls.platform.value)) {
+            <mat-form-field appearance="outline" class="!w-auto !min-w-[150px]">
+              <mat-icon matPrefix class="!text-gray-400 !mr-2 !text-lg"
+                >label</mat-icon
+              >
+              <input
+                matInput
+                type="text"
+                [formControl]="saleGroup.controls.platformName"
+                [placeholder]="'platformname' | translate"
+              />
+              @if (saleGroup.controls.platformName.hasError('required') &&
+              saleGroup.controls.platformName.touched) {
+              <mat-error>Required</mat-error>
+              }
+            </mat-form-field>
+            }
+
             <!-- Amount Field (Only for INVENTORY) -->
             @if (saleGroup.controls.type.value === 'INVENTORY') {
             <mat-form-field appearance="outline" class="!w-auto !min-w-[120px]">

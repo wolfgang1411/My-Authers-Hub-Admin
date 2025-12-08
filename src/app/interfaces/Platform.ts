@@ -14,6 +14,7 @@ export interface Platform {
   status: PlatformStatus;
   createdAt: string;
   isInventoryPlatform?: boolean;
+  isOtherPlatform?: boolean;
   updatedAt: string;
 }
 

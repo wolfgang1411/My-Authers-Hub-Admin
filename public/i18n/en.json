@@ -320,6 +320,7 @@
   "AMAZON": "Amazon",
   "saketype": "Sale Type",
   "platform": "Platform",
+  "platformname": "Platform Name",
   "qunatity": "Qunatity",
   "soldat": "Sold At",
   "bookingtype": "Booking Type",

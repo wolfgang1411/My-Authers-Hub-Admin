@@ -8,6 +8,7 @@ export interface Earnings {
   holdUntil: string | null;
   paidAt: string | null;
   platform: Platform;
+  platformName?: string;
   quantity: number;
   royalty: Royalty;
   status: EarningsStatus;
