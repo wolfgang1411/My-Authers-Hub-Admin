@@ -88,54 +88,173 @@ export class Publisher implements OnInit {
     'actions',
   ];
 
-  filter: PublisherFilter = {
+  lastPage = signal(1);
+  
+  filter = signal<PublisherFilter>({
     page: 1,
-    itemsPerPage: 30,
+    itemsPerPage: 10,
     status: 'ALL' as any,
-  };
+  });
+  
+  // Cache to store fetched pages
+  private pageCache = new Map<number, Publishers[]>();
+  private cachedFilterKey = '';
+  
+  private getFilterKey(): string {
+    const currentFilter = this.filter();
+    return JSON.stringify({
+      status: currentFilter.status,
+      searchStr: currentFilter.searchStr,
+      itemsPerPage: currentFilter.itemsPerPage,
+    });
+  }
+
+  private clearCache() {
+    this.pageCache.clear();
+    this.cachedFilterKey = '';
+  }
   fetchPublishers(showLoader = true) {
+    const currentFilter = this.filter();
+    const currentPage = currentFilter.page || 1;
+    const filterKey = this.getFilterKey();
+    
+    // Clear cache if filter changed
+    if (this.cachedFilterKey !== filterKey) {
+      this.clearCache();
+      this.cachedFilterKey = filterKey;
+    }
+
+    // Check if page is already cached
+    if (this.pageCache.has(currentPage)) {
+      const cachedPublishers = this.pageCache.get(currentPage)!;
+      this.publishers.set(cachedPublishers);
+      this.mapPublishersToDataSource(cachedPublishers);
+      return;
+    }
+
+    // Fetch from API
     this.publisherService
-      .getPublishers(this.filter, showLoader)
-      .then(({ items }) => {
+      .getPublishers(currentFilter, showLoader)
+      .then(({ items, totalCount, itemsPerPage: returnedItemsPerPage }) => {
         items = items.filter(
           ({ user: { id } }) => id !== this.userService.loggedInUser$()?.id
         );
 
+        // Cache the fetched page
+        this.pageCache.set(currentPage, items);
         this.publishers.set(items);
-
-        const mapped = items.map((publisher) => ({
-          ...publisher,
-          phonenumber: publisher.phoneNumber || publisher.user.phoneNumber,
-          nooftitles: publisher.noOfTitles,
-          noofauthors: publisher.noOfAuthors,
-          actions: '',
-        }));
-
-        const existingData = this.dataSource.data;
-        this.dataSource.data =
-          existingData && existingData.length && (this.filter.page || 0) > 2
-            ? [...existingData, ...mapped]
-            : mapped;
-        if (mapped.length > 0) {
-          const filtrCol = { ...mapped[0] };
-          delete (filtrCol as any).id;
-          if (!existingData) this.displayedColumns = Object.keys(filtrCol);
-        }
-        console.log('Mapped publishers:', mapped);
+        this.lastPage.set(Math.ceil(totalCount / returnedItemsPerPage));
+        this.mapPublishersToDataSource(items);
       })
       .catch((error) => {
         console.error('Error fetching publishers:', error);
       });
   }
+  
+  private mapPublishersToDataSource(items: Publishers[]) {
+    const mapped = items.map((publisher) => ({
+      ...publisher,
+      phonenumber: publisher.phoneNumber || publisher.user.phoneNumber,
+      nooftitles: publisher.noOfTitles,
+      noofauthors: publisher.noOfAuthors,
+      actions: '',
+    }));
+
+    if (mapped.length > 0) {
+      const filtrCol = { ...mapped[0] };
+      delete (filtrCol as any).id;
+      if (this.dataSource.data.length === 0) {
+        this.displayedColumns = Object.keys(filtrCol);
+      }
+    }
+    this.dataSource.data = mapped;
+  }
+  
+  nextPage() {
+    const currentPage = this.filter().page || 1;
+    if (currentPage < this.lastPage()) {
+      this.filter.update((f) => ({ ...f, page: currentPage + 1 }));
+      this.fetchPublishers();
+    }
+  }
+
+  previousPage() {
+    const currentPage = this.filter().page || 1;
+    if (currentPage > 1) {
+      this.filter.update((f) => ({ ...f, page: currentPage - 1 }));
+      this.fetchPublishers();
+    }
+  }
+
+  goToPage(pageNumber: number) {
+    if (pageNumber >= 1 && pageNumber <= this.lastPage()) {
+      this.filter.update((f) => ({ ...f, page: pageNumber }));
+      this.fetchPublishers();
+    }
+  }
+
+  onItemsPerPageChange(itemsPerPage: number) {
+    this.filter.update((f) => ({ ...f, itemsPerPage, page: 1 }));
+    this.clearCache();
+    this.fetchPublishers();
+  }
+
+  getPageNumbers(): number[] {
+    const currentPage = this.filter().page || 1;
+    const totalPages = this.lastPage();
+    const pages: number[] = [];
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        pages.push(-1);
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push(-1);
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  }
+
+  onStatusChange(status: any) {
+    this.filter.update((f) => ({ ...f, status, page: 1 }));
+    this.clearCache();
+    this.fetchPublishers();
+  }
 
   ngOnInit(): void {
     this.fetchPublishers();
     this.searchStr.pipe(debounceTime(200)).subscribe((value) => {
-      this.filter.page = 1;
-      this.filter.searchStr = value;
-      if (!value?.length) {
-        delete this.filter.searchStr;
-      }
+      this.filter.update((f) => {
+        const updated = { ...f };
+        if (!value?.length) {
+          delete updated.searchStr;
+        } else {
+          updated.searchStr = value;
+        }
+        updated.page = 1;
+        return updated;
+      });
+      this.clearCache();
       this.fetchPublishers(false);
     });
   }

@@ -26,12 +26,29 @@ export class CouponComponent implements OnInit {
   titleList = signal<Title[] | null>(null);
   dataSource = new MatTableDataSource<any>();
 
+  lastPage = signal(1);
+  
   filter = signal<CouponFilter>({
-    itemsPerPage: 30,
+    itemsPerPage: 10,
     page: 1,
   });
   coupons = signal<Coupon[] | null>(null);
-  lastPage = signal(1);
+  
+  // Cache to store fetched pages
+  private pageCache = new Map<number, Coupon[]>();
+  private cachedFilterKey = '';
+  
+  private getFilterKey(): string {
+    const currentFilter = this.filter();
+    return JSON.stringify({
+      itemsPerPage: currentFilter.itemsPerPage,
+    });
+  }
+
+  private clearCache() {
+    this.pageCache.clear();
+    this.cachedFilterKey = '';
+  }
 
   displayedColumns: string[] = [
     'coupon',
@@ -84,17 +101,101 @@ export class CouponComponent implements OnInit {
 
   async fetchAndUpdateCoupons() {
     try {
-      const { items, itemsPerPage, page, totalCount } =
-        await this.couponService.fetchCoupons(this.filter());
+      const currentFilter = this.filter();
+      const currentPage = currentFilter.page || 1;
+      const filterKey = this.getFilterKey();
+      
+      // Clear cache if filter changed
+      if (this.cachedFilterKey !== filterKey) {
+        this.clearCache();
+        this.cachedFilterKey = filterKey;
+      }
 
-      this.coupons.update((coupons) => {
-        return page === 1 ? items : [...(coupons || []), ...items];
-      });
-      this.lastPage.set(Math.ceil(totalCount / itemsPerPage));
+      // Check if page is already cached
+      if (this.pageCache.has(currentPage)) {
+        const cachedCoupons = this.pageCache.get(currentPage)!;
+        this.coupons.set(cachedCoupons);
+        this.mapCouponsToDataSource();
+        return;
+      }
+
+      // Fetch from API
+      const { items, itemsPerPage: returnedItemsPerPage, totalCount } =
+        await this.couponService.fetchCoupons(currentFilter);
+
+      // Cache the fetched page
+      this.pageCache.set(currentPage, items);
+      this.coupons.set(items);
+      this.lastPage.set(Math.ceil(totalCount / returnedItemsPerPage));
       this.mapCouponsToDataSource();
     } catch (error) {
       console.log(error);
     }
+  }
+  
+  nextPage() {
+    const currentPage = this.filter().page || 1;
+    if (currentPage < this.lastPage()) {
+      this.filter.update((f) => ({ ...f, page: currentPage + 1 }));
+      this.fetchAndUpdateCoupons();
+    }
+  }
+
+  previousPage() {
+    const currentPage = this.filter().page || 1;
+    if (currentPage > 1) {
+      this.filter.update((f) => ({ ...f, page: currentPage - 1 }));
+      this.fetchAndUpdateCoupons();
+    }
+  }
+
+  goToPage(pageNumber: number) {
+    if (pageNumber >= 1 && pageNumber <= this.lastPage()) {
+      this.filter.update((f) => ({ ...f, page: pageNumber }));
+      this.fetchAndUpdateCoupons();
+    }
+  }
+
+  onItemsPerPageChange(itemsPerPage: number) {
+    this.filter.update((f) => ({ ...f, itemsPerPage, page: 1 }));
+    this.clearCache();
+    this.fetchAndUpdateCoupons();
+  }
+
+  getPageNumbers(): number[] {
+    const currentPage = this.filter().page || 1;
+    const totalPages = this.lastPage();
+    const pages: number[] = [];
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        pages.push(-1);
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push(-1);
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
   }
 
   onAddUpdateCoupon(coupon?: Coupon) {

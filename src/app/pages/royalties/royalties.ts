@@ -63,11 +63,13 @@ export class Royalties {
     public userService: UserService
   ) {}
 
-  filter: EarningFilter = {
+  lastPage = signal(1);
+
+  filter = signal<EarningFilter>({
     page: 1,
-    itemsPerPage: 30,
+    itemsPerPage: 10,
     searchStr: '',
-  };
+  });
 
   titles = signal<Title[]>([]);
   searchStr = new Subject<string>();
@@ -75,21 +77,24 @@ export class Royalties {
     .asObservable()
     .pipe(debounceTime(800))
     .subscribe((value) => {
-      this.filter.searchStr = value;
-      this.filter.page = 1;
+      this.filter.update((f) => ({ ...f, searchStr: value, page: 1 }));
+      this.clearCache();
       this.updateRoyaltyList();
     });
-
-  lastPage = signal(1);
   earningList = signal<Earnings[]>([]);
+
+  // Cache to store fetched pages
+  private pageCache = new Map<number, Earnings[]>();
+  private cachedFilterKey = '';
   lastSelectedSaleType: SalesType | null = null;
   salesTypes = SalesType;
   ngOnInit(): void {
     if (this.lastSelectedSaleType) {
-      this.filter = {
-        ...this.filter,
-        salesType: [this.lastSelectedSaleType],
-      };
+      const saleType = this.lastSelectedSaleType;
+      this.filter.update((f) => ({
+        ...f,
+        salesType: [saleType],
+      }));
     }
     this.updateRoyaltyList();
   }
@@ -116,31 +121,140 @@ export class Royalties {
     return cleaned;
   }
 
+  private getFilterKey(): string {
+    const currentFilter = this.filter();
+    return JSON.stringify({
+      searchStr: currentFilter.searchStr,
+      salesType: currentFilter.salesType,
+      paidBefore: currentFilter.paidBefore,
+      paidAfter: currentFilter.paidAfter,
+      titleIds: currentFilter.titleIds,
+      authorIds: currentFilter.authorIds,
+      publisherIds: currentFilter.publisherIds,
+      status: currentFilter.status,
+      platforms: currentFilter.platforms,
+      channals: currentFilter.channals,
+      itemsPerPage: currentFilter.itemsPerPage,
+    });
+  }
+
+  private clearCache() {
+    this.pageCache.clear();
+    this.cachedFilterKey = '';
+  }
+
   async updateRoyaltyList() {
-    console.log('Updating royalty list with filter:', this.filter);
-    const cleanedFilter = this.cleanFilter(this.filter);
-    const { items, totalCount, itemsPerPage, page } =
+    const currentFilter = this.filter();
+    const currentPage = currentFilter.page || 1;
+    const filterKey = this.getFilterKey();
+
+    // Clear cache if filter changed
+    if (this.cachedFilterKey !== filterKey) {
+      this.clearCache();
+      this.cachedFilterKey = filterKey;
+    }
+
+    // Check if page is already cached
+    if (this.pageCache.has(currentPage)) {
+      this.earningList.set(this.pageCache.get(currentPage)!);
+      return;
+    }
+
+    // Fetch from API
+    console.log('Updating royalty list with filter:', currentFilter);
+    const cleanedFilter = this.cleanFilter(currentFilter);
+    const { items, totalCount, itemsPerPage: returnedItemsPerPage } =
       await this.salesService.fetchEarnings(cleanedFilter);
 
-    this.earningList.update((earningList) => {
-      return page > 1 && earningList.length
-        ? [...earningList, ...items]
-        : items;
-    });
-    this.lastPage.set(Math.ceil(totalCount / itemsPerPage));
+    // Cache the fetched page
+    this.pageCache.set(currentPage, items);
+    this.earningList.set(items);
+    this.lastPage.set(Math.ceil(totalCount / returnedItemsPerPage));
   }
   selectSaleType(type: SalesType | null) {
     this.lastSelectedSaleType = type;
-    const updatedFilter: EarningFilter = {
-      ...this.filter,
-    };
-    if (type === null) {
-      delete updatedFilter.salesType;
-    } else {
-      updatedFilter.salesType = [type];
-    }
-    this.filter = updatedFilter;
+    this.filter.update((f) => {
+      const updated = { ...f };
+      if (type === null) {
+        delete updated.salesType;
+      } else {
+        updated.salesType = [type];
+      }
+      updated.page = 1;
+      return updated;
+    });
+    this.clearCache();
     this.updateRoyaltyList();
+  }
+
+  nextPage() {
+    const currentPage = this.filter().page || 1;
+    if (currentPage < this.lastPage()) {
+      this.filter.update((f) => ({ ...f, page: currentPage + 1 }));
+      this.updateRoyaltyList();
+    }
+  }
+
+  previousPage() {
+    const currentPage = this.filter().page || 1;
+    if (currentPage > 1) {
+      this.filter.update((f) => ({ ...f, page: currentPage - 1 }));
+      this.updateRoyaltyList();
+    }
+  }
+
+  goToPage(pageNumber: number) {
+    if (pageNumber >= 1 && pageNumber <= this.lastPage()) {
+      this.filter.update((f) => ({ ...f, page: pageNumber }));
+      this.updateRoyaltyList();
+    }
+  }
+
+  onItemsPerPageChange(itemsPerPage: number) {
+    this.filter.update((f) => ({ ...f, itemsPerPage, page: 1 }));
+    this.clearCache();
+    this.updateRoyaltyList();
+  }
+
+  getPageNumbers(): number[] {
+    const currentPage = this.filter().page || 1;
+    const totalPages = this.lastPage();
+    const pages: number[] = [];
+
+    if (totalPages <= 7) {
+      // Show all pages if 7 or fewer
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show first page, last page, current page, and pages around current
+      if (currentPage <= 3) {
+        // Near the beginning
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        pages.push(-1); // Ellipsis
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        // Near the end
+        pages.push(1);
+        pages.push(-1); // Ellipsis
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // In the middle
+        pages.push(1);
+        pages.push(-1); // Ellipsis
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push(-1); // Ellipsis
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
   }
 
   addRoyalty(data?: Partial<CreateSale & { availableTitles: number[] }>[]) {

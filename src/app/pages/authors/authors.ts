@@ -87,12 +87,32 @@ export class Authors {
 
   @ViewChild('numberOfTitlesMenu') numberOfTitlesMenu!: TemplateRef<any>;
   @ViewChild('booksSoldMenu') booksSoldMenu!: TemplateRef<any>;
-  filter: AuthorFilter = {
+  lastPage = signal(1);
+  
+  filter = signal<AuthorFilter>({
     page: 1,
-    itemsPerPage: 30,
+    itemsPerPage: 10,
     status: 'ALL' as any,
     showTotalEarnings: true,
-  };
+  });
+  
+  // Cache to store fetched pages
+  private pageCache = new Map<number, Author[]>();
+  private cachedFilterKey = '';
+  
+  private getFilterKey(): string {
+    const currentFilter = this.filter();
+    return JSON.stringify({
+      status: currentFilter.status,
+      searchStr: currentFilter.searchStr,
+      itemsPerPage: currentFilter.itemsPerPage,
+    });
+  }
+
+  private clearCache() {
+    this.pageCache.clear();
+    this.cachedFilterKey = '';
+  }
   ngAfterViewInit() {
     this.authorRowMenus.set({
       numberoftitles: this.numberOfTitlesMenu,
@@ -114,30 +134,120 @@ export class Authors {
     return a ? a.user.firstName + ' ' + a.user.lastName : '';
   }
   fetchAuthors(showLoader = true) {
-    this.authorService
-      .getAuthors(this.filter, showLoader)
-      .then(({ items }) => {
-        this.authors.set(items);
-        const mapped = items.map((author, idx) => ({
-          ...author,
-          name: author.user.firstName + ' ' + author.user.lastName,
-          numberoftitles: author.noOfTitles,
-          bookssold: author.booksSold,
-          royaltiesearned: Number(author.totalEarning || 0).toFixed(2),
-          actions: '',
-        }));
-        const exisitingData = this.dataSource.data;
-        this.dataSource.data =
-          exisitingData && exisitingData.length && (this.filter.page || 0) > 1
-            ? [...exisitingData, ...mapped]
-            : mapped;
+    const currentFilter = this.filter();
+    const currentPage = currentFilter.page || 1;
+    const filterKey = this.getFilterKey();
+    
+    // Clear cache if filter changed
+    if (this.cachedFilterKey !== filterKey) {
+      this.clearCache();
+      this.cachedFilterKey = filterKey;
+    }
 
-        this.dataSource.data = mapped;
-        console.log('Fetched publishers:', this.authors());
+    // Check if page is already cached
+    if (this.pageCache.has(currentPage)) {
+      const cachedAuthors = this.pageCache.get(currentPage)!;
+      this.authors.set(cachedAuthors);
+      this.mapAuthorsToDataSource(cachedAuthors);
+      return;
+    }
+
+    // Fetch from API
+    this.authorService
+      .getAuthors(currentFilter, showLoader)
+      .then(({ items, totalCount, itemsPerPage: returnedItemsPerPage }) => {
+        // Cache the fetched page
+        this.pageCache.set(currentPage, items);
+        this.authors.set(items);
+        this.lastPage.set(Math.ceil(totalCount / returnedItemsPerPage));
+        this.mapAuthorsToDataSource(items);
       })
       .catch((error) => {
-        console.error('Error fetching publishers:', error);
+        console.error('Error fetching authors:', error);
       });
+  }
+  
+  private mapAuthorsToDataSource(items: Author[]) {
+    const mapped = items.map((author, idx) => ({
+      ...author,
+      name: author.user.firstName + ' ' + author.user.lastName,
+      numberoftitles: author.noOfTitles,
+      bookssold: author.booksSold,
+      royaltiesearned: Number(author.totalEarning || 0).toFixed(2),
+      actions: '',
+    }));
+    this.dataSource.data = mapped;
+  }
+  
+  onStatusChange(status: any) {
+    this.filter.update((f) => ({ ...f, status, page: 1 }));
+    this.clearCache();
+    this.fetchAuthors(false);
+  }
+
+  nextPage() {
+    const currentPage = this.filter().page || 1;
+    if (currentPage < this.lastPage()) {
+      this.filter.update((f) => ({ ...f, page: currentPage + 1 }));
+      this.fetchAuthors();
+    }
+  }
+
+  previousPage() {
+    const currentPage = this.filter().page || 1;
+    if (currentPage > 1) {
+      this.filter.update((f) => ({ ...f, page: currentPage - 1 }));
+      this.fetchAuthors();
+    }
+  }
+
+  goToPage(pageNumber: number) {
+    if (pageNumber >= 1 && pageNumber <= this.lastPage()) {
+      this.filter.update((f) => ({ ...f, page: pageNumber }));
+      this.fetchAuthors();
+    }
+  }
+
+  onItemsPerPageChange(itemsPerPage: number) {
+    this.filter.update((f) => ({ ...f, itemsPerPage, page: 1 }));
+    this.clearCache();
+    this.fetchAuthors();
+  }
+
+  getPageNumbers(): number[] {
+    const currentPage = this.filter().page || 1;
+    const totalPages = this.lastPage();
+    const pages: number[] = [];
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        pages.push(-1);
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push(-1);
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
   }
 
   fetchTitlesByAuthor(authorId: number) {
@@ -209,8 +319,17 @@ export class Authors {
 
   ngOnInit(): void {
     this.searchStr.pipe(debounceTime(400)).subscribe((value) => {
-      this.filter.page = 1;
-      this.filter.searchStr = value;
+      this.filter.update((f) => {
+        const updated = { ...f };
+        if (!value?.length) {
+          delete updated.searchStr;
+        } else {
+          updated.searchStr = value;
+        }
+        updated.page = 1;
+        return updated;
+      });
+      this.clearCache();
       this.fetchAuthors(false);
     });
     this.fetchAuthors();
