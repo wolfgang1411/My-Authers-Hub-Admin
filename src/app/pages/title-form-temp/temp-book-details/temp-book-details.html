@@ -120,20 +120,38 @@
           <mat-label>{{ "themeofbooksubject" | translate }}</mat-label>
           <input matInput formControlName="subject" />
         </mat-form-field>
-        <div class="grid grid-cols-2 gap-4">
-          <mat-form-field>
-            <mat-label> {{ "language" | translate }} </mat-label>
-            <mat-select formControlName="language" required>
-              @for (language of languages(); track $index) {
-              <mat-option [value]="language">{{ language }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>{{ "bookedition" | translate }}</mat-label>
-            <input matInput formControlName="edition" type="number" />
-          </mat-form-field>
-        </div>
+        <mat-form-field>
+          <mat-label>{{ "launchdate" | translate }}</mat-label>
+          <input
+            matInput
+            [matDatepicker]="launchDatePicker"
+            formControlName="launch_date"
+            required
+          />
+          <mat-datepicker-toggle
+            matSuffix
+            [for]="launchDatePicker"
+          ></mat-datepicker-toggle>
+          <mat-datepicker #launchDatePicker></mat-datepicker>
+          @if(titleDetailsGroup().controls.launch_date.hasError('required') &&
+          titleDetailsGroup().controls.launch_date.touched) {
+          <mat-error> {{ "launchdate" | translate }} is required </mat-error>
+          }
+        </mat-form-field>
+      </div>
+      <div class="grid grid-cols-2 gap-4 items-start">
+        <mat-form-field>
+          <mat-label> {{ "language" | translate }} </mat-label>
+          <mat-select formControlName="language" required>
+            @for (language of languages(); track $index) {
+            <mat-option [value]="language">{{ language }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "bookedition" | translate }}</mat-label>
+          <input matInput formControlName="edition" type="number" />
+        </mat-form-field>
       </div>
       <div class="flex flex-col gap-2 my-4">
         <mat-label class="text-sm font-medium mb-1">

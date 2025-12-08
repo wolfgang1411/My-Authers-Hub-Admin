@@ -5,7 +5,7 @@ import { ListTable } from '../list-table/list-table';
 import { TranslateService } from '@ngx-translate/core';
 import { formatCurrency } from '@angular/common';
 import { format } from 'date-fns';
-import { PlatForm } from '../../interfaces';
+import { PlatForm, SalesType } from '../../interfaces';
 import { UserService } from 'src/app/services/user';
 
 @Component({
@@ -16,6 +16,7 @@ import { UserService } from 'src/app/services/user';
 })
 export class EarningTable {
   earnings = input<Earnings[] | null | undefined>();
+  showTypeColumn = input<boolean>(false);
   displayedColumns: string[] = [
     'title',
     'publisher/author',
@@ -37,8 +38,9 @@ export class EarningTable {
       const user = this.userService.loggedInUser$();
       const isAuthor = user?.accessLevel === 'AUTHER';
       const earnings = this.earnings();
+      const showType = this.showTypeColumn();
 
-      this.displayedColumns = isAuthor
+      const baseColumns = isAuthor
         ? [
             'title',
             'publisher/author',
@@ -60,6 +62,10 @@ export class EarningTable {
             'addedAt',
             'holduntil',
           ];
+
+      this.displayedColumns = showType
+        ? ['type', ...baseColumns]
+        : baseColumns;
 
       const mappedData = earnings?.map((earning) => {
         // Check if this is an ebook platform
@@ -89,8 +95,17 @@ export class EarningTable {
           }
         }
 
+        const salesTypeMap: Record<SalesType, string> = {
+          [SalesType.SALE]: 'Sale',
+          [SalesType.LIVE_SALE]: 'Live Sale',
+          [SalesType.INVENTORY]: 'Inventory',
+        };
+
         return {
           ...earning,
+          type: earning.salesType
+            ? salesTypeMap[earning.salesType] || earning.salesType
+            : '-',
           title: earning.royalty.title.name,
           'publisher/author':
             earning.royalty.publisher?.name ||

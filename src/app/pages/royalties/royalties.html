@@ -95,6 +95,20 @@
 
       Inventory
     </button>
+    <button
+      class="btn rounded-md !text-primary"
+      matButton="filled"
+      matButton
+      type="button"
+      [ngClass]="{
+        '!bg-primary !text-white': lastSelectedSaleType === null,
+        '!bg-primary-superlight': lastSelectedSaleType !== null
+      }"
+      (click)="selectSaleType(null)"
+    >
+      <mat-icon>apps</mat-icon>
+      {{ "all" | translate }}
+    </button>
   </div>
-  <app-earning-table [earnings]="earningList()"></app-earning-table>
+  <app-earning-table [earnings]="earningList()" [showTypeColumn]="lastSelectedSaleType === null"></app-earning-table>
 </div>

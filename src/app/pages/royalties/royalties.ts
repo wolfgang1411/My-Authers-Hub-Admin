@@ -82,22 +82,45 @@ export class Royalties {
 
   lastPage = signal(1);
   earningList = signal<Earnings[]>([]);
-  lastSelectedSaleType: SalesType | null = SalesType.SALE;
+  lastSelectedSaleType: SalesType | null = null;
   salesTypes = SalesType;
   ngOnInit(): void {
-    this.filter = {
-      ...this.filter,
-      salesType: this.lastSelectedSaleType
-        ? [this.lastSelectedSaleType]
-        : [SalesType.SALE],
-    };
+    if (this.lastSelectedSaleType) {
+      this.filter = {
+        ...this.filter,
+        salesType: [this.lastSelectedSaleType],
+      };
+    }
     this.updateRoyaltyList();
+  }
+
+  private cleanFilter(filter: EarningFilter): EarningFilter {
+    const cleaned: any = {};
+    Object.keys(filter).forEach((key) => {
+      const val = (filter as any)[key];
+      if (val === undefined || val === null) {
+        return;
+      }
+      if (Array.isArray(val)) {
+        if (val.length > 0) {
+          cleaned[key] = val;
+        }
+      } else if (typeof val === 'string') {
+        if (val.trim() !== '') {
+          cleaned[key] = val;
+        }
+      } else {
+        cleaned[key] = val;
+      }
+    });
+    return cleaned;
   }
 
   async updateRoyaltyList() {
     console.log('Updating royalty list with filter:', this.filter);
+    const cleanedFilter = this.cleanFilter(this.filter);
     const { items, totalCount, itemsPerPage, page } =
-      await this.salesService.fetchEarnings(this.filter);
+      await this.salesService.fetchEarnings(cleanedFilter);
 
     this.earningList.update((earningList) => {
       return page > 1 && earningList.length
@@ -106,12 +129,17 @@ export class Royalties {
     });
     this.lastPage.set(Math.ceil(totalCount / itemsPerPage));
   }
-  selectSaleType(type: SalesType) {
+  selectSaleType(type: SalesType | null) {
     this.lastSelectedSaleType = type;
-    this.filter = {
+    const updatedFilter: EarningFilter = {
       ...this.filter,
-      salesType: [type],
     };
+    if (type === null) {
+      delete updatedFilter.salesType;
+    } else {
+      updatedFilter.salesType = [type];
+    }
+    this.filter = updatedFilter;
     this.updateRoyaltyList();
   }
 

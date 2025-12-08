@@ -329,7 +329,7 @@ export class ViewTicketDialog implements OnInit {
     if (ticket.sizeCategoryId !== undefined) {
       fields.push({
         label: this.translateService.instant('sizecategory') || 'Size Category',
-        oldValue: printing.sizeCategory?.size,
+        oldValue: printing.size?.size,
         newValue: ticket.sizeCategoryId,
       });
     }

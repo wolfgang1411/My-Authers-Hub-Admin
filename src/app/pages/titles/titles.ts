@@ -133,8 +133,8 @@ export class Titles {
 
       status: title.status,
       bookssold: title.copiesSold,
-      launchdate: title.submission_date
-        ? format(title.submission_date, 'dd-MM-yyyy')
+      launchdate: title.launch_date
+        ? format(title.launch_date, 'dd-MM-yyyy')
         : 'N/A',
       SelectedDistrbutions:
         title.distribution && title.distribution.length

@@ -42,6 +42,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { LanguageService } from '../../services/languages';
 import { IsbnFormat } from 'src/app/directives/isbn-format';
 import { IsbnClean } from 'src/app/directives/isbn-clean';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 
 @Component({
   selector: 'app-book-details',
@@ -55,6 +57,8 @@ import { IsbnClean } from 'src/app/directives/isbn-clean';
     MatIconModule,
     MatProgressSpinnerModule,
     MatButtonModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
     IsbnFormat,
     IsbnClean,
   ],
