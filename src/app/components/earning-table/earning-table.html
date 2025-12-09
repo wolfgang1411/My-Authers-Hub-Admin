@@ -5,6 +5,8 @@
     [displayedColumns]="displayedColumns"
     [actionTemplate]="actionButtons"
     [cellTemplate]="royaltyCellTemplate"
+    [isSortable]="isSortable()"
+    (sortChange)="sortChange.emit($event)"
   >
   </app-list-table>
   <ng-template #actionButtons let-element>

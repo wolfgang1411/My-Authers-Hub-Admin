@@ -119,7 +119,12 @@
       {{ "all" | translate }}
     </button>
   </div>
-  <app-earning-table [earnings]="earningList()" [showTypeColumn]="lastSelectedSaleType === null"></app-earning-table>
+  <app-earning-table 
+    [earnings]="earningList()" 
+    [showTypeColumn]="lastSelectedSaleType === null"
+    [isSortable]="isSortable"
+    (sortChange)="onSortChange($event)"
+  ></app-earning-table>
   
   <div class="flex items-center justify-between gap-4 mt-4">
     <div class="flex items-center gap-2">

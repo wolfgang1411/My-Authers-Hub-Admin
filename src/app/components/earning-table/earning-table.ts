@@ -1,4 +1,4 @@
-import { Component, effect, input } from '@angular/core';
+import { Component, effect, input, output } from '@angular/core';
 import { Earnings } from '../../interfaces/Earnings';
 import { MatTableDataSource } from '@angular/material/table';
 import { ListTable } from '../list-table/list-table';
@@ -17,11 +17,11 @@ import { UserService } from 'src/app/services/user';
 export class EarningTable {
   earnings = input<Earnings[] | null | undefined>();
   showTypeColumn = input<boolean>(false);
+  isSortable = input<((column: string) => boolean) | undefined>();
+  sortChange = output<{ active: string; direction: 'asc' | 'desc' | '' }>();
   displayedColumns: string[] = [
     'title',
     'publisher/author',
-    'royaltyAmount',
-    'customPrintMargin',
     'amount',
     'platform',
     'quantity',
@@ -40,61 +40,21 @@ export class EarningTable {
       const earnings = this.earnings();
       const showType = this.showTypeColumn();
 
-      const baseColumns = isAuthor
-        ? [
-            'title',
-            'publisher/author',
-            'royaltyAmount',
-            'amount',
-            'platform',
-            'quantity',
-            'addedAt',
-            'holduntil',
-          ]
-        : [
-            'title',
-            'publisher/author',
-            'royaltyAmount',
-            'customPrintMargin',
-            'amount',
-            'platform',
-            'quantity',
-            'addedAt',
-            'holduntil',
-          ];
+      const baseColumns = [
+        'title',
+        'publisher/author',
+        'amount',
+        'platform',
+        'quantity',
+        'addedAt',
+        'holduntil',
+      ];
 
       this.displayedColumns = showType
         ? ['type', ...baseColumns]
         : baseColumns;
 
       const mappedData = earnings?.map((earning) => {
-        // Check if this is an ebook platform
-        const ebookPlatforms: PlatForm[] = [
-          PlatForm.MAH_EBOOK,
-          PlatForm.KINDLE,
-          PlatForm.GOOGLE_PLAY,
-        ];
-        const isEbookPlatform = ebookPlatforms.includes(
-          earning.platform.name as PlatForm
-        );
-        let customPrintMargin = 0;
-        const isPublisherEarning =
-          earning.royalty.publisher && !earning.royalty.author;
-        const printing = earning.royalty.title.printing?.[0];
-
-        if (!isEbookPlatform && isPublisherEarning && printing) {
-          const printCost = Number(printing.printCost) || 0;
-          const customPrintCost = printing.customPrintCost
-            ? Number(printing.customPrintCost)
-            : null;
-
-          if (customPrintCost !== null && customPrintCost > printCost) {
-            // Calculate margin per item and multiply by quantity
-            customPrintMargin =
-              (customPrintCost - printCost) * (earning.quantity || 1);
-          }
-        }
-
         const salesTypeMap: Record<SalesType, string> = {
           [SalesType.SALE]: 'Sale',
           [SalesType.LIVE_SALE]: 'Live Sale',
@@ -111,19 +71,6 @@ export class EarningTable {
             earning.royalty.publisher?.name ||
             earning.royalty.author?.user.firstName,
           amount: formatCurrency(earning.amount, 'en', '', 'INR'),
-          customPrintMargin: isEbookPlatform
-            ? '-'
-            : customPrintMargin > 0
-            ? formatCurrency(customPrintMargin, 'en', '', 'INR')
-            : '-',
-          royaltyAmount: isEbookPlatform
-            ? formatCurrency(earning.amount, 'en', '', 'INR')
-            : formatCurrency(
-                earning.amount - customPrintMargin,
-                'en',
-                '',
-                'INR'
-              ),
           platform: earning.platformName || this.translateService.instant(
             typeof earning.platform === 'string'
               ? earning.platform

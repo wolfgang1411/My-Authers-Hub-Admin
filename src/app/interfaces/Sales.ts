@@ -42,6 +42,8 @@ export interface EarningFilter {
   channals?: string | string[];
   searchStr?: string;
   salesType?: SalesType | SalesType[];
+  orderBy?: string;
+  orderByVal?: 'asc' | 'desc';
 }
 
 export interface CreateSale {

@@ -70,6 +70,8 @@ export class Royalties {
     page: 1,
     itemsPerPage: 30,
     searchStr: '',
+    orderBy: 'id',
+    orderByVal: 'desc',
   });
 
   titles = signal<Title[]>([]);
@@ -136,6 +138,8 @@ export class Royalties {
       platforms: currentFilter.platforms,
       channals: currentFilter.channals,
       itemsPerPage: currentFilter.itemsPerPage,
+      orderBy: currentFilter.orderBy,
+      orderByVal: currentFilter.orderByVal,
     });
   }
 
@@ -256,6 +260,48 @@ export class Royalties {
     }
 
     return pages;
+  }
+
+  // Map display columns to API sort fields
+  getApiFieldName = (column: string): string | null => {
+    const columnMap: Record<string, string> = {
+      type: 'salesType',
+      title: 'titleName',
+      'publisher/author': 'publisherOrAuthor', // Will sort by publisher name (can be enhanced)
+      amount: 'amount',
+      platform: 'platformName',
+      quantity: 'quantity',
+      addedAt: 'paidAt',
+      holduntil: 'holdUntil',
+      // Direct fields that can be sorted
+      id: 'id',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+    };
+    return columnMap[column] || null;
+  };
+
+  isSortable = (column: string): boolean => {
+    return this.getApiFieldName(column) !== null;
+  };
+
+  onSortChange(sort: { active: string; direction: 'asc' | 'desc' | '' }) {
+    const apiFieldName = this.getApiFieldName(sort.active);
+    if (!apiFieldName) return;
+
+    const direction: 'asc' | 'desc' =
+      sort.direction === 'asc' || sort.direction === 'desc'
+        ? sort.direction
+        : 'desc';
+
+    this.filter.update((f) => ({
+      ...f,
+      orderBy: apiFieldName,
+      orderByVal: direction,
+      page: 1,
+    }));
+    this.clearCache();
+    this.updateRoyaltyList();
   }
 
   addRoyalty(data?: Partial<CreateSale & { availableTitles: number[] }>[]) {
@@ -398,32 +444,6 @@ export class Royalties {
 
       // Map earnings data similar to earning-table component
       const exportData = earnings.map((earning) => {
-        // Check if this is an ebook platform
-        const ebookPlatforms: PlatForm[] = [
-          PlatForm.MAH_EBOOK,
-          PlatForm.KINDLE,
-          PlatForm.GOOGLE_PLAY,
-        ];
-        const isEbookPlatform = ebookPlatforms.includes(
-          earning.platform.name as PlatForm
-        );
-        let customPrintMargin = 0;
-        const isPublisherEarning =
-          earning.royalty.publisher && !earning.royalty.author;
-        const printing = earning.royalty.title.printing?.[0];
-
-        if (!isEbookPlatform && isPublisherEarning && printing) {
-          const printCost = Number(printing.printCost) || 0;
-          const customPrintCost = printing.customPrintCost
-            ? Number(printing.customPrintCost)
-            : null;
-
-          if (customPrintCost !== null && customPrintCost > printCost) {
-            customPrintMargin =
-              (customPrintCost - printCost) * (earning.quantity || 1);
-          }
-        }
-
         const salesTypeMap: Record<SalesType, string> = {
           [SalesType.SALE]: 'Sale',
           [SalesType.LIVE_SALE]: 'Live Sale',
@@ -436,9 +456,6 @@ export class Royalties {
             earning.royalty.publisher?.name ||
             earning.royalty.author?.user.firstName ||
             '-',
-          royaltyAmount: isEbookPlatform
-            ? earning.amount
-            : earning.amount - customPrintMargin,
           amount: earning.amount,
           platform:
             earning.platformName ||
@@ -456,13 +473,6 @@ export class Royalties {
             : '-',
         };
 
-        if (!isAuthor) {
-          dataRow.customPrintMargin =
-            isEbookPlatform || customPrintMargin === 0
-              ? 0
-              : customPrintMargin;
-        }
-
         if (showType) {
           dataRow.type = earning.salesType
             ? salesTypeMap[earning.salesType] || earning.salesType
@@ -478,8 +488,6 @@ export class Royalties {
         'publisher/author':
           this.translateService.instant('publisher/author') ||
           'Publisher/Author',
-        royaltyAmount:
-          this.translateService.instant('royaltyamount') || 'Royalty Amount',
         amount: this.translateService.instant('amount') || 'Amount',
         platform: this.translateService.instant('platform') || 'Platform',
         quantity: this.translateService.instant('quantity') || 'Quantity',
@@ -487,12 +495,6 @@ export class Royalties {
         holduntil:
           this.translateService.instant('holduntil') || 'Hold Until',
       };
-
-      if (!isAuthor) {
-        headers['customPrintMargin'] =
-          this.translateService.instant('customPrintMargin') ||
-          'Custom Print Margin';
-      }
 
       if (showType) {
         headers['type'] = this.translateService.instant('salesType') || 'Type';
