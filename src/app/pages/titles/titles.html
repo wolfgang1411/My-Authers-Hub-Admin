@@ -220,6 +220,8 @@
     [dataSource]="dataSource"
     [displayedColumns]="displayedColumns"
     [actionTemplate]="actionButtons"
+    [isSortable]="isSortable"
+    (sortChange)="onSortChange($event)"
   >
   </app-list-table>
   

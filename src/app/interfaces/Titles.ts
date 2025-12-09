@@ -212,7 +212,7 @@ export interface TitleFilter {
   printingOnly?: boolean;
   page?: number;
   orderBy?: string;
-  orderByVal?: string;
+  orderByVal?: 'asc' | 'desc';
   status?: TitleStatus | TitleStatus[];
   configType?: TitleConfigType | TitleConfigType[];
   publishedBefore?: string;

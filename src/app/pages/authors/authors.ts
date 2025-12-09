@@ -181,7 +181,7 @@ export class Authors {
       name: author.user.firstName + ' ' + author.user.lastName,
       numberoftitles: author.noOfTitles,
       bookssold: author.booksSold,
-      royaltiesearned: Number(author.totalEarning || 0).toFixed(2),
+      royaltiesearned: Number(author.user?.wallet?.lifeTimeEarnings || 0).toFixed(2),
       actions: '',
     }));
     this.dataSource.data = mapped;
@@ -229,6 +229,7 @@ export class Authors {
       numberoftitles: 'TitleAuthor',
       bookssold: 'sales',
       status: 'status',
+      royaltiesearned: 'lifeTimeEarnings',
     };
     return columnMap[column] || null;
   };
@@ -601,7 +602,7 @@ export class Authors {
               dataRow[col] = author.booksSold || 0;
               break;
             case 'royaltiesearned':
-              dataRow[col] = Number(author.totalEarning || 0).toFixed(2);
+              dataRow[col] = Number(author.user?.wallet?.lifeTimeEarnings || 0).toFixed(2);
               break;
             case 'status':
               dataRow[col] = author.status || '-';
