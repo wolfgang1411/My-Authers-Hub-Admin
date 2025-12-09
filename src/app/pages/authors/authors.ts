@@ -98,6 +98,8 @@ export class Authors {
     itemsPerPage: 30,
     status: 'ALL' as any,
     showTotalEarnings: true,
+    orderBy: 'id',
+    orderVal: 'desc',
   });
   
   // Cache to store fetched pages
@@ -110,6 +112,8 @@ export class Authors {
       status: currentFilter.status,
       searchStr: currentFilter.searchStr,
       itemsPerPage: currentFilter.itemsPerPage,
+      orderBy: currentFilter.orderBy,
+      orderVal: currentFilter.orderVal,
     });
   }
 
@@ -214,6 +218,40 @@ export class Authors {
 
   onItemsPerPageChange(itemsPerPage: number) {
     this.filter.update((f) => ({ ...f, itemsPerPage, page: 1 }));
+    this.clearCache();
+    this.fetchAuthors();
+  }
+
+  // Map display columns to API sort fields
+  getApiFieldName = (column: string): string | null => {
+    const columnMap: Record<string, string> = {
+      name: 'fullName',
+      numberoftitles: 'TitleAuthor',
+      bookssold: 'sales',
+      status: 'status',
+    };
+    return columnMap[column] || null;
+  };
+
+  isSortable = (column: string): boolean => {
+    return this.getApiFieldName(column) !== null;
+  };
+
+  onSortChange(sort: { active: string; direction: 'asc' | 'desc' | '' }) {
+    const apiFieldName = this.getApiFieldName(sort.active);
+    if (!apiFieldName) return;
+
+    const direction: 'asc' | 'desc' =
+      sort.direction === 'asc' || sort.direction === 'desc'
+        ? sort.direction
+        : 'desc';
+
+    this.filter.update((f) => ({
+      ...f,
+      orderBy: apiFieldName,
+      orderVal: direction,
+      page: 1,
+    }));
     this.clearCache();
     this.fetchAuthors();
   }

@@ -52,4 +52,6 @@ export interface AuthorFilter {
   searchStr?: string;
   approvedAfter?: string;
   approvedBefore?: string;
+  orderBy?: string;
+  orderVal?: 'asc' | 'desc';
 }
