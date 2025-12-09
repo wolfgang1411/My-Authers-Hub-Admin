@@ -18,4 +18,6 @@ export type PayoutFilter = {
   page?: number;
   status?: PayoutStatus;
   searchStr?: string;
+  orderBy?: string;
+  orderByVal?: 'asc' | 'desc';
 };

@@ -66,6 +66,8 @@ export class Payouts implements OnInit {
   filter = signal<PayoutFilter>({
     page: 1,
     itemsPerPage: 30,
+    orderBy: 'id',
+    orderByVal: 'desc',
   });
 
   payouts = signal<Payout[] | null>(null);
@@ -81,6 +83,8 @@ export class Payouts implements OnInit {
     return JSON.stringify({
       searchStr: currentFilter.searchStr,
       itemsPerPage: currentFilter.itemsPerPage,
+      orderBy: currentFilter.orderBy,
+      orderByVal: currentFilter.orderByVal,
     });
   }
 
@@ -257,6 +261,48 @@ export class Payouts implements OnInit {
     }
 
     return pages;
+  }
+
+  // Map display columns to API sort fields
+  getApiFieldName = (column: string): string | null => {
+    const columnMap: Record<string, string> = {
+      usertype: 'accessLevel',
+      user: 'fullName',
+      emailId: 'email',
+      amount: 'requestedAmount',
+      status: 'status',
+      // Direct fields that can be sorted
+      id: 'id',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+    };
+    // bankdetails is computed, not sortable
+    return columnMap[column] || null;
+  };
+
+  isSortable = (column: string): boolean => {
+    // bankdetails is computed, not sortable
+    if (column === 'bankdetails') return false;
+    return this.getApiFieldName(column) !== null;
+  };
+
+  onSortChange(sort: { active: string; direction: 'asc' | 'desc' | '' }) {
+    const apiFieldName = this.getApiFieldName(sort.active);
+    if (!apiFieldName) return;
+
+    const direction: 'asc' | 'desc' =
+      sort.direction === 'asc' || sort.direction === 'desc'
+        ? sort.direction
+        : 'desc';
+
+    this.filter.update((f) => ({
+      ...f,
+      orderBy: apiFieldName,
+      orderByVal: direction,
+      page: 1,
+    }));
+    this.clearCache();
+    this.fetchPayouts();
   }
 
   async onUpdatePayout(id: number, status: PayoutStatus) {
