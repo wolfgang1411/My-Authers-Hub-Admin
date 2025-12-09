@@ -1,6 +1,7 @@
 <div class="relative">
   <button
     type="button"
+    #notificationMenuTrigger="matMenuTrigger"
     [matMenuTriggerFor]="notificationMenu"
     class="relative w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 shadow-sm hover:shadow-md"
   >
@@ -50,7 +51,10 @@
     (!notification.markAsReadByUser.includes(loggedInUser()?.id || 0)) {
     <!-- Unread Notification -->
     <div
-      class="px-4 py-3 flex gap-3 border-b border-gray-100 bg-blue-50/30 hover:bg-blue-50/50 transition-colors duration-150 cursor-pointer relative group"
+      class="px-4 py-3 flex gap-3 border-b border-gray-100 bg-blue-50/30 hover:bg-blue-50/50 transition-colors duration-150 relative group"
+      [class.cursor-pointer]="getNotificationUrl(notification) !== null"
+      [class.cursor-default]="getNotificationUrl(notification) === null"
+      (click)="onNotificationClick(notification, $event)"
     >
       <div class="flex-shrink-0 w-2 h-2 rounded-full bg-blue-500 mt-2"></div>
       <div class="flex-1 min-w-0">
@@ -79,7 +83,10 @@
     } @else {
     <!-- Read Notification -->
     <div
-      class="px-4 py-3 flex gap-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150 cursor-pointer relative group"
+      class="px-4 py-3 flex gap-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150 relative group"
+      [class.cursor-pointer]="getNotificationUrl(notification) !== null"
+      [class.cursor-default]="getNotificationUrl(notification) === null"
+      (click)="onNotificationClick(notification, $event)"
     >
       <div class="flex-shrink-0 w-2 h-2 rounded-full bg-gray-300 mt-2"></div>
       <div class="flex-1 min-w-0">
