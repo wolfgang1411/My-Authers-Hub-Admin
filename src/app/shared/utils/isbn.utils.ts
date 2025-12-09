@@ -3,8 +3,10 @@ export function cleanIsbn(value: string): string {
 }
 
 export function formatIsbn(value: string): string {
-  if (value.toLowerCase().startsWith('bcbl-')) {
-    return value;
+  if (value) {
+    if (value.toLowerCase().startsWith('bcbl-')) {
+      return value;
+    }
   }
 
   const digits = cleanIsbn(value);

@@ -163,7 +163,6 @@ export class ISBNList {
   selectStatus(status: ISBNStatus | 'ALL') {
     this.lastSelectedStatus = status;
 
-    // Base columns restored first
     this.displayedColumns = [...this.displayedColumnsBase];
 
     // APPLIED: remove isbnnumber column and add editisbn column
