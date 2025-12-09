@@ -19,11 +19,11 @@ import { PublisherService } from './publisher-service';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButton, MatButtonModule } from '@angular/material/button';
-import { ListTable } from '../../components/list-table/list-table';
 import { MatTableDataSource } from '@angular/material/table';
 import { Router, RouterLink } from '@angular/router';
 import { MatIconButton } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
+import { ListTable } from '../../components/list-table/list-table';
 import { InviteDialog } from '../../components/invite-dialog/invite-dialog';
 import { Validators } from '@angular/forms';
 import { Invite } from '../../interfaces/Invite';
@@ -93,23 +93,27 @@ export class Publisher implements OnInit {
   ];
 
   lastPage = signal(1);
-  
+
   filter = signal<PublisherFilter>({
     page: 1,
     itemsPerPage: 30,
     status: 'ALL' as any,
+    orderBy: 'id',
+    orderByVal: 'desc',
   });
-  
+
   // Cache to store fetched pages
   private pageCache = new Map<number, Publishers[]>();
   private cachedFilterKey = '';
-  
+
   private getFilterKey(): string {
     const currentFilter = this.filter();
     return JSON.stringify({
       status: currentFilter.status,
       searchStr: currentFilter.searchStr,
       itemsPerPage: currentFilter.itemsPerPage,
+      orderBy: currentFilter.orderBy,
+      orderByVal: currentFilter.orderByVal,
     });
   }
 
@@ -121,7 +125,7 @@ export class Publisher implements OnInit {
     const currentFilter = this.filter();
     const currentPage = currentFilter.page || 1;
     const filterKey = this.getFilterKey();
-    
+
     // Clear cache if filter changed
     if (this.cachedFilterKey !== filterKey) {
       this.clearCache();
@@ -154,7 +158,7 @@ export class Publisher implements OnInit {
         console.error('Error fetching publishers:', error);
       });
   }
-  
+
   private mapPublishersToDataSource(items: Publishers[]) {
     const mapped = items.map((publisher) => ({
       ...publisher,
@@ -173,7 +177,7 @@ export class Publisher implements OnInit {
     }
     this.dataSource.data = mapped;
   }
-  
+
   nextPage() {
     const currentPage = this.filter().page || 1;
     if (currentPage < this.lastPage()) {
@@ -199,6 +203,50 @@ export class Publisher implements OnInit {
 
   onItemsPerPageChange(itemsPerPage: number) {
     this.filter.update((f) => ({ ...f, itemsPerPage, page: 1 }));
+    this.clearCache();
+    this.fetchPublishers();
+  }
+
+  // Map display column names to API field names
+  // Only columns that exist in the Publisher model can be sorted
+  getApiFieldName = (column: string): string | null => {
+    const columnMap: Record<string, string> = {
+      name: 'name',
+      email: 'email',
+      phonenumber: 'phoneNumber',
+      nooftitles: 'titleCount',
+      noofauthors: 'authorCount',
+    };
+    return columnMap[column] || null;
+  };
+
+  isSortable = (column: string): boolean => {
+    return this.getApiFieldName(column) !== null;
+  };
+
+  onSortChange(sort: { active: string; direction: 'asc' | 'desc' | '' }) {
+    console.log('Sort change event:', sort);
+    const apiFieldName = this.getApiFieldName(sort.active);
+    if (!apiFieldName) {
+      console.log('Column not sortable:', sort.active);
+      return;
+    }
+
+    const direction: 'asc' | 'desc' =
+      sort.direction === 'asc' || sort.direction === 'desc'
+        ? sort.direction
+        : 'desc';
+
+    console.log('Updating filter with:', {
+      orderBy: apiFieldName,
+      orderByVal: direction,
+    });
+    this.filter.update((f) => ({
+      ...f,
+      orderBy: apiFieldName,
+      orderByVal: direction,
+      page: 1,
+    }));
     this.clearCache();
     this.fetchPublishers();
   }

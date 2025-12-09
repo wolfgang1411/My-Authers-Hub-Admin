@@ -1,13 +1,11 @@
 import {
   AfterViewInit,
   Component,
-  computed,
   Input,
-  Signal,
-  signal,
+  Output,
+  EventEmitter,
   TemplateRef,
   ViewChild,
-  WritableSignal,
 } from '@angular/core';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatInputModule } from '@angular/material/input';
@@ -37,13 +35,39 @@ export class ListTable implements AfterViewInit {
   @Input() actionTemplate!: TemplateRef<any>;
   @Input() cellTemplate?: TemplateRef<any>;
   @Input() editIsbnTemplate!: TemplateRef<any>;
+  @Input() isSortable?: (column: string) => boolean;
+  @Output() sortChange = new EventEmitter<{
+    active: string;
+    direction: 'asc' | 'desc' | '';
+  }>();
   @ViewChild(MatSort) sort!: MatSort;
 
   ngAfterViewInit() {
     setTimeout(() => {
       if (this.dataSource && this.sort) {
-        console.log(this.dataSource, 'datasourceeeee');
+        // Subscribe to sort changes BEFORE setting dataSource.sort
+        // This ensures we can intercept and handle the event
+        this.sort.sortChange.subscribe((event) => {
+          if (this.isSortable && !this.isSortable(event.active)) {
+            // Reset sort if column is not sortable
+            this.sort.sort({ id: '', start: 'asc', disableClear: false });
+            return;
+          }
+          
+          // Emit sort change to parent for API sorting
+          this.sortChange.emit(event);
+        });
+        
+        // Set sort to enable sort events and UI
         this.dataSource.sort = this.sort;
+        
+        // Override sortData to prevent client-side sorting
+        // The parent component will handle sorting via API
+        this.dataSource.sortData = (data: any[], sort: any) => {
+          // Don't sort client-side - return data as-is
+          // Parent will fetch sorted data from API and update dataSource
+          return data;
+        };
       }
     });
   }

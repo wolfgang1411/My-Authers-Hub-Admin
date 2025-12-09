@@ -14,3 +14,46 @@ table {
   color: var(--text-primary);
   background-color: var(--primary-light) !important;
 }
+
+/* Always show sort icons for sortable columns */
+.mat-sort-header-arrow {
+  opacity: 0.3 !important;
+  color: var(--text-secondary) !important;
+}
+
+.mat-sort-header-pointer-left .mat-sort-header-arrow,
+.mat-sort-header-pointer-right .mat-sort-header-arrow {
+  opacity: 1 !important;
+  color: var(--primary) !important;
+}
+
+/* Show sort icon on hover for sortable columns */
+th[mat-sort-header]:not([disabled]):hover .mat-sort-header-arrow {
+  opacity: 0.6 !important;
+  color: var(--text-primary) !important;
+}
+
+/* Hide sort icon for disabled/non-sortable columns */
+th[mat-sort-header][disabled] .mat-sort-header-arrow {
+  display: none !important;
+}
+
+/* Always show sort arrow (light), highlight when sorted, and on hover */
+:host ::ng-deep .mat-sort-header-container {
+  cursor: pointer;
+}
+
+:host ::ng-deep .mat-sort-header-arrow {
+  opacity: 0.3;
+  transform: translateY(0) scale(0.7);
+}
+
+:host ::ng-deep .mat-sort-header-container:hover .mat-sort-header-arrow {
+  opacity: 0.7;
+  transform: translateY(0) scale(0.85);
+}
+
+:host ::ng-deep .mat-sort-header-sorted .mat-sort-header-arrow {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}

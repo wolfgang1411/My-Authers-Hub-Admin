@@ -135,7 +135,7 @@
     @for (pid of titleDetails()?.titlePlatformIdentifier; track pid.id) {
     <li class="flex flex-col">
       <span class="font-medium text-[var(--text-heading)]">
-        {{ pid.platform?.name }}
+        {{ pid.platform.name }}
       </span>
 
       @if (pid.distributionLink) {

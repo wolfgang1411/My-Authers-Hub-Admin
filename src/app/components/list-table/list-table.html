@@ -7,11 +7,14 @@
   @for (column of displayedColumns; track $index) {
   <ng-container [matColumnDef]="column">
     <th
-      [innerHTML]="column | translate"
       mat-header-cell
       *matHeaderCellDef
-      mat-sort-header
-    ></th>
+      [mat-sort-header]="column"
+      [disabled]="isSortable && !isSortable(column)"
+      class="select-none"
+    >
+      <span [innerHTML]="column | translate"></span>
+    </th>
 
     <td mat-cell *matCellDef="let element">
       @if (column === 'assignisbn') {

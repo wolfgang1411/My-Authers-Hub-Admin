@@ -46,6 +46,8 @@ export interface PublisherFilter {
   status?: PublisherStatus | PublisherStatus[] | null | string;
   searchStr?: string;
   authorIds?: number;
+  orderBy?: string;
+  orderByVal?: 'asc' | 'desc';
 }
 
 export interface PublisherResponse {
