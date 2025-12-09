@@ -45,4 +45,6 @@ export interface UpdateCoupon extends Partial<AddCoupon> {
 export interface CouponFilter {
   itemsPerPage?: number;
   page?: number;
+  orderBy?: string;
+  orderByVal?: 'asc' | 'desc';
 }

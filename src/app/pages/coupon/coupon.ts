@@ -37,6 +37,8 @@ export class CouponComponent implements OnInit {
   filter = signal<CouponFilter>({
     itemsPerPage: 30,
     page: 1,
+    orderBy: 'id',
+    orderByVal: 'desc',
   });
   coupons = signal<Coupon[] | null>(null);
   
@@ -48,6 +50,8 @@ export class CouponComponent implements OnInit {
     const currentFilter = this.filter();
     return JSON.stringify({
       itemsPerPage: currentFilter.itemsPerPage,
+      orderBy: currentFilter.orderBy,
+      orderByVal: currentFilter.orderByVal,
     });
   }
 
@@ -202,6 +206,44 @@ export class CouponComponent implements OnInit {
     }
 
     return pages;
+  }
+
+  // Map display columns to API sort fields
+  getApiFieldName = (column: string): string | null => {
+    const columnMap: Record<string, string> = {
+      coupon: 'code',
+      discountvalue: 'discountValue',
+      'startdate/enddate': 'startDate', // Sort by start date
+      usedcount: 'usedCount',
+      // Direct fields that can be sorted
+      id: 'id',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+    };
+    return columnMap[column] || null;
+  };
+
+  isSortable = (column: string): boolean => {
+    return this.getApiFieldName(column) !== null;
+  };
+
+  onSortChange(sort: { active: string; direction: 'asc' | 'desc' | '' }) {
+    const apiFieldName = this.getApiFieldName(sort.active);
+    if (!apiFieldName) return;
+
+    const direction: 'asc' | 'desc' =
+      sort.direction === 'asc' || sort.direction === 'desc'
+        ? sort.direction
+        : 'desc';
+
+    this.filter.update((f) => ({
+      ...f,
+      orderBy: apiFieldName,
+      orderByVal: direction,
+      page: 1,
+    }));
+    this.clearCache();
+    this.fetchAndUpdateCoupons();
   }
 
   onAddUpdateCoupon(coupon?: Coupon) {
