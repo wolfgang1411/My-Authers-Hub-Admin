@@ -29,4 +29,6 @@ export interface BookingFilter {
   page?: number;
   itemsPerPage?: number;
   searchStr?: string;
+  orderBy?: string;
+  orderByVal?: 'asc' | 'desc';
 }

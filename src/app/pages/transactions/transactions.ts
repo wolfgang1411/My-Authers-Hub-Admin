@@ -39,6 +39,8 @@ export class Transactions implements OnInit {
     return JSON.stringify({
       searchStr: currentFilter.searchStr,
       itemsPerPage: this.itemsPerPage(),
+      orderBy: currentFilter.orderBy,
+      orderByVal: currentFilter.orderByVal,
     });
   }
 
@@ -57,6 +59,8 @@ export class Transactions implements OnInit {
   filter = signal<TransactionFilter>({
     page: 1,
     itemsPerPage: 30,
+    orderBy: 'id',
+    orderByVal: 'desc',
   });
   
   // Cache to store fetched pages
@@ -157,6 +161,45 @@ export class Transactions implements OnInit {
     }
 
     return pages;
+  }
+
+  // Map display columns to API sort fields
+  getApiFieldName = (column: string): string | null => {
+    const columnMap: Record<string, string> = {
+      orderid: 'id',
+      email: 'email',
+      status: 'status',
+      amount: 'amount',
+      txnid: 'merchantTxnId',
+      // Direct fields that can be sorted
+      id: 'id',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+    };
+    return columnMap[column] || null;
+  };
+
+  isSortable = (column: string): boolean => {
+    return this.getApiFieldName(column) !== null;
+  };
+
+  onSortChange(sort: { active: string; direction: 'asc' | 'desc' | '' }) {
+    const apiFieldName = this.getApiFieldName(sort.active);
+    if (!apiFieldName) return;
+
+    const direction: 'asc' | 'desc' =
+      sort.direction === 'asc' || sort.direction === 'desc'
+        ? sort.direction
+        : 'desc';
+
+    this.filter.update((f) => ({
+      ...f,
+      orderBy: apiFieldName,
+      orderByVal: direction,
+      page: 1,
+    }));
+    this.clearCache();
+    this.loadTransactions();
   }
 
   async onExportToExcel(): Promise<void> {

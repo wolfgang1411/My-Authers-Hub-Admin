@@ -23,4 +23,6 @@ export interface TransactionFilter {
   page?: number;
   itemsPerPage?: number;
   searchStr?: string;
+  orderBy?: string;
+  orderByVal?: 'asc' | 'desc';
 }

@@ -39,11 +39,13 @@ export class Bookings implements OnInit {
   ) {}
 
   lastPage = signal(1);
-  
+
   filter = signal<BookingFilter>({
     page: 1,
     itemsPerPage: 30,
     searchStr: '',
+    orderBy: 'id',
+    orderByVal: 'desc',
   });
 
   searchStr = new Subject<string>();
@@ -57,16 +59,18 @@ export class Bookings implements OnInit {
     });
 
   bookings = signal<Booking[]>([]);
-  
+
   // Cache to store fetched pages
   private pageCache = new Map<number, Booking[]>();
   private cachedFilterKey = '';
-  
+
   private getFilterKey(): string {
     const currentFilter = this.filter();
     return JSON.stringify({
       searchStr: currentFilter.searchStr,
       itemsPerPage: currentFilter.itemsPerPage,
+      orderBy: currentFilter.orderBy,
+      orderByVal: currentFilter.orderByVal,
     });
   }
 
@@ -93,7 +97,7 @@ export class Bookings implements OnInit {
     const currentFilter = this.filter();
     const currentPage = currentFilter.page || 1;
     const filterKey = this.getFilterKey();
-    
+
     // Clear cache if filter changed
     if (this.cachedFilterKey !== filterKey) {
       this.clearCache();
@@ -110,14 +114,14 @@ export class Bookings implements OnInit {
 
     // Fetch from API
     const bookings = await this.bookingService.fetchBookings(currentFilter);
-    
+
     // Cache the fetched page
     this.pageCache.set(currentPage, bookings.items);
     this.bookings.set(bookings.items);
     this.lastPage.set(Math.ceil(bookings.totalCount / bookings.itemsPerPage));
     this.mapBookingsToDataSource(bookings.items);
   }
-  
+
   private mapBookingsToDataSource(bookings: Booking[]) {
     this.dataSource.data = bookings.map((booking, index) => {
       return {
@@ -125,11 +129,8 @@ export class Bookings implements OnInit {
         titleId: booking.title.id,
         userId: booking.userDetails.id,
         serial: index + 1,
-        name:
-          booking.userDetails.firstName +
-          ' ' +
-          (booking.userDetails.lastName || 'N/A'),
-        email: booking.userDetails.email,
+        name: booking.user.fullName,
+        email: booking.user.email,
         title: booking.title.name,
         status: booking.status,
         amount: `${booking.totalAmount} INR`,
@@ -200,6 +201,45 @@ export class Bookings implements OnInit {
     }
 
     return pages;
+  }
+
+  // Map display columns to API sort fields
+  getApiFieldName = (column: string): string | null => {
+    const columnMap: Record<string, string> = {
+      name: 'fullName',
+      email: 'email',
+      title: 'titleName',
+      amount: 'totalAmount',
+      status: 'status',
+      // Direct fields that can be sorted
+      id: 'id',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+    };
+    return columnMap[column] || null;
+  };
+
+  isSortable = (column: string): boolean => {
+    return this.getApiFieldName(column) !== null;
+  };
+
+  onSortChange(sort: { active: string; direction: 'asc' | 'desc' | '' }) {
+    const apiFieldName = this.getApiFieldName(sort.active);
+    if (!apiFieldName) return;
+
+    const direction: 'asc' | 'desc' =
+      sort.direction === 'asc' || sort.direction === 'desc'
+        ? sort.direction
+        : 'desc';
+
+    this.filter.update((f) => ({
+      ...f,
+      orderBy: apiFieldName,
+      orderByVal: direction,
+      page: 1,
+    }));
+    this.clearCache();
+    this.updateBookingList();
   }
 
   async onExportToExcel(): Promise<void> {

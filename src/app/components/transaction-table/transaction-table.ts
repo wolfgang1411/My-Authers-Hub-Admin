@@ -1,4 +1,4 @@
-import { Component, input, effect } from '@angular/core';
+import { Component, input, output, effect } from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { ListTable } from '../list-table/list-table';
 import { RouterModule } from '@angular/router';
@@ -15,11 +15,12 @@ import { MatIconButton } from '@angular/material/button';
 })
 export class TransactionTable {
   transactions = input<Transaction[] | null | undefined>();
+  isSortable = input<((column: string) => boolean) | undefined>();
+  sortChange = output<{ active: string; direction: 'asc' | 'desc' | '' }>();
 
   displayedColumns: string[] = [
     'orderid',
     'email',
-    'title',
     'status',
     'amount',
     'txnid',
@@ -34,16 +35,10 @@ export class TransactionTable {
 
       this.dataSource.data =
         txs?.map((transaction) => ({
+          ...transaction,
           id: transaction.id,
-          bookingId: transaction.booking?.id,
-          userId: transaction.booking?.userDetails?.id,
-          titleId: transaction.booking?.title?.id,
-          orderID: '#' + transaction.id,
+          email: transaction.user.email,
           orderid: '#' + transaction.id,
-          email: transaction.booking?.userDetails?.email,
-          title: transaction.booking?.titleDetails?.name || transaction.title,
-          status: transaction.status,
-          amount: transaction.amount + ' INR',
           txnid: transaction.merchantTxnId || 'N/A',
         })) ?? [];
     });

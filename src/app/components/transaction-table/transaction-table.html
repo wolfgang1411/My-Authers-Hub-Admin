@@ -4,6 +4,8 @@
     [dataSource]="dataSource"
     [displayedColumns]="displayedColumns"
     [actionTemplate]="actionButtons"
+    [isSortable]="isSortable()"
+    (sortChange)="sortChange.emit($event)"
   >
   </app-list-table>
   <ng-template #actionButtons let-element>
