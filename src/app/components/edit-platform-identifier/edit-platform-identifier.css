@@ -1,0 +1,15 @@
+/* Prevent content from being cut off */
+mat-dialog-content {
+  overflow: visible !important;
+}
+
+::ng-deep .mat-mdc-dialog-content {
+  overflow: visible !important;
+  padding: 0 !important;
+}
+
+/* Ensure form fields are fully visible */
+mat-form-field {
+  margin-top: 0 !important;
+}
+

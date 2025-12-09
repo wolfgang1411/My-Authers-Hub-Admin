@@ -35,6 +35,7 @@ export interface Title {
   language: string;
   subject: string;
   status: TitleStatus;
+  skuNumber?: string;
   submission_date?: string;
   launch_date?: string;
   category: TitleCategory;
@@ -111,6 +112,7 @@ export interface AuthorTitle {
 }
 
 export interface ApproveTitlePayload {
+  skuNumber?: string;
   platformIdentifier: CreatePlatformIdentifier[];
 }
 
@@ -543,7 +545,6 @@ export interface TitleDetailsFormGroup {
 }
 
 export interface PlatFormIndetifierGroup {
-  uniqueIdentifier: FormControl<string | null>;
   platformName: FormControl<string | null | undefined>;
   type: FormControl<'EBOOK' | 'PRINT'>;
   distributionLink: FormControl<string | null>;
@@ -552,7 +553,6 @@ export interface PlatFormIndetifierGroup {
 export interface CreatePlatformIdentifier {
   platformName: string;
   type: 'EBOOK' | 'PRINT';
-  uniqueIdentifier?: string;
   distributionLink?: string;
 }
 

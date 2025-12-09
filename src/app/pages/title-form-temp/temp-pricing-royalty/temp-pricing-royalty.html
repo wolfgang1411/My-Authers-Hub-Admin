@@ -294,6 +294,76 @@
               </div>
             </div>
             }
+
+            <!-- Royalty Amount Calculations - Show under each pricing card -->
+            @if ((authors().length > 0 || publisher()) && displayedColumns().length > 0) {
+            <div class="royalty-amounts-inline">
+              <div class="royalty-inline-header">Royalty Amounts</div>
+              
+              <!-- Authors Section -->
+              @if (authors().length > 0) {
+              <div class="royalty-inline-section">
+                <div class="royalty-inline-label">Authors</div>
+                <div class="royalty-inline-list">
+                  @for (author of authors(); track author.id) {
+                  <div class="royalty-inline-item">
+                    <span class="royalty-inline-name">
+                      {{
+                        author.name || author.user
+                          ? author.user.firstName + " " + author.user.lastName
+                          : "N/A"
+                      }}
+                    </span>
+                    <span class="royalty-inline-amount">
+                      @if (shouldShowRoyaltyNA(item.controls.platform.value)) {
+                      <span class="text-gray-400 italic">N/A</span>
+                      } @else {
+                      {{ (totalRoyaltiesAmount()['author' + author.id]?.[item.controls.platform.value] || 0) | currency }}
+                      }
+                    </span>
+                  </div>
+                  }
+                </div>
+              </div>
+              }
+
+              <!-- Publisher Section -->
+              @if (publisher()) {
+              <div class="royalty-inline-section royalty-inline-publisher">
+                <div class="royalty-inline-label">Publisher</div>
+                <div class="royalty-inline-item royalty-inline-item-publisher">
+                  <span class="royalty-inline-name">
+                    {{
+                      publisher()?.name ||
+                        publisher()?.user?.firstName +
+                          " " +
+                          publisher()?.user?.lastName
+                    }}
+                  </span>
+                  <div class="royalty-inline-amount">
+                    @if (shouldShowRoyaltyNA(item.controls.platform.value)) {
+                    <span class="text-gray-400 italic">N/A</span>
+                    } @else if (!isEbookPlatform(item.controls.platform.value) &&
+                    publisherExtraMargin()[item.controls.platform.value]) {
+                    <div class="flex flex-col gap-0.5 items-end">
+                      <span class="font-semibold text-blue-700">
+                        {{ (totalRoyaltiesAmount()['publisher' + publisher()?.id]?.[item.controls.platform.value] || 0) | currency }}
+                      </span>
+                      <span class="text-xs text-green-600 font-medium">
+                        (+{{ publisherExtraMargin()[item.controls.platform.value] || 0 | currency }} margin)
+                      </span>
+                    </div>
+                    } @else {
+                    <span class="font-semibold text-blue-700">
+                      {{ (totalRoyaltiesAmount()['publisher' + publisher()?.id]?.[item.controls.platform.value] || 0) | currency }}
+                    </span>
+                    }
+                  </div>
+                </div>
+              </div>
+              }
+            </div>
+            }
           </div>
           }
         </div>
@@ -418,90 +488,6 @@
       </p>
       }
     </div>
-
-    <!-- Calculations Section -->
-    @if (displayedColumns().length > 0 && visiblePricingControls().length > 0) {
-    <div class="flex flex-col gap-2 mt-4 max-w-full overflow-x-hidden">
-      <h3 class="text-base font-medium">Royalty Amount Calculations</h3>
-      <div class="royalty-cards-grid">
-        @for (platform of displayedColumns(); track platform) {
-        <div class="royalty-platform-card">
-          <!-- Card Header -->
-          <div class="royalty-card-header">
-            <h4 class="royalty-card-title">{{ platform | translate }}</h4>
-          </div>
-
-          <!-- Card Body -->
-          <div class="royalty-card-body">
-            <!-- Authors Section -->
-            <div class="royalty-authors-section">
-              <div class="royalty-section-label">Authors</div>
-              <div class="royalty-amounts-list">
-                @for (author of authors(); track author.id) {
-                <div class="royalty-amount-item">
-                  <span class="royalty-name">
-                    {{
-                      author.name || author.user
-                        ? author.user.firstName + " " + author.user.lastName
-                        : "N/A"
-                    }}
-                  </span>
-                  <span class="royalty-amount">
-                    @if (shouldShowRoyaltyNA(platform)) {
-                    <span class="text-gray-400 italic">N/A</span>
-                    } @else {
-                    {{ (totalRoyaltiesAmount()['author' + author.id]?.[platform] || 0) | currency }}
-                    }
-                  </span>
-                </div>
-                }
-              </div>
-            </div>
-
-            <!-- Publisher Section -->
-            @if (publisher()) {
-            <div class="royalty-publisher-section">
-              <div class="royalty-section-divider"></div>
-              <div class="royalty-section-label">Publisher</div>
-              <div class="royalty-amount-item royalty-amount-item-publisher">
-                <span class="royalty-name">
-                  {{
-                    publisher()?.name ||
-                      publisher()?.user?.firstName +
-                        " " +
-                        publisher()?.user?.lastName
-                  }}
-                </span>
-                <div class="royalty-amount">
-                  @if (shouldShowRoyaltyNA(platform)) {
-                  <span class="text-gray-400 italic">N/A</span>
-                  } @else if (!isEbookPlatform(platform) &&
-                  publisherExtraMargin()[platform]) {
-                  <div class="flex flex-col gap-1 items-end">
-                    <div class="font-semibold text-blue-700">
-                      {{ (totalRoyaltiesAmount()['publisher' + publisher()?.id]?.[platform] || 0) | currency }}
-                    </div>
-                    <div class="text-xs text-green-600 font-medium">
-                      (includes
-                      {{ publisherExtraMargin()[platform] || 0 | currency }}
-                      custom print margin)
-                    </div>
-                  </div>
-                  } @else {
-                  <span class="font-semibold text-blue-700">
-                    {{ (totalRoyaltiesAmount()['publisher' + publisher()?.id]?.[platform] || 0) | currency }}
-                  </span>
-                  }
-                </div>
-              </div>
-            </div>
-            }
-          </div>
-        </div>
-        }
-      </div>
-    </div>
-    }
   </div>
   }
 </div>

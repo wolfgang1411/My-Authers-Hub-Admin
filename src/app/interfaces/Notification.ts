@@ -1,5 +1,19 @@
 import { AccessLevel, User } from './user';
 
+export type NotificationRedirectType =
+  | 'TITLE'
+  | 'PUBLISHER'
+  | 'AUTHOR'
+  | 'ROYALTY'
+  | 'SALE'
+  | 'PAYOUT'
+  | 'TRANSACTION'
+  | 'BOOKING'
+  | 'ISBN'
+  | 'WALLET'
+  | 'COUPON'
+  | 'NONE';
+
 export interface MyNotification {
   id: number;
   title: string;
@@ -9,6 +23,8 @@ export interface MyNotification {
   byAccessLevel?: AccessLevel;
   user?: User[];
   markAsReadByUser: number[];
+  redirectType?: NotificationRedirectType;
+  redirectId?: number | null;
   createdAt: string;
   updatedAt: string;
 }

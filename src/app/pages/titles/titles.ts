@@ -327,6 +327,7 @@ export class Titles {
       if (!value) return;
 
       const response = await this.titleService.approveTitle(title.id, {
+        skuNumber: undefined,
         platformIdentifier: [],
       });
       this.titles.update((titles) => {
@@ -349,11 +350,15 @@ export class Titles {
     const dialog = this.matDialog.open(ApproveTitle, {
       maxWidth: '95vw',
       width: '90vw',
+      height: '90vh',
       maxHeight: '90vh',
       data: {
         onClose: () => dialog.close(),
         publishingType: title.publishingType,
+        existingIdentifiers: title.titlePlatformIdentifier ?? [],
+        distribution: title.distribution ?? [],
         onSubmit: async (data: {
+          skuNumber?: string;
           platformIdentifier: CreatePlatformIdentifier[];
         }) => {
           try {
