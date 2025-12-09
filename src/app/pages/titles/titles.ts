@@ -97,7 +97,7 @@ export class Titles {
   
   filter = signal<TitleFilter>({
     page: 1,
-    itemsPerPage: 10,
+    itemsPerPage: 30,
     status: 'ALL' as any,
   });
   

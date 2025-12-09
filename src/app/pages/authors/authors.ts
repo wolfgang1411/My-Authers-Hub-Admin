@@ -95,7 +95,7 @@ export class Authors {
   
   filter = signal<AuthorFilter>({
     page: 1,
-    itemsPerPage: 10,
+    itemsPerPage: 30,
     status: 'ALL' as any,
     showTotalEarnings: true,
   });

@@ -130,7 +130,7 @@
       <span class="text-sm text-[var(--text-secondary)]">{{ "itemsperpage" | translate }}:</span>
       <select
         class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
-        [value]="filter().itemsPerPage || 10"
+        [value]="filter().itemsPerPage || 30"
         (change)="onItemsPerPageChange(+$any($event.target).value)"
       >
         <option value="10">10</option>

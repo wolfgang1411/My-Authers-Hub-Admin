@@ -42,7 +42,7 @@ export class Bookings implements OnInit {
   
   filter = signal<BookingFilter>({
     page: 1,
-    itemsPerPage: 10,
+    itemsPerPage: 30,
     searchStr: '',
   });
 

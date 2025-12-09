@@ -18,7 +18,7 @@ export class RecentOrdersComponent {
 
   bookings = signal<Booking[] | null>(null);
   filter: BookingFilter = {
-    itemsPerPage: 10,
+    itemsPerPage: 30,
     status: BookingStatus.COMPLETED,
   };
 

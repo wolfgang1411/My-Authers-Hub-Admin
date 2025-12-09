@@ -96,7 +96,7 @@ export class Publisher implements OnInit {
   
   filter = signal<PublisherFilter>({
     page: 1,
-    itemsPerPage: 10,
+    itemsPerPage: 30,
     status: 'ALL' as any,
   });
   

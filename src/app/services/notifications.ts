@@ -24,7 +24,7 @@ export class NotificationService {
 
   lastPage = signal(1);
   page = signal(1);
-  itemsPerPage = signal(10);
+  itemsPerPage = signal(30);
 
   notifications = signal<MyNotification[]>([]);
   private abortController?: AbortController;

@@ -35,7 +35,7 @@ export class CouponComponent implements OnInit {
   lastPage = signal(1);
   
   filter = signal<CouponFilter>({
-    itemsPerPage: 10,
+    itemsPerPage: 30,
     page: 1,
   });
   coupons = signal<Coupon[] | null>(null);

@@ -51,12 +51,12 @@ export class Transactions implements OnInit {
 
   transactions = signal<Transaction[] | null>(null);
   page = signal(1);
-  itemsPerPage = signal(10);
+  itemsPerPage = signal(30);
   lastPage = signal(1);
   
   filter = signal<TransactionFilter>({
     page: 1,
-    itemsPerPage: 10,
+    itemsPerPage: 30,
   });
   
   // Cache to store fetched pages

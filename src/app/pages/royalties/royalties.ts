@@ -68,7 +68,7 @@ export class Royalties {
 
   filter = signal<EarningFilter>({
     page: 1,
-    itemsPerPage: 10,
+    itemsPerPage: 30,
     searchStr: '',
   });
 

@@ -65,7 +65,7 @@ export class Payouts implements OnInit {
   
   filter = signal<PayoutFilter>({
     page: 1,
-    itemsPerPage: 10,
+    itemsPerPage: 30,
   });
 
   payouts = signal<Payout[] | null>(null);
