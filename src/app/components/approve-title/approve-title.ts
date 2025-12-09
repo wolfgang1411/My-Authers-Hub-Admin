@@ -6,20 +6,16 @@ import {
   FormControl,
   FormGroup,
   ReactiveFormsModule,
+  Validators,
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import {
-  ApproveTitleGroup,
-  CreateDistributionLink,
   CreatePlatformIdentifier,
-  DistributionType,
-  PlatForm,
   PlatFormIndetifierGroup,
   PublishingType,
   TitleDistribution,
 } from '../../interfaces';
-import { StaticValuesService } from '../../services/static-values';
 import { PlatformService } from '../../services/platform';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -39,16 +35,19 @@ import { MatFormFieldModule } from '@angular/material/form-field';
   styleUrl: './approve-title.css',
 })
 export class ApproveTitle implements OnInit {
-  staticValueService = inject(StaticValuesService);
   platformService = inject(PlatformService);
   data = inject<Inputs>(MAT_DIALOG_DATA);
 
   form = new FormGroup({
+    skuNumber: new FormControl<string | null>(null, [Validators.required]),
     platformIdentifier: new FormArray<FormGroup<PlatFormIndetifierGroup>>([]),
   });
 
   ngOnInit(): void {
     this.prefillPlatformIdentifierForm();
+    if (this.data.isEditMode && this.data.skuNumber) {
+      this.form.controls.skuNumber.setValue(this.data.skuNumber);
+    }
   }
 
   prefillPlatformIdentifierForm() {
@@ -79,9 +78,6 @@ export class ApproveTitle implements OnInit {
             platformType as 'EBOOK' | 'PRINT',
             { nonNullable: true }
           ),
-          uniqueIdentifier: new FormControl<string | null>(
-            match?.uniqueIdentifier ?? null
-          ),
           distributionLink: new FormControl<string | null>(
             match?.distributionLink ?? null
           ),
@@ -91,10 +87,13 @@ export class ApproveTitle implements OnInit {
   }
 
   onSubmit() {
+    if (!this.form.valid) {
+      return;
+    }
+
     const platformIdentifier = (
       this.form.value.platformIdentifier?.filter(
-        ({ uniqueIdentifier, distributionLink }) =>
-          !!uniqueIdentifier?.length || !!distributionLink?.length
+        ({ distributionLink }) => !!distributionLink?.length
       ) as CreatePlatformIdentifier[]
     ).map((v) => {
       return {
@@ -102,24 +101,25 @@ export class ApproveTitle implements OnInit {
         distributionLink: v.distributionLink?.length
           ? v.distributionLink
           : undefined,
-        uniqueIdentifier: v.uniqueIdentifier?.length
-          ? v.uniqueIdentifier
-          : undefined,
       };
     });
 
-    if (this.form.valid) {
-      this.data.onSubmit({
-        platformIdentifier,
-      });
-    }
+    this.data.onSubmit({
+      skuNumber: this.form.value.skuNumber ?? undefined,
+      platformIdentifier,
+    });
   }
 }
 
 interface Inputs {
-  onSubmit: (data: { platformIdentifier: CreatePlatformIdentifier[] }) => void;
+  onSubmit: (data: {
+    skuNumber?: string;
+    platformIdentifier: CreatePlatformIdentifier[];
+  }) => void;
   existingIdentifiers: CreatePlatformIdentifier[];
   distribution: TitleDistribution[];
   onClose: () => void;
   publishingType?: PublishingType;
+  isEditMode?: boolean;
+  skuNumber?: string;
 }

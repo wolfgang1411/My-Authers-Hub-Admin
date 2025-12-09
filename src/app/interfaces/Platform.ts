@@ -7,6 +7,7 @@ export enum PlatformStatus {
 export interface Platform {
   id: number;
   name: string;
+  icon?: string;
   marginPercent: number;
   extraFlatMargin?: number;
   isEbookPlatform: boolean;

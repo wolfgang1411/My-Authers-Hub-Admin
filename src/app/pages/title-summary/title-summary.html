@@ -33,11 +33,27 @@
 
           <!-- Book Info -->
           <div class="flex-1">
-            <h2
-              class="text-2xl font-bold text-[var(--primary)] mb-1 capitalize"
-            >
-              {{ titleDetails()?.name }}
-            </h2>
+            <div class="flex items-center gap-3 mb-2">
+              <h2
+                class="text-2xl font-bold text-[var(--primary)] capitalize m-0"
+              >
+                {{ titleDetails()?.name }}
+              </h2>
+              <span
+                class="inline-flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-full"
+                [ngClass]="{
+                  'bg-[var(--light-green-bg)] text-[var(--green-2)] border border-[var(--light-green-2)]':
+                    titleDetails()?.status === 'APPROVED',
+                  'bg-[var(--light-purple-bg)] text-[var(--primary)] border border-[var(--primary-light)]':
+                    titleDetails()?.status !== 'APPROVED'
+                }"
+              >
+                @if(titleDetails()?.status !== 'APPROVED') {
+                <mat-icon class="text-sm">check_circle</mat-icon>
+                }
+                {{ titleDetails()?.status }}
+              </span>
+            </div>
             <p class="text-[var(--text-primary)] text-sm mb-4">
               {{ titleDetails()?.category?.name }} |
               {{ titleDetails()?.language | uppercase }} |
@@ -94,90 +110,68 @@
             </div>
 
         
-            <!-- AUTHORS LIST WITH PRINT PRICE -->
-@if (titleDetails()?.authors?.length) {
-<div class="mt-6">
-  <h3 class="text-sm font-medium text-[var(--text-heading)] mb-2 underline">
-    Authors
-  </h3>
+            <!-- AUTHORS AND PLATFORMS PARALLEL -->
+            <div class="mt-6 grid sm:grid-cols-2 gap-6">
+              <!-- AUTHORS LIST WITH PRINT PRICE -->
+              @if (titleDetails()?.authors?.length) {
+              <div>
+                <h3 class="text-sm font-medium text-[var(--text-heading)] mb-2 underline">
+                  Authors
+                </h3>
 
-  <ul class="text-sm text-[var(--text-primary)] space-y-2">
-    @for (a of titleDetails()?.authors; track a.id) {
-    <li class="flex flex-col">
-      
-      <!-- Author Name -->
-      <span class="font-medium text-[var(--text-heading)] capitalize">
-        {{ a.display_name }}
-      </span>
+                <ul class="text-sm text-[var(--text-primary)] space-y-2">
+                  @for (a of titleDetails()?.authors; track a.id) {
+                  <li class="flex flex-col">
+                    
+                    <!-- Author Name -->
+                    <span class="font-medium text-[var(--text-heading)] capitalize">
+                      {{ a.display_name }}
+                    </span>
 
-      <!-- Author Print Price -->
-      @if (a.authorPrintPrice  !== null && a.authorPrintPrice !== undefined) {
-      <span class="text-[var(--green-2)] font-medium">
-                  Author Copies Price
-: ₹{{ a.authorPrintPrice | number : "1.2-2" }}
-      </span>
-      }
-    </li>
-    }
-  </ul>
-</div>
-}
+                    <!-- Author Print Price -->
+                    @if (a.authorPrintPrice  !== null && a.authorPrintPrice !== undefined) {
+                    <span class="text-[var(--green-2)] font-medium">
+                      Author Copies Price: ₹{{ a.authorPrintPrice | number : "1.2-2" }}
+                    </span>
+                    }
+                  </li>
+                  }
+                </ul>
+              </div>
+              }
 
-
-            <!-- PLATFORM LINKS (BASIC DETAILS) -->
-@if (titleDetails()?.titlePlatformIdentifier?.length ) {
-<div class="mt-6">
-  <h3 class="text-sm font-medium text-[var(--text-heading)] mb-2 underline">
-    Platforms & Links
-  </h3>
-
-  <ul class="text-sm text-[var(--text-primary)] space-y-2">
-    @for (pid of titleDetails()?.titlePlatformIdentifier; track pid.id) {
-    <li class="flex flex-col">
-      <span class="font-medium text-[var(--text-heading)]">
-        {{ pid.platform.name }}
-      </span>
-
-      @if (pid.distributionLink) {
-      <div class="flex items-center gap-2">
-        <a
-          [href]="pid.distributionLink"
-          target="_blank"
-          class="underline text-[var(--primary)] hover:text-[var(--purple)] transition"
-        >
-          {{ pid.distributionLink }}
-        </a>
-
-        <mat-icon
-          class="!text-base cursor-pointer text-[var(--primary)] hover:text-[var(--purple)]"
-          (click)="copyDistributionLink(pid.distributionLink)"
-          title="Copy link"
-          >content_copy</mat-icon
-        >
-      </div>
-      } @else {
-      <span class="text-[var(--text-secondary)]">No link available</span>
-      }
-    </li>
-    }
-  </ul>
-</div>
-}
-    <div class="mt-4">
-              <span
-                class="inline-flex items-center gap-2 p-4 text-xs font-medium rounded-full"
-                [ngClass]="{
-                  'bg-[var(--light-green-bg)] text-[var(--green-2)] border border-[var(--light-green-2)]':
-                    titleDetails()?.status === 'APPROVED',
-                  'bg-[var(--light-purple-bg)] text-[var(--primary)] border border-[var(--primary-light)]':
-                    titleDetails()?.status !== 'APPROVED'
-                }"
-              >
-                @if(titleDetails()?.status !== 'APPROVED') {
-                <mat-icon class="text-sm">check_circle</mat-icon>
-                }
-                {{ titleDetails()?.status }}
-              </span>
+              <!-- PLATFORM LINKS (ICONS ONLY) -->
+              @if (titleDetails()?.titlePlatformIdentifier?.length ) {
+              <div>
+                <div class="flex flex-wrap gap-3">
+                  @for (pid of titleDetails()?.titlePlatformIdentifier; track pid.id) {
+                    @if (pid.distributionLink) {
+                    <button
+                      type="button"
+                      (click)="openDistributionLink(pid.distributionLink!)"
+                      [title]="pid.platform.name"
+                      class="w-12 h-12 rounded-full flex items-center justify-center border-2 border-[var(--primary-superlight)] hover:border-[var(--primary)] hover:shadow-md transition-all cursor-pointer overflow-hidden relative"
+                      [style.background-color]="!hasValidIcon(pid.platform.icon) ? getRandomColor(pid.platform.name) : 'white'"
+                    >
+                      @if (hasValidIcon(pid.platform.icon)) {
+                        <img
+                          [src]="pid.platform.icon"
+                          [alt]="pid.platform.name"
+                          class="w-full h-full object-cover"
+                          (error)="handleImageError($event, pid.platform.name)"
+                        />
+                      }
+                      @if (!hasValidIcon(pid.platform.icon)) {
+                        <span class="text-xs font-semibold text-white">
+                          {{ pid.platform.name.charAt(0).toUpperCase() }}
+                        </span>
+                      }
+                    </button>
+                    }
+                  }
+                </div>
+              </div>
+              }
             </div>
 
           </div>
@@ -983,40 +977,63 @@
               </div>
 
               <div
-                class="flex flex-col gap-1 text-sm text-[var(--text-primary)]"
+                class="flex flex-col gap-2 text-sm text-[var(--text-primary)]"
               >
-                <p>
-                  <span class="font-medium text-[var(--text-heading)]">
-                    Unique ID:
-                  </span>
-                  <span
-                    class="ml-2 px-2 py-[2px] rounded bg-[var(--primary-superlight)] text-[var(--primary)] font-medium text-xs"
-                  >
-                    {{ pid.uniqueIdentifier || "N/A" }}
-                  </span>
-                </p>
-                <p class="flex gap-1 items-start">
-                  <span class="font-medium text-[var(--text-heading)]">
-                    Link:
+                @if(loggedInUser()?.accessLevel === 'SUPERADMIN') {
+                <div class="flex flex-col gap-1">
+                  <span class="font-medium text-[var(--text-heading)] text-xs">
+                    Distribution Link:
                   </span>
                   @if(pid.distributionLink) {
-                  <div class="flex items-center gap-1">
-                    <a target="_blank" [href]="pid.distributionLink">
+                  <div class="flex items-center gap-2 p-2 bg-[var(--light-purple-bg)] rounded-lg border border-[var(--primary-superlight)]">
+                    <a 
+                      target="_blank" 
+                      [href]="pid.distributionLink" 
+                      class="flex-1 text-[var(--primary)] hover:underline text-xs break-all"
+                      [title]="pid.distributionLink"
+                    >
                       {{ pid.distributionLink }}
                     </a>
                     <button
                       type="button"
                       (click)="copyDistributionLink(pid.distributionLink)"
                       title="Copy link"
-                      class="mt-1"
+                      class="flex-shrink-0 p-1 hover:bg-[var(--primary-superlight)] rounded transition-colors"
                     >
-                      <mat-icon class="!text-base">content_copy</mat-icon>
+                      <mat-icon class="!text-base text-[var(--primary)]">content_copy</mat-icon>
+                    </button>
+                    <a
+                      target="_blank"
+                      [href]="pid.distributionLink"
+                      title="Open in new tab"
+                      class="flex-shrink-0 p-1 hover:bg-[var(--primary-superlight)] rounded transition-colors"
+                    >
+                      <mat-icon class="!text-base text-[var(--primary)]">open_in_new</mat-icon>
+                    </a>
+                    <button
+                      type="button"
+                      (click)="editPlatformIdentifier(pid)"
+                      title="Edit"
+                      class="flex-shrink-0 p-1 hover:bg-[var(--primary-superlight)] rounded transition-colors"
+                    >
+                      <mat-icon class="!text-base text-[var(--primary)]">edit</mat-icon>
                     </button>
                   </div>
                   } @else {
-                  <span>N/A</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[var(--text-secondary)] text-xs italic">No link available</span>
+                    <button
+                      type="button"
+                      (click)="editPlatformIdentifier(pid)"
+                      title="Edit"
+                      class="flex-shrink-0 p-1 hover:bg-[var(--primary-superlight)] rounded transition-colors"
+                    >
+                      <mat-icon class="!text-base text-[var(--primary)]">edit</mat-icon>
+                    </button>
+                  </div>
                   }
-                </p>
+                </div>
+                }
                   @if (    loggedInUser()?.accessLevel !== 'AUTHER'
 )  {
                 <p>

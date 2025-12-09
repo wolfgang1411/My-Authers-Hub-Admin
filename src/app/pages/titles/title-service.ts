@@ -366,8 +366,19 @@ export class TitleService {
     try {
       return await this.loader.loadPromise(
         this.server.post(`title-platform-identifier/title/${titleId}`, {
-          ...data,
+          data: data.platformIdentifier,
         })
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async updateTitle(id: number, data: Partial<Title>) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.patch<Title>(`titles/${id}`, data)
       );
     } catch (error) {
       this.logger.logError(error);

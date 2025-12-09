@@ -31,6 +31,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { SelectDistributionLinks } from 'src/app/components/select-distribution-links/select-distribution-links';
 import { ApproveTitle } from 'src/app/components/approve-title/approve-title';
+import { EditPlatformIdentifier } from 'src/app/components/edit-platform-identifier/edit-platform-identifier';
 import { IsbnFormatPipe } from 'src/app/pipes/isbn-format-pipe';
 
 @Component({
@@ -370,12 +371,15 @@ export class TitleSummary {
     const dialog = this.matDialog.open(ApproveTitle, {
       maxWidth: '95vw',
       width: '90vw',
+      height: '90vh',
       maxHeight: '90vh',
       data: {
         onClose: () => dialog.close(),
         publishingType: title.publishingType,
         existingIdentifiers: title.titlePlatformIdentifier ?? [],
+        distribution: title.distribution ?? [],
         onSubmit: async (data: {
+          skuNumber?: string;
           platformIdentifier: CreatePlatformIdentifier[];
         }) => {
           try {
@@ -415,5 +419,97 @@ export class TitleSummary {
     } catch (error) {
       console.error('Failed to copy text:', error);
     }
+  }
+
+  openDistributionLink(url: string) {
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  }
+
+  editPlatformIdentifier(pid: any) {
+    const title = this.titleDetails();
+    if (!title) return;
+
+    const dialog = this.matDialog.open(EditPlatformIdentifier, {
+      width: '500px',
+      maxWidth: '90vw',
+      data: {
+        onClose: () => dialog.close(),
+        platformName: pid.platform.name,
+        distributionLink: pid.distributionLink,
+        onSubmit: async (data: {
+          distributionLink?: string;
+        }) => {
+          try {
+            // Update distribution link for this specific platform
+            if (data.distributionLink !== undefined && data.distributionLink !== pid.distributionLink) {
+              const platformPayload = {
+                platformIdentifier: [{
+                  platformName: pid.platform.name,
+                  type: pid.type || (pid.platform.isEbookPlatform ? 'EBOOK' : 'PRINT'),
+                  distributionLink: data.distributionLink,
+                }],
+              };
+
+              await this.titleService.createUpdateTitlePlatformIdentifier(
+                title.id,
+                platformPayload
+              );
+            }
+
+            // Refresh title details
+            await this.fetchTitleDetails();
+
+            Swal.fire({
+              icon: 'success',
+              title: this.translateService.instant('success'),
+              text: this.translateService.instant('updatedsuccessfully') || 'Updated successfully',
+              timer: 2000,
+              showConfirmButton: false,
+              toast: true,
+              position: 'top-end',
+            });
+
+            dialog.close();
+          } catch (error: any) {
+            console.error('Error updating:', error);
+            Swal.fire({
+              icon: 'error',
+              title: this.translateService.instant('error'),
+              text: error?.error?.message || this.translateService.instant('updatefailed') || 'Update failed',
+              timer: 3000,
+              showConfirmButton: false,
+              toast: true,
+              position: 'top-end',
+            });
+          }
+        },
+      },
+    });
+  }
+
+  getRandomColor(seed: string): string {
+    // Generate a consistent color based on the platform name
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    // Generate a color with good contrast
+    const hue = Math.abs(hash % 360);
+    const saturation = 65 + (Math.abs(hash) % 20); // 65-85%
+    const lightness = 45 + (Math.abs(hash) % 15); // 45-60%
+    
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+  }
+
+  handleImageError(event: Event, platformName: string) {
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
+  }
+
+  hasValidIcon(icon?: string): boolean {
+    return !!icon && icon.trim().length > 0;
   }
 }

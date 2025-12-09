@@ -1,99 +1,78 @@
 <form
   (ngSubmit)="onSubmit()"
   [formGroup]="form"
-  class="flex flex-col gap-6 w-full p-6"
+  class="flex flex-col w-full h-full"
+  style="height: 90vh;"
 >
-  <div class="flex items-center gap-3 mb-2">
-    <div
-      class="p-3 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)] shadow-inner"
-    >
-      <mat-icon>dns</mat-icon>
-    </div>
-    <div>
-      <h1
-        mat-dialog-title
-        class="text-xl font-semibold text-[var(--text-heading)] m-0"
-      >
-        {{ "platformdetails" | translate }}
-      </h1>
-      <p class="text-sm text-[var(--text-secondary)] mt-1">
-        Enter platform-specific identifiers and distribution links
-      </p>
-    </div>
-  </div>
+  <h1 mat-dialog-title class="text-base font-semibold text-[var(--text-heading)] px-4 pt-4 pb-2 m-0 flex-shrink-0">
+    {{ "approvetitle" | translate }}
+  </h1>
 
-  <mat-dialog-content class="!p-0 !m-0">
-    <div
-      class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto pr-2"
-    >
-      @for (platformIdentifier of form.controls.platformIdentifier.controls;
-      track platformIdentifier.controls.platformName.value) {
-      <div
-        class="group border border-[var(--primary-superlight)] rounded-xl p-5 bg-gradient-to-br from-white to-[var(--light-purple-bg)] hover:shadow-lg hover:scale-[1.02] transition-all"
-      >
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2">
-            <div
-              class="p-2 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)]"
-            >
-              <mat-icon class="!text-lg">storefront</mat-icon>
-            </div>
-            <h5 class="font-medium text-[var(--text-heading)] text-base">
-              {{ platformIdentifier.controls.platformName.value | translate }}
-            </h5>
-          </div>
-          <span
-            class="text-[var(--green-2)] text-xs font-medium bg-[var(--light-green-bg)] px-3 py-1 rounded-full border border-[var(--light-green-2)]"
-          >
-            {{ platformIdentifier.controls.type.value }}
-          </span>
+  <mat-dialog-content class="!p-0 !m-0 !overflow-visible flex-1 flex flex-col min-h-0">
+    <div class="flex flex-col gap-3 px-4 flex-1 min-h-0">
+      <!-- SKU Number Field - Compact Fill Style -->
+      <div class="flex flex-col gap-1">
+        <label class="text-xs font-medium text-[var(--text-heading)]">
+          {{ "skunumber" | translate }}
+        </label>
+        <input
+          type="text"
+          [formControl]="form.controls.skuNumber"
+          [placeholder]="'enterskunumber' | translate"
+          class="w-full px-3 py-2 text-sm border border-[var(--primary-superlight)] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-[var(--primary)] transition-all"
+        />
+      </div>
+
+      <!-- Distribution Links - Compact Grid with Multiple Platforms per Row -->
+      @if (form.controls.platformIdentifier.controls.length > 0) {
+      <div class="border border-[var(--primary-superlight)] rounded-lg overflow-hidden mb-2">
+        <div class="bg-[var(--light-purple-bg)] px-3 py-1.5 text-xs font-medium text-[var(--text-heading)] border-b border-[var(--primary-superlight)]">
+          {{ "distributionlinks" | translate }}
         </div>
-
-        <div class="flex flex-col gap-4">
-          <mat-form-field appearance="outline" class="w-full">
-            <input
-              matInput
-              type="text"
-              [formControl]="platformIdentifier.controls.uniqueIdentifier"
-              [placeholder]="'uniqueidentifier' | translate"
-              class="!text-sm"
-            />
-            <mat-hint class="text-xs text-[var(--text-secondary)]">
-              Platform-specific identifier (SKU, ASIN, etc.)
-            </mat-hint>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="w-full">
-            <input
-              matInput
-              type="url"
-              [formControl]="platformIdentifier.controls.distributionLink"
-              [placeholder]="'distributionlinks' | translate"
-              class="!text-sm"
-            />
-            <mat-hint class="text-xs text-[var(--text-secondary)]">
-              Distribution or purchase link (https://...)
-            </mat-hint>
-          </mat-form-field>
+        <div class="flex-1 overflow-y-auto p-2 min-h-0">
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+            @for (platformIdentifier of form.controls.platformIdentifier.controls;
+            track platformIdentifier.controls.platformName.value) {
+            <div class="flex flex-col gap-1 p-2 border border-[var(--primary-superlight)] rounded bg-white hover:bg-[var(--light-purple-bg)] transition-colors">
+              <div class="flex items-center justify-between mb-0.5">
+                <span class="text-xs font-medium text-[var(--text-heading)]">
+                  {{ platformIdentifier.controls.platformName.value | translate }}
+                </span>
+                <span class="text-[10px] text-[var(--text-secondary)] px-1.5 py-0.5 bg-[var(--light-purple-bg)] rounded border border-[var(--primary-superlight)]">
+                  {{ platformIdentifier.controls.type.value }}
+                </span>
+              </div>
+              <mat-form-field appearance="outline" class="w-full !mb-0" [subscriptSizing]="'dynamic'">
+                <input
+                  matInput
+                  type="url"
+                  [formControl]="platformIdentifier.controls.distributionLink"
+                  [placeholder]="'enterdistributionlink' | translate"
+                  class="!text-sm"
+                />
+              </mat-form-field>
+            </div>
+            }
+          </div>
         </div>
       </div>
       }
     </div>
   </mat-dialog-content>
 
-  <mat-dialog-actions class="!justify-end !p-0 !mt-4 gap-3">
+  <mat-dialog-actions class="!justify-end !px-4 !py-3 !mt-0 gap-2 border-t border-[var(--primary-superlight)] flex-shrink-0">
     <button
       (click)="data.onClose()"
       mat-button
       type="button"
-      class="!px-6 !py-2 !rounded-lg !border !border-[var(--primary-superlight)] !text-[var(--primary)] hover:!bg-[var(--light-purple-bg)] transition-all"
+      class="!px-4 !py-1.5 !text-sm !rounded-lg !border !border-[var(--primary-superlight)] !text-[var(--primary)] hover:!bg-[var(--light-purple-bg)] transition-all"
     >
       {{ "close" | translate }}
     </button>
     <button
       type="submit"
       mat-button
-      class="!px-6 !py-2 !rounded-lg !bg-primary !text-white hover:!opacity-90 transition-all shadow-md hover:shadow-lg"
+      class="!px-4 !py-1.5 !text-sm !rounded-lg !bg-primary !text-white hover:!opacity-90 transition-all"
     >
       {{ "confirm" | translate }}
     </button>
