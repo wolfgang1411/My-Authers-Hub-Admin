@@ -13,8 +13,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatMenuTrigger } from '@angular/material/menu';
 @Component({
   selector: 'app-list-table',
   imports: [

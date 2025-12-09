@@ -47,6 +47,7 @@ import {
   FormGroup,
   ReactiveFormsModule,
 } from '@angular/forms';
+import { IsbnFormatPipe } from 'src/app/pipes/isbn-format-pipe';
 
 @Component({
   selector: 'app-isbn-list',
@@ -62,6 +63,7 @@ import {
     MatFormFieldModule,
     MatIconButton,
     ReactiveFormsModule,
+    IsbnFormatPipe,
   ],
   templateUrl: './isbn-list.html',
   styleUrl: './isbn-list.css',
@@ -99,7 +101,7 @@ export class ISBNList {
     page: 1,
     itemsPerPage: 30,
     searchStr: '',
-    status: 0 as any,
+    status: ISBNStatus.PENDING,
   };
 
   isbnStatuses = computed(() => {
@@ -165,25 +167,15 @@ export class ISBNList {
 
     this.displayedColumns = [...this.displayedColumnsBase];
 
-    // APPLIED: remove isbnnumber column and add editisbn column
-    if (status === ISBNStatus.APPLIED) {
-      this.displayedColumns = this.displayedColumns.filter(
-        (col) => col !== 'isbnnumber'
-      );
-
-      const idx = this.displayedColumns.indexOf('status');
-      if (idx !== -1) {
-        this.displayedColumns.splice(idx + 1, 0, 'assignisbn');
-      }
-    }
-
-    // Reset form when switching status/tab
-    this.createIsbnForm.reset({ isbnNumber: null });
+    const isAppliedTab = status === ISBNStatus.APPLIED;
+    const isAllTab = status === 'ALL';
 
     this.filter.status = status === 'ALL' ? undefined : status;
     this.filter.page = 1;
+
     this.fetchIsbnList();
   }
+
   getIsbnControl(id: number) {
     if (!this.isbnInputs.has(id)) {
       const control = new FormControl<string | null>(null, {
@@ -265,9 +257,8 @@ export class ISBNList {
     let html = '';
     let title = 'Are you sure?';
 
-    if (status === 'APPROVED') {
-      html =
-        'The ISBN will be approved. <br> once approved it cannot be changed.';
+    if (status === 'APPLIED') {
+      html = 'The ISBN will be applied.';
     } else if (status === 'REJECTED') {
       html =
         'The ISBN will be rejected. <br> once rejected it cannot be changed.';
@@ -293,11 +284,19 @@ export class ISBNList {
       status,
     } as any);
 
+    // Update local list
     this.isbnList.update((list) =>
       list.map((item) => (item.id === response.id ? response : item))
     );
+
     this.updateISBNList();
+
+    // ⭐ Redirect to APPLIED tab if status is APPLIED
+    if (status === 'APPLIED') {
+      this.selectStatus(ISBNStatus.APPLIED);
+    }
   }
+
   async saveInlineISBN(element: any) {
     const control = this.getIsbnControl(element.id);
     const isbnNumber = cleanIsbn(control.value || '');
@@ -330,10 +329,18 @@ export class ISBNList {
     Swal.fire({
       icon: 'success',
       title: 'Assigned',
-      text: 'ISBN number assigned successfully!',
+      text: 'ISBN has been approved successfully!',
     });
 
-    // CLEAR FIELD AFTER SAVE
+    this.isbnList.update((list) =>
+      list.map((item) => (item.id === response.id ? response : item))
+    );
+
+    this.updateISBNList();
+
+    if (response.status === 'APPROVED') {
+      this.selectStatus(ISBNStatus.APPROVED);
+    }
     control.reset();
   }
 
@@ -379,7 +386,7 @@ export class ISBNList {
 
   fetchIsbnList() {
     const filter = { ...this.filter };
-    if (!filter.status) {
+    if (filter.status === undefined || filter.status === null) {
       delete filter.status;
     }
 
@@ -395,11 +402,9 @@ export class ISBNList {
   // 🔹 Map backend ISBN into table row shape
   updateISBNList() {
     const isbnList = this.isbnList();
-
     this.dataSource.data = isbnList.map((isbn) => ({
       ...isbn, // keep original fields for payload
       id: isbn.id,
-      isbnnumber: formatIsbn(isbn.isbnNumber) || 'N/A',
       isbntype: isbn.type,
       titlename: isbn.titleName,
       authorname: isbn.authors
@@ -408,6 +413,7 @@ export class ISBNList {
       publishername: isbn.publisher?.name,
       verso: isbn.edition,
       language: isbn.language,
+      isbnnumber: formatIsbn(isbn.isbnNumber) ?? 'N/A',
       status: isbn.status,
       createdby: isbn.admin
         ? isbn.admin.firstName + ' ' + isbn.admin.lastName

@@ -211,6 +211,7 @@ export enum VerifiedISBNStatus {
   ACTIVE = 'ACTIVE',
   DELETED = 'DELETED',
   APPLIED = 'APPLIED',
+  APPROVED = 'APPROVED',
 }
 
 export enum PlatForm {
