@@ -20,7 +20,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { SelectDistributionLinks } from '../../components/select-distribution-links/select-distribution-links';
 import { format } from 'date-fns';
-import { TitleStatus, User } from '../../interfaces';
+import { PublishingType, TitleStatus, User } from '../../interfaces';
 import { ApproveTitle } from '../../components/approve-title/approve-title';
 import { UserService } from '../../services/user';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -69,9 +69,19 @@ export class Titles {
       this.staticValueService.staticValues()?.TitleStatus || {}
     );
   });
+  publishingTypes = computed<PublishingType[]>(() => {
+    return Object.keys(
+      this.staticValueService.staticValues()?.PublishingType || {}
+    ) as PublishingType[];
+  });
   searchStr = new Subject<string>();
   lastSelectedStatus: TitleStatus | 'ALL' = 'ALL';
-  selectStatus(status: TitleStatus | 'ALL', updateQueryParams: boolean = true) {
+  lastSelectedPublishingType: PublishingType | 'ALL' = 'ALL';
+  selectStatus(
+    status: TitleStatus | 'ALL',
+    updateQueryParams: boolean = true,
+    triggerFetch: boolean = true
+  ) {
     this.lastSelectedStatus = status;
     this.filter.update((f) => ({
       ...f,
@@ -89,9 +99,44 @@ export class Titles {
       });
     }
     
-    this.fetchTitleDetails();
+    if (triggerFetch) {
+      this.fetchTitleDetails();
+    }
+  }
+
+  selectPublishingType(
+    publishingType: PublishingType | 'ALL',
+    updateQueryParams: boolean = true,
+    triggerFetch: boolean = true
+  ) {
+    this.lastSelectedPublishingType = publishingType;
+    this.filter.update((f) => {
+      const updated = { ...f, page: 1 };
+      if (publishingType === 'ALL') {
+        delete (updated as any).publishingType;
+      } else {
+        updated.publishingType = publishingType;
+      }
+      return updated;
+    });
+    this.clearCache();
+
+    if (updateQueryParams) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: {
+          publishingType: publishingType === 'ALL' ? 'ALL' : publishingType,
+        },
+        queryParamsHandling: 'merge',
+      });
+    }
+
+    if (triggerFetch) {
+      this.fetchTitleDetails();
+    }
   }
   titleStatus = TitleStatus;
+  publishingType = PublishingType;
   test!: Subject<string>;
   titles = signal<Title[]>([]);
   displayedColumns: string[] = [
@@ -123,6 +168,7 @@ export class Titles {
     const currentFilter = this.filter();
     return JSON.stringify({
       status: currentFilter.status,
+      publishingType: (currentFilter as any).publishingType,
       searchStr: currentFilter.searchStr,
       itemsPerPage: currentFilter.itemsPerPage,
       orderBy: currentFilter.orderBy,
@@ -311,28 +357,45 @@ export class Titles {
     // Read status from query params
     this.route.queryParams.subscribe((params) => {
       const statusParam = params['status'];
-      if (statusParam) {
-        // Validate the status is a valid TitleStatus or 'ALL'
-        if (
-          statusParam === 'ALL' ||
-          Object.values(TitleStatus).includes(statusParam as TitleStatus)
-        ) {
-          const status =
-            statusParam === 'ALL' ? 'ALL' : (statusParam as TitleStatus);
-          // Only update if different from current to avoid infinite loop
-          if (this.lastSelectedStatus !== status) {
-            this.selectStatus(status, false); // false = don't update query params (already set)
-          }
-        } else {
-          // Invalid status in query params, use default
-          this.lastSelectedStatus = 'ALL';
-          this.fetchTitleDetails();
-        }
-      } else {
-        // No status in query params, use default and fetch
-        this.lastSelectedStatus = 'ALL';
-        this.fetchTitleDetails();
+      const publishingTypeParam = params['publishingType'];
+
+      const isValidStatus =
+        statusParam &&
+        (statusParam === 'ALL' ||
+          Object.values(TitleStatus).includes(statusParam as TitleStatus));
+      const isValidPublishingType =
+        publishingTypeParam &&
+        (publishingTypeParam === 'ALL' ||
+          Object.values(PublishingType).includes(
+            publishingTypeParam as PublishingType
+          ));
+
+      const initialStatus: TitleStatus | 'ALL' = isValidStatus
+        ? (statusParam === 'ALL'
+            ? 'ALL'
+            : (statusParam as TitleStatus))
+        : 'ALL';
+      const initialPublishingType: PublishingType | 'ALL' =
+        isValidPublishingType
+          ? (publishingTypeParam === 'ALL'
+              ? 'ALL'
+              : (publishingTypeParam as PublishingType))
+          : 'ALL';
+
+      const shouldUpdateStatus = this.lastSelectedStatus !== initialStatus;
+      const shouldUpdatePublishing =
+        this.lastSelectedPublishingType !== initialPublishingType;
+
+      if (shouldUpdateStatus) {
+        this.selectStatus(initialStatus, false, false);
       }
+
+      if (shouldUpdatePublishing) {
+        this.selectPublishingType(initialPublishingType, false, false);
+      }
+
+      // Fetch once after applying both filters (or for first load)
+      this.fetchTitleDetails();
     });
     
     this.searchStr.pipe(debounceTime(400)).subscribe((value) => {

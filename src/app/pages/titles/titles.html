@@ -108,7 +108,39 @@
       }
     </div>
   </div>
-  <div class="flex w-full gap-4 mt-4">
+  <div class="flex w-full gap-4 mt-4 flex-wrap">
+    <button
+      class="btn rounded-md !text-primary"
+      matButton="filled"
+      matButton
+      type="button"
+      [ngClass]="{
+        '!bg-primary !text-white': lastSelectedPublishingType === 'ALL',
+        '!bg-primary-superlight': lastSelectedPublishingType !== 'ALL'
+      }"
+      (click)="selectPublishingType('ALL')"
+    >
+      <mat-icon>library_books</mat-icon>
+      All Publishing Types
+    </button>
+    @for (type of publishingTypes(); track type) {
+    <button
+      class="btn rounded-md !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white': lastSelectedPublishingType === type,
+        '!bg-primary-superlight': lastSelectedPublishingType !== type
+      }"
+      (click)="selectPublishingType(type)"
+    >
+      <mat-icon>menu_book</mat-icon>
+      {{ type | translate }}
+    </button>
+    }
+  </div>
+  <div class="flex w-full gap-4 mt-2">
     <button
       class="btn rounded-md !text-primary"
       matButton="filled"
