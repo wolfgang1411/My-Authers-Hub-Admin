@@ -1,4 +1,5 @@
 import { Component, Renderer2, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { RouterModule } from '@angular/router';
@@ -61,7 +62,9 @@ export class Royalties {
     private logger: Logger,
     private titleService: TitleService,
     public userService: UserService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   lastPage = signal(1);
@@ -92,14 +95,33 @@ export class Royalties {
   lastSelectedSaleType: SalesType | null = null;
   salesTypes = SalesType;
   ngOnInit(): void {
-    if (this.lastSelectedSaleType) {
-      const saleType = this.lastSelectedSaleType;
-      this.filter.update((f) => ({
-        ...f,
-        salesType: [saleType],
-      }));
-    }
-    this.updateRoyaltyList();
+    // Read sale type from query params
+    this.route.queryParams.subscribe((params) => {
+      const saleTypeParam = params['saleType'];
+      if (saleTypeParam !== undefined && saleTypeParam !== null && saleTypeParam !== '') {
+        if (saleTypeParam === 'null') {
+          this.lastSelectedSaleType = null;
+        } else if (Object.values(SalesType).includes(saleTypeParam as SalesType)) {
+          this.lastSelectedSaleType = saleTypeParam as SalesType;
+        }
+      }
+      
+      // Apply the sale type to filter if set
+      if (this.lastSelectedSaleType !== null) {
+        this.filter.update((f) => ({
+          ...f,
+          salesType: [this.lastSelectedSaleType!],
+        }));
+      } else {
+        this.filter.update((f) => {
+          const updated = { ...f };
+          delete updated.salesType;
+          return updated;
+        });
+      }
+      
+      this.updateRoyaltyList();
+    });
   }
 
   private cleanFilter(filter: EarningFilter): EarningFilter {
@@ -176,7 +198,7 @@ export class Royalties {
     this.earningList.set(items);
     this.lastPage.set(Math.ceil(totalCount / returnedItemsPerPage));
   }
-  selectSaleType(type: SalesType | null) {
+  selectSaleType(type: SalesType | null, updateQueryParams: boolean = true) {
     this.lastSelectedSaleType = type;
     this.filter.update((f) => {
       const updated = { ...f };
@@ -189,6 +211,16 @@ export class Royalties {
       return updated;
     });
     this.clearCache();
+    
+    // Update query params to persist the selected sale type
+    if (updateQueryParams) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { saleType: type === null ? null : type },
+        queryParamsHandling: 'merge', // Preserve other query params if any
+      });
+    }
+    
     this.updateRoyaltyList();
   }
 

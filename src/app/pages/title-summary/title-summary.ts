@@ -6,7 +6,7 @@ import {
   TemplateRef,
   viewChild,
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TitleService } from '../titles/title-service';
 import { Back } from '../../components/back/back';
 import {
@@ -57,9 +57,11 @@ export class TitleSummary {
   titleDetails = signal<Title | null>(null);
   loggedInUser!: Signal<User | null>;
   royaltyAmountsCache = signal<Map<string, number>>(new Map());
+  selectedTabIndex = signal<number>(0);
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private titleService: TitleService,
     private staticValueService: StaticValuesService,
     private userService: UserService,
@@ -70,9 +72,31 @@ export class TitleSummary {
     this.loggedInUser = this.userService.loggedInUser$;
   }
   ngOnInit() {
+    // Read tab index from query params
+    this.route.queryParams.subscribe((params) => {
+      const tabParam = params['tab'];
+      if (tabParam !== undefined && tabParam !== null) {
+        const tabIndex = Number(tabParam);
+        // Validate tab index is a valid number and within reasonable bounds (0-10)
+        if (!isNaN(tabIndex) && tabIndex >= 0 && tabIndex < 10) {
+          this.selectedTabIndex.set(tabIndex);
+        }
+      }
+    });
+
     this.route.params.subscribe(({ titleId }) => {
       this.titleId = Number(titleId);
       this.fetchTitleDetails();
+    });
+  }
+
+  onTabChange(index: number) {
+    this.selectedTabIndex.set(index);
+    // Update query params without reloading the page
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: index },
+      queryParamsHandling: 'merge', // Preserve other query params if any
     });
   }
 

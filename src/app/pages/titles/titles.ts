@@ -10,7 +10,7 @@ import {
 } from '../../interfaces/Titles';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { TitleService } from './title-service';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ListTable } from '../../components/list-table/list-table';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
@@ -53,7 +53,9 @@ export class Titles {
     private userService: UserService,
     private staticValueService: StaticValuesService,
     private translate: TranslateService,
-    private logger: Logger
+    private logger: Logger,
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -69,7 +71,7 @@ export class Titles {
   });
   searchStr = new Subject<string>();
   lastSelectedStatus: TitleStatus | 'ALL' = 'ALL';
-  selectStatus(status: TitleStatus | 'ALL') {
+  selectStatus(status: TitleStatus | 'ALL', updateQueryParams: boolean = true) {
     this.lastSelectedStatus = status;
     this.filter.update((f) => ({
       ...f,
@@ -77,6 +79,16 @@ export class Titles {
       page: 1,
     }));
     this.clearCache();
+    
+    // Update query params to persist the selected status
+    if (updateQueryParams) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { status: status === 'ALL' ? 'ALL' : status },
+        queryParamsHandling: 'merge', // Preserve other query params if any
+      });
+    }
+    
     this.fetchTitleDetails();
   }
   titleStatus = TitleStatus;
@@ -296,7 +308,33 @@ export class Titles {
   }
 
   ngOnInit(): void {
-    this.fetchTitleDetails();
+    // Read status from query params
+    this.route.queryParams.subscribe((params) => {
+      const statusParam = params['status'];
+      if (statusParam) {
+        // Validate the status is a valid TitleStatus or 'ALL'
+        if (
+          statusParam === 'ALL' ||
+          Object.values(TitleStatus).includes(statusParam as TitleStatus)
+        ) {
+          const status =
+            statusParam === 'ALL' ? 'ALL' : (statusParam as TitleStatus);
+          // Only update if different from current to avoid infinite loop
+          if (this.lastSelectedStatus !== status) {
+            this.selectStatus(status, false); // false = don't update query params (already set)
+          }
+        } else {
+          // Invalid status in query params, use default
+          this.lastSelectedStatus = 'ALL';
+          this.fetchTitleDetails();
+        }
+      } else {
+        // No status in query params, use default and fetch
+        this.lastSelectedStatus = 'ALL';
+        this.fetchTitleDetails();
+      }
+    });
+    
     this.searchStr.pipe(debounceTime(400)).subscribe((value) => {
       this.filter.update((f) => {
         const updated = { ...f };

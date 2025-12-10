@@ -8,6 +8,8 @@
 
   <mat-tab-group
     class="bg-white rounded-2xl shadow-sm border border-[var(--primary-superlight)]"
+    [selectedIndex]="selectedTabIndex()"
+    (selectedIndexChange)="onTabChange($event)"
   >
     <!-- OVERVIEW TAB -->
     <mat-tab label="Overview">
