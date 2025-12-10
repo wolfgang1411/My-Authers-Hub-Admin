@@ -1,8 +1,8 @@
-import { Component, computed, Signal, signal } from '@angular/core';
+import { Component, computed, OnInit, Signal, signal } from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { ListTable } from '../../components/list-table/list-table';
 import { AngularSvgIconModule } from 'angular-svg-icon';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatTableDataSource } from '@angular/material/table';
 import { IsbnService } from '../../services/isbn-service';
@@ -68,7 +68,7 @@ import { IsbnFormatPipe } from 'src/app/pipes/isbn-format-pipe';
   templateUrl: './isbn-list.html',
   styleUrl: './isbn-list.css',
 })
-export class ISBNList {
+export class ISBNList implements OnInit {
   constructor(
     private isbnService: IsbnService,
     private logger: Logger,
@@ -76,7 +76,9 @@ export class ISBNList {
     private publisherService: PublisherService,
     private authorService: AuthorsService,
     private staticValService: StaticValuesService,
-    private userService: UserService
+    private userService: UserService,
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     this.loggedInUser$ = this.userService.loggedInUser$;
   }
@@ -102,6 +104,8 @@ export class ISBNList {
     itemsPerPage: 30,
     searchStr: '',
     status: ISBNStatus.PENDING,
+    orderBy: 'id',
+    orderByVal: 'desc',
   };
 
   isbnStatuses = computed(() => {
@@ -138,15 +142,42 @@ export class ISBNList {
   });
 
   ngOnInit(): void {
-    this.fetchIsbnList();
+    // Fetch authors and publishers list (always needed)
     this.fetchAndUpdateAuthorsList();
     this.fetchAndUpdatePublishersList();
+
+    // Read status from query params
+    this.route.queryParams.subscribe((params) => {
+      const statusParam = params['status'];
+      if (statusParam) {
+        // Validate the status is a valid ISBNStatus or 'ALL'
+        if (
+          statusParam === 'ALL' ||
+          Object.values(ISBNStatus).includes(statusParam as ISBNStatus)
+        ) {
+          const status =
+            statusParam === 'ALL' ? 'ALL' : (statusParam as ISBNStatus);
+          // Only update if different from current to avoid infinite loop
+          if (this.lastSelectedStatus !== status) {
+            this.selectStatus(status, false); // false = don't update query params (already set)
+          }
+        } else {
+          // Invalid status in query params, use default and fetch
+          this.fetchIsbnList();
+        }
+      } else {
+        // No status in query params, use default and fetch
+        this.fetchIsbnList();
+      }
+    });
   }
 
   // Async validator for ISBN
   validateIsbn(): AsyncValidatorFn {
     return (control: AbstractControl) => {
-      let isbn = cleanIsbn(control.value || '');
+      const rawValue = control.value || '';
+      // Always clean the value to handle both formatted (with hyphens) and raw input
+      const isbn = cleanIsbn(String(rawValue));
 
       if (isbn.length === 0) return of(null);
 
@@ -154,15 +185,32 @@ export class ISBNList {
       if (isbn.length < 13) return of(null);
       if (isbn.length !== 13) return of({ invalid: 'ISBN must be 13 digits' });
 
-      return timer(500).pipe(
-        switchMap(() => this.isbnService.verifyIsbn(isbn)),
-        map(({ verified }) => (verified ? null : { invalid: 'Invalid ISBN' })),
-        catchError(() => of({ invalid: 'Invalid ISBN' }))
-      );
+      // Validate ISBN-13 format locally (check digit validation)
+      if (!/^\d{13}$/.test(isbn)) {
+        return of({ invalid: 'ISBN must contain only digits' });
+      }
+
+      // Validate check digit for ISBN-13
+      let sum = 0;
+      for (let i = 0; i < 12; i++) {
+        const digit = parseInt(isbn[i]);
+        if (isNaN(digit)) {
+          return of({ invalid: 'ISBN must contain only digits' });
+        }
+        sum += digit * (i % 2 === 0 ? 1 : 3);
+      }
+      let check = (10 - (sum % 10)) % 10;
+      const lastDigit = parseInt(isbn[12]);
+      if (isNaN(lastDigit) || check !== lastDigit) {
+        return of({ invalid: 'Invalid ISBN check digit' });
+      }
+
+      // Format is valid, allow it
+      return of(null);
     };
   }
 
-  selectStatus(status: ISBNStatus | 'ALL') {
+  selectStatus(status: ISBNStatus | 'ALL', updateQueryParams: boolean = true) {
     this.lastSelectedStatus = status;
 
     this.displayedColumns = [...this.displayedColumnsBase];
@@ -172,6 +220,15 @@ export class ISBNList {
 
     this.filter.status = status === 'ALL' ? undefined : status;
     this.filter.page = 1;
+
+    // Update query params to persist the selected tab
+    if (updateQueryParams) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { status: status === 'ALL' ? 'ALL' : status },
+        queryParamsHandling: 'merge', // Preserve other query params if any
+      });
+    }
 
     this.fetchIsbnList();
   }
@@ -298,31 +355,71 @@ export class ISBNList {
   }
 
   async saveInlineISBN(element: any) {
-    const control = this.getIsbnControl(element.id);
+    // Use the control from createIsbnForm since that's what the template uses
+    const control = this.createIsbnForm.controls.isbnNumber;
     const isbnNumber = cleanIsbn(control.value || '');
 
-    if (!isbnNumber || control.invalid) {
+    if (!isbnNumber || isbnNumber.length !== 13) {
       Swal.fire({
         icon: 'warning',
         title: 'Invalid ISBN',
-        text: 'Please enter a valid ISBN number.',
+        text: 'Please enter a valid 13-digit ISBN number.',
       });
       return;
     }
 
+    // Additional validation: check digit
+    if (!/^\d{13}$/.test(isbnNumber)) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Invalid ISBN',
+        text: 'ISBN must contain only digits.',
+      });
+      return;
+    }
+
+    // Validate check digit
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+      const digit = parseInt(isbnNumber[i]);
+      if (isNaN(digit)) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Invalid ISBN',
+          text: 'ISBN must contain only digits.',
+        });
+        return;
+      }
+      sum += digit * (i % 2 === 0 ? 1 : 3);
+    }
+    let check = (10 - (sum % 10)) % 10;
+    const lastDigit = parseInt(isbnNumber[12]);
+    if (isNaN(lastDigit) || check !== lastDigit) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Invalid ISBN',
+        text: 'Invalid ISBN check digit. Please verify the ISBN number.',
+      });
+      return;
+    }
+
+    // Check if control is still pending (async validation in progress)
+    if (control.pending) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Validating...',
+        text: 'Please wait while the ISBN is being validated.',
+      });
+      return;
+    }
+
+    // For APPLIED status, only send id, isbnNumber, and status (APPROVED)
+    // Don't send all the other fields
     const payload: createIsbn = {
       id: element.id,
-      type: element.type,
-      titleName: element.titleName,
-      authorIds: element.authors?.map((a: Author) => a.id) || [],
-      publisherId: element.publisher?.id,
-      edition: element.edition,
-      language: element.language,
-      status: element.status,
       isbnNumber,
-      noOfPages: element.noOfPages ?? null,
-      mrp: element.mrp ?? null,
-    };
+      status: ISBNStatus.APPROVED,
+    } as any;
 
     const response = await this.isbnService.createOrUpdateIsbn(payload);
 
@@ -338,9 +435,8 @@ export class ISBNList {
 
     this.updateISBNList();
 
-    if (response.status === 'APPROVED') {
-      this.selectStatus(ISBNStatus.APPROVED);
-    }
+    // Redirect to APPROVED tab after approval
+    this.selectStatus(ISBNStatus.APPROVED);
     control.reset();
   }
 
@@ -399,6 +495,69 @@ export class ISBNList {
     });
   }
 
+  nextPage() {
+    if (this.filter.page < this.lastPage()) {
+      this.filter.page = this.filter.page + 1;
+      this.fetchIsbnList();
+    }
+  }
+
+  previousPage() {
+    if (this.filter.page > 1) {
+      this.filter.page = this.filter.page - 1;
+      this.fetchIsbnList();
+    }
+  }
+
+  goToPage(pageNumber: number) {
+    if (pageNumber >= 1 && pageNumber <= this.lastPage()) {
+      this.filter.page = pageNumber;
+      this.fetchIsbnList();
+    }
+  }
+
+  onItemsPerPageChange(itemsPerPage: number) {
+    this.filter.itemsPerPage = itemsPerPage;
+    this.filter.page = 1;
+    this.fetchIsbnList();
+  }
+
+  getPageNumbers(): number[] {
+    const currentPage = this.filter.page || 1;
+    const totalPages = this.lastPage();
+    const pages: number[] = [];
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        pages.push(-1);
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push(-1);
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  }
+
   // 🔹 Map backend ISBN into table row shape
   updateISBNList() {
     const isbnList = this.isbnList();
@@ -431,5 +590,46 @@ export class ISBNList {
     const filename = `bunko-${isbn.id}.png`;
     const file = await urlToFile(isbn.bunko, filename);
     downloadFile(file, filename);
+  }
+
+  // Map display columns to API sort fields
+  getApiFieldName = (column: string): string | null => {
+    const columnMap: Record<string, string> = {
+      titlename: 'titleName',
+      authorname: 'id', // Authors is a relation, sort by id for now
+      publishername: 'publisherId', // Publisher is a relation, sort by publisherId
+      verso: 'edition',
+      language: 'language',
+      status: 'status',
+      isbnnumber: 'isbnNumber',
+      // Direct fields that can be sorted
+      id: 'id',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+      titleName: 'titleName',
+      edition: 'edition',
+      isbnNumber: 'isbnNumber',
+    };
+    return columnMap[column] || null;
+  };
+
+  isSortable = (column: string): boolean => {
+    return this.getApiFieldName(column) !== null;
+  };
+
+  onSortChange(sort: { active: string; direction: 'asc' | 'desc' | '' }) {
+    const apiFieldName = this.getApiFieldName(sort.active);
+    if (!apiFieldName) return;
+
+    const direction: 'asc' | 'desc' =
+      sort.direction === 'asc' || sort.direction === 'desc'
+        ? sort.direction
+        : 'desc';
+
+    this.filter.orderBy = apiFieldName;
+    this.filter.orderByVal = direction;
+    this.filter.page = 1;
+
+    this.fetchIsbnList();
   }
 }

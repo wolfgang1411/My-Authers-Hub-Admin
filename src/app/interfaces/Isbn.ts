@@ -40,4 +40,6 @@ export interface ISBNFilter {
   itemsPerPage: number;
   searchStr: string;
   status?: ISBNStatus | ISBNStatus[];
+  orderBy?: string;
+  orderByVal?: 'asc' | 'desc';
 }
