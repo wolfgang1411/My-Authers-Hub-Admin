@@ -21,6 +21,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { Router } from '@angular/router';
 import { IsbnService } from 'src/app/services/isbn-service';
+import { PayoutsService } from 'src/app/services/payouts';
+import { PayoutStatus } from '../../interfaces/Payout';
 
 @Component({
   selector: 'app-dashboard',
@@ -52,6 +54,7 @@ export class Dashboard {
     private salesService: SalesService,
     public userService: UserService,
     private router: Router,
+    private payoutService: PayoutsService,
     private isbnService: IsbnService
   ) {}
 
@@ -121,8 +124,8 @@ export class Dashboard {
     });
     this.pendingTitles.set(pending.count || 0);
 
-    const pendingearining = await this.salesService.getEarningsCount({
-      status: EarningsStatus.PENDING,
+    const pendingearining = await this.payoutService.getPayoutrequestCount({
+      status: 'PENDING',
     });
     this.royaltyPending.set(pendingearining.count || 0);
 
@@ -141,7 +144,7 @@ export class Dashboard {
   }
 
   goToRoyaltyApproval() {
-    this.router.navigate(['/royalties'], {
+    this.router.navigate(['/payouts'], {
       queryParams: { status: 'PENDING' },
     });
   }

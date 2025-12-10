@@ -61,4 +61,15 @@ export class PayoutsService {
       throw error;
     }
   }
+
+  async getPayoutrequestCount(filter: PayoutFilter) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<{ count: number }>('wallet-request/count', filter)
+      );
+    } catch (error) {
+      console.error('Error fetching publishers:', error);
+      throw error;
+    }
+  }
 }
