@@ -331,6 +331,11 @@ export class AddAuthor implements OnInit {
         }
       });
 
+    const defaultCountryIso = 'IN';
+    if (!this.authorId && !this.authorAddressDetails.get('country')?.value) {
+      this.authorAddressDetails.patchValue({ country: defaultCountryIso });
+    }
+
     this.bankOptions.set(this.bankDetailService.fetchBankOptions());
 
     if (this.signupCode) {

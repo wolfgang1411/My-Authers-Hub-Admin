@@ -245,6 +245,14 @@ export class AddPublisher {
           // this.lookupByPincode(pin);
         }
       });
+
+    const defaultCountryIso = 'IN';
+    if (
+      !this.publisherId &&
+      !this.publisherAddressDetails.get('country')?.value
+    ) {
+      this.publisherAddressDetails.patchValue({ country: defaultCountryIso });
+    }
     this.publisherBankDetails.controls.name.valueChanges.subscribe((v) => {
       this.selectedBankPrefix.set(
         this.bankOptions().find(({ name }) => name === v)?.bankCode || null
