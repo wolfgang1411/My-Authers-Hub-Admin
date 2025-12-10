@@ -82,8 +82,9 @@ export class CreateIsbn {
       }
 
       // ⏳ Debounce for 500ms before making API call
+      const titleName = this.createIsbnForm.controls.titleName.value || '';
       return timer(500).pipe(
-        switchMap(() => this.isbnService.verifyIsbn(isbn)),
+        switchMap(() => this.isbnService.verifyIsbn(isbn, titleName)),
         map(({ verified }) =>
           verified ? null : { invalid: 'Invalid ISBN Number' }
         ),

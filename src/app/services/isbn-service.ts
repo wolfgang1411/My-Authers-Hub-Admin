@@ -13,11 +13,19 @@ export class IsbnService {
     private logger: Logger,
     private loader: LoaderService
   ) {}
-  async verifyIsbn(isbn: string): Promise<{ verified: boolean }> {
+  async verifyIsbn(
+    isbn: string,
+    titleName?: string
+  ): Promise<{ verified: boolean }> {
     try {
+      const params: any = {};
+      if (titleName && titleName.trim()) {
+        params.titleName = titleName;
+      }
       return await this.loader.loadPromise(
         this.serverService.get<{ verified: boolean }>(
-          `isbn/verify/${encodeURIComponent(isbn)}`
+          `isbn/verify/${encodeURIComponent(isbn)}`,
+          params
         )
       );
     } catch (error) {

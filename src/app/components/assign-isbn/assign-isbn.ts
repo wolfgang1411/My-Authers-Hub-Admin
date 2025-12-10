@@ -59,9 +59,10 @@ export class AssignIsbn {
       if (isbn.length < 13) return of(null); // allow typing
       if (isbn.length !== 13) return of({ invalid: 'ISBN must be 13 digits' });
 
-      // API verification
+      // API verification - use titleName from existing ISBN if available
+      const titleName = this.data.isbn?.titleName || '';
       return timer(500).pipe(
-        switchMap(() => this.isbnService.verifyIsbn(isbn)),
+        switchMap(() => this.isbnService.verifyIsbn(isbn, titleName)),
         map(({ verified }) => (verified ? null : { invalid: 'Invalid ISBN' })),
         catchError(() => of({ invalid: 'Invalid ISBN' }))
       );

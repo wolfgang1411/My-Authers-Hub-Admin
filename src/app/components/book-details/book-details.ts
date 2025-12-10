@@ -304,7 +304,8 @@ export class BookDetails {
     this.isbnVerified.set(null);
 
     try {
-      const result = await this.isbnService.verifyIsbn(isbnNumber);
+      const titleName = this.titleDetailsGroup().controls.name.value || '';
+      const result = await this.isbnService.verifyIsbn(isbnNumber, titleName);
       if (result.verified) {
         this.isbnVerified.set(true);
         this.titleDetailsGroup().controls.isbnPrint.setErrors(null);
@@ -333,7 +334,8 @@ export class BookDetails {
     this.isbnEbookVerified.set(false);
 
     try {
-      const result = await this.isbnService.verifyIsbn(isbnNumber);
+      const titleName = this.titleDetailsGroup().controls.name.value || '';
+      const result = await this.isbnService.verifyIsbn(isbnNumber, titleName);
       if (result.verified) {
         this.isbnEbookVerified.set(true);
         this.titleDetailsGroup().controls.isbnEbook.setErrors(null);
