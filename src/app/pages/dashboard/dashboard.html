@@ -16,6 +16,44 @@
       </button> -->
     </div>
   </div>
+  <!-- ░ NOTIFICATIONS BAR ░ -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+    <!-- Pending Titles -->
+    <div
+      class="flex items-center justify-between p-4 rounded-xl shadow-md cursor-pointer bg-gradient-to-r from-[#e9d5ff] to-[#c4b5fd] hover:scale-[1.03] hover:shadow-xl transition-all duration-300"
+      (click)="goToPendingTitles()"
+    >
+      <div>
+        <p class="text-sm opacity-80">Pending Titles</p>
+        <p class="text-2xl font-bold">{{ pendingTitles() }}</p>
+      </div>
+      <mat-icon class="text-[#6B21A8] text-3xl">hourglass_empty</mat-icon>
+    </div>
+
+    <!-- Royalty Approval -->
+    <div
+      class="flex items-center justify-between p-4 rounded-xl shadow-md cursor-pointer bg-gradient-to-r from-[#c7d2fe] to-[#93c5fd] hover:scale-[1.03] hover:shadow-xl transition-all duration-300"
+      (click)="goToRoyaltyApproval()"
+    >
+      <div>
+        <p class="text-sm opacity-80">Royalty Approval</p>
+        <p class="text-2xl font-bold">{{ royaltyPending() }}</p>
+      </div>
+      <mat-icon class="text-indigo-700 text-3xl">payments</mat-icon>
+    </div>
+
+    <!-- ISBN Applied -->
+    <div
+      class="flex items-center justify-between p-4 rounded-xl shadow-md cursor-pointer bg-gradient-to-r from-[#ddd6fe] to-[#bfdbfe] hover:scale-[1.03] hover:shadow-xl transition-all duration-300"
+      (click)="goToIsbnApplied()"
+    >
+      <div>
+        <p class="text-sm opacity-80">ISBN Applied</p>
+        <p class="text-2xl font-bold">{{ isbnApplied() }}</p>
+      </div>
+      <mat-icon class="text-indigo-700 text-3xl">library_books</mat-icon>
+    </div>
+  </div>
 
   <!-- ░ STATS SECTION ░ -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">

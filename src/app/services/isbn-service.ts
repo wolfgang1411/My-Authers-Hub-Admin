@@ -81,4 +81,14 @@ export class IsbnService {
       throw error;
     }
   }
+  async getISBNCount(filter: ISBNFilter) {
+    try {
+      return await this.loader.loadPromise(
+        this.serverService.get<{ count: number }>('isbn/count', filter)
+      );
+    } catch (error) {
+      console.error('Error fetching publishers:', error);
+      throw error;
+    }
+  }
 }

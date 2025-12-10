@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Server } from '../services/server';
 import { LoaderService } from './loader';
-import { Pagination } from '../interfaces';
+import { EarningFilter, Pagination } from '../interfaces';
 import { CreateRoyalty, Royalty, RoyaltyFilter } from '../interfaces/Royalty';
 import { Logger } from './logger';
 
@@ -70,6 +70,17 @@ export class RoyaltyService {
       );
     } catch (error) {
       this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async getEarningsCount(filter: EarningFilter) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<{ count: number }>('earnings/count', filter)
+      );
+    } catch (error) {
+      console.error('Error fetching publishers:', error);
       throw error;
     }
   }

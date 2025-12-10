@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { Server } from '../../services/server';
 import {
   DistributionType,
+  EarningFilter,
+  ISBNFilter,
   Media,
   Pagination,
   Royalty,

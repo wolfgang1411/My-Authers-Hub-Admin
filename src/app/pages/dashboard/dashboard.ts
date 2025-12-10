@@ -16,7 +16,11 @@ import { AuthorsService } from '../authors/authors-service';
 import { SalesService } from '../../services/sales';
 import { UserService } from '../../services/user';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { TitleStatus } from '../../interfaces';
+import { EarningsStatus, ISBNStatus, TitleStatus } from '../../interfaces';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { Router } from '@angular/router';
+import { IsbnService } from 'src/app/services/isbn-service';
 
 @Component({
   selector: 'app-dashboard',
@@ -33,6 +37,8 @@ import { TitleStatus } from '../../interfaces';
     ReactiveFormsModule,
     SharedModule,
     ProfileCardComponent,
+    MatIconModule,
+    MatButtonModule,
   ],
 
   templateUrl: './dashboard.html',
@@ -44,12 +50,17 @@ export class Dashboard {
     private titleService: TitleService,
     private authorService: AuthorsService,
     private salesService: SalesService,
-    public userService: UserService
+    public userService: UserService,
+    private router: Router,
+    private isbnService: IsbnService
   ) {}
 
   date = new FormControl(formatDate(new Date(), 'yyyy-MM-dd'));
 
   stats = signal<{}[] | null>(null);
+  pendingTitles = signal(0);
+  royaltyPending = signal(0);
+  isbnApplied = signal(0);
 
   toggleTheme() {
     document.documentElement.classList.toggle('dark');
@@ -76,6 +87,7 @@ export class Dashboard {
 
   ngOnInit() {
     this.fetchStats();
+    this.fetchNotificationCounts();
   }
 
   async fetchStats() {
@@ -101,5 +113,42 @@ export class Dashboard {
         isCurreny: true,
       },
     ]);
+  }
+  async fetchNotificationCounts() {
+    // 1. Pending Titles
+    const pending = await this.titleService.getTitleCount({
+      status: TitleStatus.PENDING,
+    });
+    this.pendingTitles.set(pending.count || 0);
+
+    const pendingearining = await this.salesService.getEarningsCount({
+      status: EarningsStatus.PENDING,
+    });
+    this.royaltyPending.set(pendingearining.count || 0);
+
+    const appliedisbn = await this.isbnService.getISBNCount({
+      status: ISBNStatus.APPLIED,
+      page: 0,
+      itemsPerPage: 0,
+      searchStr: '',
+    });
+    this.isbnApplied.set(appliedisbn.count || 0);
+  }
+  goToPendingTitles() {
+    this.router.navigate(['/titles'], {
+      queryParams: { status: 'PENDING' },
+    });
+  }
+
+  goToRoyaltyApproval() {
+    this.router.navigate(['/royalties'], {
+      queryParams: { status: 'PENDING' },
+    });
+  }
+
+  goToIsbnApplied() {
+    this.router.navigate(['/isbn'], {
+      queryParams: { status: 'APPLIED' },
+    });
   }
 }
