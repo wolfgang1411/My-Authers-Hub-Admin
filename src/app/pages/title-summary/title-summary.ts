@@ -1,11 +1,4 @@
-import {
-  Component,
-  computed,
-  inject,
-  signal,
-  TemplateRef,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TitleService } from '../titles/title-service';
 import { Back } from '../../components/back/back';
@@ -29,10 +22,11 @@ import { RoyaltyService } from '../../services/royalty-service';
 import { SharedModule } from 'src/app/modules/shared/shared-module';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
-import { SelectDistributionLinks } from 'src/app/components/select-distribution-links/select-distribution-links';
 import { ApproveTitle } from 'src/app/components/approve-title/approve-title';
 import { EditPlatformIdentifier } from 'src/app/components/edit-platform-identifier/edit-platform-identifier';
 import { IsbnFormatPipe } from 'src/app/pipes/isbn-format-pipe';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
 @Component({
   selector: 'app-title-summary',
@@ -462,18 +456,23 @@ export class TitleSummary {
         onClose: () => dialog.close(),
         platformName: pid.platform.name,
         distributionLink: pid.distributionLink,
-        onSubmit: async (data: {
-          distributionLink?: string;
-        }) => {
+        onSubmit: async (data: { distributionLink?: string }) => {
           try {
             // Update distribution link for this specific platform
-            if (data.distributionLink !== undefined && data.distributionLink !== pid.distributionLink) {
+            if (
+              data.distributionLink !== undefined &&
+              data.distributionLink !== pid.distributionLink
+            ) {
               const platformPayload = {
-                platformIdentifier: [{
-                  platformName: pid.platform.name,
-                  type: pid.type || (pid.platform.isEbookPlatform ? 'EBOOK' : 'PRINT'),
-                  distributionLink: data.distributionLink,
-                }],
+                platformIdentifier: [
+                  {
+                    platformName: pid.platform.name,
+                    type:
+                      pid.type ||
+                      (pid.platform.isEbookPlatform ? 'EBOOK' : 'PRINT'),
+                    distributionLink: data.distributionLink,
+                  },
+                ],
               };
 
               await this.titleService.createUpdateTitlePlatformIdentifier(
@@ -488,7 +487,9 @@ export class TitleSummary {
             Swal.fire({
               icon: 'success',
               title: this.translateService.instant('success'),
-              text: this.translateService.instant('updatedsuccessfully') || 'Updated successfully',
+              text:
+                this.translateService.instant('updatedsuccessfully') ||
+                'Updated successfully',
               timer: 2000,
               showConfirmButton: false,
               toast: true,
@@ -501,7 +502,10 @@ export class TitleSummary {
             Swal.fire({
               icon: 'error',
               title: this.translateService.instant('error'),
-              text: error?.error?.message || this.translateService.instant('updatefailed') || 'Update failed',
+              text:
+                error?.error?.message ||
+                this.translateService.instant('updatefailed') ||
+                'Update failed',
               timer: 3000,
               showConfirmButton: false,
               toast: true,
@@ -519,12 +523,12 @@ export class TitleSummary {
     for (let i = 0; i < seed.length; i++) {
       hash = seed.charCodeAt(i) + ((hash << 5) - hash);
     }
-    
+
     // Generate a color with good contrast
     const hue = Math.abs(hash % 360);
     const saturation = 65 + (Math.abs(hash) % 20); // 65-85%
     const lightness = 45 + (Math.abs(hash) % 15); // 45-60%
-    
+
     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
   }
 
@@ -535,5 +539,39 @@ export class TitleSummary {
 
   hasValidIcon(icon?: string): boolean {
     return !!icon && icon.trim().length > 0;
+  }
+
+  downloadAllMedia() {
+    const mediaList = this.titleDetails()?.media;
+    const titleName = this.titleDetails()?.name ?? 'titlemedia';
+
+    if (!mediaList || !mediaList.length) {
+      Swal.fire('No media found to download.');
+      return;
+    }
+
+    const zip = new JSZip();
+    const folder = zip.folder(titleName.replace(/\s+/g, '_'))!;
+
+    const fetchPromises = mediaList.map(async (media: any) => {
+      try {
+        const response = await fetch(media.url);
+        const blob = await response.blob();
+
+        // create readable file name
+        const ext = media.url.split('.').pop().split('?')[0];
+        const fileName = `${media.type.replace('_', '-')}.${ext}`;
+
+        folder.file(fileName, blob);
+      } catch (err) {
+        console.error('Error loading file:', media.url, err);
+      }
+    });
+
+    Promise.all(fetchPromises).then(() => {
+      zip.generateAsync({ type: 'blob' }).then((content) => {
+        saveAs(content, `${titleName.replace(/\s+/g, '_')}.zip`);
+      });
+    });
   }
 }
