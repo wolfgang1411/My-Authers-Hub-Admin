@@ -1,6 +1,10 @@
 import { Component, input, output, signal } from '@angular/core';
 import { FormArray, FormGroup } from '@angular/forms';
-import { DistributionType, TitleDistributionGroup } from '../../../interfaces';
+import {
+  DistributionType,
+  PublishingType,
+  TitleDistributionGroup,
+} from '../../../interfaces';
 import { SharedModule } from '../../../modules/shared/shared-module';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -22,12 +26,14 @@ import { BuyAssignPointsButton } from '../../../components/buy-assign-points-but
   styleUrl: './temp-title-distribution.css',
 })
 export class TempTitleDistribution {
+  readonly DistributionType = DistributionType;
   distributionControl =
     input.required<FormArray<FormGroup<TitleDistributionGroup>>>();
   publisherId = input<number | undefined>(undefined);
   publisherName = input<string | undefined>(undefined);
   returnUrl = input<string | undefined>(undefined);
   isHardBoundAllowed = input<boolean>(false);
+  publishingType = input<PublishingType | null>(null);
 
   onClickPurchasePoint = output<DistributionType>();
   onPointsPurchased = output<void>();
@@ -39,6 +45,12 @@ export class TempTitleDistribution {
     const availablePoints = group.controls.availablePoints.value;
     const selectedType = group.controls.type.value;
     const hasId = group.controls.id.value;
+
+    // MAH is mandatory for ONLY_EBOOK and cannot be toggled off
+    if (selectedType === DistributionType.MAH) {
+      group.controls.isSelected.setValue(true, { emitEvent: false });
+      return;
+    }
 
     // Cannot remove already created distributions
     if (hasId && isSelected) {
@@ -97,10 +109,16 @@ export class TempTitleDistribution {
   shouldHideDistribution(group: FormGroup<TitleDistributionGroup>): boolean {
     const type = group.controls.type.value;
     const hasId = group.controls.id.value;
+    const publishingType = this.publishingType();
 
     // Don't hide if it's already created (has id) - show it but disabled
     if (hasId) {
       return false;
+    }
+
+    // ONLY_EBOOK: show only MAH
+    if (publishingType === PublishingType.ONLY_EBOOK) {
+      return type !== DistributionType.MAH;
     }
 
     const isHardBoundAllowed = this.isHardBoundAllowed();
@@ -173,6 +191,8 @@ export class TempTitleDistribution {
         return 'flag';
       case DistributionType.National_Prime:
         return 'star';
+      case DistributionType.MAH:
+        return 'workspace_premium';
       default:
         return '';
     }

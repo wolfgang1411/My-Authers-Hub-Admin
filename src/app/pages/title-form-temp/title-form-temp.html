@@ -474,6 +474,7 @@
   >
     <app-temp-title-distribution
       [distributionControl]="tempForm.controls.distribution"
+      [publishingType]="tempForm.controls.publishingType.value ?? null"
       [publisherId]="
         publisherSignal()?.id ||
         tempForm.controls.titleDetails.controls.publisher.controls.id.value ||

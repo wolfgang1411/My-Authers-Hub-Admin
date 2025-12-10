@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-4 py-8">
+<div class="flex flex-col gap-4 py-8 pl-2">
   <h2 class="text-lg font-medium">{{ "selectdistributions" | translate }}</h2>
   @if (distributionControl().hasError("invalid")) {
   <mat-error
@@ -41,54 +41,63 @@
         >
           {{ distribution.controls.name.value | translate }}
         </h3>
-        <span
-          [ngClass]="{
-            'text-white': distribution.controls.isSelected.value
-          }"
-          class="mt-1 font-medium"
-        >
-          {{ "availablepoints" | translate }}({{
-            distribution.controls.availablePoints.value
-          }})
-        </span>
-        @if (!distribution.controls.availablePoints.value
-        &&!distribution.controls.id.value ) {
-        <div class="mt-4">
-          <app-buy-assign-points-button
-            [distributionType]="distribution.controls.type.value"
-            [publisherId]="publisherId()"
-            [publisherName]="publisherName()"
-            [returnUrl]="returnUrl()"
-            [buttonClass]="
-              'btn btn__primary !rounded-full' +
-              (animateBuyButton() === distribution.controls.type.value
-                ? ' shake'
-                : '')
+        @if (distribution.controls.type.value !== DistributionType.MAH) {
+          <span
+            [ngClass]="{
+              'text-white': distribution.controls.isSelected.value
+            }"
+            class="mt-1 font-medium"
+          >
+            {{ "availablepoints" | translate }}({{
+              distribution.controls.availablePoints.value
+            }})
+          </span>
+        }
+        @if (
+          distribution.controls.type.value !== DistributionType.MAH &&
+          !distribution.controls.availablePoints.value &&
+          !distribution.controls.id.value
+        ) {
+          <div class="mt-4">
+            <app-buy-assign-points-button
+              [distributionType]="distribution.controls.type.value"
+              [publisherId]="publisherId()"
+              [publisherName]="publisherName()"
+              [returnUrl]="returnUrl()"
+              [buttonClass]="
+                'btn btn__primary !rounded-full' +
+                (animateBuyButton() === distribution.controls.type.value
+                  ? ' shake'
+                  : '')
+              "
+              (onSuccess)="onPointsPurchased.emit()"
+            ></app-buy-assign-points-button>
+          </div>
+        } @else if (distribution.controls.type.value !== DistributionType.MAH) {
+          <button
+            class="mt-4 btn btn__primary !rounded-full flex items-center gap-2"
+            [ngClass]="{
+              shake: animateBuyButton() === distribution.controls.type.value,
+              '!bg-white': distribution.controls.isSelected.value,
+              'text-primary': distribution.controls.isSelected.value,
+            }"
+            (click)="onClickDistribution(distribution)"
+            [disabled]="distribution.controls.id.value"
+            [title]="
+              distribution.controls.id.value
+                ? 'Cannot remove already processed distribution type'
+                : ''
             "
-            (onSuccess)="onPointsPurchased.emit()"
-          ></app-buy-assign-points-button>
-        </div>
+          >
+            <span>{{ "publish" | translate }}</span>
+            <mat-icon>
+              {{ !distribution.controls.isSelected.value ? "add" : "check" }}
+            </mat-icon>
+          </button>
         } @else {
-        <button
-          class="mt-4 btn btn__primary !rounded-full flex items-center gap-2"
-          [ngClass]="{
-            shake: animateBuyButton() === distribution.controls.type.value,
-            '!bg-white': distribution.controls.isSelected.value,
-            'text-primary': distribution.controls.isSelected.value,
-          }"
-          (click)="onClickDistribution(distribution)"
-          [disabled]="distribution.controls.id.value"
-          [title]="
-            distribution.controls.id.value
-              ? 'Cannot remove already processed distribution type'
-              : ''
-          "
-        >
-          <span>{{ "publish" | translate }}</span>
-          <mat-icon>
-            {{ !distribution.controls.isSelected.value ? "add" : "check" }}
-          </mat-icon>
-        </button>
+          <div class="mt-4 text-white font-medium">
+            {{ "included" | translate }} (Free)
+          </div>
         }
       </mat-card>
     </li>

@@ -739,6 +739,10 @@ export class TitleFormTemp implements OnDestroy {
       .subscribe(async (v) => {
         manageISBNRequired(v);
         this.updatePricingValidatorsForPublishingType(v);
+        // Reset distribution options when publishing type changes
+        this.tempForm.setControl('distribution', this.createDistributionOptions());
+        // Re-fetch points for the new distribution set (no-op for ONLY_EBOOK/MAH)
+        this.fetchAndUpdatePublishingPoints();
         await this.manageManuscriptMedia(v);
       });
 
@@ -827,6 +831,19 @@ export class TitleFormTemp implements OnDestroy {
 
       if (publishingPoints && Array.isArray(publishingPoints)) {
         publishingPoints.forEach(({ distributionType, availablePoints }) => {
+          // MAH is free and always available for ebook-only titles
+          if (distributionType === DistributionType.MAH) {
+            const mahControl = this.tempForm.controls.distribution.controls.find(
+              ({ controls: { type } }) => type.value === DistributionType.MAH
+            );
+            if (mahControl) {
+              mahControl.controls.availablePoints.patchValue(
+                Number.MAX_SAFE_INTEGER
+              );
+            }
+            return;
+          }
+
           const distributionController =
             this.tempForm.controls.distribution.controls.find(
               ({ controls: { type } }) => type.value === distributionType
@@ -2184,6 +2201,7 @@ export class TitleFormTemp implements OnDestroy {
           }),
         })
       );
+      this.ensureMahFirstPosition();
     } else {
       // Update signal to reflect hardbound is not allowed
       this.isHardBoundAllowedSignal.set(false);
@@ -2195,6 +2213,9 @@ export class TitleFormTemp implements OnDestroy {
     );
     const hasHardboundDistribution = data.distribution?.some(
       ({ type }) => type === DistributionType.Hardbound_National
+    );
+    const hasMahDistribution = data.distribution?.some(
+      ({ type }) => type === DistributionType.MAH
     );
 
     // Remove opposite control if one is found
@@ -2227,6 +2248,28 @@ export class TitleFormTemp implements OnDestroy {
         }
       }
     }
+
+    // Ensure MAH exists and is selected (even if not returned from backend yet)
+    const mahControl = this.tempForm.controls.distribution.controls.find(
+      ({ controls }) => controls.type.value === DistributionType.MAH
+    );
+    if (mahControl) {
+      mahControl.controls.isSelected.patchValue(true);
+    } else {
+      this.tempForm.controls.distribution.insert(
+        0,
+        new FormGroup<TitleDistributionGroup>({
+          id: new FormControl<number | null>(null),
+          isSelected: new FormControl(true, { nonNullable: true }),
+          type: new FormControl(DistributionType.MAH, { nonNullable: true }),
+          availablePoints: new FormControl(Number.MAX_SAFE_INTEGER, {
+            nonNullable: true,
+          }),
+          name: new FormControl(DistributionType.MAH, { nonNullable: true }),
+        })
+      );
+    }
+    this.ensureMahFirstPosition();
 
     data.distribution?.forEach(({ id, type }) => {
       const disTypeControl = this.tempForm.controls.distribution.controls.find(
@@ -2529,6 +2572,9 @@ export class TitleFormTemp implements OnDestroy {
 
   distributionValidator(): ValidatorFn {
     return (control) => {
+      // Form may not be fully initialized during first run
+      const publishingType = this.tempForm?.controls?.publishingType?.value;
+
       // Check if distributions already exist for this title
       // If they exist, validation passes (user doesn't need to select again)
       const existingDistributions = this.titleDetails()?.distribution ?? [];
@@ -2541,6 +2587,21 @@ export class TitleFormTemp implements OnDestroy {
         control as FormArray<FormGroup<TitleDistributionGroup>>
       ).value;
 
+      // Ebook-only: MAH is mandatory and the only allowed option
+      if (publishingType === PublishingType.ONLY_EBOOK) {
+        const hasMah = distributions.some(
+          ({ type, isSelected }) => type === DistributionType.MAH && isSelected
+        );
+
+        if (!hasMah) {
+          return {
+            invalid: 'MAH distribution is required for ebook-only titles.',
+          };
+        }
+
+        return null;
+      }
+
       const national = distributions.find(
         ({ type, isSelected }) =>
           type === DistributionType.National && isSelected
@@ -2549,6 +2610,16 @@ export class TitleFormTemp implements OnDestroy {
         ({ type, isSelected }) =>
           type === DistributionType.Hardbound_National && isSelected
       );
+
+      // MAH must always be selected (all publishing types)
+      const hasMahSelected = distributions.some(
+        ({ type, isSelected }) => type === DistributionType.MAH && isSelected
+      );
+      if (!hasMahSelected) {
+        return {
+          invalid: 'MAH distribution is required.',
+        };
+      }
 
       const isHardBoundAllowed =
         this.bindingType
@@ -2593,23 +2664,62 @@ export class TitleFormTemp implements OnDestroy {
   }
 
   createDistributionOptions(): FormArray<FormGroup<TitleDistributionGroup>> {
+    const publishingType = this.tempForm?.controls?.publishingType?.value;
+    const allTypes = Object.values(DistributionType) as DistributionType[];
+
+    const baseTypes = allTypes.filter(
+      (type) => type !== DistributionType.Hardbound_National
+    );
+
+    // ALWAYS include MAH; for ONLY_EBOOK show only MAH
+    const filteredTypes: DistributionType[] =
+      publishingType === PublishingType.ONLY_EBOOK
+        ? [DistributionType.MAH]
+        : Array.from(new Set<DistributionType>([DistributionType.MAH, ...baseTypes]));
+
+    // Ensure MAH is always first in the list
+    const orderedTypes = filteredTypes.sort((a, b) =>
+      a === DistributionType.MAH ? -1 : b === DistributionType.MAH ? 1 : 0
+    );
+
     return new FormArray<FormGroup<TitleDistributionGroup>>(
-      Object.keys(DistributionType)
-        .filter((type) => type !== DistributionType.Hardbound_National)
-        .map(
-          (type) =>
-            new FormGroup<TitleDistributionGroup>({
-              id: new FormControl<number | null>(null),
-              isSelected: new FormControl(false, { nonNullable: true }),
-              name: new FormControl(type, { nonNullable: true }),
-              type: new FormControl(type as DistributionType, {
-                nonNullable: true,
-              }),
-              availablePoints: new FormControl(0, { nonNullable: true }),
-            })
-        ),
+      orderedTypes.map(
+        (type) =>
+          new FormGroup<TitleDistributionGroup>({
+            id: new FormControl<number | null>(null),
+            isSelected: new FormControl(
+              type === DistributionType.MAH,
+              { nonNullable: true }
+            ),
+            name: new FormControl(type, { nonNullable: true }),
+            type: new FormControl(type as DistributionType, {
+              nonNullable: true,
+            }),
+            availablePoints: new FormControl(
+              type === DistributionType.MAH
+                ? Number.MAX_SAFE_INTEGER
+                : 0,
+              { nonNullable: true }
+            ),
+          })
+      ),
       { validators: [this.distributionValidator()] }
     );
+  }
+
+  private ensureMahFirstPosition(): void {
+    const controls = this.tempForm?.controls?.distribution;
+    if (!controls) return;
+
+    const mahIndex = controls.controls.findIndex(
+      ({ controls: { type } }) => type.value === DistributionType.MAH
+    );
+
+    if (mahIndex > 0) {
+      const mahControl = controls.at(mahIndex);
+      controls.removeAt(mahIndex);
+      controls.insert(0, mahControl);
+    }
   }
 
   createPricingArrayTemp(): FormArray<PricingGroup> {

@@ -195,6 +195,7 @@ export enum ProductForm {
 }
 
 export enum DistributionType {
+  MAH = 'MAH',
   National = 'National',
   Hardbound_National = 'Hardbound_National',
   Global = 'Global',
