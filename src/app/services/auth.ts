@@ -171,4 +171,36 @@ export class AuthService {
       throw error;
     }
   }
+
+  async requestPasswordReset(email: string) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post<{ logId: string }>('auth/password-forgot', {
+          username: email,
+          isAdmin: true,
+        }),
+        'request-password-reset'
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async updatePassword(payload: {
+    logId: string;
+    otp: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post('auth/password-update', payload),
+        'update-password'
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
 }

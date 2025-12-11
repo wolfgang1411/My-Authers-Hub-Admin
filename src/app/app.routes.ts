@@ -204,9 +204,7 @@ export const routes: Routes = [
   {
     path: 'shared-titles',
     loadComponent: () =>
-      import('./pages/shared-titles/shared-titles').then(
-        (c) => c.SharedTitles
-      ),
+      import('./pages/shared-titles/shared-titles').then((c) => c.SharedTitles),
     canActivate: [privateRouteGuard],
   },
   {
@@ -214,6 +212,20 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/shared-title-view/shared-title-view').then(
         (c) => c.SharedTitleView
+      ),
+  },
+  {
+    path: 'forgot',
+    loadComponent: () =>
+      import('./pages/forgot-password/forgot-password').then(
+        (c) => c.ForgotPassword
+      ),
+  },
+  {
+    path: 'forgot/verify',
+    loadComponent: () =>
+      import('./pages/verify-password/verify-password').then(
+        (c) => c.VerifyPassword
       ),
   },
   {

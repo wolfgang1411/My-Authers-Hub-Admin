@@ -39,6 +39,7 @@
     "jszip": "^3.10.1",
     "jwt-decode": "^4.0.0",
     "md5": "^2.3.0",
+    "ng-otp-input": "^2.0.9",
     "ng2-charts": "^3.0.2",
     "ngx-intl-tel-input": "^17.0.0",
     "ngx-material-date-fns-adapter": "^20.0.0",

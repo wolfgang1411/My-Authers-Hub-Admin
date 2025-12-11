@@ -73,15 +73,4 @@ export class RoyaltyService {
       throw error;
     }
   }
-
-  async getEarningsCount(filter: EarningFilter) {
-    try {
-      return await this.loader.loadPromise(
-        this.server.get<{ count: number }>('earnings/count', filter)
-      );
-    } catch (error) {
-      console.error('Error fetching publishers:', error);
-      throw error;
-    }
-  }
 }

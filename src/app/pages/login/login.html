@@ -44,6 +44,14 @@
             placeholder="password"
           />
         </div>
+        <div class="flex justify-end w-full -mt-3">
+          <a
+            [routerLink]="['/forgot']"
+            class="text-sm text-primary hover:underline hover:text-blue-colour cursor-pointer"
+          >
+            Forgot Password?
+          </a>
+        </div>
         <button matButton="elevated" matButton="filled" class="!bg-primary">
           {{ "login" | translate }}
         </button>
