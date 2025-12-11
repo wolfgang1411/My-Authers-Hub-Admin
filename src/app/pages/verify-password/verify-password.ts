@@ -5,13 +5,14 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { NgOtpInputModule } from 'ng-otp-input';
+import { SharedModule } from 'src/app/modules/shared/shared-module';
 
 @Component({
   selector: 'app-verify-password',
-  imports: [NgOtpInputModule, ReactiveFormsModule],
+  imports: [NgOtpInputModule, ReactiveFormsModule, SharedModule, RouterLink],
   templateUrl: './verify-password.html',
   styleUrl: './verify-password.css',
 })

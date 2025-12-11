@@ -5,12 +5,19 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
+import { AngularSvgIconModule } from 'angular-svg-icon';
+import { SharedModule } from 'src/app/modules/shared/shared-module';
 
 @Component({
   selector: 'app-forgot-password',
-  imports: [ReactiveFormsModule],
+  imports: [
+    ReactiveFormsModule,
+    AngularSvgIconModule,
+    SharedModule,
+    RouterLink,
+  ],
   templateUrl: './forgot-password.html',
   styleUrl: './forgot-password.css',
 })
