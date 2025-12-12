@@ -603,8 +603,13 @@ export class AddAuthor implements OnInit {
       await this.addressService.createOrUpdateAddress(
         authorAddressData as Address
       );
+      const bankDetailsValue = { ...this.authorBankDetails.value };
+      // Remove gstNumber if empty, otherwise keep it
+      if (!bankDetailsValue.gstNumber || (typeof bankDetailsValue.gstNumber === 'string' && bankDetailsValue.gstNumber.trim() === '')) {
+        delete bankDetailsValue.gstNumber;
+      }
       const authorBankData = {
-        ...this.authorBankDetails.value,
+        ...bankDetailsValue,
         autherId: response.id,
       };
       await this.bankDetailService.createOrUpdateBankDetail(
@@ -910,9 +915,14 @@ export class AddAuthor implements OnInit {
     ];
 
     // Build rawValue from current form values (not from authorData which might be stale)
+    const bankDetailsValue = { ...this.authorBankDetails.value };
+    // Remove gstNumber if empty, otherwise keep it
+    if (!bankDetailsValue.gstNumber || bankDetailsValue.gstNumber.trim() === '') {
+      delete bankDetailsValue.gstNumber;
+    }
     const rawValue = {
       ...this.authorAddressDetails.value,
-      ...this.authorBankDetails.value,
+      ...bankDetailsValue,
       authorName: this.authorFormGroup.value.name,
       authorEmail: this.authorFormGroup.value.email,
       authorContactNumber: this.authorFormGroup.value.phoneNumber,
@@ -1058,8 +1068,13 @@ export class AddAuthor implements OnInit {
 
         // Update bank details if changed
         if (hasBankChange && existingBank) {
+          const bankDetailsValue = { ...this.authorBankDetails.value };
+          // Remove gstNumber if empty, otherwise keep it
+          if (!bankDetailsValue.gstNumber || bankDetailsValue.gstNumber.trim() === '') {
+            delete bankDetailsValue.gstNumber;
+          }
           await this.bankDetailService.createOrUpdateBankDetail({
-            ...this.authorBankDetails.value,
+            ...bankDetailsValue,
             id: existingBank.id,
             autherId: this.authorId,
           } as createBankDetails);

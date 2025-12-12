@@ -639,8 +639,13 @@ export class AddPublisher {
       await this.addressService.createOrUpdateAddress(
         publisherAddressData as Address
       );
+      const bankDetailsValue = { ...this.publisherBankDetails.value };
+      // Remove gstNumber if empty, otherwise keep it
+      if (!bankDetailsValue.gstNumber || (typeof bankDetailsValue.gstNumber === 'string' && bankDetailsValue.gstNumber.trim() === '')) {
+        delete bankDetailsValue.gstNumber;
+      }
       const publisherBankData = {
-        ...this.publisherBankDetails.value,
+        ...bankDetailsValue,
         publisherId: response.id,
       };
 
@@ -834,9 +839,14 @@ export class AddPublisher {
       },
     ];
 
+    const bankDetailsValue = { ...this.publisherBankDetails.value };
+    // Remove gstNumber if empty, otherwise keep it
+    if (!bankDetailsValue.gstNumber || bankDetailsValue.gstNumber.trim() === '') {
+      delete bankDetailsValue.gstNumber;
+    }
     const rawValue = {
       ...this.publisherAddressDetails.value,
-      ...this.publisherBankDetails.value,
+      ...bankDetailsValue,
       accountHolderName: this.publisherBankDetails.value.accountHolderName,
       bankName: this.publisherBankDetails.value.name,
       publisherName: this.publisherFormGroup.value.name,
