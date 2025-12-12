@@ -175,7 +175,7 @@ export class AuthService {
   async requestPasswordReset(email: string) {
     try {
       return await this.loader.loadPromise(
-        this.server.post<{ logId: string }>('auth/password-forgot', {
+        this.server.post<{ id: string }>('auth/password-forgot', {
           username: email,
           isAdmin: true,
         }),
@@ -188,10 +188,11 @@ export class AuthService {
   }
 
   async updatePassword(payload: {
-    logId: string;
-    otp: string;
+    logId: number;
+    otp: number;
     newPassword: string;
     confirmPassword: string;
+    requestType: string;
   }) {
     try {
       return await this.loader.loadPromise(

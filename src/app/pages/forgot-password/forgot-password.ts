@@ -43,11 +43,10 @@ export class ForgotPassword {
       const email = this.forgotForm.value.email;
       const res = await this.auth.requestPasswordReset(email as string);
       // res expected { logId: string }
-      const logId = res?.logId;
       this.successMessage.set('OTP has been sent to your email.');
       // navigate to verify with query params
       this.router.navigate(['/forgot/verify'], {
-        queryParams: { otpId: res.logId, email },
+        queryParams: { otpId: res.id, email },
       });
     } catch (err: any) {
       this.errorMessage.set(err?.message || 'Something went wrong. Try again.');

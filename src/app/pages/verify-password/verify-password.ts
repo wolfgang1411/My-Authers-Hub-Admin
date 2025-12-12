@@ -9,6 +9,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { NgOtpInputModule } from 'ng-otp-input';
 import { SharedModule } from 'src/app/modules/shared/shared-module';
+import md5 from 'md5';
 
 @Component({
   selector: 'app-verify-password',
@@ -83,10 +84,11 @@ export class VerifyPassword {
     this.loading.set(true);
     try {
       await this.auth.updatePassword({
-        logId: this.otpId!,
-        otp: this.otpValue(),
-        newPassword: newPassword ?? '',
-        confirmPassword: confirmPassword ?? '',
+        logId: Number(this.otpId),
+        otp: Number(this.otpValue()),
+        newPassword: newPassword ? md5(newPassword) : '',
+        confirmPassword: confirmPassword ? md5(confirmPassword) : '',
+        requestType: 'CHANGE',
       });
 
       this.successMessage.set(
@@ -118,7 +120,7 @@ export class VerifyPassword {
       const res = await this.auth.requestPasswordReset(this.email);
 
       // backend returns otpid — so use that
-      this.otpId = res?.logId || this.otpId;
+      this.otpId = res?.id || this.otpId;
 
       this.successMessage.set('OTP resent successfully.');
     } catch (err: any) {

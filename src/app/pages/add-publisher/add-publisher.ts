@@ -352,6 +352,21 @@ export class AddPublisher {
     };
   }
 
+  gstValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (!control.value) return null;
+
+      // GST format: 15 characters, 2 state code + 10 PAN + 3 check digits
+      // Format: [0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}
+      const gstRegex =
+        /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/;
+
+      return gstRegex.test(control.value.toUpperCase())
+        ? null
+        : { invalidGst: true };
+    };
+  }
+
   ifscCodeValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const prefix = this.bankOptions().find(
@@ -428,6 +443,7 @@ export class AddPublisher {
       confirmAccountNo: ['', [Validators.required]],
       ifsc: ['', [Validators.required, this.ifscCodeValidator()]],
       panCardNo: ['', [Validators.required, this.panCardValidator()]],
+      gstNumber: ['', [this.gstValidator()]],
       accountType: ['', Validators.required],
       signupCode: <string | null>null,
     },
@@ -569,6 +585,7 @@ export class AddPublisher {
       ifsc: publisherDetails.bankDetails?.[0]?.ifsc,
       panCardNo: publisherDetails.bankDetails?.[0]?.panCardNo,
       accountType: publisherDetails.bankDetails?.[0]?.accountType,
+      gstNumber: publisherDetails.bankDetails?.[0]?.gstNumber,
     });
     const socialMediaArray = this.publisherSocialMediaGroup.get(
       'socialMedia'
