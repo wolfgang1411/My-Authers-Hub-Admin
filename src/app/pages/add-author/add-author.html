@@ -19,7 +19,6 @@
     label="Fill out your basic details"
   >
     <div class="mx-auto py-6 space-y-10">
-      <!-- 🔷 AUTHOR DETAILS -->
       <form [formGroup]="authorFormGroup">
         <div class="bg-white shadow-sm border rounded-xl px-6 py-8">
           <div class="flex flex-col md:flex-row gap-10">
@@ -89,12 +88,35 @@
               <mat-form-field class="w-full">
                 <mat-label>Create Password</mat-label>
                 <input
+                  id="password"
                   matInput
                   type="password"
                   formControlName="userPassword"
                 />
-              </mat-form-field>
+                <mat-icon
+                  matSuffix
+                  (click)="openPassword()"
+                  class="cursor-pointer"
+                  >visibility</mat-icon
+                >
 
+                @if ( authorFormGroup.get('userPassword')?.hasError('required')
+                && authorFormGroup.get('userPassword')?.touched ) {
+                <mat-error>{{ "requiredvalueerror" | translate }}</mat-error>
+                } @if (
+                authorFormGroup.get('userPassword')?.hasError('minlength') &&
+                !authorFormGroup.get('userPassword')?.hasError('required') ) {
+                <mat-error>
+                  {{ "minlengtherror" | translate : { length: 8 } }}
+                </mat-error>
+                } @if ( authorFormGroup.get('userPassword')?.hasError('pattern')
+                && !authorFormGroup.get('userPassword')?.hasError('required') &&
+                !authorFormGroup.get('userPassword')?.hasError('minlength') ) {
+                <mat-error>
+                  {{ "passwordstrengtherror" | translate }}
+                </mat-error>
+                }
+              </mat-form-field>
               }
 
               <mat-form-field class="md:col-span-3 w-full">
@@ -313,9 +335,15 @@
         </mat-form-field>
         <mat-form-field>
           <mat-label>GST Number</mat-label>
-          <input matInput formControlName="gstNumber" placeholder="e.g., 27ABCDE1234F1Z5" />
+          <input
+            matInput
+            formControlName="gstNumber"
+            placeholder="e.g., 27ABCDE1234F1Z5"
+          />
           @if (authorBankDetails.get('gstNumber')?.hasError('invalidGst')) {
-          <mat-error> Enter a valid GST number (e.g., 27ABCDE1234F1Z5) </mat-error>
+          <mat-error>
+            Enter a valid GST number (e.g., 27ABCDE1234F1Z5)
+          </mat-error>
           }
         </mat-form-field>
         <mat-form-field>

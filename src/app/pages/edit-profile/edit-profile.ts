@@ -1,4 +1,11 @@
-import { Component, computed, effect, Renderer2, Signal, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  Renderer2,
+  Signal,
+  signal,
+} from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -35,6 +42,11 @@ import { AuthService } from '../../services/auth';
 import { SafeUrlPipe } from 'src/app/pipes/safe-url-pipe';
 import { PublisherService } from '../publisher/publisher-service';
 import { AuthorsService } from '../authors/authors-service';
+import { NgxIntlTelInputModule } from 'ngx-intl-tel-input';
+import {
+  CountryISO,
+  NgxMaterialIntlTelInputComponent,
+} from 'ngx-material-intl-tel-input';
 
 @Component({
   selector: 'app-edit-profile',
@@ -49,6 +61,7 @@ import { AuthorsService } from '../authors/authors-service';
     SharedModule,
     RouterModule,
     SafeUrlPipe,
+    NgxMaterialIntlTelInputComponent,
   ],
   templateUrl: './edit-profile.html',
   styleUrl: './edit-profile.css',
@@ -77,7 +90,7 @@ export class EditProfile {
       }
     });
   }
-
+  countryISO = CountryISO;
   publisher = signal<Publishers | null>(null);
   author = signal<Author | null>(null);
   loggedInUser!: Signal<User | null>;
@@ -113,7 +126,6 @@ export class EditProfile {
     phoneNumber: new FormControl<string | null>(null, { nonNullable: false }),
   });
 
-
   passwordForm = new FormGroup({
     oldPassword: new FormControl<string | null>(null, {
       nonNullable: false,
@@ -121,7 +133,11 @@ export class EditProfile {
     }),
     newPassword: new FormControl<string | null>(null, {
       nonNullable: false,
-      validators: [Validators.required, Validators.minLength(8)],
+      validators: [
+        Validators.required,
+        Validators.minLength(8),
+        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/),
+      ],
     }),
     confirmPassword: new FormControl<string | null>(null, {
       nonNullable: false,
@@ -232,7 +248,6 @@ export class EditProfile {
     this.isEditing.set(false);
   }
 
-
   async changePassword() {
     if (this.passwordForm.invalid) {
       this.passwordForm.markAllAsTouched();
@@ -299,7 +314,7 @@ export class EditProfile {
 
   navigateToUpdateTickets(tab: 'author' | 'publisher') {
     this.router.navigate(['/update-tickets'], {
-      queryParams: { tab }
+      queryParams: { tab },
     });
   }
 

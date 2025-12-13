@@ -426,7 +426,14 @@ export class AddPublisher {
     name: ['', Validators.required],
     designation: ['', Validators.required],
     media: this._formBuilder.control<Media | null>(null, Validators.required),
-    userPassword: ['', [Validators.required, Validators.minLength(8)]],
+    userPassword: [
+      '',
+      [
+        Validators.required,
+        Validators.minLength(8),
+        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/),
+      ],
+    ],
     signupCode: <string | null>null,
   });
 
@@ -641,7 +648,11 @@ export class AddPublisher {
       );
       const bankDetailsValue = { ...this.publisherBankDetails.value };
       // Remove gstNumber if empty, otherwise keep it
-      if (!bankDetailsValue.gstNumber || (typeof bankDetailsValue.gstNumber === 'string' && bankDetailsValue.gstNumber.trim() === '')) {
+      if (
+        !bankDetailsValue.gstNumber ||
+        (typeof bankDetailsValue.gstNumber === 'string' &&
+          bankDetailsValue.gstNumber.trim() === '')
+      ) {
         delete bankDetailsValue.gstNumber;
       }
       const publisherBankData = {
@@ -704,9 +715,6 @@ export class AddPublisher {
     return newStr !== existingStr;
   }
 
-  /**
-   * Get existing value for a field based on field name
-   */
   private getExistingValueForField(
     field: string,
     existingPublisher?: Publishers,
@@ -841,7 +849,10 @@ export class AddPublisher {
 
     const bankDetailsValue = { ...this.publisherBankDetails.value };
     // Remove gstNumber if empty, otherwise keep it
-    if (!bankDetailsValue.gstNumber || bankDetailsValue.gstNumber.trim() === '') {
+    if (
+      !bankDetailsValue.gstNumber ||
+      bankDetailsValue.gstNumber.trim() === ''
+    ) {
       delete bankDetailsValue.gstNumber;
     }
     const rawValue = {
@@ -1167,6 +1178,14 @@ export class AddPublisher {
       this.router.navigate(['/publisher']);
     } catch (error) {
       console.log(error);
+    }
+  }
+  openPassword() {
+    const oldInput = document.getElementById('password') as HTMLInputElement;
+    if (oldInput.type === 'password') {
+      oldInput.type = 'text';
+    } else {
+      oldInput.type = 'password';
     }
   }
 }

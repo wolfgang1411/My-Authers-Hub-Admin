@@ -151,7 +151,7 @@
         <form
           [formGroup]="personalForm"
           (ngSubmit)="updateUserProfile()"
-          class="grid grid-cols-1 md:grid-cols-2 gap-4"
+          class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start"
         >
           <mat-form-field class="w-full">
             <mat-label>First name</mat-label>
@@ -193,17 +193,20 @@
             <mat-hint class="text-red-600">Enter a valid email</mat-hint>
             }
           </mat-form-field>
-
-          <mat-form-field class="w-full">
-            <mat-label>Phone</mat-label>
-            <input
-              matInput
-              formControlName="phoneNumber"
-              placeholder="+91 9xxxxxxxxx"
-            />
-            <mat-icon matSuffix>phone</mat-icon>
-          </mat-form-field>
-
+          <ngx-material-intl-tel-input
+            matInput
+            [preferredCountries]="['IN']"
+            [appearance]="'fill'"
+            [fieldControl]="personalForm.controls.phoneNumber"
+            [autoSelectedCountry]="countryISO.India"
+            [autoSelectCountry]="true"
+            [hidePhoneIcon]="true"
+            [iconMakeCall]="false"
+            [autoIpLookup]="false"
+            [mainLabel]="' '"
+            [enablePlaceholder]="false"
+            class="tel-input"
+          />
           <div class="md:col-span-2 flex gap-3 justify-end mt-2">
             <button
               mat-flat-button
@@ -303,12 +306,13 @@
               formControlName="newPassword"
             />
             <mat-icon matSuffix (click)="openPassword()" class="cursor-pointer"
-              >lock</mat-icon
+              >visibility</mat-icon
             >
             @if(passwordForm.controls.newPassword.invalid &&
             passwordForm.controls.newPassword.touched) {
             <mat-hint class="text-red-600">
-              Password must be at least 8 characters
+              Password must be at least 8 characters, include uppercase,
+              lowercase & number
             </mat-hint>
             }
           </mat-form-field>

@@ -340,9 +340,6 @@
   "publisher/author": "Publisher/Author",
   "paidAt/holduntill": "Paid At/Hold Untill",
   "changepassword": "Change password",
-  "minlengtherror": "Value must be at least {{length}} characters",
-  "passwordmismatcherror": "Password did not match",
-  "requiredvalueerror": "Value is required",
   "passwordchangesuccessfully": "Password updated successfully",
   "bookssold": "Books Sold",
   "launchdate": "Launch Date",
@@ -647,5 +644,9 @@
   "export": "Export",
   "exportsuccessful": "Data exported successfully",
   "nodatatoexport": "No data to export",
-  "errorexporting": "Failed to export data. Please try again."
-}
+  "errorexporting": "Failed to export data. Please try again.",
+  "AUTHER" : "AUTHOR",
+   "passwordstrengtherror": "Password must contain uppercase, lowercase and a number",
+  "passwordmismatcherror": "Passwords do not match",
+  "requiredvalueerror": "This field is required",
+  "minlengtherror": "Minimum {{length}} characters required"}

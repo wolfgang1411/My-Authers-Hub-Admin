@@ -49,7 +49,9 @@ export class ForgotPassword {
         queryParams: { otpId: res.id, email },
       });
     } catch (err: any) {
-      this.errorMessage.set(err?.message || 'Something went wrong. Try again.');
+      this.errorMessage.set(
+        err?.error_description || 'Something went wrong. Try again.'
+      );
     } finally {
       this.loading.set(false);
     }

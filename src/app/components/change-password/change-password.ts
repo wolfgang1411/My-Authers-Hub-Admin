@@ -44,6 +44,7 @@ export class ChangePassword implements OnInit {
     confirmPassword: new FormControl(null, [
       Validators.required,
       Validators.minLength(8),
+      Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/),
     ]),
   });
 
@@ -64,18 +65,26 @@ export class ChangePassword implements OnInit {
     const confirmPassword = this.form.controls.confirmPassword.value as
       | string
       | null;
-    let errors = this.form.controls.confirmPassword.errors;
+    const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    const confirmCtrl = this.form.controls.confirmPassword;
+    let errors = confirmCtrl.errors || {};
+    if (password && !PASSWORD_REGEX.test(password)) {
+      errors['weakPassword'] = 'passwordstrengtherror';
+    } else {
+      delete errors['weakPassword'];
+    }
     const isMatch = password?.trim() === confirmPassword?.trim();
 
-    if (isMatch && errors) {
-      delete errors['missmatch'];
-    } else if (!isMatch) {
-      if (!errors) {
-        errors = {};
-      }
+    if (!isMatch) {
       errors['missmatch'] = 'passwordmismatcherror';
+    } else {
+      delete errors['missmatch'];
     }
-    this.form.controls.confirmPassword.setErrors(errors);
+    if (Object.keys(errors).length === 0) {
+      confirmCtrl.setErrors(null);
+    } else {
+      confirmCtrl.setErrors(errors);
+    }
   }
 
   onSubmit() {

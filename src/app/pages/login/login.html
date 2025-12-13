@@ -33,7 +33,7 @@
             placeholder="username"
           />
         </div>
-        <div class="flex flex-col gap-4 w-full">
+        <!-- <div class="flex flex-col gap-4 w-full">
           <label class="self-start text-text-primary">
             {{ "password" | translate }}
           </label>
@@ -43,13 +43,54 @@
             type="password"
             placeholder="password"
           />
+          <mat-icon matSuffix (click)="openPassword()" class="cursor-pointer"
+            >visibility</mat-icon
+          >
+          @if(loginForm.controls.password.invalid &&
+          loginForm.controls.password.touched) {
+          <mat-hint class="text-red-600">
+            Password must be at least 8 characters
+          </mat-hint>
+          }
+        </div> -->
+        <div class="flex flex-col gap-2 w-full">
+          <label class="self-start text-text-primary">
+            {{ "password" | translate }}
+          </label>
+
+          <!-- Input wrapper -->
+          <div class="relative w-full">
+            <input
+              formControlName="password"
+              class="input-field w-full pr-12"
+              [type]="showPassword ? 'text' : 'password'"
+              [placeholder]="'password' | translate"
+            />
+
+            <!-- Eye icon -->
+            <mat-icon
+              class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 hover:text-primary"
+              (click)="togglePassword()"
+            >
+              {{ showPassword ? "visibility_off" : "visibility" }}
+            </mat-icon>
+          </div>
+
+          @if ( loginForm.controls.password.invalid &&
+          loginForm.controls.password.touched ) {
+          <span class="text-red-600 text-sm">
+            Password must be at least 8 characters, include uppercase, lowercase
+            & number
+          </span>
+          }
         </div>
+
         <div class="flex justify-end w-full -mt-3">
           <a
             [routerLink]="['/forgot']"
             class="text-sm text-primary hover:underline hover:text-blue-colour cursor-pointer"
           >
-            Forgot Password?
+            Forgot Password ?
           </a>
         </div>
         <button matButton="elevated" matButton="filled" class="!bg-primary">

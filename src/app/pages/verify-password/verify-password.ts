@@ -1,8 +1,11 @@
 import { Component, signal } from '@angular/core';
 import {
+  AbstractControl,
   FormControl,
   FormGroup,
   ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -10,10 +13,17 @@ import { AuthService } from '../../services/auth';
 import { NgOtpInputModule } from 'ng-otp-input';
 import { SharedModule } from 'src/app/modules/shared/shared-module';
 import md5 from 'md5';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-verify-password',
-  imports: [NgOtpInputModule, ReactiveFormsModule, SharedModule, RouterLink],
+  imports: [
+    NgOtpInputModule,
+    ReactiveFormsModule,
+    SharedModule,
+    RouterLink,
+    MatIconModule,
+  ],
   templateUrl: './verify-password.html',
   styleUrl: './verify-password.css',
 })
@@ -22,22 +32,37 @@ export class VerifyPassword {
   errorMessage = signal<string | null>(null);
   successMessage = signal<string | null>(null);
 
-  otpId: string | null = null; // 🔥 renamed
+  otpId: string | null = null;
   email: string | null = null;
+  showNewPassword = false;
+  showConfirmPassword = false;
 
   otpValue = signal('');
   otpConfig = {
     length: 6,
     allowNumbersOnly: true,
   };
+  passwordMatchValidator: ValidatorFn = (
+    control: AbstractControl
+  ): ValidationErrors | null => {
+    const password = control.get('newPassword')?.value;
+    const confirm = control.get('confirmPassword')?.value;
 
-  passwordForm = new FormGroup({
-    newPassword: new FormControl('', [
-      Validators.required,
-      Validators.minLength(6),
-    ]),
-    confirmPassword: new FormControl('', [Validators.required]),
-  });
+    if (!password || !confirm) return null;
+
+    return password === confirm ? null : { passwordMismatch: true };
+  };
+  passwordForm = new FormGroup(
+    {
+      newPassword: new FormControl('', [
+        Validators.required,
+        Validators.minLength(8),
+        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/),
+      ]),
+      confirmPassword: new FormControl('', Validators.required),
+    },
+    { validators: this.passwordMatchValidator }
+  );
 
   constructor(
     private route: ActivatedRoute,
@@ -71,13 +96,12 @@ export class VerifyPassword {
 
     const { newPassword, confirmPassword } = this.passwordForm.value;
 
-    if (newPassword !== confirmPassword) {
-      this.errorMessage.set('Passwords do not match.');
-      return;
-    }
-
     if (!this.otpValue()) {
       this.errorMessage.set('Please enter the OTP.');
+      return;
+    }
+    if (this.otpValue().length !== 6) {
+      this.errorMessage.set('OTP must be 6 digits.');
       return;
     }
 

@@ -62,7 +62,7 @@ export class Payouts implements OnInit {
 
   loggedInUser!: Signal<User | null>;
   lastPage = signal(1);
-  
+
   filter = signal<PayoutFilter>({
     page: 1,
     itemsPerPage: 30,
@@ -73,11 +73,11 @@ export class Payouts implements OnInit {
   payouts = signal<Payout[] | null>(null);
 
   searchStr = new Subject<string>();
-  
+
   // Cache to store fetched pages
   private pageCache = new Map<number, Payout[]>();
   private cachedFilterKey = '';
-  
+
   private getFilterKey(): string {
     const currentFilter = this.filter();
     return JSON.stringify({
@@ -108,6 +108,7 @@ export class Payouts implements OnInit {
     this.dataSource.data =
       this.payouts()?.map((payout) => {
         const usertype = payout.user.accessLevel;
+        const usertypeTranslated = this.translateService.instant(`${usertype}`);
         const firstName =
           payout.user.publisher?.name ||
           payout.user.auther?.name ||
@@ -153,7 +154,7 @@ export class Payouts implements OnInit {
         return {
           ...payout,
           orderid: '#' + payout.id,
-          usertype: `<b>${usertype}</b>`,
+          usertype: `<b>${usertypeTranslated}</b>`,
           user: `${firstName} ${payout.user?.lastName || ''}`,
           emailId: email,
           bankdetails: `Account Holder Name : ${accountName} <br> Bank Name : ${bankName} <br> Account No : ${accountNo} <br> IFSC Code : ${ifscCode}<br>
@@ -169,7 +170,7 @@ export class Payouts implements OnInit {
       const currentFilter = this.filter();
       const currentPage = currentFilter.page || 1;
       const filterKey = this.getFilterKey();
-      
+
       // Clear cache if filter changed
       if (this.cachedFilterKey !== filterKey) {
         this.clearCache();
@@ -185,9 +186,12 @@ export class Payouts implements OnInit {
       }
 
       // Fetch from API
-      const { items, itemsPerPage: returnedItemsPerPage, totalCount } =
-        await this.payoutService.fetchPayouts(currentFilter);
-      
+      const {
+        items,
+        itemsPerPage: returnedItemsPerPage,
+        totalCount,
+      } = await this.payoutService.fetchPayouts(currentFilter);
+
       // Cache the fetched page
       this.pageCache.set(currentPage, items);
       this.payouts.set(items);
@@ -197,7 +201,7 @@ export class Payouts implements OnInit {
       console.error('Error fetching payouts:', error);
     }
   }
-  
+
   nextPage() {
     const currentPage = this.filter().page || 1;
     if (currentPage < this.lastPage()) {
@@ -508,7 +512,9 @@ export class Payouts implements OnInit {
               dataRow[col] = email;
               break;
             case 'bankdetails':
-              dataRow[col] = `Account Holder: ${accountName}, Bank: ${bankName}, Account: ${accountNo}, IFSC: ${ifscCode}`;
+              dataRow[
+                col
+              ] = `Account Holder: ${accountName}, Bank: ${bankName}, Account: ${accountNo}, IFSC: ${ifscCode}`;
               break;
             case 'amount':
               dataRow[col] = `${payout.requestedAmount} INR`;

@@ -108,10 +108,37 @@
               <mat-form-field>
                 <mat-label>Create Password</mat-label>
                 <input
+                  id="password"
                   type="password"
                   matInput
                   formControlName="userPassword"
-                /> </mat-form-field
+                />
+                <mat-icon
+                  matSuffix
+                  (click)="openPassword()"
+                  class="cursor-pointer"
+                  >visibility</mat-icon
+                >
+                @if (
+                publisherFormGroup.get('userPassword')?.hasError('required') &&
+                publisherFormGroup.get('userPassword')?.touched ) {
+                <mat-error>{{ "requiredvalueerror" | translate }}</mat-error>
+                } @if (
+                publisherFormGroup.get('userPassword')?.hasError('minlength') &&
+                !publisherFormGroup.get('userPassword')?.hasError('required') )
+                {
+                <mat-error>
+                  {{ "minlengtherror" | translate : { length: 8 } }}
+                </mat-error>
+                } @if (
+                publisherFormGroup.get('userPassword')?.hasError('pattern') &&
+                !publisherFormGroup.get('userPassword')?.hasError('required') &&
+                !publisherFormGroup.get('userPassword')?.hasError('minlength') )
+                {
+                <mat-error>
+                  {{ "passwordstrengtherror" | translate }}
+                </mat-error>
+                } </mat-form-field
               >}
             </div>
           </div>
@@ -312,9 +339,15 @@
         </mat-form-field>
         <mat-form-field>
           <mat-label>GST Number</mat-label>
-          <input matInput formControlName="gstNumber" placeholder="e.g., 27ABCDE1234F1Z5" />
+          <input
+            matInput
+            formControlName="gstNumber"
+            placeholder="e.g., 27ABCDE1234F1Z5"
+          />
           @if (publisherBankDetails.get('gstNumber')?.hasError('invalidGst')) {
-          <mat-error> Enter a valid GST number (e.g., 27ABCDE1234F1Z5) </mat-error>
+          <mat-error>
+            Enter a valid GST number (e.g., 27ABCDE1234F1Z5)
+          </mat-error>
           }
         </mat-form-field>
         <mat-form-field>

@@ -424,7 +424,14 @@ export class AddAuthor implements OnInit {
     phoneNumber: ['', Validators.required],
     username: ['', Validators.required],
     about: ['', Validators.required],
-    userPassword: ['', [Validators.required, Validators.minLength(8)]],
+    userPassword: [
+      '',
+      [
+        Validators.required,
+        Validators.minLength(8),
+        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/),
+      ],
+    ],
     authorImage: [''],
     media: this._formBuilder.control<Media | null>(null, Validators.required),
     signupCode: <string | null>null,
@@ -590,6 +597,14 @@ export class AddAuthor implements OnInit {
       this.mediaControl.setValue(null);
     }
   }
+  openPassword() {
+    const oldInput = document.getElementById('password') as HTMLInputElement;
+    if (oldInput.type === 'password') {
+      oldInput.type = 'text';
+    } else {
+      oldInput.type = 'password';
+    }
+  }
   async handleNewOrSuperAdminAuthorSubmission(authorData: Author) {
     const response = (await this.authorsService.createAuthor(
       authorData as Author
@@ -605,7 +620,11 @@ export class AddAuthor implements OnInit {
       );
       const bankDetailsValue = { ...this.authorBankDetails.value };
       // Remove gstNumber if empty, otherwise keep it
-      if (!bankDetailsValue.gstNumber || (typeof bankDetailsValue.gstNumber === 'string' && bankDetailsValue.gstNumber.trim() === '')) {
+      if (
+        !bankDetailsValue.gstNumber ||
+        (typeof bankDetailsValue.gstNumber === 'string' &&
+          bankDetailsValue.gstNumber.trim() === '')
+      ) {
         delete bankDetailsValue.gstNumber;
       }
       const authorBankData = {
@@ -917,7 +936,10 @@ export class AddAuthor implements OnInit {
     // Build rawValue from current form values (not from authorData which might be stale)
     const bankDetailsValue = { ...this.authorBankDetails.value };
     // Remove gstNumber if empty, otherwise keep it
-    if (!bankDetailsValue.gstNumber || bankDetailsValue.gstNumber.trim() === '') {
+    if (
+      !bankDetailsValue.gstNumber ||
+      bankDetailsValue.gstNumber.trim() === ''
+    ) {
       delete bankDetailsValue.gstNumber;
     }
     const rawValue = {
@@ -1070,7 +1092,10 @@ export class AddAuthor implements OnInit {
         if (hasBankChange && existingBank) {
           const bankDetailsValue = { ...this.authorBankDetails.value };
           // Remove gstNumber if empty, otherwise keep it
-          if (!bankDetailsValue.gstNumber || bankDetailsValue.gstNumber.trim() === '') {
+          if (
+            !bankDetailsValue.gstNumber ||
+            bankDetailsValue.gstNumber.trim() === ''
+          ) {
             delete bankDetailsValue.gstNumber;
           }
           await this.bankDetailService.createOrUpdateBankDetail({
