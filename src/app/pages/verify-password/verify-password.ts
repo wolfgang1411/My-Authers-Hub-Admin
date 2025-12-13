@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ViewChild } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -10,7 +10,7 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
-import { NgOtpInputModule } from 'ng-otp-input';
+import { NgOtpInputComponent, NgOtpInputModule } from 'ng-otp-input';
 import { SharedModule } from 'src/app/modules/shared/shared-module';
 import md5 from 'md5';
 import { MatIconModule } from '@angular/material/icon';
@@ -42,6 +42,8 @@ export class VerifyPassword {
     length: 6,
     allowNumbersOnly: true,
   };
+  @ViewChild(NgOtpInputComponent) otpInput!: NgOtpInputComponent;
+
   passwordMatchValidator: ValidatorFn = (
     control: AbstractControl
   ): ValidationErrors | null => {
@@ -132,18 +134,21 @@ export class VerifyPassword {
   }
 
   resendOtp = async () => {
+    console.log(this.otpValue(), 'resend ');
     if (!this.email) {
       this.errorMessage.set('No email to resend to. Start again.');
       return;
     }
+    this.otpValue.set('');
+    this.passwordForm.reset();
+    this.successMessage.set(null);
+    this.errorMessage.set(null);
 
     this.loading.set(true);
-    this.errorMessage.set(null);
+    this.otpInput?.setValue('');
 
     try {
       const res = await this.auth.requestPasswordReset(this.email);
-
-      // backend returns otpid — so use that
       this.otpId = res?.id || this.otpId;
 
       this.successMessage.set('OTP resent successfully.');
