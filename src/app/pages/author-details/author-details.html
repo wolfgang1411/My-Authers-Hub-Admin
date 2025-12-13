@@ -219,7 +219,18 @@
         id="royalties"
         class="mt-10 bg-white p-6 rounded-xl shadow flex flex-col gap-6"
       >
-        <h2 class="heading">{{ "Royalties&Wallet" | translate }}</h2>
+        <div class="flex justify-between">
+          <h2 class="heading">{{ "Royalties&Wallet" | translate }}</h2>
+          <mat-form-field>
+            <mat-label>{{ "filter" | translate }}</mat-label>
+            <input
+              matInput
+              (keyup)="applyRoyaltyFilter($event)"
+              placeholder="Ex. ium"
+              #input
+            />
+          </mat-form-field>
+        </div>
         <ul class="space-y-2">
           <li>
             🪙 {{ "walletbalance" | translate }} :

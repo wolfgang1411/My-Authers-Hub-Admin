@@ -43,7 +43,7 @@ export interface AuthorResponse {
 }
 
 export interface AuthorFilter {
-  publisherId?: number;
+  publisherIds?: number[] | number;
   titleId?: number;
   status?: AuthorStatus | AuthorStatus[];
   page?: number;

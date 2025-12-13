@@ -23,7 +23,6 @@ import { formatCurrency } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { format } from 'date-fns';
 import { DistributionType } from '../../interfaces';
-import Swal from 'sweetalert2';
 import { MatIconModule } from '@angular/material/icon';
 import { StaticValuesService } from '../../services/static-values';
 import { MatButtonModule } from '@angular/material/button';
@@ -163,6 +162,47 @@ export class PublisherDetails implements OnInit, OnDestroy {
     await this.fetchRoyalty();
     await this.fetchDistributionLinks();
     await this.fetchPublishingPoints();
+    this.bookPublishData.filterPredicate = (data: any, filter: string) => {
+      const search = filter.trim().toLowerCase();
+
+      return (
+        (data.title ?? '').toLowerCase().includes(search) ||
+        (data.distribution ?? '').toLowerCase().includes(search) ||
+        (data.isbnPrint ?? '').toLowerCase().includes(search) ||
+        (data.isbnEbook ?? '').toLowerCase().includes(search) ||
+        (data.authors ?? '').toLowerCase().includes(search)
+      );
+    };
+    this.authorData.filterPredicate = (data: any, filter: string) => {
+      const search = filter.trim().toLowerCase();
+
+      return (
+        (data.name ?? '').toLowerCase().includes(search) ||
+        (data.email ?? '').toLowerCase().includes(search) ||
+        (data.phonenumber ?? '').toLowerCase().includes(search) ||
+        (data.links ?? '').toLowerCase().includes(search)
+      );
+    };
+    this.subPublisherData.filterPredicate = (data: any, filter: string) => {
+      const search = filter.trim().toLowerCase();
+
+      return (
+        (data.name ?? '').toLowerCase().includes(search) ||
+        (data.email ?? '').toLowerCase().includes(search) ||
+        (data.phonenumber ?? '').toLowerCase().includes(search)
+      );
+    };
+    this.royaltyData.filterPredicate = (data: any, filter: string) => {
+      const search = filter.trim().toLowerCase();
+
+      return (
+        (data.title ?? '').toLowerCase().includes(search) ||
+        (data['publisher/author'] ?? '').toLowerCase().includes(search) ||
+        (data.platform ?? '').toLowerCase().includes(search) ||
+        (data.amount ?? '').toString().toLowerCase().includes(search) ||
+        (data['paidAt/holduntill'] ?? '').toLowerCase().includes(search)
+      );
+    };
   }
 
   async fetchPublisherDetails() {
@@ -194,97 +234,96 @@ export class PublisherDetails implements OnInit, OnDestroy {
       .then(({ items }) => {
         const mapped = items.map((publisher) => ({
           ...publisher,
-          phonenumber: publisher.phoneNumber || publisher.user.phoneNumber,
+          phonenumber:
+            publisher.phoneNumber || publisher.user?.phoneNumber || 'N/A',
           nooftitles: publisher.noOfTitles,
           noofauthors: publisher.noOfAuthors,
         }));
-        this.subPublisherData = new MatTableDataSource(mapped);
-        this.subPublisherData.filterPredicate = (data, filter) =>
-          data.name.toLowerCase().includes(filter) ||
-          data.email.toLowerCase().includes(filter) ||
-          data.phonenumber?.toLowerCase().includes(filter);
+
+        // ✅ IMPORTANT
+        this.subPublisherData.data = mapped;
       })
-      .catch((error) => console.error('Error fetching authors:', error));
+      .catch((error) => console.error('Error fetching sub publishers:', error));
   }
+
   fetchAuthors() {
     this.authorsService
-      .getAuthors({ publisherId: this.publisherId, showTotalEarnings: true })
+      .getAuthors({
+        publisherIds: [this.publisherId],
+        showTotalEarnings: true,
+      })
       .then(({ items }) => {
         const mapped = items.map((author, idx) => ({
           ...author,
           serial: idx + 1,
           name: `${author.user.firstName} ${author.user.lastName}`,
           email: author.user.email,
-          phonenumber: author.user.phoneNumber,
+          phonenumber: author.user.phoneNumber ?? 'N/A',
           titles: author.noOfTitles,
           bookssold: author.booksSold,
           royaltyearned: author.totalEarning || 0,
-          links: author.socialMedias?.map((sm) => sm.url) || 'N/A',
+          links: author.socialMedias?.length
+            ? author.socialMedias.map((sm) => sm.url).join(', ')
+            : 'N/A',
         }));
-        this.authorData = new MatTableDataSource(mapped);
 
-        this.authorData.filterPredicate = (data, filter) =>
-          data.name.toLowerCase().includes(filter) ||
-          data.email.toLowerCase().includes(filter) ||
-          data.phonenumber?.toLowerCase().includes(filter);
+        this.authorData.data = mapped;
       })
       .catch((error) => console.error('Error fetching authors:', error));
   }
 
   async fetchTitles() {
-    this.titleService
-      .getTitles()
-      .then(({ items }) => {
-        const mapped = items.map((title, idx) => ({
-          serial: idx + 1,
-          id: title.id,
-          title: title.name,
-          distribution: title.distribution,
-          isbnPrint:
-            title.isbnPrint && title.isbnPrint
-              ? formatIsbn(title.isbnPrint)
-              : 'N/A',
-          isbnEbook:
-            title.isbnEbook && title.isbnEbook
-              ? formatIsbn(title.isbnEbook)
-              : 'N/A',
-          pages:
-            title.printing && title.printing.length
-              ? title.printing[0].totalPages
-              : 'N/A',
-
-          copiessold: title.copiesSold,
-          royaltiesearned: title.totalSales,
-          authors:
-            title.authors && title.authors.length
-              ? title.authors.map(({ display_name }) => display_name).join(' ,')
-              : 'N/A',
-          status: title.status,
-        }));
-        this.bookPublishData = new MatTableDataSource(mapped);
-        this.bookPublishData.filterPredicate = (data, filter) =>
-          data.title.toLowerCase().includes(filter) ||
-          data.distribution.toLowerCase().includes(filter) ||
-          data.isbnPrint.toLowerCase().includes(filter) ||
-          data.isbnEbook.toLowerCase().includes(filter);
-      })
-      .catch((error) => {
-        console.error('Error fetching titles:', error);
+    try {
+      const { items } = await this.titleService.getTitles({
+        publisherIds: [this.publisherId],
       });
+
+      const mapped = items.map((title, idx) => ({
+        serial: idx + 1,
+        id: title.id,
+        title: title.name,
+
+        // ✅ FIXED DISTRIBUTION
+        distribution: title.distribution?.length
+          ? title.distribution.map((d) => d.type).join(', ')
+          : 'N/A',
+
+        isbnPrint: title.isbnPrint ? formatIsbn(title.isbnPrint) : 'N/A',
+        isbnEbook: title.isbnEbook ? formatIsbn(title.isbnEbook) : 'N/A',
+
+        pages: title.printing?.[0]?.totalPages ?? 'N/A',
+        copiessold: title.copiesSold,
+        royaltiesearned: title.totalSales,
+
+        authors: title.authors?.length
+          ? title.authors.map((a) => a.display_name).join(', ')
+          : 'N/A',
+
+        status: title.status,
+      }));
+
+      this.bookPublishData.data = mapped;
+    } catch (error) {
+      console.error('Error fetching titles:', error);
+    }
   }
 
   async fetchRoyalty() {
     const { items } = await this.salesService.fetchEarnings({
       publisherIds: [this.publisherId],
     });
+
     const mappedData = items?.map((earning) => ({
       ...earning,
       title: earning.royalty.title.name,
       'publisher/author':
         earning.royalty.publisher?.name ||
-        earning.royalty.author?.user.firstName,
+        earning.royalty.author?.user.firstName ||
+        'N/A',
       amount: formatCurrency(earning.amount, 'en', '', 'INR'),
-      platform: earning.platformName || this.translateService.instant(earning.platform.name),
+      platform:
+        earning.platformName ||
+        this.translateService.instant(earning.platform.name),
       'paidAt/holduntill': (() => {
         const date = earning.holdUntil || earning.paidAt;
         if (!date) return '-';
@@ -321,14 +360,22 @@ export class PublisherDetails implements OnInit, OnDestroy {
     const filterValue = (event.target as HTMLInputElement).value;
     console.log(filterValue, 'filterrrr');
     this.bookPublishData.filter = filterValue.trim().toLowerCase();
+
+    console.log('FILTER VALUE:', this.bookPublishData.filter);
+    console.log('FILTERED DATA:', this.bookPublishData.filteredData);
   }
   applyAuthorFilter(event: Event) {
-    const value = (event.target as HTMLInputElement).value.trim().toLowerCase();
-    this.authorData.filter = value;
+    const value = (event.target as HTMLInputElement).value;
+    this.authorData.filter = value.trim().toLowerCase();
   }
+
   applySubPublisherFilter(event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
     this.subPublisherData.filter = filterValue.trim().toLowerCase();
+  }
+  applyRoyaltyFilter(event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    this.royaltyData.filter = value.trim().toLowerCase();
   }
 
   returnUrl(): string {

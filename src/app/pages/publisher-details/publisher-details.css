@@ -8,7 +8,6 @@ table {
   color: var(--text-primary);
   font-size: 0.875rem;
   line-height: 1.25rem;
-  background-color: var(--primary-light);
 }
 .mat-mdc-header-row {
   color: var(--text-primary);
