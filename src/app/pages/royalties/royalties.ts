@@ -16,7 +16,6 @@ import {
   EarningFilter,
   SalesCsvData,
   Title,
-  TitleStatus,
 } from '../../interfaces';
 import { debounceTime, Subject } from 'rxjs';
 import Swal from 'sweetalert2';
@@ -31,8 +30,7 @@ import { EarningTable } from '../../components/earning-table/earning-table';
 import { UserService } from '../../services/user';
 import { TranslateService } from '@ngx-translate/core';
 import { exportToExcel } from '../../common/utils/excel';
-import { formatCurrency } from '@angular/common';
-import { PlatForm, SalesType } from '../../interfaces';
+import { SalesType } from '../../interfaces';
 
 @Component({
   selector: 'app-royalties',
@@ -88,25 +86,26 @@ export class Royalties {
       this.updateRoyaltyList();
     });
   earningList = signal<Earnings[]>([]);
-
-  // Cache to store fetched pages
   private pageCache = new Map<number, Earnings[]>();
   private cachedFilterKey = '';
   lastSelectedSaleType: SalesType | null = null;
   salesTypes = SalesType;
   ngOnInit(): void {
-    // Read sale type from query params
     this.route.queryParams.subscribe((params) => {
       const saleTypeParam = params['saleType'];
-      if (saleTypeParam !== undefined && saleTypeParam !== null && saleTypeParam !== '') {
+      if (
+        saleTypeParam !== undefined &&
+        saleTypeParam !== null &&
+        saleTypeParam !== ''
+      ) {
         if (saleTypeParam === 'null') {
           this.lastSelectedSaleType = null;
-        } else if (Object.values(SalesType).includes(saleTypeParam as SalesType)) {
+        } else if (
+          Object.values(SalesType).includes(saleTypeParam as SalesType)
+        ) {
           this.lastSelectedSaleType = saleTypeParam as SalesType;
         }
       }
-      
-      // Apply the sale type to filter if set
       if (this.lastSelectedSaleType !== null) {
         this.filter.update((f) => ({
           ...f,
@@ -119,7 +118,7 @@ export class Royalties {
           return updated;
         });
       }
-      
+
       this.updateRoyaltyList();
     });
   }
@@ -174,8 +173,6 @@ export class Royalties {
     const currentFilter = this.filter();
     const currentPage = currentFilter.page || 1;
     const filterKey = this.getFilterKey();
-
-    // Clear cache if filter changed
     if (this.cachedFilterKey !== filterKey) {
       this.clearCache();
       this.cachedFilterKey = filterKey;
@@ -190,8 +187,11 @@ export class Royalties {
     // Fetch from API
     console.log('Updating royalty list with filter:', currentFilter);
     const cleanedFilter = this.cleanFilter(currentFilter);
-    const { items, totalCount, itemsPerPage: returnedItemsPerPage } =
-      await this.salesService.fetchEarnings(cleanedFilter);
+    const {
+      items,
+      totalCount,
+      itemsPerPage: returnedItemsPerPage,
+    } = await this.salesService.fetchEarnings(cleanedFilter);
 
     // Cache the fetched page
     this.pageCache.set(currentPage, items);
@@ -211,7 +211,7 @@ export class Royalties {
       return updated;
     });
     this.clearCache();
-    
+
     // Update query params to persist the selected sale type
     if (updateQueryParams) {
       this.router.navigate([], {
@@ -220,7 +220,7 @@ export class Royalties {
         queryParamsHandling: 'merge', // Preserve other query params if any
       });
     }
-    
+
     this.updateRoyaltyList();
   }
 
@@ -524,8 +524,7 @@ export class Royalties {
         platform: this.translateService.instant('platform') || 'Platform',
         quantity: this.translateService.instant('quantity') || 'Quantity',
         addedAt: this.translateService.instant('addedAt') || 'Added At',
-        holduntil:
-          this.translateService.instant('holduntil') || 'Hold Until',
+        holduntil: this.translateService.instant('holduntil') || 'Hold Until',
       };
 
       if (showType) {

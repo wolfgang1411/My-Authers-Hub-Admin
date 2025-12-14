@@ -17,6 +17,7 @@
     </div>
   </div>
   <!-- ░ NOTIFICATIONS BAR ░ -->
+  @if (userService.loggedInUser$()?.accessLevel !== 'AUTHER') {
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
     <!-- Pending Titles -->
     <div
@@ -54,9 +55,10 @@
       <mat-icon class="text-indigo-700 text-3xl">library_books</mat-icon>
     </div>
   </div>
+  }
 
   <!-- ░ STATS SECTION ░ -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
+  <div [ngClass]="gridClass()">
     @for(stat of stats(); track $index){
     <app-stat-card-component
       [stat]="stat"

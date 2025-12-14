@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { NgChartsModule } from 'ng2-charts';
 import { StatCardComponent } from '../../components/stat-card-component/stat-card-component';
 import { SalesAnalyticsComponent } from '../../components/sales-analytics-component/sales-analytics-component';
@@ -94,16 +94,29 @@ export class Dashboard {
   }
 
   async fetchStats() {
+    const user = this.userService.loggedInUser$();
+    const isAuthor = user?.accessLevel === 'AUTHER';
+
     const totalTitles = await this.titleService.getTitleCount({});
-    const totalAuthors = await this.authorService.getAuthorsCount({});
     const totalSales = await this.salesService.fetchSalesCount({});
     const totalSalesUser = await this.salesService.fetchSalesCount({
-      userId: this.userService.loggedInUser$()?.id,
+      userId: user?.id,
     });
 
-    this.stats.set([
+    // Fetch authors ONLY if not author
+    let totalAuthors = { count: 0 };
+    if (!isAuthor) {
+      totalAuthors = await this.authorService.getAuthorsCount({});
+    }
+
+    const stats = [
       { title: 'Total titles', value: totalTitles.count || 0 },
-      { title: 'Total Authors', value: totalAuthors.count || 0 },
+
+      // 👇 conditionally include
+      !isAuthor
+        ? { title: 'Total Authors', value: totalAuthors.count || 0 }
+        : null,
+
       { title: 'Total Copies sold', value: totalSales.copiesSold || 0 },
       {
         title: 'Total Royalty',
@@ -115,8 +128,22 @@ export class Dashboard {
         value: totalSalesUser.totalAmount || 0,
         isCurreny: true,
       },
-    ]);
+    ].filter(Boolean); // 🔥 removes null
+
+    this.stats.set(stats as any);
   }
+
+  gridClass = computed(() => {
+    const count = this.stats()?.length || 0;
+
+    return {
+      'grid grid-cols-1 gap-5 mb-8': true,
+      'sm:grid-cols-2': true,
+      'lg:grid-cols-4': count === 4,
+      'lg:grid-cols-5': count >= 5,
+    };
+  });
+
   async fetchNotificationCounts() {
     // 1. Pending Titles
     const pending = await this.titleService.getTitleCount({

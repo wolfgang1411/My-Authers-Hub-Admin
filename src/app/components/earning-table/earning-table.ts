@@ -50,9 +50,7 @@ export class EarningTable {
         'holduntil',
       ];
 
-      this.displayedColumns = showType
-        ? ['type', ...baseColumns]
-        : baseColumns;
+      this.displayedColumns = showType ? ['type', ...baseColumns] : baseColumns;
 
       const mappedData = earnings?.map((earning) => {
         const salesTypeMap: Record<SalesType, string> = {
@@ -70,12 +68,20 @@ export class EarningTable {
           'publisher/author':
             earning.royalty.publisher?.name ||
             earning.royalty.author?.user.firstName,
-          amount: formatCurrency(earning.amount, 'en', '', 'INR'),
-          platform: earning.platformName || this.translateService.instant(
-            typeof earning.platform === 'string'
-              ? earning.platform
-              : (earning.platform as any)?.name || earning.platform || ''
+          amount: formatCurrency(
+            Number(earning.amount || 0),
+            'en-IN',
+            '₹',
+            'INR',
+            '1.0-2'
           ),
+          platform:
+            earning.platformName ||
+            this.translateService.instant(
+              typeof earning.platform === 'string'
+                ? earning.platform
+                : (earning.platform as any)?.name || earning.platform || ''
+            ),
           quantity: earning.quantity || 0,
           addedAt: (() => {
             const date = earning.paidAt;
