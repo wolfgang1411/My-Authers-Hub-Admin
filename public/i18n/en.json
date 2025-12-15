@@ -649,4 +649,6 @@
    "passwordstrengtherror": "Password must contain uppercase, lowercase and a number",
   "passwordmismatcherror": "Passwords do not match",
   "requiredvalueerror": "This field is required",
-  "minlengtherror": "Minimum {{length}} characters required"}
+  "minlengtherror": "Minimum {{length}} characters required",
+  "skunumberrequired": "SKU number is required"
+}
