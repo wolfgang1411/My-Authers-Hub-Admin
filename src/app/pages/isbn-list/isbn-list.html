@@ -96,13 +96,13 @@
       matButton
       [ngClass]="{
         '!bg-primary !text-white':
-          lastSelectedStatus === isbnStatusEnum.DELETED,
-        '!bg-primary-superlight': lastSelectedStatus !== isbnStatusEnum.DELETED
+          lastSelectedStatus === isbnStatusEnum.REJECTED,
+        '!bg-primary-superlight': lastSelectedStatus !== isbnStatusEnum.REJECTED
       }"
-      (click)="selectStatus(isbnStatusEnum.DELETED)"
+      (click)="selectStatus(isbnStatusEnum.REJECTED)"
     >
       <mat-icon>delete</mat-icon>
-      DELETED
+      REJECTED
     </button>
 
     <button
@@ -136,8 +136,8 @@
   <div class="flex items-center justify-between gap-4 mt-4">
     <div class="flex items-center gap-2">
       <span class="text-sm text-[var(--text-secondary)]">
-        {{ "page" | translate }} {{ filter.page || 1 }}
-        {{ "of" | translate }} {{ lastPage() }}
+        {{ "page" | translate }} {{ filter.page || 1 }} {{ "of" | translate }}
+        {{ lastPage() }}
       </span>
       <span class="text-sm text-[var(--text-secondary)]">|</span>
       <span class="text-sm text-[var(--text-secondary)]"
@@ -273,8 +273,8 @@
         <mat-icon class="material-icons text-white">check</mat-icon>
       </button>
 
-      } @if ( element.status !== 'APPROVED' && loggedInUser$()?.accessLevel ===
-      'SUPERADMIN' ) {
+      } @if ( element.status !== 'APPROVED' && element.status !== 'REJECTED' &&
+      loggedInUser$()?.accessLevel === 'SUPERADMIN' ) {
 
       <button
         title="Reject"

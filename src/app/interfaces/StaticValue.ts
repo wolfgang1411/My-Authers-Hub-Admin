@@ -365,7 +365,7 @@ export enum ApplyOnType {
 export enum ISBNStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
-  DELETED = 'DELETED',
+  REJECTED = 'REJECTED',
   APPLIED = 'APPLIED',
 }
 

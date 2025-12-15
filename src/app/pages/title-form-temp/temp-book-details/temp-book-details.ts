@@ -45,6 +45,7 @@ import { CKEditorModule } from '@ckeditor/ckeditor5-angular';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import { formatIsbn13 } from '../../../common/utils/isbn';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { IsbnFormatPipe } from 'src/app/pipes/isbn-format-pipe';
 
 @Component({
   selector: 'app-temp-book-details',
@@ -61,6 +62,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
     CKEditorModule,
     MatDatepickerModule,
   ],
+  providers: [IsbnFormatPipe],
   templateUrl: './temp-book-details.html',
   styleUrl: './temp-book-details.css',
 })
@@ -70,7 +72,8 @@ export class TempBookDetails implements OnDestroy {
   constructor(
     private titleService: TitleService,
     private isbnService: IsbnService,
-    private languageService: LanguageService
+    private languageService: LanguageService,
+    private isbnFormatPipe: IsbnFormatPipe
   ) {
     this.languages = this.languageService.languages$;
 
@@ -227,6 +230,13 @@ export class TempBookDetails implements OnDestroy {
     this.titleDetailsGroup().controls.name.valueChanges.subscribe(() => {
       this.triedGenerateEbookIsbn = false;
     });
+  }
+  onIsbnBlur(controlName: 'isbnPrint' | 'isbnEbook') {
+    const control = this.titleDetailsGroup().get(controlName);
+    if (!control?.value) return;
+
+    const formatted = this.isbnFormatPipe.transform(control.value);
+    control.setValue(formatted, { emitEvent: false });
   }
 
   ngOnDestroy(): void {
