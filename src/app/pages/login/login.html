@@ -1,75 +1,62 @@
-<section class="flex items-center justify-center w-full h-full bg- grow">
+<section
+  class="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 to-purple-100"
+>
   <div
-    class="shadow-md grid grid-cols-2 gap-4 max-w-[70vW] border rounded-lg bg-white h-[600px]"
+    class="shadow-lg grid grid-cols-1 md:grid-cols-2 max-w-[1100px] w-full border rounded-xl bg-white overflow-hidden"
   >
-    <div>
-      <div class="w-full flex justify-center pt-6">
+    <!-- LEFT : LOGIN FORM -->
+    <div class="flex flex-col justify-center p-10">
+      <!-- Logo -->
+      <div class="flex justify-center mb-6">
         <img
-          class="aspect-square object-contain h-[80px]"
           src="images/my Author(1).png"
-          alt="Logo"
+          alt="My Author's Hub"
+          class="h-20 object-contain"
         />
       </div>
+
+      <!-- Heading -->
+      <h2 class="text-2xl font-semibold text-text-heading text-center">
+        {{ "welcometomyauthorshub" | translate }}!
+      </h2>
+      <p class="text-sm text-gray-500 text-center mt-1 mb-8">
+        {{ "login_to_your_account" | translate }}
+      </p>
+
+      <!-- FORM -->
       <form
         [formGroup]="loginForm"
-        class="flex flex-col items-center justify-center gap-6 p-8"
+        class="flex flex-col gap-5"
         (ngSubmit)="onFormSubmit()"
       >
-        <label class="text-lg font-semibold text-text-heading">
-          {{ "welcometomyauthorshub" | translate }} !
-        </label>
-        <label class="text-sm font-medium text-text-heading">
-          {{ "login_to_your_account" | translate }}
-        </label>
-        <div class="flex flex-col gap-4 w-full">
-          <label class="self-start text-text-primary">
-            {{ "username" | translate }} /
-            {{ "email" | translate }}
+        <!-- Username -->
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-text-primary">
+            {{ "username" | translate }} / {{ "email" | translate }}
           </label>
           <input
             formControlName="username"
-            class="input-field"
             type="text"
-            placeholder="username"
+            class="input-field"
+            placeholder="Enter your username or email"
           />
         </div>
-        <!-- <div class="flex flex-col gap-4 w-full">
-          <label class="self-start text-text-primary">
-            {{ "password" | translate }}
-          </label>
-          <input
-            formControlName="password"
-            class="input-field"
-            type="password"
-            placeholder="password"
-          />
-          <mat-icon matSuffix (click)="openPassword()" class="cursor-pointer"
-            >visibility</mat-icon
-          >
-          @if(loginForm.controls.password.invalid &&
-          loginForm.controls.password.touched) {
-          <mat-hint class="text-red-600">
-            Password must be at least 8 characters
-          </mat-hint>
-          }
-        </div> -->
-        <div class="flex flex-col gap-2 w-full">
-          <label class="self-start text-text-primary">
+
+        <!-- Password -->
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-text-primary">
             {{ "password" | translate }}
           </label>
 
-          <!-- Input wrapper -->
-          <div class="relative w-full">
+          <div class="relative">
             <input
               formControlName="password"
-              class="input-field w-full pr-12"
+              class="input-field pr-12"
               [type]="showPassword ? 'text' : 'password'"
-              [placeholder]="'password' | translate"
+              placeholder="Enter password"
             />
-
-            <!-- Eye icon -->
             <mat-icon
-              class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 hover:text-primary"
+              class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-primary"
               (click)="togglePassword()"
             >
               {{ showPassword ? "visibility_off" : "visibility" }}
@@ -78,32 +65,60 @@
 
           @if ( loginForm.controls.password.invalid &&
           loginForm.controls.password.touched ) {
-          <span class="text-red-600 text-sm">
-            Password must be at least 8 characters, include uppercase, lowercase
-            & number
+          <span class="text-xs text-red-600">
+            Password must be at least 8 characters
           </span>
           }
         </div>
 
-        <div class="flex justify-end w-full -mt-3">
+        <!-- Forgot password -->
+        <div class="flex justify-end">
           <a
             [routerLink]="['/forgot']"
-            class="text-sm text-primary hover:underline hover:text-blue-colour cursor-pointer"
+            class="text-sm text-primary hover:underline"
           >
-            Forgot Password ?
+            Forgot password?
           </a>
         </div>
-        <button matButton="elevated" matButton="filled" class="!bg-primary">
+
+        <!-- Login button -->
+        <button
+          matButton="filled"
+          class="!bg-primary !text-white h-[44px] rounded-md"
+        >
           {{ "login" | translate }}
         </button>
 
-        <div id="google-btn"></div>
+        <!-- Divider -->
+        <div class="flex items-center gap-3 my-2">
+          <span class="flex-1 h-px bg-gray-200"></span>
+          <span class="text-xs text-gray-400 uppercase font-medium">
+            Or continue with
+          </span>
+          <span class="flex-1 h-px bg-gray-200"></span>
+        </div>
+
+        <!-- GOOGLE SIGN-IN (NO FUNCTION NEEDED) -->
+        <div class="w-full flex justify-center">
+          <div
+            class="w-full h-[44px] rounded-md transition-all duration-200 flex items-center justify-center"
+          >
+            <div id="google-btn"></div>
+          </div>
+        </div>
+
+        <p class="text-xs text-gray-400 text-center mt-2">
+          Secure sign-in powered by Google
+        </p>
       </form>
     </div>
-    <div class="rounded-br-lg rounded-tr-lg flex">
+
+    <!-- RIGHT : IMAGE -->
+    <div class="hidden md:flex bg-purple-50">
       <img
-        class="object-fill rounded-br-lg rounded-tr-lg max-h-[600px]"
         src="images/my(1).gif"
+        class="object-cover w-full h-full"
+        alt="Illustration"
       />
     </div>
   </div>

@@ -59,28 +59,24 @@ export class Login {
     });
   }
 
-
-
   ngAfterViewInit() {
     google.accounts.id.initialize({
       client_id: environment.O2AuthClientId,
       callback: (response: any) => this.handleCredential(response),
     });
 
-    google.accounts.id.renderButton(
-      document.getElementById('google-btn'),
-      {
-        theme: 'outline',
-        size: 'large',
-      }
-    );
+    google.accounts.id.renderButton(document.getElementById('google-btn'), {
+      size: 'large',
+      theme: 'outline',
+    });
   }
 
   async handleCredential(response: any) {
-    const authResponse = await this.authService.googleLogin(response.credential);
+    const authResponse = await this.authService.googleLogin(
+      response.credential
+    );
     await this.handleLoggedInResponse(authResponse);
   }
-
 
   async handleLoggedInResponse(response: AuthResponse) {
     const userId = this.authService.setAuthToken(response);

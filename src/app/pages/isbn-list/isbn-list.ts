@@ -6,15 +6,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatTableDataSource } from '@angular/material/table';
 import { IsbnService } from '../../services/isbn-service';
-import {
-  catchError,
-  debounceTime,
-  map,
-  of,
-  Subject,
-  switchMap,
-  timer,
-} from 'rxjs';
+import { debounceTime, of, Subject } from 'rxjs';
 import {
   Author,
   AuthorStatus,
@@ -65,6 +57,7 @@ import { IsbnFormatPipe } from 'src/app/pipes/isbn-format-pipe';
     ReactiveFormsModule,
     IsbnFormatPipe,
   ],
+  providers: [IsbnFormatPipe],
   templateUrl: './isbn-list.html',
   styleUrl: './isbn-list.css',
 })
@@ -78,7 +71,8 @@ export class ISBNList implements OnInit {
     private staticValService: StaticValuesService,
     private userService: UserService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private isbnFormatPipe: IsbnFormatPipe
   ) {
     this.loggedInUser$ = this.userService.loggedInUser$;
   }
@@ -176,16 +170,11 @@ export class ISBNList implements OnInit {
   validateIsbn(): AsyncValidatorFn {
     return (control: AbstractControl) => {
       const rawValue = control.value || '';
-      // Always clean the value to handle both formatted (with hyphens) and raw input
       const isbn = cleanIsbn(String(rawValue));
 
       if (isbn.length === 0) return of(null);
-
-      // allow typing until it reaches 13
       if (isbn.length < 13) return of(null);
       if (isbn.length !== 13) return of({ invalid: 'ISBN must be 13 digits' });
-
-      // Validate ISBN-13 format locally (check digit validation)
       if (!/^\d{13}$/.test(isbn)) {
         return of({ invalid: 'ISBN must contain only digits' });
       }
@@ -204,10 +193,16 @@ export class ISBNList implements OnInit {
       if (isNaN(lastDigit) || check !== lastDigit) {
         return of({ invalid: 'Invalid ISBN check digit' });
       }
-
-      // Format is valid, allow it
       return of(null);
     };
+  }
+
+  onInlineIsbnBlur(row: any) {
+    const control = this.getIsbnControl(row);
+    if (!control.value) return;
+
+    const formatted = this.isbnFormatPipe.transform(control.value);
+    control.setValue(formatted, { emitEvent: false });
   }
 
   selectStatus(status: ISBNStatus | 'ALL', updateQueryParams: boolean = true) {
@@ -233,25 +228,13 @@ export class ISBNList implements OnInit {
     this.fetchIsbnList();
   }
 
-  getIsbnControl(id: number) {
-    if (!this.isbnInputs.has(id)) {
-      const control = new FormControl<string | null>(null, {
-        asyncValidators: this.validateIsbn(),
-        updateOn: 'change',
-      });
+  getIsbnControl(row: any): FormControl<string | null> {
+    if (!this.isbnInputs.has(row.id)) {
+      const control = new FormControl<string | null>(row.isbnNumber ?? null);
 
-      control.valueChanges.subscribe((value) => {
-        if (!value) return;
-        const cleaned = cleanIsbn(value);
-        const formatted = formatIsbn(cleaned);
-        if (formatted !== value) {
-          control.setValue(formatted, { emitEvent: false });
-        }
-      });
-
-      this.isbnInputs.set(id, control);
+      this.isbnInputs.set(row.id, control);
     }
-    return this.isbnInputs.get(id)!;
+    return this.isbnInputs.get(row.id)!;
   }
 
   async fetchAndUpdatePublishersList() {
@@ -353,90 +336,40 @@ export class ISBNList implements OnInit {
       this.selectStatus(ISBNStatus.APPLIED);
     }
   }
-
-  async saveInlineISBN(element: any) {
-    // Use the control from createIsbnForm since that's what the template uses
-    const control = this.createIsbnForm.controls.isbnNumber;
+  onIsbnBlur() {
+    const control = this.createIsbnForm.get('isbnNumber');
+    if (!control?.value) return;
+    const formatted = this.isbnFormatPipe.transform(control.value);
+    control.setValue(formatted, { emitEvent: false });
+  }
+  async saveInlineISBN(row: any) {
+    const control = this.getIsbnControl(row);
     const isbnNumber = cleanIsbn(control.value || '');
 
-    if (!isbnNumber || isbnNumber.length !== 13) {
+    if (isbnNumber.length !== 13) {
       Swal.fire({
         icon: 'warning',
         title: 'Invalid ISBN',
-        text: 'Please enter a valid 13-digit ISBN number.',
+        text: 'Please enter a valid 13-digit ISBN.',
       });
       return;
     }
 
-    // Additional validation: check digit
-    if (!/^\d{13}$/.test(isbnNumber)) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Invalid ISBN',
-        text: 'ISBN must contain only digits.',
-      });
-      return;
-    }
-
-    // Validate check digit
-    let sum = 0;
-    for (let i = 0; i < 12; i++) {
-      const digit = parseInt(isbnNumber[i]);
-      if (isNaN(digit)) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Invalid ISBN',
-          text: 'ISBN must contain only digits.',
-        });
-        return;
-      }
-      sum += digit * (i % 2 === 0 ? 1 : 3);
-    }
-    let check = (10 - (sum % 10)) % 10;
-    const lastDigit = parseInt(isbnNumber[12]);
-    if (isNaN(lastDigit) || check !== lastDigit) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Invalid ISBN',
-        text: 'Invalid ISBN check digit. Please verify the ISBN number.',
-      });
-      return;
-    }
-
-    // Check if control is still pending (async validation in progress)
-    if (control.pending) {
-      Swal.fire({
-        icon: 'info',
-        title: 'Validating...',
-        text: 'Please wait while the ISBN is being validated.',
-      });
-      return;
-    }
-
-    // For APPLIED status, only send id, isbnNumber, and status (APPROVED)
-    // Don't send all the other fields
     const payload: createIsbn = {
-      id: element.id,
+      id: row.id,
       isbnNumber,
       status: ISBNStatus.APPROVED,
     } as any;
 
     const response = await this.isbnService.createOrUpdateIsbn(payload);
 
-    Swal.fire({
-      icon: 'success',
-      title: 'Assigned',
-      text: 'ISBN has been approved successfully!',
-    });
-
     this.isbnList.update((list) =>
       list.map((item) => (item.id === response.id ? response : item))
     );
 
     this.updateISBNList();
-
-    // Redirect to APPROVED tab after approval
     this.selectStatus(ISBNStatus.APPROVED);
+
     control.reset();
   }
 

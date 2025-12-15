@@ -206,27 +206,26 @@
   <!-- Inline ISBN column template (only for APPLIED) -->
   <ng-template #isbnnumber let-element>
     @if (element.status === 'APPLIED') {
-    <form class="flex items-center gap-2" [formGroup]="createIsbnForm">
+    <div class="flex items-center gap-2">
       <input
         matInput
-        formControlName="isbnNumber"
-        placeholder="Enter ISBN"
+        [formControl]="getIsbnControl(element)"
         class="border border-primary rounded-md px-2 py-1 w-40"
-        appIsbnFormat
-        appIsbnClean
+        maxlength="17"
+        placeholder="Enter ISBN"
+        (blur)="onInlineIsbnBlur(element)"
       />
 
       <button
         matIconButton
         type="button"
         class="!bg-green-600 text-white rounded-full p-2"
-        [disabled]="createIsbnForm.invalid || createIsbnForm.pending"
         (click)="saveInlineISBN(element)"
       >
         <mat-icon class="text-sm !text-white">check</mat-icon>
       </button>
-    </form>
-    }@else {
+    </div>
+    } @else {
     <span>{{ (element.isbnNumber | isbnFormat) || "N/A" }}</span>
     }
   </ng-template>
