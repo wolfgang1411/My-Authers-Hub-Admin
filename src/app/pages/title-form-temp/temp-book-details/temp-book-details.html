@@ -22,6 +22,7 @@
               placeholder=""
               formControlName="isbnPrint"
               [maxlength]="17"
+              (blur)="onIsbnBlur('isbnPrint')"
             />
           </mat-form-field>
           <div class="text-sm">
@@ -42,6 +43,7 @@
               matInput
               placeholder=""
               formControlName="isbnEbook"
+              (blur)="onIsbnBlur('isbnEbook')"
               [maxlength]="17"
             />
             <button
