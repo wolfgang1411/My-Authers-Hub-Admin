@@ -177,14 +177,10 @@ export class Royalties {
       this.clearCache();
       this.cachedFilterKey = filterKey;
     }
-
-    // Check if page is already cached
     if (this.pageCache.has(currentPage)) {
       this.earningList.set(this.pageCache.get(currentPage)!);
       return;
     }
-
-    // Fetch from API
     console.log('Updating royalty list with filter:', currentFilter);
     const cleanedFilter = this.cleanFilter(currentFilter);
     const {

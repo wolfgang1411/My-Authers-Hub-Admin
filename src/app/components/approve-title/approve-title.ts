@@ -49,6 +49,10 @@ export class ApproveTitle implements OnInit {
       this.form.controls.skuNumber.setValue(this.data.skuNumber);
     }
   }
+  get skuInvalid(): boolean {
+    const control = this.form.controls.skuNumber;
+    return control.invalid && (control.touched || control.dirty);
+  }
 
   prefillPlatformIdentifierForm() {
     const allPlatforms = this.platformService.platforms();
@@ -87,6 +91,7 @@ export class ApproveTitle implements OnInit {
   }
 
   onSubmit() {
+    this.form.markAllAsTouched();
     if (!this.form.valid) {
       return;
     }

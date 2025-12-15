@@ -1,12 +1,9 @@
 import { Component, computed, Signal, signal } from '@angular/core';
 import { debounceTime, Subject } from 'rxjs';
 import {
-  ApproveTitlePayload,
-  CreateDistributionLink,
   CreatePlatformIdentifier,
   Title,
   TitleFilter,
-  TitleResponse,
 } from '../../interfaces/Titles';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { TitleService } from './title-service';
@@ -18,7 +15,6 @@ import { MatButton, MatIconButton } from '@angular/material/button';
 import Swal from 'sweetalert2';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
-import { SelectDistributionLinks } from '../../components/select-distribution-links/select-distribution-links';
 import { format } from 'date-fns';
 import { PublishingType, TitleStatus, User } from '../../interfaces';
 import { ApproveTitle } from '../../components/approve-title/approve-title';
@@ -89,7 +85,7 @@ export class Titles {
       page: 1,
     }));
     this.clearCache();
-    
+
     // Update query params to persist the selected status
     if (updateQueryParams) {
       this.router.navigate([], {
@@ -98,7 +94,7 @@ export class Titles {
         queryParamsHandling: 'merge', // Preserve other query params if any
       });
     }
-    
+
     if (triggerFetch) {
       this.fetchTitleDetails();
     }
@@ -151,7 +147,7 @@ export class Titles {
   ];
   dataSource = new MatTableDataSource<any>();
   lastPage = signal(1);
-  
+
   filter = signal<TitleFilter>({
     page: 1,
     itemsPerPage: 30,
@@ -159,11 +155,11 @@ export class Titles {
     orderBy: 'id',
     orderByVal: 'desc',
   });
-  
+
   // Cache to store fetched pages
   private pageCache = new Map<number, Title[]>();
   private cachedFilterKey = '';
-  
+
   private getFilterKey(): string {
     const currentFilter = this.filter();
     return JSON.stringify({
@@ -214,12 +210,12 @@ export class Titles {
     this.clearCache();
     this.fetchTitleDetails();
   }
-  
+
   fetchTitleDetails() {
     const currentFilter = this.filter();
     const currentPage = currentFilter.page || 1;
     const filterKey = this.getFilterKey();
-    
+
     // Clear cache if filter changed
     if (this.cachedFilterKey !== filterKey) {
       this.clearCache();
@@ -247,7 +243,7 @@ export class Titles {
         console.error('Error fetching titles:', error);
       });
   }
-  
+
   nextPage() {
     const currentPage = this.filter().page || 1;
     if (currentPage < this.lastPage()) {
@@ -371,15 +367,15 @@ export class Titles {
           ));
 
       const initialStatus: TitleStatus | 'ALL' = isValidStatus
-        ? (statusParam === 'ALL'
-            ? 'ALL'
-            : (statusParam as TitleStatus))
+        ? statusParam === 'ALL'
+          ? 'ALL'
+          : (statusParam as TitleStatus)
         : 'ALL';
       const initialPublishingType: PublishingType | 'ALL' =
         isValidPublishingType
-          ? (publishingTypeParam === 'ALL'
-              ? 'ALL'
-              : (publishingTypeParam as PublishingType))
+          ? publishingTypeParam === 'ALL'
+            ? 'ALL'
+            : (publishingTypeParam as PublishingType)
           : 'ALL';
 
       const shouldUpdateStatus = this.lastSelectedStatus !== initialStatus;
@@ -397,7 +393,7 @@ export class Titles {
       // Fetch once after applying both filters (or for first load)
       this.fetchTitleDetails();
     });
-    
+
     this.searchStr.pipe(debounceTime(400)).subscribe((value) => {
       this.filter.update((f) => {
         const updated = { ...f };
@@ -559,7 +555,9 @@ export class Titles {
 
       const exportData = titles.map((title) => ({
         name: title.name || '-',
-        isbn: `${title.isbnPrint ? formatIsbn(title.isbnPrint) : 'N/A'} / ${title.isbnEbook ? formatIsbn(title.isbnEbook) : 'N/A'}`,
+        isbn: `${title.isbnPrint ? formatIsbn(title.isbnPrint) : 'N/A'} / ${
+          title.isbnEbook ? formatIsbn(title.isbnEbook) : 'N/A'
+        }`,
         authors:
           title.authors && title.authors.length
             ? title.authors
@@ -590,7 +588,8 @@ export class Titles {
         isbn: this.translateService.instant('ISBN') || 'ISBN',
         authors: this.translateService.instant('author') || 'Authors',
         bookssold: this.translateService.instant('bookssold') || 'Books Sold',
-        launchdate: this.translateService.instant('launchdate') || 'Launch Date',
+        launchdate:
+          this.translateService.instant('launchdate') || 'Launch Date',
         status: this.translateService.instant('status') || 'Status',
         SelectedDistrbutions:
           this.translateService.instant('SelectedDistrbutions') ||
