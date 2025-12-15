@@ -3,3 +3,34 @@
   display: flex;
   flex-direction: column;
 }
+
+/* Style the Google button wrapper and iframe to be full width */
+#google-btn {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+}
+
+#google-btn > div {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+#google-btn iframe {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  position: relative !important;
+  border-radius: 100% !important; /* Fully rounded */
+  min-height: 48px !important; /* Ensure consistent height */
+}

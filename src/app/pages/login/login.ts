@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, AfterViewInit } from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
 import {
   FormControl,
@@ -28,7 +28,7 @@ declare var google: any;
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
-export class Login {
+export class Login implements AfterViewInit {
   constructor(
     private authService: AuthService,
     private userService: UserService,
@@ -60,10 +60,12 @@ export class Login {
   }
 
   ngAfterViewInit() {
-    google.accounts.id.initialize({
-      client_id: environment.O2AuthClientId,
-      callback: (response: any) => this.handleCredential(response),
-    });
+    // Wait for the view to be fully rendered
+    setTimeout(() => {
+      google.accounts.id.initialize({
+        client_id: environment.O2AuthClientId,
+        callback: (response: any) => this.handleCredential(response),
+      });
 
     google.accounts.id.renderButton(document.getElementById('google-btn'), {
       size: 'large',
@@ -71,6 +73,7 @@ export class Login {
     });
   }
 
+}
   async handleCredential(response: any) {
     const authResponse = await this.authService.googleLogin(
       response.credential
