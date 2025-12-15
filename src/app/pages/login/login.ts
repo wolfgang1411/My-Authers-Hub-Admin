@@ -11,6 +11,10 @@ import { UserService } from '../../services/user';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { environment } from 'src/environments/environment';
+import { AuthResponse } from 'src/app/interfaces';
+
+declare var google: any;
 
 @Component({
   selector: 'app-login',
@@ -54,19 +58,46 @@ export class Login {
       }
     });
   }
+
+
+
+  ngAfterViewInit() {
+    google.accounts.id.initialize({
+      client_id: environment.O2AuthClientId,
+      callback: (response: any) => this.handleCredential(response),
+    });
+
+    google.accounts.id.renderButton(
+      document.getElementById('google-btn'),
+      {
+        theme: 'outline',
+        size: 'large',
+      }
+    );
+  }
+
+  async handleCredential(response: any) {
+    const authResponse = await this.authService.googleLogin(response.credential);
+    await this.handleLoggedInResponse(authResponse);
+  }
+
+
+  async handleLoggedInResponse(response: AuthResponse) {
+    const userId = this.authService.setAuthToken(response);
+    if (userId) {
+      const user = await this.authService.whoAmI();
+      this.userService.setLoggedInUser(user);
+      this.router.navigate(['/']);
+    }
+  }
+
   async onFormSubmit() {
     try {
       const authResponse = await this.authService.loginWithEmail({
         username: this.loginForm.value.username,
         password: this.loginForm.value.password as string,
       });
-      console.log(this.loginForm.value.password, 'passworddddddd');
-      const userId = this.authService.setAuthToken(authResponse);
-      if (userId) {
-        const user = await this.authService.whoAmI();
-        this.userService.setLoggedInUser(user);
-        this.router.navigate(['/']);
-      }
+      await this.handleLoggedInResponse(authResponse);
     } catch (error) {
       console.log(error);
     }

@@ -38,6 +38,8 @@ export class AuthService {
     );
   }
 
+
+
   decodeToken(token: string) {
     try {
       const tokenInfo = jwtDecode<TokeInfo>(token);
@@ -56,6 +58,20 @@ export class AuthService {
           password: md5(data.password),
           grant_type: 'password',
           client_id: 'web',
+        })
+      );
+      return response;
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async googleLogin(token: string) {
+    try {
+      const response = await this.loader.loadPromise(
+        this.server.post<AuthResponse>('auth/google', {
+          token,
         })
       );
       return response;
