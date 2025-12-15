@@ -67,13 +67,12 @@ export class Login implements AfterViewInit {
         callback: (response: any) => this.handleCredential(response),
       });
 
-    google.accounts.id.renderButton(document.getElementById('google-btn'), {
-      size: 'large',
-      theme: 'outline',
+      google.accounts.id.renderButton(document.getElementById('google-btn'), {
+        size: 'large',
+        theme: 'outline',
+      });
     });
   }
-
-}
   async handleCredential(response: any) {
     const authResponse = await this.authService.googleLogin(
       response.credential
