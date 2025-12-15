@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, AfterViewInit } from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
 import {
   FormControl,
@@ -28,7 +28,7 @@ declare var google: any;
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
-export class Login {
+export class Login implements AfterViewInit {
   constructor(
     private authService: AuthService,
     private userService: UserService,
@@ -62,18 +62,34 @@ export class Login {
 
 
   ngAfterViewInit() {
-    google.accounts.id.initialize({
-      client_id: environment.O2AuthClientId,
-      callback: (response: any) => this.handleCredential(response),
-    });
+    // Wait for the view to be fully rendered
+    setTimeout(() => {
+      google.accounts.id.initialize({
+        client_id: environment.O2AuthClientId,
+        callback: (response: any) => this.handleCredential(response),
+      });
 
-    google.accounts.id.renderButton(
-      document.getElementById('google-btn'),
-      {
-        theme: 'outline',
-        size: 'large',
+      const googleButtonElement = document.getElementById('google-btn');
+      if (googleButtonElement) {
+        google.accounts.id.renderButton(googleButtonElement, {
+          theme: 'outline',
+          size: 'large',
+          text: 'signin_with',
+          shape: 'rectangular',
+          width: googleButtonElement.offsetWidth || undefined,
+        });
+
+        // Apply custom styles after button is rendered
+        setTimeout(() => {
+          const iframe = googleButtonElement.querySelector('iframe');
+          if (iframe) {
+            iframe.style.borderRadius = '0.5rem';
+            iframe.style.width = '100%';
+            iframe.style.maxWidth = '100%';
+          }
+        }, 100);
       }
-    );
+    }, 0);
   }
 
   async handleCredential(response: any) {

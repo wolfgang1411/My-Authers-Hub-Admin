@@ -1,18 +1,18 @@
-<section class="flex items-center justify-center w-full h-full bg- grow">
+<section class="flex items-center justify-center w-full h-full bg- grow p-4">
   <div
-    class="shadow-md grid grid-cols-2 gap-4 max-w-[70vW] border rounded-lg bg-white h-[600px]"
+    class="shadow-md grid grid-cols-2 gap-4 max-w-[70vW] border rounded-lg bg-white h-[600px] overflow-hidden"
   >
-    <div>
-      <div class="w-full flex justify-center pt-6">
+    <div class="overflow-hidden flex flex-col">
+      <div class="w-full flex justify-center pt-4 pb-2">
         <img
-          class="aspect-square object-contain h-[80px]"
+          class="aspect-square object-contain h-[60px]"
           src="images/my Author(1).png"
           alt="Logo"
         />
       </div>
       <form
         [formGroup]="loginForm"
-        class="flex flex-col items-center justify-center gap-6 p-8"
+        class="flex flex-col items-center justify-center gap-4 px-6 pb-6 overflow-y-auto flex-1 min-h-0"
         (ngSubmit)="onFormSubmit()"
       >
         <label class="text-lg font-semibold text-text-heading">
@@ -93,17 +93,24 @@
             Forgot Password ?
           </a>
         </div>
-        <button matButton="elevated" matButton="filled" class="!bg-primary">
+        <button matButton="elevated" matButton="filled" class="!bg-primary w-full">
           {{ "login" | translate }}
         </button>
 
-        <div id="google-btn"></div>
+        <div class="flex items-center gap-4 w-full my-2">
+          <div class="flex-1 h-px bg-gray-300"></div>
+          <span class="text-sm text-text-secondary">or</span>
+          <div class="flex-1 h-px bg-gray-300"></div>
+        </div>
+
+        <div id="google-btn" class="w-full mb-2"></div>
       </form>
     </div>
-    <div class="rounded-br-lg rounded-tr-lg flex">
+    <div class="rounded-br-lg rounded-tr-lg flex overflow-hidden">
       <img
-        class="object-fill rounded-br-lg rounded-tr-lg max-h-[600px]"
+        class="object-cover rounded-br-lg rounded-tr-lg w-full h-full"
         src="images/my(1).gif"
+        alt="Login illustration"
       />
     </div>
   </div>
