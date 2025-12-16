@@ -1,74 +1,69 @@
-<div class="bg-white rounded-lg p-4 shadow-sm">
-  <div class="flex flex-col items-center gap-2">
+<div class="bg-white rounded-xl p-4 sm:p-6 shadow-sm">
+  <div class="flex flex-col items-center gap-3">
+    <!-- Avatar -->
     <div
-      class="w-28 h-28 rounded-full bg-gray-100 relative overflow-hidden flex items-center justify-center"
+      class="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gray-100 relative flex items-center justify-center"
     >
       <img
-        [src]="
-          userService.loggedInUser$()?.url !== null
-            ? userService.loggedInUser$()?.url
-            : 'images/user-solid-full.svg'
-        "
-        alt="avatar"
-        class="w-[30px] h-[30px] object-cover"
+        [src]="userService.loggedInUser$()?.url ?? 'images/user-solid-full.svg'"
+        class="w-6 h-6 sm:w-8 sm:h-8 object-contain"
       />
+
       <button
         type="button"
-        class="absolute bottom-3 right-5 bg-primary rounded-full w-7 h-7 flex items-center justify-center shadow-md p-1 hover:bg-purple/90"
+        class="absolute bottom-2 right-2 bg-primary rounded-full w-7 h-7 flex items-center justify-center shadow-md hover:bg-primary/90"
         (click)="onClickUpdateImage()"
       >
         <svg-icon
-          class="flex w-6 !fill-white"
+          class="flex w-4 !fill-white"
           src="images/camera-solid-full.svg"
         ></svg-icon>
       </button>
     </div>
-    <div class="flex flex-col items-center gap-2 text-center py-4">
-      <!-- Name -->
-      <h3 class="text-xl font-medium text-gray-800 tracking-tight">
+
+    <!-- Info -->
+    <div class="text-center space-y-1">
+      <h3 class="text-base sm:text-lg font-medium text-gray-800">
         {{ userService.loggedInUser$()?.firstName }}
         {{ userService.loggedInUser$()?.lastName }}
       </h3>
 
-      <!-- Role -->
       <span
-        class="text-xs font-medium px-3 py-1 rounded-full uppercase bg-primary/10 text-primary tracking-wide"
+        class="text-[10px] px-3 py-1 rounded-full uppercase bg-primary/10 text-primary"
       >
         {{ userService.loggedInUser$()?.accessLevel }}
       </span>
-
-      <!-- Email + Phone -->
-      <div class="mt-1 text-sm text-gray-600 leading-relaxed space-y-1">
-        <p class="flex items-center justify-center gap-2">
-          <mat-icon class="text-primary !text-base">mail</mat-icon>
-          {{ userService.loggedInUser$()?.email }}
-        </p>
-
-        <p class="flex items-center justify-center gap-2">
-          <mat-icon class="text-primary !text-base">call</mat-icon>
-          {{ userService.loggedInUser$()?.phoneNumber || "N/A" }}
-        </p>
-      </div>
     </div>
 
-    <div class="w-full flex gap-2">
+    <!-- Contact -->
+    <div class="text-xs sm:text-sm text-gray-600 space-y-1 text-center">
+      <p class="flex items-center justify-center gap-2 truncate">
+        <mat-icon class="!text-sm text-primary">mail</mat-icon>
+        {{ userService.loggedInUser$()?.email }}
+      </p>
+
+      <p class="flex items-center justify-center gap-2">
+        <mat-icon class="!text-sm text-primary">call</mat-icon>
+        {{ userService.loggedInUser$()?.phoneNumber || "N/A" }}
+      </p>
+    </div>
+
+    <!-- Actions -->
+    <div class="w-full flex flex-col sm:flex-row gap-3 pt-3">
       <button
         matButton="filled"
-        class="flex-1 py-2 !bg-primary !text-white rounded hover:bg-primary/85 cursor-pointer"
+        class="w-full sm:flex-1 h-11 sm:h-10 md:h-11 !bg-primary !text-white rounded-lg text-sm sm:text-base flex items-center justify-center gap-2"
         [routerLink]="['/profile']"
-        routerLinkActive="router-link-active"
       >
         <mat-icon>edit</mat-icon>
         Edit Profile
       </button>
-      @if (userService.loggedInUser$()?.accessLevel !== 'AUTHER') {
 
+      @if (userService.loggedInUser$()?.accessLevel !== 'AUTHER') {
       <button
         matButton="filled"
-        class="flex-1 py-2 bg-primary-superlight border rounded hover:bg-primary-light"
-        class="flex-1 py-2 bg-primary-superlight border rounded hover:bg-[var(--primary-light)]"
+        class="w-full sm:flex-1 h-11 sm:h-10 md:h-11 !bg-primary !text-white rounded-lg text-sm sm:text-base flex items-center justify-center gap-2"
         [routerLink]="['/settings']"
-        routerLinkActive="router-link-active"
       >
         <mat-icon>settings</mat-icon>
         Settings

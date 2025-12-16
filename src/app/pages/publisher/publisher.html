@@ -1,51 +1,48 @@
 <div class="flex flex-col flex-grow gap-4">
-  <div class="flex justify-between items-center">
-    <h3 class="heading">
-      {{ "publishers" | translate }}
-    </h3>
-    <div class="flex gap-4">
+  <div
+    class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+  >
+    <h3 class="heading">{{ "publishers" | translate }}</h3>
+
+    <div class="flex flex-wrap gap-2 sm:gap-3">
       <button
-        matButton
         matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        class="!bg-primary text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
         [routerLink]="['/publisher', 0]"
-        routerLinkActive="router-link-active"
       >
-        <mat-icon class="material-icons">add_circle_outline</mat-icon>
-        {{ "addpublisher" | translate }}
+        <mat-icon class="!text-sm">add</mat-icon>
+        <span>{{ "addpublisher" | translate }}</span>
       </button>
+
       <button
-        matButton
         matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        class="!bg-primary text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
         (click)="invitePublisher()"
       >
-        <mat-icon class="material-icons">person_add</mat-icon>
-        {{ "invitepublisher" | translate }}
+        <mat-icon class="!text-sm">person_add</mat-icon>
+        <span>{{ "invitepublisher" | translate }}</span>
       </button>
+
       <button
-        matButton
         matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        class="!bg-primary text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
         [routerLink]="['/update-tickets']"
         [queryParams]="{ tab: 'publisher' }"
-        routerLinkActive="router-link-active"
       >
-        <mat-icon class="material-icons">support_agent</mat-icon>
-        {{ "raisedtickets" | translate }}
+        <mat-icon class="!text-sm">support_agent</mat-icon>
+        <span>{{ "raisedtickets" | translate }}</span>
       </button>
+
       <button
-        matButton
         matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        class="!bg-primary text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
         (click)="onExportToExcel()"
       >
-        <mat-icon class="material-icons">download</mat-icon>
-        {{ "export" | translate }}
+        <mat-icon class="!text-sm">download</mat-icon>
+        <span>{{ "export" | translate }}</span>
       </button>
     </div>
   </div>
-
   <div class="flex md:flex-row flex-col justify-between w-full gap-4">
     <div
       class="flex h-[38px] items-center justify-center md:min-w-[480px] min-w-full gap-2"
@@ -67,54 +64,100 @@
         {{ "search" | translate }}
       </button>
     </div>
-
     <div class="flex gap-2 pr-2">
       <mat-form-field class="compact-select h-[42px]" appearance="outline">
         <mat-select
           (selectionChange)="onStatusChange($event.value)"
           [value]="filter().status"
         >
-          <mat-option value="ALL">ALL</mat-option>
-          @for (status of publisherDBStatus(); track $index) {
-          <mat-option [value]="status">{{ status | translate }}</mat-option>
-          }
+          <mat-option value="ALL">ALL</mat-option> @for (status of
+          publisherDBStatus(); track $index) {
+          <mat-option [value]="status">{{ status | translate }}</mat-option> }
         </mat-select>
       </mat-form-field>
-      <!-- <button
-        matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
-      >
-        <mat-icon class="material-icons">filter_list</mat-icon>
-        {{ "filter" | translate }}
-      </button> -->
     </div>
   </div>
-  <!-- <div class="flex gap-2 pt-4">
-    <button class="!bg-primary" matButton="filled">
-      {{ "all" | translate }}
-    </button>
-    <button class="!bg-primary" matButton="filled">
-      {{ "active" | translate }}
-    </button>
-    <button class="!bg-primary" matButton="filled">
-      {{ "inactive" | translate }}
-    </button>
-    <button class="!bg-primary" matButton="filled">
-      {{ "dormant" | translate }}
-    </button>
-  </div> -->
 
-  <app-list-table
-    class="pt-6"
-    [dataSource]="dataSource"
-    [displayedColumns]="displayedColumns"
-    [actionTemplate]="actionButtons"
-    [isSortable]="isSortable"
-    (sortChange)="onSortChange($event)"
+  <div class="hidden md:block pt-6">
+    <app-list-table
+      class="pt-6"
+      [dataSource]="dataSource"
+      [displayedColumns]="displayedColumns"
+      [actionTemplate]="actionButtons"
+      [isSortable]="isSortable"
+      (sortChange)="onSortChange($event)"
+    >
+    </app-list-table>
+  </div>
+  <div class="md:hidden flex flex-col gap-4 pt-6">
+    @for (publisher of dataSource.data; track publisher.id) {
+    <div class="bg-white rounded-xl shadow-md p-4 border">
+      <!-- Header -->
+      <div class="flex justify-between items-start mb-2">
+        <div>
+          <h4 class="font-medium text-gray-800">
+            {{ publisher.name }}
+          </h4>
+          <p class="text-sm text-gray-400">
+            {{ publisher.email }}
+          </p>
+        </div>
+        <span class="text-sm px-2 py-1 rounded-full bg-primary/10 text-primary">
+          {{ publisher.status | translate }}
+        </span>
+      </div>
+      <div class="grid grid-cols-2 gap-3 text-sm text-gray-600 my-3">
+        <div>
+          <p class="text-sm text-gray-400">Titles</p>
+          <p>{{ publisher.noOfTitles }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-400">Authors</p>
+          <p>{{ publisher.noOfAuthors }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-400">Phone</p>
+          <p>
+            {{ publisher?.user?.phoneNumber }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex flex-wrap gap-2 pt-2">
+        <button
+          mat-icon-button
+          class="!bg-primary"
+          [routerLink]="['/publisherDetails', publisher.id]"
+        >
+          <mat-icon class="!text-white">visibility</mat-icon>
+        </button>
+
+        @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
+        <button
+          mat-icon-button
+          class="!bg-primary"
+          [routerLink]="['/publisher', publisher.id]"
+        >
+          <mat-icon class="!text-white">edit</mat-icon>
+        </button>
+        }
+
+        <button
+          mat-icon-button
+          class="!bg-primary"
+          (click)="onClickChangePassword(publisher)"
+        >
+          <mat-icon class="!text-white">lock_reset</mat-icon>
+        </button>
+      </div>
+    </div>
+    }
+  </div>
+
+  <div
+    class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4"
   >
-  </app-list-table>
-
-  <div class="flex items-center justify-between gap-4 mt-4">
     <div class="flex items-center gap-2">
       <span class="text-sm text-[var(--text-secondary)]">
         {{ "page" | translate }} {{ filter().page || 1 }}
