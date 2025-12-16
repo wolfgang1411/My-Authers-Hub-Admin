@@ -1,31 +1,38 @@
-<main
-  class="flex min-h-screen bg-gray-50 text-slate-800"
-  [ngClass]="{
-    'flex-col': !showSidebar()
-  }"
->
-  <!-- Sidebar -->
+<main class="flex min-h-screen bg-gray-50 text-slate-800">
+  <!-- MOBILE OVERLAY -->
+  @if (isMobile() && mobileSidebarOpen()) {
+  <div
+    class="fixed inset-0 bg-black/40 z-20"
+    (click)="closeMobileSidebar()"
+  ></div>
+  }
+
+  <!-- Sidebar (SAME SIDEBAR, MOBILE BEHAVIOR ADDED) -->
   @if (showSidebar()) {
   <aside
-    class="group z-30 h-screen bg-primary-superlight transition-all duration-300 w-[100px] hover:w-[280px] shadow-md sticky top-0"
+    class="group z-30 h-screen bg-primary-superlight shadow-md transition-all duration-300 w-[100px] hover:w-[280px] left-0 transform fixed lg:sticky lg:top-0"
+    [class.-translate-x-full]="isMobile() && !mobileSidebarOpen()"
+    [class.translate-x-0]="isMobile() && mobileSidebarOpen()"
   >
-    <app-sidebar></app-sidebar>
+    <app-sidebar (click)="closeMobileSidebar()"></app-sidebar>
   </aside>
   }
 
   <!-- Main Section -->
   <section class="flex-1 flex flex-col min-h-screen">
-    <!-- Header -->
     @if (showHeader()) {
-    <app-header class="sticky top-0 z-20 shadow-sm"></app-header>
+    <app-header
+      class="sticky top-0 z-20 shadow-sm"
+      (menuToggle)="toggleMobileSidebar()"
+    ></app-header>
     }
 
-    <!-- Page Content -->
     <div
-      class="flex-1 p-6 md:p-8 overflow-y-auto overflow-x-hidden transition-all duration-300 flex flex-col"
+      class="flex-1 p-6 md:p-8 overflow-y-auto overflow-x-hidden flex flex-col"
     >
       <ng-content></ng-content>
     </div>
+
     <app-footer></app-footer>
   </section>
 </main>

@@ -1,7 +1,9 @@
 import {
   Component,
+  EventEmitter,
   Inject,
   OnInit,
+  Output,
   Signal,
   signal,
   ViewChild,
@@ -47,7 +49,11 @@ export class Sidebar implements OnInit {
   showHeader!: Signal<boolean>;
 
   mode: 'side' | 'over' = 'side';
+  @Output() closeSidebar = new EventEmitter<void>();
 
+  onItemClick() {
+    this.closeSidebar.emit();
+  }
   sidebarMenu() {
     const menuItems = [
       { name: 'Dashboard', url: '/dashboard', icon: 'dashboard' },
