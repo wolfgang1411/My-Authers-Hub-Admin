@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "setup": "node setup.js",
-    "prebuild": "node setup.js",
+    "setup": "NODE_ENV=development node setup.js",
+    "setup:prod": "NODE_ENV=production node setup.js",
+    "prebuild": "NODE_ENV=production node setup.js",
     "build": "ng build --configuration production && cp _redirects dist/my-authors-hub",
     "start": "ng serve --host 0.0.0.0 --port 4200",
     "serve:static": "npx serve dist/my-authors-hub/browser",

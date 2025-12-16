@@ -2,8 +2,24 @@ import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
 
+// Determine environment first
+const nodeEnv = process.env.NODE_ENV || "development";
+const isDev = nodeEnv !== "production";
+
+// Set envPath based on environment
+const envPath = isDev
+  ? path.resolve(process.cwd(), ".env.development")
+  : path.resolve(process.cwd(), ".env.production");
+
+// Fallback to .env if specific env file doesn't exist
+const finalEnvPath = fs.existsSync(envPath)
+  ? envPath
+  : path.resolve(process.cwd(), ".env");
+
 // Load environment variables
-dotenv.config();
+dotenv.config({
+  path: finalEnvPath,
+});
 
 // Resolve environments folder path
 const envDir = path.resolve(process.cwd(), "src/environments");
@@ -15,7 +31,6 @@ if (!fs.existsSync(envDir)) {
 }
 
 const apiUrl = process.env.apiUrl || "http://localhost:3001/";
-const nodeEnv = process.env.NODE_ENV || "development";
 
 const O2AUTH_CLIENT_ID = process.env.O2AUTH_CLIENT_ID || "1234567890";
 const O2AUTH_CLIENT_SECRET = process.env.O2AUTH_CLIENT_SECRET || "1234567890";
