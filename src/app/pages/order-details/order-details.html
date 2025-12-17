@@ -173,6 +173,7 @@
           mat-stroked-button
           color="warn"
           class="!text-white !bg-red-colour"
+          (click)="onCancel(false)"
         >
           <mat-icon>block</mat-icon>
           {{ "cancelorder" | translate }}
@@ -181,6 +182,7 @@
           mat-stroked-button
           color="warn"
           class="!text-white !bg-red-colour"
+          (click)="onCancel(true)"
         >
           <mat-icon>undo</mat-icon>
           {{ "cancelandrefund" | translate }}

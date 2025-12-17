@@ -97,6 +97,50 @@ export class OrderDetails implements OnInit {
     }
   }
 
+  async onCancel(refund: boolean) {
+    if (!this.order()?.id) return;
+    const result = await Swal.fire({
+      icon: 'warning',
+      title: this.translateService.instant('areyousure') || 'Are you sure?',
+      text:
+        (refund
+          ? this.translateService.instant('cancelandrefund')
+          : this.translateService.instant('cancelorder')) ||
+        'This action cannot be undone',
+      showCancelButton: true,
+      confirmButtonText: this.translateService.instant('yes') || 'Yes',
+      cancelButtonText: this.translateService.instant('no') || 'No',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await this.orderService.cancelOrder(this.order()!.id, refund);
+        const refreshed = await this.orderService.fetchOrder(this.order()!.id);
+        this.order.set(refreshed);
+        Swal.fire({
+          icon: 'success',
+          title:
+            this.translateService.instant('statusupdated') || 'Status updated',
+          text:
+            this.translateService.instant('order') +
+            ' ' +
+            (this.translateService.instant('updatedsuccessfully') ||
+              'updated successfully'),
+        });
+      } catch (error) {
+        this.logger.logError(error);
+        Swal.fire({
+          icon: 'error',
+          title: this.translateService.instant('error') || 'Error',
+          text:
+            (error as any)?.message ||
+            this.translateService.instant('somethingwentwrong') ||
+            'Something went wrong',
+        });
+      }
+    }
+  }
+
   getInvoice(transactions?: Transaction[]) {
     const successTransaction = transactions?.filter(
       (tx) => tx.status === TransactionStatus.SUCCESS

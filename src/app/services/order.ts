@@ -51,4 +51,16 @@ export class OrderService {
       throw error;
     }
   }
+
+  async cancelOrder(id: number, refund: boolean) {
+    try {
+      return await this.loader.loadPromise(
+        this.serverService.patch<Order>(`order/${id}/cancel`, { refund }),
+        'order'
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
 }
