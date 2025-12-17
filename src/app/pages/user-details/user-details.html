@@ -34,8 +34,9 @@
           {{ user()?.status || (user()?.active ? "ACTIVE" : "DEACTIVE") }}
         </span>
         <button
-          class="!bg-primary"
+          class="status-toggle"
           mat-icon-button
+          type="button"
           (click)="changeStatus(getNextStatus(user()?.status))"
           [matTooltip]="
             getNextStatus(user()?.status) === 'ACTIVE'
@@ -43,58 +44,8 @@
               : ('deactivatestatus' | translate)
           "
         >
-          <mat-icon class="!text-white">
-            {{
-              getNextStatus(user()?.status) === 'ACTIVE'
-                ? 'toggle_on'
-                : 'toggle_off'
-            }}
-          </mat-icon>
+          <mat-icon>sync_alt</mat-icon>
         </button>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="bg-white shadow-md rounded-md p-4 user-card">
-        <h3 class="text-md font-medium flex items-center gap-2">
-          <mat-icon>badge</mat-icon>
-          {{ "userinfo" | translate }}
-        </h3>
-        <div class="mt-3 text-sm space-y-2">
-          <div class="flex justify-between gap-2">
-            <span class="font-semibold">{{ "id" | translate }}</span>
-            <span>#{{ user()?.id }}</span>
-          </div>
-          <div class="flex justify-between gap-2">
-            <span class="font-semibold">{{ "accesslevel" | translate }}</span>
-            <span>{{ user()?.accessLevel }}</span>
-          </div>
-          <div class="flex justify-between gap-2">
-            <span class="font-semibold">{{ "createdat" | translate }}</span>
-            <span>{{ user()?.created_date | date : "medium" }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-white shadow-md rounded-md p-4 user-card">
-        <h3 class="text-md font-medium flex items-center gap-2">
-          <mat-icon>account_balance_wallet</mat-icon>
-          {{ "wallet" | translate }}
-        </h3>
-        <div class="mt-3 text-sm space-y-2">
-          <div class="flex justify-between gap-2">
-            <span class="font-semibold">{{ "totalamount" | translate }}</span>
-            <span>{{ user()?.wallet?.totalAmount ?? "—" }}</span>
-          </div>
-          <div class="flex justify-between gap-2">
-            <span class="font-semibold">{{ "holdamount" | translate }}</span>
-            <span>{{ user()?.wallet?.holdAmount ?? "—" }}</span>
-          </div>
-          <div class="flex justify-between gap-2">
-            <span class="font-semibold">{{ "lifetimeearnings" | translate }}</span>
-            <span>{{ user()?.wallet?.lifeTimeEarnings ?? "—" }}</span>
-          </div>
-        </div>
       </div>
     </div>
 
