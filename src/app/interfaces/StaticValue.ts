@@ -1,8 +1,8 @@
 export enum UserStatus {
-  ACTIVE,
-  DEACTIVE,
-  DELETED,
-  PENDING,
+  ACTIVE = 'ACTIVE',
+  DEACTIVE = 'DEACTIVE',
+  DELETED = 'DELETED',
+  PENDING = 'PENDING',
 }
 
 export enum UserAccessLevel {

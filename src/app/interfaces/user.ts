@@ -3,6 +3,8 @@ import { Author } from './Authors';
 import { Publishers } from './Publishers';
 import { BankDetailsType, UpdateTicketType } from './index';
 import { Wallet } from './Wallet';
+import { BasicFilter } from './pagination';
+import { UserStatus } from './StaticValue';
 
 export interface User {
   id: number;
@@ -14,10 +16,15 @@ export interface User {
   lastName: string;
   phoneNumber: string;
   url?: string;
+  profileImage?: string | null;
   userAddress?: UserAddress;
   publisher?: Publishers;
   auther?: Author;
   address: Address[];
+  active?: boolean;
+  status?: UserStatus;
+  created_date?: string;
+  modified_date?: string;
 }
 
 export interface CreateUser {
@@ -74,4 +81,12 @@ export enum AccessLevelEnum {
   'AUTHER',
   'USER',
   'SUPERADMIN',
+}
+
+export interface UserFilter extends BasicFilter {
+  searchStr?: string;
+  status?: UserStatus | UserStatus[];
+  orderBy?: string;
+  orderByVal?: 'asc' | 'desc';
+  accessLevel?: AccessLevel;
 }

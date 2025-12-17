@@ -210,6 +210,24 @@ export const routes: Routes = [
     },
   },
   {
+    path: 'users',
+    loadComponent: () =>
+      import('./pages/users/users').then((c) => c.Users),
+    canActivate: [privateRouteGuard],
+    data: {
+      accessLevels: 'SUPERADMIN',
+    },
+  },
+  {
+    path: 'users/:id',
+    loadComponent: () =>
+      import('./pages/user-details/user-details').then((c) => c.UserDetails),
+    canActivate: [privateRouteGuard],
+    data: {
+      accessLevels: 'SUPERADMIN',
+    },
+  },
+  {
     path: 'coupon',
     loadComponent: () =>
       import('./pages/coupon/coupon').then((c) => c.CouponComponent),

@@ -681,5 +681,7 @@
   "requiredvalueerror": "This field is required",
   "minlengtherror": "Minimum {{length}} characters required",
   "skunumberrequired": "SKU number is required",
-  "changedeliverystatus": "Change Delivery Status"
+  "changedeliverystatus": "Change Delivery Status",
+  "userstatuswarningtitle": "Change user status?",
+  "userstatuswarningtext": "Do you want to change status to {{status}}?"
 }
