@@ -22,7 +22,7 @@ export interface Order {
 }
 
 export interface OrderFilter {
-  status?: OrderStatus;
+  status?: OrderStatus | OrderStatus[];
   deliveryStatus?: DeliveryStatus;
   page?: number;
   itemsPerPage?: number;
@@ -30,4 +30,3 @@ export interface OrderFilter {
   orderBy?: string;
   orderByVal?: 'asc' | 'desc';
 }
-

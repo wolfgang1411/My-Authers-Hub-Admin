@@ -64,7 +64,7 @@ export class Orders implements OnInit {
     searchStr: '',
     orderBy: 'id',
     orderByVal: 'desc',
-    status: 'COMPLETED' as OrderStatus,
+    status: ['COMPLETED', 'CANCELLED'] as OrderStatus[],
     deliveryStatus: undefined,
   });
 
