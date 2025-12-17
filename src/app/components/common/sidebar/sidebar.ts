@@ -62,7 +62,8 @@ export class Sidebar implements OnInit {
       { name: 'Titles', url: '/titles', icon: 'library_books' },
       { name: 'ISBN', url: '/isbn', icon: 'qr_code' },
       { name: 'Royalties', url: '/royalties', icon: 'attach_money' },
-      { name: 'Bookings', url: '/bookings', icon: 'book_online' },
+      { name: 'Users', url: '/users', icon: 'group' },
+      { name: 'Orders', url: '/orders', icon: 'receipt_long' },
       { name: 'Transactions', url: '/transactions', icon: 'receipt_long' },
       { name: 'Payouts', url: '/payouts', icon: 'credit_card' },
       { name: 'Wallet', url: '/wallet', icon: 'credit_card' },
@@ -96,8 +97,12 @@ export class Sidebar implements OnInit {
       if (accessLevel !== 'SUPERADMIN' && item.name === 'Transactions') {
         return false;
       }
-      // Hide Bookings for non-superadmin (only show for superadmin)
-      if (accessLevel !== 'SUPERADMIN' && item.name === 'Bookings') {
+      // Hide Users for non-superadmin
+      if (accessLevel !== 'SUPERADMIN' && item.name === 'Users') {
+        return false;
+      }
+      // Hide Orders for non-superadmin (only show for superadmin)
+      if (accessLevel !== 'SUPERADMIN' && item.name === 'Orders') {
         return false;
       }
       if (

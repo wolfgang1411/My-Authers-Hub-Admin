@@ -123,6 +123,26 @@ export const routes: Routes = [
       import('./pages/add-publisher/add-publisher').then((C) => C.AddPublisher),
   },
   {
+    path: 'orders',
+    loadComponent: () =>
+      import('./pages/orders/orders').then((c) => c.Orders),
+    canActivate: [privateRouteGuard],
+  },
+  {
+    path: 'orders/:id',
+    loadComponent: () =>
+      import('./pages/order-details/order-details').then(
+        (c) => c.OrderDetails
+      ),
+    canActivate: [privateRouteGuard],
+  },
+  {
+    path: 'transactions',
+    loadComponent: () =>
+      import('./pages/transactions/transactions').then((c) => c.Transactions),
+    canActivate: [privateRouteGuard],
+  },
+  {
     path: 'bookings',
     loadComponent: () =>
       import('./pages/bookings/bookings').then((c) => c.Bookings),
@@ -134,12 +154,6 @@ export const routes: Routes = [
       import('./pages/booking-details/booking-details').then(
         (c) => c.BookingDetails
       ),
-    canActivate: [privateRouteGuard],
-  },
-  {
-    path: 'transactions',
-    loadComponent: () =>
-      import('./pages/transactions/transactions').then((c) => c.Transactions),
     canActivate: [privateRouteGuard],
   },
   {
@@ -190,6 +204,24 @@ export const routes: Routes = [
       import('./pages/notifications/notifications').then(
         (c) => c.Notifications
       ),
+    canActivate: [privateRouteGuard],
+    data: {
+      accessLevels: 'SUPERADMIN',
+    },
+  },
+  {
+    path: 'users',
+    loadComponent: () =>
+      import('./pages/users/users').then((c) => c.Users),
+    canActivate: [privateRouteGuard],
+    data: {
+      accessLevels: 'SUPERADMIN',
+    },
+  },
+  {
+    path: 'users/:id',
+    loadComponent: () =>
+      import('./pages/user-details/user-details').then((c) => c.UserDetails),
     canActivate: [privateRouteGuard],
     data: {
       accessLevels: 'SUPERADMIN',

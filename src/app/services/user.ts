@@ -5,6 +5,8 @@ import {
   UpdateUser,
   UpdateUserWithTicket,
   User,
+  UserFilter,
+  UserStatus,
   UpdateTicket,
   UpdateTicketFilter,
   Pagination,
@@ -26,6 +28,37 @@ export class UserService {
 
   private loggedInUser = signal<User | null>(null);
   loggedInUser$ = this.loggedInUser.asReadonly();
+
+  async fetchUsers(filter: UserFilter) {
+    try {
+      const { status, accessLevel = 'USER', ...rest } = filter || {};
+      const normalizedStatus = Array.isArray(status)
+        ? status
+        : status
+          ? [status]
+          : undefined;
+
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<User>>('users', {
+          ...rest,
+          status: normalizedStatus,
+          accessLevel,
+        })
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async fetchUser(id: number) {
+    try {
+      return await this.loader.loadPromise(this.server.get<User>(`users/${id}`));
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
 
   async getUserById(userId: number) {
     try {
@@ -120,6 +153,17 @@ export class UserService {
       };
       this.loggedInUser.set(temp as User);
       return media;
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async updateStatus(id: number, status: UserStatus) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.patch<User>(`users/${id}/status`, { status })
+      );
     } catch (error) {
       this.logger.logError(error);
       throw error;
