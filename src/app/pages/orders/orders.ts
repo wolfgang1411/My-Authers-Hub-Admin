@@ -20,6 +20,8 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
 import { RouterModule } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
 import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTableDataSource } from '@angular/material/table';
 import { TranslateService } from '@ngx-translate/core';
 import { Logger } from '../../services/logger';
@@ -39,6 +41,8 @@ import { StaticValuesService } from 'src/app/services/static-values';
     MatIcon,
     MatButton,
     MatIconButton,
+    MatMenuModule,
+    MatTooltipModule,
   ],
   templateUrl: './orders.html',
   styleUrl: './orders.css',
@@ -98,6 +102,13 @@ export class Orders implements OnInit {
     return [{ label: 'all', value: undefined }, ...dynamicTabs];
   });
 
+  deliveryStatusMenuOptions = computed(() => {
+    const enums = this.staticValuesService.staticValues()?.DeliveryStatus || {};
+    return Object.keys(enums).map(
+      (key) => enums[key as keyof typeof enums] as DeliveryStatus
+    );
+  });
+
   ngOnInit(): void {
     this.updateOrderList();
   }
@@ -148,6 +159,56 @@ export class Orders implements OnInit {
     this.orders.set(orders.items);
     this.lastPage.set(Math.ceil(orders.totalCount / orders.itemsPerPage));
     this.mapOrdersToDataSource(orders.items);
+  }
+
+  private canChangeDeliveryStatus(status?: DeliveryStatus) {
+    return true;
+    // return status !== 'RETURNED' && status !== 'CANCELLED';
+  }
+
+  async changeDeliveryStatus(orderId: number, status: DeliveryStatus) {
+    if (!this.canChangeDeliveryStatus(status)) return;
+    try {
+      await this.orderService.updateDeliveryStatus(orderId, status);
+      // Optimistic UI update without refetch
+      const updater = (list?: Order[]) =>
+        (list || []).map((o) =>
+          o.id === orderId ? { ...o, deliveryStatus: status } : o
+        );
+
+      this.orders.update((o) => updater(o));
+
+      // Update cached pages
+      const newCache = new Map(this.pageCache);
+      newCache.forEach((page, key) => {
+        newCache.set(key, updater(page));
+      });
+      this.pageCache = newCache;
+
+      // Refresh table datasource from current orders signal
+      this.mapOrdersToDataSource(this.orders());
+
+      Swal.fire({
+        icon: 'success',
+        title:
+          this.translateService.instant('statusupdated') || 'Status updated',
+        text:
+          this.translateService.instant('deliverystatus') +
+          ' ' +
+          (this.translateService.instant('updatedsuccessfully') ||
+            'updated successfully'),
+      });
+    } catch (error) {
+      this.logger.logError(error);
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error') || 'Error',
+        text:
+          (error as any)?.message ||
+          this.translateService.instant('somethingwentwrong') ||
+          'Something went wrong',
+      });
+    }
   }
 
   private mapOrdersToDataSource(orders: Order[]) {

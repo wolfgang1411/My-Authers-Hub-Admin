@@ -144,6 +144,31 @@
       >
         <mat-icon class="!text-white">visibility</mat-icon>
       </button>
+      <button
+        class="!px-3 !py-1 !min-w-[140px] !border !border-[var(--primary)]"
+        mat-stroked-button
+        color="primary"
+        [matMenuTriggerFor]="deliveryMenu"
+        [disabled]="
+          element.deliverystatus === 'RETURNED' ||
+          element.deliverystatus === 'CANCELLED'
+        "
+        matTooltip="{{ 'changedeliverystatus' | translate }}"
+      >
+        <mat-icon>swap_horiz</mat-icon>
+        <span class="text-xs">{{ "changedeliverystatus" | translate }}</span>
+      </button>
+      <mat-menu #deliveryMenu="matMenu">
+        @for (opt of deliveryStatusMenuOptions(); track opt) {
+        <button
+          mat-menu-item
+          [disabled]="opt === element.deliverystatus"
+          (click)="changeDeliveryStatus(element.id, opt)"
+        >
+          {{ opt.toLowerCase() | translate }}
+        </button>
+        }
+      </mat-menu>
     </div>
   </ng-template>
 </div>
