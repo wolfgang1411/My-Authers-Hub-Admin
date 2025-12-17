@@ -1,24 +1,18 @@
-<div class="min-h-screen bg-gray-50 p-5">
+<div class="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-5">
   <!-- ░ DASHBOARD HEADER ░ -->
-  <div class="flex items-center justify-between mb-8">
-    <h1 class="text-2xl font-medium text-slate-800">Dashboard Overview</h1>
-    <div class="flex items-center gap-3">
-      <!-- <button
-        class="px-4 py-2 text-white rounded-lg shadow text-sm bg-primary hover:bg-primary/90"
-      >
-        Home
-      </button> -->
-      <!-- <button
-        class="px-4 py-2 text-sm bg-white rounded-lg shadow hover:bg-gray-100"
-        (click)="toggleTheme()"
-      >
-        Theme
-      </button> -->
-    </div>
+  <div
+    class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6"
+  >
+    <h1 class="text-xl sm:text-2xl font-medium text-slate-800">
+      Dashboard Overview
+    </h1>
   </div>
+
   <!-- ░ NOTIFICATIONS BAR ░ -->
   @if (userService.loggedInUser$()?.accessLevel !== 'AUTHER') {
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+  <div
+    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 mb-8"
+  >
     <!-- Pending Titles -->
     <div
       class="flex items-center justify-between p-4 rounded-xl shadow-md cursor-pointer bg-gradient-to-r from-[#e9d5ff] to-[#c4b5fd] hover:scale-[1.03] hover:shadow-xl transition-all duration-300"
@@ -72,7 +66,7 @@
       <app-sales-analytics-component
         class="bg-white p-6 rounded-xl shadow-md border border-gray-200"
       ></app-sales-analytics-component>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[250px]">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 min-h-[250px]">
         @if (userService.loggedInUser$()?.accessLevel !== 'AUTHER') {
         <app-recent-authors
           class="bg-white p-6 rounded-xl shadow-md border border-gray-200"
@@ -122,7 +116,7 @@
     <div class="flex flex-col gap-6">
       <app-profile-card-component></app-profile-card-component>
       <app-recent-orders-component
-        class="min-h-[200px] bg-white p-6 rounded-xl shadow-md border border-gray-200"
+        class="min-h-[200px] bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-200"
       >
         <ng-template #empty>
           <div

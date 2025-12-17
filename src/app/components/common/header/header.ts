@@ -1,4 +1,10 @@
-import { Component, computed, OnInit } from '@angular/core';
+import {
+  Component,
+  computed,
+  EventEmitter,
+  OnInit,
+  Output,
+} from '@angular/core';
 import { SharedModule } from '../../../modules/shared/shared-module';
 import { LayoutService } from '../../../services/layout';
 import { UserService } from '../../../services/user';
@@ -31,6 +37,11 @@ export class Header implements OnInit {
   ) {}
   pageTitle: string = '';
   pageIcon: string = 'dashboard';
+  @Output() menuToggle = new EventEmitter<void>();
+
+  onMenuClick() {
+    this.menuToggle.emit();
+  }
   ngOnInit() {
     this.layoutService.pageTitle$.subscribe((title) => {
       this.pageTitle = title;

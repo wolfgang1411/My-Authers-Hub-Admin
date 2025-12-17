@@ -3,23 +3,18 @@
 >
   <div class="flex items-center gap-4">
     <button
-      (click)="onSidebarToggle()"
+      (click)="onMenuClick()"
       class="mobile:hidden flex items-center justify-center w-10 h-10 rounded-full hover:bg-primary/10 transition"
     >
       <mat-icon class="text-primary">menu</mat-icon>
     </button>
-
     <div
       class="hidden mobile:flex items-center gap-2 text-gray-600 text-base font-medium tracking-wide"
     >
-      <mat-icon class="text-primary text-lg">
-        {{ pageIcon }}
-      </mat-icon>
-
+      <mat-icon class="text-primary text-lg"> {{ pageIcon }} </mat-icon>
       <span>{{ pageTitle || "Dashboard" }}</span>
     </div>
   </div>
-
   <div class="flex items-center gap-4 mr-4">
     <div
       class="flex items-center gap-3 cursor-pointer"
@@ -27,7 +22,7 @@
       routerLinkActive="router-link-active"
     >
       <div
-        class="w-[50px] h-[50px] rounded-full bg-gray-300 flex items-center justify-center overflow-hidden"
+        class="w-[40px] h-[40px] sm:w-[50px] sm:h-[50px] rounded-full bg-gray-300 flex items-center justify-center overflow-hidden"
       >
         @if (userService.loggedInUser$()?.url !==null) {
         <img
@@ -41,14 +36,12 @@
         />
         }
       </div>
-
       <div class="hidden mobile:flex flex-col">
         <span class="text-sm text-gray-500">{{ "hi" | translate }},</span>
         <span class="font-semibold text-gray-800">{{ fullName() }}</span>
       </div>
     </div>
     @if (!!userService.loggedInUser$()) {
-    <app-notification></app-notification>
-    }
+    <app-notification></app-notification> }
   </div>
 </header>

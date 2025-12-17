@@ -1,28 +1,27 @@
 <div
-  class="w-full rounded-2xl bg-surface h-full shadow-lg p-6 border border-gray-200"
+  class="w-full rounded-2xl bg-surface shadow-lg p-4 sm:p-6 border border-gray-200"
 >
-  <div class="flex items-center justify-between mb-6 pb-3 border-b">
-    <h2 class="text-lg font-medium text-gray-700">Sales Analytics</h2>
+  <!-- Header -->
+  <div
+    class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-3 border-b"
+  >
+    <h2 class="text-sm sm:text-lg font-medium text-gray-700">
+      Sales Analytics
+    </h2>
 
     <mat-radio-group
-      class="flex items-center gap-4"
+      class="flex flex-wrap gap-3 text-xs sm:text-sm"
       [value]="salesDuration.value"
       (change)="salesDuration.next($event.value)"
     >
-      <mat-radio-button value="WEEKLY" class="!text-sm"
-        >Weekly</mat-radio-button
-      >
-      <mat-radio-button value="MONTHLY" class="!text-sm"
-        >Monthly</mat-radio-button
-      >
-      <mat-radio-button value="YEARLY" class="!text-sm"
-        >Yearly</mat-radio-button
-      >
+      <mat-radio-button value="WEEKLY">Weekly</mat-radio-button>
+      <mat-radio-button value="MONTHLY">Monthly</mat-radio-button>
+      <mat-radio-button value="YEARLY">Yearly</mat-radio-button>
     </mat-radio-group>
   </div>
 
-  <!-- Chart Graph -->
-  <div class="relative h-[340px] overflow-visible">
+  <!-- Chart -->
+  <div class="relative h-[240px] sm:h-[340px]">
     <canvas
       baseChart
       [data]="chartData()"
