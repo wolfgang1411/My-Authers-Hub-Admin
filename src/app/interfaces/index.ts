@@ -22,3 +22,4 @@ export * from './Sales';
 export * from './Dashboard';
 export * from './Platform';
 export * from './UpdateTicket';
+export * from './Order';

@@ -31,13 +31,11 @@ export class TransactionTable {
     // 👇 react whenever transactions() changes
     effect(() => {
       const txs = this.transactions();
-      console.log({ txs }, 'finaltransacccc');
-
       this.dataSource.data =
         txs?.map((transaction) => ({
           ...transaction,
           id: transaction.id,
-          email: transaction.user.email,
+          email: transaction.user?.email ?? '—',
           orderid: '#' + transaction.id,
           txnid: transaction.merchantTxnId || 'N/A',
         })) ?? [];

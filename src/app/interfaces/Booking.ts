@@ -10,6 +10,8 @@ export interface Booking {
   titleDetails: Title;
   userId: number;
   title: Title;
+  quantity?: number;
+  amount?: number;
   totalAmount: number;
   status: BookingStatus;
   bookingDate: string;

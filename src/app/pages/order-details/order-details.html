@@ -1,0 +1,206 @@
+<div class="order-details flex flex-col h-full p-4">
+  <div class="flex justify-between items-center">
+    <h2 class="text-xl heading !text-primary">
+      {{ "orderdetails" | translate }}
+    </h2>
+    <app-back></app-back>
+  </div>
+  <div
+    class="flex justify-between items-center bg-primary text-white p-4 rounded-md shadow order-card"
+  >
+    <div class="flex justify-between gap-2 w-full items-center">
+      <h2 class="text-lg font-semibold">
+        {{ "order" | translate }}: #{{ orderId }}
+      </h2>
+      <p class="text-sm">
+        {{ "createdat" | translate }}:
+        {{ order()?.createdAt | date : "mediumDate" }}
+      </p>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="flex flex-col gap-4">
+      <div class="bg-white shadow-md rounded-md p-4 order-card">
+        <h3 class="order-section-title text-md font-medium">
+          <mat-icon>menu_book</mat-icon>
+          {{ "ordersummary" | translate }}
+        </h3>
+
+        <div class="summary-grid mt-3">
+          <div class="summary-item">
+            <span class="summary-label">
+              {{ "orderid" | translate }}
+            </span>
+            <span class="summary-value">#{{ order()?.id }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">
+              {{ "status" | translate }}
+            </span>
+            <span
+              class="px-3 py-1 rounded-full text-xs font-semibold inline-block summary-value"
+              [ngClass]="{
+                'bg-yellow-100 text-yellow-800':
+                  order()?.deliveryStatus === 'PENDING',
+                'bg-blue-100 text-blue-800':
+                  order()?.deliveryStatus === 'SHIPPED',
+                'bg-green-100 text-green-800':
+                  order()?.deliveryStatus === 'DELIVERED',
+                'bg-red-100 text-red-800':
+                  order()?.deliveryStatus === 'RETURNED' ||
+                  order()?.deliveryStatus === 'CANCELLED'
+              }"
+            >
+              {{ order()?.deliveryStatus }}
+            </span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">
+              {{ "totalamount" | translate }}
+            </span>
+            <span class="summary-value">
+              {{ order()?.totalAmount | currency : "INR" }}
+            </span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">
+              {{ "deliverycharges" | translate }}
+            </span>
+            <span class="summary-value">
+              {{ order()?.delivery | currency : "INR" }}
+            </span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">
+              {{ "weight" | translate }}
+            </span>
+            <span class="summary-value">{{ order()?.weight }} g</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white shadow-md rounded-md p-4 order-card">
+        <h3 class="order-section-title text-md font-medium">
+          <mat-icon>person</mat-icon>
+          {{ "clientdetails" | translate }}
+        </h3>
+
+        <div class="mt-3 text-sm flex flex-col gap-4">
+          <p class="font-semibold flex gap-2 items-center">
+            <mat-icon class="w-8">person_circle</mat-icon>
+            {{ getCustomer()?.firstName || getCustomer()?.fullName }}
+            {{ getCustomer()?.lastName }}
+          </p>
+          <p class="text-gray-600 flex items-center gap-2">
+            <mat-icon class="w-8">email</mat-icon>
+            {{ getCustomer()?.email }}
+          </p>
+          <p class="text-gray-600 flex items-center gap-2">
+            <mat-icon class="w-8">call</mat-icon>
+            {{ getCustomer()?.phoneNumber || "—" }}
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-col gap-4">
+      <div class="bg-white shadow-md rounded-md p-4 order-card">
+        <h3 class="order-section-title text-md font-medium">
+          <mat-icon>home</mat-icon>
+          {{ "deliveryaddress" | translate }}
+        </h3>
+        <p class="mt-3 text-sm">
+          {{ order()?.deliveryAddress?.address }}<br />
+          {{ order()?.deliveryAddress?.city }},
+          {{ order()?.deliveryAddress?.state }},
+          {{ order()?.deliveryAddress?.country }} -
+          {{ order()?.deliveryAddress?.pincode }}
+        </p>
+      </div>
+      <div class="bg-white shadow-md rounded-md p-4 order-card">
+        <h3 class="order-section-title text-md font-medium">
+          <mat-icon>home</mat-icon>
+          {{ "billingaddress" | translate }}
+        </h3>
+        <p class="mt-3 text-sm">
+          {{ order()?.billingAddress?.address }}<br />
+          {{ order()?.billingAddress?.city }},
+          {{ order()?.billingAddress?.state }},
+          {{ order()?.billingAddress?.country }} -
+          {{ order()?.billingAddress?.pincode }}
+        </p>
+      </div>
+      <div class="bg-white shadow-md rounded-md p-4 order-card order-actions">
+        <button
+          mat-stroked-button
+          color="primary"
+          class="!bg-primary !text-white"
+          (click)="getInvoice(order()?.transactions)"
+        >
+          <mat-icon>download</mat-icon>
+          {{ "download" | translate }}
+        </button>
+        @if (order()?.status === 'COMPLETED') {
+        <button
+          mat-stroked-button
+          color="warn"
+          class="!text-white !bg-red-colour"
+        >
+          <mat-icon>block</mat-icon>
+          {{ "cancelorder" | translate }}
+        </button>
+        <button
+          mat-stroked-button
+          color="warn"
+          class="!text-white !bg-red-colour"
+        >
+          <mat-icon>undo</mat-icon>
+          {{ "cancelandrefund" | translate }}
+        </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-grow">
+    <h3 class="order-section-title text-md font-medium">
+      <mat-icon>menu_book</mat-icon>
+      {{ "bookings" | translate }}
+    </h3>
+    <div class="overflow-auto order-table mt-2">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-left border-b">
+            <th class="p-2">#</th>
+            <th class="p-2">{{ "title" | translate }}</th>
+            <th class="p-2">{{ "quantity" | translate }}</th>
+            <th class="p-2">{{ "amount" | translate }}</th>
+            <th class="p-2">{{ "status" | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (bk of order()?.bookings; track bk.id) {
+          <tr class="border-b">
+            <td class="p-2">{{ bk.id }}</td>
+            <td class="p-2">{{ bk.title.name }}</td>
+            <td class="p-2">{{ bk.quantity }}</td>
+            <td class="p-2">{{ bk.totalAmount || bk.amount }}</td>
+            <td class="p-2">{{ bk.status }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="flex-grow">
+    <h3 class="order-section-title text-md font-medium">
+      <mat-icon>payments</mat-icon>
+      {{ "transactions" | translate }}
+    </h3>
+    {{ order()?.transactions?.length }} transactions @if (order()?.transactions)
+    {
+    <app-transaction-table
+      [transactions]="order()?.transactions"
+    ></app-transaction-table>
+    }
+  </div>
+</div>

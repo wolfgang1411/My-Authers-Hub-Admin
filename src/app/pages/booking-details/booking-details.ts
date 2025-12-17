@@ -5,8 +5,8 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { BookingService } from '../../services/booking';
 import { ActivatedRoute } from '@angular/router';
+import { BookingService } from '../../services/booking';
 import {
   Booking,
   Title,
