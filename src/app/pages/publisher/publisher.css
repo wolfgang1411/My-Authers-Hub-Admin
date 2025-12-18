@@ -1,0 +1,12 @@
+.publisher-tabs .mat-mdc-tab-header {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.publisher-tabs .mat-mdc-tab-header::-webkit-scrollbar {
+  display: none;
+}
+
+.publisher-tabs .mat-mdc-tab-label {
+  white-space: nowrap;
+}
