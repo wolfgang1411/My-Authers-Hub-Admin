@@ -13,10 +13,10 @@ export class BrowserUsageComponent {
   total = 1;
   constructor(private svc: DashboardService) {}
   ngOnInit() {
-    this.svc.getBrowserUsage().subscribe((b) => {
-      this.browsers = b;
-      this.total = b.reduce((s: any, x: any) => s + x.value, 0);
-    });
+    // this.svc.getBrowserUsage().subscribe((b) => {
+    //   this.browsers = b;
+    //   this.total = b.reduce((s: any, x: any) => s + x.value, 0);
+    // });
   }
   getPct(v: number) {
     return Math.round((v / this.total) * 100);
