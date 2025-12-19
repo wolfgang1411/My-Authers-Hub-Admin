@@ -14,7 +14,7 @@
       </div>
 
       <!-- Navigation Links - Part 2 -->
-      <nav class="hidden md:flex items-center justify-center flex-1 gap-8">
+      <nav class="ml-auto hidden md:flex items-center justify-center gap-8">
         <a
           routerLink="/contact"
           routerLinkActive="text-primary"
@@ -36,10 +36,17 @@
         >
           Terms
         </a>
+        <a
+          routerLink="/user-policies"
+          routerLinkActive="text-primary"
+          class="text-gray-700 hover:text-primary transition-colors"
+        >
+          Policies
+        </a>
       </nav>
 
       <!-- Login & Mobile Menu - Part 3 -->
-      <div class="flex items-center justify-end flex-1">
+      <div class="flex items-center justify-end ml-4">
         <a
           routerLink="/login"
           class="hidden md:block bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
