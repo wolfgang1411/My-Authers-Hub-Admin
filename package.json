@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "setup": "NODE_ENV=development node setup.js",
+    "setup": "node setup.js",
     "setup:prod": "NODE_ENV=production node setup.js",
     "prebuild": "NODE_ENV=production node setup.js",
     "build": "ng build --configuration production && cp _redirects dist/my-authors-hub",
@@ -11,9 +11,7 @@
     "start": "ng serve --host 0.0.0.0 --port 4200",
     "serve:static": "npx serve dist/my-authors-hub/browser",
     "test": "ng test",
-    "watch": "ng build --watch --configuration development",
-    "deploy:vps": "bash deploy-vps.sh",
-    "setup:nginx": "echo 'Run on VPS after deployment: ssh ubuntu@your-vps && cd /home/ubuntu/mah/admin && sudo bash scripts/setup-nginx.sh'"
+    "watch": "ng build --watch --configuration development"
   },
   "dependencies": {
     "@angular/animations": "^20.3.11",

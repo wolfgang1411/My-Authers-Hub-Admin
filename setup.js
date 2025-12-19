@@ -57,7 +57,7 @@ const baseEnv = `export const environment = {
   production: false,
   apiUrl: '',
   O2AuthClientId: '',
-  i18nHash: ${Date.now()},
+  i18nHash: 0,
 };
 `;
 
