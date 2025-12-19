@@ -11,7 +11,8 @@
     "start": "ng serve --host 0.0.0.0 --port 4200",
     "serve:static": "npx serve dist/my-authors-hub/browser",
     "test": "ng test",
-    "watch": "ng build --watch --configuration development"
+    "watch": "ng build --watch --configuration development",
+    "deploy": "ssh ubuntu@72.61.241.224 \"cd /home/ubuntu/my-authors-hub/admin && ./deploy.sh\""
   },
   "dependencies": {
     "@angular/animations": "^20.3.11",
