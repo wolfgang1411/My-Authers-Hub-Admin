@@ -370,8 +370,30 @@ export enum ISBNStatus {
 }
 
 export const EBOOK_MSP = '69';
+export const COMPANY_EMAIL = '';
+export const COMPANY_PHONE = '';
+export const COMPANY_ADDRESS = '';
+export const COMPANY_FACEBOOK_URL = '';
+export const COMPANY_INSTAGRAM_URL = '';
+export const COMPANY_LINKEDIN_URL = '';
+export const COMPANY_TWITTER_URL = '';
+export const COMPANY_YOUTUBE_URL = '';
+export const COMPANY_TIKTOK_URL = '';
+export const COMPANY_PINTEREST_URL = '';
+export const COMPANY_REDDIT_URL = '';
 
 export const StaticValues = {
+  COMPANY_EMAIL,
+  COMPANY_PHONE,
+  COMPANY_ADDRESS,
+  COMPANY_FACEBOOK_URL,
+  COMPANY_INSTAGRAM_URL,
+  COMPANY_LINKEDIN_URL,
+  COMPANY_TWITTER_URL,
+  COMPANY_YOUTUBE_URL,
+  COMPANY_TIKTOK_URL,
+  COMPANY_PINTEREST_URL,
+  COMPANY_REDDIT_URL,
   ISBNStatus,
   UserStatus,
   UserAccessLevel,

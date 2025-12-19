@@ -261,6 +261,26 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'user-policies',
+    loadComponent: () =>
+      import('./pages/user-policies/user-policies').then(
+        (c) => c.UserPolicies
+      ),
+  },
+  {
+    path: 'terms',
+    loadComponent: () => import('./pages/terms/terms').then((c) => c.Terms),
+  },
+  {
+    path: 'contact',
+    loadComponent: () =>
+      import('./pages/contact/contact').then((c) => c.Contact),
+  },
+  {
+    path: 'faq',
+    loadComponent: () => import('./pages/faq/faq').then((c) => c.FAQ),
+  },
+  {
     path: '',
     redirectTo: '/dashboard',
     pathMatch: 'full',

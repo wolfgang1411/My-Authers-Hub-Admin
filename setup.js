@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 const nodeEnv = process.env.NODE_ENV || "development";
 const isDev = nodeEnv !== "production";
 
+console.log({ isDev });
+
 // Set envPath based on environment
 const envPath = isDev
   ? path.resolve(process.cwd(), ".env.development")
