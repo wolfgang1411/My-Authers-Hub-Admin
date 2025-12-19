@@ -26,9 +26,16 @@
       (menuToggle)="toggleMobileSidebar()"
     ></app-header>
     }
+    
+    @if (shouldShowSimpleHeader()) {
+    <app-simple-header></app-simple-header>
+    }
 
     <div
-      class="flex-1 p-6 md:p-8 overflow-y-auto overflow-x-hidden flex flex-col"
+      class="flex-1 overflow-y-auto overflow-x-hidden flex flex-col"
+      [ngClass]="{
+        'p-6 md:p-8': !shouldShowSimpleHeader()
+      }"
     >
       <ng-content></ng-content>
     </div>

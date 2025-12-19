@@ -1,0 +1,111 @@
+<header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center h-16">
+      <!-- Logo -->
+      <div class="flex items-center">
+        <a routerLink="/" class="flex items-center gap-3">
+          <img
+            src="images/my Author(1).png"
+            alt="My Author's Hub"
+            class="h-10"
+          />
+          <!-- <span class="text-xl font-semibold text-gray-900 hidden sm:block">My Author's Hub</span> -->
+        </a>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="hidden md:flex items-center gap-6">
+        <a
+          routerLink="/contact"
+          routerLinkActive="text-primary"
+          class="text-gray-700 hover:text-primary transition-colors"
+        >
+          Contact Us
+        </a>
+        <a
+          routerLink="/faq"
+          routerLinkActive="text-primary"
+          class="text-gray-700 hover:text-primary transition-colors"
+        >
+          FAQ
+        </a>
+        <a
+          routerLink="/terms"
+          routerLinkActive="text-primary"
+          class="text-gray-700 hover:text-primary transition-colors"
+        >
+          Terms
+        </a>
+        <a
+          routerLink="/user-policies"
+          routerLinkActive="text-primary"
+          class="text-gray-700 hover:text-primary transition-colors"
+        >
+          Policies
+        </a>
+        <a
+          routerLink="/login"
+          class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+        >
+          Login
+        </a>
+      </nav>
+
+      <!-- Mobile Menu Button -->
+      <button
+        (click)="toggleMobileMenu()"
+        class="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+        aria-label="Toggle menu"
+      >
+        <mat-icon>{{ mobileMenuOpen() ? "close" : "menu" }}</mat-icon>
+      </button>
+    </div>
+
+    <!-- Mobile Menu -->
+    @if (mobileMenuOpen()) {
+    <div class="md:hidden border-t border-gray-200 py-4">
+      <nav class="flex flex-col gap-4">
+        <a
+          routerLink="/contact"
+          routerLinkActive="text-primary"
+          (click)="closeMobileMenu()"
+          class="text-gray-700 hover:text-primary transition-colors px-2 py-1"
+        >
+          Contact Us
+        </a>
+        <a
+          routerLink="/faq"
+          routerLinkActive="text-primary"
+          (click)="closeMobileMenu()"
+          class="text-gray-700 hover:text-primary transition-colors px-2 py-1"
+        >
+          FAQ
+        </a>
+        <a
+          routerLink="/terms"
+          routerLinkActive="text-primary"
+          (click)="closeMobileMenu()"
+          class="text-gray-700 hover:text-primary transition-colors px-2 py-1"
+        >
+          Terms
+        </a>
+        <a
+          routerLink="/user-policies"
+          routerLinkActive="text-primary"
+          (click)="closeMobileMenu()"
+          class="text-gray-700 hover:text-primary transition-colors px-2 py-1"
+        >
+          Policies
+        </a>
+        <a
+          routerLink="/login"
+          (click)="closeMobileMenu()"
+          class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors text-center"
+        >
+          Login
+        </a>
+      </nav>
+    </div>
+    }
+  </div>
+</header>
