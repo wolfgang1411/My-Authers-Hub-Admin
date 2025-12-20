@@ -73,12 +73,18 @@ export class Sidebar implements OnInit {
 
     const loggedInUser = this.userService.loggedInUser$();
     const accessLevel = loggedInUser?.accessLevel;
+    const type = loggedInUser?.publisher?.type;
 
     // Filter menu items based on access level
     return menuItems.filter((item) => {
       // Hide Authors and Publishers links for author role (only show for publisher and superadmin)
       if (accessLevel === 'AUTHER') {
         if (item.name === 'Authors' || item.name === 'Publishers') {
+          return false;
+        }
+      }
+      if (accessLevel === 'PUBLISHER' && type === 'Sub_Publisher') {
+        if (item.name === 'Publishers') {
           return false;
         }
       }
