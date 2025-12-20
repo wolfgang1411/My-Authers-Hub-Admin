@@ -281,6 +281,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/faq/faq').then((c) => c.FAQ),
   },
   {
+    path: 'invites',
+    loadComponent: () =>
+      import('./pages/invites/invites').then((c) => c.Invites),
+    canActivate: [privateRouteGuard],
+  },
+  {
     path: '',
     redirectTo: '/dashboard',
     pathMatch: 'full',

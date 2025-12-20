@@ -93,6 +93,15 @@
         <button
           mat-flat-button
           color="accent"
+          class="w-full !bg-primary"
+          [routerLink]="['/invites']"
+        >
+          <mat-icon>mail</mat-icon>
+          <span class="ml-2">{{ "invites" | translate }}</span>
+        </button>
+        <button
+          mat-flat-button
+          color="accent"
           class="w-full !bg-accent"
           (click)="navigateToUpdateTickets('author')"
         >

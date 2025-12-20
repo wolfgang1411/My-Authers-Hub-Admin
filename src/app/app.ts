@@ -105,8 +105,14 @@ export class App {
 
   setSidebarVisibility(url: string) {
     const isAuthenticated = this.authService.isUserAuthenticated$();
+    // Hide sidebar for login and public invite routes (like /author/invite/:token or /publisher/invite/:token)
+    // But show it for admin invites page (/invites)
+    const isPublicInviteRoute = 
+      url.includes('/author/invite/') || 
+      url.includes('/publisher/invite/') ||
+      (url.includes('/invite/') && !url.startsWith('/invites'));
     const isShowSidebar =
-      !url.includes('login') && !url.includes('invite') && !!isAuthenticated;
+      !url.includes('login') && !isPublicInviteRoute && !!isAuthenticated;
     this.layoutService.changeSidebarVisibility(isShowSidebar);
   }
 }

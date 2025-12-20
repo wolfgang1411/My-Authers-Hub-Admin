@@ -30,6 +30,15 @@
       <button
         matButton="filled"
         class="!bg-primary text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
+        [routerLink]="['/invites']"
+      >
+        <mat-icon class="!text-sm">mail</mat-icon>
+        <span>{{ "invites" | translate }}</span>
+      </button>
+
+      <button
+        matButton="filled"
+        class="!bg-primary text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
         [routerLink]="['/update-tickets']"
         [queryParams]="{ tab: 'publisher' }"
       >

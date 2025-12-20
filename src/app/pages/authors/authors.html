@@ -27,6 +27,16 @@
         matButton
         matButton="filled"
         class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        [routerLink]="['/invites']"
+        routerLinkActive="router-link-active"
+      >
+        <mat-icon class="material-icons">mail</mat-icon>
+        {{ "invites" | translate }}
+      </button>
+      <button
+        matButton
+        matButton="filled"
+        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
         [routerLink]="['/update-tickets']"
         [queryParams]="{ tab: 'author' }"
         routerLinkActive="router-link-active"
