@@ -1,23 +1,23 @@
-@switch (stepperOrientation | async) { @case ('horizontal') { } @case
-('vertical') { } }
 <div class="flex justify-between">
   <h3 class="heading">
     {{ "publisherdetails" | translate }}
   </h3>
   <app-back></app-back>
 </div>
-<mat-stepper
-  #stepper
-  class="example-stepper !my-4"
-  [orientation]="(stepperOrientation | async)!"
-  [linear]="true"
-  [animationDuration]="'500'"
+
+<mat-tab-group
+  [selectedIndex]="currentTabIndex()"
+  (selectedIndexChange)="onTabChange($event)"
+  class="!my-4"
 >
-  <mat-step
-    [stepControl]="step1Form"
-    class="!text-accent !p-0"
-    label="Fill out your basic details"
-  >
+  <!-- Tab 0: Basic Details & Social Media -->
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <span class="flex items-center gap-2">
+        <mat-icon>business</mat-icon>
+        Basic Details
+      </span>
+    </ng-template>
     <div class="mx-auto py-6 space-y-10">
       <form [formGroup]="publisherFormGroup">
         <div class="bg-white shadow-sm border rounded-xl px-6 py-8">
@@ -179,19 +179,16 @@
         </form>
       </div>
     </div>
-    <button
-      matButton="filled"
-      class="!bg-primary mt-8"
-      (click)="checkProfileImageAndProceed(stepper)"
-    >
-      Next
-    </button>
-  </mat-step>
-  <mat-step
-    [stepControl]="publisherAddressDetails"
-    class="!text-accent !p-0"
-    label="Fill out your address"
-  >
+  </mat-tab>
+
+  <!-- Tab 1: Address -->
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <span class="flex items-center gap-2">
+        <mat-icon>location_on</mat-icon>
+        Address
+      </span>
+    </ng-template>
     <form [formGroup]="publisherAddressDetails">
       <div class="grid-cols-4 grid gap-4 my-4">
         <mat-form-field>
@@ -252,20 +249,16 @@
         </mat-form-field>
       </div>
     </form>
-    <div class="flex flex-row gap-2">
-      <button class="!bg-primary mt-8 !text-white" matButton matStepperPrevious>
-        Back
-      </button>
-      <button class="!bg-primary mt-8 !text-white" matButton matStepperNext>
-        Next
-      </button>
-    </div>
-  </mat-step>
-  <mat-step
-    [stepControl]="publisherBankDetails"
-    class="!text-accent !p-0"
-    label="Fill out your Bank Details"
-  >
+  </mat-tab>
+
+  <!-- Tab 2: Bank Details -->
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <span class="flex items-center gap-2">
+        <mat-icon>account_balance</mat-icon>
+        Bank Details
+      </span>
+    </ng-template>
     <form [formGroup]="publisherBankDetails">
       <div class="grid-cols-4 grid gap-4 my-4">
         <mat-form-field>
@@ -359,17 +352,29 @@
         </mat-form-field>
       </div>
     </form>
-    <div class="flex flex-row gap-2">
-      <button class="!bg-primary mt-8 !text-white" matButton matStepperPrevious>
-        Back
-      </button>
-      <button
-        class="!bg-primary mt-8 !text-white"
-        matButton
-        (click)="onSubmit()"
-      >
-        {{ submitButtonText() }}
-      </button>
-    </div>
-  </mat-step>
-</mat-stepper>
+  </mat-tab>
+</mat-tab-group>
+
+<!-- Navigation Buttons -->
+<div class="flex justify-between items-center gap-3 mt-6">
+  <!-- Previous/Back Button (Left) -->
+  <button
+    matButton="filled"
+    class="!bg-primary !text-white"
+    [disabled]="currentTabIndex() === 0"
+    (click)="prevTab()"
+  >
+    <mat-icon>arrow_back</mat-icon>
+    {{ "previous" | translate }}
+  </button>
+
+  <!-- Action Button (Right) -->
+  <button
+    matButton="filled"
+    class="!bg-primary !text-white"
+    (click)="handleTabAction()"
+  >
+    {{ getActionButtonText() }}
+    <mat-icon>{{ getActionButtonIcon() }}</mat-icon>
+  </button>
+</div>

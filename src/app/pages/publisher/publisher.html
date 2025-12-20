@@ -149,7 +149,10 @@
           <mat-icon class="!text-white">visibility</mat-icon>
         </button>
 
-        @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
+        @if (loggedInUser()?.accessLevel === 'SUPERADMIN' ||
+        (loggedInUser()?.accessLevel === 'PUBLISHER' && (publisher.status ===
+        PublisherStatus.Pending || publisher.status === PublisherStatus.Dormant) &&
+        loggedInUser()?.publisher?.id === publisher.id)) {
         <button
           mat-icon-button
           class="!bg-primary"
@@ -252,8 +255,8 @@
         <mat-icon class="!text-white">visibility</mat-icon>
       </button>
       @if(loggedInUser()?.accessLevel === 'SUPERADMIN' ||
-      (loggedInUser()?.accessLevel === 'PUBLISHER' && element.status ===
-      PublisherStatus.Pending)) {
+      (loggedInUser()?.accessLevel === 'PUBLISHER' && (element.status ===
+      PublisherStatus.Pending || element.status === PublisherStatus.Dormant))) {
       <button
         class="!bg-primary"
         mat-icon-button

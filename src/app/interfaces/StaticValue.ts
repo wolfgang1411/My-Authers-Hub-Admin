@@ -110,6 +110,7 @@ export enum PuplisherStatus {
   Pending = 'Pending',
   Rejected = 'Rejected',
   Deactivated = 'Deactivated',
+  Dormant = 'Dormant',
 }
 
 export enum PublisherStatus {
@@ -117,6 +118,7 @@ export enum PublisherStatus {
   Pending = 'Pending',
   Rejected = 'Rejected',
   Deactivated = 'Deactivated',
+  Dormant = 'Dormant',
 }
 
 export enum PublisherType {

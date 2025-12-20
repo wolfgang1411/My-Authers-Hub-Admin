@@ -6,7 +6,7 @@ export interface Media {
   name: string;
   url: string;
   type: string;
-  file: File;
+  file?: File; // Optional - not present when prefilling from API
   noOfPages?: number;
   mediaType?: TitleMediaType;
 }

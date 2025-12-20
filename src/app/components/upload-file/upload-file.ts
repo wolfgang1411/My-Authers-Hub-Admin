@@ -46,6 +46,14 @@ export class UploadFile {
       if (media?.url) {
         this.previewUrl.set(media.url);
         console.log('Prefilled preview:', media.url);
+        // Emit the prefilled media back to parent so form control is set
+        // Only emit if media has an id (meaning it's from API, not a new upload)
+        if (media.id && media.id > 0) {
+          this.mediaAdded.emit(media);
+        }
+      } else if (media === null) {
+        // Clear preview when media is set to null
+        this.previewUrl.set(null);
       }
     });
   }

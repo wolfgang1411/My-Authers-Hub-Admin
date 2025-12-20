@@ -25,6 +25,7 @@ import {
   StepperOrientation,
   MatStepperModule,
 } from '@angular/material/stepper';
+import { MatTabsModule } from '@angular/material/tabs';
 import { Observable } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
@@ -50,6 +51,7 @@ import {
   UpdateTicketType,
   User,
 } from '../../interfaces';
+import { PublisherStatus } from '../../interfaces/StaticValue';
 import { AddressService } from '../../services/address-service';
 import { BankDetailService } from '../../services/bank-detail-service';
 import Swal from 'sweetalert2';
@@ -72,6 +74,7 @@ import { UserService } from '../../services/user';
 import { MatIcon } from '@angular/material/icon';
 import { TranslateService } from '@ngx-translate/core';
 import { Back } from '../../components/back/back';
+import { LoaderService } from '../../services/loader';
 import { HttpClient } from '@angular/common/http';
 import { City, Country, State } from 'country-state-city';
 import md5 from 'md5';
@@ -81,6 +84,7 @@ import { NgxMaterialIntlTelInputComponent } from 'ngx-material-intl-tel-input';
   selector: 'app-add-publisher',
   imports: [
     MatStepperModule,
+    MatTabsModule,
     FormsModule,
     ReactiveFormsModule,
     MatFormFieldModule,
@@ -110,7 +114,8 @@ export class AddPublisher {
     private inviteService: InviteService,
     private socialService: SocialMediaService,
     private userService: UserService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private loader: LoaderService
   ) {
     effect(() => {
       const selected =
@@ -129,13 +134,21 @@ export class AddPublisher {
       this.signupCode = signupCode;
     });
     this.loggedInUser = this.userService.loggedInUser$;
+
+    // Initialize tab index from query params
+    this.route.queryParams.subscribe((params) => {
+      const tabIndex = params['tab'] ? Number(params['tab']) : 0;
+      if (tabIndex >= 0 && tabIndex < this.TOTAL_TABS) {
+        this.currentTabIndex.set(tabIndex);
+      }
+    });
   }
   countryISO = CountryISO;
 
   bankOptions = signal<BankOption[]>([]);
   signupCode?: string;
   publisherId?: number;
-  publisherDetails?: Publishers;
+  publisherDetails = signal<Publishers | undefined>(undefined);
   inputData = {
     separateDialCode: true,
     SearchCountryField: SearchCountryField,
@@ -157,6 +170,10 @@ export class AddPublisher {
   cities!: Cities[];
   isPrefilling: boolean = false;
   mediaToDeleteId: number | null = null;
+  PublisherStatus = PublisherStatus; // Expose PublisherStatus enum to template
+  currentTabIndex = signal<number>(0);
+  readonly TOTAL_TABS = 3; // Basic Details (with Social Media), Address, Bank Details
+  ticketRaisedForTab = signal<{ [tabIndex: number]: boolean }>({}); // Track which tabs raised tickets
   isAllSelected = computed(() => {
     return this.selectedTypes().length >= this.socialMediaArray.length;
   });
@@ -165,7 +182,7 @@ export class AddPublisher {
   submitButtonText = computed(() => {
     const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
     const isNewPublisher = !this.publisherId;
-    const publisherStatus = this.publisherDetails?.status;
+    const publisherStatus = this.publisherDetails()?.status;
     const isActivePublisher = publisherStatus === 'Active';
 
     // When adding a new publisher
@@ -272,7 +289,7 @@ export class AddPublisher {
       const response = await this.publisherService.getPublisherById(
         this.publisherId
       );
-      this.publisherDetails = response;
+      this.publisherDetails.set(response);
       this.isPrefilling = true;
       this.prefillForm(response);
       this.isPrefilling = false;
@@ -500,17 +517,25 @@ export class AddPublisher {
   onMediaAdded(newMedia: Media) {
     const existing = this.mediaControl.value;
 
-    if (existing?.id) {
-      this.mediaToDeleteId = existing.id;
+    // If newMedia has an id > 0, it's a prefill from API - keep it as is
+    if (newMedia.id && newMedia.id > 0) {
+      // This is a prefill from API - keep the original media object
+      this.mediaControl.setValue(newMedia);
+      this.mediaToDeleteId = newMedia.id;
+    } else {
+      // This is a new file upload
+      if (existing?.id) {
+        this.mediaToDeleteId = existing.id;
+      }
+      this.mediaControl.setValue({
+        ...newMedia,
+        id: 0,
+        url: '',
+      });
     }
-    this.mediaControl.setValue({
-      ...newMedia,
-      id: 0,
-      url: '',
-    });
 
     this.mediaControl.updateValueAndValidity();
-    console.log('🆕 New media selected', this.mediaControl.value);
+    console.log('🆕 Media updated', this.mediaControl.value);
   }
 
   addSocialMedia() {
@@ -536,47 +561,50 @@ export class AddPublisher {
       name: publisherDetails.name,
       designation: publisherDetails.designation,
     });
-    const addr = publisherDetails.address[0];
+    
+    // Prefill address if it exists
+    const addr = publisherDetails.address?.[0];
+    if (addr) {
+      const countryIso =
+        this.countries.find(
+          (c) =>
+            addr.country?.toLowerCase() === c.name.toLowerCase() ||
+            addr.country?.toLowerCase() === c.isoCode.toLowerCase()
+        )?.isoCode || '';
 
-    const countryIso =
-      this.countries.find(
-        (c) =>
-          addr.country?.toLowerCase() === c.name.toLowerCase() ||
-          addr.country?.toLowerCase() === c.isoCode.toLowerCase()
-      )?.isoCode || '';
+      this.publisherAddressDetails.patchValue({
+        id: addr.id,
+        address: addr.address,
+        country: countryIso,
+      });
+      console.log({ addr }, 'addresss');
+      this.states = State.getStatesOfCountry(countryIso).map((s) => ({
+        name: s.name,
+        isoCode: s.isoCode,
+      }));
+      console.log(this.states, 'states');
+      const stateIso =
+        this.states.find(
+          (s) => s.isoCode.toLowerCase() === addr.state?.toLowerCase()
+        )?.isoCode || '';
+      console.log({ stateIso }, 'stateIso');
+      this.publisherAddressDetails.patchValue({
+        state: stateIso,
+      });
 
-    this.publisherAddressDetails.patchValue({
-      id: addr.id,
-      address: addr.address,
-      country: countryIso,
-    });
-    console.log({ addr }, 'addresss');
-    this.states = State.getStatesOfCountry(countryIso).map((s) => ({
-      name: s.name,
-      isoCode: s.isoCode,
-    }));
-    console.log(this.states, 'states');
-    const stateIso =
-      this.states.find(
-        (s) => s.isoCode.toLowerCase() === addr.state?.toLowerCase()
-      )?.isoCode || '';
-    console.log({ stateIso }, 'stateIso');
-    this.publisherAddressDetails.patchValue({
-      state: stateIso,
-    });
+      this.cities = City.getCitiesOfState(countryIso, stateIso).map((c) => ({
+        name: c.name,
+      }));
 
-    this.cities = City.getCitiesOfState(countryIso, stateIso).map((c) => ({
-      name: c.name,
-    }));
+      const cityName =
+        this.cities.find((c) => c.name.toLowerCase() === addr.city?.toLowerCase())
+          ?.name || '';
 
-    const cityName =
-      this.cities.find((c) => c.name.toLowerCase() === addr.city?.toLowerCase())
-        ?.name || '';
-
-    this.publisherAddressDetails.patchValue({
-      city: cityName,
-      pincode: addr.pincode,
-    });
+      this.publisherAddressDetails.patchValue({
+        city: cityName,
+        pincode: addr.pincode,
+      });
+    }
 
     this.selectedBankPrefix.set(
       this.bankOptions().find(
@@ -615,9 +643,18 @@ export class AddPublisher {
     });
     const mediaList = publisherDetails.medias as Media[];
     if (mediaList?.length > 0) {
-      this.mediaControl.setValue(mediaList[0]);
+      // Find media with type LOGO (publisher logo) or use first media
+      const logoMedia = mediaList.find((m) => (m as any).type === 'LOGO') || mediaList[0];
+      // Store the media ID for potential deletion if user uploads new image
+      if (logoMedia.id) {
+        this.mediaToDeleteId = logoMedia.id;
+      }
+      // Set the media control - the upload-file component will handle displaying it
+      // and emit it back via mediaAdded event
+      this.mediaControl.setValue(logoMedia as Media);
     } else {
       this.mediaControl.setValue(null);
+      this.mediaToDeleteId = null;
     }
     console.log(this.publisherFormGroup.value, 'prefillll');
   }
@@ -756,22 +793,85 @@ export class AddPublisher {
 
   // Check if publisher details have changed
   private hasPublisherChanges(): boolean {
-    if (!this.publisherDetails) return false;
+    const details = this.publisherDetails();
+    if (!details) return false;
 
-    const newName = this.publisherFormGroup.value.name;
-    const newEmail = this.publisherFormGroup.value.email;
+    const formValue = this.publisherFormGroup.value;
+    const pocName = formValue.pocName || '';
+    const nameParts = pocName.split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
 
     return (
-      this.compareValues(newName, this.publisherDetails.name) ||
-      this.compareValues(newEmail, this.publisherDetails.email)
+      this.compareValues(formValue.name, details.name) ||
+      this.compareValues(formValue.email, details.email) ||
+      this.compareValues(formValue.designation, details.designation) ||
+      this.compareValues(firstName, details.user?.firstName) ||
+      this.compareValues(lastName, details.user?.lastName) ||
+      this.compareValues(formValue.pocEmail, details.user?.email) ||
+      this.compareValues(formValue.pocPhoneNumber, details.user?.phoneNumber)
     );
   }
 
-  // Check if address has changed
-  private hasAddressChanges(): boolean {
-    if (!this.publisherDetails?.address?.[0]) return false;
+  // Check if media has changes
+  private hasMediaChanges(existingMedia: Media | undefined): boolean {
+    const newMedia = this.mediaControl.value;
+    if (!newMedia?.file) {
+      return false; // No new file, no change
+    }
+    if (!existingMedia) {
+      return true; // New file and no existing media = change
+    }
+    // Compare file name and size
+    return (
+      newMedia.file.name !== existingMedia.name ||
+      newMedia.file.size !== (existingMedia as any).size
+    );
+  }
 
-    const existingAddress = this.publisherDetails.address[0];
+  // Check if social media has changes
+  private hasSocialMediaChanges(
+    existingSocialMedia: socialMediaGroup[]
+  ): boolean {
+    const newSocialMedia = this.socialMediaArray.controls
+      .map((group) => ({
+        type: group.value.type,
+        url: group.value.url?.trim() || '',
+      }))
+      .filter((item) => item.type && item.url);
+
+    const existing = (existingSocialMedia || []).map((item) => ({
+      type: item.type,
+      url: item.url?.trim() || '',
+    }));
+
+    if (newSocialMedia.length !== existing.length) {
+      return true;
+    }
+
+    // Sort both arrays for comparison
+    const sortedNew = [...newSocialMedia].sort((a, b) =>
+      `${a.type}-${a.url}`.localeCompare(`${b.type}-${b.url}`)
+    );
+    const sortedExisting = [...existing].sort((a, b) =>
+      `${a.type}-${a.url}`.localeCompare(`${b.type}-${b.url}`)
+    );
+
+    return sortedNew.some(
+      (newItem, index) =>
+        newItem.type !== sortedExisting[index]?.type ||
+        newItem.url !== sortedExisting[index]?.url
+    );
+  }
+
+  // Check if address has changed (for ticket comparison)
+  private hasAddressChanges(existingAddress?: Address): boolean {
+    if (!existingAddress) {
+      // If no existing address, check if form has values
+      const formValue = this.publisherAddressDetails.value;
+      return !!(formValue.address || formValue.city || formValue.state || formValue.country || formValue.pincode);
+    }
+
     const formAddress = this.publisherAddressDetails.value;
 
     return (
@@ -783,11 +883,14 @@ export class AddPublisher {
     );
   }
 
-  // Check if bank details have changed
-  private hasBankChanges(): boolean {
-    if (!this.publisherDetails?.bankDetails?.[0]) return false;
-
-    const existingBank = this.publisherDetails.bankDetails[0];
+  // Check if bank details have changed (for ticket comparison)
+  private hasBankChanges(existingBank?: BankDetails): boolean {
+    if (!existingBank) {
+      // If no existing bank, check if form has values
+      const formValue = this.publisherBankDetails.value;
+      return !!(formValue.name || formValue.accountNo || formValue.ifsc || formValue.panCardNo || formValue.accountType || formValue.accountHolderName);
+    }
+    
     const formBank = this.publisherBankDetails.value;
 
     return (
@@ -810,7 +913,7 @@ export class AddPublisher {
     let ticketsRaised = false;
 
     // Get existing data
-    const existingPublisher = this.publisherDetails;
+    const existingPublisher = this.publisherDetails();
     const existingAddress = existingPublisher?.address?.[0];
     const existingBank = existingPublisher?.bankDetails?.[0];
 
@@ -818,7 +921,7 @@ export class AddPublisher {
       {
         type: UpdateTicketType.ADDRESS,
         fields: ['address', 'city', 'state', 'country', 'pincode'],
-        hasChanges: this.hasAddressChanges(),
+        hasChanges: this.hasAddressChanges(existingAddress),
       },
       {
         type: UpdateTicketType.BANK,
@@ -831,7 +934,7 @@ export class AddPublisher {
           'accountType',
           'gstNumber',
         ],
-        hasChanges: this.hasBankChanges(),
+        hasChanges: this.hasBankChanges(existingBank),
       },
       {
         type: UpdateTicketType.PUBLISHER,
@@ -1126,9 +1229,10 @@ export class AddPublisher {
       ) {
         await this.handleNewOrSuperAdminSubmission(publisherData);
       } else {
-        // If publisher status is Pending, allow direct update (no tickets needed)
+        // If publisher status is Pending or Dormant, allow direct update (no tickets needed)
         // Otherwise, raise update ticket
-        if (this.publisherDetails?.status === 'Pending') {
+        const status = this.publisherDetails()?.status;
+        if (status === 'Pending' || status === 'Dormant') {
           console.log(
             '📝 Publisher is pending - direct update without tickets'
           );
@@ -1177,9 +1281,526 @@ export class AddPublisher {
       console.log('➡️ Redirecting to publisher list (direct save)');
       this.router.navigate(['/publisher']);
     } catch (error) {
-      console.log(error);
+      // Error handled by service
     }
   }
+
+  // Tab navigation methods
+  goToTab(index: number) {
+    if (index >= 0 && index < this.TOTAL_TABS) {
+      this.currentTabIndex.set(index);
+      this.updateQueryParams({ tab: index.toString() });
+    }
+  }
+
+  onTabChange(index: number) {
+    this.goToTab(index);
+  }
+
+  nextTab() {
+    if (this.currentTabIndex() < this.TOTAL_TABS - 1) {
+      this.goToTab(this.currentTabIndex() + 1);
+    }
+  }
+
+  prevTab() {
+    if (this.currentTabIndex() > 0) {
+      this.goToTab(this.currentTabIndex() - 1);
+    }
+  }
+
+  updateQueryParams(params: { [key: string]: any }) {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: params,
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  // Get action button text for current tab (combines action + navigation)
+  getActionButtonText(): string {
+    const currentTab = this.currentTabIndex();
+    const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
+    const status = this.publisherDetails()?.status;
+    // Publishers: Only Dormant/Pending can be updated directly, ALL Active need tickets (even SuperAdmin)
+    const canUpdateDirectly = 
+      !this.publisherId || 
+      status === PublisherStatus.Pending || 
+      status === PublisherStatus.Dormant;
+
+    let actionText = '';
+    let navigationText = '';
+
+    // Determine action text
+    switch (currentTab) {
+      case 0: // Basic Details
+        if (!this.publisherId) {
+          actionText = this.translateService.instant('create') || 'Create';
+        } else if (canUpdateDirectly) {
+          actionText = this.translateService.instant('update') || 'Update';
+        } else {
+          actionText = this.translateService.instant('raiseaticket') || 'Raise Ticket';
+        }
+        break;
+
+      case 1: // Address
+        const existingAddress = this.publisherDetails()?.address?.[0];
+        if (!existingAddress) {
+          actionText = this.translateService.instant('create') || 'Create';
+        } else if (canUpdateDirectly) {
+          actionText = this.translateService.instant('update') || 'Update';
+        } else {
+          actionText = this.translateService.instant('raiseaticket') || 'Raise Ticket';
+        }
+        break;
+
+      case 2: // Bank Details
+        const existingBank = this.publisherDetails()?.bankDetails?.[0];
+        if (!existingBank) {
+          actionText = this.translateService.instant('create') || 'Create';
+        } else if (canUpdateDirectly) {
+          actionText = this.translateService.instant('update') || 'Update';
+        } else {
+          actionText = this.translateService.instant('raiseaticket') || 'Raise Ticket';
+        }
+        break;
+
+      default:
+        return '';
+    }
+
+    // Determine navigation text
+    if (currentTab === this.TOTAL_TABS - 1) {
+      // Last tab
+      if (this.ticketRaisedForTab()[currentTab]) {
+        navigationText = this.translateService.instant('viewticket') || 'View Ticket';
+      } else {
+        navigationText = this.translateService.instant('back') || 'Back';
+      }
+    } else {
+      // Not last tab
+      navigationText = this.translateService.instant('next') || 'Next';
+    }
+
+    // Combine action and navigation text
+    return `${actionText} and ${navigationText}`;
+  }
+
+  // Get action button icon
+  getActionButtonIcon(): string {
+    const currentTab = this.currentTabIndex();
+    
+    if (currentTab === this.TOTAL_TABS - 1) {
+      // Last tab
+      if (this.ticketRaisedForTab()[currentTab]) {
+        return 'visibility';
+      }
+      return 'arrow_back';
+    }
+    
+    // Not last tab
+    return 'arrow_forward';
+  }
+
+  // Check if current tab is valid
+  isCurrentTabValid(): boolean {
+    const currentTab = this.currentTabIndex();
+    
+    switch (currentTab) {
+      case 0: // Basic Details (includes Social Media)
+        return this.publisherFormGroup.valid && !!this.mediaControl.value;
+      case 1: // Address
+        return this.publisherAddressDetails.valid;
+      case 2: // Bank Details
+        return this.publisherBankDetails.valid && !this.publisherBankDetails.hasError('accountMismatch');
+      default:
+        return false;
+    }
+  }
+
+  // Handle tab-specific save/next action
+  async handleTabAction() {
+    const currentTab = this.currentTabIndex();
+    
+    // Validate current tab
+    if (!this.isCurrentTabValid()) {
+      // Mark current tab form as touched
+      switch (currentTab) {
+        case 0:
+          this.publisherFormGroup.markAllAsTouched();
+          if (!this.mediaControl.value) {
+            await Swal.fire({
+              title: 'Profile Image Required',
+              text: 'Please upload a profile image to continue.',
+              icon: 'error',
+              heightAuto: false,
+            });
+          }
+          break;
+        case 1:
+          this.publisherAddressDetails.markAllAsTouched();
+          break;
+        case 2:
+          this.publisherBankDetails.markAllAsTouched();
+          if (this.publisherBankDetails.hasError('accountMismatch')) {
+            await Swal.fire({
+              title: 'Error',
+              text: 'Account numbers do not match.',
+              icon: 'error',
+              heightAuto: false,
+            });
+          }
+          break;
+      }
+      return;
+    }
+
+    // Save current tab data - let services handle errors
+    switch (currentTab) {
+      case 0:
+        await this.saveBasicDetailsTab();
+        // Move to next tab after save
+        this.nextTab();
+        break;
+      case 1:
+        await this.saveAddressTab();
+        // Move to next tab after save
+        this.nextTab();
+        break;
+      case 2:
+        await this.saveBankDetailsTab();
+        // Last tab - handle navigation based on action
+        if (this.ticketRaisedForTab()[currentTab]) {
+          // Ticket was raised - navigate to tickets page
+          this.router.navigate(['/update-tickets'], {
+            queryParams: { tab: 'publisher' },
+          });
+        }
+        // For direct updates, saveBankDetailsTab already handles redirect
+        break;
+    }
+  }
+
+  // Save Basic Details Tab (Publisher info, Media, Social Media)
+  async saveBasicDetailsTab() {
+    const publisherData: any = {
+      ...this.publisherFormGroup.value,
+      id: this.publisherId || this.publisherFormGroup.value.id,
+      pocEmail: this.publisherFormGroup.controls.pocEmail.value,
+      userPassword: this.publisherFormGroup.controls.userPassword.value
+        ? md5(this.publisherFormGroup.controls.userPassword.value)
+        : undefined,
+      pocPhoneNumber:
+        this.publisherFormGroup.controls.pocPhoneNumber.value?.replaceAll(' ', ''),
+    };
+
+    const status = this.publisherDetails()?.status;
+    // Publishers: Only Dormant/Pending can be updated directly, ALL Active need tickets (even SuperAdmin)
+    const canUpdateDirectly = 
+      !this.publisherId || 
+      status === PublisherStatus.Pending || 
+      status === PublisherStatus.Dormant;
+
+    if (canUpdateDirectly) {
+      // Create new publisher or update directly
+      const response = (await this.publisherService.createPublisher(
+        publisherData
+      )) as Publishers;
+      
+      // Store publisherId if it's a new publisher
+      const wasNewPublisher = !this.publisherId;
+      const finalPublisherId = response?.id || this.publisherId;
+      if (!this.publisherId && response?.id) {
+        this.publisherId = response.id;
+        // Update query params
+        this.updateQueryParams({ publisherId: response.id.toString() });
+        
+        // Reload publisher details
+        const updatedPublisher = await this.publisherService.getPublisherById(response.id);
+        this.publisherDetails.set(updatedPublisher);
+      }
+
+      // Save media with loader - only upload if there's a new file
+      const media = this.mediaControl.value;
+      if (finalPublisherId && media?.file) {
+        if (this.mediaToDeleteId) {
+          await this.publisherService.removeImage(this.mediaToDeleteId);
+        }
+        // Wrap media upload in loader to keep it active during upload
+        await this.loader.loadPromise(
+          this.publisherService.updateMyImage(media.file, finalPublisherId),
+          'upload-media'
+        );
+      }
+
+      // Save social media
+      if (finalPublisherId) {
+        const socialMediaData = this.socialMediaArray.controls
+          .map((group) => ({
+            ...group.value,
+            publisherId: finalPublisherId,
+          }))
+          .filter((item) => item.type && item.url?.trim());
+
+        if (socialMediaData.length > 0) {
+          await this.socialService.createOrUpdateSocialMediaLinks(
+            socialMediaData as socialMediaGroup[]
+          );
+        }
+      }
+
+      // Clear ticket flag for this tab on successful direct update
+      this.ticketRaisedForTab.update((prev) => {
+        const updated = { ...prev };
+        delete updated[0];
+        return updated;
+      });
+
+      // Success popup removed - only show on last tab (bank details)
+    } else {
+      // Raise ticket for Active publishers (ALL Active need tickets, even SuperAdmin)
+      const existingPublisher = this.publisherDetails();
+      const hasPublisherChange = existingPublisher 
+        ? this.hasPublisherChanges() 
+        : false;
+      const existingMedia = existingPublisher?.medias?.[0];
+      const hasMediaChange = this.hasMediaChanges(existingMedia);
+      const existingSocialMedia = existingPublisher?.socialMedias || [];
+      const hasSocialMediaChange = this.hasSocialMediaChanges(existingSocialMedia);
+
+      if (hasPublisherChange || hasMediaChange || hasSocialMediaChange) {
+        const pocName = this.publisherFormGroup.value.pocName || '';
+        const nameParts = pocName.split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+
+        const payload: any = {
+          type: UpdateTicketType.PUBLISHER,
+          publisherId: this.publisherId,
+          publisherName: this.publisherFormGroup.value.name,
+          publisherEmail: this.publisherFormGroup.value.email,
+          publisherDesignation: this.publisherFormGroup.value.designation,
+          publisherPocName: pocName,
+          publisherPocEmail: this.publisherFormGroup.value.pocEmail,
+          publisherPocPhoneNumber: this.publisherFormGroup.value.pocPhoneNumber,
+        };
+
+        await this.userService.raisingTicket(payload);
+
+        // Mark that ticket was raised for this tab
+        this.ticketRaisedForTab.update((prev) => ({
+          ...prev,
+          [0]: true,
+        }));
+
+        // Success popup removed - only show on last tab (bank details)
+      }
+    }
+  }
+
+  // Save Address Tab
+  async saveAddressTab() {
+    // For new publishers, publisherId should be set from tab 0
+    // But if somehow it's not set, try to get it from query params
+    if (!this.publisherId) {
+      const queryPublisherId = this.route.snapshot.queryParams['publisherId'];
+      if (queryPublisherId) {
+        this.publisherId = Number(queryPublisherId);
+        const updatedPublisher = await this.publisherService.getPublisherById(this.publisherId);
+        this.publisherDetails.set(updatedPublisher);
+      } else {
+        await Swal.fire({
+          title: 'Error',
+          text: 'Please complete Basic Details first.',
+          icon: 'error',
+          heightAuto: false,
+        });
+        this.goToTab(0);
+        return;
+      }
+    }
+
+    const status = this.publisherDetails()?.status;
+    // Publishers: Only Dormant/Pending can be updated directly
+    const canUpdateDirectly = 
+      status === PublisherStatus.Pending || 
+      status === PublisherStatus.Dormant;
+
+    if (canUpdateDirectly) {
+      // Create or update address directly
+      const existingPublisher = this.publisherDetails();
+      const existingAddress = existingPublisher?.address?.[0];
+      const wasNewAddress = !existingAddress;
+      
+      await this.addressService.createOrUpdateAddress({
+        ...this.publisherAddressDetails.value,
+        id: existingAddress?.id,
+        publisherId: this.publisherId,
+      } as Address);
+
+      // Reload publisher details to get updated address
+      const updatedPublisher = await this.publisherService.getPublisherById(this.publisherId);
+      this.publisherDetails.set(updatedPublisher);
+
+      // Clear ticket flag for this tab on successful direct update
+      this.ticketRaisedForTab.update((prev) => {
+        const updated = { ...prev };
+        delete updated[1];
+        return updated;
+      });
+
+      // Success popup removed - only show on last tab (bank details)
+    } else {
+      // Raise ticket for Active publishers
+      const existingPublisher = this.publisherDetails();
+      const existingAddress = existingPublisher?.address?.[0];
+      const hasAddressChange = this.hasAddressChanges(existingAddress);
+
+      if (hasAddressChange) {
+        const payload: any = {
+          type: UpdateTicketType.ADDRESS,
+          targetPublisherId: this.publisherId,
+          address: this.publisherAddressDetails.value.address,
+          city: this.publisherAddressDetails.value.city,
+          state: this.publisherAddressDetails.value.state,
+          country: this.publisherAddressDetails.value.country,
+          pincode: this.publisherAddressDetails.value.pincode,
+        };
+
+        await this.userService.raisingTicket(payload);
+
+        // Mark that ticket was raised for this tab
+        this.ticketRaisedForTab.update((prev) => ({
+          ...prev,
+          [1]: true,
+        }));
+
+        // Success popup removed - only show on last tab (bank details)
+      }
+    }
+  }
+
+  // Save Bank Details Tab
+  async saveBankDetailsTab() {
+    // For new publishers, publisherId should be set from tab 0
+    // But if somehow it's not set, try to get it from query params
+    if (!this.publisherId) {
+      const queryPublisherId = this.route.snapshot.queryParams['publisherId'];
+      if (queryPublisherId) {
+        this.publisherId = Number(queryPublisherId);
+        const updatedPublisher = await this.publisherService.getPublisherById(this.publisherId);
+        this.publisherDetails.set(updatedPublisher);
+      } else {
+        await Swal.fire({
+          title: 'Error',
+          text: 'Please complete Basic Details first.',
+          icon: 'error',
+          heightAuto: false,
+        });
+        this.goToTab(0);
+        return;
+      }
+    }
+
+    const status = this.publisherDetails()?.status;
+    // Publishers: Only Dormant/Pending can be updated directly
+    const canUpdateDirectly = 
+      status === PublisherStatus.Pending || 
+      status === PublisherStatus.Dormant;
+
+    if (canUpdateDirectly) {
+      // Create or update bank details directly
+      const existingPublisher = this.publisherDetails();
+      const existingBank = existingPublisher?.bankDetails?.[0];
+      const wasNewBank = !existingBank;
+      
+      const bankDetailsValue = { ...this.publisherBankDetails.value };
+      if (
+        !bankDetailsValue.gstNumber ||
+        bankDetailsValue.gstNumber.trim() === ''
+      ) {
+        delete bankDetailsValue.gstNumber;
+      }
+
+      await this.bankDetailService.createOrUpdateBankDetail({
+        ...bankDetailsValue,
+        id: existingBank?.id,
+        publisherId: this.publisherId,
+      } as createBankDetails);
+
+      // Reload publisher details to get updated bank details
+      const updatedPublisher = await this.publisherService.getPublisherById(this.publisherId);
+      this.publisherDetails.set(updatedPublisher);
+
+      // Clear ticket flag for this tab on successful direct update
+      this.ticketRaisedForTab.update((prev) => {
+        const updated = { ...prev };
+        delete updated[2];
+        return updated;
+      });
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: wasNewBank 
+          ? 'Bank details created successfully' 
+          : 'Bank details updated successfully',
+        heightAuto: false,
+      });
+
+      // Redirect after final save (only for direct updates, not tickets)
+      if (this.signupCode) {
+        this.router.navigate(['/login']);
+      } else {
+        this.router.navigate(['/publisher']);
+      }
+    } else {
+      // Raise ticket for Active publishers
+      const existingPublisher = this.publisherDetails();
+      const existingBank = existingPublisher?.bankDetails?.[0];
+      const hasBankChange = this.hasBankChanges(existingBank);
+
+      if (hasBankChange) {
+        const bankDetailsValue = { ...this.publisherBankDetails.value };
+        if (
+          !bankDetailsValue.gstNumber ||
+          bankDetailsValue.gstNumber.trim() === ''
+        ) {
+          delete bankDetailsValue.gstNumber;
+        }
+
+        const payload: any = {
+          type: UpdateTicketType.BANK,
+          targetPublisherId: this.publisherId,
+          bankName: bankDetailsValue.name,
+          accountHolderName: bankDetailsValue.accountHolderName,
+          accountNo: bankDetailsValue.accountNo,
+          ifsc: bankDetailsValue.ifsc,
+          panCardNo: bankDetailsValue.panCardNo,
+          accountType: bankDetailsValue.accountType,
+          gstNumber: bankDetailsValue.gstNumber,
+        };
+
+        await this.userService.raisingTicket(payload);
+
+        // Mark that ticket was raised for this tab
+        this.ticketRaisedForTab.update((prev) => ({
+          ...prev,
+          [2]: true,
+        }));
+
+        await Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Update ticket raised successfully for bank details',
+          heightAuto: false,
+        });
+
+        // Don't redirect automatically - let user click "View Ticket" button
+      }
+    }
+  }
+
   openPassword() {
     const oldInput = document.getElementById('password') as HTMLInputElement;
     if (oldInput.type === 'password') {

@@ -58,6 +58,7 @@
           <span class="ml-2">My Publishing Details</span>
         </button>
         } @if (loggedInUser()?.publisher?.id) {
+        @if (publisher()?.status === 'Dormant' || publisher()?.status === 'Pending' || loggedInUser()?.accessLevel === 'SUPERADMIN') {
         <button
           mat-flat-button
           color="accent"
@@ -67,6 +68,8 @@
           <mat-icon>edit</mat-icon>
           <span class="ml-2">Edit Publisher Details</span>
         </button>
+        }
+        @if (publisher()?.status === 'Active') {
         <button
           mat-flat-button
           color="accent"
@@ -76,6 +79,7 @@
           <mat-icon>visibility</mat-icon>
           <span class="ml-2">View My Tickets</span>
         </button>
+        }
         } @if (loggedInUser()?.auther?.id) {
         <button
           mat-flat-button
