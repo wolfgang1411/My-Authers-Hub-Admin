@@ -9,18 +9,21 @@
 
   <mat-dialog-content>
     <div class="grid grid-cols-2 gap-4">
-      <mat-form-field>
+      <mat-form-field appearance="fill">
         <mat-label>{{ "coupon" | translate }}</mat-label>
         <input formControlName="code" matInput type="text" />
       </mat-form-field>
 
-      <mat-form-field>
+      <mat-form-field appearance="fill">
         <mat-label>{{ "discountvalue" | translate }}</mat-label>
         <input formControlName="discountValue" matInput type="number" />
       </mat-form-field>
 
-      <mat-form-field>
-        <mat-label>{{ "discounttype" | translate }}</mat-label>
+      <mat-form-field appearance="fill">
+        <mat-icon matPrefix class="!text-gray-400 !text-lg"
+          >percent</mat-icon
+        >
+        <mat-label class="!hidden">{{ "discounttype" | translate }}</mat-label>
         <mat-select formControlName="discountType">
           @for (discountType of discountTypes() ; track discountType) {
           <mat-option [value]="discountType">
@@ -30,8 +33,11 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field>
-        <mat-label>{{ "applyon" | translate }}</mat-label>
+      <mat-form-field appearance="fill">
+        <mat-icon matPrefix class="!text-gray-400 !text-lg"
+          >category</mat-icon
+        >
+        <mat-label class="!hidden">{{ "applyon" | translate }}</mat-label>
         <mat-select formControlName="applyOn">
           @for (applyOn of applyOnTypes() ; track applyOn) {
           <mat-option [value]="applyOn">
@@ -41,7 +47,7 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field class="relative">
+      <mat-form-field appearance="fill" class="relative">
         <mat-label>{{ "startdate" | translate }}</mat-label>
         <input
           class="opacity-0 w-0 h-0 absolute top-0"
@@ -61,7 +67,7 @@
         <mat-datepicker #picker></mat-datepicker>
       </mat-form-field>
 
-      <mat-form-field class="relative">
+      <mat-form-field appearance="fill" class="relative">
         <mat-label>{{ "enddate" | translate }}</mat-label>
         <input
           class="hidden"
@@ -83,18 +89,21 @@
         <mat-datepicker #endDatePicker></mat-datepicker>
       </mat-form-field>
 
-      <mat-form-field>
+      <mat-form-field appearance="fill">
         <mat-label>{{ "usagelimit" | translate }}</mat-label>
         <input formControlName="usageLimit" matInput type="number" />
       </mat-form-field>
 
-      <mat-form-field>
+      <mat-form-field appearance="fill">
         <mat-label>{{ "userusagelimit" | translate }}</mat-label>
         <input formControlName="userUsageLimit" matInput type="number" />
       </mat-form-field>
 
-      <mat-form-field class="col-span-2">
-        <mat-label>{{ "title" | translate }}</mat-label>
+      <mat-form-field appearance="fill" class="col-span-2">
+        <mat-icon matPrefix class="!text-gray-400 !text-lg"
+          >book</mat-icon
+        >
+        <mat-label class="!hidden">{{ "title" | translate }}</mat-label>
         <mat-select formControlName="titleId">
           @for (title of data.titleList ; track title) {
           <mat-option [value]="title.id">

@@ -25,6 +25,7 @@ import { StaticValuesService } from '../../services/static-values';
 import { formatIsbn } from 'src/app/shared/utils/isbn.utils';
 import { exportToExcel } from '../../common/utils/excel';
 import { Logger } from '../../services/logger';
+import { SharedTitlesService } from '../shared-titles/shared-titles-service';
 
 @Component({
   selector: 'app-titles',
@@ -51,7 +52,8 @@ export class Titles {
     private translate: TranslateService,
     private logger: Logger,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private sharedTitlesService: SharedTitlesService
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -621,6 +623,51 @@ export class Titles {
           this.translateService.instant('errorexporting') ||
           'Failed to export data. Please try again.',
       });
+    }
+  }
+
+  async onClickShareTitle(title: Title): Promise<void> {
+    try {
+      if (!title.id || title.status !== TitleStatus.APPROVED) {
+        Swal.fire({
+          icon: 'error',
+          title: this.translateService.instant('error') || 'Error',
+          text:
+            this.translateService.instant('onlyapprovedtitlescanbeshared') ||
+            'Only approved titles can be shared',
+        });
+        return;
+      }
+
+      const sharedTitle =
+        await this.sharedTitlesService.createSharedTitle(title.id);
+
+      // Generate the share URL
+      const shareUrl = `${window.location.origin}/shared-title-view/${sharedTitle.code}`;
+
+      // Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        Swal.fire({
+          icon: 'success',
+          title:
+            this.translateService.instant('linkcopied') || 'Link Copied',
+          html: `${this.translateService.instant('sharelinkcopied') || 'Share link copied to clipboard!'}<br><br><small>${this.translateService.instant('linkvaliduntil') || 'Link valid until'}: ${sharedTitle.sharedUntil ? new Date(sharedTitle.sharedUntil).toLocaleDateString() : 'N/A'}</small>`,
+          showConfirmButton: true,
+        });
+      } catch (clipboardError) {
+        // Fallback for browsers that don't support clipboard API
+        console.error('Clipboard error:', clipboardError);
+        Swal.fire({
+          icon: 'info',
+          title: this.translateService.instant('sharelink') || 'Share Link',
+          html: `<div style="word-break: break-all;">${shareUrl}</div><br><small>${this.translateService.instant('linkvaliduntil') || 'Link valid until'}: ${sharedTitle.sharedUntil ? new Date(sharedTitle.sharedUntil).toLocaleDateString() : 'N/A'}</small>`,
+          confirmButtonText:
+            this.translateService.instant('close') || 'Close',
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing title:', error);
     }
   }
 }

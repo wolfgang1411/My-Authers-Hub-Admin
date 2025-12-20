@@ -8,6 +8,7 @@ export interface SharedTitle {
   id: number;
   titleId: number;
   code: string;
+  sharedUntil: string | null;
   createdAt: string;
   updatedAt: string;
   title: {

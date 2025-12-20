@@ -13,6 +13,8 @@ import Swal from 'sweetalert2';
 import { TranslateService } from '@ngx-translate/core';
 import { format } from 'date-fns';
 import { TitleService } from '../titles/title-service';
+import { MatDialog } from '@angular/material/dialog';
+import { ShareTitle } from '../../components/share-title/share-title';
 
 @Component({
   selector: 'app-shared-titles',
@@ -42,7 +44,8 @@ export class SharedTitles implements OnInit {
     private userService: UserService,
     private translateService: TranslateService,
     private titleService: TitleService,
-    private router: Router
+    private router: Router,
+    private matDialog: MatDialog
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -154,56 +157,42 @@ export class SharedTitles implements OnInit {
     }
   }
 
-  async onClickCreate() {
-    const { value: titleId } = await Swal.fire({
-      icon: 'info',
-      title: 'Select Title to Share',
-      input: 'number',
-      inputLabel: 'Title ID',
-      inputPlaceholder: 'Enter title ID',
-      showCancelButton: true,
-      confirmButtonText: 'Share',
-      confirmButtonColor: '#3d1a5d',
-      cancelButtonText: 'Cancel',
-      inputValidator: (value) => {
-        if (!value) {
-          return 'Please enter a title ID';
-        }
-        if (isNaN(Number(value)) || Number(value) <= 0) {
-          return 'Please enter a valid title ID';
-        }
-        return null;
+  onClickCreate() {
+    const dialog = this.matDialog.open(ShareTitle, {
+      width: '500px',
+      maxWidth: '90vw',
+      data: {
+        onClose: () => dialog.close(),
+        onSubmit: async (titleId: number) => {
+          try {
+            const sharedTitle =
+              await this.sharedTitlesService.createSharedTitle(titleId);
+            // Refresh the list to show the new shared title
+            this.page.set(1);
+            await this.fetchSharedTitles();
+            dialog.close();
+            Swal.fire({
+              icon: 'success',
+              title: this.translateService.instant('success') || 'Success',
+              html: `${this.translateService.instant('titlesharedsuccessfully') || 'Title shared successfully!'}<br>${this.translateService.instant('code') || 'Share Code'}: <strong>${sharedTitle.code}</strong>`,
+              timer: 3000,
+              showConfirmButton: true,
+            });
+          } catch (error: any) {
+            console.error('Error creating shared title:', error);
+            const errorMessage =
+              error?.error?.message ||
+              this.translateService.instant('errorsharingtitle') ||
+              'Failed to create shared title';
+            Swal.fire({
+              icon: 'error',
+              title: this.translateService.instant('error') || 'Error',
+              text: errorMessage,
+            });
+          }
+        },
       },
     });
-
-    if (!titleId) return;
-
-    try {
-      const sharedTitle = await this.sharedTitlesService.createSharedTitle(
-        Number(titleId)
-      );
-      // Refresh the list to show the new shared title
-      this.page.set(1);
-      await this.fetchSharedTitles();
-      Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        html: `Title shared successfully!<br>Share Code: <strong>${sharedTitle.code}</strong>`,
-        timer: 3000,
-        showConfirmButton: true,
-      });
-    } catch (error: any) {
-      console.error('Error creating shared title:', error);
-      const errorMessage =
-        error?.error?.message ||
-        this.translateService.instant('error') ||
-        'Failed to create shared title';
-      Swal.fire({
-        icon: 'error',
-        title: this.translateService.instant('error'),
-        text: errorMessage,
-      });
-    }
   }
 
   onPageChange(page: number) {

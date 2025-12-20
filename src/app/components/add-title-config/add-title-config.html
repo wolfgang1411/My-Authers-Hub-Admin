@@ -5,18 +5,36 @@
 
   <mat-dialog-content>
     <form [formGroup]="form" class="flex flex-col gap-4">
-      <mat-form-field class="flex-1">
-        <mat-label>{{ "title" | translate }}</mat-label>
+      <mat-form-field appearance="fill" class="flex-1 w-full">
+        <mat-icon matPrefix class="!text-gray-400 !text-lg"
+          >book</mat-icon
+        >
+        <mat-label class="!hidden">{{ "title" | translate }}</mat-label>
         <mat-select formControlName="titleId">
           @for (title of data.titles; track title.id) {
-          <mat-option [value]="title.id">{{ title.name }}</mat-option>
+          <mat-option [value]="title.id"
+            >{{ title.name }} ({{ title.status | translate }})</mat-option
+          >
           }
         </mat-select>
+        @if (
+        form.controls.titleId.hasError('required') &&
+        form.controls.titleId.touched) {
+        <mat-error>{{ "titleisrequired" | translate }}</mat-error>
+        }
       </mat-form-field>
 
-      <mat-form-field class="w-full">
-        <mat-label>{{ "position" | translate }}</mat-label>
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-icon matPrefix class="!text-gray-400 !text-lg"
+          >numbers</mat-icon
+        >
+        <mat-label class="!hidden">{{ "position" | translate }}</mat-label>
         <input matInput type="number" formControlName="position" />
+        @if (
+        form.controls.position.hasError('required') &&
+        form.controls.position.touched) {
+        <mat-error>{{ "positionisrequired" | translate }}</mat-error>
+        }
       </mat-form-field>
     </form>
   </mat-dialog-content>

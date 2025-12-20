@@ -37,7 +37,7 @@ export class RoyaltyService {
     try {
       return await this.server.get<Pagination<Royalty>>('royalty', filter);
     } catch (error) {
-      this.logger.logError(error);
+      console.error('Error fetching royalties:', error);
       throw error;
     }
   }
@@ -51,7 +51,7 @@ export class RoyaltyService {
       );
       return responses;
     } catch (error) {
-      this.logger.logError(error);
+      console.error('Error creating royalties:', error);
       throw error;
     }
   }
@@ -69,7 +69,7 @@ export class RoyaltyService {
         true // Hide loader for this frequent call
       );
     } catch (error) {
-      this.logger.logError(error);
+      console.error('Error calculating royalties:', error);
       throw error;
     }
   }

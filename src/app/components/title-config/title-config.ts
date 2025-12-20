@@ -153,7 +153,9 @@ export class TitleConfigComponent implements OnInit {
     event.stopPropagation();
 
     if (!this.titlesWithMinimumDetails()) {
-      const { items } = await this.titleService.getTitleWithLessDetails({});
+      const { items } = await this.titleService.getTitleWithLessDetails({
+        status: ['APPROVED'] as any,
+      });
       this.titlesWithMinimumDetails.set(items);
     }
 
@@ -170,7 +172,8 @@ export class TitleConfigComponent implements OnInit {
     const dialog = this.matDialog.open(AddTitleConfig, {
       data: {
         titles: this.titlesWithMinimumDetails()?.filter(
-          ({ id }) => !existingTitles?.includes(id)
+          ({ id, status }) =>
+            !existingTitles?.includes(id) && status === 'APPROVED'
         ),
         type,
         nextPosition,

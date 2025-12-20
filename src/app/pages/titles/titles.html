@@ -93,18 +93,7 @@
         <mat-icon>menu_book</mat-icon>
         {{ "mytitles" | translate }}
       </button>
-      @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
-      <button
-        matButton
-        matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
-        [routerLink]="['/shared-titles']"
-        routerLinkActive="router-link-active"
-      >
-        <mat-icon>share</mat-icon>
-        Shared Titles
-      </button>
-      } }
+      }
     </div>
   </div>
   @if (loggedInUser()?.accessLevel !== 'AUTHER') {
@@ -384,6 +373,16 @@
         mat-icon-button
       >
         <mat-icon class="!text-white">thumb_down</mat-icon>
+      </button>
+      }
+      @if (element.status === 'APPROVED') {
+      <button
+        (click)="onClickShareTitle(element)"
+        [title]="'share' | translate"
+        class="!bg-primary"
+        mat-icon-button
+      >
+        <mat-icon class="!text-white">share</mat-icon>
       </button>
       }
 

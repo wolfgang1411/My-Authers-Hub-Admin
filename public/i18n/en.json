@@ -720,5 +720,22 @@
   "AMAZON_PRIME" : "Amazon Prime",
   "OTHER_EBOOK_STORES"  : "Other EBook Stores",
 "Sub_Publisher":"Sub Publisher"  ,
-"addedBy":"Added By"  
+"addedBy":"Added By",
+"share": "Share",
+"onlyapprovedtitlescanbeshared": "Only approved titles can be shared",
+"titlesharedsuccessfully": "Title shared successfully",
+"errorsharingtitle": "Failed to share title. Please try again.",
+"APPROVED": "APPROVED",
+"sharetitle": "Share Title",
+"selecttitle": "Select Title",
+"titleisrequired": "Title is required",
+"noapprovedtitlesavailable": "No approved titles available",
+"loading": "Loading",
+"positionisrequired": "Position is required",
+"selectdiscounttype": "Select Discount Type",
+"selectapplyon": "Select Apply On",
+"linkcopied": "Link Copied",
+"sharelinkcopied": "Share link copied to clipboard!",
+"linkvaliduntil": "Link valid until",
+"sharelink": "Share Link"
 }

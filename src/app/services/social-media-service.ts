@@ -31,7 +31,7 @@ export class SocialMediaService {
         })
       );
     } catch (error) {
-      this.logger.logError(error);
+      console.error('Error creating/updating social media links:', error);
       throw error;
     }
   }

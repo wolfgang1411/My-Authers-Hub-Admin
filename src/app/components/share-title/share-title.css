@@ -1,5 +1,19 @@
-/* Fix icon prefix positioning for mat-select */
+/* Share Title Dialog Styles */
 ::ng-deep .mat-mdc-dialog-container {
+  .mat-mdc-form-field {
+    width: 100%;
+  }
+
+  .mat-mdc-select-value {
+    min-height: 40px;
+  }
+
+  .mat-mdc-option {
+    min-height: 56px;
+    padding: 8px 16px;
+  }
+
+  /* Fix icon prefix positioning for mat-select */
   .mat-mdc-form-field-has-icon-prefix {
     .mat-mdc-text-field-wrapper {
       padding-left: 0 !important;
