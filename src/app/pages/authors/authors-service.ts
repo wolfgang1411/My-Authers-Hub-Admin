@@ -165,8 +165,8 @@ export class AuthorsService {
         this.server.delete(`author-media/medias/${mediaId}`)
       );
     } catch (error) {
-      throw error;
       this.logger.logError(error);
+      throw error;
     }
   }
 }

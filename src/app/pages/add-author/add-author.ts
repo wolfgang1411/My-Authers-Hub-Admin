@@ -23,6 +23,7 @@ import {
   StepperOrientation,
   MatStepperModule,
 } from '@angular/material/stepper';
+import { MatTabsModule } from '@angular/material/tabs';
 import { Observable, of } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
@@ -63,6 +64,7 @@ import { SocialMedia } from '../social-media/social-media';
 import { MatIcon } from '@angular/material/icon';
 import { UserService } from '../../services/user';
 import { Back } from '../../components/back/back';
+import { LoaderService } from '../../services/loader';
 import { Country, State, City } from 'country-state-city';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -77,6 +79,7 @@ import {
   selector: 'app-add-author',
   imports: [
     MatStepperModule,
+    MatTabsModule,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
@@ -105,7 +108,8 @@ export class AddAuthor implements OnInit {
     private router: Router,
     private socialService: SocialMediaService,
     private userService: UserService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private loader: LoaderService
   ) {
     effect(() => {
       const selected =
@@ -123,6 +127,15 @@ export class AddAuthor implements OnInit {
       this.authorId = Number(id) || undefined;
       this.signupCode = signupCode;
     });
+    
+    // Handle tab index from query params
+    this.route.queryParams.subscribe((params) => {
+      const tabIndex = params['tab'] ? Number(params['tab']) : 0;
+      if (tabIndex >= 0 && tabIndex < this.TOTAL_TABS) {
+        this.currentTabIndex.set(tabIndex);
+      }
+    });
+    
     this.loggedInUser = this.userService.loggedInUser$;
   }
 
@@ -138,6 +151,9 @@ export class AddAuthor implements OnInit {
   states!: States[];
   cities!: Cities[];
   AuthorStatus = AuthorStatus; // Expose AuthorStatus enum to template
+  currentTabIndex = signal<number>(0);
+  readonly TOTAL_TABS = 3; // Basic Details (with Social Media), Address, Bank Details
+  ticketRaisedForTab = signal<{ [tabIndex: number]: boolean }>({}); // Track which tabs raised tickets
   isAllSelected = computed(() => {
     return this.selectedTypes().length >= this.socialMediaArray.length;
   });
@@ -145,7 +161,9 @@ export class AddAuthor implements OnInit {
     if (!this.authorId || !this.authorDetails()) {
       return true; // New author or no author details, can submit normally
     }
-    return this.authorDetails()?.status !== AuthorStatus.Pending;
+    // Allow direct updates for Dormant and Pending authors (no tickets needed)
+    const status = this.authorDetails()?.status;
+    return status !== AuthorStatus.Pending && status !== AuthorStatus.Dormant;
   });
   bankInfo: any = null;
   verifying = false;
@@ -862,8 +880,7 @@ export class AddAuthor implements OnInit {
         );
         this.authorDetails.set(existingAuthor);
       } catch (error) {
-        console.error('Error fetching author details:', error);
-        // Fall back to current behavior if fetch fails
+        // Error handled by service - fall back to current behavior if fetch fails
         existingAuthor = undefined;
       }
     }
@@ -1063,9 +1080,13 @@ export class AddAuthor implements OnInit {
       }
     }
 
-    // Update author directly if status is Pending (can be updated without tickets)
+    // Update author directly if status is Dormant or Pending (can be updated without tickets)
     // For Active authors, tickets will handle the update when approved
-    if (this.authorId && existingAuthor?.status === AuthorStatus.Pending) {
+    if (
+      this.authorId &&
+      (existingAuthor?.status === AuthorStatus.Pending ||
+        existingAuthor?.status === AuthorStatus.Dormant)
+    ) {
       try {
         // Update author basic info
         const authorUpdateData = {
@@ -1105,7 +1126,7 @@ export class AddAuthor implements OnInit {
           } as createBankDetails);
         }
       } catch (error) {
-        console.error('Error updating author directly:', error);
+        // Error handled by service
       }
     }
 
@@ -1264,9 +1285,12 @@ export class AddAuthor implements OnInit {
         // Superadmin or creating new author → direct save
         await this.handleNewOrSuperAdminAuthorSubmission(authorData);
       } else {
-        // If author status is Pending, allow direct update (like titles)
+        // If author status is Dormant or Pending, allow direct update (like titles)
         // Otherwise, raise update ticket
-        if (this.authorDetails()?.status === AuthorStatus.Pending) {
+        if (
+          this.authorDetails()?.status === AuthorStatus.Pending ||
+          this.authorDetails()?.status === AuthorStatus.Dormant
+        ) {
           await this.handleNewOrSuperAdminAuthorSubmission(authorData);
         } else {
           updateFlowResult = await this.handleAuthorUpdateFlow(authorData);
@@ -1316,7 +1340,529 @@ export class AddAuthor implements OnInit {
       console.log('➡️ Redirecting to author list (direct save)');
       this.router.navigate(['/author']);
     } catch (error: any) {
-      console.error('❌ Error in onSubmit:', error);
+      // Error handled by service
+    }
+  }
+
+  // Tab navigation methods
+  goToTab(index: number) {
+    if (index >= 0 && index < this.TOTAL_TABS) {
+      this.currentTabIndex.set(index);
+      this.updateQueryParams({ tab: index.toString() });
+    }
+  }
+
+  onTabChange(index: number) {
+    this.goToTab(index);
+  }
+
+  nextTab() {
+    if (this.currentTabIndex() < this.TOTAL_TABS - 1) {
+      this.goToTab(this.currentTabIndex() + 1);
+    }
+  }
+
+  prevTab() {
+    if (this.currentTabIndex() > 0) {
+      this.goToTab(this.currentTabIndex() - 1);
+    }
+  }
+
+  updateQueryParams(params: { [key: string]: any }) {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: params,
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  // Get action button text for current tab (combines action + navigation)
+  getActionButtonText(): string {
+    const currentTab = this.currentTabIndex();
+    const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
+    const status = this.authorDetails()?.status;
+    const canUpdateDirectly = 
+      isSuperAdmin || 
+      status === AuthorStatus.Pending || 
+      status === AuthorStatus.Dormant;
+
+    let actionText = '';
+    let navigationText = '';
+
+    // Determine action text
+    switch (currentTab) {
+      case 0: // Basic Details
+        if (!this.authorId) {
+          actionText = this.translateService.instant('create') || 'Create';
+        } else if (canUpdateDirectly) {
+          actionText = this.translateService.instant('update') || 'Update';
+        } else {
+          actionText = this.translateService.instant('raiseaticket') || 'Raise Ticket';
+        }
+        break;
+
+      case 1: // Address
+        const existingAddress = this.authorDetails()?.address?.[0];
+        if (!existingAddress) {
+          actionText = this.translateService.instant('create') || 'Create';
+        } else if (canUpdateDirectly) {
+          actionText = this.translateService.instant('update') || 'Update';
+        } else {
+          actionText = this.translateService.instant('raiseaticket') || 'Raise Ticket';
+        }
+        break;
+
+      case 2: // Bank Details
+        const existingBank = this.authorDetails()?.bankDetails?.[0];
+        if (!existingBank) {
+          actionText = this.translateService.instant('create') || 'Create';
+        } else if (canUpdateDirectly) {
+          actionText = this.translateService.instant('update') || 'Update';
+        } else {
+          actionText = this.translateService.instant('raiseaticket') || 'Raise Ticket';
+        }
+        break;
+
+      default:
+        return '';
+    }
+
+    // Determine navigation text
+    if (currentTab === this.TOTAL_TABS - 1) {
+      // Last tab
+      if (this.ticketRaisedForTab()[currentTab]) {
+        navigationText = this.translateService.instant('viewticket') || 'View Ticket';
+      } else {
+        navigationText = this.translateService.instant('back') || 'Back';
+      }
+    } else {
+      // Not last tab
+      navigationText = this.translateService.instant('next') || 'Next';
+    }
+
+    // Combine action and navigation text
+    return `${actionText} and ${navigationText}`;
+  }
+
+  // Get action button icon
+  getActionButtonIcon(): string {
+    const currentTab = this.currentTabIndex();
+    
+    if (currentTab === this.TOTAL_TABS - 1) {
+      // Last tab
+      if (this.ticketRaisedForTab()[currentTab]) {
+        return 'visibility';
+      }
+      return 'arrow_back';
+    }
+    
+    // Not last tab
+    return 'arrow_forward';
+  }
+
+
+  // Check if current tab is valid
+  isCurrentTabValid(): boolean {
+    const currentTab = this.currentTabIndex();
+    
+    switch (currentTab) {
+      case 0: // Basic Details (includes Social Media)
+        return this.authorFormGroup.valid && !!this.mediaControl.value;
+      case 1: // Address
+        return this.authorAddressDetails.valid;
+      case 2: // Bank Details
+        return this.authorBankDetails.valid && !this.authorBankDetails.hasError('accountMismatch');
+      default:
+        return false;
+    }
+  }
+
+  // Handle tab-specific save/next action
+  async handleTabAction() {
+    const currentTab = this.currentTabIndex();
+    
+    // Validate current tab
+    if (!this.isCurrentTabValid()) {
+      // Mark current tab form as touched
+      switch (currentTab) {
+        case 0:
+          this.authorFormGroup.markAllAsTouched();
+          if (!this.mediaControl.value) {
+            await Swal.fire({
+              title: 'Profile Image Required',
+              text: 'Please upload a profile image to continue.',
+              icon: 'error',
+              heightAuto: false,
+            });
+          }
+          break;
+        case 1:
+          this.authorAddressDetails.markAllAsTouched();
+          break;
+        case 2:
+          this.authorBankDetails.markAllAsTouched();
+          if (this.authorBankDetails.hasError('accountMismatch')) {
+            await Swal.fire({
+              title: 'Error',
+              text: 'Account numbers do not match.',
+              icon: 'error',
+              heightAuto: false,
+            });
+          }
+          break;
+      }
+      return;
+    }
+
+    // Save current tab data - let services handle errors
+    switch (currentTab) {
+      case 0:
+        await this.saveBasicDetailsTab();
+        // Move to next tab after save
+        this.nextTab();
+        break;
+      case 1:
+        await this.saveAddressTab();
+        // Move to next tab after save
+        this.nextTab();
+        break;
+      case 2:
+        await this.saveBankDetailsTab();
+        // Last tab - handle navigation based on action
+        if (this.ticketRaisedForTab()[currentTab]) {
+          // Ticket was raised - navigate to tickets page
+          const isAuthor = this.loggedInUser()?.accessLevel === 'AUTHER';
+          const tab = isAuthor ? 'author' : 'publisher';
+          this.router.navigate(['/update-tickets'], {
+            queryParams: { tab },
+          });
+        }
+        // For direct updates, saveBankDetailsTab already handles redirect
+        // If no redirect happened, go back to previous tab
+        break;
+    }
+  }
+
+  // Save Basic Details Tab (Author info, Media, Social Media)
+  async saveBasicDetailsTab() {
+    const authorData = {
+      ...this.authorFormGroup.value,
+      id: this.authorId || this.authorFormGroup.value.id,
+      email: this.authorFormGroup.controls.email.value,
+      userPassword: this.authorFormGroup.controls.userPassword.value
+        ? md5(this.authorFormGroup.controls.userPassword.value)
+        : undefined,
+      phoneNumber:
+        this.authorFormGroup.controls.phoneNumber.value?.replaceAll(' ', ''),
+    } as Author;
+
+    const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
+    const status = this.authorDetails()?.status;
+    const canUpdateDirectly = 
+      !this.authorId || 
+      isSuperAdmin || 
+      status === AuthorStatus.Pending || 
+      status === AuthorStatus.Dormant;
+
+    if (canUpdateDirectly) {
+      // Create new author or update directly
+      const response = (await this.authorsService.createAuthor(
+        authorData as Author
+      )) as Author;
+      
+      // Store authorId if it's a new author
+      const wasNewAuthor = !this.authorId;
+      const finalAuthorId = response?.id || this.authorId;
+      if (!this.authorId && response?.id) {
+        this.authorId = response.id;
+        // Update query params
+        this.updateQueryParams({ authorId: response.id.toString() });
+        
+        // Reload author details
+        const updatedAuthor = await this.authorsService.getAuthorrById(response.id);
+        this.authorDetails.set(updatedAuthor);
+      }
+
+      // Save media with loader
+      const media = this.mediaControl.value;
+      if (finalAuthorId) {
+        if (this.mediaToDeleteId && media?.file) {
+          await this.authorsService.removeImage(this.mediaToDeleteId);
+          // Wrap media upload in loader to keep it active during upload
+          await this.loader.loadPromise(
+            this.authorsService.updateMyImage(media.file, finalAuthorId),
+            'upload-media'
+          );
+        } else if (!this.mediaToDeleteId && media?.file) {
+          // Wrap media upload in loader to keep it active during upload
+          await this.loader.loadPromise(
+            this.authorsService.updateMyImage(media.file, finalAuthorId),
+            'upload-media'
+          );
+        }
+      }
+
+      // Save social media
+      if (finalAuthorId) {
+        const socialMediaData = this.socialMediaArray.controls
+          .map((group) => ({
+            ...group.value,
+            autherId: finalAuthorId,
+          }))
+          .filter((item) => item.type && item.url?.trim());
+
+        if (socialMediaData.length > 0) {
+          await this.socialService.createOrUpdateSocialMediaLinks(
+            socialMediaData as socialMediaGroup[]
+          );
+        }
+      }
+
+      // Clear ticket flag for this tab on successful direct update
+      this.ticketRaisedForTab.update((prev) => {
+        const updated = { ...prev };
+        delete updated[0];
+        return updated;
+      });
+
+      // Success popup removed - only show on last tab (bank details)
+    } else {
+      // Raise ticket for Active authors (not SuperAdmin)
+      const existingAuthor = this.authorDetails();
+      const hasAuthorChange = existingAuthor 
+        ? this.hasAuthorChanges(existingAuthor) 
+        : false;
+      const existingMedia = existingAuthor?.medias?.[0];
+      const hasMediaChange = this.hasMediaChanges(existingMedia);
+      const existingSocialMedia = existingAuthor?.socialMedias || [];
+      const hasSocialMediaChange = this.hasSocialMediaChanges(existingSocialMedia);
+
+      if (hasAuthorChange || hasMediaChange || hasSocialMediaChange) {
+        const payload: any = {
+          type: UpdateTicketType.AUTHOR,
+          authorId: this.authorId,
+          authorName: this.authorFormGroup.value.name,
+          authorEmail: this.authorFormGroup.value.email,
+          authorContactNumber: this.authorFormGroup.value.phoneNumber,
+          authorAbout: this.authorFormGroup.value.about,
+          authorUsername: this.authorFormGroup.value.username,
+        };
+
+        await this.userService.raisingTicket(payload);
+
+        // Mark that ticket was raised for this tab
+        this.ticketRaisedForTab.update((prev) => ({
+          ...prev,
+          [0]: true,
+        }));
+
+        // Success popup removed - only show on last tab (bank details)
+      }
+    }
+  }
+
+  // Save Address Tab
+  async saveAddressTab() {
+    // For new authors, authorId should be set from tab 0
+    // But if somehow it's not set, try to get it from query params
+    if (!this.authorId) {
+      const queryAuthorId = this.route.snapshot.queryParams['authorId'];
+      if (queryAuthorId) {
+        this.authorId = Number(queryAuthorId);
+        const updatedAuthor = await this.authorsService.getAuthorrById(this.authorId);
+        this.authorDetails.set(updatedAuthor);
+      } else {
+        await Swal.fire({
+          title: 'Error',
+          text: 'Please complete Basic Details first.',
+          icon: 'error',
+          heightAuto: false,
+        });
+        this.goToTab(0);
+        return;
+      }
+    }
+
+    const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
+    const status = this.authorDetails()?.status;
+    const canUpdateDirectly = 
+      isSuperAdmin || 
+      status === AuthorStatus.Pending || 
+      status === AuthorStatus.Dormant;
+
+    if (canUpdateDirectly) {
+      // Create or update address directly
+      const existingAuthor = this.authorDetails();
+      const existingAddress = existingAuthor?.address?.[0];
+      const wasNewAddress = !existingAddress;
+      
+      await this.addressService.createOrUpdateAddress({
+        ...this.authorAddressDetails.value,
+        id: existingAddress?.id,
+        autherId: this.authorId,
+      } as Address);
+
+      // Reload author details to get updated address
+      const updatedAuthor = await this.authorsService.getAuthorrById(this.authorId);
+      this.authorDetails.set(updatedAuthor);
+
+      // Clear ticket flag for this tab on successful direct update
+      this.ticketRaisedForTab.update((prev) => {
+        const updated = { ...prev };
+        delete updated[1];
+        return updated;
+      });
+
+      // Success popup removed - only show on last tab (bank details)
+    } else {
+      // Raise ticket for Active authors
+      const existingAuthor = this.authorDetails();
+      const existingAddress = existingAuthor?.address?.[0];
+      const hasAddressChange = this.hasAddressChanges(existingAddress);
+
+      if (hasAddressChange) {
+        const payload: any = {
+          type: UpdateTicketType.ADDRESS,
+          targetAuthorId: this.authorId,
+          address: this.authorAddressDetails.value.address,
+          city: this.authorAddressDetails.value.city,
+          state: this.authorAddressDetails.value.state,
+          country: this.authorAddressDetails.value.country,
+          pincode: this.authorAddressDetails.value.pincode,
+        };
+
+        await this.userService.raisingTicket(payload);
+
+        // Mark that ticket was raised for this tab
+        this.ticketRaisedForTab.update((prev) => ({
+          ...prev,
+          [1]: true,
+        }));
+
+        // Success popup removed - only show on last tab (bank details)
+      }
+    }
+  }
+
+  // Save Bank Details Tab
+  async saveBankDetailsTab() {
+    // For new authors, authorId should be set from tab 0
+    // But if somehow it's not set, try to get it from query params
+    if (!this.authorId) {
+      const queryAuthorId = this.route.snapshot.queryParams['authorId'];
+      if (queryAuthorId) {
+        this.authorId = Number(queryAuthorId);
+        const updatedAuthor = await this.authorsService.getAuthorrById(this.authorId);
+        this.authorDetails.set(updatedAuthor);
+      } else {
+        await Swal.fire({
+          title: 'Error',
+          text: 'Please complete Basic Details first.',
+          icon: 'error',
+          heightAuto: false,
+        });
+        this.goToTab(0);
+        return;
+      }
+    }
+
+    const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
+    const status = this.authorDetails()?.status;
+    const canUpdateDirectly = 
+      isSuperAdmin || 
+      status === AuthorStatus.Pending || 
+      status === AuthorStatus.Dormant;
+
+    if (canUpdateDirectly) {
+      // Create or update bank details directly
+      const existingAuthor = this.authorDetails();
+      const existingBank = existingAuthor?.bankDetails?.[0];
+      const wasNewBank = !existingBank;
+      
+      const bankDetailsValue = { ...this.authorBankDetails.value };
+      if (
+        !bankDetailsValue.gstNumber ||
+        bankDetailsValue.gstNumber.trim() === ''
+      ) {
+        delete bankDetailsValue.gstNumber;
+      }
+
+      await this.bankDetailService.createOrUpdateBankDetail({
+        ...bankDetailsValue,
+        id: existingBank?.id,
+        autherId: this.authorId,
+      } as createBankDetails);
+
+      // Reload author details to get updated bank details
+      const updatedAuthor = await this.authorsService.getAuthorrById(this.authorId);
+      this.authorDetails.set(updatedAuthor);
+
+      // Clear ticket flag for this tab on successful direct update
+      this.ticketRaisedForTab.update((prev) => {
+        const updated = { ...prev };
+        delete updated[2];
+        return updated;
+      });
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: wasNewBank 
+          ? 'Bank details created successfully' 
+          : 'Bank details updated successfully',
+        heightAuto: false,
+      });
+
+      // Redirect after final save (only for direct updates, not tickets)
+      if (this.signupCode) {
+        this.router.navigate(['/login']);
+      } else {
+        this.router.navigate(['/author']);
+      }
+    } else {
+      // Raise ticket for Active authors
+      const existingAuthor = this.authorDetails();
+      const existingBank = existingAuthor?.bankDetails?.[0];
+      const hasBankChange = this.hasBankChanges(existingBank);
+
+      if (hasBankChange) {
+        const bankDetailsValue = { ...this.authorBankDetails.value };
+        if (
+          !bankDetailsValue.gstNumber ||
+          bankDetailsValue.gstNumber.trim() === ''
+        ) {
+          delete bankDetailsValue.gstNumber;
+        }
+
+        const payload: any = {
+          type: UpdateTicketType.BANK,
+          targetAuthorId: this.authorId,
+          bankName: bankDetailsValue.name,
+          accountHolderName: bankDetailsValue.accountHolderName,
+          accountNo: bankDetailsValue.accountNo,
+          ifsc: bankDetailsValue.ifsc,
+          panCardNo: bankDetailsValue.panCardNo,
+          accountType: bankDetailsValue.accountType,
+          gstNumber: bankDetailsValue.gstNumber,
+        };
+
+        await this.userService.raisingTicket(payload);
+
+        // Mark that ticket was raised for this tab
+        this.ticketRaisedForTab.update((prev) => ({
+          ...prev,
+          [2]: true,
+        }));
+
+        await Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Update ticket raised successfully for bank details',
+          heightAuto: false,
+        });
+
+        // Don't redirect automatically - let user click "View Ticket" button
+      }
     }
   }
 }

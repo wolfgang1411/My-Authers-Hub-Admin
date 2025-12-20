@@ -203,8 +203,9 @@
         <mat-icon class="!text-white">visibility</mat-icon>
       </button>
       @if(loggedInUser()?.accessLevel === 'SUPERADMIN' ||
-      (loggedInUser()?.accessLevel === 'PUBLISHER' && element.status ===
-      AuthorStatus.Pending)) {
+      (loggedInUser()?.accessLevel === 'PUBLISHER' && (element.status ===
+      AuthorStatus.Pending || element.status ===
+      AuthorStatus.Dormant))) {
       <button
         class="!bg-primary"
         mat-icon-button

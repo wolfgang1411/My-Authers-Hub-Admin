@@ -133,6 +133,7 @@ export enum AuthorStatus {
   Pending = 'Pending',
   Rejected = 'Rejected',
   Deactivated = 'Deactivated',
+  Dormant = 'Dormant'
 }
 
 export enum TitleMediaType {
