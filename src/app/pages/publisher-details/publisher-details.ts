@@ -1,4 +1,11 @@
-import { Component, computed, effect, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  OnInit,
+  OnDestroy,
+  inject,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { signal } from '@angular/core';
 import { takeUntil } from 'rxjs/operators';
@@ -29,6 +36,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { SafeUrlPipe } from 'src/app/pipes/safe-url-pipe';
 import { BuyAssignPointsButton } from '../../components/buy-assign-points-button/buy-assign-points-button';
 import { formatIsbn } from 'src/app/shared/utils/isbn.utils';
+import { UserService } from 'src/app/services/user';
 @Component({
   selector: 'app-publisher-details',
   imports: [
@@ -50,7 +58,9 @@ import { formatIsbn } from 'src/app/shared/utils/isbn.utils';
 export class PublisherDetails implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   selectedTabIndex = signal<number>(0);
+  private readonly userService = inject(UserService);
 
+  loggedInUser = computed(() => this.userService.loggedInUser$());
   constructor(
     private route: ActivatedRoute,
     private router: Router,

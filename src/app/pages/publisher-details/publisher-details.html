@@ -137,6 +137,9 @@
       </section>
     </mat-tab>
 
+    @if (loggedInUser()?.accessLevel === 'SUPERADMIN' ||
+    (loggedInUser()?.accessLevel === 'PUBLISHER' && publisherDetails()?.type !==
+    'Sub_Publisher') || loggedInUser()?.id === publisherDetails()?.user?.id) {
     <!-- Books Published -->
     <mat-tab>
       <ng-template mat-tab-label>
@@ -230,6 +233,7 @@
         </div>
       </section>
     </mat-tab>
+    }
 
     <!-- Royalties -->
     <mat-tab>
