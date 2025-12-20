@@ -113,7 +113,7 @@ export class BookDetails {
   languages!: Signal<string[] | null>;
 
   async ngOnInit() {
-    this.languageService.fetchAndUpdateLanguages();
+    await this.languageService.fetchAndUpdateLanguages();
     const { items: category } = await this.titleService.getTitleCategory();
     this.TitleCategory.set(category);
 

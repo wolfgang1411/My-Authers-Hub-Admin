@@ -90,6 +90,16 @@ export class TempBookDetails implements OnDestroy {
         this.initialized.set(true); // mark as done
       }
     });
+
+    // Set default language to first language when languages are loaded
+    effect(() => {
+      const languages = this.languages();
+      const languageControl = this.titleDetailsGroup().controls.language;
+
+      if (languages && languages.length > 0 && !languageControl.value) {
+        languageControl.setValue(languages[0]);
+      }
+    });
   }
   private initialized = signal(false);
 
@@ -189,7 +199,7 @@ export class TempBookDetails implements OnDestroy {
   languages!: Signal<string[] | null>;
 
   async ngOnInit() {
-    this.languageService.fetchAndUpdateLanguages();
+    await this.languageService.fetchAndUpdateLanguages();
     const { items: category } = await this.titleService.getTitleCategory();
     this.TitleCategory.set(category);
 

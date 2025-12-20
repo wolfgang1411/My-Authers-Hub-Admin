@@ -105,8 +105,8 @@ export class CreateIsbn {
     edition: new FormControl('', [Validators.required]),
   });
 
-  ngOnInit() {
-    this.languageService.fetchAndUpdateLanguages();
+  async ngOnInit() {
+    await this.languageService.fetchAndUpdateLanguages();
     if (this.data.isbn) {
       this.createIsbnForm.patchValue({
         ...this.data.isbn,
