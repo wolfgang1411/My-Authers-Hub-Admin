@@ -66,7 +66,8 @@ export class Publisher implements OnInit {
     private userService: UserService,
     private authService: AuthService,
     private translateService: TranslateService,
-    private logger: Logger
+    private logger: Logger,
+    private translate: TranslateService
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -89,6 +90,8 @@ export class Publisher implements OnInit {
     'noofauthors',
     'email',
     'phonenumber',
+    'type',
+    'addedBy',
     'actions',
   ];
 
@@ -165,6 +168,8 @@ export class Publisher implements OnInit {
       phonenumber: publisher.phoneNumber || publisher.user.phoneNumber,
       nooftitles: publisher.noOfTitles,
       noofauthors: publisher.noOfAuthors,
+      type: this.translate.instant(`${publisher.type}`),
+      addedBy: publisher.addedBy,
       actions: '',
     }));
 
@@ -311,6 +316,9 @@ export class Publisher implements OnInit {
     });
   }
   openDistributionDialog(publisherId: number) {
+    const publisher = this.publishers().find((p) => p.id === publisherId);
+    const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
+    const isSubPublisher = publisher?.type === 'Sub_Publisher';
     const dialogRef = this.dialog.open(DistributionDialog, {
       data: {
         onSubmit: async (

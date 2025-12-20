@@ -3,7 +3,11 @@ import { Author } from './Authors';
 import { BankDetails } from './BankDetails';
 import { Media } from './Media';
 import { socialMediaGroup } from './SocialMedia';
-import { DistributionType, PublisherStatus } from './StaticValue';
+import {
+  DistributionType,
+  PublisherStatus,
+  PublisherType,
+} from './StaticValue';
 import { Title } from './Titles';
 import { User } from './user';
 
@@ -26,6 +30,8 @@ export interface Publishers {
   socialMedias: socialMediaGroup[];
   allowCustomPrintingPrice?: boolean;
   allowAuthorCopyPrice?: boolean;
+  type: PublisherType;
+  addedBy: string;
 }
 
 export interface CreatePublisher {

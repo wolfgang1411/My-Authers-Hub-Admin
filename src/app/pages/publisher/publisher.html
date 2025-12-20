@@ -5,6 +5,9 @@
     <h3 class="heading">{{ "publishers" | translate }}</h3>
 
     <div class="flex flex-wrap gap-2 sm:gap-3">
+      @if (loggedInUser()?.accessLevel === 'SUPERADMIN' ||
+      (loggedInUser()?.accessLevel ==='PUBLISHER' && loggedInUser()?.publisher
+      && loggedInUser()?.publisher?.type === 'Publisher')) {
       <button
         matButton="filled"
         class="!bg-primary text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
@@ -22,6 +25,7 @@
         <mat-icon class="!text-sm">person_add</mat-icon>
         <span>{{ "invitepublisher" | translate }}</span>
       </button>
+      }
 
       <button
         matButton="filled"
@@ -119,6 +123,18 @@
           <p class="text-sm text-gray-400">Phone</p>
           <p>
             {{ publisher?.user?.phoneNumber }}
+          </p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-400">Type</p>
+          <p>
+            {{ publisher?.type }}
+          </p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-400">Created By</p>
+          <p>
+            {{ publisher?.createdBy }}
           </p>
         </div>
       </div>

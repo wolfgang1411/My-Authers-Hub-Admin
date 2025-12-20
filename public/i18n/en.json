@@ -689,5 +689,7 @@
   "userstatuswarningtext": "Do you want to change status to {{status}}?",
   "deactive":"Deactive",
   "AMAZON_PRIME" : "Amazon Prime",
-  "OTHER_EBOOK_STORES"  : "Other EBook Stores"
-  }
+  "OTHER_EBOOK_STORES"  : "Other EBook Stores",
+"Sub_Publisher":"Sub Publisher"  ,
+"addedBy":"Added By"  
+}
