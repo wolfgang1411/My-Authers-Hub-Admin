@@ -1,14 +1,14 @@
 /* Material Dialog container overrides */
 ::ng-deep .cdk-overlay-pane.mat-mdc-dialog-panel {
   max-width: 95vw !important;
-  min-width: 700px !important;
+  min-width: 80vw !important;
 }
 
 .distribution-dialog-container {
   display: flex;
   flex-direction: column;
   width: auto;
-  min-width: 700px;
+  min-width: 80vw;
   max-width: 95vw;
   padding: 0;
   background: white;
@@ -129,7 +129,6 @@
   max-width: 150px;
 }
 
-
 .checkbox-section {
   padding: 16px;
   background: #f9f9f9;
@@ -211,40 +210,67 @@
 }
 
 /* Red border for invalid fields */
-::ng-deep .distribution-dialog-container .field-invalid .mat-mdc-form-field-outline,
-::ng-deep .distribution-dialog-container .field-invalid .mat-mdc-form-field-outline-thick {
+::ng-deep
+  .distribution-dialog-container
+  .field-invalid
+  .mat-mdc-form-field-outline,
+::ng-deep
+  .distribution-dialog-container
+  .field-invalid
+  .mat-mdc-form-field-outline-thick {
   color: #f44336 !important;
   border-color: #f44336 !important;
 }
 
-::ng-deep .distribution-dialog-container .field-invalid .mat-mdc-text-field-input {
+::ng-deep
+  .distribution-dialog-container
+  .field-invalid
+  .mat-mdc-text-field-input {
   color: #f44336;
 }
 
-::ng-deep .distribution-dialog-container .mat-mdc-form-field .mat-mdc-text-field-wrapper {
+::ng-deep
+  .distribution-dialog-container
+  .mat-mdc-form-field
+  .mat-mdc-text-field-wrapper {
   background-color: white;
 }
 
-::ng-deep .distribution-dialog-container .mat-mdc-form-field-appearance-outline .mat-mdc-text-field-wrapper {
+::ng-deep
+  .distribution-dialog-container
+  .mat-mdc-form-field-appearance-outline
+  .mat-mdc-text-field-wrapper {
   padding: 0;
 }
 
 /* Ensure outline border has proper spacing from icon */
-::ng-deep .distribution-dialog-container .mat-mdc-form-field-appearance-outline .mat-mdc-form-field-outline-start {
+::ng-deep
+  .distribution-dialog-container
+  .mat-mdc-form-field-appearance-outline
+  .mat-mdc-form-field-outline-start {
   padding-left: 0 !important;
 }
 
-::ng-deep .distribution-dialog-container .mat-mdc-form-field-appearance-outline .mat-mdc-form-field-infix {
+::ng-deep
+  .distribution-dialog-container
+  .mat-mdc-form-field-appearance-outline
+  .mat-mdc-form-field-infix {
   padding: 16px !important;
   min-height: 44px;
 }
 
-::ng-deep .distribution-dialog-container .mat-mdc-form-field .mat-mdc-form-field-infix {
+::ng-deep
+  .distribution-dialog-container
+  .mat-mdc-form-field
+  .mat-mdc-form-field-infix {
   min-width: 0;
 }
 
 /* Input field styling - no icon, more space */
-::ng-deep .distribution-dialog-container .amount-field .mat-mdc-form-field-infix {
+::ng-deep
+  .distribution-dialog-container
+  .amount-field
+  .mat-mdc-form-field-infix {
   padding-left: 12px !important;
   padding-right: 12px !important;
   padding-top: 10px !important;
@@ -253,13 +279,20 @@
 }
 
 /* Fix outline border when no label - remove the center line and notch */
-::ng-deep .distribution-dialog-container .amount-field.mat-form-field-appearance-outline .mat-mdc-form-field-infix {
+::ng-deep
+  .distribution-dialog-container
+  .amount-field.mat-form-field-appearance-outline
+  .mat-mdc-form-field-infix {
   border-top: none !important;
   padding-top: 10px !important;
   padding-bottom: 10px !important;
 }
 
-::ng-deep .distribution-dialog-container .amount-field.mat-form-field-appearance-outline .mat-mdc-form-field-infix .mat-mdc-input-element {
+::ng-deep
+  .distribution-dialog-container
+  .amount-field.mat-form-field-appearance-outline
+  .mat-mdc-form-field-infix
+  .mat-mdc-input-element {
   padding: 0;
   width: 100% !important;
   max-width: 100% !important;
@@ -267,19 +300,28 @@
 }
 
 /* Ensure form field wrapper doesn't restrict width */
-::ng-deep .distribution-dialog-container .amount-field .mat-mdc-text-field-wrapper {
+::ng-deep
+  .distribution-dialog-container
+  .amount-field
+  .mat-mdc-text-field-wrapper {
   width: 100%;
   max-width: 150px;
 }
 
 /* Hide the notch (center divider) when no label */
-::ng-deep .distribution-dialog-container .amount-field .mdc-notched-outline__notch {
+::ng-deep
+  .distribution-dialog-container
+  .amount-field
+  .mdc-notched-outline__notch {
   display: none !important;
   border: none !important;
 }
 
 /* Placeholder styling */
-::ng-deep .distribution-dialog-container .amount-field .mat-mdc-input-element::placeholder {
+::ng-deep
+  .distribution-dialog-container
+  .amount-field
+  .mat-mdc-input-element::placeholder {
   color: rgba(0, 0, 0, 0.5);
   opacity: 1;
 }

@@ -7,6 +7,7 @@ import {
   PublisherMediaType,
   Publishers,
   PublisherStatus,
+  PublishingPointCost,
   PublishingPoints,
 } from '../../interfaces';
 import { Pagination, PublishingType } from '../../interfaces';
@@ -188,6 +189,25 @@ export class PublisherService {
         this.server.get<Pagination<PublishingPoints>>('publishing-points', {
           publisherIds: [publisherId],
         })
+      );
+    } catch (error) {
+      const errorToLog =
+        error instanceof HttpErrorResponse && error.status !== 500
+          ? error.error
+          : error;
+      this.logger.logError(errorToLog);
+      throw error;
+    }
+  }
+  async fetchPublishingPointCost(publisherId: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<PublishingPointCost>>(
+          'publisher-point-cost',
+          {
+            publisherIds: [publisherId],
+          }
+        )
       );
     } catch (error) {
       const errorToLog =

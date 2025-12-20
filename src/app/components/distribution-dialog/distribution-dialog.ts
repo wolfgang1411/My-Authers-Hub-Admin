@@ -23,7 +23,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { Distribution } from '../../interfaces/Distribution';
-import { DistributionType } from '../../interfaces';
+import { DistributionType, PublishingPointCost } from '../../interfaces';
 
 @Component({
   selector: 'app-distribution-dialog',
@@ -49,13 +49,54 @@ export class DistributionDialog {
   constructor(private fb: FormBuilder) {
     this.form = this.fb.group({
       distributions: this.fb.array(
-        Object.values(DistributionType).map((type) =>
-          this.createDistribution(type as DistributionType, null)
-        )
+        Object.values(DistributionType)
+          .filter(
+            (type) => type !== DistributionType.MAH // 👈 FILTER HERE
+          )
+          .map((type) => {
+            const existingAmount =
+              this.data.currentDistributionPoints?.find(
+                (p) => p.distributionType === type
+              )?.amount ?? null;
+
+            return this.createDistribution(
+              type as DistributionType,
+              existingAmount
+            );
+          })
       ),
       allowCustomPrintingPrice: this.fb.control<boolean>(false),
       allowAuthorCopyPrice: this.fb.control<boolean>(false),
     });
+  }
+
+  private minFromBaseValidator(type: DistributionType) {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+
+      if (
+        value === null ||
+        value === undefined ||
+        !this.data.baseDistributionPoints
+      ) {
+        return null;
+      }
+
+      const base = this.data.baseDistributionPoints.find(
+        (p) => p.distributionType === type
+      );
+
+      if (base && value < base.amount) {
+        return {
+          minFromBase: {
+            requiredMin: base.amount,
+            actual: value,
+          },
+        };
+      }
+
+      return null;
+    };
   }
 
   createDistribution(type: DistributionType, amount: number | null) {
@@ -64,14 +105,12 @@ export class DistributionDialog {
         value: type,
         disabled: true,
       }),
-      amount: this.fb.control<number | null>(
-        amount,
-        [
-          Validators.required,
-          Validators.min(0),
-          this.positiveNumberValidator,
-        ]
-      ),
+      amount: this.fb.control<number | null>(amount, [
+        Validators.required,
+        Validators.min(0),
+        this.positiveNumberValidator,
+        this.minFromBaseValidator(type),
+      ]),
     });
   }
 
@@ -121,5 +160,11 @@ export class DistributionDialog {
 }
 interface Inputs {
   onClose: () => void;
-  onSubmit: (payload: Distribution[], allowCustomPrintingPrice?: boolean, allowAuthorCopyPrice?: boolean) => void;
+  onSubmit: (
+    payload: Distribution[],
+    allowCustomPrintingPrice?: boolean,
+    allowAuthorCopyPrice?: boolean
+  ) => void;
+  baseDistributionPoints?: PublishingPointCost[] | null; // min validation
+  currentDistributionPoints?: PublishingPointCost[] | null;
 }

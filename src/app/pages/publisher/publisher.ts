@@ -14,6 +14,7 @@ import {
   PublisherFilter,
   PublisherResponse,
   Publishers,
+  PublishingPointCost,
 } from '../../interfaces/Publishers';
 import { PublisherService } from './publisher-service';
 import { CommonModule } from '@angular/common';
@@ -84,16 +85,31 @@ export class Publisher implements OnInit {
   test!: Subject<string>;
   publishers = signal<Publishers[]>([]);
   dataSource = new MatTableDataSource<any>();
-  displayedColumns: string[] = [
-    'name',
-    'nooftitles',
-    'noofauthors',
-    'email',
-    'phonenumber',
-    'type',
-    'addedBy',
-    'actions',
-  ];
+  displayedColumns = computed(() => {
+    const user = this.loggedInUser();
+
+    // SUPERADMIN → hide `type` and `addedBy`
+    if (user?.accessLevel === 'SUPERADMIN') {
+      return [
+        'name',
+        'nooftitles',
+        'noofauthors',
+        'email',
+        'phonenumber',
+        'type',
+        'addedBy',
+        'actions',
+      ];
+    }
+    return [
+      'name',
+      'nooftitles',
+      'noofauthors',
+      'email',
+      'phonenumber',
+      'actions',
+    ];
+  });
 
   lastPage = signal(1);
 
@@ -169,7 +185,7 @@ export class Publisher implements OnInit {
       nooftitles: publisher.noOfTitles,
       noofauthors: publisher.noOfAuthors,
       type: this.translate.instant(`${publisher.type}`),
-      addedBy: publisher.addedBy,
+      addedBy: publisher.addedBy?.publisher?.name || '-',
       actions: '',
     }));
 
@@ -315,44 +331,104 @@ export class Publisher implements OnInit {
       this.fetchPublishers(false);
     });
   }
-  openDistributionDialog(publisherId: number) {
-    const publisher = this.publishers().find((p) => p.id === publisherId);
-    const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
-    const isSubPublisher = publisher?.type === 'Sub_Publisher';
-    const dialogRef = this.dialog.open(DistributionDialog, {
+  async openDistributionDialog(targetPublisherId: number) {
+    const targetPublisher = this.publishers().find(
+      (p) => p.id === targetPublisherId
+    );
+    const loggedInUser = this.loggedInUser();
+
+    if (!targetPublisher || !loggedInUser) return;
+
+    let baseDistributionPoints: PublishingPointCost[] | null = null;
+    let currentDistributionPoints: PublishingPointCost[] | null = null;
+
+    /* -------------------------------------------------
+     * 1️⃣ PREFILL → ALWAYS fetch target publisher points
+     * ------------------------------------------------- */
+    {
+      const res = await this.publisherService.fetchPublishingPointCost(
+        targetPublisherId
+      );
+      currentDistributionPoints = res.items;
+    }
+
+    /* -------------------------------------------------
+     * 2️⃣ BASE VALUES → ONLY FOR VALIDATION
+     * ------------------------------------------------- */
+
+    // SUPERADMIN approving SUB_PUBLISHER
+    if (
+      loggedInUser.accessLevel === 'SUPERADMIN' &&
+      targetPublisher.type === 'Sub_Publisher'
+    ) {
+      const parentPublisherId = targetPublisher.addedBy?.publisher?.id;
+
+      if (parentPublisherId) {
+        const res = await this.publisherService.fetchPublishingPointCost(
+          parentPublisherId
+        );
+        baseDistributionPoints = res.items;
+      }
+    }
+
+    // PUBLISHER approving SUB_PUBLISHER
+    if (loggedInUser.accessLevel === 'PUBLISHER') {
+      const res = await this.publisherService.fetchPublishingPointCost(
+        loggedInUser.publisher?.id as number
+      );
+      baseDistributionPoints = res.items;
+    }
+
+    /* -------------------------------------------------
+     * 3️⃣ OPEN DIALOG
+     * ------------------------------------------------- */
+    this.dialog.open(DistributionDialog, {
       data: {
+        baseDistributionPoints,
+        currentDistributionPoints,
+
         onSubmit: async (
           distributionData: Distribution[],
           allowCustomPrintingPrice?: boolean,
           allowAuthorCopyPrice?: boolean
         ) => {
-          console.log(distributionData, 'distrubittton dta');
+          // 🔐 ALWAYS approve the TARGET publisher (sub-publisher)
           const response = await this.publisherService.approvePublisher(
             distributionData,
-            publisherId,
+            targetPublisherId,
             allowCustomPrintingPrice,
             allowAuthorCopyPrice
           );
+
           if (response) {
-            const updatedData = this.dataSource.data.map((item) =>
-              item.id === publisherId
+            this.dataSource.data = this.dataSource.data.map((item) =>
+              item.id === targetPublisherId
                 ? { ...item, status: PublisherStatus.Active }
                 : item
             );
-            this.dataSource.data = updatedData;
-            dialogRef.close();
+
             Swal.fire({
-              title: 'success',
+              title: 'Success',
               text: 'The publisher has been approved successfully!',
               icon: 'success',
               heightAuto: false,
+            }).then(() => {
+              this.dialog.closeAll();
             });
           }
         },
-        onClose: () => dialogRef.close(),
+
+        onClose: () => this.dialog.closeAll(),
       },
     });
+    console.log({
+      approving: targetPublisherId,
+      loggedInUser: loggedInUser.id,
+      role: loggedInUser.accessLevel,
+    });
+    this.fetchPublishers();
   }
+
   rejectPublisher(publisherId: number) {
     Swal.fire({
       title: 'Are you sure?',
@@ -531,7 +607,7 @@ export class Publisher implements OnInit {
       }
 
       // Only export the columns that are displayed in the UI (excluding 'actions')
-      const exportColumns = this.displayedColumns.filter(
+      const exportColumns = this.displayedColumns().filter(
         (col) => col !== 'actions'
       );
 

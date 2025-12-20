@@ -31,7 +31,8 @@ export interface Publishers {
   allowCustomPrintingPrice?: boolean;
   allowAuthorCopyPrice?: boolean;
   type: PublisherType;
-  addedBy: string;
+  addedBy: User;
+  isApprovedByPublisher: boolean;
 }
 
 export interface CreatePublisher {
@@ -73,4 +74,23 @@ export interface PublishingPoints {
   distributionType: DistributionType;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PublishingPointCost {
+  id: number;
+  publisherId: number;
+  distributionType: DistributionType;
+  amount: number;
+  publisher: {
+    email: string;
+    name: string;
+    designation: string;
+    username: string;
+    id: number;
+    allowCustomPrintingPrice: boolean;
+    allowAuthorCopyPrice: boolean;
+    status: PublisherStatus;
+    type: PublisherType;
+    isApprovedByPublisher: boolean;
+  };
 }

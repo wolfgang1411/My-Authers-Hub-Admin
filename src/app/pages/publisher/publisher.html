@@ -86,7 +86,7 @@
     <app-list-table
       class="pt-6"
       [dataSource]="dataSource"
-      [displayedColumns]="displayedColumns"
+      [displayedColumns]="displayedColumns()"
       [actionTemplate]="actionButtons"
       [isSortable]="isSortable"
       (sortChange)="onSortChange($event)"
@@ -125,6 +125,8 @@
             {{ publisher?.user?.phoneNumber }}
           </p>
         </div>
+        @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
+
         <div>
           <p class="text-sm text-gray-400">Type</p>
           <p>
@@ -134,9 +136,10 @@
         <div>
           <p class="text-sm text-gray-400">Created By</p>
           <p>
-            {{ publisher?.createdBy }}
+            {{ publisher.addedBy?.publisher?.name || "-" }}
           </p>
         </div>
+        }
       </div>
 
       <!-- Actions -->
@@ -151,8 +154,8 @@
 
         @if (loggedInUser()?.accessLevel === 'SUPERADMIN' ||
         (loggedInUser()?.accessLevel === 'PUBLISHER' && (publisher.status ===
-        PublisherStatus.Pending || publisher.status === PublisherStatus.Dormant) &&
-        loggedInUser()?.publisher?.id === publisher.id)) {
+        PublisherStatus.Pending || publisher.status === PublisherStatus.Dormant)
+        && loggedInUser()?.publisher?.id === publisher.id)) {
         <button
           mat-icon-button
           class="!bg-primary"
@@ -285,6 +288,18 @@
       >
         <mat-icon class="!text-white">support_agent</mat-icon>
       </button>
+      } @if (element.status === PublisherStatus.Pending &&
+      loggedInUser()?.accessLevel ==='SUPERADMIN' ||
+      (loggedInUser()?.accessLevel === 'PUBLISHER' &&
+      element.isApprovedByPublisher !== true)) {
+      <button
+        class="!bg-green-2 active:bg-green-2/60"
+        mat-icon-button
+        (click)="openDistributionDialog(element.id)"
+        [title]="'approve' | translate"
+      >
+        <mat-icon class="!text-white">check</mat-icon>
+      </button>
       } @if (loggedInUser()?.accessLevel === 'SUPERADMIN') { @if(element.status
       !== PublisherStatus.Deactivated) {
       <button
@@ -296,14 +311,7 @@
         <mat-icon class="!text-white">lock</mat-icon>
       </button>
       } @if(element.status === PublisherStatus.Pending) {
-      <button
-        class="!bg-green-2 active:bg-green-2/60"
-        mat-icon-button
-        (click)="openDistributionDialog(element.id)"
-        [title]="'approve' | translate"
-      >
-        <mat-icon class="!text-white">check</mat-icon>
-      </button>
+
       <button
         class="!bg-red-colour active:bg-red-colour/60"
         mat-icon-button
