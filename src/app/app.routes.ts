@@ -32,7 +32,7 @@ export const routes: Routes = [
     component: AddAuthor,
     // loadComponent: () =>
     //   import('./pages/add-author/add-author').then((c) => c.AddAuthor),
-    // canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard],
   },
   {
     path: 'authorDetails/:id',
