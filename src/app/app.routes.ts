@@ -31,7 +31,7 @@ export const routes: Routes = [
     path: 'author/:id',
     component: AddAuthor,
     // loadComponent: () =>
-    //   import('./pages/add-author/add-author').then((c) => c.AddAuthor),
+    //   import('./pages/add-author/add-author').then((c) => cg.AddAuthor),
     canActivate: [privateRouteGuard],
   },
   {
