@@ -11,11 +11,6 @@ import { LoaderService } from './loader';
   providedIn: 'root',
 })
 export class AuthService {
-  constructor(
-    private server: Server,
-    private logger: Logger,
-    private loader: LoaderService
-  ) {}
 
   isUserAuthenticated = signal<boolean | null>(null);
   isUserAuthenticated$ = this.isUserAuthenticated.asReadonly();
@@ -24,6 +19,51 @@ export class AuthService {
   private tokenInfo?: TokeInfo;
 
   private refreshTokenTimeout?: any;
+
+  constructor(
+    private server: Server,
+    private logger: Logger,
+    private loader: LoaderService
+  ) {
+    // Initialize auth state synchronously from storage to avoid guard delays
+    this.initializeAuthFromStorage();
+  }
+
+  /**
+   * Synchronously initialize authentication state from storage.
+   * This prevents guards from blocking navigation while waiting for async token verification.
+   */
+  private initializeAuthFromStorage(): void {
+    try {
+      const authResponse = storage.getItem('authToken') as AuthResponse | null;
+      if (!authResponse?.access_token) {
+        this.isUserAuthenticated.set(false);
+        return;
+      }
+
+      const tokenInfo = this.decodeToken(authResponse.access_token);
+      if (!tokenInfo) {
+        this.isUserAuthenticated.set(false);
+        return;
+      }
+
+      // Check if token is expired
+      if (tokenInfo.exp < Date.now() / 1000) {
+        storage.removeItem('authToken');
+        this.isUserAuthenticated.set(false);
+        return;
+      }
+
+      // Token looks valid, set authenticated state immediately
+      // The actual verification will happen asynchronously in hydrateToken
+      this.accessToken = authResponse.access_token;
+      this.tokenInfo = tokenInfo;
+      this.isUserAuthenticated.set(true);
+    } catch (error) {
+      console.error('Error initializing auth from storage:', error);
+      this.isUserAuthenticated.set(false);
+    }
+  }
 
   getAuthToken(): AuthResponse {
     const accessToken = storage.getItem('authToken') as AuthResponse | null;

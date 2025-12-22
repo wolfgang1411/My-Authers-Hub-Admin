@@ -32,6 +32,8 @@ export class App {
     private staticValuesService: StaticValuesService,
     private platformService: PlatformService
   ) {
+    // hydrateToken is now called after auth is initialized synchronously
+    // This prevents guards from blocking navigation
     this.hydrateToken();
     router.events.subscribe((ev) => {
       if (ev instanceof NavigationEnd) {
@@ -71,27 +73,29 @@ export class App {
 
   async hydrateToken() {
     try {
+      // Auth state is already initialized synchronously in AuthService constructor
+      // Now we just verify the token is still valid via API call
       const authResponse = this.authService.getAuthToken();
       if (!authResponse.access_token) {
-        this.authService.setAuthToken();
+        // Token was already cleared in initializeAuthFromStorage
         return;
       }
 
-      const userId = this.authService.setAuthToken(authResponse);
-      if (!userId) {
-        this.authService.setAuthToken();
-        return;
-      }
-
+      // Verify token is still valid by calling whoAmI
+      // If this fails, we'll clear the auth state
       const user = await this.authService.whoAmI();
 
       if (!user) {
         this.authService.setAuthToken();
         return;
       }
+
+      // Token is valid, set the user
       this.userService.setLoggedInUser(user);
     } catch (error) {
-      console.log(error);
+      // Token verification failed, clear auth state
+      console.log('Token verification failed:', error);
+      this.authService.setAuthToken();
     }
   }
 
@@ -107,8 +111,8 @@ export class App {
     const isAuthenticated = this.authService.isUserAuthenticated$();
     // Hide sidebar for login and public invite routes (like /author/invite/:token or /publisher/invite/:token)
     // But show it for admin invites page (/invites)
-    const isPublicInviteRoute = 
-      url.includes('/author/invite/') || 
+    const isPublicInviteRoute =
+      url.includes('/author/invite/') ||
       url.includes('/publisher/invite/') ||
       (url.includes('/invite/') && !url.startsWith('/invites'));
     const isShowSidebar =

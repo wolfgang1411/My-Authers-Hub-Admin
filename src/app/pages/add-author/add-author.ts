@@ -111,14 +111,6 @@ export class AddAuthor implements OnInit {
     private translateService: TranslateService,
     private loader: LoaderService
   ) {
-    effect(() => {
-      const selected =
-        (this.authorSocialMediaGroup.get('socialMedia') as FormArray)?.value
-          ?.map((s: any) => s?.type)
-          ?.filter((t: string) => !!t) ?? [];
-      this.selectedTypes.set(selected);
-    });
-
     const breakpointObserver = inject(BreakpointObserver);
     this.stepperOrientation = breakpointObserver
       .observe('(min-width: 800px)')
@@ -310,6 +302,22 @@ export class AddAuthor implements OnInit {
     this.authorAddressDetails.controls.signupCode.patchValue(
       this.signupCode || null
     );
+
+    // Set up social media type tracking using valueChanges instead of effect
+    // This is more efficient and doesn't block component initialization
+    this.authorSocialMediaGroup.valueChanges.subscribe(() => {
+      const selected =
+        (this.authorSocialMediaGroup.get('socialMedia') as FormArray)?.value
+          ?.map((s: any) => s?.type)
+          ?.filter((t: string) => !!t) ?? [];
+      this.selectedTypes.set(selected);
+    });
+    // Initialize with current value
+    const initialSelected =
+      (this.authorSocialMediaGroup.get('socialMedia') as FormArray)?.value
+        ?.map((s: any) => s?.type)
+        ?.filter((t: string) => !!t) ?? [];
+    this.selectedTypes.set(initialSelected);
 
     this.authorBankDetails.controls.name.valueChanges.subscribe((v) => {
       this.selectedBankPrefix.set(
