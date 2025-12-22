@@ -12,8 +12,8 @@ echo "🚀 Deploying Angular app..."
 echo "📥 Pulling latest code..."
 git pull origin main
 
-# echo "📦 Installing dependencies..."
-# npm ci
+echo "📦 Installing dependencies..."
+npm ci
 
 echo "🏗️ Building Angular app..."
 npm run build:prod
