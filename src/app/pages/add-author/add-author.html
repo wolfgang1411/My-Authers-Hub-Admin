@@ -2,7 +2,11 @@
   <h3 class="heading">
     {{ "authordetails" | translate }}
   </h3>
-  <app-back></app-back>
+  <button matButton="filled" (click)="goBack()">
+    <mat-icon>arrow_back</mat-icon>
+    {{ "back" | translate }}
+  </button>
+  <!-- <app-back></app-back> -->
 </div>
 
 <mat-tab-group
@@ -18,7 +22,7 @@
         Basic Details
       </span>
     </ng-template>
-    
+
     <div class="mx-auto py-6 space-y-10">
       <form [formGroup]="authorFormGroup">
         <div class="bg-white shadow-sm border rounded-xl px-6 py-8">
@@ -184,7 +188,7 @@
         Address
       </span>
     </ng-template>
-    
+
     <form [formGroup]="authorAddressDetails">
       <div class="grid-cols-4 grid gap-4 my-4">
         <mat-form-field>
@@ -255,7 +259,7 @@
         Bank Details
       </span>
     </ng-template>
-    
+
     <form [formGroup]="authorBankDetails">
       <div class="grid-cols-4 grid gap-4 my-4">
         <mat-form-field>

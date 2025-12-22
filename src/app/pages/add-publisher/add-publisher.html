@@ -2,7 +2,11 @@
   <h3 class="heading">
     {{ "publisherdetails" | translate }}
   </h3>
-  <app-back></app-back>
+  <!-- <app-back></app-back> -->
+  <button mat-button="filled" (click)="goBack()">
+    <mat-icon>arrow_back</mat-icon>
+    {{ "back" | translate }}
+  </button>
 </div>
 
 <mat-tab-group

@@ -174,8 +174,11 @@ export class AddPublisher {
   currentTabIndex = signal<number>(0);
   readonly TOTAL_TABS = 3; // Basic Details (with Social Media), Address, Bank Details
   ticketRaisedForTab = signal<{ [tabIndex: number]: boolean }>({}); // Track which tabs raised tickets
+  // Total number of available social media platforms: FACEBOOK, TWITTER, INSTAGRAM, LINKEDIN, YOUTUBE, WEBSITE
+  readonly TOTAL_SOCIAL_MEDIA_PLATFORMS = 6;
   isAllSelected = computed(() => {
-    return this.selectedTypes().length >= this.socialMediaArray.length;
+    // Disable "Add More" button only when all platforms are already added
+    return this.socialMediaArray.length >= this.TOTAL_SOCIAL_MEDIA_PLATFORMS;
   });
 
   // Computed property to determine submit button text
@@ -561,7 +564,7 @@ export class AddPublisher {
       name: publisherDetails.name,
       designation: publisherDetails.designation,
     });
-    
+
     // Prefill address if it exists
     const addr = publisherDetails.address?.[0];
     if (addr) {
@@ -597,8 +600,9 @@ export class AddPublisher {
       }));
 
       const cityName =
-        this.cities.find((c) => c.name.toLowerCase() === addr.city?.toLowerCase())
-          ?.name || '';
+        this.cities.find(
+          (c) => c.name.toLowerCase() === addr.city?.toLowerCase()
+        )?.name || '';
 
       this.publisherAddressDetails.patchValue({
         city: cityName,
@@ -644,7 +648,8 @@ export class AddPublisher {
     const mediaList = publisherDetails.medias as Media[];
     if (mediaList?.length > 0) {
       // Find media with type LOGO (publisher logo) or use first media
-      const logoMedia = mediaList.find((m) => (m as any).type === 'LOGO') || mediaList[0];
+      const logoMedia =
+        mediaList.find((m) => (m as any).type === 'LOGO') || mediaList[0];
       // Store the media ID for potential deletion if user uploads new image
       if (logoMedia.id) {
         this.mediaToDeleteId = logoMedia.id;
@@ -701,16 +706,48 @@ export class AddPublisher {
         publisherBankData as createBankDetails
       );
       const socialMediaData = this.socialMediaArray.controls
-        .map((group) => ({
-          ...group.value,
-          publisherId: response.id,
-        }))
+        .map((group) => {
+          const value = group.value;
+          return {
+            type: value.type,
+            url: value.url,
+            publisherId: response.id,
+            name: value.name,
+            autherId: value.autherId,
+            id: value.id && typeof value.id === 'number' ? value.id : undefined, // Explicitly include id only if it's a valid number
+          };
+        })
         .filter((item) => item.type && item.url?.trim());
 
       if (socialMediaData.length > 0) {
         await this.socialService.createOrUpdateSocialMediaLinks(
           socialMediaData as socialMediaGroup[]
         );
+
+        // Reload publisher details to get updated social media with IDs
+        const updatedPublisher = await this.publisherService.getPublisherById(
+          response.id
+        );
+        this.publisherDetails.set(updatedPublisher);
+
+        // Update form with IDs from saved social media to enable PATCH on next save
+        const socialMediaArray = this.publisherSocialMediaGroup.get(
+          'socialMedia'
+        ) as FormArray<FormGroup<SocialMediaGroupType>>;
+        const savedSocialMedia = updatedPublisher.socialMedias || [];
+
+        // Match and update IDs in form controls
+        socialMediaArray.controls.forEach((control) => {
+          const formValue = control.value;
+          const savedItem = savedSocialMedia.find(
+            (saved) =>
+              saved.type === formValue.type &&
+              saved.url?.trim() === formValue.url?.trim()
+          );
+          if (savedItem?.id) {
+            control.patchValue({ id: savedItem.id });
+          }
+        });
       }
       const media = this.mediaControl.value;
       if (this.mediaToDeleteId && media?.file) {
@@ -802,6 +839,14 @@ export class AddPublisher {
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
 
+    // Normalize phone number for comparison (remove spaces, same as when saving)
+    const normalizedPhoneNumber =
+      formValue.pocPhoneNumber?.replaceAll?.(' ', '') ||
+      formValue.pocPhoneNumber;
+    const normalizedExistingPhone =
+      details.user?.phoneNumber?.replaceAll?.(' ', '') ||
+      details.user?.phoneNumber;
+
     return (
       this.compareValues(formValue.name, details.name) ||
       this.compareValues(formValue.email, details.email) ||
@@ -809,23 +854,38 @@ export class AddPublisher {
       this.compareValues(firstName, details.user?.firstName) ||
       this.compareValues(lastName, details.user?.lastName) ||
       this.compareValues(formValue.pocEmail, details.user?.email) ||
-      this.compareValues(formValue.pocPhoneNumber, details.user?.phoneNumber)
+      this.compareValues(normalizedPhoneNumber, normalizedExistingPhone)
     );
   }
 
   // Check if media has changes
   private hasMediaChanges(existingMedia: Media | undefined): boolean {
     const newMedia = this.mediaControl.value;
+
+    // If no new file is uploaded, there's no change
     if (!newMedia?.file) {
       return false; // No new file, no change
     }
+
+    // If there's a new file but no existing media, it's a change
     if (!existingMedia) {
       return true; // New file and no existing media = change
     }
-    // Compare file name and size
+
+    // Compare file name and size only if we have both
+    // If sizes don't match or names don't match, it's a change
+    const existingSize = (existingMedia as any)?.size;
+    const existingName = existingMedia?.name;
+
+    // If we can't compare (missing size info), consider it a change to be safe
+    if (existingSize === undefined && existingName) {
+      // If existing has a name but new file has different name, it's a change
+      return newMedia.file.name !== existingName;
+    }
+
+    // Compare both name and size
     return (
-      newMedia.file.name !== existingMedia.name ||
-      newMedia.file.size !== (existingMedia as any).size
+      newMedia.file.name !== existingName || newMedia.file.size !== existingSize
     );
   }
 
@@ -869,7 +929,13 @@ export class AddPublisher {
     if (!existingAddress) {
       // If no existing address, check if form has values
       const formValue = this.publisherAddressDetails.value;
-      return !!(formValue.address || formValue.city || formValue.state || formValue.country || formValue.pincode);
+      return !!(
+        formValue.address ||
+        formValue.city ||
+        formValue.state ||
+        formValue.country ||
+        formValue.pincode
+      );
     }
 
     const formAddress = this.publisherAddressDetails.value;
@@ -888,9 +954,16 @@ export class AddPublisher {
     if (!existingBank) {
       // If no existing bank, check if form has values
       const formValue = this.publisherBankDetails.value;
-      return !!(formValue.name || formValue.accountNo || formValue.ifsc || formValue.panCardNo || formValue.accountType || formValue.accountHolderName);
+      return !!(
+        formValue.name ||
+        formValue.accountNo ||
+        formValue.ifsc ||
+        formValue.panCardNo ||
+        formValue.accountType ||
+        formValue.accountHolderName
+      );
     }
-    
+
     const formBank = this.publisherBankDetails.value;
 
     return (
@@ -1323,9 +1396,9 @@ export class AddPublisher {
     const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
     const status = this.publisherDetails()?.status;
     // Publishers: Only Dormant/Pending can be updated directly, ALL Active need tickets (even SuperAdmin)
-    const canUpdateDirectly = 
-      !this.publisherId || 
-      status === PublisherStatus.Pending || 
+    const canUpdateDirectly =
+      !this.publisherId ||
+      status === PublisherStatus.Pending ||
       status === PublisherStatus.Dormant;
 
     let actionText = '';
@@ -1339,7 +1412,8 @@ export class AddPublisher {
         } else if (canUpdateDirectly) {
           actionText = this.translateService.instant('update') || 'Update';
         } else {
-          actionText = this.translateService.instant('raiseaticket') || 'Raise Ticket';
+          actionText =
+            this.translateService.instant('raiseaticket') || 'Raise Ticket';
         }
         break;
 
@@ -1350,7 +1424,8 @@ export class AddPublisher {
         } else if (canUpdateDirectly) {
           actionText = this.translateService.instant('update') || 'Update';
         } else {
-          actionText = this.translateService.instant('raiseaticket') || 'Raise Ticket';
+          actionText =
+            this.translateService.instant('raiseaticket') || 'Raise Ticket';
         }
         break;
 
@@ -1361,7 +1436,8 @@ export class AddPublisher {
         } else if (canUpdateDirectly) {
           actionText = this.translateService.instant('update') || 'Update';
         } else {
-          actionText = this.translateService.instant('raiseaticket') || 'Raise Ticket';
+          actionText =
+            this.translateService.instant('raiseaticket') || 'Raise Ticket';
         }
         break;
 
@@ -1373,7 +1449,8 @@ export class AddPublisher {
     if (currentTab === this.TOTAL_TABS - 1) {
       // Last tab
       if (this.ticketRaisedForTab()[currentTab]) {
-        navigationText = this.translateService.instant('viewticket') || 'View Ticket';
+        navigationText =
+          this.translateService.instant('viewticket') || 'View Ticket';
       } else {
         navigationText = this.translateService.instant('back') || 'Back';
       }
@@ -1389,7 +1466,7 @@ export class AddPublisher {
   // Get action button icon
   getActionButtonIcon(): string {
     const currentTab = this.currentTabIndex();
-    
+
     if (currentTab === this.TOTAL_TABS - 1) {
       // Last tab
       if (this.ticketRaisedForTab()[currentTab]) {
@@ -1397,7 +1474,7 @@ export class AddPublisher {
       }
       return 'arrow_back';
     }
-    
+
     // Not last tab
     return 'arrow_forward';
   }
@@ -1405,14 +1482,17 @@ export class AddPublisher {
   // Check if current tab is valid
   isCurrentTabValid(): boolean {
     const currentTab = this.currentTabIndex();
-    
+
     switch (currentTab) {
       case 0: // Basic Details (includes Social Media)
         return this.publisherFormGroup.valid && !!this.mediaControl.value;
       case 1: // Address
         return this.publisherAddressDetails.valid;
       case 2: // Bank Details
-        return this.publisherBankDetails.valid && !this.publisherBankDetails.hasError('accountMismatch');
+        return (
+          this.publisherBankDetails.valid &&
+          !this.publisherBankDetails.hasError('accountMismatch')
+        );
       default:
         return false;
     }
@@ -1421,7 +1501,7 @@ export class AddPublisher {
   // Handle tab-specific save/next action
   async handleTabAction() {
     const currentTab = this.currentTabIndex();
-    
+
     // Validate current tab
     if (!this.isCurrentTabValid()) {
       // Mark current tab form as touched
@@ -1456,32 +1536,40 @@ export class AddPublisher {
     }
 
     // Save current tab data - let services handle errors
+    let result: boolean | null = false;
     switch (currentTab) {
       case 0:
-        await this.saveBasicDetailsTab();
-        // Move to next tab after save
-        this.nextTab();
+        result = await this.saveBasicDetailsTab();
+        // Only move to next tab if result is false (direct update)
+        if (result === false) {
+          this.nextTab();
+        }
+        // If result is null, no changes detected - stay on current tab
+        // If result is true, navigation occurred - don't change tab
         break;
       case 1:
-        await this.saveAddressTab();
-        // Move to next tab after save
-        this.nextTab();
+        result = await this.saveAddressTab();
+        // Only move to next tab if result is false (direct update)
+        if (result === false) {
+          this.nextTab();
+        }
+        // If result is null, no changes detected - stay on current tab
+        // If result is true, navigation occurred - don't change tab
         break;
       case 2:
-        await this.saveBankDetailsTab();
-        // Last tab - handle navigation based on action
-        if (this.ticketRaisedForTab()[currentTab]) {
-          // Ticket was raised - navigate to tickets page
-          this.router.navigate(['/update-tickets'], {
-            queryParams: { tab: 'publisher' },
-          });
-        }
-        // For direct updates, saveBankDetailsTab already handles redirect
+        result = await this.saveBankDetailsTab();
+        // saveBankDetailsTab handles navigation (goBack() for tickets, or direct redirect)
+        // If result is null, no changes detected - stay on current tab
         break;
     }
   }
 
-  // Save Basic Details Tab (Publisher info, Media, Social Media)
+  goBack() {
+    this.router.navigate(['/publisher']);
+  }
+
+  // Save Basic Details Tab
+  // Order: 1. Basic Details (Publisher info) → 2. Media → 3. Social Media
   async saveBasicDetailsTab() {
     const publisherData: any = {
       ...this.publisherFormGroup.value,
@@ -1491,22 +1579,25 @@ export class AddPublisher {
         ? md5(this.publisherFormGroup.controls.userPassword.value)
         : undefined,
       pocPhoneNumber:
-        this.publisherFormGroup.controls.pocPhoneNumber.value?.replaceAll(' ', ''),
+        this.publisherFormGroup.controls.pocPhoneNumber.value?.replaceAll(
+          ' ',
+          ''
+        ),
     };
 
     const status = this.publisherDetails()?.status;
     // Publishers: Only Dormant/Pending can be updated directly, ALL Active need tickets (even SuperAdmin)
-    const canUpdateDirectly = 
-      !this.publisherId || 
-      status === PublisherStatus.Pending || 
+    const canUpdateDirectly =
+      !this.publisherId ||
+      status === PublisherStatus.Pending ||
       status === PublisherStatus.Dormant;
 
     if (canUpdateDirectly) {
-      // Create new publisher or update directly
+      // Step 1: Create/Update Basic Details (Publisher info)
       const response = (await this.publisherService.createPublisher(
         publisherData
       )) as Publishers;
-      
+
       // Store publisherId if it's a new publisher
       const wasNewPublisher = !this.publisherId;
       const finalPublisherId = response?.id || this.publisherId;
@@ -1514,13 +1605,15 @@ export class AddPublisher {
         this.publisherId = response.id;
         // Update query params
         this.updateQueryParams({ publisherId: response.id.toString() });
-        
+
         // Reload publisher details
-        const updatedPublisher = await this.publisherService.getPublisherById(response.id);
+        const updatedPublisher = await this.publisherService.getPublisherById(
+          response.id
+        );
         this.publisherDetails.set(updatedPublisher);
       }
 
-      // Save media with loader - only upload if there's a new file
+      // Step 2: Save Media (after basic details)
       const media = this.mediaControl.value;
       if (finalPublisherId && media?.file) {
         if (this.mediaToDeleteId) {
@@ -1533,19 +1626,53 @@ export class AddPublisher {
         );
       }
 
-      // Save social media
+      // Step 3: Save Social Media (after media)
       if (finalPublisherId) {
         const socialMediaData = this.socialMediaArray.controls
-          .map((group) => ({
-            ...group.value,
-            publisherId: finalPublisherId,
-          }))
+          .map((group) => {
+            const value = group.value;
+            return {
+              type: value.type,
+              url: value.url,
+              publisherId: finalPublisherId,
+              name: value.name,
+              autherId: value.autherId,
+              id:
+                value.id && typeof value.id === 'number' ? value.id : undefined, // Explicitly include id only if it's a valid number
+            };
+          })
           .filter((item) => item.type && item.url?.trim());
 
         if (socialMediaData.length > 0) {
           await this.socialService.createOrUpdateSocialMediaLinks(
             socialMediaData as socialMediaGroup[]
           );
+
+          // Reload publisher details to get updated social media with IDs
+          // This ensures form state is preserved for PATCH operations later
+          const updatedPublisher = await this.publisherService.getPublisherById(
+            finalPublisherId
+          );
+          this.publisherDetails.set(updatedPublisher);
+
+          // Update form with IDs from saved social media to enable PATCH on next save
+          const socialMediaArray = this.publisherSocialMediaGroup.get(
+            'socialMedia'
+          ) as FormArray<FormGroup<SocialMediaGroupType>>;
+          const savedSocialMedia = updatedPublisher.socialMedias || [];
+
+          // Match and update IDs in form controls
+          socialMediaArray.controls.forEach((control) => {
+            const formValue = control.value;
+            const savedItem = savedSocialMedia.find(
+              (saved) =>
+                saved.type === formValue.type &&
+                saved.url?.trim() === formValue.url?.trim()
+            );
+            if (savedItem?.id) {
+              control.patchValue({ id: savedItem.id });
+            }
+          });
         }
       }
 
@@ -1557,18 +1684,48 @@ export class AddPublisher {
       });
 
       // Success popup removed - only show on last tab (bank details)
+      return false; // No navigation occurred, direct update
     } else {
       // Raise ticket for Active publishers (ALL Active need tickets, even SuperAdmin)
       const existingPublisher = this.publisherDetails();
-      const hasPublisherChange = existingPublisher 
-        ? this.hasPublisherChanges() 
+      const hasPublisherChange = existingPublisher
+        ? this.hasPublisherChanges()
         : false;
       const existingMedia = existingPublisher?.medias?.[0];
       const hasMediaChange = this.hasMediaChanges(existingMedia);
       const existingSocialMedia = existingPublisher?.socialMedias || [];
-      const hasSocialMediaChange = this.hasSocialMediaChanges(existingSocialMedia);
+      const hasSocialMediaChange =
+        this.hasSocialMediaChanges(existingSocialMedia);
 
-      if (hasPublisherChange || hasMediaChange || hasSocialMediaChange) {
+      // Debug logging to identify what's triggering the change
+      console.log('Change detection for Publisher Basic Details:', {
+        hasPublisherChange,
+        hasMediaChange,
+        hasSocialMediaChange,
+        formPhoneNumber: this.publisherFormGroup.value.pocPhoneNumber,
+        existingPhoneNumber: existingPublisher?.user?.phoneNumber,
+        formName: this.publisherFormGroup.value.name,
+        existingName: existingPublisher?.name,
+        formEmail: this.publisherFormGroup.value.email,
+        existingEmail: existingPublisher?.email,
+        formDesignation: this.publisherFormGroup.value.designation,
+        existingDesignation: existingPublisher?.designation,
+        formPocName: this.publisherFormGroup.value.pocName,
+        existingPocName: existingPublisher
+          ? `${existingPublisher.user?.firstName || ''} ${
+              existingPublisher.user?.lastName || ''
+            }`.trim()
+          : 'N/A',
+        formPocEmail: this.publisherFormGroup.value.pocEmail,
+        existingPocEmail: existingPublisher?.user?.email,
+        newMediaFile: this.mediaControl.value?.file?.name,
+        existingMediaName: existingMedia?.name,
+      });
+
+      // Only raise PUBLISHER ticket for publisher details or media changes, NOT social media
+      // When raising tickets, do NOT update social media - keep it in form state only
+      // Social media will be saved when the ticket is approved or on direct update
+      if (hasPublisherChange || hasMediaChange) {
         const pocName = this.publisherFormGroup.value.pocName || '';
         const nameParts = pocName.split(' ');
         const firstName = nameParts[0] || '';
@@ -1587,15 +1744,85 @@ export class AddPublisher {
 
         await this.userService.raisingTicket(payload);
 
-        // Mark that ticket was raised for this tab
-        this.ticketRaisedForTab.update((prev) => ({
-          ...prev,
-          [0]: true,
-        }));
+        await Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Ticket created',
+          heightAuto: false,
+        });
 
-        // Success popup removed - only show on last tab (bank details)
+        // Navigate back to publishers list after successful ticket raise
+        // Do NOT proceed to next tab when raising tickets
+        this.goBack();
+        return true; // Indicate that navigation occurred
+      } else if (hasSocialMediaChange) {
+        // Only social media changes detected
+        // Social media doesn't require tickets - update directly
+        // But since we're in ticket-raising mode, go back instead of proceeding to next tab
+        if (this.publisherId) {
+          const socialMediaData = this.socialMediaArray.controls
+            .map((group) => {
+              const value = group.value;
+              return {
+                type: value.type,
+                url: value.url,
+                publisherId: this.publisherId,
+                name: value.name,
+                autherId: value.autherId,
+                id:
+                  value.id && typeof value.id === 'number'
+                    ? value.id
+                    : undefined,
+              };
+            })
+            .filter((item) => item.type && item.url?.trim());
+
+          if (socialMediaData.length > 0) {
+            await this.socialService.createOrUpdateSocialMediaLinks(
+              socialMediaData as socialMediaGroup[]
+            );
+
+            // Reload publisher details to get updated social media with IDs
+            // This ensures form state is preserved for PATCH operations later
+            const updatedPublisher =
+              await this.publisherService.getPublisherById(this.publisherId);
+            this.publisherDetails.set(updatedPublisher);
+
+            // Update form with IDs from saved social media to enable PATCH on next save
+            const socialMediaArray = this.publisherSocialMediaGroup.get(
+              'socialMedia'
+            ) as FormArray<FormGroup<SocialMediaGroupType>>;
+            const savedSocialMedia = updatedPublisher.socialMedias || [];
+
+            // Match and update IDs in form controls
+            socialMediaArray.controls.forEach((control) => {
+              const formValue = control.value;
+              const savedItem = savedSocialMedia.find(
+                (saved) =>
+                  saved.type === formValue.type &&
+                  saved.url?.trim() === formValue.url?.trim()
+              );
+              if (savedItem?.id) {
+                control.patchValue({ id: savedItem.id });
+              }
+            });
+          }
+        }
+        // Go back instead of proceeding to next tab when in ticket mode
+        this.goBack();
+        return true; // Navigation occurred, don't proceed with tab change
+      } else {
+        // No changes detected
+        await Swal.fire({
+          icon: 'info',
+          title: 'No Changes',
+          text: 'No change for update ticket',
+          heightAuto: false,
+        });
+        return null; // No changes detected, don't proceed with tab change
       }
     }
+    return false; // No navigation occurred, but proceed with tab change (direct update)
   }
 
   // Save Address Tab
@@ -1606,7 +1833,9 @@ export class AddPublisher {
       const queryPublisherId = this.route.snapshot.queryParams['publisherId'];
       if (queryPublisherId) {
         this.publisherId = Number(queryPublisherId);
-        const updatedPublisher = await this.publisherService.getPublisherById(this.publisherId);
+        const updatedPublisher = await this.publisherService.getPublisherById(
+          this.publisherId
+        );
         this.publisherDetails.set(updatedPublisher);
       } else {
         await Swal.fire({
@@ -1616,22 +1845,21 @@ export class AddPublisher {
           heightAuto: false,
         });
         this.goToTab(0);
-        return;
+        return false; // No navigation occurred, go to first tab
       }
     }
 
     const status = this.publisherDetails()?.status;
     // Publishers: Only Dormant/Pending can be updated directly
-    const canUpdateDirectly = 
-      status === PublisherStatus.Pending || 
-      status === PublisherStatus.Dormant;
+    const canUpdateDirectly =
+      status === PublisherStatus.Pending || status === PublisherStatus.Dormant;
 
     if (canUpdateDirectly) {
       // Create or update address directly
       const existingPublisher = this.publisherDetails();
       const existingAddress = existingPublisher?.address?.[0];
       const wasNewAddress = !existingAddress;
-      
+
       await this.addressService.createOrUpdateAddress({
         ...this.publisherAddressDetails.value,
         id: existingAddress?.id,
@@ -1639,7 +1867,9 @@ export class AddPublisher {
       } as Address);
 
       // Reload publisher details to get updated address
-      const updatedPublisher = await this.publisherService.getPublisherById(this.publisherId);
+      const updatedPublisher = await this.publisherService.getPublisherById(
+        this.publisherId
+      );
       this.publisherDetails.set(updatedPublisher);
 
       // Clear ticket flag for this tab on successful direct update
@@ -1650,6 +1880,7 @@ export class AddPublisher {
       });
 
       // Success popup removed - only show on last tab (bank details)
+      return false; // No navigation occurred, direct update
     } else {
       // Raise ticket for Active publishers
       const existingPublisher = this.publisherDetails();
@@ -1669,15 +1900,28 @@ export class AddPublisher {
 
         await this.userService.raisingTicket(payload);
 
-        // Mark that ticket was raised for this tab
-        this.ticketRaisedForTab.update((prev) => ({
-          ...prev,
-          [1]: true,
-        }));
+        await Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Ticket created',
+          heightAuto: false,
+        });
 
-        // Success popup removed - only show on last tab (bank details)
+        // Navigate back to publishers list after successful ticket raise
+        this.goBack();
+        return true; // Indicate that navigation occurred
+      } else {
+        // No changes detected
+        await Swal.fire({
+          icon: 'info',
+          title: 'No Changes',
+          text: 'No change for update ticket',
+          heightAuto: false,
+        });
+        return null; // No changes detected, don't proceed with tab change
       }
     }
+    return false; // No navigation occurred, but proceed with tab change (direct update)
   }
 
   // Save Bank Details Tab
@@ -1688,7 +1932,9 @@ export class AddPublisher {
       const queryPublisherId = this.route.snapshot.queryParams['publisherId'];
       if (queryPublisherId) {
         this.publisherId = Number(queryPublisherId);
-        const updatedPublisher = await this.publisherService.getPublisherById(this.publisherId);
+        const updatedPublisher = await this.publisherService.getPublisherById(
+          this.publisherId
+        );
         this.publisherDetails.set(updatedPublisher);
       } else {
         await Swal.fire({
@@ -1698,22 +1944,21 @@ export class AddPublisher {
           heightAuto: false,
         });
         this.goToTab(0);
-        return;
+        return false; // No navigation occurred, go to first tab
       }
     }
 
     const status = this.publisherDetails()?.status;
     // Publishers: Only Dormant/Pending can be updated directly
-    const canUpdateDirectly = 
-      status === PublisherStatus.Pending || 
-      status === PublisherStatus.Dormant;
+    const canUpdateDirectly =
+      status === PublisherStatus.Pending || status === PublisherStatus.Dormant;
 
     if (canUpdateDirectly) {
       // Create or update bank details directly
       const existingPublisher = this.publisherDetails();
       const existingBank = existingPublisher?.bankDetails?.[0];
       const wasNewBank = !existingBank;
-      
+
       const bankDetailsValue = { ...this.publisherBankDetails.value };
       if (
         !bankDetailsValue.gstNumber ||
@@ -1729,7 +1974,9 @@ export class AddPublisher {
       } as createBankDetails);
 
       // Reload publisher details to get updated bank details
-      const updatedPublisher = await this.publisherService.getPublisherById(this.publisherId);
+      const updatedPublisher = await this.publisherService.getPublisherById(
+        this.publisherId
+      );
       this.publisherDetails.set(updatedPublisher);
 
       // Clear ticket flag for this tab on successful direct update
@@ -1742,8 +1989,8 @@ export class AddPublisher {
       await Swal.fire({
         icon: 'success',
         title: 'Success',
-        text: wasNewBank 
-          ? 'Bank details created successfully' 
+        text: wasNewBank
+          ? 'Bank details created successfully'
           : 'Bank details updated successfully',
         heightAuto: false,
       });
@@ -1754,6 +2001,7 @@ export class AddPublisher {
       } else {
         this.router.navigate(['/publisher']);
       }
+      return true; // Navigation occurred
     } else {
       // Raise ticket for Active publishers
       const existingPublisher = this.publisherDetails();
@@ -1783,22 +2031,28 @@ export class AddPublisher {
 
         await this.userService.raisingTicket(payload);
 
-        // Mark that ticket was raised for this tab
-        this.ticketRaisedForTab.update((prev) => ({
-          ...prev,
-          [2]: true,
-        }));
-
         await Swal.fire({
           icon: 'success',
           title: 'Success',
-          text: 'Update ticket raised successfully for bank details',
+          text: 'Ticket created',
           heightAuto: false,
         });
 
-        // Don't redirect automatically - let user click "View Ticket" button
+        // Navigate back to publishers list after successful ticket raise
+        this.goBack();
+        return true; // Indicate that navigation occurred
+      } else {
+        // No changes detected
+        await Swal.fire({
+          icon: 'info',
+          title: 'No Changes',
+          text: 'No change for update ticket',
+          heightAuto: false,
+        });
+        return null; // No changes detected, don't proceed with tab change
       }
     }
+    return false; // No navigation occurred, but proceed with tab change (direct update)
   }
 
   openPassword() {

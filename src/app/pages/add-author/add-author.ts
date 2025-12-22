@@ -145,8 +145,11 @@ export class AddAuthor implements OnInit {
   currentTabIndex = signal<number>(0);
   readonly TOTAL_TABS = 3; // Basic Details (with Social Media), Address, Bank Details
   ticketRaisedForTab = signal<{ [tabIndex: number]: boolean }>({}); // Track which tabs raised tickets
+  // Total number of available social media platforms: FACEBOOK, TWITTER, INSTAGRAM, LINKEDIN, YOUTUBE, WEBSITE
+  readonly TOTAL_SOCIAL_MEDIA_PLATFORMS = 6;
   isAllSelected = computed(() => {
-    return this.selectedTypes().length >= this.socialMediaArray.length;
+    // Disable "Add More" button only when all platforms are already added
+    return this.socialMediaArray.length >= this.TOTAL_SOCIAL_MEDIA_PLATFORMS;
   });
   canRaiseTicket = computed(() => {
     if (!this.authorId || !this.authorDetails()) {
@@ -661,10 +664,17 @@ export class AddAuthor implements OnInit {
       );
 
       const socialMediaData = this.socialMediaArray.controls
-        .map((group) => ({
-          ...group.value,
-          autherId: response.id,
-        }))
+        .map((group) => {
+          const value = group.value;
+          return {
+            type: value.type,
+            url: value.url,
+            publisherId: value.publisherId,
+            name: value.name,
+            autherId: response.id,
+            id: value.id && typeof value.id === 'number' ? value.id : undefined, // Explicitly include id only if it's a valid number
+          };
+        })
         .filter((item) => item.type && item.url?.trim());
 
       if (socialMediaData.length > 0) {
@@ -762,14 +772,18 @@ export class AddAuthor implements OnInit {
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
 
+    // Normalize phone number for comparison (remove spaces, same as when saving)
+    const normalizedPhoneNumber =
+      formValue.phoneNumber?.replaceAll?.(' ', '') || formValue.phoneNumber;
+    const normalizedExistingPhone =
+      existingAuthor.user?.phoneNumber?.replaceAll?.(' ', '') ||
+      existingAuthor.user?.phoneNumber;
+
     return (
       this.compareValues(firstName, existingAuthor.user?.firstName) ||
       this.compareValues(lastName, existingAuthor.user?.lastName) ||
       this.compareValues(formValue.email, existingAuthor.user?.email) ||
-      this.compareValues(
-        formValue.phoneNumber,
-        existingAuthor.user?.phoneNumber
-      ) ||
+      this.compareValues(normalizedPhoneNumber, normalizedExistingPhone) ||
       this.compareValues(formValue.about, existingAuthor.about) ||
       this.compareValues(formValue.username, existingAuthor.username)
     );
@@ -780,16 +794,31 @@ export class AddAuthor implements OnInit {
    */
   private hasMediaChanges(existingMedia: Media | undefined): boolean {
     const newMedia = this.mediaControl.value;
+
+    // If no new file is uploaded, there's no change
     if (!newMedia?.file) {
       return false; // No new file, no change
     }
+
+    // If there's a new file but no existing media, it's a change
     if (!existingMedia) {
       return true; // New file and no existing media = change
     }
-    // Compare file name and size
+
+    // Compare file name and size only if we have both
+    // If sizes don't match or names don't match, it's a change
+    const existingSize = (existingMedia as any)?.size;
+    const existingName = existingMedia?.name;
+
+    // If we can't compare (missing size info), consider it a change to be safe
+    if (existingSize === undefined && existingName) {
+      // If existing has a name but new file has different name, it's a change
+      return newMedia.file.name !== existingName;
+    }
+
+    // Compare both name and size
     return (
-      newMedia.file.name !== existingMedia.name ||
-      newMedia.file.size !== (existingMedia as any).size
+      newMedia.file.name !== existingName || newMedia.file.size !== existingSize
     );
   }
 
@@ -1438,17 +1467,39 @@ export class AddAuthor implements OnInit {
     }
 
     // Determine navigation text
+    // Check if we should raise a ticket for current tab
+    let shouldRaiseTicket = false;
+    switch (currentTab) {
+      case 0: // Basic Details
+        shouldRaiseTicket = !!this.authorId && !canUpdateDirectly;
+        break;
+      case 1: // Address
+        const existingAddress = this.authorDetails()?.address?.[0];
+        shouldRaiseTicket = !!existingAddress && !canUpdateDirectly;
+        break;
+      case 2: // Bank Details
+        const existingBank = this.authorDetails()?.bankDetails?.[0];
+        shouldRaiseTicket = !!existingBank && !canUpdateDirectly;
+        break;
+    }
+
     if (currentTab === this.TOTAL_TABS - 1) {
       // Last tab
-      if (this.ticketRaisedForTab()[currentTab]) {
+      if (shouldRaiseTicket) {
+        navigationText = this.translateService.instant('back') || 'Back';
+      } else if (this.ticketRaisedForTab()[currentTab]) {
         navigationText =
           this.translateService.instant('viewticket') || 'View Ticket';
       } else {
         navigationText = this.translateService.instant('back') || 'Back';
       }
     } else {
-      // Not last tab
-      navigationText = this.translateService.instant('next') || 'Next';
+      // Not last tab - show "Back" when raising ticket, otherwise "Next"
+      if (shouldRaiseTicket) {
+        navigationText = this.translateService.instant('back') || 'Back';
+      } else {
+        navigationText = this.translateService.instant('next') || 'Next';
+      }
     }
 
     // Combine action and navigation text
@@ -1458,17 +1509,44 @@ export class AddAuthor implements OnInit {
   // Get action button icon
   getActionButtonIcon(): string {
     const currentTab = this.currentTabIndex();
+    const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
+    const status = this.authorDetails()?.status;
+    const canUpdateDirectly =
+      isSuperAdmin ||
+      status === AuthorStatus.Pending ||
+      status === AuthorStatus.Dormant;
+
+    // Check if we should raise a ticket for current tab
+    let shouldRaiseTicket = false;
+    switch (currentTab) {
+      case 0: // Basic Details
+        shouldRaiseTicket = !!this.authorId && !canUpdateDirectly;
+        break;
+      case 1: // Address
+        const existingAddress = this.authorDetails()?.address?.[0];
+        shouldRaiseTicket = !!existingAddress && !canUpdateDirectly;
+        break;
+      case 2: // Bank Details
+        const existingBank = this.authorDetails()?.bankDetails?.[0];
+        shouldRaiseTicket = !!existingBank && !canUpdateDirectly;
+        break;
+    }
 
     if (currentTab === this.TOTAL_TABS - 1) {
       // Last tab
-      if (this.ticketRaisedForTab()[currentTab]) {
+      if (shouldRaiseTicket) {
+        return 'arrow_back';
+      } else if (this.ticketRaisedForTab()[currentTab]) {
         return 'visibility';
       }
       return 'arrow_back';
+    } else {
+      // Not last tab - show back arrow when raising ticket, otherwise forward arrow
+      if (shouldRaiseTicket) {
+        return 'arrow_back';
+      }
+      return 'arrow_forward';
     }
-
-    // Not last tab
-    return 'arrow_forward';
   }
 
   // Check if current tab is valid
@@ -1528,32 +1606,38 @@ export class AddAuthor implements OnInit {
     }
 
     // Save current tab data - let services handle errors
+    let result: boolean | null = false;
     switch (currentTab) {
       case 0:
-        await this.saveBasicDetailsTab();
-        // Move to next tab after save
-        this.nextTab();
+        result = await this.saveBasicDetailsTab();
+        // Only move to next tab if:
+        // - result is false (direct update, proceed normally)
+        // - result is not null (null means no changes detected, don't proceed)
+        if (result === false) {
+          this.nextTab();
+        }
+        // If result is null, no changes detected - stay on current tab
+        // If result is true, navigation occurred - don't change tab
         break;
       case 1:
-        await this.saveAddressTab();
-        // Move to next tab after save
-        this.nextTab();
+        result = await this.saveAddressTab();
+        // Only move to next tab if result is false (direct update)
+        if (result === false) {
+          this.nextTab();
+        }
+        // If result is null, no changes detected - stay on current tab
+        // If result is true, navigation occurred - don't change tab
         break;
       case 2:
-        await this.saveBankDetailsTab();
-        // Last tab - handle navigation based on action
-        if (this.ticketRaisedForTab()[currentTab]) {
-          // Ticket was raised - navigate to tickets page
-          const isAuthor = this.loggedInUser()?.accessLevel === 'AUTHER';
-          const tab = isAuthor ? 'author' : 'publisher';
-          this.router.navigate(['/update-tickets'], {
-            queryParams: { tab },
-          });
-        }
-        // For direct updates, saveBankDetailsTab already handles redirect
-        // If no redirect happened, go back to previous tab
+        result = await this.saveBankDetailsTab();
+        // saveBankDetailsTab handles navigation (goBack() for tickets, or direct redirect)
+        // If result is null, no changes detected - stay on current tab
         break;
     }
+  }
+
+  goBack() {
+    this.router.navigate(['/author']);
   }
 
   // Save Basic Details Tab (Author info, Media, Social Media)
@@ -1619,19 +1703,53 @@ export class AddAuthor implements OnInit {
         }
       }
 
-      // Save social media
+      // Save social media (order: basic details → media → social media)
       if (finalAuthorId) {
         const socialMediaData = this.socialMediaArray.controls
-          .map((group) => ({
-            ...group.value,
-            autherId: finalAuthorId,
-          }))
+          .map((group) => {
+            const value = group.value;
+            return {
+              type: value.type,
+              url: value.url,
+              publisherId: value.publisherId,
+              name: value.name,
+              autherId: finalAuthorId,
+              id:
+                value.id && typeof value.id === 'number' ? value.id : undefined, // Explicitly include id only if it's a valid number
+            };
+          })
           .filter((item) => item.type && item.url?.trim());
 
         if (socialMediaData.length > 0) {
           await this.socialService.createOrUpdateSocialMediaLinks(
             socialMediaData as socialMediaGroup[]
           );
+
+          // Reload author details to get updated social media with IDs
+          // This ensures form state is preserved for PATCH operations later
+          const updatedAuthor = await this.authorsService.getAuthorrById(
+            finalAuthorId
+          );
+          this.authorDetails.set(updatedAuthor);
+
+          // Update form with IDs from saved social media to enable PATCH on next save
+          const socialMediaArray = this.authorSocialMediaGroup.get(
+            'socialMedia'
+          ) as FormArray<FormGroup<SocialMediaGroupType>>;
+          const savedSocialMedia = updatedAuthor.socialMedias || [];
+
+          // Match and update IDs in form controls
+          socialMediaArray.controls.forEach((control, index) => {
+            const formValue = control.value;
+            const savedItem = savedSocialMedia.find(
+              (saved) =>
+                saved.type === formValue.type &&
+                saved.url?.trim() === formValue.url?.trim()
+            );
+            if (savedItem?.id) {
+              control.patchValue({ id: savedItem.id });
+            }
+          });
         }
       }
 
@@ -1643,6 +1761,7 @@ export class AddAuthor implements OnInit {
       });
 
       // Success popup removed - only show on last tab (bank details)
+      return false; // No navigation occurred, direct update
     } else {
       // Raise ticket for Active authors (not SuperAdmin)
       const existingAuthor = this.authorDetails();
@@ -1655,7 +1774,33 @@ export class AddAuthor implements OnInit {
       const hasSocialMediaChange =
         this.hasSocialMediaChanges(existingSocialMedia);
 
-      if (hasAuthorChange || hasMediaChange || hasSocialMediaChange) {
+      // Debug logging to identify what's triggering the change
+      console.log('Change detection for Basic Details:', {
+        hasAuthorChange,
+        hasMediaChange,
+        hasSocialMediaChange,
+        formPhoneNumber: this.authorFormGroup.value.phoneNumber,
+        existingPhoneNumber: existingAuthor?.user?.phoneNumber,
+        formName: this.authorFormGroup.value.name,
+        existingName: existingAuthor
+          ? `${existingAuthor.user?.firstName || ''} ${
+              existingAuthor.user?.lastName || ''
+            }`.trim()
+          : 'N/A',
+        formEmail: this.authorFormGroup.value.email,
+        existingEmail: existingAuthor?.user?.email,
+        formUsername: this.authorFormGroup.value.username,
+        existingUsername: existingAuthor?.username,
+        formAbout: this.authorFormGroup.value.about,
+        existingAbout: existingAuthor?.about,
+        newMediaFile: this.mediaControl.value?.file?.name,
+        existingMediaName: existingMedia?.name,
+      });
+
+      // Only raise AUTHOR ticket for author details or media changes, NOT social media
+      // When raising tickets, do NOT update social media - keep it in form state only
+      // Social media will be saved when the ticket is approved or on direct update
+      if (hasAuthorChange || hasMediaChange) {
         const payload: any = {
           type: UpdateTicketType.AUTHOR,
           authorId: this.authorId,
@@ -1668,15 +1813,86 @@ export class AddAuthor implements OnInit {
 
         await this.userService.raisingTicket(payload);
 
-        // Mark that ticket was raised for this tab
-        this.ticketRaisedForTab.update((prev) => ({
-          ...prev,
-          [0]: true,
-        }));
+        await Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Ticket created',
+          heightAuto: false,
+        });
 
-        // Success popup removed - only show on last tab (bank details)
+        // Navigate back to authors list after successful ticket raise
+        // Do NOT proceed to next tab when raising tickets
+        this.goBack();
+        return true; // Indicate that navigation occurred
+      } else if (hasSocialMediaChange) {
+        // Only social media changes detected
+        // Social media doesn't require tickets - update directly
+        // But since we're in ticket-raising mode, go back instead of proceeding to next tab
+        if (this.authorId) {
+          const socialMediaData = this.socialMediaArray.controls
+            .map((group) => {
+              const value = group.value;
+              return {
+                type: value.type,
+                url: value.url,
+                publisherId: value.publisherId,
+                name: value.name,
+                autherId: this.authorId,
+                id:
+                  value.id && typeof value.id === 'number'
+                    ? value.id
+                    : undefined,
+              };
+            })
+            .filter((item) => item.type && item.url?.trim());
+
+          if (socialMediaData.length > 0) {
+            await this.socialService.createOrUpdateSocialMediaLinks(
+              socialMediaData as socialMediaGroup[]
+            );
+
+            // Reload author details to get updated social media with IDs
+            // This ensures form state is preserved for PATCH operations later
+            const updatedAuthor = await this.authorsService.getAuthorrById(
+              this.authorId
+            );
+            this.authorDetails.set(updatedAuthor);
+
+            // Update form with IDs from saved social media to enable PATCH on next save
+            const socialMediaArray = this.authorSocialMediaGroup.get(
+              'socialMedia'
+            ) as FormArray<FormGroup<SocialMediaGroupType>>;
+            const savedSocialMedia = updatedAuthor.socialMedias || [];
+
+            // Match and update IDs in form controls
+            socialMediaArray.controls.forEach((control) => {
+              const formValue = control.value;
+              const savedItem = savedSocialMedia.find(
+                (saved) =>
+                  saved.type === formValue.type &&
+                  saved.url?.trim() === formValue.url?.trim()
+              );
+              if (savedItem?.id) {
+                control.patchValue({ id: savedItem.id });
+              }
+            });
+          }
+        }
+        // Go back instead of proceeding to next tab when in ticket mode
+        this.goBack();
+        return true; // Navigation occurred, don't proceed with tab change
+      } else {
+        // No changes detected
+        await Swal.fire({
+          icon: 'info',
+          title: 'No Changes',
+          text: 'No change for update ticket',
+          heightAuto: false,
+        });
+        return null; // No changes detected, don't proceed with tab change
       }
     }
+    return false; // No navigation occurred, but proceed with tab change (direct update)
   }
 
   // Save Address Tab
@@ -1699,7 +1915,7 @@ export class AddAuthor implements OnInit {
           heightAuto: false,
         });
         this.goToTab(0);
-        return;
+        return false; // No navigation occurred, go to first tab
       }
     }
 
@@ -1736,6 +1952,7 @@ export class AddAuthor implements OnInit {
       });
 
       // Success popup removed - only show on last tab (bank details)
+      return false; // No navigation occurred, direct update
     } else {
       // Raise ticket for Active authors
       const existingAuthor = this.authorDetails();
@@ -1755,15 +1972,28 @@ export class AddAuthor implements OnInit {
 
         await this.userService.raisingTicket(payload);
 
-        // Mark that ticket was raised for this tab
-        this.ticketRaisedForTab.update((prev) => ({
-          ...prev,
-          [1]: true,
-        }));
+        await Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Ticket created',
+          heightAuto: false,
+        });
 
-        // Success popup removed - only show on last tab (bank details)
+        // Navigate back to authors list after successful ticket raise
+        this.goBack();
+        return true; // Indicate that navigation occurred
+      } else {
+        // No changes detected
+        await Swal.fire({
+          icon: 'info',
+          title: 'No Changes',
+          text: 'No change for update ticket',
+          heightAuto: false,
+        });
+        return null; // No changes detected, don't proceed with tab change
       }
     }
+    return false; // No navigation occurred, but proceed with tab change (direct update)
   }
 
   // Save Bank Details Tab
@@ -1786,7 +2016,7 @@ export class AddAuthor implements OnInit {
           heightAuto: false,
         });
         this.goToTab(0);
-        return;
+        return false; // No navigation occurred, go to first tab
       }
     }
 
@@ -1845,6 +2075,7 @@ export class AddAuthor implements OnInit {
       } else {
         this.router.navigate(['/author']);
       }
+      return true; // Navigation occurred
     } else {
       // Raise ticket for Active authors
       const existingAuthor = this.authorDetails();
@@ -1874,21 +2105,27 @@ export class AddAuthor implements OnInit {
 
         await this.userService.raisingTicket(payload);
 
-        // Mark that ticket was raised for this tab
-        this.ticketRaisedForTab.update((prev) => ({
-          ...prev,
-          [2]: true,
-        }));
-
         await Swal.fire({
           icon: 'success',
           title: 'Success',
-          text: 'Update ticket raised successfully for bank details',
+          text: 'Ticket created',
           heightAuto: false,
         });
 
-        // Don't redirect automatically - let user click "View Ticket" button
+        // Navigate back to authors list after successful ticket raise
+        this.goBack();
+        return true; // Indicate that navigation occurred
+      } else {
+        // No changes detected
+        await Swal.fire({
+          icon: 'info',
+          title: 'No Changes',
+          text: 'No change for update ticket',
+          heightAuto: false,
+        });
+        return null; // No changes detected, don't proceed with tab change
       }
     }
+    return false; // No navigation occurred, but proceed with tab change (direct update)
   }
 }

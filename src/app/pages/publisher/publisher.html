@@ -298,9 +298,9 @@
         <mat-icon class="!text-white">support_agent</mat-icon>
       </button>
       } @if (element.status === PublisherStatus.Pending &&
-      loggedInUser()?.accessLevel ==='SUPERADMIN' ||
+      (loggedInUser()?.accessLevel ==='SUPERADMIN' ||
       (loggedInUser()?.accessLevel === 'PUBLISHER' &&
-      element.isApprovedByPublisher !== true)) {
+      element.isApprovedByPublisher !== true))) {
       <button
         class="!bg-green-2 active:bg-green-2/60"
         mat-icon-button
