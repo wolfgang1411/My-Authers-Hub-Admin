@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { privateRouteGuard } from './guards/private-route-guard';
 import { publicRouteGuard } from './guards/public-route-guard';
+import { AddAuthor } from './pages/add-author/add-author';
 
 export const routes: Routes = [
   {
@@ -28,9 +29,10 @@ export const routes: Routes = [
   },
   {
     path: 'author/:id',
-    loadComponent: () =>
-      import('./pages/add-author/add-author').then((c) => c.AddAuthor),
-    canActivate: [privateRouteGuard],
+    component: AddAuthor,
+    // loadComponent: () =>
+    //   import('./pages/add-author/add-author').then((c) => c.AddAuthor),
+    // canActivate: [privateRouteGuard],
   },
   {
     path: 'authorDetails/:id',
@@ -124,16 +126,13 @@ export const routes: Routes = [
   },
   {
     path: 'orders',
-    loadComponent: () =>
-      import('./pages/orders/orders').then((c) => c.Orders),
+    loadComponent: () => import('./pages/orders/orders').then((c) => c.Orders),
     canActivate: [privateRouteGuard],
   },
   {
     path: 'orders/:id',
     loadComponent: () =>
-      import('./pages/order-details/order-details').then(
-        (c) => c.OrderDetails
-      ),
+      import('./pages/order-details/order-details').then((c) => c.OrderDetails),
     canActivate: [privateRouteGuard],
   },
   {
@@ -211,8 +210,7 @@ export const routes: Routes = [
   },
   {
     path: 'users',
-    loadComponent: () =>
-      import('./pages/users/users').then((c) => c.Users),
+    loadComponent: () => import('./pages/users/users').then((c) => c.Users),
     canActivate: [privateRouteGuard],
     data: {
       accessLevels: 'SUPERADMIN',
@@ -263,9 +261,7 @@ export const routes: Routes = [
   {
     path: 'user-policies',
     loadComponent: () =>
-      import('./pages/user-policies/user-policies').then(
-        (c) => c.UserPolicies
-      ),
+      import('./pages/user-policies/user-policies').then((c) => c.UserPolicies),
   },
   {
     path: 'terms',
