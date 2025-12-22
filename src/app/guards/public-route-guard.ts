@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { filter, map, take } from 'rxjs';
+import { filter, map, take, of } from 'rxjs';
 import { AuthService } from '../services/auth';
 
 export const publicRouteGuard: CanActivateFn = (route, state) => {
@@ -13,12 +13,13 @@ export const publicRouteGuard: CanActivateFn = (route, state) => {
   const currentAuthState = authService.isUserAuthenticated$();
   
   if (currentAuthState !== null) {
-    // Auth state is already determined, return immediately
+    // Auth state is already determined, return immediately as Observable
+    // Using of() ensures immediate emission without any delay
     if (currentAuthState) {
       router.navigate(['/']);
-      return false;
+      return of(false);
     } else {
-      return true;
+      return of(true);
     }
   }
 

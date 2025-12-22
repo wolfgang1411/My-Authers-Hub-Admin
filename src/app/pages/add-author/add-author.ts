@@ -83,7 +83,6 @@ import {
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    AsyncPipe,
     SharedModule,
     MatSelectModule,
     MatCardModule,
@@ -119,7 +118,7 @@ export class AddAuthor implements OnInit {
       this.authorId = Number(id) || undefined;
       this.signupCode = signupCode;
     });
-    
+
     // Handle tab index from query params
     this.route.queryParams.subscribe((params) => {
       const tabIndex = params['tab'] ? Number(params['tab']) : 0;
@@ -127,7 +126,7 @@ export class AddAuthor implements OnInit {
         this.currentTabIndex.set(tabIndex);
       }
     });
-    
+
     this.loggedInUser = this.userService.loggedInUser$;
   }
 
@@ -1389,9 +1388,9 @@ export class AddAuthor implements OnInit {
     const currentTab = this.currentTabIndex();
     const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
     const status = this.authorDetails()?.status;
-    const canUpdateDirectly = 
-      isSuperAdmin || 
-      status === AuthorStatus.Pending || 
+    const canUpdateDirectly =
+      isSuperAdmin ||
+      status === AuthorStatus.Pending ||
       status === AuthorStatus.Dormant;
 
     let actionText = '';
@@ -1405,7 +1404,8 @@ export class AddAuthor implements OnInit {
         } else if (canUpdateDirectly) {
           actionText = this.translateService.instant('update') || 'Update';
         } else {
-          actionText = this.translateService.instant('raiseaticket') || 'Raise Ticket';
+          actionText =
+            this.translateService.instant('raiseaticket') || 'Raise Ticket';
         }
         break;
 
@@ -1416,7 +1416,8 @@ export class AddAuthor implements OnInit {
         } else if (canUpdateDirectly) {
           actionText = this.translateService.instant('update') || 'Update';
         } else {
-          actionText = this.translateService.instant('raiseaticket') || 'Raise Ticket';
+          actionText =
+            this.translateService.instant('raiseaticket') || 'Raise Ticket';
         }
         break;
 
@@ -1427,7 +1428,8 @@ export class AddAuthor implements OnInit {
         } else if (canUpdateDirectly) {
           actionText = this.translateService.instant('update') || 'Update';
         } else {
-          actionText = this.translateService.instant('raiseaticket') || 'Raise Ticket';
+          actionText =
+            this.translateService.instant('raiseaticket') || 'Raise Ticket';
         }
         break;
 
@@ -1439,7 +1441,8 @@ export class AddAuthor implements OnInit {
     if (currentTab === this.TOTAL_TABS - 1) {
       // Last tab
       if (this.ticketRaisedForTab()[currentTab]) {
-        navigationText = this.translateService.instant('viewticket') || 'View Ticket';
+        navigationText =
+          this.translateService.instant('viewticket') || 'View Ticket';
       } else {
         navigationText = this.translateService.instant('back') || 'Back';
       }
@@ -1455,7 +1458,7 @@ export class AddAuthor implements OnInit {
   // Get action button icon
   getActionButtonIcon(): string {
     const currentTab = this.currentTabIndex();
-    
+
     if (currentTab === this.TOTAL_TABS - 1) {
       // Last tab
       if (this.ticketRaisedForTab()[currentTab]) {
@@ -1463,23 +1466,25 @@ export class AddAuthor implements OnInit {
       }
       return 'arrow_back';
     }
-    
+
     // Not last tab
     return 'arrow_forward';
   }
 
-
   // Check if current tab is valid
   isCurrentTabValid(): boolean {
     const currentTab = this.currentTabIndex();
-    
+
     switch (currentTab) {
       case 0: // Basic Details (includes Social Media)
         return this.authorFormGroup.valid && !!this.mediaControl.value;
       case 1: // Address
         return this.authorAddressDetails.valid;
       case 2: // Bank Details
-        return this.authorBankDetails.valid && !this.authorBankDetails.hasError('accountMismatch');
+        return (
+          this.authorBankDetails.valid &&
+          !this.authorBankDetails.hasError('accountMismatch')
+        );
       default:
         return false;
     }
@@ -1488,7 +1493,7 @@ export class AddAuthor implements OnInit {
   // Handle tab-specific save/next action
   async handleTabAction() {
     const currentTab = this.currentTabIndex();
-    
+
     // Validate current tab
     if (!this.isCurrentTabValid()) {
       // Mark current tab form as touched
@@ -1560,16 +1565,18 @@ export class AddAuthor implements OnInit {
       userPassword: this.authorFormGroup.controls.userPassword.value
         ? md5(this.authorFormGroup.controls.userPassword.value)
         : undefined,
-      phoneNumber:
-        this.authorFormGroup.controls.phoneNumber.value?.replaceAll(' ', ''),
+      phoneNumber: this.authorFormGroup.controls.phoneNumber.value?.replaceAll(
+        ' ',
+        ''
+      ),
     } as Author;
 
     const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
     const status = this.authorDetails()?.status;
-    const canUpdateDirectly = 
-      !this.authorId || 
-      isSuperAdmin || 
-      status === AuthorStatus.Pending || 
+    const canUpdateDirectly =
+      !this.authorId ||
+      isSuperAdmin ||
+      status === AuthorStatus.Pending ||
       status === AuthorStatus.Dormant;
 
     if (canUpdateDirectly) {
@@ -1577,7 +1584,7 @@ export class AddAuthor implements OnInit {
       const response = (await this.authorsService.createAuthor(
         authorData as Author
       )) as Author;
-      
+
       // Store authorId if it's a new author
       const wasNewAuthor = !this.authorId;
       const finalAuthorId = response?.id || this.authorId;
@@ -1585,9 +1592,11 @@ export class AddAuthor implements OnInit {
         this.authorId = response.id;
         // Update query params
         this.updateQueryParams({ authorId: response.id.toString() });
-        
+
         // Reload author details
-        const updatedAuthor = await this.authorsService.getAuthorrById(response.id);
+        const updatedAuthor = await this.authorsService.getAuthorrById(
+          response.id
+        );
         this.authorDetails.set(updatedAuthor);
       }
 
@@ -1637,13 +1646,14 @@ export class AddAuthor implements OnInit {
     } else {
       // Raise ticket for Active authors (not SuperAdmin)
       const existingAuthor = this.authorDetails();
-      const hasAuthorChange = existingAuthor 
-        ? this.hasAuthorChanges(existingAuthor) 
+      const hasAuthorChange = existingAuthor
+        ? this.hasAuthorChanges(existingAuthor)
         : false;
       const existingMedia = existingAuthor?.medias?.[0];
       const hasMediaChange = this.hasMediaChanges(existingMedia);
       const existingSocialMedia = existingAuthor?.socialMedias || [];
-      const hasSocialMediaChange = this.hasSocialMediaChanges(existingSocialMedia);
+      const hasSocialMediaChange =
+        this.hasSocialMediaChanges(existingSocialMedia);
 
       if (hasAuthorChange || hasMediaChange || hasSocialMediaChange) {
         const payload: any = {
@@ -1677,7 +1687,9 @@ export class AddAuthor implements OnInit {
       const queryAuthorId = this.route.snapshot.queryParams['authorId'];
       if (queryAuthorId) {
         this.authorId = Number(queryAuthorId);
-        const updatedAuthor = await this.authorsService.getAuthorrById(this.authorId);
+        const updatedAuthor = await this.authorsService.getAuthorrById(
+          this.authorId
+        );
         this.authorDetails.set(updatedAuthor);
       } else {
         await Swal.fire({
@@ -1693,9 +1705,9 @@ export class AddAuthor implements OnInit {
 
     const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
     const status = this.authorDetails()?.status;
-    const canUpdateDirectly = 
-      isSuperAdmin || 
-      status === AuthorStatus.Pending || 
+    const canUpdateDirectly =
+      isSuperAdmin ||
+      status === AuthorStatus.Pending ||
       status === AuthorStatus.Dormant;
 
     if (canUpdateDirectly) {
@@ -1703,7 +1715,7 @@ export class AddAuthor implements OnInit {
       const existingAuthor = this.authorDetails();
       const existingAddress = existingAuthor?.address?.[0];
       const wasNewAddress = !existingAddress;
-      
+
       await this.addressService.createOrUpdateAddress({
         ...this.authorAddressDetails.value,
         id: existingAddress?.id,
@@ -1711,7 +1723,9 @@ export class AddAuthor implements OnInit {
       } as Address);
 
       // Reload author details to get updated address
-      const updatedAuthor = await this.authorsService.getAuthorrById(this.authorId);
+      const updatedAuthor = await this.authorsService.getAuthorrById(
+        this.authorId
+      );
       this.authorDetails.set(updatedAuthor);
 
       // Clear ticket flag for this tab on successful direct update
@@ -1760,7 +1774,9 @@ export class AddAuthor implements OnInit {
       const queryAuthorId = this.route.snapshot.queryParams['authorId'];
       if (queryAuthorId) {
         this.authorId = Number(queryAuthorId);
-        const updatedAuthor = await this.authorsService.getAuthorrById(this.authorId);
+        const updatedAuthor = await this.authorsService.getAuthorrById(
+          this.authorId
+        );
         this.authorDetails.set(updatedAuthor);
       } else {
         await Swal.fire({
@@ -1776,9 +1792,9 @@ export class AddAuthor implements OnInit {
 
     const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
     const status = this.authorDetails()?.status;
-    const canUpdateDirectly = 
-      isSuperAdmin || 
-      status === AuthorStatus.Pending || 
+    const canUpdateDirectly =
+      isSuperAdmin ||
+      status === AuthorStatus.Pending ||
       status === AuthorStatus.Dormant;
 
     if (canUpdateDirectly) {
@@ -1786,7 +1802,7 @@ export class AddAuthor implements OnInit {
       const existingAuthor = this.authorDetails();
       const existingBank = existingAuthor?.bankDetails?.[0];
       const wasNewBank = !existingBank;
-      
+
       const bankDetailsValue = { ...this.authorBankDetails.value };
       if (
         !bankDetailsValue.gstNumber ||
@@ -1802,7 +1818,9 @@ export class AddAuthor implements OnInit {
       } as createBankDetails);
 
       // Reload author details to get updated bank details
-      const updatedAuthor = await this.authorsService.getAuthorrById(this.authorId);
+      const updatedAuthor = await this.authorsService.getAuthorrById(
+        this.authorId
+      );
       this.authorDetails.set(updatedAuthor);
 
       // Clear ticket flag for this tab on successful direct update
@@ -1815,8 +1833,8 @@ export class AddAuthor implements OnInit {
       await Swal.fire({
         icon: 'success',
         title: 'Success',
-        text: wasNewBank 
-          ? 'Bank details created successfully' 
+        text: wasNewBank
+          ? 'Bank details created successfully'
           : 'Bank details updated successfully',
         heightAuto: false,
       });
