@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 import { privateRouteGuard } from './guards/private-route-guard';
 import { publicRouteGuard } from './guards/public-route-guard';
 import { AddAuthor } from './pages/add-author/add-author';
+import { TitleFormTemp } from './pages/title-form-temp/title-form-temp';
+import { AddPublisher } from './pages/add-publisher/add-publisher';
 
 export const routes: Routes = [
   {
@@ -30,8 +32,6 @@ export const routes: Routes = [
   {
     path: 'author/:id',
     component: AddAuthor,
-    // loadComponent: () =>
-    //   import('./pages/add-author/add-author').then((c) => cg.AddAuthor),
     canActivate: [privateRouteGuard],
   },
   {
@@ -49,10 +49,7 @@ export const routes: Routes = [
   },
   {
     path: 'title/:titleId',
-    loadComponent: () =>
-      import('./pages/title-form-temp/title-form-temp').then(
-        (c) => c.TitleFormTemp
-      ),
+    component: TitleFormTemp,
     canActivate: [privateRouteGuard],
   },
   {
@@ -115,8 +112,7 @@ export const routes: Routes = [
   },
   {
     path: 'publisher/:id',
-    loadComponent: () =>
-      import('./pages/add-publisher/add-publisher').then((C) => C.AddPublisher),
+    component: AddPublisher,
     canActivate: [privateRouteGuard],
   },
   {
