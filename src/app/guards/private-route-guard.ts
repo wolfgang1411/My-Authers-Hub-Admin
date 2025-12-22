@@ -1,32 +1,23 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { filter, map, take } from 'rxjs';
 import { AuthService } from '../services/auth';
 
 export const privateRouteGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  const isUserAuthenticated = authService.isUserAuthenticated$();
-
-  console.log({ isUserAuthenticated });
-
-  if (isUserAuthenticated) {
-    return true;
-  }
-
-  if (isUserAuthenticated === null) {
-    router.navigate(['/waiting'], {
-      state: {
-        redirectUrl: state.url,
-      },
-    });
-    return false;
-  }
-
-  if (isUserAuthenticated === false) {
-    router.navigate(['/login']);
-    return false;
-  }
-
-  return true;
+  return toObservable(authService.isUserAuthenticated$).pipe(
+    filter((value) => value !== null),
+    take(1),
+    map((isUserAuthenticated) => {
+      if (isUserAuthenticated) {
+        return true;
+      } else {
+        router.navigate(['/login']);
+        return false;
+      }
+    })
+  );
 };

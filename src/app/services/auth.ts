@@ -38,8 +38,6 @@ export class AuthService {
     );
   }
 
-
-
   decodeToken(token: string) {
     try {
       const tokenInfo = jwtDecode<TokeInfo>(token);
@@ -106,7 +104,7 @@ export class AuthService {
     this.tokenInfo = tokenInfo;
     storage.setItem('authToken', data);
     this.isUserAuthenticated.set(true);
-    this.refreshToken(data.access_token, data.refresh_token);
+    // this.refreshToken(data.access_token, data.refresh_token);
     return this.tokenInfo.sub;
   }
 
