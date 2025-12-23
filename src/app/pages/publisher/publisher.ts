@@ -401,11 +401,22 @@ export class Publisher implements OnInit {
           );
 
           if (response) {
-            this.dataSource.data = this.dataSource.data.map((item) =>
-              item.id === targetPublisherId
-                ? { ...item, status: PublisherStatus.Active }
-                : item
+            this.publishers.update((list) =>
+              list.map((p) =>
+                p.id === targetPublisherId
+                  ? { ...p, status: PublisherStatus.Active }
+                  : p
+              )
             );
+
+            // re-map to table
+            this.mapPublishersToDataSource(this.publishers());
+
+            // this.dataSource.data = this.dataSource.data.map((item) =>
+            //   item.id === targetPublisherId
+            //     ? { ...item, status: PublisherStatus.Active }
+            //     : item
+            // );
 
             Swal.fire({
               title: 'Success',
@@ -426,7 +437,6 @@ export class Publisher implements OnInit {
       loggedInUser: loggedInUser.id,
       role: loggedInUser.accessLevel,
     });
-    this.fetchPublishers();
   }
 
   rejectPublisher(publisherId: number) {
