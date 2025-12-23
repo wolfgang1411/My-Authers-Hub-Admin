@@ -205,7 +205,7 @@
 
   <!-- Inline ISBN column template (only for APPLIED) -->
   <ng-template #isbnnumber let-element>
-    @if (element.status === 'APPLIED') {
+    @if (element.status === 'APPLIED' && loggedInUser$()?.accessLevel === 'SUPERADMIN') {
     <div class="flex items-center gap-2">
       <input
         matInput
@@ -263,6 +263,7 @@
       >
         <mat-icon class="material-icons">edit</mat-icon>
       </button>
+      @if (loggedInUser$()?.accessLevel === 'SUPERADMIN') {
       <button
         title="Apply"
         class="!bg-green-600 flex items-center gap-2 !text-white rounded-full p-2"
@@ -271,7 +272,7 @@
       >
         <mat-icon class="material-icons text-white">check</mat-icon>
       </button>
-
+      }
       } @if ( element.status !== 'APPROVED' && element.status !== 'REJECTED' &&
       loggedInUser$()?.accessLevel === 'SUPERADMIN' ) {
 
