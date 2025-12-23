@@ -251,17 +251,14 @@
     >
     </app-temp-book-details>
 
-    <div class="flex justify-end">
+    <div class="flex justify-end mt-8">
       <button
         matButton="filled"
-        class="!bg-primary mt-8"
+        class="!bg-primary"
         (click)="onTitleSubmit()"
       >
-        @if(isRaisingTicket()) {
-        {{ "raiseticket" | translate }}
-        } @else {
-        {{ "next" | translate }}
-        }
+        {{ getActionButtonText('details') }}
+        <mat-icon>{{ getActionButtonIcon('details') }}</mat-icon>
       </button>
     </div>
   </mat-step>
@@ -370,17 +367,25 @@
         </div>
         }
       </div>
-      <div class="mt-6 flex justify-end">
+      <div class="mt-6 flex justify-between items-center gap-3">
+        <!-- Previous Button -->
+        <button
+          matButton="filled"
+          class="!bg-primary !text-white"
+          (click)="goToPreviousStep()"
+        >
+          <mat-icon>arrow_back</mat-icon>
+          {{ "previous" | translate }}
+        </button>
+
+        <!-- Action Button -->
         <button
           (click)="onMediaUpload()"
           matButton="filled"
           class="px-6 py-2 !bg-primary text-white rounded-lg shadow"
         >
-          @if(isRaisingTicket()) {
-          {{ "raiseticket" | translate }}
-          } @else {
-          {{ "next" | translate }}
-          }
+          {{ getActionButtonText('documents') }}
+          <mat-icon>{{ getActionButtonIcon('documents') }}</mat-icon>
         </button>
       </div>
     </form>
@@ -409,17 +414,25 @@
       [authors]="authorsSignal()"
       (calculateCost)="calculatePrintingCost()"
     ></app-temp-title-printing>
-    <div class="flex justify-end mt-6">
+    <div class="flex justify-between items-center gap-3 mt-6">
+      <!-- Previous Button -->
+      <button
+        matButton="filled"
+        class="!bg-primary !text-white"
+        (click)="goToPreviousStep()"
+      >
+        <mat-icon>arrow_back</mat-icon>
+        {{ "previous" | translate }}
+      </button>
+
+      <!-- Action Button -->
       <button
         class="!bg-primary"
         matButton="filled"
         (click)="savePrintingDraft()"
       >
-        @if(isRaisingTicket()) {
-        {{ "raiseticket" | translate }}
-        } @else {
-        {{ "next" | translate }}
-        }
+        {{ getActionButtonText('printing') }}
+        <mat-icon>{{ getActionButtonIcon('printing') }}</mat-icon>
       </button>
     </div>
   </mat-step>
@@ -452,17 +465,25 @@
       [hasPricing]="tempForm.controls.pricing.length > 0"
     ></app-temp-pricing-royalty>
 
-    <div class="flex justify-end mt-6">
+    <div class="flex justify-between items-center gap-3 mt-6">
+      <!-- Previous Button -->
+      <button
+        matButton="filled"
+        class="!bg-primary !text-white"
+        (click)="goToPreviousStep()"
+      >
+        <mat-icon>arrow_back</mat-icon>
+        {{ "previous" | translate }}
+      </button>
+
+      <!-- Action Button -->
       <button
         class="!bg-primary"
         matButton="filled"
         (click)="onPricingAndRoyaltySubmit()"
       >
-        @if(isRaisingTicket()) {
-        {{ "raiseticket" | translate }}
-        } @else {
-        {{ "next" | translate }}
-        }
+        {{ getActionButtonText('pricing') }}
+        <mat-icon>{{ getActionButtonIcon('pricing') }}</mat-icon>
       </button>
     </div>
   </mat-step>
@@ -490,17 +511,25 @@
       (onClickPurchasePoint)="onClickPurchasePoint($event)"
       (onPointsPurchased)="fetchAndUpdatePublishingPoints()"
     ></app-temp-title-distribution>
-    <div class="flex justify-end">
+    <div class="flex justify-between items-center gap-3 mt-2">
+      <!-- Previous Button -->
+      <button
+        matButton="filled"
+        class="!bg-primary !text-white"
+        (click)="goToPreviousStep()"
+      >
+        <mat-icon>arrow_back</mat-icon>
+        {{ "previous" | translate }}
+      </button>
+
+      <!-- Action Button -->
       <button
         (click)="onDistributionSubmit()"
-        class="!bg-primary mt-2"
+        class="!bg-primary"
         matButton="filled"
       >
-        @if(isRaisingTicket()) {
-        {{ "raiseticket" | translate }}
-        } @else {
-        {{ "uploadtitle" | translate }}
-        }
+        {{ getActionButtonText('distribution') }}
+        <mat-icon>{{ getActionButtonIcon('distribution') }}</mat-icon>
       </button>
     </div>
   </mat-step>

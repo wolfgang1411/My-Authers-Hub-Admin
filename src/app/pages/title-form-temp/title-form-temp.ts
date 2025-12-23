@@ -3390,6 +3390,19 @@ export class TitleFormTemp implements OnDestroy {
       return;
     }
 
+    // Check if raising ticket and no changes detected
+    if (this.isRaisingTicket() && !this.hasChangesInCurrentStep('details')) {
+      await Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error') || 'Error',
+        text:
+          this.translateService.instant('nochangesdetected') ||
+          'No changes detected. Please make changes before raising a ticket.',
+        heightAuto: false,
+      });
+      return;
+    }
+
     const titleDetails = this.tempForm.controls.titleDetails?.value;
     const validAuthors = (titleDetails.authorIds || [])
       .filter((author: any) => !!author?.id)
@@ -3522,6 +3535,8 @@ export class TitleFormTemp implements OnDestroy {
           // Continue even if reload fails
         }
 
+        // Navigate back to titles listing after successful ticket creation
+        this.goBackToTitles();
         return; // Don't proceed with normal update flow
       }
       const res = await this.titleService.createTitle(finalbasicData);
@@ -3600,6 +3615,19 @@ export class TitleFormTemp implements OnDestroy {
         text:
           this.translateService.instant('titleidrequired') ||
           'Title ID is required. Please save title details first.',
+      });
+      return;
+    }
+
+    // Check if raising ticket and no changes detected
+    if (this.isRaisingTicket() && !this.hasChangesInCurrentStep('documents')) {
+      await Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error') || 'Error',
+        text:
+          this.translateService.instant('nochangesdetected') ||
+          'No changes detected. Please make changes before raising a ticket.',
+        heightAuto: false,
       });
       return;
     }
@@ -3708,6 +3736,8 @@ export class TitleFormTemp implements OnDestroy {
           console.error('Error reloading title:', reloadError);
         }
 
+        // Navigate back to titles listing after successful ticket creation
+        this.goBackToTitles();
         return; // Don't proceed with normal flow
       }
 
@@ -4086,6 +4116,19 @@ export class TitleFormTemp implements OnDestroy {
 
       // Check if raising ticket for approved title
       if (this.isRaisingTicket()) {
+        // Check if there are changes
+        if (!this.hasChangesInCurrentStep('pricing')) {
+          await Swal.fire({
+            icon: 'error',
+            title: this.translateService.instant('error') || 'Error',
+            text:
+              this.translateService.instant('nochangesdetected') ||
+              'No changes detected. Please make changes before raising a ticket.',
+            heightAuto: false,
+          });
+          return;
+        }
+
         // Create pricing update ticket
         await this.titleService.createPricingUpdateTicket(this.titleId, {
           data,
@@ -4111,6 +4154,8 @@ export class TitleFormTemp implements OnDestroy {
           console.error('Error reloading title:', reloadError);
         }
 
+        // Navigate back to titles listing after successful ticket creation
+        this.goBackToTitles();
         return; // Don't proceed with normal flow
       }
 
@@ -4658,6 +4703,19 @@ export class TitleFormTemp implements OnDestroy {
 
       // Check if raising ticket for approved title
       if (this.isRaisingTicket()) {
+        // Check if there are changes
+        if (!this.hasChangesInCurrentStep('pricing')) {
+          await Swal.fire({
+            icon: 'error',
+            title: this.translateService.instant('error') || 'Error',
+            text:
+              this.translateService.instant('nochangesdetected') ||
+              'No changes detected. Please make changes before raising a ticket.',
+            heightAuto: false,
+          });
+          return;
+        }
+
         // Create pricing update ticket
         await this.titleService.createPricingUpdateTicket(this.titleId, {
           data: pricingData,
@@ -4688,6 +4746,8 @@ export class TitleFormTemp implements OnDestroy {
           console.error('Error reloading title:', reloadError);
         }
 
+        // Navigate back to titles listing after successful ticket creation
+        this.goBackToTitles();
         return; // Don't proceed with normal flow
       }
 
@@ -4755,6 +4815,19 @@ export class TitleFormTemp implements OnDestroy {
         text:
           this.translateService.instant('titleidrequired') ||
           'Title ID is required.',
+      });
+      return;
+    }
+
+    // Check if raising ticket and no changes detected
+    if (this.isRaisingTicket() && !this.hasChangesInCurrentStep('printing')) {
+      await Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error') || 'Error',
+        text:
+          this.translateService.instant('nochangesdetected') ||
+          'No changes detected. Please make changes before raising a ticket.',
+        heightAuto: false,
       });
       return;
     }
@@ -5098,6 +5171,8 @@ export class TitleFormTemp implements OnDestroy {
           console.error('Error reloading title:', reloadError);
         }
 
+        // Navigate back to titles listing after successful ticket creation
+        this.goBackToTitles();
         return; // Don't proceed with normal flow
       }
 
@@ -5289,6 +5364,8 @@ export class TitleFormTemp implements OnDestroy {
           console.error('Error reloading title:', reloadError);
         }
 
+        // Navigate back to titles listing after successful ticket creation
+        this.goBackToTitles();
         return; // Don't proceed with normal flow
       }
 
@@ -5313,6 +5390,179 @@ export class TitleFormTemp implements OnDestroy {
       return window.location.href;
     }
     return '';
+  }
+
+  /**
+   * Get current step index from stepper
+   */
+  getCurrentStepIndex(): number {
+    const stepperInstance = this.stepper();
+    return stepperInstance?.selectedIndex ?? 0;
+  }
+
+  /**
+   * Check if current step is the first step (Fill the Title Details)
+   */
+  isFirstStep(): boolean {
+    const currentStep = this.currentStep();
+    return currentStep === 'details';
+  }
+
+  /**
+   * Get action button text for current step
+   */
+  getActionButtonText(stepName?: string): string {
+    const step = stepName || this.currentStep();
+    if (!step) return this.translateService.instant('next') || 'Next';
+
+    const isNewTitle = !this.titleId || this.titleId === 0;
+    const isRaisingTicket = this.isRaisingTicket();
+
+    let actionText = '';
+    let navigationText = '';
+
+    // Determine action text based on step and context
+    switch (step) {
+      case 'details':
+        if (isNewTitle) {
+          actionText = this.translateService.instant('create') || 'Create';
+          navigationText = this.translateService.instant('next') || 'Next';
+        } else if (isRaisingTicket) {
+          actionText =
+            this.translateService.instant('raiseaticket') || 'Raise Ticket';
+          navigationText = this.translateService.instant('back') || 'Back';
+        } else {
+          actionText = this.translateService.instant('update') || 'Update';
+          navigationText = this.translateService.instant('next') || 'Next';
+        }
+        break;
+
+      case 'documents':
+        if (isRaisingTicket) {
+          actionText =
+            this.translateService.instant('raiseaticket') || 'Raise Ticket';
+          navigationText = this.translateService.instant('back') || 'Back';
+        } else {
+          actionText = this.translateService.instant('update') || 'Update';
+          navigationText = this.translateService.instant('next') || 'Next';
+        }
+        break;
+
+      case 'printing':
+        if (isRaisingTicket) {
+          actionText =
+            this.translateService.instant('raiseaticket') || 'Raise Ticket';
+          navigationText = this.translateService.instant('back') || 'Back';
+        } else {
+          actionText = this.translateService.instant('update') || 'Update';
+          navigationText = this.translateService.instant('next') || 'Next';
+        }
+        break;
+
+      case 'pricing':
+        if (isRaisingTicket) {
+          actionText =
+            this.translateService.instant('raiseaticket') || 'Raise Ticket';
+          navigationText = this.translateService.instant('back') || 'Back';
+        } else {
+          actionText = this.translateService.instant('update') || 'Update';
+          navigationText = this.translateService.instant('next') || 'Next';
+        }
+        break;
+
+      case 'distribution':
+        if (isRaisingTicket) {
+          actionText =
+            this.translateService.instant('raiseaticket') || 'Raise Ticket';
+          navigationText = this.translateService.instant('back') || 'Back';
+        } else {
+          actionText = this.translateService.instant('uploadtitle') || 'Upload Title';
+        }
+        break;
+
+      default:
+        return this.translateService.instant('next') || 'Next';
+    }
+
+    // Combine action and navigation text
+    return navigationText
+      ? `${actionText} and ${navigationText}`
+      : actionText;
+  }
+
+  /**
+   * Get action button icon for current step
+   */
+  getActionButtonIcon(stepName?: string): string {
+    const step = stepName || this.currentStep();
+    if (!step) return 'arrow_forward';
+
+    const isRaisingTicket = this.isRaisingTicket();
+
+    // If raising ticket, show back arrow (will navigate back to titles listing)
+    if (isRaisingTicket) {
+      return 'arrow_back';
+    }
+
+    // Otherwise show forward arrow
+    return 'arrow_forward';
+  }
+
+  /**
+   * Navigate to previous step
+   */
+  goToPreviousStep(): void {
+    const stepperInstance = this.stepper();
+    if (!stepperInstance) return;
+
+    const currentIndex = stepperInstance.selectedIndex;
+    if (currentIndex > 0) {
+      stepperInstance.previous();
+      const stepOrder = this.getStepOrder();
+      const prevStepName = this.getStepNameFromIndex(currentIndex - 1);
+      if (prevStepName) {
+        this.currentStep.set(prevStepName);
+      }
+    }
+  }
+
+  /**
+   * Check if there are changes in the current step
+   * This is a simplified version - you may need to enhance based on specific step requirements
+   */
+  hasChangesInCurrentStep(stepName?: string): boolean {
+    const step = stepName || this.currentStep();
+    if (!step || !this.titleId) return true; // New titles always have changes
+
+    const titleDetails = this.titleDetails();
+    if (!titleDetails) return true;
+
+    // For now, we'll check if form is dirty
+    // You can enhance this to compare specific fields
+    switch (step) {
+      case 'details':
+        return this.tempForm.controls.titleDetails.dirty;
+      case 'documents':
+        // Check if any media file is selected
+        return this.tempForm.controls.documentMedia.controls.some(
+          (control) => control.controls.file.value !== null
+        );
+      case 'printing':
+        return this.tempForm.controls.printing.dirty;
+      case 'pricing':
+        return this.tempForm.controls.pricing.dirty;
+      case 'distribution':
+        return this.tempForm.controls.distribution.dirty;
+      default:
+        return true;
+    }
+  }
+
+  /**
+   * Navigate back to titles listing
+   */
+  goBackToTitles(): void {
+    this.router.navigate(['/titles']);
   }
 
   async onClickPurchasePoint(type: DistributionType) {
@@ -5395,6 +5645,19 @@ export class TitleFormTemp implements OnDestroy {
 
       // Check if raising ticket for approved title
       if (this.isRaisingTicket()) {
+        // Check if there are changes
+        if (!this.hasChangesInCurrentStep('distribution')) {
+          await Swal.fire({
+            icon: 'error',
+            title: this.translateService.instant('error') || 'Error',
+            text:
+              this.translateService.instant('nochangesdetected') ||
+              'No changes detected. Please make changes before raising a ticket.',
+            heightAuto: false,
+          });
+          return;
+        }
+
         // Create distribution update ticket
         await this.titleService.createTitleDistributionUpdateTicket(
           this.titleId,
@@ -5421,6 +5684,8 @@ export class TitleFormTemp implements OnDestroy {
           console.error('Error reloading title:', reloadError);
         }
 
+        // Navigate back to titles listing after successful ticket creation
+        this.goBackToTitles();
         return; // Don't proceed with normal flow
       }
 
