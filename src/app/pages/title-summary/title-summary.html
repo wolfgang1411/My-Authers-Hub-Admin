@@ -134,12 +134,11 @@
                       {{ a.display_name }}
                     </span>
 
-                    <!-- Author Print Price -->
-                    @if (a.authorPrintPrice !== null && a.authorPrintPrice !==
-                    undefined) {
+                    <!-- Author Copy Access -->
+                    @if (a.allowAuthorCopy && getAuthorCopyPrice() !== null) {
                     <span class="text-[var(--green-2)] font-medium">
                       Author Copies Price: ₹{{
-                        a.authorPrintPrice | number : "1.2-2"
+                        getAuthorCopyPrice() | number : "1.2-2"
                       }}
                     </span>
                     }

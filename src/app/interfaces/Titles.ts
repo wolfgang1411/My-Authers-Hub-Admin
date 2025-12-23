@@ -107,7 +107,7 @@ export interface AuthorTitle {
   id: number;
   author: Author;
   display_name: string; // Author display name from form
-  authorPrintPrice?: number | null; // Price publisher will give book to author for printing (optional)
+  allowAuthorCopy?: boolean; // Whether author can buy copies at print cost
   order: number;
 }
 
@@ -163,7 +163,7 @@ export interface TitleCreate {
   authorIds: {
     id: number;
     displayName: string;
-    authorPrintPrice?: number | null;
+    allowAuthorCopy?: boolean;
   }[];
 }
 
@@ -432,9 +432,9 @@ export interface PrintingCreate {
   customPrintCost?: number;
   insideCover: boolean;
   isColorPagesRandom: boolean;
-  authorPrintPrices?: Array<{
+  authorCopyPermissions?: Array<{
     authorId: number;
-    authorPrintPrice?: number | null;
+    allowAuthorCopy?: boolean;
   }>;
 }
 
@@ -479,7 +479,7 @@ export interface AuthorFormGroup {
   name: FormControl<string | null | undefined>;
   keepSame: FormControl<boolean | null | undefined>;
   displayName: FormControl<string | null | undefined>;
-  authorPrintPrice: FormControl<number | null | undefined>;
+  allowAuthorCopy: FormControl<boolean | null | undefined>;
 }
 
 // 📖 ISBN group

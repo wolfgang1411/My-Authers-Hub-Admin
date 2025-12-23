@@ -42,9 +42,15 @@
         </td>
 
         <td class="px-5 py-3">{{ t.copiesSold }}</td>
-        @if (t.authors?.[0]?.authorPrintPrice !== null) {
+        @if (
+          t.authors?.[0]?.allowAuthorCopy &&
+          (t.printing?.[0]?.customPrintCost || t.printing?.[0]?.printCost)
+        ) {
         <td class="px-5 py-3">
-          ₹{{ t.authors?.[0]?.authorPrintPrice |  number : "1.2-2"  }}
+          ₹{{
+            (t.printing?.[0]?.customPrintCost || t.printing?.[0]?.printCost)
+              | number : "1.2-2"
+          }}
         </td>
         }@else{
         <td class="px-5 py-3">

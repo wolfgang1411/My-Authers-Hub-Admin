@@ -388,7 +388,7 @@ export class TempBookDetails implements OnDestroy {
         name: new FormControl<string | null>(null),
         keepSame: new FormControl<boolean>(true),
         displayName: new FormControl<string | null>(null),
-        authorPrintPrice: new FormControl<number | null | undefined>(null),
+        allowAuthorCopy: new FormControl<boolean | null | undefined>(false),
       }) as FormGroup<AuthorFormGroup>
     );
   }

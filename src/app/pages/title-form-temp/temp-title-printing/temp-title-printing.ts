@@ -90,7 +90,7 @@ export class TempTitlePrinting implements OnDestroy {
   showCustomPrintCost = computed(() => this.allowCustomPrintingPrice());
 
   // Computed to check if author print price field should be shown
-  showAuthorPrintPrice = computed(() => this.allowAuthorCopyPrice());
+  showAuthorCopyOption = computed(() => this.allowAuthorCopyPrice());
 
   async ngOnInit() {
     // Load all sizes first

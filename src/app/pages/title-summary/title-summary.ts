@@ -200,6 +200,24 @@ export class TitleSummary {
     }
   }
 
+  getAuthorCopyPrice(): number | null {
+    const printing = this.titleDetails()?.printing?.[0] as any;
+    if (!printing) return null;
+
+    const rawPrice =
+      printing.customPrintCost !== null && printing.customPrintCost !== undefined
+        ? Number(printing.customPrintCost)
+        : printing.printCost !== null && printing.printCost !== undefined
+        ? Number(printing.printCost)
+        : null;
+
+    if (rawPrice === null || isNaN(rawPrice)) {
+      return null;
+    }
+
+    return rawPrice;
+  }
+
   frontCoverUrl(): string | null {
     const media = this.titleDetails()?.media || [];
     const front = media.find((m: any) => m.type === 'FRONT_COVER');
