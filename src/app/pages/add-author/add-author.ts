@@ -475,7 +475,7 @@ export class AddAuthor implements OnInit {
       accountNo: ['', Validators.required],
       confirmAccountNo: ['', [Validators.required]],
       ifsc: ['', [Validators.required, this.ifscCodeValidator()]],
-      panCardNo: ['', [Validators.required, this.panCardValidator()]],
+      panCardNo: ['', [this.panCardValidator()]],
       gstNumber: ['', [this.gstValidator()]],
       accountType: ['', Validators.required],
       signupCode: <string | null>null,
@@ -995,6 +995,13 @@ export class AddAuthor implements OnInit {
     ) {
       delete bankDetailsValue.gstNumber;
     }
+    if (
+      !bankDetailsValue.panCardNo ||
+      bankDetailsValue.panCardNo.trim() === ''
+    ) {
+      delete bankDetailsValue.panCardNo;
+    }
+
     const rawValue = {
       ...this.authorAddressDetails.value,
       ...bankDetailsValue,
@@ -1003,7 +1010,6 @@ export class AddAuthor implements OnInit {
       authorContactNumber: this.authorFormGroup.value.phoneNumber,
       authorAbout: this.authorFormGroup.value.about,
       authorUsername: this.authorFormGroup.value.username,
-
       bankName: this.authorBankDetails.value.name,
       accountHolderName: this.authorBankDetails.value.accountHolderName,
     };
