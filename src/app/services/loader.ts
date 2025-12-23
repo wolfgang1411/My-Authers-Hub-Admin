@@ -15,6 +15,9 @@ export class LoaderService {
   private privateLoadingAreas = new BehaviorSubject<string[]>([]);
   privateLoadingAreas$ = this.privateLoadingAreas.asObservable();
 
+  private loadingMessage = new BehaviorSubject<string | null>(null);
+  loadingMessage$ = this.loadingMessage.asObservable();
+
   async loadPromise<T>(promise: Promise<T>, area?: string, isPrivate = false) {
     const loadingArea = area || uuidV4();
 
@@ -44,4 +47,8 @@ export class LoaderService {
           areas.includes(name) || privateAreas.includes(name)
       )
     );
+
+  setLoadingMessage(message: string | null) {
+    this.loadingMessage.next(message);
+  }
 }

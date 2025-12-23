@@ -372,22 +372,27 @@ export class ViewTicketDialog implements OnInit {
   private processMediaChanges(ticket: TitleMediaUpdateTicket): void {
     const fields: ChangeField[] = [];
 
+    // Find the old media value by matching the ticket type with title.media array
+    const oldMedia = this.title?.media?.find(
+      (media) => media.type === ticket.type
+    );
+
     fields.push({
       label: this.translateService.instant('name') || 'Name',
-      oldValue: null,
+      oldValue: oldMedia?.name || 'N/A',
       newValue: ticket.name,
     });
 
     fields.push({
       label: this.translateService.instant('type') || 'Type',
-      oldValue: null,
+      oldValue: oldMedia?.type || 'N/A',
       newValue: ticket.type,
     });
 
     fields.push({
       label: this.translateService.instant('noofpages') || 'No. of Pages',
-      oldValue: null,
-      newValue: ticket.noOfPages,
+      oldValue: oldMedia?.noOfPages ?? 'N/A',
+      newValue: ticket.noOfPages ?? 'N/A',
     });
 
     this.changes = fields;

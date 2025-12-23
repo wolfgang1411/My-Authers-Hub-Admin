@@ -2,6 +2,13 @@
 <div
   class="fixed inset-0 z-50 flex items-center justify-center bg-white/30 dark:bg-black/40 backdrop-blur-[2px]"
 >
-  <img src="images/spinner.gif" alt="Loading..." class="w-16 h-16" />
+  <div class="flex flex-col items-center gap-4">
+    <img src="images/spinner.gif" alt="Loading..." class="w-16 h-16" />
+    @if(loadingMessage$ | async; as message) {
+      <p class="text-lg font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 px-6 py-3 rounded-lg shadow-lg">
+        {{ message }}
+      </p>
+    }
+  </div>
 </div>
 }

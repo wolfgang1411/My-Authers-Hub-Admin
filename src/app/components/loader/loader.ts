@@ -11,10 +11,12 @@ import { AsyncPipe } from '@angular/common';
 })
 export class Loader {
   isLoading$!: Observable<boolean>;
+  loadingMessage$!: Observable<string | null>;
 
   constructor(private loader: LoaderService) {}
 
   ngOnInit() {
     this.isLoading$ = this.loader.isLoading$;
+    this.loadingMessage$ = this.loader.loadingMessage$;
   }
 }
