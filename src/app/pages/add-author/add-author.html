@@ -91,40 +91,6 @@
                 />
               </div>
 
-              @if(authorFormGroup.get('id')?.value===null){
-              <mat-form-field class="w-full">
-                <mat-label>Create Password</mat-label>
-                <input
-                  id="password"
-                  matInput
-                  type="password"
-                  formControlName="userPassword"
-                />
-                <mat-icon
-                  matSuffix
-                  (click)="openPassword()"
-                  class="cursor-pointer"
-                  >visibility</mat-icon
-                >
-
-                @if ( authorFormGroup.get('userPassword')?.hasError('required')
-                && authorFormGroup.get('userPassword')?.touched ) {
-                <mat-error>{{ "requiredvalueerror" | translate }}</mat-error>
-                } @if (
-                authorFormGroup.get('userPassword')?.hasError('minlength') &&
-                !authorFormGroup.get('userPassword')?.hasError('required') ) {
-                <mat-error>
-                  {{ "minlengtherror" | translate : { length: 8 } }}
-                </mat-error>
-                } @if ( authorFormGroup.get('userPassword')?.hasError('pattern')
-                && !authorFormGroup.get('userPassword')?.hasError('required') &&
-                !authorFormGroup.get('userPassword')?.hasError('minlength') ) {
-                <mat-error>
-                  {{ "passwordstrengtherror" | translate }}
-                </mat-error>
-                }
-              </mat-form-field>
-              }
 
               <mat-form-field class="md:col-span-3 w-full">
                 <mat-label>{{ "about" | translate }}</mat-label>

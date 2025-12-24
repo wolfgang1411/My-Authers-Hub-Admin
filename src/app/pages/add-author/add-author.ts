@@ -388,8 +388,6 @@ export class AddAuthor implements OnInit {
     }
 
     if (this.authorId) {
-      this.authorFormGroup.controls.userPassword.disable();
-
       const response = await this.authorsService.getAuthorrById(this.authorId);
       this.authorDetails.set(response);
       this.isPrefilling = true;
@@ -452,14 +450,6 @@ export class AddAuthor implements OnInit {
     phoneNumber: ['', Validators.required],
     username: ['', Validators.required],
     about: ['', Validators.required],
-    userPassword: [
-      '',
-      [
-        Validators.required,
-        Validators.minLength(8),
-        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/),
-      ],
-    ],
     authorImage: [''],
     media: this._formBuilder.control<Media | null>(null, Validators.required),
     signupCode: <string | null>null,
@@ -1302,9 +1292,6 @@ export class AddAuthor implements OnInit {
         ...this.authorFormGroup.value,
         id: this.authorId || this.authorFormGroup.value.id,
         email: this.authorFormGroup.controls.email.value,
-        userPassword: this.authorFormGroup.controls.userPassword.value
-          ? md5(this.authorFormGroup.controls.userPassword.value)
-          : undefined,
         phoneNumber:
           this.authorFormGroup.controls.phoneNumber.value?.replaceAll(' ', ''),
       } as Author;
@@ -1646,9 +1633,6 @@ export class AddAuthor implements OnInit {
       ...this.authorFormGroup.value,
       id: this.authorId || this.authorFormGroup.value.id,
       email: this.authorFormGroup.controls.email.value,
-      userPassword: this.authorFormGroup.controls.userPassword.value
-        ? md5(this.authorFormGroup.controls.userPassword.value)
-        : undefined,
       phoneNumber: this.authorFormGroup.controls.phoneNumber.value?.replaceAll(
         ' ',
         ''

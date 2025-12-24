@@ -40,7 +40,6 @@ export interface CreatePublisher {
   pocEmail: string;
   pocPhoneNumber: string;
   designation: string;
-  userPassword: string;
   name: string;
   email: string;
   signupCode?: string;

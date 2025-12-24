@@ -287,8 +287,6 @@ export class AddPublisher {
     }
 
     if (this.publisherId) {
-      this.publisherFormGroup.controls.userPassword.disable();
-
       const response = await this.publisherService.getPublisherById(
         this.publisherId
       );
@@ -446,14 +444,6 @@ export class AddPublisher {
     name: ['', Validators.required],
     designation: ['', Validators.required],
     media: this._formBuilder.control<Media | null>(null, Validators.required),
-    userPassword: [
-      '',
-      [
-        Validators.required,
-        Validators.minLength(8),
-        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/),
-      ],
-    ],
     signupCode: <string | null>null,
   });
 
@@ -1278,9 +1268,6 @@ export class AddPublisher {
       const publisherData = {
         ...this.publisherFormGroup.value,
         pocEmail: this.publisherFormGroup.controls.pocEmail.value,
-        userPassword: this.publisherFormGroup.controls.userPassword.value
-          ? md5(this.publisherFormGroup.controls.userPassword.value)
-          : undefined,
         pocPhoneNumber:
           this.publisherFormGroup.controls.pocPhoneNumber.value?.replaceAll(
             ' ',
@@ -1575,9 +1562,6 @@ export class AddPublisher {
       ...this.publisherFormGroup.value,
       id: this.publisherId || this.publisherFormGroup.value.id,
       pocEmail: this.publisherFormGroup.controls.pocEmail.value,
-      userPassword: this.publisherFormGroup.controls.userPassword.value
-        ? md5(this.publisherFormGroup.controls.userPassword.value)
-        : undefined,
       pocPhoneNumber:
         this.publisherFormGroup.controls.pocPhoneNumber.value?.replaceAll(
           ' ',

@@ -108,42 +108,6 @@
                   placeholder="Printer"
                 />
               </mat-form-field>
-              @if(publisherFormGroup.get('id')?.value===null){
-              <mat-form-field>
-                <mat-label>Create Password</mat-label>
-                <input
-                  id="password"
-                  type="password"
-                  matInput
-                  formControlName="userPassword"
-                />
-                <mat-icon
-                  matSuffix
-                  (click)="openPassword()"
-                  class="cursor-pointer"
-                  >visibility</mat-icon
-                >
-                @if (
-                publisherFormGroup.get('userPassword')?.hasError('required') &&
-                publisherFormGroup.get('userPassword')?.touched ) {
-                <mat-error>{{ "requiredvalueerror" | translate }}</mat-error>
-                } @if (
-                publisherFormGroup.get('userPassword')?.hasError('minlength') &&
-                !publisherFormGroup.get('userPassword')?.hasError('required') )
-                {
-                <mat-error>
-                  {{ "minlengtherror" | translate : { length: 8 } }}
-                </mat-error>
-                } @if (
-                publisherFormGroup.get('userPassword')?.hasError('pattern') &&
-                !publisherFormGroup.get('userPassword')?.hasError('required') &&
-                !publisherFormGroup.get('userPassword')?.hasError('minlength') )
-                {
-                <mat-error>
-                  {{ "passwordstrengtherror" | translate }}
-                </mat-error>
-                } </mat-form-field
-              >}
             </div>
           </div>
         </div>
