@@ -290,7 +290,7 @@
         }
         <mat-form-field>
           <mat-label>{{ "panCardNo" | translate }}</mat-label>
-          <input matInput formControlName="panCardNo" placeholder="" required />
+          <input matInput formControlName="panCardNo" placeholder="" />
           @if (authorBankDetails.get('panCardNo')?.hasError('invalidPan')) {
           <mat-error> Enter a valid PAN number (e.g., ABCDE1234F) </mat-error>
           }

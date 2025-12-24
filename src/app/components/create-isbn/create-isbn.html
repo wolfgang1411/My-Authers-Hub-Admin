@@ -22,10 +22,10 @@
       </mat-form-field> -->
 
       <mat-form-field appearance="fill">
-        <mat-icon matPrefix class="!text-gray-400 !text-lg"
+        <!-- <mat-icon matPrefix class="!text-gray-400 !text-lg"
           >style</mat-icon
-        >
-        <mat-label class="!hidden">{{ "selectisbntype" | translate }}</mat-label>
+        > -->
+        <mat-label>{{ "selectisbntype" | translate }}</mat-label>
         <mat-select formControlName="type" required>
           <mat-option value="PRINT">{{ "Print" | translate }}</mat-option>
           <mat-option value="EBOOK">{{ "Ebook" | translate }}</mat-option>
@@ -33,10 +33,10 @@
       </mat-form-field>
 
       <mat-form-field appearance="fill">
-        <mat-icon matPrefix class="!text-gray-400 !text-lg"
+        <!-- <mat-icon matPrefix class="!text-gray-400 !text-lg"
           >business</mat-icon
-        >
-        <mat-label class="!hidden">{{ "selectpublisher" | translate }}</mat-label>
+        > -->
+        <mat-label>{{ "selectpublisher" | translate }}</mat-label>
         <mat-select formControlName="publisherId" required>
           @for (publisher of data.publishersList; track publisher.id) {
           <mat-option [value]="publisher.id">{{ publisher.name }}</mat-option>
@@ -45,10 +45,10 @@
       </mat-form-field>
 
       <mat-form-field appearance="fill">
-        <mat-icon matPrefix class="!text-gray-400 !text-lg"
+        <!-- <mat-icon matPrefix class="!text-gray-400 !text-lg"
           >person</mat-icon
-        >
-        <mat-label class="!hidden">{{ "selectauthor" | translate }}</mat-label>
+        > -->
+        <mat-label>{{ "selectauthor" | translate }}</mat-label>
         <mat-select formControlName="authorIds" required [multiple]="true">
           @for (author of data.authorsList; track author.id) {
           <mat-option [value]="author.id">
@@ -74,12 +74,9 @@
       </mat-form-field>
 
       <mat-form-field appearance="fill">
-        <mat-icon matPrefix class="!text-gray-400 !text-lg"
-          >language</mat-icon
-        >
-        <mat-label class="!hidden">{{ "language" | translate }}</mat-label>
+        <mat-label>{{ "language" | translate }}</mat-label>
         <mat-select formControlName="language" required>
-          @for (language of languages(); track $index) {
+          @for (language of languages(); track language) {
           <mat-option [value]="language">
             {{ language | translate }}
           </mat-option>

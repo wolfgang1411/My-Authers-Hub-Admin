@@ -737,5 +737,6 @@
 "linkcopied": "Link Copied",
 "sharelinkcopied": "Share link copied to clipboard!",
 "linkvaliduntil": "Link valid until",
-"sharelink": "Share Link"
+"sharelink": "Share Link",
+"sendto" : "Send To"
 }
