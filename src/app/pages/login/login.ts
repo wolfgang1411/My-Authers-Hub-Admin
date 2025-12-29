@@ -1,4 +1,4 @@
-import { Component, AfterViewInit } from '@angular/core';
+import { Component, AfterViewInit, OnInit } from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
 import {
   FormControl,
@@ -13,6 +13,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { environment } from 'src/environments/environment';
 import { AuthResponse } from 'src/app/interfaces';
+import Swal from 'sweetalert2';
 
 declare var google: any;
 
@@ -28,7 +29,7 @@ declare var google: any;
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
-export class Login implements AfterViewInit {
+export class Login implements AfterViewInit, OnInit {
   constructor(
     private authService: AuthService,
     private userService: UserService,
@@ -54,6 +55,42 @@ export class Login implements AfterViewInit {
       const prefill = qp.get('prefill');
       if (prefill) {
         this.loginForm.get('username')?.setValue(prefill);
+      }
+
+      // Handle email verification status
+      const verified = qp.get('verified');
+      if (verified !== null) {
+        if (verified === 'true') {
+          Swal.fire({
+            icon: 'success',
+            title: 'Email Verified',
+            text: 'Your email has been successfully verified. You can now log in.',
+            confirmButtonText: 'OK',
+            heightAuto: false,
+          });
+          // Clean up the query parameter
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { verified: null },
+            queryParamsHandling: 'merge',
+            replaceUrl: true,
+          });
+        } else if (verified === 'false') {
+          Swal.fire({
+            icon: 'error',
+            title: 'Verification Failed',
+            text: 'Email verification failed. The link may be invalid or expired. Please contact support if you continue to experience issues.',
+            confirmButtonText: 'OK',
+            heightAuto: false,
+          });
+          // Clean up the query parameter
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { verified: null },
+            queryParamsHandling: 'merge',
+            replaceUrl: true,
+          });
+        }
       }
     });
   }

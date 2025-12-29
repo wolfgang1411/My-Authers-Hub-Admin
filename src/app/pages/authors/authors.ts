@@ -35,6 +35,7 @@ import { UserService } from 'src/app/services/user';
 import { exportToExcel } from '../../common/utils/excel';
 import { format } from 'date-fns';
 import { Logger } from '../../services/logger';
+import { TippyTooltipDirective } from '../../directives/tippy-tooltip';
 
 @Component({
   selector: 'app-authors',
@@ -49,6 +50,7 @@ import { Logger } from '../../services/logger';
     MatSelectModule,
     MatMenuModule,
     AuthorTitleList,
+    TippyTooltipDirective,
   ],
   templateUrl: './authors.html',
   styleUrl: './authors.css',

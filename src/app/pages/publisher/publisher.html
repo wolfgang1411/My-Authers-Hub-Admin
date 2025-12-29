@@ -272,59 +272,69 @@
       <button
         class="!bg-primary"
         mat-icon-button
-        [title]="'edit' | translate"
+        [appTippyTooltip]="'edit' | translate"
         [routerLink]="['/publisher', element.id]"
       >
         <mat-icon class="!text-white">edit</mat-icon>
       </button>
-      }
-
+      } @if(element.status === PublisherStatus.Active) {
       <button
         class="!bg-primary"
         mat-icon-button
-        [title]="'resetpassword' | translate"
+        [appTippyTooltip]="'resetpassword' | translate"
         (click)="onClickChangePassword(element)"
       >
         <mat-icon class="!text-white">lock_reset</mat-icon>
       </button>
-      @if(element.status === PublisherStatus.Active &&
+      } @if(element.status === PublisherStatus.Active &&
       loggedInUser()?.accessLevel === 'PUBLISHER') {
       <button
         class="!bg-primary"
         mat-icon-button
         [routerLink]="['/publisher', element.id]"
-        [title]="'raiseaticket' | translate"
+        [appTippyTooltip]="'raiseaticket' | translate"
       >
         <mat-icon class="!text-white">support_agent</mat-icon>
       </button>
       } @if (element.status === PublisherStatus.Pending &&
       (loggedInUser()?.accessLevel ==='SUPERADMIN' ||
       (loggedInUser()?.accessLevel === 'PUBLISHER' &&
-      element.isApprovedByPublisher !== true))) {
+      element.isApprovedByPublisher !== true))) { @if
+      (element.user?.isEmailVerified !== false) {
       <button
         class="!bg-green-2 active:bg-green-2/60"
         mat-icon-button
         (click)="openDistributionDialog(element.id)"
-        [title]="'approve' | translate"
+        [appTippyTooltip]="'approve' | translate"
       >
         <mat-icon class="!text-white">check</mat-icon>
       </button>
-      } @if (loggedInUser()?.accessLevel === 'SUPERADMIN') { @if(element.status
-      !== PublisherStatus.Deactivated) {
+      } @else {
+      <button
+        class="!bg-yellow-500"
+        mat-icon-button
+        [appTippyTooltip]="'Email verification pending' | translate"
+      >
+        <mat-icon class="!text-white">help</mat-icon>
+      </button>
+      } } @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
+      @if(element.status === PublisherStatus.Active &&
+      element.user?.isEmailVerified !== false) {
       <button
         class="!bg-accent active:bg-accent/60"
         mat-icon-button
-        [title]="'deactivate' | translate"
+        [appTippyTooltip]="'deactivate' | translate"
         (click)="updateStatus(element.id, 'Deactivated')"
       >
         <mat-icon class="!text-white">lock</mat-icon>
       </button>
-      } @if(element.status === PublisherStatus.Pending) {
+      } @if(element.status === PublisherStatus.Pending &&
+      element.user?.isEmailVerified !== false) {
 
       <button
         class="!bg-red-colour active:bg-red-colour/60"
         mat-icon-button
-        [title]="'reject' | translate"
+        [appTippyTooltip]="'reject' | translate"
         (click)="rejectPublisher(element.id)"
       >
         <mat-icon class="!text-white">cancel</mat-icon>
@@ -334,17 +344,16 @@
         (click)="updateStatus(element.id, 'Active')"
         class="!bg-purple"
         mat-icon-button
-        [title]="'active' | translate"
+        [appTippyTooltip]="'active' | translate"
       >
         <mat-icon class="!text-white">lock_open</mat-icon>
       </button>
-      } } @if(loggedInUser()?.accessLevel === 'PUBLISHER' && element.status !==
-      PublisherStatus.Pending && element.status !== PublisherStatus.Deactivated
-      && element.status !== PublisherStatus.Rejected) {
+      } } @if(loggedInUser()?.accessLevel === 'PUBLISHER' && element.status ===
+      PublisherStatus.Active && element.user?.isEmailVerified !== false) {
       <button
         class="!bg-accent active:bg-accent/60"
         mat-icon-button
-        [title]="'deactivate' | translate"
+        [appTippyTooltip]="'deactivate' | translate"
         (click)="updateStatus(element.id, 'Deactivated')"
       >
         <mat-icon class="!text-white">lock</mat-icon>
@@ -355,7 +364,7 @@
         (click)="updateStatus(element.id, 'Active')"
         class="!bg-purple"
         mat-icon-button
-        [title]="'active' | translate"
+        [appTippyTooltip]="'active' | translate"
       >
         <mat-icon class="!text-white">lock_open</mat-icon>
       </button>

@@ -214,58 +214,67 @@
       </button>
       @if(loggedInUser()?.accessLevel === 'SUPERADMIN' ||
       (loggedInUser()?.accessLevel === 'PUBLISHER' && (element.status ===
-      AuthorStatus.Pending || element.status ===
-      AuthorStatus.Dormant))) {
+      AuthorStatus.Pending || element.status === AuthorStatus.Dormant))) {
       <button
         class="!bg-primary"
         mat-icon-button
-        [title]="'edit' | translate"
+        [appTippyTooltip]="'edit' | translate"
         [routerLink]="['/author', element.id]"
       >
         <mat-icon class="!text-white">edit</mat-icon>
       </button>
-      } @if(element.status !== AuthorStatus.Rejected) {
+      } @if(element.status === AuthorStatus.Active) {
       <button
         class="!bg-primary"
         mat-icon-button
-        [title]="'resetpassword' | translate"
+        [appTippyTooltip]="'resetpassword' | translate"
         (click)="onClickChangePassword(element)"
       >
         <mat-icon class="!text-white">lock_reset</mat-icon>
       </button>
-      } @if(element.status !== AuthorStatus.Deactivated && element.status !==
-      AuthorStatus.Rejected) {
+      } @if(element.status === AuthorStatus.Active &&
+      element.user?.isEmailVerified !== false) {
       <button
         class="!bg-accent active:bg-accent/60"
         mat-icon-button
-        [title]="'deactivate' | translate"
+        [appTippyTooltip]="'deactivate' | translate"
         (click)="updateStatus(element.id, 'Deactivated')"
       >
         <mat-icon class="!text-white">lock</mat-icon>
       </button>
-      } @if(element.status === AuthorStatus.Pending) {
+      } @if(element.status === AuthorStatus.Pending) { @if
+      (element.user?.isEmailVerified !== false) {
       <button
         class="!bg-green-2 active:bg-green-2/60"
         mat-icon-button
         (click)="approveAuthor(element.id)"
-        [title]="'approve' | translate"
+        [appTippyTooltip]="'approve' | translate"
       >
         <mat-icon class="!text-white">check</mat-icon>
       </button>
+      } @else {
+      <button
+        class="!bg-yellow-500"
+        mat-icon-button
+        [appTippyTooltip]="'Email verification pending' | translate"
+      >
+        <mat-icon class="!text-white">help</mat-icon>
+      </button>
+      } @if (element.user?.isEmailVerified !== false) {
       <button
         class="!bg-red-colour active:bg-red-colour/60"
         mat-icon-button
-        [title]="'reject' | translate"
+        [appTippyTooltip]="'reject' | translate"
         (click)="rejectAuthor(element.id)"
       >
         <mat-icon class="!text-white">cancel</mat-icon>
       </button>
-      } @if(element.status === AuthorStatus.Deactivated){
+      } } @if(element.status === AuthorStatus.Deactivated){
       <button
         (click)="updateStatus(element.id, 'Active')"
         class="!bg-purple"
         mat-icon-button
-        [title]="'active' | translate"
+        [appTippyTooltip]="'active' | translate"
       >
         <mat-icon class="!text-white">lock_up</mat-icon>
       </button>
@@ -276,7 +285,7 @@
         class="!bg-primary"
         mat-icon-button
         [routerLink]="['/author', element.id]"
-        [title]="'raiseaticket' | translate"
+        [appTippyTooltip]="'raiseaticket' | translate"
       >
         <mat-icon class="!text-white">support_agent</mat-icon>
       </button>

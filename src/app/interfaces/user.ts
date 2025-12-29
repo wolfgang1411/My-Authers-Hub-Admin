@@ -25,6 +25,7 @@ export interface User {
   status?: UserStatus;
   isSendEmailNotifications?: boolean;
   isSendNotifications?: boolean;
+  isEmailVerified?: boolean;
   created_date?: string;
   modified_date?: string;
 }

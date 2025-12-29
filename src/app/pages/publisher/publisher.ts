@@ -41,6 +41,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { exportToExcel } from '../../common/utils/excel';
 import { Logger } from '../../services/logger';
 import { format } from 'date-fns';
+import { TippyTooltipDirective } from '../../directives/tippy-tooltip';
 
 @Component({
   selector: 'app-publisher',
@@ -54,6 +55,7 @@ import { format } from 'date-fns';
     MatIconButton,
     MatButtonModule,
     MatSelectModule,
+    TippyTooltipDirective,
   ],
   templateUrl: './publisher.html',
   styleUrl: './publisher.css',
