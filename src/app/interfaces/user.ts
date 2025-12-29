@@ -23,6 +23,8 @@ export interface User {
   address: Address[];
   active?: boolean;
   status?: UserStatus;
+  isSendEmailNotifications?: boolean;
+  isSendNotifications?: boolean;
   created_date?: string;
   modified_date?: string;
 }
@@ -67,6 +69,8 @@ export interface UpdateUser extends Partial<CreateUser> {
   publisher?: Publishers;
   auther?: Author;
   url?: string;
+  isSendEmailNotifications?: boolean;
+  isSendNotifications?: boolean;
 }
 
 export type UserAddress = {

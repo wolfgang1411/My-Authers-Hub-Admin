@@ -103,13 +103,7 @@ export class EditProfile {
   completeAddress = signal<string>('');
   notifications = {
     email: signal(true),
-    sms: signal(false),
-    push: signal(true),
-  };
-
-  privacy = {
-    showProfilePublic: signal(true),
-    twoFactorAuth: signal(false),
+    notifications: signal(true),
   };
 
   personalForm = new FormGroup({
@@ -196,6 +190,14 @@ export class EditProfile {
       }`
     );
 
+    // Initialize notification preferences from user data
+    this.notifications.email.set(
+      userData?.isSendEmailNotifications ?? true
+    );
+    this.notifications.notifications.set(
+      userData?.isSendNotifications ?? true
+    );
+
     const Finaladdress = this.userAddress();
     const FinalBankDetails = this.userBankDetails();
     const UpdateUserWithTicket: UpdateUserWithTicket = {
@@ -246,6 +248,37 @@ export class EditProfile {
       });
     }
     this.isEditing.set(false);
+  }
+
+  async updateNotificationPreferences() {
+    if (!this.loggedInUser()?.id) return;
+
+    const payload: UpdateUser = {
+      id: this.loggedInUser()?.id,
+      isSendEmailNotifications: this.notifications.email(),
+      isSendNotifications: this.notifications.notifications(),
+    };
+
+    try {
+      const response = await this.userService.createOrUpdateUser(payload);
+      if (response) {
+        this.userService.setLoggedInUser(response);
+        Swal.fire({
+          icon: 'success',
+          text: 'Notification preferences updated successfully',
+          title: 'Success',
+          heightAuto: false,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to update notification preferences:', error);
+      Swal.fire({
+        icon: 'error',
+        text: 'Failed to update notification preferences',
+        title: 'Error',
+        heightAuto: false,
+      });
+    }
   }
 
   async changePassword() {

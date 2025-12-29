@@ -1,1 +1,53 @@
-<p>profile works!</p>
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+  <h1 class="text-2xl font-bold mb-6">Profile Settings</h1>
+
+  @if (loggedInUser(); as user) {
+    <mat-card class="mb-6">
+      <mat-card-header>
+        <mat-card-title>Notification Preferences</mat-card-title>
+        <mat-card-subtitle>
+          Control how you receive notifications and emails
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="notificationForm" class="space-y-6">
+          <!-- Email Notifications Toggle -->
+          <div class="flex items-center justify-between p-4 border rounded-lg">
+            <div class="flex-1">
+              <h3 class="text-lg font-medium mb-1">Email Notifications</h3>
+              <p class="text-sm text-gray-600">
+                Receive email notifications about important updates and activities
+              </p>
+            </div>
+            <mat-slide-toggle
+              formControlName="isSendEmailNotifications"
+              (change)="onToggleChange()"
+              [disabled]="loading()"
+              color="primary"
+            ></mat-slide-toggle>
+          </div>
+
+          <!-- In-App Notifications Toggle -->
+          <div class="flex items-center justify-between p-4 border rounded-lg">
+            <div class="flex-1">
+              <h3 class="text-lg font-medium mb-1">In-App Notifications</h3>
+              <p class="text-sm text-gray-600">
+                Receive notifications within the application
+              </p>
+            </div>
+            <mat-slide-toggle
+              formControlName="isSendNotifications"
+              (change)="onToggleChange()"
+              [disabled]="loading()"
+              color="primary"
+            ></mat-slide-toggle>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <div class="text-center py-8">
+      <p class="text-gray-500">Loading user information...</p>
+    </div>
+  }
+</div>
