@@ -6,12 +6,12 @@ import { jwtDecode } from 'jwt-decode';
 import md5 from 'md5';
 import { Logger } from './logger';
 import { LoaderService } from './loader';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-
   isUserAuthenticated = signal<boolean | null>(null);
   isUserAuthenticated$ = this.isUserAuthenticated.asReadonly();
 
@@ -23,7 +23,8 @@ export class AuthService {
   constructor(
     private server: Server,
     private logger: Logger,
-    private loader: LoaderService
+    private loader: LoaderService,
+    private router: Router
   ) {
     // Initialize auth state synchronously from storage to avoid guard delays
     this.initializeAuthFromStorage();
@@ -201,7 +202,8 @@ export class AuthService {
       clearTimeout(this.refreshTokenTimeout);
       this.refreshTokenTimeout = undefined;
     }
-    window.location.href = '/login';
+    this.router.navigate(['/login']);
+    // window.location.href = '/login';
   }
 
   async whoAmI() {
