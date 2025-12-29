@@ -130,8 +130,16 @@ export class AddPublisher {
       .observe('(min-width: 800px)')
       .pipe(map(({ matches }) => (matches ? 'horizontal' : 'vertical')));
     this.route.params.subscribe(({ id, signupCode }) => {
-      this.publisherId = Number(id) || undefined;
-      this.signupCode = signupCode;
+      // In invite flow, don't set publisherId from route id param
+      // publisherId should only come from existing publisher found via invite API
+      if (signupCode) {
+        this.signupCode = signupCode;
+        // Don't set publisherId from route in invite flow
+        // It will be set when we find existing publisher via invite API
+      } else {
+        this.publisherId = Number(id) || undefined;
+        this.signupCode = undefined;
+      }
     });
     this.loggedInUser = this.userService.loggedInUser$;
 
@@ -216,6 +224,25 @@ export class AddPublisher {
   });
 
   async ngOnInit() {
+    // Ensure signupCode is read from route snapshot first (before route.params subscription)
+    // This prevents race conditions where ngOnInit might run before subscription sets signupCode
+    const routeParams = this.route.snapshot.params;
+    if (routeParams['signupCode']) {
+      this.signupCode = routeParams['signupCode'];
+    }
+    if (routeParams['id'] && !this.signupCode) {
+      this.publisherId = Number(routeParams['id']) || undefined;
+    }
+    
+    // Check query params for publisherId (for refresh scenarios after creating new publisher)
+    // This allows prefilling form data when user refreshes the page after creating a publisher
+    if (!this.publisherId && !this.signupCode) {
+      const queryPublisherId = this.route.snapshot.queryParams['publisherId'];
+      if (queryPublisherId) {
+        this.publisherId = Number(queryPublisherId) || undefined;
+      }
+    }
+
     this.publisherFormGroup.controls.signupCode.patchValue(
       this.signupCode || null
     );
@@ -280,20 +307,86 @@ export class AddPublisher {
     });
     this.bankOptions.set(this.bankDetailService.fetchBankOptions());
 
+    // Handle invite flow: fetch invite and check for existing publisher
     if (this.signupCode) {
-      const invite = await this.inviteService.findOne(this.signupCode);
-      this.publisherFormGroup.controls.pocEmail.patchValue(invite.email);
-      this.publisherFormGroup.controls.pocEmail.disable();
+      try {
+        const invite = await this.inviteService.findOne(this.signupCode);
+
+        // Prefill email from invite
+        this.publisherFormGroup.controls.pocEmail.patchValue(invite.email);
+        this.publisherFormGroup.controls.pocEmail.disable();
+
+        // Try to fetch existing Dormant publisher by invite code
+        // This allows resuming signup flow for Dormant publishers
+        const existingPublisher = await this.fetchPublisher();
+
+        if (existingPublisher && existingPublisher.status === PublisherStatus.Dormant) {
+          // Set publisherId to enable update flow instead of create flow
+          this.publisherId = existingPublisher.id;
+          this.publisherDetails.set(existingPublisher);
+          this.isPrefilling = true;
+          this.prefillForm(existingPublisher);
+          this.isPrefilling = false;
+        }
+      } catch (error) {
+        // Invalid invite - error will be shown by service
+        console.error('Error fetching invite:', error);
+      }
     }
 
-    if (this.publisherId) {
-      const response = await this.publisherService.getPublisherById(
-        this.publisherId
-      );
-      this.publisherDetails.set(response);
-      this.isPrefilling = true;
-      this.prefillForm(response);
-      this.isPrefilling = false;
+    // Handle normal edit flow (when publisherId is set and no signupCode)
+    // IMPORTANT: In invite flow, publisherId might be set after finding existing publisher,
+    // but we should NOT fetch here - it's already handled in the invite flow above
+    if (this.publisherId && !this.signupCode) {
+      const response = await this.fetchPublisher();
+      if (response) {
+        this.publisherDetails.set(response);
+        this.isPrefilling = true;
+        this.prefillForm(response);
+        this.isPrefilling = false;
+      }
+    }
+  }
+
+  /**
+   * Centralized method to fetch publisher - handles all scenarios:
+   * 1. Invite flow: ALWAYS use findPublisherByInvite (uses /publishers/by-invite/:signupCode)
+   * 2. Normal flow: Use getById normally
+   * 
+   * @param id - Publisher ID (optional, only used for normal flow)
+   * @returns Publisher object or undefined if not found
+   */
+  /**
+   * Centralized method to fetch publisher - handles all scenarios:
+   * 1. Invite flow: ALWAYS use findPublisherByInvite (uses /publishers/by-invite/:signupCode)
+   * 2. Normal flow: Use getById normally
+   * 
+   * @param id - Publisher ID (optional, only used for normal flow)
+   * @returns Publisher object or undefined if not found
+   */
+  private async fetchPublisher(id?: number): Promise<Publishers | undefined> {
+    try {
+      if (this.signupCode) {
+        // Invite flow: ALWAYS use the invite API endpoint
+        // This uses /publishers/by-invite/:signupCode which works for any status
+        const publisher = await this.publisherService.findPublisherByInvite(this.signupCode);
+        if (publisher) {
+          return publisher;
+        }
+        // If no publisher found, return undefined (don't throw error)
+        return undefined;
+      } else {
+        // Normal flow - require publisherId
+        const publisherId = id || this.publisherId;
+        if (!publisherId) {
+          return undefined;
+        }
+        return await this.publisherService.getPublisherById(publisherId);
+      }
+    } catch (error) {
+      // Log error but don't throw - return undefined to allow graceful handling
+      console.error('Error fetching publisher:', error);
+      return undefined;
     }
   }
   // lookupByPincode(pin: string) {
@@ -664,8 +757,10 @@ export class AddPublisher {
   }
 
   async handleNewOrSuperAdminSubmission(publisherData: Publishers) {
+    // Always pass signupCode if present (for invite flow)
     const response = (await this.publisherService.createPublisher(
-      publisherData
+      publisherData,
+      this.signupCode
     )) as Publishers;
     this.publisherId = response.id;
 
@@ -675,9 +770,15 @@ export class AddPublisher {
         publisherId: response.id,
       };
 
-      await this.addressService.createOrUpdateAddress(
-        publisherAddressData as Address
-      );
+      // In invite flow, always use CREATE (remove id) but still prefill form
+      const addressPayload: any = {
+        ...publisherAddressData,
+      };
+      if (this.signupCode) {
+        addressPayload.id = undefined;
+      }
+      await this.addressService.createOrUpdateAddress(addressPayload as Address);
+
       const bankDetailsValue = { ...this.publisherBankDetails.value };
       // Remove gstNumber if empty, otherwise keep it
       if (
@@ -687,10 +788,14 @@ export class AddPublisher {
       ) {
         delete bankDetailsValue.gstNumber;
       }
-      const publisherBankData = {
+      // In invite flow, always use CREATE (remove id) but still prefill form
+      const publisherBankData: any = {
         ...bankDetailsValue,
         publisherId: response.id,
       };
+      if (this.signupCode) {
+        publisherBankData.id = undefined;
+      }
 
       await this.bankDetailService.createOrUpdateBankDetail(
         publisherBankData as createBankDetails
@@ -698,14 +803,22 @@ export class AddPublisher {
       const socialMediaData = this.socialMediaArray.controls
         .map((group) => {
           const value = group.value;
-          return {
+          const socialMediaItem: any = {
             type: value.type,
             url: value.url,
             publisherId: response.id,
             name: value.name,
             autherId: value.autherId,
-            id: value.id && typeof value.id === 'number' ? value.id : undefined, // Explicitly include id only if it's a valid number
           };
+          // In invite flow, always use CREATE (remove id) and add signupCode
+          // Otherwise, include id only if it's a valid number
+          if (!this.signupCode && value.id && typeof value.id === 'number') {
+            socialMediaItem.id = value.id;
+          }
+          if (this.signupCode) {
+            socialMediaItem.signupCode = this.signupCode;
+          }
+          return socialMediaItem;
         })
         .filter((item) => item.type && item.url?.trim());
 
@@ -715,39 +828,39 @@ export class AddPublisher {
         );
 
         // Reload publisher details to get updated social media with IDs
-        const updatedPublisher = await this.publisherService.getPublisherById(
-          response.id
-        );
-        this.publisherDetails.set(updatedPublisher);
+        const updatedPublisher = await this.fetchPublisher(response.id);
+        if (updatedPublisher) {
+          this.publisherDetails.set(updatedPublisher);
 
-        // Update form with IDs from saved social media to enable PATCH on next save
-        const socialMediaArray = this.publisherSocialMediaGroup.get(
-          'socialMedia'
-        ) as FormArray<FormGroup<SocialMediaGroupType>>;
-        const savedSocialMedia = updatedPublisher.socialMedias || [];
+          // Update form with IDs from saved social media to enable PATCH on next save
+          const socialMediaArray = this.publisherSocialMediaGroup.get(
+            'socialMedia'
+          ) as FormArray<FormGroup<SocialMediaGroupType>>;
+          const savedSocialMedia = updatedPublisher.socialMedias || [];
 
-        // Match and update IDs in form controls
-        socialMediaArray.controls.forEach((control) => {
-          const formValue = control.value;
-          const savedItem = savedSocialMedia.find(
-            (saved) =>
-              saved.type === formValue.type &&
-              saved.url?.trim() === formValue.url?.trim()
-          );
-          if (savedItem?.id) {
-            control.patchValue({ id: savedItem.id });
-          }
-        });
+          // Match and update IDs in form controls
+          socialMediaArray.controls.forEach((control) => {
+            const formValue = control.value;
+            const savedItem = savedSocialMedia.find(
+              (saved) =>
+                saved.type === formValue.type &&
+                saved.url?.trim() === formValue.url?.trim()
+            );
+            if (savedItem?.id) {
+              control.patchValue({ id: savedItem.id });
+            }
+          });
+        }
       }
       const media = this.mediaControl.value;
       if (this.mediaToDeleteId && media?.file) {
         await this.publisherService.removeImage(this.mediaToDeleteId);
         console.log('🗑 Old image deleted');
 
-        await this.publisherService.updateMyImage(media.file, response.id);
+        await this.publisherService.updateMyImage(media.file, response.id, this.signupCode);
         console.log('⬆ New image uploaded');
       } else if (!this.mediaToDeleteId && media?.file) {
-        await this.publisherService.updateMyImage(media.file, response.id);
+        await this.publisherService.updateMyImage(media.file, response.id, this.signupCode);
         console.log('📤 New image uploaded (no old media existed)');
       }
     }
@@ -769,6 +882,24 @@ export class AddPublisher {
       heightAuto: false,
     });
   }
+  /**
+   * Helper method to check if user can update directly (without tickets)
+   * Superadmins can always update directly
+   * Publishers can update directly if status is Pending or Dormant
+   * New publishers (no publisherId) can always be created directly
+   */
+  private canUpdateDirectly(): boolean {
+    const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
+    if (isSuperAdmin) {
+      return true; // Superadmin can always update directly
+    }
+    if (!this.publisherId) {
+      return true; // New publisher can always be created directly
+    }
+    const status = this.publisherDetails()?.status;
+    return status === PublisherStatus.Pending || status === PublisherStatus.Dormant;
+  }
+
   // Helper method to compare values
   private compareValues(newValue: any, existingValue: any): boolean {
     if (newValue === undefined || newValue === null || newValue === '') {
@@ -1140,10 +1271,19 @@ export class AddPublisher {
     }
 
     const socialMediaData = this.socialMediaArray.controls
-      .map((group) => ({
-        ...group.value,
-        publisherId: this.publisherId,
-      }))
+      .map((group) => {
+        const value = group.value;
+        const socialMediaItem: any = {
+          ...value,
+          publisherId: this.publisherId,
+        };
+        // In invite flow, always use CREATE (remove id) and add signupCode
+        if (this.signupCode) {
+          socialMediaItem.id = undefined;
+          socialMediaItem.signupCode = this.signupCode;
+        }
+        return socialMediaItem;
+      })
       .filter((item) => item.type && item.url?.trim());
 
     if (socialMediaData.length > 0) {
@@ -1159,13 +1299,15 @@ export class AddPublisher {
 
       await this.publisherService.updateMyImage(
         media.file,
-        this.publisherId as number
+        this.publisherId as number,
+        this.signupCode
       );
       console.log('⬆ New image uploaded');
     } else if (!this.mediaToDeleteId && media?.file) {
       await this.publisherService.updateMyImage(
         media.file,
-        this.publisherId as number
+        this.publisherId as number,
+        this.signupCode
       );
       console.log('📤 New image uploaded (no old media existed)');
     }
@@ -1370,9 +1512,11 @@ export class AddPublisher {
   }
 
   updateQueryParams(params: { [key: string]: any }) {
+    // Exclude signupCode from query params - it should only be in route params
+    const { signupCode, ...queryParams } = params;
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: params,
+      queryParams: queryParams,
       queryParamsHandling: 'merge',
     });
   }
@@ -1380,13 +1524,7 @@ export class AddPublisher {
   // Get action button text for current tab (combines action + navigation)
   getActionButtonText(): string {
     const currentTab = this.currentTabIndex();
-    const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
-    const status = this.publisherDetails()?.status;
-    // Publishers: Only Dormant/Pending can be updated directly, ALL Active need tickets (even SuperAdmin)
-    const canUpdateDirectly =
-      !this.publisherId ||
-      status === PublisherStatus.Pending ||
-      status === PublisherStatus.Dormant;
+    const canUpdateDirectly = this.canUpdateDirectly();
 
     let actionText = '';
     let navigationText = '';
@@ -1558,9 +1696,9 @@ export class AddPublisher {
   // Save Basic Details Tab
   // Order: 1. Basic Details (Publisher info) → 2. Media → 3. Social Media
   async saveBasicDetailsTab() {
+    // If signupCode exists, don't include id (force POST/create)
     const publisherData: any = {
       ...this.publisherFormGroup.value,
-      id: this.publisherId || this.publisherFormGroup.value.id,
       pocEmail: this.publisherFormGroup.controls.pocEmail.value,
       pocPhoneNumber:
         this.publisherFormGroup.controls.pocPhoneNumber.value?.replaceAll(
@@ -1568,18 +1706,17 @@ export class AddPublisher {
           ''
         ),
     };
+    // Only include id if no signupCode (allow PATCH/update)
+    if (!this.signupCode) {
+      publisherData.id = this.publisherId || this.publisherFormGroup.value.id;
+    }
 
-    const status = this.publisherDetails()?.status;
-    // Publishers: Only Dormant/Pending can be updated directly, ALL Active need tickets (even SuperAdmin)
-    const canUpdateDirectly =
-      !this.publisherId ||
-      status === PublisherStatus.Pending ||
-      status === PublisherStatus.Dormant;
-
-    if (canUpdateDirectly) {
+    if (this.canUpdateDirectly()) {
       // Step 1: Create/Update Basic Details (Publisher info)
+      // Always pass signupCode if present (for invite flow)
       const response = (await this.publisherService.createPublisher(
-        publisherData
+        publisherData,
+        this.signupCode
       )) as Publishers;
 
       // Store publisherId if it's a new publisher
@@ -1587,14 +1724,16 @@ export class AddPublisher {
       const finalPublisherId = response?.id || this.publisherId;
       if (!this.publisherId && response?.id) {
         this.publisherId = response.id;
-        // Update query params
-        this.updateQueryParams({ publisherId: response.id.toString() });
+        // Update query params (but not in invite flow - signupCode should not be in query params)
+        if (!this.signupCode) {
+          this.updateQueryParams({ publisherId: response.id.toString() });
+        }
 
-        // Reload publisher details
-        const updatedPublisher = await this.publisherService.getPublisherById(
-          response.id
-        );
-        this.publisherDetails.set(updatedPublisher);
+        // Reload publisher details (always use invite API if signupCode is present)
+        const updatedPublisher = await this.fetchPublisher(response.id);
+        if (updatedPublisher) {
+          this.publisherDetails.set(updatedPublisher);
+        }
       }
 
       // Step 2: Save Media (after basic details)
@@ -1605,7 +1744,7 @@ export class AddPublisher {
         }
         // Wrap media upload in loader to keep it active during upload
         await this.loader.loadPromise(
-          this.publisherService.updateMyImage(media.file, finalPublisherId),
+          this.publisherService.updateMyImage(media.file, finalPublisherId, this.signupCode),
           'upload-media'
         );
       }
@@ -1615,15 +1754,22 @@ export class AddPublisher {
         const socialMediaData = this.socialMediaArray.controls
           .map((group) => {
             const value = group.value;
-            return {
+            const socialMediaItem: any = {
               type: value.type,
               url: value.url,
               publisherId: finalPublisherId,
               name: value.name,
               autherId: value.autherId,
-              id:
-                value.id && typeof value.id === 'number' ? value.id : undefined, // Explicitly include id only if it's a valid number
             };
+            // In invite flow, always use CREATE (remove id) and add signupCode
+            // Otherwise, include id only if it's a valid number
+            if (!this.signupCode && value.id && typeof value.id === 'number') {
+              socialMediaItem.id = value.id;
+            }
+            if (this.signupCode) {
+              socialMediaItem.signupCode = this.signupCode;
+            }
+            return socialMediaItem;
           })
           .filter((item) => item.type && item.url?.trim());
 
@@ -1634,29 +1780,31 @@ export class AddPublisher {
 
           // Reload publisher details to get updated social media with IDs
           // This ensures form state is preserved for PATCH operations later
-          const updatedPublisher = await this.publisherService.getPublisherById(
+          const updatedPublisher = await this.fetchPublisher(
             finalPublisherId
           );
-          this.publisherDetails.set(updatedPublisher);
+          if (updatedPublisher) {
+            this.publisherDetails.set(updatedPublisher);
 
-          // Update form with IDs from saved social media to enable PATCH on next save
-          const socialMediaArray = this.publisherSocialMediaGroup.get(
-            'socialMedia'
-          ) as FormArray<FormGroup<SocialMediaGroupType>>;
-          const savedSocialMedia = updatedPublisher.socialMedias || [];
+            // Update form with IDs from saved social media to enable PATCH on next save
+            const socialMediaArray = this.publisherSocialMediaGroup.get(
+              'socialMedia'
+            ) as FormArray<FormGroup<SocialMediaGroupType>>;
+            const savedSocialMedia = updatedPublisher.socialMedias || [];
 
-          // Match and update IDs in form controls
-          socialMediaArray.controls.forEach((control) => {
-            const formValue = control.value;
-            const savedItem = savedSocialMedia.find(
-              (saved) =>
-                saved.type === formValue.type &&
-                saved.url?.trim() === formValue.url?.trim()
-            );
-            if (savedItem?.id) {
-              control.patchValue({ id: savedItem.id });
-            }
-          });
+            // Match and update IDs in form controls
+            socialMediaArray.controls.forEach((control) => {
+              const formValue = control.value;
+              const savedItem = savedSocialMedia.find(
+                (saved) =>
+                  saved.type === formValue.type &&
+                  saved.url?.trim() === formValue.url?.trim()
+              );
+              if (savedItem?.id) {
+                control.patchValue({ id: savedItem.id });
+              }
+            });
+          }
         }
       }
 
@@ -1747,17 +1895,22 @@ export class AddPublisher {
           const socialMediaData = this.socialMediaArray.controls
             .map((group) => {
               const value = group.value;
-              return {
+              const socialMediaItem: any = {
                 type: value.type,
                 url: value.url,
                 publisherId: this.publisherId,
                 name: value.name,
                 autherId: value.autherId,
-                id:
-                  value.id && typeof value.id === 'number'
-                    ? value.id
-                    : undefined,
               };
+              // In invite flow, always use CREATE (remove id) and add signupCode
+              // Otherwise, include id only if it's a valid number
+              if (!this.signupCode && value.id && typeof value.id === 'number') {
+                socialMediaItem.id = value.id;
+              }
+              if (this.signupCode) {
+                socialMediaItem.signupCode = this.signupCode;
+              }
+              return socialMediaItem;
             })
             .filter((item) => item.type && item.url?.trim());
 
@@ -1769,27 +1922,29 @@ export class AddPublisher {
             // Reload publisher details to get updated social media with IDs
             // This ensures form state is preserved for PATCH operations later
             const updatedPublisher =
-              await this.publisherService.getPublisherById(this.publisherId);
-            this.publisherDetails.set(updatedPublisher);
+              await this.fetchPublisher(this.publisherId);
+            if (updatedPublisher) {
+              this.publisherDetails.set(updatedPublisher);
 
-            // Update form with IDs from saved social media to enable PATCH on next save
-            const socialMediaArray = this.publisherSocialMediaGroup.get(
-              'socialMedia'
-            ) as FormArray<FormGroup<SocialMediaGroupType>>;
-            const savedSocialMedia = updatedPublisher.socialMedias || [];
+              // Update form with IDs from saved social media to enable PATCH on next save
+              const socialMediaArray = this.publisherSocialMediaGroup.get(
+                'socialMedia'
+              ) as FormArray<FormGroup<SocialMediaGroupType>>;
+              const savedSocialMedia = updatedPublisher.socialMedias || [];
 
-            // Match and update IDs in form controls
-            socialMediaArray.controls.forEach((control) => {
-              const formValue = control.value;
-              const savedItem = savedSocialMedia.find(
-                (saved) =>
-                  saved.type === formValue.type &&
-                  saved.url?.trim() === formValue.url?.trim()
-              );
-              if (savedItem?.id) {
-                control.patchValue({ id: savedItem.id });
-              }
-            });
+              // Match and update IDs in form controls
+              socialMediaArray.controls.forEach((control) => {
+                const formValue = control.value;
+                const savedItem = savedSocialMedia.find(
+                  (saved) =>
+                    saved.type === formValue.type &&
+                    saved.url?.trim() === formValue.url?.trim()
+                );
+                if (savedItem?.id) {
+                  control.patchValue({ id: savedItem.id });
+                }
+              });
+            }
           }
         }
         // Go back instead of proceeding to next tab when in ticket mode
@@ -1812,16 +1967,32 @@ export class AddPublisher {
   // Save Address Tab
   async saveAddressTab() {
     // For new publishers, publisherId should be set from tab 0
-    // But if somehow it's not set, try to get it from query params
+    // But if somehow it's not set, try to get it from query params or invite API
     if (!this.publisherId) {
-      const queryPublisherId = this.route.snapshot.queryParams['publisherId'];
-      if (queryPublisherId) {
-        this.publisherId = Number(queryPublisherId);
-        const updatedPublisher = await this.publisherService.getPublisherById(
-          this.publisherId
-        );
-        this.publisherDetails.set(updatedPublisher);
+      if (this.signupCode) {
+        // In invite flow, fetch using invite API
+        try {
+          const existingPublisher = await this.fetchPublisher();
+          if (existingPublisher && existingPublisher.id) {
+            this.publisherId = existingPublisher.id;
+            this.publisherDetails.set(existingPublisher);
+          }
+        } catch (error) {
+          // No existing publisher - continue with new publisher flow
+        }
       } else {
+      // Normal flow - try query params
+        const queryPublisherId = this.route.snapshot.queryParams['publisherId'];
+        if (queryPublisherId) {
+          this.publisherId = Number(queryPublisherId);
+          const updatedPublisher = await this.fetchPublisher(this.publisherId);
+          if (updatedPublisher) {
+            this.publisherDetails.set(updatedPublisher);
+          }
+        }
+      }
+
+      if (!this.publisherId) {
         await Swal.fire({
           title: 'Error',
           text: 'Please complete Basic Details first.',
@@ -1833,28 +2004,30 @@ export class AddPublisher {
       }
     }
 
-    const status = this.publisherDetails()?.status;
-    // Publishers: Only Dormant/Pending can be updated directly
-    const canUpdateDirectly =
-      status === PublisherStatus.Pending || status === PublisherStatus.Dormant;
-
-    if (canUpdateDirectly) {
+    if (this.canUpdateDirectly()) {
       // Create or update address directly
       const existingPublisher = this.publisherDetails();
       const existingAddress = existingPublisher?.address?.[0];
       const wasNewAddress = !existingAddress;
 
-      await this.addressService.createOrUpdateAddress({
+      // In invite flow, always use CREATE (remove id) but still prefill form
+      const addressPayload: any = {
         ...this.publisherAddressDetails.value,
-        id: existingAddress?.id,
         publisherId: this.publisherId,
-      } as Address);
+      };
+      // Remove id if signupCode is present (force CREATE)
+      if (this.signupCode) {
+        addressPayload.id = undefined;
+      } else {
+        addressPayload.id = existingAddress?.id;
+      }
+      await this.addressService.createOrUpdateAddress(addressPayload as Address);
 
       // Reload publisher details to get updated address
-      const updatedPublisher = await this.publisherService.getPublisherById(
-        this.publisherId
-      );
-      this.publisherDetails.set(updatedPublisher);
+      const updatedPublisher = await this.fetchPublisher(this.publisherId);
+      if (updatedPublisher) {
+        this.publisherDetails.set(updatedPublisher);
+      }
 
       // Clear ticket flag for this tab on successful direct update
       this.ticketRaisedForTab.update((prev) => {
@@ -1909,18 +2082,34 @@ export class AddPublisher {
   }
 
   // Save Bank Details Tab
-  async saveBankDetailsTab() {
+  async saveBankDetailsTab(): Promise<boolean | null> {
     // For new publishers, publisherId should be set from tab 0
-    // But if somehow it's not set, try to get it from query params
+    // But if somehow it's not set, try to get it from query params or invite API
     if (!this.publisherId) {
-      const queryPublisherId = this.route.snapshot.queryParams['publisherId'];
-      if (queryPublisherId) {
-        this.publisherId = Number(queryPublisherId);
-        const updatedPublisher = await this.publisherService.getPublisherById(
-          this.publisherId
-        );
-        this.publisherDetails.set(updatedPublisher);
+      if (this.signupCode) {
+        // In invite flow, fetch using invite API
+        try {
+          const existingPublisher = await this.fetchPublisher();
+          if (existingPublisher && existingPublisher.id) {
+            this.publisherId = existingPublisher.id;
+            this.publisherDetails.set(existingPublisher);
+          }
+        } catch (error) {
+          // No existing publisher - continue with new publisher flow
+        }
       } else {
+      // Normal flow - try query params
+        const queryPublisherId = this.route.snapshot.queryParams['publisherId'];
+        if (queryPublisherId) {
+          this.publisherId = Number(queryPublisherId);
+          const updatedPublisher = await this.fetchPublisher(this.publisherId);
+          if (updatedPublisher) {
+            this.publisherDetails.set(updatedPublisher);
+          }
+        }
+      }
+
+      if (!this.publisherId) {
         await Swal.fire({
           title: 'Error',
           text: 'Please complete Basic Details first.',
@@ -1932,12 +2121,7 @@ export class AddPublisher {
       }
     }
 
-    const status = this.publisherDetails()?.status;
-    // Publishers: Only Dormant/Pending can be updated directly
-    const canUpdateDirectly =
-      status === PublisherStatus.Pending || status === PublisherStatus.Dormant;
-
-    if (canUpdateDirectly) {
+    if (this.canUpdateDirectly()) {
       // Create or update bank details directly
       const existingPublisher = this.publisherDetails();
       const existingBank = existingPublisher?.bankDetails?.[0];
@@ -1946,22 +2130,29 @@ export class AddPublisher {
       const bankDetailsValue = { ...this.publisherBankDetails.value };
       if (
         !bankDetailsValue.gstNumber ||
-        bankDetailsValue.gstNumber.trim() === ''
+        (typeof bankDetailsValue.gstNumber === 'string' && bankDetailsValue.gstNumber.trim() === '')
       ) {
         delete bankDetailsValue.gstNumber;
       }
 
-      await this.bankDetailService.createOrUpdateBankDetail({
+      // In invite flow, always use CREATE (remove id) but still prefill form
+      const bankPayload: any = {
         ...bankDetailsValue,
-        id: existingBank?.id,
         publisherId: this.publisherId,
-      } as createBankDetails);
+      };
+      // Remove id if signupCode is present (force CREATE)
+      if (this.signupCode) {
+        bankPayload.id = undefined;
+      } else {
+        bankPayload.id = existingBank?.id;
+      }
+      await this.bankDetailService.createOrUpdateBankDetail(bankPayload as createBankDetails);
 
       // Reload publisher details to get updated bank details
-      const updatedPublisher = await this.publisherService.getPublisherById(
-        this.publisherId
-      );
-      this.publisherDetails.set(updatedPublisher);
+      const updatedPublisher = await this.fetchPublisher(this.publisherId);
+      if (updatedPublisher) {
+        this.publisherDetails.set(updatedPublisher);
+      }
 
       // Clear ticket flag for this tab on successful direct update
       this.ticketRaisedForTab.update((prev) => {
@@ -1970,14 +2161,24 @@ export class AddPublisher {
         return updated;
       });
 
-      await Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: wasNewBank
-          ? 'Bank details created successfully'
-          : 'Bank details updated successfully',
-        heightAuto: false,
-      });
+      // Show different message for invite flow
+      if (this.signupCode) {
+        await Swal.fire({
+          icon: 'success',
+          title: this.translateService.instant('success') || 'Success',
+          text: this.translateService.instant('applicationSentForApproval') || 'Your application has been sent to admin for approval. Please check your email for verification.',
+          heightAuto: false,
+        });
+      } else {
+        await Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: wasNewBank
+            ? 'Bank details created successfully'
+            : 'Bank details updated successfully',
+          heightAuto: false,
+        });
+      }
 
       // Redirect after final save (only for direct updates, not tickets)
       if (this.signupCode) {
@@ -1996,7 +2197,7 @@ export class AddPublisher {
         const bankDetailsValue = { ...this.publisherBankDetails.value };
         if (
           !bankDetailsValue.gstNumber ||
-          bankDetailsValue.gstNumber.trim() === ''
+          (typeof bankDetailsValue.gstNumber === 'string' && bankDetailsValue.gstNumber.trim() === '')
         ) {
           delete bankDetailsValue.gstNumber;
         }

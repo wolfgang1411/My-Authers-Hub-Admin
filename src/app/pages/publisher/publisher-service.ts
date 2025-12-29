@@ -50,11 +50,12 @@ export class PublisherService {
     }
   }
   // Initialization logic can gp here if needed
-  async getPublisherById(id: number) {
+  async getPublisherById(id: number, signupCode?: string) {
     try {
-      return await this.loader.loadPromise(
-        this.server.get<Publishers>(`publishers/${id}`)
-      );
+      const url = signupCode
+        ? `publishers/${id}?signupCode=${signupCode}`
+        : `publishers/${id}`;
+      return await this.loader.loadPromise(this.server.get<Publishers>(url));
     } catch (error) {
       const errorToLog =
         error instanceof HttpErrorResponse && error.status !== 500
@@ -65,13 +66,46 @@ export class PublisherService {
     }
   }
 
-  async createPublisher(publisherData: Publishers): Promise<Publishers> {
+  /**
+   * Find publisher by invite code (signupCode)
+   * Used when accepting invite to check if Dormant publisher exists
+   * This endpoint is public and doesn't require authentication
+   */
+  async findPublisherByInvite(signupCode: string): Promise<Publishers | null> {
     try {
       return await this.loader.loadPromise(
-        this.server[publisherData.id ? 'patch' : 'post'](
-          publisherData.id ? `publishers/${publisherData.id}` : 'publishers',
-          { ...publisherData }
-        )
+        this.server.get<Publishers>(`publishers/by-invite/${signupCode}`)
+      );
+    } catch (error) {
+      const errorToLog =
+        error instanceof HttpErrorResponse && error.status !== 500
+          ? error.error
+          : error;
+      // If publisher not found or not Dormant, return null (not an error)
+      if (
+        error instanceof HttpErrorResponse &&
+        (error.status === 404 || error.status === 400)
+      ) {
+        return null;
+      }
+      this.logger.logError(errorToLog);
+      return null;
+    }
+  }
+
+  async createPublisher(publisherData: Publishers, signupCode?: string): Promise<Publishers> {
+    try {
+      // If signupCode exists, always use POST (create new) - don't use PATCH even if id exists
+      // If no signupCode, use PATCH if id exists, POST if no id
+      const shouldUsePatch = !signupCode && publisherData.id;
+      const url = shouldUsePatch ? `publishers/${publisherData.id}` : 'publishers';
+      const method = shouldUsePatch ? 'patch' : 'post';
+
+      // If signupCode exists, remove id from payload to force POST
+      const payload = signupCode ? { ...publisherData, id: undefined } : { ...publisherData };
+
+      return await this.loader.loadPromise(
+        this.server[method](url, payload)
       );
     } catch (error) {
       const errorToLog =
@@ -220,19 +254,25 @@ export class PublisherService {
   }
   uploadPublisherImage(
     file: File,
-    publisherId: number
+    publisherId: number,
+    signupCode?: string
   ): Promise<{ id: number; url: string }> {
     return new Promise(async (resolve, reject) => {
       try {
         const { name } = await this.s3Upload.uploadMedia(file);
-        const media = await this.server.post<Media>(
-          `publisher-media/${publisherId}/medias`,
-          {
-            keyname: name,
-            mime: file.type,
-            type: PublisherMediaType.LOGO,
-          }
-        );
+        const payload: any = {
+          keyname: name,
+          mime: file.type,
+          type: PublisherMediaType.LOGO,
+        };
+        // Include signupCode in body if present
+        if (signupCode) {
+          payload.signupCode = signupCode;
+        }
+        const url = signupCode
+          ? `publisher-media/${publisherId}/medias?signupCode=${signupCode}`
+          : `publisher-media/${publisherId}/medias`;
+        const media = await this.server.post<Media>(url, payload);
         resolve(media);
       } catch (error) {
         this.logger.logError(error);
@@ -240,9 +280,9 @@ export class PublisherService {
       }
     });
   }
-  async updateMyImage(file: File, publisherId: number) {
+  async updateMyImage(file: File, publisherId: number, signupCode?: string) {
     try {
-      const media = await this.uploadPublisherImage(file, publisherId);
+      const media = await this.uploadPublisherImage(file, publisherId, signupCode);
       return media;
     } catch (error) {
       this.logger.logError(error);

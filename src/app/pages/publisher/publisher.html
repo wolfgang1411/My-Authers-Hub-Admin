@@ -309,7 +309,10 @@
       >
         <mat-icon class="!text-white">check</mat-icon>
       </button>
-      } @else {
+      }
+
+      @if(element.status === PublisherStatus.Pending &&
+      element.user?.isEmailVerified === false) {
       <button
         class="!bg-yellow-500"
         mat-icon-button
@@ -317,7 +320,9 @@
       >
         <mat-icon class="!text-white">help</mat-icon>
       </button>
-      } } @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
+      }
+
+     } @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
       @if(element.status === PublisherStatus.Active &&
       element.user?.isEmailVerified !== false) {
       <button
