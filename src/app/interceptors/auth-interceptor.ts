@@ -1,5 +1,7 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { catchError, throwError, from, switchMap, tap } from 'rxjs';
+import Swal from 'sweetalert2';
 import { AuthService } from '../services/auth';
 import { environment } from '../../environments/environment';
 
@@ -22,6 +24,34 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       setHeaders: {
         'ngrok-skip-browser-warning': '69420',
       },
+    })
+  ).pipe(
+    catchError((error: HttpErrorResponse) => {
+      if (error.status === 401) {
+        // Convert Swal promise to Observable and wait for user to click
+        return from(
+          Swal.fire({
+            icon: 'warning',
+            title: 'Session Expired',
+            text: 'You have been logged out. Please login again to continue.',
+            confirmButtonText: 'Login',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+          })
+        ).pipe(
+          tap(() => {
+            // Clear auth tokens and navigate to login after user clicks
+            authService.logout();
+          }),
+          switchMap(() => {
+            // Mark error as handled to prevent other error handlers from showing Swal
+            (error as any).__handledByInterceptor = true;
+            // Throw error after Swal completes and user clicks
+            return throwError(() => error);
+          })
+        );
+      }
+      return throwError(() => error);
     })
   );
 };

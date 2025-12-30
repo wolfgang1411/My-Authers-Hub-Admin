@@ -88,10 +88,8 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { PrintingService } from '../../services/printing-service';
 import { TempTitlePrinting } from './temp-title-printing/temp-title-printing';
-import { TempRoyalties } from './temp-royalties/temp-royalties';
 import { TitleService } from '../titles/title-service';
 import { TempBookDetails } from './temp-book-details/temp-book-details';
-import { TempPricing } from './temp-pricing/temp-pricing';
 import { TempPricingRoyalty } from './temp-pricing-royalty/temp-pricing-royalty';
 import { TempTitleDistribution } from './temp-title-distribution/temp-title-distribution';
 import Swal from 'sweetalert2';
@@ -127,7 +125,6 @@ import { LoaderService } from '../../services/loader';
     TempBookDetails,
     TempPricingRoyalty,
     TempTitleDistribution,
-    Back,
   ],
   templateUrl: './title-form-temp.html',
   styleUrl: './title-form-temp.css',

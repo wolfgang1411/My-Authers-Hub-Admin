@@ -20,6 +20,11 @@ export class Logger {
    * @param options - Optional configuration for the error dialog
    */
   logError(error: any, options?: LogErrorOptions): void {
+    // Skip showing Swal if error was already handled by interceptor (e.g., 401 logout)
+    if (error && (error as any).__handledByInterceptor) {
+      return;
+    }
+
     const errorInfo = this.parseError(error);
 
     Swal.fire({
