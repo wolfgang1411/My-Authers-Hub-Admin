@@ -1,7 +1,6 @@
 import {
   Component,
   computed,
-  effect,
   inject,
   OnInit,
   Signal,
@@ -24,12 +23,11 @@ import {
   MatStepperModule,
 } from '@angular/material/stepper';
 import { MatTabsModule } from '@angular/material/tabs';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { AsyncPipe } from '@angular/common';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCardModule } from '@angular/material/card';
@@ -63,13 +61,10 @@ import { SocialMediaService } from '../../services/social-media-service';
 import { SocialMedia } from '../social-media/social-media';
 import { MatIcon } from '@angular/material/icon';
 import { UserService } from '../../services/user';
-import { Back } from '../../components/back/back';
 import { LoaderService } from '../../services/loader';
 import { Country, State, City } from 'country-state-city';
-import { HttpClient } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import md5 from 'md5';
 import {
   CountryISO,
   NgxMaterialIntlTelInputComponent,
@@ -89,7 +84,6 @@ import {
     UploadFile,
     SocialMedia,
     MatIcon,
-    Back,
     FormsModule,
     ReactiveFormsModule,
     NgxMaterialIntlTelInputComponent,
@@ -125,7 +119,7 @@ export class AddAuthor implements OnInit {
       if (tabIndex >= 0 && tabIndex < this.TOTAL_TABS) {
         this.currentTabIndex.set(tabIndex);
       }
-      
+
       // Also check for authorId in query params (for refresh scenarios)
       // Only use query param authorId if:
       // 1. No authorId from route params
@@ -463,7 +457,7 @@ export class AddAuthor implements OnInit {
    * Centralized method to fetch author - handles all scenarios:
    * 1. Invite flow: ALWAYS use findAuthorByInvite (uses /authors/by-invite/:signupCode)
    * 2. Normal flow: Use getAuthorrById normally
-   * 
+   *
    * @param id - Author ID (optional, only used for normal flow)
    * @returns Author object or undefined if not found
    */
@@ -472,7 +466,9 @@ export class AddAuthor implements OnInit {
       if (this.signupCode) {
         // Invite flow: ALWAYS use the invite API endpoint
         // This uses /authors/by-invite/:signupCode which works for any status
-        const author = await this.authorsService.findAuthorByInvite(this.signupCode);
+        const author = await this.authorsService.findAuthorByInvite(
+          this.signupCode
+        );
         if (author) {
           return author;
         }
@@ -665,8 +661,9 @@ export class AddAuthor implements OnInit {
       }));
 
       const cityName =
-        this.cities.find((c) => c.name.toLowerCase() === addr.city?.toLowerCase())
-          ?.name || '';
+        this.cities.find(
+          (c) => c.name.toLowerCase() === addr.city?.toLowerCase()
+        )?.name || '';
 
       this.authorAddressDetails.patchValue({
         city: cityName,
@@ -678,9 +675,8 @@ export class AddAuthor implements OnInit {
     if (authorDetails.bankDetails && authorDetails.bankDetails.length > 0) {
       const bankDetail = authorDetails.bankDetails[0];
       this.selectedBankPrefix.set(
-        this.bankOptions().find(
-          ({ name }) => name === bankDetail?.name
-        )?.bankCode || null
+        this.bankOptions().find(({ name }) => name === bankDetail?.name)
+          ?.bankCode || null
       );
       this.authorBankDetails.patchValue({
         id: bankDetail.id,
@@ -818,7 +814,8 @@ export class AddAuthor implements OnInit {
             socialMediaItem.id = undefined;
             socialMediaItem.signupCode = this.signupCode;
           } else {
-            socialMediaItem.id = value.id && typeof value.id === 'number' ? value.id : undefined;
+            socialMediaItem.id =
+              value.id && typeof value.id === 'number' ? value.id : undefined;
           }
           return socialMediaItem;
         })
@@ -834,15 +831,23 @@ export class AddAuthor implements OnInit {
       // API will automatically delete old media if it exists, so we only need to POST
       const media = this.mediaControl.value;
       if (media?.file) {
-        await this.authorsService.updateMyImage(media.file, finalAuthorId, this.signupCode);
-        console.log('⬆ Image uploaded (API handles deletion of old media if exists)');
+        await this.authorsService.updateMyImage(
+          media.file,
+          finalAuthorId,
+          this.signupCode
+        );
+        console.log(
+          '⬆ Image uploaded (API handles deletion of old media if exists)'
+        );
       }
     }
 
     let html = 'You have successfully created author';
     if (this.authorId) html = 'You have successfully updated author';
     if (this.signupCode)
-      html = this.translateService.instant('registeredAsAuthor') || 'You have been registered as an author. Please verify your email. A verification link has been sent to your email address.';
+      html =
+        this.translateService.instant('registeredAsAuthor') ||
+        'You have been registered as an author. Please verify your email. A verification link has been sent to your email address.';
 
     await Swal.fire({
       title: 'Success',
@@ -1341,7 +1346,9 @@ export class AddAuthor implements OnInit {
           this.authorId as number,
           this.signupCode
         );
-        console.log('⬆ Image uploaded (API handles deletion of old media if exists)');
+        console.log(
+          '⬆ Image uploaded (API handles deletion of old media if exists)'
+        );
       }
     }
 
@@ -1443,7 +1450,9 @@ export class AddAuthor implements OnInit {
       const authorData = {
         ...this.authorFormGroup.value,
         // Only include id if no signupCode (allow PATCH/update)
-        id: !this.signupCode ? (this.authorId || this.authorFormGroup.value.id) : undefined,
+        id: !this.signupCode
+          ? this.authorId || this.authorFormGroup.value.id
+          : undefined,
         email: this.authorFormGroup.controls.email.value,
         phoneNumber:
           this.authorFormGroup.controls.phoneNumber.value?.replaceAll(' ', ''),
@@ -1458,7 +1467,11 @@ export class AddAuthor implements OnInit {
       // Check if author is editing their own profile
       const isEditingSelf = this.authorId === this.loggedInUser()?.auther?.id;
 
-      if (this.loggedInUser()?.accessLevel === 'SUPERADMIN' || !this.authorId || this.canUpdateDirectly()) {
+      if (
+        this.loggedInUser()?.accessLevel === 'SUPERADMIN' ||
+        !this.authorId ||
+        this.canUpdateDirectly()
+      ) {
         // Superadmin, new author, or can update directly → direct save
         await this.handleNewOrSuperAdminAuthorSubmission(authorData);
       } else {
@@ -1768,7 +1781,9 @@ export class AddAuthor implements OnInit {
     const authorData = {
       ...this.authorFormGroup.value,
       // Only include id if no signupCode (allow PATCH/update)
-      id: !this.signupCode ? (this.authorId || this.authorFormGroup.value.id) : undefined,
+      id: !this.signupCode
+        ? this.authorId || this.authorFormGroup.value.id
+        : undefined,
       email: this.authorFormGroup.controls.email.value,
       phoneNumber: this.authorFormGroup.controls.phoneNumber.value?.replaceAll(
         ' ',
@@ -1806,7 +1821,11 @@ export class AddAuthor implements OnInit {
       if (finalAuthorId && media?.file) {
         // Wrap media upload in loader to keep it active during upload
         await this.loader.loadPromise(
-          this.authorsService.updateMyImage(media.file, finalAuthorId, this.signupCode),
+          this.authorsService.updateMyImage(
+            media.file,
+            finalAuthorId,
+            this.signupCode
+          ),
           'upload-media'
         );
       }
@@ -2015,13 +2034,13 @@ export class AddAuthor implements OnInit {
     // For new authors, authorId should be set from tab 0
     // But if somehow it's not set, try to get it from query params
     if (!this.authorId) {
-        const queryAuthorId = this.route.snapshot.queryParams['authorId'];
-        if (queryAuthorId) {
-          this.authorId = Number(queryAuthorId);
-          const updatedAuthor = await this.fetchAuthor(this.authorId);
-          if (updatedAuthor) {
-            this.authorDetails.set(updatedAuthor);
-          }
+      const queryAuthorId = this.route.snapshot.queryParams['authorId'];
+      if (queryAuthorId) {
+        this.authorId = Number(queryAuthorId);
+        const updatedAuthor = await this.fetchAuthor(this.authorId);
+        if (updatedAuthor) {
+          this.authorDetails.set(updatedAuthor);
+        }
       } else {
         await Swal.fire({
           title: 'Error',
@@ -2109,13 +2128,13 @@ export class AddAuthor implements OnInit {
     // For new authors, authorId should be set from tab 0
     // But if somehow it's not set, try to get it from query params
     if (!this.authorId) {
-        const queryAuthorId = this.route.snapshot.queryParams['authorId'];
-        if (queryAuthorId) {
-          this.authorId = Number(queryAuthorId);
-          const updatedAuthor = await this.fetchAuthor(this.authorId);
-          if (updatedAuthor) {
-            this.authorDetails.set(updatedAuthor);
-          }
+      const queryAuthorId = this.route.snapshot.queryParams['authorId'];
+      if (queryAuthorId) {
+        this.authorId = Number(queryAuthorId);
+        const updatedAuthor = await this.fetchAuthor(this.authorId);
+        if (updatedAuthor) {
+          this.authorDetails.set(updatedAuthor);
+        }
       } else {
         await Swal.fire({
           title: 'Error',
@@ -2154,7 +2173,9 @@ export class AddAuthor implements OnInit {
         bankPayload.id = existingBank?.id;
       }
 
-      await this.bankDetailService.createOrUpdateBankDetail(bankPayload as createBankDetails);
+      await this.bankDetailService.createOrUpdateBankDetail(
+        bankPayload as createBankDetails
+      );
 
       // Reload author details to get updated bank details (use fetchAuthor to handle invite flow)
       const updatedAuthor = await this.fetchAuthor(this.authorId);
@@ -2174,7 +2195,9 @@ export class AddAuthor implements OnInit {
         await Swal.fire({
           icon: 'success',
           title: this.translateService.instant('success') || 'Success',
-          text: this.translateService.instant('pleaseVerifyEmail') || 'Please verify your email.',
+          text:
+            this.translateService.instant('pleaseVerifyEmail') ||
+            'Please verify your email.',
           heightAuto: false,
         });
       } else {

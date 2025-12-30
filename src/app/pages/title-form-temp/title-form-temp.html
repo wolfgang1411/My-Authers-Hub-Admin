@@ -5,7 +5,11 @@
   <h3 class="heading">
     {{ "uploadtitle" | translate }}
   </h3>
-  <app-back></app-back>
+  <button matButton="filled" (click)="goBack()">
+    <mat-icon>arrow_back</mat-icon>
+    {{ "close" | translate }}
+  </button>
+  <!-- <app-back></app-back> -->
 </div>
 <mat-stepper
   class="example-stepper !my-4"
@@ -252,13 +256,9 @@
     </app-temp-book-details>
 
     <div class="flex justify-end mt-8">
-      <button
-        matButton="filled"
-        class="!bg-primary"
-        (click)="onTitleSubmit()"
-      >
-        {{ getActionButtonText('details') }}
-        <mat-icon>{{ getActionButtonIcon('details') }}</mat-icon>
+      <button matButton="filled" class="!bg-primary" (click)="onTitleSubmit()">
+        {{ getActionButtonText("details") }}
+        <mat-icon>{{ getActionButtonIcon("details") }}</mat-icon>
       </button>
     </div>
   </mat-step>
@@ -384,8 +384,8 @@
           matButton="filled"
           class="px-6 py-2 !bg-primary text-white rounded-lg shadow"
         >
-          {{ getActionButtonText('documents') }}
-          <mat-icon>{{ getActionButtonIcon('documents') }}</mat-icon>
+          {{ getActionButtonText("documents") }}
+          <mat-icon>{{ getActionButtonIcon("documents") }}</mat-icon>
         </button>
       </div>
     </form>
@@ -431,8 +431,8 @@
         matButton="filled"
         (click)="savePrintingDraft()"
       >
-        {{ getActionButtonText('printing') }}
-        <mat-icon>{{ getActionButtonIcon('printing') }}</mat-icon>
+        {{ getActionButtonText("printing") }}
+        <mat-icon>{{ getActionButtonIcon("printing") }}</mat-icon>
       </button>
     </div>
   </mat-step>
@@ -482,8 +482,8 @@
         matButton="filled"
         (click)="onPricingAndRoyaltySubmit()"
       >
-        {{ getActionButtonText('pricing') }}
-        <mat-icon>{{ getActionButtonIcon('pricing') }}</mat-icon>
+        {{ getActionButtonText("pricing") }}
+        <mat-icon>{{ getActionButtonIcon("pricing") }}</mat-icon>
       </button>
     </div>
   </mat-step>
@@ -528,8 +528,8 @@
         class="!bg-primary"
         matButton="filled"
       >
-        {{ getActionButtonText('distribution') }}
-        <mat-icon>{{ getActionButtonIcon('distribution') }}</mat-icon>
+        {{ getActionButtonText("distribution") }}
+        <mat-icon>{{ getActionButtonIcon("distribution") }}</mat-icon>
       </button>
     </div>
   </mat-step>

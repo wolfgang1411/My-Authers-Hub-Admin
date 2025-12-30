@@ -3,7 +3,6 @@ import {
   computed,
   effect,
   inject,
-  model,
   Signal,
   signal,
 } from '@angular/core';
@@ -31,7 +30,6 @@ import { debounceTime, map } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { AsyncPipe } from '@angular/common';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCardModule } from '@angular/material/card';
@@ -63,7 +61,6 @@ import {
 } from '../../interfaces/SocialMedia';
 import { SocialMedia } from '../social-media/social-media';
 import { SocialMediaService } from '../../services/social-media-service';
-import { NGXIntlTel } from '../../interfaces/Intl';
 import {
   CountryISO,
   NgxIntlTelInputModule,
@@ -73,11 +70,8 @@ import {
 import { UserService } from '../../services/user';
 import { MatIcon } from '@angular/material/icon';
 import { TranslateService } from '@ngx-translate/core';
-import { Back } from '../../components/back/back';
 import { LoaderService } from '../../services/loader';
-import { HttpClient } from '@angular/common/http';
 import { City, Country, State } from 'country-state-city';
-import md5 from 'md5';
 import { NgxMaterialIntlTelInputComponent } from 'ngx-material-intl-tel-input';
 
 @Component({
@@ -90,7 +84,6 @@ import { NgxMaterialIntlTelInputComponent } from 'ngx-material-intl-tel-input';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    AsyncPipe,
     SharedModule,
     MatSelectModule,
     MatCardModule,
@@ -98,7 +91,6 @@ import { NgxMaterialIntlTelInputComponent } from 'ngx-material-intl-tel-input';
     SocialMedia,
     NgxIntlTelInputModule,
     MatIcon,
-    Back,
     NgxMaterialIntlTelInputComponent,
   ],
   templateUrl: './add-publisher.html',
@@ -233,7 +225,7 @@ export class AddPublisher {
     if (routeParams['id'] && !this.signupCode) {
       this.publisherId = Number(routeParams['id']) || undefined;
     }
-    
+
     // Check query params for publisherId (for refresh scenarios after creating new publisher)
     // This allows prefilling form data when user refreshes the page after creating a publisher
     if (!this.publisherId && !this.signupCode) {
@@ -320,7 +312,10 @@ export class AddPublisher {
         // This allows resuming signup flow for Dormant publishers
         const existingPublisher = await this.fetchPublisher();
 
-        if (existingPublisher && existingPublisher.status === PublisherStatus.Dormant) {
+        if (
+          existingPublisher &&
+          existingPublisher.status === PublisherStatus.Dormant
+        ) {
           // Set publisherId to enable update flow instead of create flow
           this.publisherId = existingPublisher.id;
           this.publisherDetails.set(existingPublisher);
@@ -352,7 +347,7 @@ export class AddPublisher {
    * Centralized method to fetch publisher - handles all scenarios:
    * 1. Invite flow: ALWAYS use findPublisherByInvite (uses /publishers/by-invite/:signupCode)
    * 2. Normal flow: Use getById normally
-   * 
+   *
    * @param id - Publisher ID (optional, only used for normal flow)
    * @returns Publisher object or undefined if not found
    */
@@ -360,7 +355,7 @@ export class AddPublisher {
    * Centralized method to fetch publisher - handles all scenarios:
    * 1. Invite flow: ALWAYS use findPublisherByInvite (uses /publishers/by-invite/:signupCode)
    * 2. Normal flow: Use getById normally
-   * 
+   *
    * @param id - Publisher ID (optional, only used for normal flow)
    * @returns Publisher object or undefined if not found
    */
@@ -369,7 +364,9 @@ export class AddPublisher {
       if (this.signupCode) {
         // Invite flow: ALWAYS use the invite API endpoint
         // This uses /publishers/by-invite/:signupCode which works for any status
-        const publisher = await this.publisherService.findPublisherByInvite(this.signupCode);
+        const publisher = await this.publisherService.findPublisherByInvite(
+          this.signupCode
+        );
         if (publisher) {
           return publisher;
         }
@@ -777,7 +774,9 @@ export class AddPublisher {
       if (this.signupCode) {
         addressPayload.id = undefined;
       }
-      await this.addressService.createOrUpdateAddress(addressPayload as Address);
+      await this.addressService.createOrUpdateAddress(
+        addressPayload as Address
+      );
 
       const bankDetailsValue = { ...this.publisherBankDetails.value };
       // Remove gstNumber if empty, otherwise keep it
@@ -857,10 +856,18 @@ export class AddPublisher {
         await this.publisherService.removeImage(this.mediaToDeleteId);
         console.log('🗑 Old image deleted');
 
-        await this.publisherService.updateMyImage(media.file, response.id, this.signupCode);
+        await this.publisherService.updateMyImage(
+          media.file,
+          response.id,
+          this.signupCode
+        );
         console.log('⬆ New image uploaded');
       } else if (!this.mediaToDeleteId && media?.file) {
-        await this.publisherService.updateMyImage(media.file, response.id, this.signupCode);
+        await this.publisherService.updateMyImage(
+          media.file,
+          response.id,
+          this.signupCode
+        );
         console.log('📤 New image uploaded (no old media existed)');
       }
     }
@@ -872,7 +879,9 @@ export class AddPublisher {
     }
 
     if (this.signupCode) {
-      html = this.translateService.instant('registeredAsPublisher') || 'You have been registered as a publisher. Please verify your email. A verification link has been sent to your email address.';
+      html =
+        this.translateService.instant('registeredAsPublisher') ||
+        'You have been registered as a publisher. Please verify your email. A verification link has been sent to your email address.';
     }
 
     await Swal.fire({
@@ -902,7 +911,9 @@ export class AddPublisher {
       return true; // New publisher can always be created directly
     }
     const status = this.publisherDetails()?.status;
-    return status === PublisherStatus.Pending || status === PublisherStatus.Dormant;
+    return (
+      status === PublisherStatus.Pending || status === PublisherStatus.Dormant
+    );
   }
 
   // Helper method to compare values
@@ -1749,7 +1760,11 @@ export class AddPublisher {
         }
         // Wrap media upload in loader to keep it active during upload
         await this.loader.loadPromise(
-          this.publisherService.updateMyImage(media.file, finalPublisherId, this.signupCode),
+          this.publisherService.updateMyImage(
+            media.file,
+            finalPublisherId,
+            this.signupCode
+          ),
           'upload-media'
         );
       }
@@ -1785,9 +1800,7 @@ export class AddPublisher {
 
           // Reload publisher details to get updated social media with IDs
           // This ensures form state is preserved for PATCH operations later
-          const updatedPublisher = await this.fetchPublisher(
-            finalPublisherId
-          );
+          const updatedPublisher = await this.fetchPublisher(finalPublisherId);
           if (updatedPublisher) {
             this.publisherDetails.set(updatedPublisher);
 
@@ -1909,7 +1922,11 @@ export class AddPublisher {
               };
               // In invite flow, always use CREATE (remove id) and add signupCode
               // Otherwise, include id only if it's a valid number
-              if (!this.signupCode && value.id && typeof value.id === 'number') {
+              if (
+                !this.signupCode &&
+                value.id &&
+                typeof value.id === 'number'
+              ) {
                 socialMediaItem.id = value.id;
               }
               if (this.signupCode) {
@@ -1926,8 +1943,9 @@ export class AddPublisher {
 
             // Reload publisher details to get updated social media with IDs
             // This ensures form state is preserved for PATCH operations later
-            const updatedPublisher =
-              await this.fetchPublisher(this.publisherId);
+            const updatedPublisher = await this.fetchPublisher(
+              this.publisherId
+            );
             if (updatedPublisher) {
               this.publisherDetails.set(updatedPublisher);
 
@@ -1986,7 +2004,7 @@ export class AddPublisher {
           // No existing publisher - continue with new publisher flow
         }
       } else {
-      // Normal flow - try query params
+        // Normal flow - try query params
         const queryPublisherId = this.route.snapshot.queryParams['publisherId'];
         if (queryPublisherId) {
           this.publisherId = Number(queryPublisherId);
@@ -2026,7 +2044,9 @@ export class AddPublisher {
       } else {
         addressPayload.id = existingAddress?.id;
       }
-      await this.addressService.createOrUpdateAddress(addressPayload as Address);
+      await this.addressService.createOrUpdateAddress(
+        addressPayload as Address
+      );
 
       // Reload publisher details to get updated address
       const updatedPublisher = await this.fetchPublisher(this.publisherId);
@@ -2103,7 +2123,7 @@ export class AddPublisher {
           // No existing publisher - continue with new publisher flow
         }
       } else {
-      // Normal flow - try query params
+        // Normal flow - try query params
         const queryPublisherId = this.route.snapshot.queryParams['publisherId'];
         if (queryPublisherId) {
           this.publisherId = Number(queryPublisherId);
@@ -2135,7 +2155,8 @@ export class AddPublisher {
       const bankDetailsValue = { ...this.publisherBankDetails.value };
       if (
         !bankDetailsValue.gstNumber ||
-        (typeof bankDetailsValue.gstNumber === 'string' && bankDetailsValue.gstNumber.trim() === '')
+        (typeof bankDetailsValue.gstNumber === 'string' &&
+          bankDetailsValue.gstNumber.trim() === '')
       ) {
         delete bankDetailsValue.gstNumber;
       }
@@ -2151,7 +2172,9 @@ export class AddPublisher {
       } else {
         bankPayload.id = existingBank?.id;
       }
-      await this.bankDetailService.createOrUpdateBankDetail(bankPayload as createBankDetails);
+      await this.bankDetailService.createOrUpdateBankDetail(
+        bankPayload as createBankDetails
+      );
 
       // Reload publisher details to get updated bank details
       const updatedPublisher = await this.fetchPublisher(this.publisherId);
@@ -2171,7 +2194,9 @@ export class AddPublisher {
         await Swal.fire({
           icon: 'success',
           title: this.translateService.instant('success') || 'Success',
-          text: this.translateService.instant('applicationSentForApproval') || 'Your application has been sent for superadmin approval. Please verify your email in the meantime.',
+          text:
+            this.translateService.instant('applicationSentForApproval') ||
+            'Your application has been sent for superadmin approval. Please verify your email in the meantime.',
           heightAuto: false,
         });
       } else {
@@ -2202,7 +2227,8 @@ export class AddPublisher {
         const bankDetailsValue = { ...this.publisherBankDetails.value };
         if (
           !bankDetailsValue.gstNumber ||
-          (typeof bankDetailsValue.gstNumber === 'string' && bankDetailsValue.gstNumber.trim() === '')
+          (typeof bankDetailsValue.gstNumber === 'string' &&
+            bankDetailsValue.gstNumber.trim() === '')
         ) {
           delete bankDetailsValue.gstNumber;
         }

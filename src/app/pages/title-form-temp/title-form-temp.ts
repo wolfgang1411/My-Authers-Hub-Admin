@@ -256,6 +256,10 @@ export class TitleFormTemp implements OnDestroy {
   }
   @ViewChild('scrollTarget') scrollTarget!: ElementRef;
 
+  goBack() {
+    this.router.navigate(['/titles']);
+  }
+
   onSelectDocumentsReady() {
     this.tempForm.get('hasFiles')?.setValue(true);
     if (
@@ -5135,20 +5139,21 @@ export class TitleFormTemp implements OnDestroy {
         return; // Don't proceed with normal flow
       }
 
-    // Collect author copy permissions from form
-    const authorCopyPermissions: Array<{
-      authorId: number;
-      allowAuthorCopy?: boolean;
-    }> = [];
+      // Collect author copy permissions from form
+      const authorCopyPermissions: Array<{
+        authorId: number;
+        allowAuthorCopy?: boolean;
+      }> = [];
       if (this.tempForm.controls.titleDetails.controls.authorIds) {
         this.tempForm.controls.titleDetails.controls.authorIds.controls.forEach(
           (authorControl) => {
             const authorId = authorControl.controls.id.value;
-          const allowAuthorCopy = authorControl.controls.allowAuthorCopy.value;
+            const allowAuthorCopy =
+              authorControl.controls.allowAuthorCopy.value;
             if (authorId) {
-            authorCopyPermissions.push({
+              authorCopyPermissions.push({
                 authorId,
-              allowAuthorCopy: !!allowAuthorCopy,
+                allowAuthorCopy: !!allowAuthorCopy,
               });
             }
           }
