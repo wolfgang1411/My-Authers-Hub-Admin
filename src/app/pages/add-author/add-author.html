@@ -205,6 +205,11 @@
         <mat-form-field>
           <mat-label>{{ "pincode" | translate }}</mat-label>
           <input matInput formControlName="pincode" placeholder="" required />
+          @if (verifyingPin()) {
+          <span matSuffix style="padding-right: 8px;">
+            <mat-spinner diameter="16" mode="indeterminate" style="display: inline-block;"></mat-spinner>
+          </span>
+          }
           @if (authorAddressDetails.controls.pincode.hasError('invalidPincode'))
           {
           <mat-error>

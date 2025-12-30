@@ -479,6 +479,7 @@
   "usagelimit": "Usage Limit",
   "userusagelimit": "User Usage Limit",
   "invalidpincode": "Invalid pincode",
+  "verifyingpincode": "Verifying pincode...",
   "platformdetails": "Platform Details",
   "addedAt": "Added At",
   "holduntil": " Hold Until",

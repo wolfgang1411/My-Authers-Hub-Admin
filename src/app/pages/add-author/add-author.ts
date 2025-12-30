@@ -60,6 +60,7 @@ import {
 import { SocialMediaService } from '../../services/social-media-service';
 import { SocialMedia } from '../social-media/social-media';
 import { MatIcon } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { UserService } from '../../services/user';
 import { LoaderService } from '../../services/loader';
 import { Country, State, City } from 'country-state-city';
@@ -84,6 +85,7 @@ import {
     UploadFile,
     SocialMedia,
     MatIcon,
+    MatProgressSpinnerModule,
     FormsModule,
     ReactiveFormsModule,
     NgxMaterialIntlTelInputComponent,
@@ -184,6 +186,7 @@ export class AddAuthor implements OnInit {
   invalidIFSC = false;
   isPrefilling: boolean = false;
   mediaToDeleteId: number | null = null;
+  verifyingPin = signal(false);
 
   ifscCodeValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
@@ -217,22 +220,28 @@ export class AddAuthor implements OnInit {
 
       // Skip async validation if field is empty
       if (!pin || !isIndia) {
+        this.verifyingPin.set(false);
         return null;
       }
 
       // Optional: basic length check (India)
       if (pin?.length !== 6 || !state || !state.length) {
+        this.verifyingPin.set(false);
         return { invalidPincode: true };
       }
 
       try {
+        this.verifyingPin.set(true);
         const { valid } = await this.addressService.validatePincode(pin, state);
         // Expecting: { valid: boolean } or similar
         if (valid) {
+          this.verifyingPin.set(false);
           return null; // Valid pincode
         }
+        this.verifyingPin.set(false);
         return { invalidPincode: true }; // Invalid from API
       } catch (err) {
+        this.verifyingPin.set(false);
         return { invalidPincode: true }; // API error = invalid
       }
     };

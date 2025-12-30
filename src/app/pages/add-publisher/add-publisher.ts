@@ -69,6 +69,7 @@ import {
 } from 'ngx-intl-tel-input';
 import { UserService } from '../../services/user';
 import { MatIcon } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateService } from '@ngx-translate/core';
 import { LoaderService } from '../../services/loader';
 import { City, Country, State } from 'country-state-city';
@@ -91,6 +92,7 @@ import { NgxMaterialIntlTelInputComponent } from 'ngx-material-intl-tel-input';
     SocialMedia,
     NgxIntlTelInputModule,
     MatIcon,
+    MatProgressSpinnerModule,
     NgxMaterialIntlTelInputComponent,
   ],
   templateUrl: './add-publisher.html',
@@ -169,6 +171,7 @@ export class AddPublisher {
   states!: States[];
   cities!: Cities[];
   isPrefilling: boolean = false;
+  verifyingPin = signal(false);
   mediaToDeleteId: number | null = null;
   PublisherStatus = PublisherStatus; // Expose PublisherStatus enum to template
   currentTabIndex = signal<number>(0);
@@ -427,22 +430,28 @@ export class AddPublisher {
 
       // Skip async validation if field is empty
       if (!pin || !isIndia) {
+        this.verifyingPin.set(false);
         return null;
       }
 
       // Optional: basic length check (India)
       if (pin?.length !== 6 || !state || !state.length) {
+        this.verifyingPin.set(false);
         return { invalidPincode: true };
       }
 
       try {
+        this.verifyingPin.set(true);
         const { valid } = await this.addressService.validatePincode(pin, state);
         // Expecting: { valid: boolean } or similar
         if (valid) {
+          this.verifyingPin.set(false);
           return null; // Valid pincode
         }
+        this.verifyingPin.set(false);
         return { invalidPincode: true }; // Invalid from API
       } catch (err) {
+        this.verifyingPin.set(false);
         return { invalidPincode: true }; // API error = invalid
       }
     };
