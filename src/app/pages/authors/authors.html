@@ -223,7 +223,8 @@
       >
         <mat-icon class="!text-white">edit</mat-icon>
       </button>
-      } @if(element.status === AuthorStatus.Active) {
+      } @if(element.status === AuthorStatus.Active &&
+      element.user?.isEmailVerified !== false) {
       <button
         class="!bg-primary"
         mat-icon-button
@@ -289,7 +290,8 @@
       </button>
 
       } @if(element.status === AuthorStatus.Active &&
-      loggedInUser()?.accessLevel === 'PUBLISHER') {
+      loggedInUser()?.accessLevel === 'PUBLISHER' &&
+      element.user?.isEmailVerified !== false) {
       <button
         class="!bg-primary"
         mat-icon-button
@@ -299,6 +301,7 @@
         <mat-icon class="!text-white">support_agent</mat-icon>
       </button>
       }
+      @if(element.user?.isEmailVerified !== false) {
       <button
         class="!bg-primary"
         mat-icon-button
@@ -312,6 +315,7 @@
           }}
         </mat-icon>
       </button>
+      }
     </div>
   </ng-template>
 </div>

@@ -125,6 +125,14 @@ export class AddAuthor implements OnInit {
       if (tabIndex >= 0 && tabIndex < this.TOTAL_TABS) {
         this.currentTabIndex.set(tabIndex);
       }
+      
+      // Also check for authorId in query params (for refresh scenarios)
+      // Only use query param authorId if:
+      // 1. No authorId from route params
+      // 2. No signupCode (invite flow always creates, so don't use query param)
+      if (!this.authorId && !this.signupCode && params['authorId']) {
+        this.authorId = Number(params['authorId']) || undefined;
+      }
     });
 
     this.loggedInUser = this.userService.loggedInUser$;
@@ -313,6 +321,17 @@ export class AddAuthor implements OnInit {
   }
 
   async ngOnInit() {
+    // Check query params synchronously for authorId (for refresh scenarios)
+    // Only use query param authorId if:
+    // 1. No authorId from route params
+    // 2. No signupCode (invite flow always creates, so don't use query param)
+    if (!this.authorId && !this.signupCode) {
+      const queryAuthorId = this.route.snapshot.queryParams['authorId'];
+      if (queryAuthorId) {
+        this.authorId = Number(queryAuthorId) || undefined;
+      }
+    }
+
     this.authorFormGroup.controls.signupCode.patchValue(
       this.signupCode || null
     );
@@ -609,63 +628,74 @@ export class AddAuthor implements OnInit {
       username: authorDetails.username,
       about: authorDetails.about,
     });
-    const addr = authorDetails.address[0];
 
-    const countryIso =
-      this.countries.find(
-        (c) =>
-          addr.country?.toLowerCase() === c.name.toLowerCase() ||
-          addr.country?.toLowerCase() === c.isoCode.toLowerCase()
-      )?.isoCode || '';
+    // Prefill address if it exists
+    if (authorDetails.address?.length > 0) {
+      const addr = authorDetails.address[0];
 
-    this.authorAddressDetails.patchValue({
-      id: addr.id,
-      address: addr.address,
-      country: countryIso,
-    });
-    console.log({ addr }, 'addresss');
-    this.states = State.getStatesOfCountry(countryIso).map((s) => ({
-      name: s.name,
-      isoCode: s.isoCode,
-    }));
-    console.log(this.states, 'states');
-    const stateIso =
-      this.states.find(
-        (s) => s.isoCode.toLowerCase() === addr.state?.toLowerCase()
-      )?.isoCode || '';
-    console.log({ stateIso }, 'stateIso');
-    this.authorAddressDetails.patchValue({
-      state: stateIso,
-    });
+      const countryIso =
+        this.countries.find(
+          (c) =>
+            addr.country?.toLowerCase() === c.name.toLowerCase() ||
+            addr.country?.toLowerCase() === c.isoCode.toLowerCase()
+        )?.isoCode || '';
 
-    this.cities = City.getCitiesOfState(countryIso, stateIso).map((c) => ({
-      name: c.name,
-    }));
+      this.authorAddressDetails.patchValue({
+        id: addr.id,
+        address: addr.address,
+        country: countryIso,
+      });
+      console.log({ addr }, 'addresss');
+      this.states = State.getStatesOfCountry(countryIso).map((s) => ({
+        name: s.name,
+        isoCode: s.isoCode,
+      }));
+      console.log(this.states, 'states');
+      const stateIso =
+        this.states.find(
+          (s) => s.isoCode.toLowerCase() === addr.state?.toLowerCase()
+        )?.isoCode || '';
+      console.log({ stateIso }, 'stateIso');
+      this.authorAddressDetails.patchValue({
+        state: stateIso,
+      });
 
-    const cityName =
-      this.cities.find((c) => c.name.toLowerCase() === addr.city?.toLowerCase())
-        ?.name || '';
+      this.cities = City.getCitiesOfState(countryIso, stateIso).map((c) => ({
+        name: c.name,
+      }));
 
-    this.authorAddressDetails.patchValue({
-      city: cityName,
-      pincode: addr.pincode,
-    });
-    this.selectedBankPrefix.set(
-      this.bankOptions().find(
-        ({ name }) => name === authorDetails.bankDetails?.[0]?.name
-      )?.bankCode || null
-    );
-    this.authorBankDetails.patchValue({
-      id: authorDetails.bankDetails?.[0]?.id,
-      name: authorDetails.bankDetails?.[0]?.name,
-      accountNo: authorDetails.bankDetails?.[0]?.accountNo,
-      confirmAccountNo: authorDetails.bankDetails?.[0]?.accountNo,
-      ifsc: authorDetails.bankDetails?.[0]?.ifsc,
-      panCardNo: authorDetails.bankDetails?.[0]?.panCardNo,
-      accountType: authorDetails.bankDetails?.[0]?.accountType,
-      accountHolderName: authorDetails.bankDetails?.[0]?.accountHolderName,
-      gstNumber: authorDetails.bankDetails?.[0]?.gstNumber,
-    });
+      const cityName =
+        this.cities.find((c) => c.name.toLowerCase() === addr.city?.toLowerCase())
+          ?.name || '';
+
+      this.authorAddressDetails.patchValue({
+        city: cityName,
+        pincode: addr.pincode,
+      });
+    }
+
+    // Prefill bank details if it exists
+    if (authorDetails.bankDetails && authorDetails.bankDetails.length > 0) {
+      const bankDetail = authorDetails.bankDetails[0];
+      this.selectedBankPrefix.set(
+        this.bankOptions().find(
+          ({ name }) => name === bankDetail?.name
+        )?.bankCode || null
+      );
+      this.authorBankDetails.patchValue({
+        id: bankDetail.id,
+        name: bankDetail.name,
+        accountNo: bankDetail.accountNo,
+        confirmAccountNo: bankDetail.accountNo,
+        ifsc: bankDetail.ifsc,
+        panCardNo: bankDetail.panCardNo,
+        accountType: bankDetail.accountType,
+        accountHolderName: bankDetail.accountHolderName,
+        gstNumber: bankDetail.gstNumber,
+      });
+    }
+
+    // Prefill social media (always try to prefill, even if empty array)
     const socialMediaArray = this.authorSocialMediaGroup.get(
       'socialMedia'
     ) as FormArray<FormGroup<SocialMediaGroupType>>;
@@ -673,19 +703,22 @@ export class AddAuthor implements OnInit {
     socialMediaArray.clear();
     if (!authorDetails.socialMedias?.length) {
       socialMediaArray.push(this.createSocialGroup());
-    }
-    authorDetails.socialMedias?.forEach((media) => {
-      const group = new FormGroup<SocialMediaGroupType>({
-        type: new FormControl<SocialMediaType | null>(media.type),
-        url: new FormControl<string | null>(media.url),
-        publisherId: new FormControl<number | null>(media.publisherId),
-        name: new FormControl<string | null>(media.name),
-        autherId: new FormControl<number | null>(media.autherId),
-        id: new FormControl<number | null>(media.id),
-      });
+    } else {
+      authorDetails.socialMedias.forEach((media) => {
+        const group = new FormGroup<SocialMediaGroupType>({
+          type: new FormControl<SocialMediaType | null>(media.type),
+          url: new FormControl<string | null>(media.url),
+          publisherId: new FormControl<number | null>(media.publisherId),
+          name: new FormControl<string | null>(media.name),
+          autherId: new FormControl<number | null>(media.autherId),
+          id: new FormControl<number | null>(media.id),
+        });
 
-      socialMediaArray.push(group);
-    });
+        socialMediaArray.push(group);
+      });
+    }
+
+    // Prefill media (always try to prefill, even if empty)
     const mediaList = authorDetails.medias as Media[];
     if (mediaList?.length > 0) {
       this.mediaControl.setValue(mediaList[0]);
@@ -798,16 +831,11 @@ export class AddAuthor implements OnInit {
       }
 
       // Step 5: Upload Media (pass signupCode if present)
+      // API will automatically delete old media if it exists, so we only need to POST
       const media = this.mediaControl.value;
-      if (this.mediaToDeleteId && media?.file) {
-        await this.authorsService.removeImage(this.mediaToDeleteId);
-        console.log('🗑 Old image deleted');
-
+      if (media?.file) {
         await this.authorsService.updateMyImage(media.file, finalAuthorId, this.signupCode);
-        console.log('⬆ New image uploaded');
-      } else if (!this.mediaToDeleteId && media?.file) {
-        await this.authorsService.updateMyImage(media.file, finalAuthorId, this.signupCode);
-        console.log('📤 New image uploaded (no old media existed)');
+        console.log('⬆ Image uploaded (API handles deletion of old media if exists)');
       }
     }
 
@@ -1305,25 +1333,16 @@ export class AddAuthor implements OnInit {
     }
 
     // Only update media if there are changes
+    // API will automatically delete old media if it exists, so we only need to POST
     if (hasMediaChange) {
       const media = this.mediaControl.value;
-      if (this.mediaToDeleteId && media?.file) {
-        await this.authorsService.removeImage(this.mediaToDeleteId);
-        console.log('🗑 Old image deleted');
-
+      if (media?.file) {
         await this.authorsService.updateMyImage(
           media.file,
           this.authorId as number,
           this.signupCode
         );
-        console.log('⬆ New image uploaded');
-      } else if (!this.mediaToDeleteId && media?.file) {
-        await this.authorsService.updateMyImage(
-          media.file,
-          this.authorId as number,
-          this.signupCode
-        );
-        console.log('📤 New image uploaded (no old media existed)');
+        console.log('⬆ Image uploaded (API handles deletion of old media if exists)');
       }
     }
 
@@ -1783,22 +1802,14 @@ export class AddAuthor implements OnInit {
       }
 
       // Save media with loader (pass signupCode if present)
+      // API will automatically delete old media if it exists, so we only need to POST
       const media = this.mediaControl.value;
-      if (finalAuthorId) {
-        if (this.mediaToDeleteId && media?.file) {
-          await this.authorsService.removeImage(this.mediaToDeleteId);
-          // Wrap media upload in loader to keep it active during upload
-          await this.loader.loadPromise(
-            this.authorsService.updateMyImage(media.file, finalAuthorId, this.signupCode),
-            'upload-media'
-          );
-        } else if (!this.mediaToDeleteId && media?.file) {
-          // Wrap media upload in loader to keep it active during upload
-          await this.loader.loadPromise(
-            this.authorsService.updateMyImage(media.file, finalAuthorId, this.signupCode),
-            'upload-media'
-          );
-        }
+      if (finalAuthorId && media?.file) {
+        // Wrap media upload in loader to keep it active during upload
+        await this.loader.loadPromise(
+          this.authorsService.updateMyImage(media.file, finalAuthorId, this.signupCode),
+          'upload-media'
+        );
       }
 
       // Save social media (order: basic details → media → social media)
