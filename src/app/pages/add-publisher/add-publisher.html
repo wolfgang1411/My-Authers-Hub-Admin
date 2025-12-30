@@ -346,6 +346,7 @@
     matButton="filled"
     class="!bg-primary !text-white"
     (click)="handleTabAction()"
+    [disabled]="isSaving()"
   >
     {{ getActionButtonText() }}
     <mat-icon>{{ getActionButtonIcon() }}</mat-icon>

@@ -149,6 +149,7 @@ export class AddAuthor implements OnInit {
   currentTabIndex = signal<number>(0);
   readonly TOTAL_TABS = 3; // Basic Details (with Social Media), Address, Bank Details
   ticketRaisedForTab = signal<{ [tabIndex: number]: boolean }>({}); // Track which tabs raised tickets
+  isSaving = signal<boolean>(false); // Loading state for button feedback
   // Total number of available social media platforms: FACEBOOK, TWITTER, INSTAGRAM, LINKEDIN, YOUTUBE, WEBSITE
   readonly TOTAL_SOCIAL_MEDIA_PLATFORMS = 6;
   isAllSelected = computed(() => {
@@ -1715,6 +1716,11 @@ export class AddAuthor implements OnInit {
 
   // Handle tab-specific save/next action
   async handleTabAction() {
+    // Prevent multiple clicks
+    if (this.isSaving()) {
+      return;
+    }
+
     const currentTab = this.currentTabIndex();
 
     // Validate current tab
@@ -1750,34 +1756,46 @@ export class AddAuthor implements OnInit {
       return;
     }
 
-    // Save current tab data - let services handle errors
-    let result: boolean | null = false;
-    switch (currentTab) {
-      case 0:
-        result = await this.saveBasicDetailsTab();
-        // Only move to next tab if:
-        // - result is false (direct update, proceed normally)
-        // - result is not null (null means no changes detected, don't proceed)
-        if (result === false) {
-          this.nextTab();
-        }
-        // If result is null, no changes detected - stay on current tab
-        // If result is true, navigation occurred - don't change tab
-        break;
-      case 1:
-        result = await this.saveAddressTab();
-        // Only move to next tab if result is false (direct update)
-        if (result === false) {
-          this.nextTab();
-        }
-        // If result is null, no changes detected - stay on current tab
-        // If result is true, navigation occurred - don't change tab
-        break;
-      case 2:
-        result = await this.saveBankDetailsTab();
-        // saveBankDetailsTab handles navigation (goBack() for tickets, or direct redirect)
-        // If result is null, no changes detected - stay on current tab
-        break;
+    // Set loading state immediately for user feedback
+    this.isSaving.set(true);
+
+    try {
+      // Save current tab data - let services handle errors
+      let result: boolean | null = false;
+      switch (currentTab) {
+        case 0:
+          result = await this.saveBasicDetailsTab();
+          // Only move to next tab if:
+          // - result is false (direct update, proceed normally)
+          // - result is not null (null means no changes detected, don't proceed)
+          if (result === false) {
+            this.nextTab();
+          }
+          // If result is null, no changes detected - stay on current tab
+          // If result is true, navigation occurred - don't change tab
+          break;
+        case 1:
+          result = await this.saveAddressTab();
+          // Only move to next tab if result is false (direct update)
+          if (result === false) {
+            this.nextTab();
+          }
+          // If result is null, no changes detected - stay on current tab
+          // If result is true, navigation occurred - don't change tab
+          break;
+        case 2:
+          result = await this.saveBankDetailsTab();
+          // saveBankDetailsTab handles navigation (goBack() for tickets, or direct redirect)
+          // If result is null, no changes detected - stay on current tab
+          break;
+      }
+    } catch (error) {
+      // Log error but don't handle it - service already handled it with Swal
+      // This ensures the method always completes and loading state is cleared
+      console.error('Error in handleTabAction:', error);
+    } finally {
+      // Always clear loading state
+      this.isSaving.set(false);
     }
   }
 
