@@ -872,7 +872,7 @@ export class AddPublisher {
     }
 
     if (this.signupCode) {
-      html = `You have successfully registered as publisher. Please login to continue.`;
+      html = this.translateService.instant('registeredAsPublisher') || 'You have been registered as a publisher. Please verify your email. A verification link has been sent to your email address.';
     }
 
     await Swal.fire({
@@ -2171,7 +2171,7 @@ export class AddPublisher {
         await Swal.fire({
           icon: 'success',
           title: this.translateService.instant('success') || 'Success',
-          text: this.translateService.instant('applicationSentForApproval') || 'Your application has been sent to admin for approval. Please check your email for verification.',
+          text: this.translateService.instant('applicationSentForApproval') || 'Your application has been sent for superadmin approval. Please verify your email in the meantime.',
           heightAuto: false,
         });
       } else {

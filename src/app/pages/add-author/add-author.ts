@@ -842,8 +842,7 @@ export class AddAuthor implements OnInit {
     let html = 'You have successfully created author';
     if (this.authorId) html = 'You have successfully updated author';
     if (this.signupCode)
-      html =
-        'You have successfully registered as author. Please login to continue';
+      html = this.translateService.instant('registeredAsAuthor') || 'You have been registered as an author. Please verify your email. A verification link has been sent to your email address.';
 
     await Swal.fire({
       title: 'Success',
@@ -2170,14 +2169,24 @@ export class AddAuthor implements OnInit {
         return updated;
       });
 
-      await Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: wasNewBank
-          ? 'Bank details created successfully'
-          : 'Bank details updated successfully',
-        heightAuto: false,
-      });
+      // Show different message for invite flow
+      if (this.signupCode) {
+        await Swal.fire({
+          icon: 'success',
+          title: this.translateService.instant('success') || 'Success',
+          text: this.translateService.instant('pleaseVerifyEmail') || 'Please verify your email.',
+          heightAuto: false,
+        });
+      } else {
+        await Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: wasNewBank
+            ? 'Bank details created successfully'
+            : 'Bank details updated successfully',
+          heightAuto: false,
+        });
+      }
 
       // Redirect after final save (only for direct updates, not tickets)
       if (this.signupCode) {
