@@ -279,6 +279,13 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/faq/faq').then((c) => c.FAQ),
   },
   {
+    path: 'email-verified',
+    loadComponent: () =>
+      import('./pages/email-verified/email-verified').then(
+        (c) => c.EmailVerified
+      ),
+  },
+  {
     path: 'invites',
     loadComponent: () =>
       import('./pages/invites/invites').then((c) => c.Invites),

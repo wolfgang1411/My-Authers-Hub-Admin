@@ -742,5 +742,18 @@
 "sharelinkcopied": "Share link copied to clipboard!",
 "linkvaliduntil": "Link valid until",
 "sharelink": "Share Link",
-"sendto" : "Send To"
+"sendto" : "Send To",
+"verification_error": "Verification Error",
+"go_to_login": "Go to Login",
+"email_verified_successfully": "Email Verified Successfully",
+"congratulations": "Congratulations",
+"email_verification_success_message": "Your email address has been successfully verified.",
+"awaiting_admin_approval": "Awaiting Admin Approval",
+"publisher_pending_approval_message": "Your publisher account is currently pending approval from our admin team. You will receive an email notification once your account has been reviewed and approved. This process typically takes 1-3 business days.",
+"ready_to_get_started": "Ready to Get Started",
+"author_ready_message": "Your author account is ready to use. You can now log in and start collaborating with publishers to bring your stories to life.",
+"account_verified": "Account Verified",
+"email_verified_generic_message": "Your email has been verified. You can now log in to access your account.",
+"continue_to_login": "Continue to Login",
+"approval_notification_message": "We'll notify you via email once your account is approved."
 }
