@@ -151,13 +151,31 @@ export class AddAuthor implements OnInit {
     // Disable "Add More" button only when all platforms are already added
     return this.socialMediaArray.length >= this.TOTAL_SOCIAL_MEDIA_PLATFORMS;
   });
-  canRaiseTicket = computed(() => {
-    if (!this.authorId || !this.authorDetails()) {
-      return true; // New author or no author details, can submit normally
+  /**
+   * Helper method to check if user can update directly (without tickets)
+   * Superadmins can always update directly
+   * Invite flow (signupCode present) can always update directly
+   * Publishers can update directly if status is Pending or Dormant
+   * New authors (no authorId) can always be created directly
+   */
+  private canUpdateDirectly(): boolean {
+    // Invite flow always allows direct updates
+    if (this.signupCode) {
+      return true;
     }
-    // Allow direct updates for Dormant and Pending authors (no tickets needed)
+    const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
+    if (isSuperAdmin) {
+      return true; // Superadmin can always update directly
+    }
+    if (!this.authorId) {
+      return true; // New author can always be created directly
+    }
     const status = this.authorDetails()?.status;
-    return status !== AuthorStatus.Pending && status !== AuthorStatus.Dormant;
+    return status === AuthorStatus.Pending || status === AuthorStatus.Dormant;
+  }
+
+  canRaiseTicket = computed(() => {
+    return !this.canUpdateDirectly();
   });
   bankInfo: any = null;
   verifying = false;
@@ -381,18 +399,78 @@ export class AddAuthor implements OnInit {
 
     this.bankOptions.set(this.bankDetailService.fetchBankOptions());
 
+    // Handle invite flow: fetch invite and check for existing author
     if (this.signupCode) {
-      const invite = await this.inviteService.findOne(this.signupCode);
-      this.authorFormGroup.controls.email.patchValue(invite.email);
-      this.authorFormGroup.controls.email.disable();
+      try {
+        const invite = await this.inviteService.findOne(this.signupCode);
+
+        // Prefill email from invite
+        this.authorFormGroup.controls.email.patchValue(invite.email);
+        this.authorFormGroup.controls.email.disable();
+
+        // Try to fetch existing author by invite code
+        // This allows resuming signup flow for any author status
+        const existingAuthor = await this.fetchAuthor();
+
+        if (existingAuthor) {
+          // Set authorId to enable update flow instead of create flow
+          this.authorId = existingAuthor.id;
+          this.authorDetails.set(existingAuthor);
+          this.isPrefilling = true;
+          this.prefillForm(existingAuthor);
+          this.isPrefilling = false;
+        }
+      } catch (error) {
+        // Invalid invite - error will be shown by service
+        console.error('Error fetching invite:', error);
+      }
     }
 
-    if (this.authorId) {
-      const response = await this.authorsService.getAuthorrById(this.authorId);
-      this.authorDetails.set(response);
-      this.isPrefilling = true;
-      this.prefillForm(response);
-      this.isPrefilling = false;
+    // Handle normal edit flow (when authorId is set and no signupCode)
+    // IMPORTANT: In invite flow, authorId might be set after finding existing author,
+    // but we should NOT fetch here - it's already handled in the invite flow above
+    if (this.authorId && !this.signupCode) {
+      const response = await this.fetchAuthor();
+      if (response) {
+        this.authorDetails.set(response);
+        this.isPrefilling = true;
+        this.prefillForm(response);
+        this.isPrefilling = false;
+      }
+    }
+  }
+
+  /**
+   * Centralized method to fetch author - handles all scenarios:
+   * 1. Invite flow: ALWAYS use findAuthorByInvite (uses /authors/by-invite/:signupCode)
+   * 2. Normal flow: Use getAuthorrById normally
+   * 
+   * @param id - Author ID (optional, only used for normal flow)
+   * @returns Author object or undefined if not found
+   */
+  private async fetchAuthor(id?: number): Promise<Author | undefined> {
+    try {
+      if (this.signupCode) {
+        // Invite flow: ALWAYS use the invite API endpoint
+        // This uses /authors/by-invite/:signupCode which works for any status
+        const author = await this.authorsService.findAuthorByInvite(this.signupCode);
+        if (author) {
+          return author;
+        }
+        // If no author found, return undefined (don't throw error)
+        return undefined;
+      } else {
+        // Normal flow - require authorId
+        const authorId = id || this.authorId;
+        if (!authorId) {
+          return undefined;
+        }
+        return await this.authorsService.getAuthorrById(authorId);
+      }
+    } catch (error) {
+      // Log error but don't throw - return undefined to allow graceful handling
+      console.error('Error fetching author:', error);
+      return undefined;
     }
   }
   get mediaControl() {
@@ -624,18 +702,48 @@ export class AddAuthor implements OnInit {
     }
   }
   async handleNewOrSuperAdminAuthorSubmission(authorData: Author) {
+    // Step 1: Create/Update Basic Details (Author info)
+    // Always pass signupCode if present (for invite flow)
     const response = (await this.authorsService.createAuthor(
       authorData as Author
     )) as Author;
-    this.authorId = response.id;
-    if (response && response.id) {
-      const authorAddressData = {
+
+    // Store authorId if it's a new author
+    const wasNewAuthor = !this.authorId;
+    const finalAuthorId = response?.id || this.authorId;
+    if (!this.authorId && response?.id) {
+      this.authorId = response.id;
+      // Update query params (only if no signupCode)
+      if (!this.signupCode) {
+        this.updateQueryParams({ authorId: response.id.toString() });
+      }
+
+      // Reload author details using fetchAuthor (handles invite flow)
+      const updatedAuthor = await this.fetchAuthor(response.id);
+      if (updatedAuthor) {
+        this.authorDetails.set(updatedAuthor);
+      }
+    }
+
+    if (response && finalAuthorId) {
+      // Step 2: Create/Update Address
+      // In invite flow, always use CREATE (remove id) but still prefill form
+      const addressPayload: any = {
         ...this.authorAddressDetails.value,
-        autherId: response.id,
+        autherId: finalAuthorId,
       };
+      if (this.signupCode) {
+        addressPayload.id = undefined; // Force CREATE
+        addressPayload.signupCode = this.signupCode;
+      } else {
+        const existingAddress = this.authorDetails()?.address?.[0];
+        addressPayload.id = existingAddress?.id;
+      }
       await this.addressService.createOrUpdateAddress(
-        authorAddressData as Address
+        addressPayload as Address
       );
+
+      // Step 3: Create/Update Bank Details
       const bankDetailsValue = { ...this.authorBankDetails.value };
       // Remove gstNumber if empty, otherwise keep it
       if (
@@ -645,25 +753,41 @@ export class AddAuthor implements OnInit {
       ) {
         delete bankDetailsValue.gstNumber;
       }
-      const authorBankData = {
+      // In invite flow, always use CREATE (remove id) but still prefill form
+      const bankPayload: any = {
         ...bankDetailsValue,
-        autherId: response.id,
+        autherId: finalAuthorId,
       };
+      if (this.signupCode) {
+        bankPayload.id = undefined; // Force CREATE
+        bankPayload.signupCode = this.signupCode;
+      } else {
+        const existingBank = this.authorDetails()?.bankDetails?.[0];
+        bankPayload.id = existingBank?.id;
+      }
       await this.bankDetailService.createOrUpdateBankDetail(
-        authorBankData as createBankDetails
+        bankPayload as createBankDetails
       );
 
+      // Step 4: Create/Update Social Media
       const socialMediaData = this.socialMediaArray.controls
         .map((group) => {
           const value = group.value;
-          return {
+          const socialMediaItem: any = {
             type: value.type,
             url: value.url,
             publisherId: value.publisherId,
             name: value.name,
-            autherId: response.id,
-            id: value.id && typeof value.id === 'number' ? value.id : undefined, // Explicitly include id only if it's a valid number
+            autherId: finalAuthorId,
           };
+          // In invite flow, always use CREATE (remove id) and add signupCode
+          if (this.signupCode) {
+            socialMediaItem.id = undefined;
+            socialMediaItem.signupCode = this.signupCode;
+          } else {
+            socialMediaItem.id = value.id && typeof value.id === 'number' ? value.id : undefined;
+          }
+          return socialMediaItem;
         })
         .filter((item) => item.type && item.url?.trim());
 
@@ -672,15 +796,17 @@ export class AddAuthor implements OnInit {
           socialMediaData as socialMediaGroup[]
         );
       }
+
+      // Step 5: Upload Media (pass signupCode if present)
       const media = this.mediaControl.value;
       if (this.mediaToDeleteId && media?.file) {
         await this.authorsService.removeImage(this.mediaToDeleteId);
         console.log('🗑 Old image deleted');
 
-        await this.authorsService.updateMyImage(media.file, response.id);
+        await this.authorsService.updateMyImage(media.file, finalAuthorId, this.signupCode);
         console.log('⬆ New image uploaded');
       } else if (!this.mediaToDeleteId && media?.file) {
-        await this.authorsService.updateMyImage(media.file, response.id);
+        await this.authorsService.updateMyImage(media.file, finalAuthorId, this.signupCode);
         console.log('📤 New image uploaded (no old media existed)');
       }
     }
@@ -901,10 +1027,10 @@ export class AddAuthor implements OnInit {
     let existingAuthor = this.authorDetails();
     if (!existingAuthor && this.authorId) {
       try {
-        existingAuthor = await this.authorsService.getAuthorrById(
-          this.authorId
-        );
-        this.authorDetails.set(existingAuthor);
+        existingAuthor = await this.fetchAuthor(this.authorId);
+        if (existingAuthor) {
+          this.authorDetails.set(existingAuthor);
+        }
       } catch (error) {
         // Error handled by service - fall back to current behavior if fetch fails
         existingAuthor = undefined;
@@ -1187,13 +1313,15 @@ export class AddAuthor implements OnInit {
 
         await this.authorsService.updateMyImage(
           media.file,
-          this.authorId as number
+          this.authorId as number,
+          this.signupCode
         );
         console.log('⬆ New image uploaded');
       } else if (!this.mediaToDeleteId && media?.file) {
         await this.authorsService.updateMyImage(
           media.file,
-          this.authorId as number
+          this.authorId as number,
+          this.signupCode
         );
         console.log('📤 New image uploaded (no old media existed)');
       }
@@ -1296,10 +1424,12 @@ export class AddAuthor implements OnInit {
 
       const authorData = {
         ...this.authorFormGroup.value,
-        id: this.authorId || this.authorFormGroup.value.id,
+        // Only include id if no signupCode (allow PATCH/update)
+        id: !this.signupCode ? (this.authorId || this.authorFormGroup.value.id) : undefined,
         email: this.authorFormGroup.controls.email.value,
         phoneNumber:
           this.authorFormGroup.controls.phoneNumber.value?.replaceAll(' ', ''),
+        signupCode: this.signupCode || undefined,
       } as Author;
 
       let updateFlowResult = {
@@ -1310,20 +1440,12 @@ export class AddAuthor implements OnInit {
       // Check if author is editing their own profile
       const isEditingSelf = this.authorId === this.loggedInUser()?.auther?.id;
 
-      if (this.loggedInUser()?.accessLevel === 'SUPERADMIN' || !this.authorId) {
-        // Superadmin or creating new author → direct save
+      if (this.loggedInUser()?.accessLevel === 'SUPERADMIN' || !this.authorId || this.canUpdateDirectly()) {
+        // Superadmin, new author, or can update directly → direct save
         await this.handleNewOrSuperAdminAuthorSubmission(authorData);
       } else {
-        // If author status is Dormant or Pending, allow direct update (like titles)
-        // Otherwise, raise update ticket
-        if (
-          this.authorDetails()?.status === AuthorStatus.Pending ||
-          this.authorDetails()?.status === AuthorStatus.Dormant
-        ) {
-          await this.handleNewOrSuperAdminAuthorSubmission(authorData);
-        } else {
-          updateFlowResult = await this.handleAuthorUpdateFlow(authorData);
-        }
+        // Existing active author being edited → raise tickets
+        updateFlowResult = await this.handleAuthorUpdateFlow(authorData);
       }
 
       // Redirect based on whether tickets were raised
@@ -1408,12 +1530,7 @@ export class AddAuthor implements OnInit {
   // Get action button text for current tab (combines action + navigation)
   getActionButtonText(): string {
     const currentTab = this.currentTabIndex();
-    const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
-    const status = this.authorDetails()?.status;
-    const canUpdateDirectly =
-      isSuperAdmin ||
-      status === AuthorStatus.Pending ||
-      status === AuthorStatus.Dormant;
+    const canUpdateDirectly = this.canUpdateDirectly();
 
     let actionText = '';
     let navigationText = '';
@@ -1502,12 +1619,7 @@ export class AddAuthor implements OnInit {
   // Get action button icon
   getActionButtonIcon(): string {
     const currentTab = this.currentTabIndex();
-    const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
-    const status = this.authorDetails()?.status;
-    const canUpdateDirectly =
-      isSuperAdmin ||
-      status === AuthorStatus.Pending ||
-      status === AuthorStatus.Dormant;
+    const canUpdateDirectly = this.canUpdateDirectly();
 
     // Check if we should raise a ticket for current tab
     let shouldRaiseTicket = false;
@@ -1637,23 +1749,17 @@ export class AddAuthor implements OnInit {
   async saveBasicDetailsTab() {
     const authorData = {
       ...this.authorFormGroup.value,
-      id: this.authorId || this.authorFormGroup.value.id,
+      // Only include id if no signupCode (allow PATCH/update)
+      id: !this.signupCode ? (this.authorId || this.authorFormGroup.value.id) : undefined,
       email: this.authorFormGroup.controls.email.value,
       phoneNumber: this.authorFormGroup.controls.phoneNumber.value?.replaceAll(
         ' ',
         ''
       ),
+      signupCode: this.signupCode || undefined,
     } as Author;
 
-    const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
-    const status = this.authorDetails()?.status;
-    const canUpdateDirectly =
-      !this.authorId ||
-      isSuperAdmin ||
-      status === AuthorStatus.Pending ||
-      status === AuthorStatus.Dormant;
-
-    if (canUpdateDirectly) {
+    if (this.canUpdateDirectly()) {
       // Create new author or update directly
       const response = (await this.authorsService.createAuthor(
         authorData as Author
@@ -1664,30 +1770,32 @@ export class AddAuthor implements OnInit {
       const finalAuthorId = response?.id || this.authorId;
       if (!this.authorId && response?.id) {
         this.authorId = response.id;
-        // Update query params
-        this.updateQueryParams({ authorId: response.id.toString() });
+        // Update query params (only if no signupCode)
+        if (!this.signupCode) {
+          this.updateQueryParams({ authorId: response.id.toString() });
+        }
 
-        // Reload author details
-        const updatedAuthor = await this.authorsService.getAuthorrById(
-          response.id
-        );
-        this.authorDetails.set(updatedAuthor);
+        // Reload author details using fetchAuthor (handles invite flow)
+        const updatedAuthor = await this.fetchAuthor(response.id);
+        if (updatedAuthor) {
+          this.authorDetails.set(updatedAuthor);
+        }
       }
 
-      // Save media with loader
+      // Save media with loader (pass signupCode if present)
       const media = this.mediaControl.value;
       if (finalAuthorId) {
         if (this.mediaToDeleteId && media?.file) {
           await this.authorsService.removeImage(this.mediaToDeleteId);
           // Wrap media upload in loader to keep it active during upload
           await this.loader.loadPromise(
-            this.authorsService.updateMyImage(media.file, finalAuthorId),
+            this.authorsService.updateMyImage(media.file, finalAuthorId, this.signupCode),
             'upload-media'
           );
         } else if (!this.mediaToDeleteId && media?.file) {
           // Wrap media upload in loader to keep it active during upload
           await this.loader.loadPromise(
-            this.authorsService.updateMyImage(media.file, finalAuthorId),
+            this.authorsService.updateMyImage(media.file, finalAuthorId, this.signupCode),
             'upload-media'
           );
         }
@@ -1698,15 +1806,22 @@ export class AddAuthor implements OnInit {
         const socialMediaData = this.socialMediaArray.controls
           .map((group) => {
             const value = group.value;
-            return {
+            const socialMediaItem: any = {
               type: value.type,
               url: value.url,
               publisherId: value.publisherId,
               name: value.name,
               autherId: finalAuthorId,
-              id:
-                value.id && typeof value.id === 'number' ? value.id : undefined, // Explicitly include id only if it's a valid number
             };
+            // In invite flow, always use CREATE (remove id) and add signupCode
+            if (this.signupCode) {
+              socialMediaItem.id = undefined;
+              socialMediaItem.signupCode = this.signupCode;
+            } else {
+              socialMediaItem.id =
+                value.id && typeof value.id === 'number' ? value.id : undefined;
+            }
+            return socialMediaItem;
           })
           .filter((item) => item.type && item.url?.trim());
 
@@ -1715,31 +1830,31 @@ export class AddAuthor implements OnInit {
             socialMediaData as socialMediaGroup[]
           );
 
-          // Reload author details to get updated social media with IDs
+          // Reload author details to get updated social media with IDs (use fetchAuthor to handle invite flow)
           // This ensures form state is preserved for PATCH operations later
-          const updatedAuthor = await this.authorsService.getAuthorrById(
-            finalAuthorId
-          );
-          this.authorDetails.set(updatedAuthor);
+          const updatedAuthor = await this.fetchAuthor(finalAuthorId);
+          if (updatedAuthor) {
+            this.authorDetails.set(updatedAuthor);
 
-          // Update form with IDs from saved social media to enable PATCH on next save
-          const socialMediaArray = this.authorSocialMediaGroup.get(
-            'socialMedia'
-          ) as FormArray<FormGroup<SocialMediaGroupType>>;
-          const savedSocialMedia = updatedAuthor.socialMedias || [];
+            // Update form with IDs from saved social media to enable PATCH on next save
+            const socialMediaArray = this.authorSocialMediaGroup.get(
+              'socialMedia'
+            ) as FormArray<FormGroup<SocialMediaGroupType>>;
+            const savedSocialMedia = updatedAuthor.socialMedias || [];
 
-          // Match and update IDs in form controls
-          socialMediaArray.controls.forEach((control, index) => {
-            const formValue = control.value;
-            const savedItem = savedSocialMedia.find(
-              (saved) =>
-                saved.type === formValue.type &&
-                saved.url?.trim() === formValue.url?.trim()
-            );
-            if (savedItem?.id) {
-              control.patchValue({ id: savedItem.id });
-            }
-          });
+            // Match and update IDs in form controls
+            socialMediaArray.controls.forEach((control, index) => {
+              const formValue = control.value;
+              const savedItem = savedSocialMedia.find(
+                (saved) =>
+                  saved.type === formValue.type &&
+                  saved.url?.trim() === formValue.url?.trim()
+              );
+              if (savedItem?.id) {
+                control.patchValue({ id: savedItem.id });
+              }
+            });
+          }
         }
       }
 
@@ -1841,31 +1956,31 @@ export class AddAuthor implements OnInit {
               socialMediaData as socialMediaGroup[]
             );
 
-            // Reload author details to get updated social media with IDs
+            // Reload author details to get updated social media with IDs (use fetchAuthor to handle invite flow)
             // This ensures form state is preserved for PATCH operations later
-            const updatedAuthor = await this.authorsService.getAuthorrById(
-              this.authorId
-            );
-            this.authorDetails.set(updatedAuthor);
+            const updatedAuthor = await this.fetchAuthor(this.authorId);
+            if (updatedAuthor) {
+              this.authorDetails.set(updatedAuthor);
 
-            // Update form with IDs from saved social media to enable PATCH on next save
-            const socialMediaArray = this.authorSocialMediaGroup.get(
-              'socialMedia'
-            ) as FormArray<FormGroup<SocialMediaGroupType>>;
-            const savedSocialMedia = updatedAuthor.socialMedias || [];
+              // Update form with IDs from saved social media to enable PATCH on next save
+              const socialMediaArray = this.authorSocialMediaGroup.get(
+                'socialMedia'
+              ) as FormArray<FormGroup<SocialMediaGroupType>>;
+              const savedSocialMedia = updatedAuthor.socialMedias || [];
 
-            // Match and update IDs in form controls
-            socialMediaArray.controls.forEach((control) => {
-              const formValue = control.value;
-              const savedItem = savedSocialMedia.find(
-                (saved) =>
-                  saved.type === formValue.type &&
-                  saved.url?.trim() === formValue.url?.trim()
-              );
-              if (savedItem?.id) {
-                control.patchValue({ id: savedItem.id });
-              }
-            });
+              // Match and update IDs in form controls
+              socialMediaArray.controls.forEach((control) => {
+                const formValue = control.value;
+                const savedItem = savedSocialMedia.find(
+                  (saved) =>
+                    saved.type === formValue.type &&
+                    saved.url?.trim() === formValue.url?.trim()
+                );
+                if (savedItem?.id) {
+                  control.patchValue({ id: savedItem.id });
+                }
+              });
+            }
           }
         }
         // Go back instead of proceeding to next tab when in ticket mode
@@ -1890,13 +2005,13 @@ export class AddAuthor implements OnInit {
     // For new authors, authorId should be set from tab 0
     // But if somehow it's not set, try to get it from query params
     if (!this.authorId) {
-      const queryAuthorId = this.route.snapshot.queryParams['authorId'];
-      if (queryAuthorId) {
-        this.authorId = Number(queryAuthorId);
-        const updatedAuthor = await this.authorsService.getAuthorrById(
-          this.authorId
-        );
-        this.authorDetails.set(updatedAuthor);
+        const queryAuthorId = this.route.snapshot.queryParams['authorId'];
+        if (queryAuthorId) {
+          this.authorId = Number(queryAuthorId);
+          const updatedAuthor = await this.fetchAuthor(this.authorId);
+          if (updatedAuthor) {
+            this.authorDetails.set(updatedAuthor);
+          }
       } else {
         await Swal.fire({
           title: 'Error',
@@ -1909,14 +2024,7 @@ export class AddAuthor implements OnInit {
       }
     }
 
-    const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
-    const status = this.authorDetails()?.status;
-    const canUpdateDirectly =
-      isSuperAdmin ||
-      status === AuthorStatus.Pending ||
-      status === AuthorStatus.Dormant;
-
-    if (canUpdateDirectly) {
+    if (this.canUpdateDirectly()) {
       // Create or update address directly
       const existingAuthor = this.authorDetails();
       const existingAddress = existingAuthor?.address?.[0];
@@ -1928,11 +2036,11 @@ export class AddAuthor implements OnInit {
         autherId: this.authorId,
       } as Address);
 
-      // Reload author details to get updated address
-      const updatedAuthor = await this.authorsService.getAuthorrById(
-        this.authorId
-      );
-      this.authorDetails.set(updatedAuthor);
+      // Reload author details to get updated address (use fetchAuthor to handle invite flow)
+      const updatedAuthor = await this.fetchAuthor(this.authorId);
+      if (updatedAuthor) {
+        this.authorDetails.set(updatedAuthor);
+      }
 
       // Clear ticket flag for this tab on successful direct update
       this.ticketRaisedForTab.update((prev) => {
@@ -1991,13 +2099,13 @@ export class AddAuthor implements OnInit {
     // For new authors, authorId should be set from tab 0
     // But if somehow it's not set, try to get it from query params
     if (!this.authorId) {
-      const queryAuthorId = this.route.snapshot.queryParams['authorId'];
-      if (queryAuthorId) {
-        this.authorId = Number(queryAuthorId);
-        const updatedAuthor = await this.authorsService.getAuthorrById(
-          this.authorId
-        );
-        this.authorDetails.set(updatedAuthor);
+        const queryAuthorId = this.route.snapshot.queryParams['authorId'];
+        if (queryAuthorId) {
+          this.authorId = Number(queryAuthorId);
+          const updatedAuthor = await this.fetchAuthor(this.authorId);
+          if (updatedAuthor) {
+            this.authorDetails.set(updatedAuthor);
+          }
       } else {
         await Swal.fire({
           title: 'Error',
@@ -2010,14 +2118,7 @@ export class AddAuthor implements OnInit {
       }
     }
 
-    const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
-    const status = this.authorDetails()?.status;
-    const canUpdateDirectly =
-      isSuperAdmin ||
-      status === AuthorStatus.Pending ||
-      status === AuthorStatus.Dormant;
-
-    if (canUpdateDirectly) {
+    if (this.canUpdateDirectly()) {
       // Create or update bank details directly
       const existingAuthor = this.authorDetails();
       const existingBank = existingAuthor?.bankDetails?.[0];
@@ -2031,17 +2132,25 @@ export class AddAuthor implements OnInit {
         delete bankDetailsValue.gstNumber;
       }
 
-      await this.bankDetailService.createOrUpdateBankDetail({
+      // In invite flow, always use CREATE (remove id) but still prefill form
+      const bankPayload: any = {
         ...bankDetailsValue,
-        id: existingBank?.id,
         autherId: this.authorId,
-      } as createBankDetails);
+      };
+      if (this.signupCode) {
+        bankPayload.id = undefined; // Force CREATE
+        bankPayload.signupCode = this.signupCode;
+      } else {
+        bankPayload.id = existingBank?.id;
+      }
 
-      // Reload author details to get updated bank details
-      const updatedAuthor = await this.authorsService.getAuthorrById(
-        this.authorId
-      );
-      this.authorDetails.set(updatedAuthor);
+      await this.bankDetailService.createOrUpdateBankDetail(bankPayload as createBankDetails);
+
+      // Reload author details to get updated bank details (use fetchAuthor to handle invite flow)
+      const updatedAuthor = await this.fetchAuthor(this.authorId);
+      if (updatedAuthor) {
+        this.authorDetails.set(updatedAuthor);
+      }
 
       // Clear ticket flag for this tab on successful direct update
       this.ticketRaisedForTab.update((prev) => {

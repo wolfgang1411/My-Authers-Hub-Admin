@@ -233,6 +233,15 @@
         <mat-icon class="!text-white">lock_reset</mat-icon>
       </button>
       } @if(element.status === AuthorStatus.Active &&
+      element.user?.isEmailVerified === false) {
+      <button
+        class="!bg-yellow-500"
+        mat-icon-button
+        [appTippyTooltip]="'Email verification pending' | translate"
+      >
+        <mat-icon class="!text-white">help</mat-icon>
+      </button>
+      } @if(element.status === AuthorStatus.Active &&
       element.user?.isEmailVerified !== false) {
       <button
         class="!bg-accent active:bg-accent/60"

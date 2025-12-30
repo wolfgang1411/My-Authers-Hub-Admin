@@ -885,10 +885,15 @@ export class AddPublisher {
   /**
    * Helper method to check if user can update directly (without tickets)
    * Superadmins can always update directly
+   * Invite flow (signupCode present) can always update directly
    * Publishers can update directly if status is Pending or Dormant
    * New publishers (no publisherId) can always be created directly
    */
   private canUpdateDirectly(): boolean {
+    // Invite flow always allows direct updates
+    if (this.signupCode) {
+      return true;
+    }
     const isSuperAdmin = this.loggedInUser()?.accessLevel === 'SUPERADMIN';
     if (isSuperAdmin) {
       return true; // Superadmin can always update directly

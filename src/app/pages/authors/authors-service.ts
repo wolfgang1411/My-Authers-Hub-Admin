@@ -77,6 +77,19 @@ export class AuthorsService {
     }
   }
 
+  async findAuthorByInvite(signupCode: string): Promise<Author | null> {
+    try {
+      const author = await this.loader.loadPromise(
+        this.server.get<Author | null>(`authors/by-invite/${signupCode}`)
+      );
+      // Return null if no author found (valid for new invites)
+      return author || null;
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
   async createAuthor(authorData: Author): Promise<Author> {
     try {
       return await this.loader.loadPromise(
@@ -128,20 +141,26 @@ export class AuthorsService {
       throw error;
     }
   }
-  uploadAuthorImage(
+
+  async uploadAuthorImage(
     file: File,
-    authorId: number
+    authorId: number,
+    signupCode?: string
   ): Promise<{ id: number; url: string }> {
     return new Promise(async (resolve, reject) => {
       try {
         const { name } = await this.s3upload.uploadMedia(file);
+        const payload: any = {
+          keyname: name,
+          mime: file.type,
+          type: AuthorMediaType.IMAGE,
+        };
+        if (signupCode) {
+          payload.signupCode = signupCode;
+        }
         const media = await this.server.post<Media>(
           `author-media/${authorId}/medias`,
-          {
-            keyname: name,
-            mime: file.type,
-            type: AuthorMediaType.IMAGE,
-          }
+          payload
         );
         resolve(media);
       } catch (error) {
@@ -150,15 +169,17 @@ export class AuthorsService {
       }
     });
   }
-  async updateMyImage(file: File, authorId: number) {
+
+  async updateMyImage(file: File, authorId: number, signupCode?: string) {
     try {
-      const media = await this.uploadAuthorImage(file, authorId);
+      const media = await this.uploadAuthorImage(file, authorId, signupCode);
       return media;
     } catch (error) {
       this.logger.logError(error);
       throw error;
     }
   }
+
   async removeImage(mediaId: number) {
     try {
       return await this.loader.loadPromise(
