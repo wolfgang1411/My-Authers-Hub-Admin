@@ -24,3 +24,4 @@ export * from './Platform';
 export * from './UpdateTicket';
 export * from './Order';
 export * from './Invite';
+export * from './SEO';

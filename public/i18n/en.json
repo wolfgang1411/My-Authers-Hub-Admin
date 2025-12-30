@@ -758,6 +758,66 @@
 "author_ready_message": "Your author account is ready to use. You can now log in and start collaborating with publishers to bring your stories to life.",
 "account_verified": "Account Verified",
 "email_verified_generic_message": "Your email has been verified. You can now log in to access your account.",
-"continue_to_login": "Continue to Login",
-"approval_notification_message": "We'll notify you via email once your account is approved."
+  "continue_to_login": "Continue to Login",
+  "approval_notification_message": "We'll notify you via email once your account is approved.",
+  "seo": {
+    "defaultTitle": "My Authors Hub",
+    "defaultDescription": "Manage your publishing platform",
+    "dashboard": {
+      "title": "Dashboard",
+      "description": "Manage your authors hub dashboard"
+    },
+    "login": {
+      "title": "Login - My Authors Hub",
+      "description": "Login to your My Authors Hub account to manage your publishing platform"
+    },
+    "contact": {
+      "title": "Contact Us - My Authors Hub",
+      "description": "Get in touch with My Authors Hub team. We are here to help you with your publishing needs."
+    },
+    "faq": {
+      "title": "Frequently Asked Questions - My Authors Hub",
+      "description": "Find answers to common questions about My Authors Hub publishing platform"
+    },
+    "terms": {
+      "title": "Terms and Conditions - My Authors Hub",
+      "description": "Read our terms and conditions for using My Authors Hub"
+    },
+    "userPolicies": {
+      "title": "User Policies - My Authors Hub",
+      "description": "Review our user policies and guidelines for My Authors Hub"
+    },
+    "forgotPassword": {
+      "title": "Forgot Password - My Authors Hub",
+      "description": "Reset your My Authors Hub account password"
+    },
+    "verifyPassword": {
+      "title": "Verify Password Reset - My Authors Hub",
+      "description": "Verify your password reset code"
+    },
+    "authorInvite": {
+      "title": "Author Invitation - My Authors Hub",
+      "description": "Join My Authors Hub as an author"
+    },
+    "publisherInvite": {
+      "title": "Publisher Invitation - My Authors Hub",
+      "description": "Join My Authors Hub as a publisher"
+    },
+    "sharedTitleView": {
+      "title": "Book Title - My Authors Hub",
+      "description": "View book details on My Authors Hub"
+    },
+    "sharedAuthorView": {
+      "title": "Author Profile - My Authors Hub",
+      "description": "View author profile and published works"
+    },
+    "sharedPublisherView": {
+      "title": "Publisher Profile - My Authors Hub",
+      "description": "View publisher profile and published titles"
+    },
+    "emailVerified": {
+      "title": "Email Verified - My Authors Hub",
+      "description": "Your email has been successfully verified"
+    }
+  }
 }

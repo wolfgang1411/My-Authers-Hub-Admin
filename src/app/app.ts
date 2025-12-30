@@ -1,10 +1,11 @@
-import { Component, effect, signal } from '@angular/core';
+import { Component, effect, signal, inject } from '@angular/core';
 import {
   ActivatedRoute,
   NavigationEnd,
   Router,
   RouterModule,
 } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { AuthService } from './services/auth';
 import { UserService } from './services/user';
 import { Layout } from './components/common/layout/layout';
@@ -14,6 +15,8 @@ import { Loader } from './components/loader/loader';
 import { NotificationService } from './services/notifications';
 import { StaticValuesService } from './services/static-values';
 import { PlatformService } from './services/platform';
+import { SEOService } from './services/seo';
+import { RouteSEOData } from './interfaces/SEO';
 
 @Component({
   selector: 'app-root',
@@ -23,11 +26,14 @@ import { PlatformService } from './services/platform';
 })
 export class App {
   title = 'site';
+  private readonly seoService = inject(SEOService);
+  private readonly router = inject(Router);
+  private readonly activatedRoute = inject(ActivatedRoute);
+
   constructor(
     private authService: AuthService,
     private userService: UserService,
     private layoutService: LayoutService,
-    router: Router,
     private notificationService: NotificationService,
     private staticValuesService: StaticValuesService,
     private platformService: PlatformService
@@ -35,13 +41,13 @@ export class App {
     // hydrateToken is now called after auth is initialized synchronously
     // This prevents guards from blocking navigation
     this.hydrateToken();
-    router.events.subscribe((ev) => {
-      if (ev instanceof NavigationEnd) {
-        this.setPageMeta(ev.url);
-        this.setHeaderVisibility(ev.url);
-        this.setSidebarVisibility(ev.url);
-      }
-    });
+    this.router.events
+      .pipe(filter((ev) => ev instanceof NavigationEnd))
+      .subscribe(() => {
+        this.setPageMeta();
+        this.setHeaderVisibility(this.router.url);
+        this.setSidebarVisibility(this.router.url);
+      });
   }
 
   ngOnInit(): void {}
@@ -99,7 +105,50 @@ export class App {
     }
   }
 
-  setPageMeta(url: string) {}
+  setPageMeta(): void {
+    let route = this.activatedRoute;
+    while (route.firstChild) {
+      route = route.firstChild;
+    }
+
+    const seoData = route.snapshot.data['seo'] as RouteSEOData | undefined;
+
+    if (seoData) {
+      const title = typeof seoData.title === 'function'
+        ? seoData.title(route.snapshot)
+        : seoData.title;
+
+      const description = seoData.description
+        ? typeof seoData.description === 'function'
+          ? seoData.description(route.snapshot)
+          : seoData.description
+        : undefined;
+
+      const canonicalUrl = seoData.canonicalUrl || this.router.url;
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+
+      this.seoService.updatePageSEO({
+        title,
+        description,
+        keywords: seoData.keywords,
+        ogTitle: title,
+        ogDescription: description,
+        ogImage: seoData.ogImage,
+        ogUrl: baseUrl ? `${baseUrl}${canonicalUrl}` : undefined,
+        ogType: seoData.ogType || 'website',
+        twitterCard: 'summary_large_image',
+        twitterTitle: title,
+        twitterDescription: description,
+        twitterImage: seoData.ogImage,
+        canonicalUrl,
+        noindex: seoData.noindex,
+        nofollow: seoData.nofollow,
+      });
+    } else {
+      // Default SEO for routes without configuration
+      this.seoService.setTitle('My Authors Hub');
+    }
+  }
 
   setHeaderVisibility(url: string) {
     const isAuthenticated = this.authService.isUserAuthenticated$();
