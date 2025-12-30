@@ -317,16 +317,18 @@ export class Publisher implements OnInit {
       Swal.fire({
         icon: 'success',
         title: this.translateService.instant('success') || 'Success',
-        text: this.translateService.instant('linkCopiedToClipboard') || 'Link copied to clipboard!',
-        timer: 2000,
-        showConfirmButton: false,
+        text: this.translateService.instant('linkCopiedToClipboard') || 'Share link has been copied to clipboard successfully!',
+        timer: 3000,
+        showConfirmButton: true,
+        confirmButtonText: this.translateService.instant('ok') || 'OK',
       });
     } catch (error) {
       console.error('Failed to copy link:', error);
       Swal.fire({
         icon: 'error',
         title: this.translateService.instant('error') || 'Error',
-        text: this.translateService.instant('failedToCopyLink') || 'Failed to copy link to clipboard',
+        text: this.translateService.instant('failedToCopyLink') || 'Failed to copy link to clipboard. Please try again.',
+        confirmButtonText: this.translateService.instant('ok') || 'OK',
       });
     }
   }
