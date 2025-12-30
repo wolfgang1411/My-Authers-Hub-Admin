@@ -9,6 +9,7 @@ import {
   PublisherStatus,
   PublishingPointCost,
   PublishingPoints,
+  SharedPublisherProfile,
 } from '../../interfaces';
 import { Pagination, PublishingType } from '../../interfaces';
 import { Invite } from '../../interfaces/Invite';
@@ -294,6 +295,16 @@ export class PublisherService {
       return await this.loader.loadPromise(
         this.server.delete(`publisher-media/medias/${mediaId}`)
       );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async getSharedProfile(id: number): Promise<SharedPublisherProfile> {
+    try {
+      // Public endpoint - call directly without loader
+      return await this.server.get<SharedPublisherProfile>(`publishers/${id}/shared`);
     } catch (error) {
       this.logger.logError(error);
       throw error;

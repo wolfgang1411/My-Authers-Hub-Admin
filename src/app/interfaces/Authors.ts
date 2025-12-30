@@ -54,3 +54,39 @@ export interface AuthorFilter {
   orderBy?: string;
   orderVal?: 'asc' | 'desc';
 }
+
+export interface SharedAuthorTitle {
+  id: number;
+  name: string;
+  shortDescription: string;
+  longDescription: string;
+  frontCoverUrl: string | null;
+  platformLinks: SharedPlatformLink[];
+}
+
+export interface SharedPlatformLink {
+  id: number;
+  platform: {
+    id: number;
+    name: string;
+    icon?: string;
+    isEbookPlatform: boolean;
+    isSuperAdminPricingOnly: boolean;
+    isInventoryPlatform: boolean;
+    isOtherPlatform: boolean;
+  };
+  distributionLink: string;
+}
+
+export interface SharedAuthorProfile {
+  id: number;
+  name: string;
+  username: string;
+  about: string;
+  medias: Media[];
+  socialMedias: socialMediaGroup[];
+  noOfTitles: number;
+  booksSold: number;
+  platformLinks: SharedPlatformLink[];
+  titles: SharedAuthorTitle[];
+}

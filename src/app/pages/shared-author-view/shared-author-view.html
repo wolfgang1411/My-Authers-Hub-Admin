@@ -1,0 +1,218 @@
+<div class="p-6 bg-[var(--surface)] min-h-screen rounded-2xl">
+  @if (isLoading()) {
+  <div class="flex justify-center items-center min-h-screen">
+    <div class="text-center">
+      <mat-icon class="text-6xl text-[var(--primary)] animate-spin"
+        >refresh</mat-icon
+      >
+      <p class="mt-4 text-[var(--text-primary)]">Loading...</p>
+    </div>
+  </div>
+  } @else if (error()) {
+  <div class="flex flex-col justify-center items-center min-h-screen">
+    <mat-icon class="text-6xl text-[var(--accent)]">error</mat-icon>
+    <p class="mt-4 text-[var(--text-primary)] text-lg">{{ error() }}</p>
+    @if (isLoggedIn()) {
+    <app-back class="mt-4"></app-back>
+    }
+  </div>
+  } @else if (authorData()) {
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    @if (isLoggedIn()) {
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-medium text-[var(--text-heading)]">
+        {{ authorData()?.name || "Author Profile" }}
+      </h1>
+      <app-back></app-back>
+    </div>
+    } @else {
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-[var(--text-heading)] mb-2">
+        {{ authorData()?.name || "Author Profile" }}
+      </h1>
+    </div>
+    }
+
+    <!-- Profile Header Card -->
+    <div
+      class="bg-white border border-[var(--primary-superlight)] rounded-2xl shadow-md p-6 mb-8 transition-all hover:shadow-lg"
+    >
+      <div class="flex flex-col md:flex-row items-start gap-6">
+        <!-- Profile Image -->
+        <div
+          class="w-32 h-32 rounded-full overflow-hidden shadow-lg border-2 border-[var(--primary-light)] bg-[var(--light-purple-bg)] flex items-center justify-center"
+        >
+          @if (getProfileImageUrl()) {
+          <img
+            [src]="getProfileImageUrl()! | safeUrl"
+            alt="{{ authorData()?.name }}"
+            class="w-full h-full object-cover"
+          />
+          } @else {
+          <mat-icon class="text-[var(--primary)] text-6xl"
+            >account_circle</mat-icon
+          >
+          }
+        </div>
+
+        <!-- Author Info -->
+        <div class="flex-1">
+          <h2 class="text-2xl font-bold text-[var(--primary)] mb-2 capitalize">
+            {{ authorData()?.name }}
+          </h2>
+          <p class="text-[var(--text-primary)] text-sm mb-4">
+            @{{ authorData()?.username }}
+          </p>
+          @if (authorData()?.about) {
+          <p class="text-[var(--text-primary)] text-base mb-4">
+            {{ authorData()?.about }}
+          </p>
+          }
+          <div class="flex flex-wrap gap-4 text-sm text-[var(--text-primary)]">
+            <div>
+              <span class="font-medium">Titles:</span>
+              {{ authorData()?.noOfTitles || 0 }}
+            </div>
+            <div>
+              <span class="font-medium">Books Sold:</span>
+              {{ authorData()?.booksSold || 0 }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Titles Section -->
+    @if (authorData()?.titles?.length) {
+    <div
+      class="bg-white border border-[var(--primary-superlight)] rounded-2xl shadow-md p-6 mb-8 transition-all hover:shadow-lg"
+    >
+      <h3
+        class="text-lg font-medium text-[var(--primary)] mb-6 flex items-center gap-2"
+      >
+        <mat-icon class="text-[var(--primary)]">menu_book</mat-icon>
+        Published Titles
+      </h3>
+      <div class="space-y-4">
+        @for (title of authorData()?.titles; track title.id) {
+        <div
+          class="group rounded-xl border border-[var(--primary-light)] bg-[var(--light-purple-bg)] shadow-sm hover:shadow-md transition-all overflow-hidden"
+        >
+          <div class="flex flex-col md:flex-row gap-4 p-4">
+            <!-- Cover Image -->
+            <div
+              class="w-full md:w-32 h-48 md:h-32 bg-gradient-to-br from-[var(--light-purple-bg)] to-[var(--primary-superlight)] flex items-center justify-center overflow-hidden rounded-lg flex-shrink-0"
+            >
+              @if (title.frontCoverUrl) {
+              <img
+                [src]="title.frontCoverUrl | safeUrl"
+                [alt]="title.name"
+                class="object-cover w-full h-full"
+              />
+              } @else {
+              <mat-icon class="text-[var(--primary)] text-4xl">book</mat-icon>
+              }
+            </div>
+
+            <!-- Title Info -->
+            <div class="flex-1 min-w-0">
+              <h4 class="font-semibold text-[var(--text-heading)] text-lg mb-2">
+                {{ title.name }}
+              </h4>
+              @if (title.shortDescription) {
+              <p class="text-sm text-[var(--text-primary)] line-clamp-2 mb-3">
+                {{ title.shortDescription }}
+              </p>
+              }
+              <!-- Platform Icons -->
+              @if (title.platformLinks && title.platformLinks.length) {
+              <div class="flex flex-wrap gap-2 items-center">
+                @for (platformLink of title.platformLinks; track
+                platformLink.id) {
+                <a
+                  [href]="platformLink.distributionLink"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  [matTooltip]="platformLink.platform.name.replace('_', ' ')"
+                  class="flex items-center justify-center w-8 h-8 rounded-lg bg-white border border-[var(--primary-light)] hover:bg-[var(--primary-superlight)] transition"
+                >
+                  @if (hasPlatformIconUrl(platformLink.platform.icon,
+                  platformLink.platform.name)) {
+                  <img
+                    [src]="
+                      getPlatformIconUrl(
+                        platformLink.platform.icon,
+                        platformLink.platform.name
+                      )! | safeUrl
+                    "
+                    [alt]="platformLink.platform.name"
+                    class="w-5 h-5 object-contain"
+                  />
+                  } @else {
+                  <mat-icon class="text-[var(--primary)] text-lg">{{
+                    getPlatformIcon(platformLink.platform.name)
+                  }}</mat-icon>
+                  }
+                </a>
+                }
+              </div>
+              }
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+    } @else {
+    <div
+      class="bg-white border border-[var(--primary-superlight)] rounded-2xl shadow-md p-6 mb-8"
+    >
+      <div
+        class="flex flex-col items-center justify-center py-12 bg-[var(--light-purple-bg)] rounded-xl border border-[var(--primary-light)]"
+      >
+        <mat-icon class="text-[var(--primary)] text-4xl mb-2"
+          >menu_book</mat-icon
+        >
+        <p class="text-[var(--text-primary)] text-sm">No titles available.</p>
+      </div>
+    </div>
+    }
+
+    <!-- Social Media Links -->
+    @if (authorData()?.socialMedias?.length) {
+    <div
+      class="bg-white border border-[var(--primary-superlight)] rounded-2xl shadow-md p-6 mb-8 transition-all hover:shadow-lg"
+    >
+      <h3
+        class="text-lg font-medium text-[var(--primary)] mb-6 flex items-center gap-2"
+      >
+        <mat-icon class="text-[var(--primary)]">share</mat-icon>
+        Social Media
+      </h3>
+      <div class="flex flex-wrap gap-3">
+        @for (social of authorData()?.socialMedias; track social.id) {
+        <a
+          [href]="social.url"
+          target="_blank"
+          rel="noopener noreferrer"
+          [matTooltip]="getSocialMediaLabel(social.type)"
+          class="flex items-center justify-center w-10 h-10 rounded-lg border border-[var(--primary-light)] hover:bg-[var(--light-purple-bg)] transition"
+        >
+          @if (hasSocialMediaIconUrl(social.type)) {
+          <img
+            [src]="getSocialMediaIconUrl(social.type)! | safeUrl"
+            [alt]="getSocialMediaLabel(social.type)"
+            class="w-6 h-6 object-contain"
+          />
+          } @else {
+          <mat-icon class="text-[var(--primary)]">language</mat-icon>
+          }
+        </a>
+        }
+      </div>
+    </div>
+    }
+  </div>
+  }
+</div>

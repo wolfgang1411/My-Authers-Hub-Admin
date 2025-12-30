@@ -2,6 +2,7 @@ import { Address } from './Address';
 import { Author } from './Authors';
 import { BankDetails } from './BankDetails';
 import { Media } from './Media';
+import { SharedPlatformLink } from './Authors';
 import { socialMediaGroup } from './SocialMedia';
 import {
   DistributionType,
@@ -92,4 +93,26 @@ export interface PublishingPointCost {
     type: PublisherType;
     isApprovedByPublisher: boolean;
   };
+}
+
+export interface SharedPublisherTitle {
+  id: number;
+  name: string;
+  shortDescription: string;
+  longDescription: string;
+  frontCoverUrl: string | null;
+  platformLinks: SharedPlatformLink[];
+}
+
+export interface SharedPublisherProfile {
+  id: number;
+  name: string;
+  username: string;
+  designation: string;
+  medias: Media[];
+  socialMedias: socialMediaGroup[];
+  noOfTitles: number;
+  noOfAuthors: number;
+  platformLinks: SharedPlatformLink[];
+  titles: SharedPublisherTitle[];
 }

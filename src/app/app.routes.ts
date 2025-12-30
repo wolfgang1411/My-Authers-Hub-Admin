@@ -247,6 +247,20 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'shared/authors/:id',
+    loadComponent: () =>
+      import('./pages/shared-author-view/shared-author-view').then(
+        (c) => c.SharedAuthorView
+      ),
+  },
+  {
+    path: 'shared/publishers/:id',
+    loadComponent: () =>
+      import('./pages/shared-publisher-view/shared-publisher-view').then(
+        (c) => c.SharedPublisherView
+      ),
+  },
+  {
     path: 'forgot',
     loadComponent: () =>
       import('./pages/forgot-password/forgot-password').then(

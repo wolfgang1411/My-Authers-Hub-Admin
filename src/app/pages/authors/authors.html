@@ -245,6 +245,14 @@
       } @if(element.status === AuthorStatus.Active &&
       element.user?.isEmailVerified !== false) {
       <button
+        class="!bg-green-600"
+        mat-icon-button
+        [appTippyTooltip]="'share' | translate"
+        (click)="onShareAuthor(element)"
+      >
+        <mat-icon class="!text-white">share</mat-icon>
+      </button>
+      <button
         class="!bg-accent active:bg-accent/60"
         mat-icon-button
         [appTippyTooltip]="'deactivate' | translate"

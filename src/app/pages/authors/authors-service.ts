@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Server } from '../../services/server';
 import { AuthorMediaType, Media, Pagination } from '../../interfaces';
-import { Author, AuthorFilter, AuthorStatus } from '../../interfaces';
+import { Author, AuthorFilter, AuthorStatus, SharedAuthorProfile } from '../../interfaces';
 import { Logger } from '../../services/logger';
 import { LoaderService } from '../../services/loader';
 import { S3Service } from 'src/app/services/s3';
@@ -185,6 +185,16 @@ export class AuthorsService {
       return await this.loader.loadPromise(
         this.server.delete(`author-media/medias/${mediaId}`)
       );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async getSharedProfile(id: number): Promise<SharedAuthorProfile> {
+    try {
+      // Public endpoint - call directly without loader
+      return await this.server.get<SharedAuthorProfile>(`authors/${id}/shared`);
     } catch (error) {
       this.logger.logError(error);
       throw error;

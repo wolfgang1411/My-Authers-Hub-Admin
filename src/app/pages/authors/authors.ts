@@ -295,6 +295,27 @@ export class Authors {
     return pages;
   }
 
+  async onShareAuthor(author: Author) {
+    try {
+      const shareUrl = `${window.location.origin}/shared/authors/${author.id}`;
+      await navigator.clipboard.writeText(shareUrl);
+      Swal.fire({
+        icon: 'success',
+        title: this.translateService.instant('success') || 'Success',
+        text: this.translateService.instant('linkCopiedToClipboard') || 'Link copied to clipboard!',
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      console.error('Failed to copy link:', error);
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error') || 'Error',
+        text: this.translateService.instant('failedToCopyLink') || 'Failed to copy link to clipboard',
+      });
+    }
+  }
+
   fetchTitlesByAuthor(authorId: number) {
     if (this.authorTitles()[authorId]) return;
 

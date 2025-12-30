@@ -181,6 +181,16 @@
         >
           <mat-icon class="!text-white">lock_reset</mat-icon>
         </button>
+        @if (publisher.status === PublisherStatus.Active) {
+        <button
+          mat-icon-button
+          class="!bg-green-600"
+          (click)="onSharePublisher(publisher)"
+          [title]="'share' | translate"
+        >
+          <mat-icon class="!text-white">share</mat-icon>
+        </button>
+        }
       </div>
     </div>
     }
@@ -295,6 +305,15 @@
         [appTippyTooltip]="'raiseaticket' | translate"
       >
         <mat-icon class="!text-white">support_agent</mat-icon>
+      </button>
+      } @if(element.status === PublisherStatus.Active) {
+      <button
+        class="!bg-green-600"
+        mat-icon-button
+        [appTippyTooltip]="'share' | translate"
+        (click)="onSharePublisher(element)"
+      >
+        <mat-icon class="!text-white">share</mat-icon>
       </button>
       } @if (element.status === PublisherStatus.Pending &&
       (loggedInUser()?.accessLevel ==='SUPERADMIN' ||

@@ -310,6 +310,27 @@ export class Publisher implements OnInit {
     return pages;
   }
 
+  async onSharePublisher(publisher: Publishers) {
+    try {
+      const shareUrl = `${window.location.origin}/shared/publishers/${publisher.id}`;
+      await navigator.clipboard.writeText(shareUrl);
+      Swal.fire({
+        icon: 'success',
+        title: this.translateService.instant('success') || 'Success',
+        text: this.translateService.instant('linkCopiedToClipboard') || 'Link copied to clipboard!',
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      console.error('Failed to copy link:', error);
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error') || 'Error',
+        text: this.translateService.instant('failedToCopyLink') || 'Failed to copy link to clipboard',
+      });
+    }
+  }
+
   onStatusChange(status: any) {
     this.filter.update((f) => ({ ...f, status, page: 1 }));
     this.clearCache();
