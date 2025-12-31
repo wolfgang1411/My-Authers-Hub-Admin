@@ -23,11 +23,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { SharedModule } from '../../../modules/shared/shared-module';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { TitleService } from '../../titles/title-service';
 import {
   Author,
   AuthorFormGroup,
+  AuthorStatus,
   Publishers,
+  PublisherStatus,
   PublishingType,
   TitleCategory,
   TitleDetailsFormGroup,
@@ -35,7 +38,7 @@ import {
   User,
 } from '../../../interfaces';
 import { MatRadioModule } from '@angular/material/radio';
-import { debounceTime, Subject, takeUntil } from 'rxjs';
+import { debounceTime, Subject, takeUntil, distinctUntilChanged } from 'rxjs';
 import { IsbnService } from '../../../services/isbn-service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -46,6 +49,12 @@ import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import { formatIsbn13 } from '../../../common/utils/isbn';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { IsbnFormatPipe } from 'src/app/pipes/isbn-format-pipe';
+import { AuthorsService } from '../../authors/authors-service';
+import { PublisherService } from '../../publisher/publisher-service';
+import {
+  SearchableSelect,
+  SearchableSelectOption,
+} from '../../../components/searchable-select/searchable-select';
 
 @Component({
   selector: 'app-temp-book-details',
@@ -55,12 +64,14 @@ import { IsbnFormatPipe } from 'src/app/pipes/isbn-format-pipe';
     SharedModule,
     MatSelectModule,
     MatInputModule,
+    MatAutocompleteModule,
     MatRadioModule,
     MatIconModule,
     MatProgressSpinnerModule,
     MatButtonModule,
     CKEditorModule,
     MatDatepickerModule,
+    SearchableSelect,
   ],
   providers: [IsbnFormatPipe],
   templateUrl: './temp-book-details.html',
@@ -69,11 +80,19 @@ import { IsbnFormatPipe } from 'src/app/pipes/isbn-format-pipe';
 export class TempBookDetails implements OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
+  // Searchable select options
+  authorOptions = signal<SearchableSelectOption[]>([]);
+  publisherOptions = signal<SearchableSelectOption[]>([]);
+  isSearchingAuthors = signal(false);
+  isSearchingPublishers = signal(false);
+
   constructor(
     private titleService: TitleService,
     private isbnService: IsbnService,
     private languageService: LanguageService,
-    private isbnFormatPipe: IsbnFormatPipe
+    private isbnFormatPipe: IsbnFormatPipe,
+    private authorService: AuthorsService,
+    private publisherService: PublisherService
   ) {
     this.languages = this.languageService.languages$;
 
@@ -99,6 +118,28 @@ export class TempBookDetails implements OnDestroy {
       if (languages && languages.length > 0 && !languageControl.value) {
         languageControl.setValue(languages[0]);
       }
+    });
+
+    // Convert authors to options format - MUST be in constructor for reactivity
+    effect(() => {
+      const authors = this.authorsList();
+      this.authorOptions.set(
+        authors.map((author) => ({
+          label: `${author.user?.firstName} ${author.user?.lastName} (${author.username}) (${author.id})`,
+          value: author.id,
+        }))
+      );
+    });
+
+    // Convert publishers to options format - MUST be in constructor for reactivity
+    effect(() => {
+      const publishers = this.publishers();
+      this.publisherOptions.set(
+        publishers.map((publisher) => ({
+          label: publisher.name,
+          value: publisher.id,
+        }))
+      );
     });
   }
   private initialized = signal(false);
@@ -241,6 +282,235 @@ export class TempBookDetails implements OnDestroy {
       this.triedGenerateEbookIsbn = false;
     });
   }
+
+  onAuthorSearch(searchTerm: string, index: number) {
+    // Call API for any search term (no minimum limit)
+    if (searchTerm && searchTerm.trim().length > 0) {
+      this.searchAuthors(searchTerm.trim(), index);
+    }
+  }
+
+  onPublisherSearch(searchTerm: string) {
+    // Call API for any search term (no minimum limit)
+    if (searchTerm && searchTerm.trim().length > 0) {
+      this.searchPublishers(searchTerm.trim());
+    }
+  }
+
+  onAuthorSelected(authorId: number | null | undefined, index: number) {
+    // Guard against null/undefined authorId to prevent API calls with null
+    if (authorId == null || authorId === undefined) {
+      return;
+    }
+
+    const authorCtrl = this.titleDetailsGroup().controls.authorIds.at(
+      index
+    ) as FormGroup<AuthorFormGroup>;
+    if (!authorCtrl) return;
+
+    authorCtrl.controls.id.setValue(authorId);
+
+    // Call onAuthorChange - it will handle finding the author
+    // If author is not in authorsList, onAuthorChange will fetch it
+    this.onAuthorChange(index, authorId);
+    this.onAuthorChangeChild.emit(authorId);
+  }
+
+  onPublisherSelected(publisherId: number) {
+    const pubGroup = this.titleDetailsGroup().controls.publisher;
+    if (!pubGroup) return;
+    pubGroup.controls.id.setValue(publisherId);
+    this.onPublisherChange(publisherId);
+    this.onPublisherChangeChild.emit(publisherId);
+  }
+
+  async searchAuthors(searchTerm: string, authorIndex?: number) {
+    try {
+      this.isSearchingAuthors.set(true);
+
+      // Always include currently selected authors to ensure they're visible
+      const currentAuthorIds = this.titleDetailsGroup()
+        .controls.authorIds.controls.map((ctrl) => ctrl.controls.id.value)
+        .filter((id): id is number => id != null && !isNaN(Number(id)));
+
+      // Get currently selected authors from the full list
+      let selectedAuthors = this.authorsList().filter((a) =>
+        currentAuthorIds.includes(a.id)
+      );
+
+      // For any selected author IDs not in authorsList, fetch them
+      const missingAuthorIds = currentAuthorIds.filter(
+        (id) => !selectedAuthors.find((a) => a.id === id)
+      );
+      if (missingAuthorIds.length > 0) {
+        const fetchedAuthors = await Promise.all(
+          missingAuthorIds.map((id) =>
+            this.authorService.getAuthorrById(id).catch(() => null)
+          )
+        );
+        const validFetchedAuthors = fetchedAuthors.filter(
+          (a): a is Author => a != null
+        );
+        selectedAuthors = [...selectedAuthors, ...validFetchedAuthors];
+      }
+
+      // Do server-side search
+      const { items } = await this.authorService.getAuthors({
+        status: AuthorStatus.Active,
+        searchStr: searchTerm,
+        itemsPerPage: 100,
+      });
+
+      // Combine search results with selected authors, removing duplicates
+      // Always put selected authors first to ensure they're visible
+      const combined = [...selectedAuthors];
+      items.forEach((author) => {
+        if (!combined.find((a) => a.id === author.id)) {
+          combined.push(author);
+        }
+      });
+
+      // Update options - always include selected values
+      this.authorOptions.set(
+        combined.map((author) => ({
+          label: `${author.user?.firstName} ${author.user?.lastName} (${author.username}) (${author.id})`,
+          value: author.id,
+        }))
+      );
+    } catch (error) {
+      console.error('Error searching authors:', error);
+      // On error, ensure selected authors are still in the list
+      const currentAuthorIds = this.titleDetailsGroup()
+        .controls.authorIds.controls.map((ctrl) => ctrl.controls.id.value)
+        .filter((id): id is number => id != null && !isNaN(Number(id)));
+
+      let selectedAuthors = this.authorsList().filter((a) =>
+        currentAuthorIds.includes(a.id)
+      );
+
+      // Try to fetch missing authors
+      const missingAuthorIds = currentAuthorIds.filter(
+        (id) => !selectedAuthors.find((a) => a.id === id)
+      );
+      if (missingAuthorIds.length > 0) {
+        const fetchedAuthors = await Promise.all(
+          missingAuthorIds.map((id) =>
+            this.authorService.getAuthorrById(id).catch(() => null)
+          )
+        );
+        const validFetchedAuthors = fetchedAuthors.filter(
+          (a): a is Author => a != null
+        );
+        selectedAuthors = [...selectedAuthors, ...validFetchedAuthors];
+      }
+
+      // Fall back to all authors + selected authors
+      const allAuthors = this.authorsList();
+      const combined = [...selectedAuthors];
+      allAuthors.forEach((author) => {
+        if (!combined.find((a) => a.id === author.id)) {
+          combined.push(author);
+        }
+      });
+
+      this.authorOptions.set(
+        combined.map((author) => ({
+          label: `${author.user?.firstName} ${author.user?.lastName} (${author.username}) (${author.id})`,
+          value: author.id,
+        }))
+      );
+    } finally {
+      this.isSearchingAuthors.set(false);
+    }
+  }
+
+  async searchPublishers(searchTerm: string) {
+    try {
+      this.isSearchingPublishers.set(true);
+
+      // Always include currently selected publisher to ensure it's visible
+      const currentPublisherId =
+        this.titleDetailsGroup().controls.publisher.controls.id.value;
+
+      // Get currently selected publisher from the full list
+      let selectedPublisher = currentPublisherId
+        ? this.publishers().find((p) => p.id === currentPublisherId)
+        : null;
+
+      // If publisher not in list, fetch it
+      if (currentPublisherId && !selectedPublisher) {
+        try {
+          selectedPublisher = await this.publisherService.getPublisherById(
+            currentPublisherId
+          );
+        } catch (error) {
+          console.error('Error fetching publisher:', error);
+        }
+      }
+
+      // Do server-side search
+      const { items } = await this.publisherService.getPublishers({
+        status: PublisherStatus.Active,
+        searchStr: searchTerm,
+        itemsPerPage: 100,
+      });
+
+      // Combine search results with selected publisher, removing duplicates
+      // Always put selected publisher first
+      const combined = selectedPublisher ? [selectedPublisher] : [];
+      items.forEach((publisher) => {
+        if (!combined.find((p) => p.id === publisher.id)) {
+          combined.push(publisher);
+        }
+      });
+
+      // Update options - always include selected value
+      this.publisherOptions.set(
+        combined.map((publisher) => ({
+          label: publisher.name,
+          value: publisher.id,
+        }))
+      );
+    } catch (error) {
+      console.error('Error searching publishers:', error);
+      // On error, ensure selected publisher is still in the list
+      const currentPublisherId =
+        this.titleDetailsGroup().controls.publisher.controls.id.value;
+
+      let selectedPublisher = currentPublisherId
+        ? this.publishers().find((p) => p.id === currentPublisherId)
+        : null;
+
+      // Try to fetch if not in list
+      if (currentPublisherId && !selectedPublisher) {
+        try {
+          selectedPublisher = await this.publisherService.getPublisherById(
+            currentPublisherId
+          );
+        } catch (error) {
+          console.error('Error fetching publisher:', error);
+        }
+      }
+
+      // Fall back to all publishers + selected publisher
+      const allPublishers = this.publishers();
+      const combined = selectedPublisher ? [selectedPublisher] : [];
+      allPublishers.forEach((publisher) => {
+        if (!combined.find((p) => p.id === publisher.id)) {
+          combined.push(publisher);
+        }
+      });
+
+      this.publisherOptions.set(
+        combined.map((publisher) => ({
+          label: publisher.name,
+          value: publisher.id,
+        }))
+      );
+    } finally {
+      this.isSearchingPublishers.set(false);
+    }
+  }
   onIsbnBlur(controlName: 'isbnPrint' | 'isbnEbook') {
     const control = this.titleDetailsGroup().get(controlName);
     if (!control?.value) return;
@@ -368,17 +638,82 @@ export class TempBookDetails implements OnDestroy {
     }
   }
 
-  onAuthorChange(index: number, authorId: number) {
-    const selected = this.authorsList().find((p) => p.id === authorId);
+  onAuthorChange(index: number, authorId: number | null | undefined) {
+    // Guard against null/undefined authorId
+    if (authorId == null || authorId === undefined) {
+      return;
+    }
+
     const authorCtrl = this.titleDetailsGroup().controls.authorIds.at(
       index
     ) as FormGroup<AuthorFormGroup>;
-    const keepSame = authorCtrl.controls.keepSame.value;
-    if (keepSame && selected) {
-      authorCtrl.controls.displayName.setValue(
-        `${selected.user?.firstName} ${selected.user?.lastName}(${selected.username})`
-      );
+    if (!authorCtrl) return;
+
+    // Try to find author in authorsList first
+    let selected = this.authorsList().find((a) => a.id === authorId);
+
+    // If not found, try to get it from the search results
+    // We need to fetch it since authorOptions only has label/value, not full author object
+    if (!selected) {
+      // Only fetch if authorId is valid (not null/undefined)
+      if (authorId != null && !isNaN(Number(authorId))) {
+        // Fetch the author by ID
+        this.authorService
+          .getAuthorrById(authorId)
+          .then((fetchedAuthor) => {
+            if (fetchedAuthor) {
+              const keepSame = authorCtrl.controls.keepSame.value ?? true; // Default to true if not set
+              // Always set display name if keepSame is true (default behavior, like publisher)
+              if (keepSame) {
+                const displayName = `${fetchedAuthor.user?.firstName} ${fetchedAuthor.user?.lastName}(${fetchedAuthor.username})`;
+                authorCtrl.controls.displayName.setValue(displayName);
+              }
+            }
+          })
+          .catch(() => {
+            // If fetch fails, try to construct display name from the option label
+            const option = this.authorOptions().find(
+              (opt) => opt.value === authorId
+            );
+            if (option) {
+              // Extract name from label format: "FirstName LastName (username) (id)"
+              const match = option.label.match(
+                /^(.+?)\s*\(([^)]+)\)\s*\((\d+)\)$/
+              );
+              if (match) {
+                const keepSame = authorCtrl.controls.keepSame.value ?? true; // Default to true if not set
+                if (keepSame) {
+                  const displayName = `${match[1]}(${match[2]})`;
+                  authorCtrl.controls.displayName.setValue(displayName);
+                }
+              }
+            }
+          });
+      }
+      return; // Exit early, will set display name in promise
     }
+
+    const keepSame = authorCtrl.controls.keepSame.value ?? true; // Default to true if not set
+    // Always set display name if keepSame is true (default behavior, like publisher)
+    if (keepSame && selected) {
+      const displayName = `${selected.user?.firstName} ${selected.user?.lastName}(${selected.username})`;
+      authorCtrl.controls.displayName.setValue(displayName);
+    }
+  }
+
+  getAuthorDisplayName(authorId: number | null | undefined): string {
+    if (!authorId) return '';
+    const author = this.authorsList().find((a: Author) => a.id === authorId);
+    if (!author) return '';
+    return `${author.user?.firstName} ${author.user?.lastName} (${author.username})`;
+  }
+
+  getPublisherDisplayName(publisherId: number | null | undefined): string {
+    if (!publisherId) return '';
+    const publisher = this.publishers().find(
+      (p: Publishers) => p.id === publisherId
+    );
+    return publisher?.name || '';
   }
 
   addAuthor(): void {

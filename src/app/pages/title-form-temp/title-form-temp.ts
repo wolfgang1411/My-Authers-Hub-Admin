@@ -690,6 +690,9 @@ export class TitleFormTemp implements OnDestroy {
 
         this.titleDetails.set(response);
 
+        // Ensure linked authors and publishers are included in lists
+        await this.ensureLinkedAuthorsAndPublishersInLists(response);
+
         // Ensure pricing array has all platforms before pre-filling
         this.ensurePricingArrayHasAllPlatforms();
 
@@ -1972,6 +1975,78 @@ export class TitleFormTemp implements OnDestroy {
     } catch (error) {
       console.error('Error calculating printing cost:', error);
       // Don't show error to user as this is called frequently during form changes
+    }
+  }
+
+  /**
+   * Ensures that authors and publishers linked to the title are always included
+   * in the lists, even if they're not in the initial paginated results
+   */
+  async ensureLinkedAuthorsAndPublishersInLists(title: Title): Promise<void> {
+    const currentAuthors = this.authorsList();
+    const currentPublishers = this.publishers();
+
+    // Get IDs of linked authors and publisher
+    const linkedAuthorIds =
+      title.authors?.map(({ author }) => author.id).filter((id) => id != null) ||
+      [];
+    const linkedPublisherId = title.publisher?.id;
+
+    // Check which authors are missing from the current list
+    const missingAuthorIds = linkedAuthorIds.filter(
+      (id) => !currentAuthors.find((a) => a.id === id)
+    );
+
+    // Check if publisher is missing from the current list
+    const isPublisherMissing =
+      linkedPublisherId &&
+      !currentPublishers.find((p) => p.id === linkedPublisherId);
+
+    // Fetch missing authors
+    if (missingAuthorIds.length > 0) {
+      try {
+        const authorPromises = missingAuthorIds.map((id) =>
+          this.authorService.getAuthorrById(id).catch(() => null)
+        );
+        const fetchedAuthors = (await Promise.all(authorPromises)).filter(
+          (a): a is Author => a != null && a.status === AuthorStatus.Active
+        );
+
+        if (fetchedAuthors.length > 0) {
+          // Add fetched authors to the list, avoiding duplicates
+          const updatedAuthors = [...currentAuthors];
+          fetchedAuthors.forEach((author) => {
+            if (!updatedAuthors.find((a) => a.id === author.id)) {
+              updatedAuthors.push(author);
+            }
+          });
+          this.authorsList.set(updatedAuthors);
+        }
+      } catch (error) {
+        console.error('Error fetching missing authors:', error);
+      }
+    }
+
+    // Fetch missing publisher
+    if (isPublisherMissing && linkedPublisherId) {
+      try {
+        const fetchedPublisher = await this.publisherService.getPublisherById(
+          linkedPublisherId
+        );
+        if (
+          fetchedPublisher &&
+          fetchedPublisher.status === PublisherStatus.Active
+        ) {
+          // Add fetched publisher to the list, avoiding duplicates
+          const updatedPublishers = [...currentPublishers];
+          if (!updatedPublishers.find((p) => p.id === fetchedPublisher.id)) {
+            updatedPublishers.push(fetchedPublisher);
+          }
+          this.publishers.set(updatedPublishers);
+        }
+      } catch (error) {
+        console.error('Error fetching missing publisher:', error);
+      }
     }
   }
 

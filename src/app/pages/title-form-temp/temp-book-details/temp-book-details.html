@@ -230,22 +230,15 @@
         formGroupName="publisher"
       >
         @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
-        <mat-form-field>
-          <mat-label>Select Publisher</mat-label>
-          <mat-select
-            formControlName="id"
-            (selectionChange)="
-              onPublisherChange($event.value);
-              onPublisherChangeChild.emit($event.value)
-            "
-          >
-            @for (item of publishers(); track $index) {
-            <mat-option [value]="item.id">
-              {{ item.name }}
-            </mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+        <app-searchable-select
+          [label]="'Select Publisher'"
+          [placeholder]="'Type to search publishers...'"
+          [optionsSignal]="publisherOptions"
+          [isLoading]="isSearchingPublishers()"
+          [formControl]="titleDetailsGroup().controls.publisher.controls.id"
+          (searchChange)="onPublisherSearch($event)"
+          (selectionChange)="onPublisherSelected($event)"
+        ></app-searchable-select>
         }
         <div class="flex flex-col">
           <mat-form-field>
@@ -276,24 +269,16 @@
         'author' + $index){
         <div class="flex flex-col">
           <div class="grid grid-cols-[0.8fr_0.8fr_0.2fr] items-start gap-2">
-            <mat-form-field class="w-full">
-              <mat-label>Author</mat-label>
-              <mat-select
+            <app-searchable-select
+              class="w-full"
+              [label]="'Author'"
+              [placeholder]="'Type to search authors...'"
+              [optionsSignal]="authorOptions"
+              [isLoading]="isSearchingAuthors()"
                 [formControl]="item.controls.id"
-                (selectionChange)="
-                  onAuthorChange($index, $event.value);
-                  onAuthorChangeChild.emit($event.value)
-                "
-              >
-                @for(author of authorsList() ; track $index) {
-                <mat-option [value]="author.id">
-                  {{ author.user.firstName + " " + author.user.lastName }} ({{
-                    author.username
-                  }}) ({{ author.id }})
-                </mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
+              (searchChange)="onAuthorSearch($event, $index)"
+              (selectionChange)="onAuthorSelected($event, $index)"
+            ></app-searchable-select>
             <mat-form-field>
               <mat-label>{{ "displaynameforauthor" | translate }}</mat-label>
               <input
