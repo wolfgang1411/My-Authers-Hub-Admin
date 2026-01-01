@@ -34,7 +34,6 @@ import {
   User,
 } from '../../interfaces';
 import { MatRadioModule } from '@angular/material/radio';
-import { debounceTime } from 'rxjs';
 import { IsbnService } from '../../services/isbn-service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -44,6 +43,10 @@ import { IsbnFormat } from 'src/app/directives/isbn-format';
 import { IsbnClean } from 'src/app/directives/isbn-clean';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
+import { AuthorsService } from '../../pages/authors/authors-service';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
+import { OnDestroy } from '@angular/core';
 
 @Component({
   selector: 'app-book-details',
@@ -61,15 +64,18 @@ import { MatNativeDateModule } from '@angular/material/core';
     MatNativeDateModule,
     IsbnFormat,
     IsbnClean,
+    NgxMatSelectSearchModule,
   ],
   templateUrl: './book-details.html',
   styleUrl: './book-details.css',
 })
-export class BookDetails {
+export class BookDetails implements OnDestroy {
+  private readonly destroy$ = new Subject<void>();
   constructor(
     private titleService: TitleService,
     private isbnService: IsbnService,
-    private languageService: LanguageService
+    private languageService: LanguageService,
+    private authorService: AuthorsService
   ) {
     this.languages = this.languageService.languages$;
 
@@ -86,8 +92,86 @@ export class BookDetails {
         this.initialized.set(true); // mark as done
       }
     });
+    
+    // Setup author search
+    this.authorSearchControl = new FormControl('');
+    this.setupAuthorSearch();
   }
   private initialized = signal(false);
+  
+  // Author search
+  authorSearchControl = new FormControl('');
+  filteredAuthorOptions = signal<{ label: string; value: number }[]>([]);
+  isSearchingAuthors = signal(false);
+  
+  private setupAuthorSearch() {
+    this.authorSearchControl.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((searchTerm) => {
+        if (searchTerm && searchTerm.trim().length > 0) {
+          this.searchAuthors(searchTerm.trim());
+        } else {
+          this.updateAuthorOptions();
+        }
+      });
+    
+    // Update options when authorsList changes
+    effect(() => {
+      const authors = this.authorsList();
+      if (authors) {
+        this.updateAuthorOptions();
+      }
+    });
+  }
+  
+  private updateAuthorOptions() {
+    const authors = this.authorsList();
+    if (!authors) {
+      this.filteredAuthorOptions.set([]);
+      return;
+    }
+    
+    const searchValue = (this.authorSearchControl.value || '').toLowerCase();
+    const filtered = authors
+      .filter((author) => {
+        const fullName = author.user?.fullName || 
+          `${author.user?.firstName || ''} ${author.user?.lastName || ''}`;
+        return fullName.toLowerCase().includes(searchValue);
+      })
+      .map((author) => ({
+        label: `${author.user?.firstName || ''} ${author.user?.lastName || ''} (${author.username}) (${author.id})`,
+        value: author.id,
+      }));
+    
+    this.filteredAuthorOptions.set(filtered);
+  }
+  
+  private async searchAuthors(searchTerm: string) {
+    this.isSearchingAuthors.set(true);
+    try {
+      const { items } = await this.authorService.getAuthors({ searchStr: searchTerm });
+      const filtered = items
+        .map((author) => ({
+          label: `${author.user?.firstName || ''} ${author.user?.lastName || ''} (${author.username}) (${author.id})`,
+          value: author.id,
+        }));
+      this.filteredAuthorOptions.set(filtered);
+    } catch (error) {
+      console.error('Error searching authors:', error);
+      this.updateAuthorOptions();
+    } finally {
+      this.isSearchingAuthors.set(false);
+    }
+  }
+  
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   loggedInUser = input<User | null>();
 

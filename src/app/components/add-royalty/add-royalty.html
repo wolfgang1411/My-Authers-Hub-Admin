@@ -29,11 +29,20 @@
               (selectionChange)="getAuthorPublisherList($event.value)"
               required
             >
+              <mat-option>
+                <ngx-mat-select-search
+                  [formControl]="titleSearchControls.get(i)!"
+                  [placeholderLabel]="'Type to search titles...'"
+                  [noEntriesFoundLabel]="'No titles found'"
+                ></ngx-mat-select-search>
+              </mat-option>
               <mat-option [value]="null" disabled>{{
                 "selecttitle" | translate
               }}</mat-option>
-              @for (type of titleList(); track type.id) {
-              <mat-option [value]="type.id">{{ type.name }}</mat-option>
+              @if (filteredTitleOptions.get(i)) {
+                @for (option of filteredTitleOptions.get(i)!(); track option.value) {
+                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                }
               }
             </mat-select>
           </mat-form-field>
@@ -43,13 +52,26 @@
               formControlName="authorId"
               [required]="!item.get('publisherId')?.value"
             >
+              <mat-option>
+                <ngx-mat-select-search
+                  [formControl]="authorSearchControls.get(i)!"
+                  [placeholderLabel]="'Type to search authors...'"
+                  [noEntriesFoundLabel]="'No authors found'"
+                ></ngx-mat-select-search>
+              </mat-option>
+              @if (isSearchingAuthors.get(i)?.()) {
+              <mat-option disabled>
+                <mat-spinner diameter="20"></mat-spinner>
+                <span class="ml-2">Searching...</span>
+              </mat-option>
+              }
               <mat-option [value]="null" disabled>
                 {{ "selectauthor" | translate }}
               </mat-option>
-              @for (item of authorList(); track item.id) {
-              <mat-option [value]="item.id">
-                {{ item.user.firstName + " " + item.user.lastName }}
-              </mat-option>
+              @if (filteredAuthorOptions.get(i)) {
+                @for (option of filteredAuthorOptions.get(i)!(); track option.value) {
+                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                }
               }
             </mat-select>
           </mat-form-field>
@@ -62,11 +84,26 @@
               formControlName="publisherId"
               [required]="!item.get('authorId')?.value"
             >
+              <mat-option>
+                <ngx-mat-select-search
+                  [formControl]="publisherSearchControls.get(i)!"
+                  [placeholderLabel]="'Type to search publishers...'"
+                  [noEntriesFoundLabel]="'No publishers found'"
+                ></ngx-mat-select-search>
+              </mat-option>
+              @if (isSearchingPublishers.get(i)?.()) {
+              <mat-option disabled>
+                <mat-spinner diameter="20"></mat-spinner>
+                <span class="ml-2">Searching...</span>
+              </mat-option>
+              }
               <mat-option [value]="null" disabled>{{
                 "selectpublisher" | translate
               }}</mat-option>
-              @for (item of publisherList(); track $index) {
-              <mat-option [value]="item.id">{{ item.name }}</mat-option>
+              @if (filteredPublisherOptions.get(i)) {
+                @for (option of filteredPublisherOptions.get(i)!(); track option.value) {
+                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                }
               }
             </mat-select>
           </mat-form-field>
@@ -124,6 +161,7 @@
             mat-icon-button
             color="warn"
             class="!bg-accent mt-2 rounded-full items-center p-1.5 flex justify-center"
+            (click)="removeRoyalty(i)"
           >
             <mat-icon class="!fill-red">delete</mat-icon>
           </button>

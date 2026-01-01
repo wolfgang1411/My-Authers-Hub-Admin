@@ -3,9 +3,11 @@ import {
   computed,
   inject,
   OnInit,
+  OnDestroy,
   Pipe,
   PipeTransform,
   signal,
+  WritableSignal,
 } from '@angular/core';
 import {
   FormArray,
@@ -46,6 +48,9 @@ import { MyDatePipe } from '../../pipes/my-date-pipe';
 import { format } from 'date-fns';
 import { MatIconModule } from '@angular/material/icon';
 import Swal from 'sweetalert2';
+import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 
 @Pipe({
   name: 'myTitleFilterBySale',
@@ -66,7 +71,6 @@ export class TitleFilterBySale implements PipeTransform {
     MatSelectModule,
     MatInputModule,
     MatFormFieldModule,
-    TitleFilterBySale,
     MatButtonModule,
     MatCardModule,
     MatTooltipModule,
@@ -77,12 +81,16 @@ export class TitleFilterBySale implements PipeTransform {
     NgxMatDatetimepicker,
     MyDatePipe,
     MatIconModule,
+    NgxMatSelectSearchModule,
+    MatProgressSpinnerModule,
   ],
 
   templateUrl: './add-sales.html',
   styleUrl: './add-sales.css',
 })
-export class AddSales implements OnInit {
+export class AddSales implements OnInit, OnDestroy {
+  private readonly destroy$ = new Subject<void>();
+  
   constructor(
     private titleService: TitleService,
     private staticValueService: StaticValuesService,
@@ -105,6 +113,11 @@ export class AddSales implements OnInit {
   platforms = signal<Platform[]>([]);
 
   titles = signal<Title[] | null>(null);
+  
+  // Title search controls - one per form array item
+  titleSearchControls = new Map<number, FormControl<string | null>>();
+  filteredTitleOptions = new Map<number, WritableSignal<{ label: string; value: number }[]>>();
+  isSearchingTitles = new Map<number, WritableSignal<boolean>>();
 
   // Computed map of available platforms by titleId (kept for backward compatibility if needed)
   availablePlatformsByTitle = computed(() => {
@@ -285,7 +298,8 @@ export class AddSales implements OnInit {
     });
 
     // Subscribe to quantity and amount changes in existing form groups
-    this.form.controls.salesArray.controls.forEach((group) => {
+    this.form.controls.salesArray.controls.forEach((group, index) => {
+      this.initializeTitleSearchForIndex(index);
       group.controls.quantity.valueChanges.subscribe(() => {
         this.updateSummary();
       });
@@ -305,7 +319,9 @@ export class AddSales implements OnInit {
     type: SalesType,
     data?: Partial<CreateSale & { availableTitles: number[] }>
   ) {
+    const newIndex = this.form.controls.salesArray.length;
     this.form.controls.salesArray.push(this.createSalesGroup(type, data));
+    this.initializeTitleSearchForIndex(newIndex);
     this.updateSummary();
   }
   addMoreSales() {
@@ -337,6 +353,11 @@ export class AddSales implements OnInit {
           Array<Title>()
         );
         return result;
+      });
+      
+      // Update title options for all indices
+      this.filteredTitleOptions.forEach((_, index) => {
+        this.updateTitleOptions(index);
       });
     } catch (error) {
       console.log(error);
@@ -544,6 +565,14 @@ export class AddSales implements OnInit {
     group.get('title.id')?.valueChanges.subscribe(async (titleId) => {
       group.patchValue({ platform: null, amount: null, platformName: null });
 
+      // Enable/disable platform control based on title selection
+      const platformControl = group.get('platform');
+      if (titleId) {
+        platformControl?.enable();
+      } else {
+        platformControl?.disable();
+      }
+
       // Calculate and set platformOptions
       await this.updatePlatformOptionsForGroup(group, titleId);
 
@@ -558,9 +587,17 @@ export class AddSales implements OnInit {
       }
       group.get('platform')?.updateValueAndValidity();
     });
+    
+    // Initialize platform control disabled state based on initial title
+    const initialTitleId = group.get('title.id')?.value;
+    const platformControl = group.get('platform');
+    if (!initialTitleId) {
+      platformControl?.disable();
+    } else {
+      platformControl?.enable();
+    }
 
     // Initialize platformOptions if title is already set
-    const initialTitleId = group.get('title.id')?.value;
     if (initialTitleId) {
       this.updatePlatformOptionsForGroup(group, initialTitleId);
     }
@@ -635,7 +672,127 @@ export class AddSales implements OnInit {
 
   removeSale(index: number) {
     this.form.controls.salesArray.removeAt(index);
+    this.cleanupTitleSearchForIndex(index);
+    
+    // Reindex remaining controls
+    const currentControls = Array.from(this.titleSearchControls.keys()).sort();
+    currentControls.forEach((oldIndex) => {
+      if (oldIndex > index) {
+        const titleControl = this.titleSearchControls.get(oldIndex);
+        const titleOptions = this.filteredTitleOptions.get(oldIndex);
+        const titleLoading = this.isSearchingTitles.get(oldIndex);
+        
+        if (titleControl) this.titleSearchControls.set(oldIndex - 1, titleControl);
+        if (titleOptions) this.filteredTitleOptions.set(oldIndex - 1, titleOptions);
+        if (titleLoading) this.isSearchingTitles.set(oldIndex - 1, titleLoading);
+        
+        this.cleanupTitleSearchForIndex(oldIndex);
+      }
+    });
+    
     this.updateSummary();
+  }
+  
+  private cleanupTitleSearchForIndex(index: number) {
+    this.titleSearchControls.delete(index);
+    this.filteredTitleOptions.delete(index);
+    this.isSearchingTitles.delete(index);
+  }
+  
+  private initializeTitleSearchForIndex(index: number) {
+    // Create search control for this index
+    const titleSearchControl = new FormControl<string | null>('');
+    this.titleSearchControls.set(index, titleSearchControl);
+    
+    // Create filtered options signal
+    this.filteredTitleOptions.set(index, signal<{ label: string; value: number }[]>([]));
+    
+    // Create loading signal
+    this.isSearchingTitles.set(index, signal(false));
+    
+    // Setup subscription
+    titleSearchControl.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((searchTerm) => {
+        if (searchTerm && searchTerm.trim().length > 0) {
+          this.searchTitles(searchTerm.trim(), index);
+        } else {
+          this.updateTitleOptions(index);
+        }
+      });
+    
+    // Initialize options
+    this.updateTitleOptions(index);
+  }
+  
+  private updateTitleOptions(index: number) {
+    const titles = this.titles();
+    const signal = this.filteredTitleOptions.get(index);
+    if (!signal) return;
+    
+    if (!titles) {
+      signal.set([]);
+      return;
+    }
+    
+    const searchControl = this.titleSearchControls.get(index);
+    const searchValue = (searchControl?.value || '').toLowerCase();
+    const saleGroup = this.form.controls.salesArray.at(index);
+    const availableOptions = saleGroup?.get('title.availableOptions')?.value;
+    
+    let filtered = titles
+      .filter((title) => {
+        // Filter by search term
+        const matchesSearch = title.name.toLowerCase().includes(searchValue);
+        // Filter by available options if set
+        const matchesAvailable = !availableOptions || availableOptions.length === 0 || availableOptions.includes(title.id);
+        return matchesSearch && matchesAvailable;
+      })
+      .map((title) => ({ label: title.name, value: title.id }));
+    
+    signal.set(filtered);
+  }
+  
+  private async searchTitles(searchTerm: string, index: number) {
+    const loadingSignal = this.isSearchingTitles.get(index);
+    const filteredSignal = this.filteredTitleOptions.get(index);
+    if (!loadingSignal || !filteredSignal) return;
+    
+    loadingSignal.set(true);
+    try {
+      const { items } = await this.titleService.getTitles({ 
+        searchStr: searchTerm,
+        status: TitleStatus.APPROVED 
+      });
+      
+      const saleGroup = this.form.controls.salesArray.at(index);
+      const availableOptions = saleGroup?.get('title.availableOptions')?.value;
+      
+      // Filter out titles where printingOnly is true
+      let filtered = items
+        .filter((title) => !title.printingOnly)
+        .filter((title) => {
+          // Filter by available options if set
+          return !availableOptions || availableOptions.length === 0 || availableOptions.includes(title.id);
+        })
+        .map((title) => ({ label: title.name, value: title.id }));
+      
+      filteredSignal.set(filtered);
+    } catch (error) {
+      console.error('Error searching titles:', error);
+      this.updateTitleOptions(index);
+    } finally {
+      loadingSignal.set(false);
+    }
+  }
+  
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   onSubmit() {

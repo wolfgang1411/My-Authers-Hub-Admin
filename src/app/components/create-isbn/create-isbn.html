@@ -38,8 +38,21 @@
         > -->
         <mat-label>{{ "selectpublisher" | translate }}</mat-label>
         <mat-select formControlName="publisherId" required>
-          @for (publisher of data.publishersList; track publisher.id) {
-          <mat-option [value]="publisher.id">{{ publisher.name }}</mat-option>
+          <mat-option>
+            <ngx-mat-select-search
+              [formControl]="publisherSearchControl"
+              [placeholderLabel]="'Type to search publishers...'"
+              [noEntriesFoundLabel]="'No publishers found'"
+            ></ngx-mat-select-search>
+          </mat-option>
+          @if (isSearchingPublishers()) {
+          <mat-option disabled>
+            <mat-spinner diameter="20"></mat-spinner>
+            <span class="ml-2">Searching...</span>
+          </mat-option>
+          }
+          @for (option of filteredPublisherOptions(); track option.value) {
+          <mat-option [value]="option.value">{{ option.label }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -50,10 +63,21 @@
         > -->
         <mat-label>{{ "selectauthor" | translate }}</mat-label>
         <mat-select formControlName="authorIds" required [multiple]="true">
-          @for (author of data.authorsList; track author.id) {
-          <mat-option [value]="author.id">
-            {{ author.user.fullName }}
+          <mat-option>
+            <ngx-mat-select-search
+              [formControl]="authorSearchControl"
+              [placeholderLabel]="'Type to search authors...'"
+              [noEntriesFoundLabel]="'No authors found'"
+            ></ngx-mat-select-search>
           </mat-option>
+          @if (isSearchingAuthors()) {
+          <mat-option disabled>
+            <mat-spinner diameter="20"></mat-spinner>
+            <span class="ml-2">Searching...</span>
+          </mat-option>
+          }
+          @for (option of filteredAuthorOptions(); track option.value) {
+          <mat-option [value]="option.value">{{ option.label }}</mat-option>
           }
         </mat-select>
       </mat-form-field>

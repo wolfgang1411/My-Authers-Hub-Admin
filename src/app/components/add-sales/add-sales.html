@@ -74,11 +74,24 @@
                 [formControl]="saleGroup.controls.title.controls.id"
                 placeholder="Select Title"
               >
+                <mat-option>
+                  <ngx-mat-select-search
+                    [formControl]="titleSearchControls.get($index)!"
+                    [placeholderLabel]="'Type to search titles...'"
+                    [noEntriesFoundLabel]="'No titles found'"
+                  ></ngx-mat-select-search>
+                </mat-option>
+                @if (isSearchingTitles.get($index)?.()) {
+                <mat-option disabled>
+                  <mat-spinner diameter="20"></mat-spinner>
+                  <span class="ml-2">Searching...</span>
+                </mat-option>
+                }
                 <mat-option [value]="null" disabled>Select a title</mat-option>
-                @for (title of titles() |
-                myTitleFilterBySale:saleGroup.controls.title.controls.availableOptions.value;
-                track title.id) {
-                <mat-option [value]="title.id">{{ title.name }}</mat-option>
+                @if (filteredTitleOptions.get($index)) {
+                  @for (option of filteredTitleOptions.get($index)!(); track option.value) {
+                  <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                  }
                 }
               </mat-select>
               @if (saleGroup.controls.title.controls.id.hasError('required') &&
@@ -97,7 +110,6 @@
               >
               <mat-select
                 [formControl]="saleGroup.controls.platform"
-                [disabled]="!saleGroup.controls.title.controls.id.value"
                 placeholder="Select Platform"
               >
                 <mat-option [value]="null" disabled>Select platform</mat-option>

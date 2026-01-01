@@ -268,12 +268,21 @@
                   onAuthorChangeChild.emit($event.value)
                 "
               >
-                @for(author of authorsList() ; track $index) {
-                <mat-option [value]="author.id">
-                  {{ author.user.firstName + " " + author.user.lastName }} ({{
-                    author.username
-                  }}) ({{ author.id }})
+                <mat-option>
+                  <ngx-mat-select-search
+                    [formControl]="authorSearchControl"
+                    [placeholderLabel]="'Type to search authors...'"
+                    [noEntriesFoundLabel]="'No authors found'"
+                  ></ngx-mat-select-search>
                 </mat-option>
+                @if (isSearchingAuthors()) {
+                <mat-option disabled>
+                  <mat-spinner diameter="20"></mat-spinner>
+                  <span class="ml-2">Searching...</span>
+                </mat-option>
+                }
+                @for (option of filteredAuthorOptions(); track option.value) {
+                <mat-option [value]="option.value">{{ option.label }}</mat-option>
                 }
               </mat-select>
             </mat-form-field>
