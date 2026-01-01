@@ -38,7 +38,7 @@ import {
   User,
 } from '../../../interfaces';
 import { MatRadioModule } from '@angular/material/radio';
-import { debounceTime, Subject, takeUntil, distinctUntilChanged } from 'rxjs';
+import { debounceTime, Subject, takeUntil, distinctUntilChanged, startWith } from 'rxjs';
 import { IsbnService } from '../../../services/isbn-service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -51,10 +51,8 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { IsbnFormatPipe } from 'src/app/pipes/isbn-format-pipe';
 import { AuthorsService } from '../../authors/authors-service';
 import { PublisherService } from '../../publisher/publisher-service';
-import {
-  SearchableSelect,
-  SearchableSelectOption,
-} from '../../../components/searchable-select/searchable-select';
+import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
+import { ReplaySubject } from 'rxjs';
 
 @Component({
   selector: 'app-temp-book-details',
@@ -71,7 +69,7 @@ import {
     MatButtonModule,
     CKEditorModule,
     MatDatepickerModule,
-    SearchableSelect,
+    NgxMatSelectSearchModule,
   ],
   providers: [IsbnFormatPipe],
   templateUrl: './temp-book-details.html',
@@ -80,11 +78,19 @@ import {
 export class TempBookDetails implements OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
-  // Searchable select options
-  authorOptions = signal<SearchableSelectOption[]>([]);
-  publisherOptions = signal<SearchableSelectOption[]>([]);
+  // Searchable select options - using simple format for mat-select
+  authorOptions = signal<{ label: string; value: number }[]>([]);
+  publisherOptions = signal<{ label: string; value: number }[]>([]);
   isSearchingAuthors = signal(false);
   isSearchingPublishers = signal(false);
+
+  // Search controls for ngx-mat-select-search
+  authorSearchControl = new FormControl('');
+  publisherSearchControl = new FormControl('');
+
+  // Filtered options for display - using signals
+  filteredAuthorOptions = signal<{ label: string; value: number }[]>([]);
+  filteredPublisherOptions = signal<{ label: string; value: number }[]>([]);
 
   constructor(
     private titleService: TitleService,
@@ -120,18 +126,54 @@ export class TempBookDetails implements OnDestroy {
       }
     });
 
-    // Convert authors to options format - MUST be in constructor for reactivity
+    // Convert authors to options format and ensure selected authors are in options
     effect(() => {
       const authors = this.authorsList();
+      const authorIds = this.titleDetailsGroup().controls.authorIds;
+
+      // Update options when authors list changes
       this.authorOptions.set(
         authors.map((author) => ({
           label: `${author.user?.firstName} ${author.user?.lastName} (${author.username}) (${author.id})`,
           value: author.id,
         }))
       );
+
+      // Check each author form control and ensure selected authors are in options
+      authorIds.controls.forEach((authorCtrl) => {
+        const authorId = authorCtrl.controls.id.value;
+        if (authorId && authors.length > 0) {
+          const selectedAuthor = authors.find((a) => a.id === authorId);
+          if (!selectedAuthor) {
+            // Author not in list, try to fetch it
+            this.authorService
+              .getAuthorrById(authorId)
+              .then((author) => {
+                if (author) {
+                  const currentOptions = this.authorOptions();
+                  const exists = currentOptions.find(
+                    (opt) => opt.value === author.id
+                  );
+                  if (!exists) {
+                    this.authorOptions.set([
+                      {
+                        label: `${author.user?.firstName} ${author.user?.lastName} (${author.username}) (${author.id})`,
+                        value: author.id,
+                      },
+                      ...currentOptions,
+                    ]);
+                  }
+                }
+              })
+              .catch(() => {
+                // Silently fail - author might not exist
+              });
+          }
+        }
+      });
     });
 
-    // Convert publishers to options format - MUST be in constructor for reactivity
+    // Convert publishers to options format and ensure selected publisher is in options
     effect(() => {
       const publishers = this.publishers();
       this.publisherOptions.set(
@@ -140,6 +182,114 @@ export class TempBookDetails implements OnDestroy {
           value: publisher.id,
         }))
       );
+
+      // After publishers are loaded, ensure selected publisher is in options
+      const selectedPublisherId =
+        this.titleDetailsGroup().controls.publisher.controls.id.value;
+      if (selectedPublisherId && publishers.length > 0) {
+        const selectedPublisher = publishers.find(
+          (p) => p.id === selectedPublisherId
+        );
+        if (!selectedPublisher) {
+          // Publisher not in list, try to fetch it
+          this.publisherService
+            .getPublisherById(selectedPublisherId)
+            .then((publisher) => {
+              if (publisher) {
+                const currentOptions = this.publisherOptions();
+                const exists = currentOptions.find(
+                  (opt) => opt.value === publisher.id
+                );
+                if (!exists) {
+                  this.publisherOptions.set([
+                    { label: publisher.name, value: publisher.id },
+                    ...currentOptions,
+                  ]);
+                }
+              }
+            })
+            .catch(() => {
+              // Silently fail - publisher might not exist
+            });
+        }
+      }
+    });
+
+    // Update filtered options when options change - ensure selected values are always visible
+    effect(() => {
+      const authorOpts = this.authorOptions();
+      const searchValue = this.authorSearchControl.value || '';
+      const selectedAuthorIds = this.titleDetailsGroup()
+        .controls.authorIds.controls.map((ctrl) => ctrl.controls.id.value)
+        .filter((id): id is number => id != null && !isNaN(Number(id)));
+
+      let filtered: { label: string; value: number }[];
+      if (searchValue && searchValue.trim().length > 0) {
+        const filterValue = searchValue.toLowerCase();
+        filtered = authorOpts.filter((opt) =>
+          opt.label.toLowerCase().includes(filterValue)
+        );
+      } else {
+        filtered = [...authorOpts];
+      }
+
+      // Ensure selected authors are always in the filtered list
+      selectedAuthorIds.forEach((selectedId) => {
+        const selectedOpt = authorOpts.find((opt) => opt.value === selectedId);
+        if (selectedOpt && !filtered.find((opt) => opt.value === selectedId)) {
+          filtered = [selectedOpt, ...filtered];
+        }
+      });
+
+      this.filteredAuthorOptions.set(filtered);
+    });
+
+    effect(() => {
+      const publisherOpts = this.publisherOptions();
+      const searchValue = this.publisherSearchControl.value || '';
+      const selectedPublisherId =
+        this.titleDetailsGroup().controls.publisher.controls.id.value;
+
+      let filtered: { label: string; value: number }[];
+      if (searchValue && searchValue.trim().length > 0) {
+        const filterValue = searchValue.toLowerCase();
+        filtered = publisherOpts.filter((opt) =>
+          opt.label.toLowerCase().includes(filterValue)
+        );
+      } else {
+        filtered = [...publisherOpts];
+      }
+
+      // Ensure selected publisher is always in the filtered list
+      if (selectedPublisherId != null) {
+        const selectedOpt = publisherOpts.find(
+          (opt) => opt.value === selectedPublisherId
+        );
+        if (
+          selectedOpt &&
+          !filtered.find((opt) => opt.value === selectedPublisherId)
+        ) {
+          filtered = [selectedOpt, ...filtered];
+        }
+      }
+
+      this.filteredPublisherOptions.set(filtered);
+    });
+
+    // Watch for category changes to fetch subcategories (handles prefilled data)
+    effect(() => {
+      const categoryId = this.titleDetailsGroup().controls.category.value;
+      if (categoryId) {
+        // Fetch subcategories when category is set (including prefilled)
+        this.getSubcategory(Number(categoryId));
+      } else {
+        // Clear subcategories if category is cleared
+        this.subCategory.set([]);
+        const subCategoryControl =
+          this.titleDetailsGroup().controls.subCategory;
+        subCategoryControl.disable();
+        subCategoryControl.reset();
+      }
     });
   }
   private initialized = signal(false);
@@ -260,14 +410,17 @@ export class TempBookDetails implements OnDestroy {
 
     this.titleDetailsGroup()
       .controls.category.valueChanges.pipe(takeUntil(this.destroy$))
-      .subscribe((value) => {
+      .subscribe(async (value) => {
         const subCategoryControl =
           this.titleDetailsGroup().controls.subCategory;
         if (value) {
           subCategoryControl.enable();
+          // Fetch subcategories when category changes
+          await this.getSubcategory(Number(value));
         } else {
           subCategoryControl.disable();
           subCategoryControl.reset();
+          this.subCategory.set([]);
         }
       });
 
@@ -281,6 +434,68 @@ export class TempBookDetails implements OnDestroy {
     this.titleDetailsGroup().controls.name.valueChanges.subscribe(() => {
       this.triedGenerateEbookIsbn = false;
     });
+
+    // Watch for publisher ID changes to update display name (catches programmatic changes)
+    this.titleDetailsGroup()
+      .controls.publisher.controls.id.valueChanges.pipe(
+        takeUntil(this.destroy$),
+        distinctUntilChanged()
+      )
+      .subscribe((publisherId) => {
+        if (publisherId != null) {
+          // Only update if keepSame is true or not set (defaults to true)
+          const keepSame = this.titleDetailsGroup().controls.publisher.controls.keepSame.value ?? true;
+          if (keepSame) {
+            this.onPublisherChange(publisherId);
+          }
+        }
+      });
+
+    // Setup search filtering for authors
+    this.authorSearchControl.valueChanges
+      .pipe(
+        startWith(''),
+        debounceTime(300),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((search) => {
+        const options = this.authorOptions();
+        if (search && search.trim().length > 0) {
+          const filterValue = search.toLowerCase();
+          const filtered = options.filter((opt) =>
+            opt.label.toLowerCase().includes(filterValue)
+          );
+          this.filteredAuthorOptions.set(filtered);
+          // Trigger API search if needed
+          this.onAuthorSearch(search, 0);
+        } else {
+          this.filteredAuthorOptions.set(options);
+        }
+      });
+
+    // Setup search filtering for publishers
+    this.publisherSearchControl.valueChanges
+      .pipe(
+        startWith(''),
+        debounceTime(300),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((search) => {
+        const options = this.publisherOptions();
+        if (search && search.trim().length > 0) {
+          const filterValue = search.toLowerCase();
+          const filtered = options.filter((opt) =>
+            opt.label.toLowerCase().includes(filterValue)
+          );
+          this.filteredPublisherOptions.set(filtered);
+          // Trigger API search if needed
+          this.onPublisherSearch(search);
+        } else {
+          this.filteredPublisherOptions.set(options);
+        }
+      });
   }
 
   onAuthorSearch(searchTerm: string, index: number) {
@@ -296,6 +511,7 @@ export class TempBookDetails implements OnDestroy {
       this.searchPublishers(searchTerm.trim());
     }
   }
+
 
   onAuthorSelected(authorId: number | null | undefined, index: number) {
     // Guard against null/undefined authorId to prevent API calls with null
@@ -596,11 +812,46 @@ export class TempBookDetails implements OnDestroy {
   }
 
   onPublisherChange(publisherId: number) {
-    const selected = this.publishers().find((p) => p.id === publisherId);
-
     const pubGroup = this.titleDetailsGroup().controls.publisher;
     if (!pubGroup) return;
-    const keepSame = pubGroup.controls.keepSame.value;
+
+    // Try to find publisher in publishers list first
+    let selected = this.publishers().find((p) => p.id === publisherId);
+
+    // If not found, fetch it from the API
+    if (!selected) {
+      this.publisherService
+        .getPublisherById(publisherId)
+        .then((fetchedPublisher) => {
+          if (fetchedPublisher) {
+            const keepSame = pubGroup.controls.keepSame.value ?? true; // Default to true if not set
+            if (keepSame) {
+              pubGroup.controls.displayName.setValue(fetchedPublisher.name);
+              this.titleDetailsGroup().controls.publisherDisplay.setValue(
+                fetchedPublisher.name
+              );
+            }
+          }
+        })
+        .catch(() => {
+          // If fetch fails, try to get name from the option label
+          const option = this.publisherOptions().find(
+            (opt) => opt.value === publisherId
+          );
+          if (option) {
+            const keepSame = pubGroup.controls.keepSame.value ?? true; // Default to true if not set
+            if (keepSame) {
+              pubGroup.controls.displayName.setValue(option.label);
+              this.titleDetailsGroup().controls.publisherDisplay.setValue(
+                option.label
+              );
+            }
+          }
+        });
+      return; // Exit early, will set display name in promise
+    }
+
+    const keepSame = pubGroup.controls.keepSame.value ?? true; // Default to true if not set
     if (keepSame && selected) {
       pubGroup.controls.displayName.setValue(selected.name);
       this.titleDetailsGroup().controls.publisherDisplay.setValue(
@@ -613,7 +864,38 @@ export class TempBookDetails implements OnDestroy {
     const checked = (event.target as HTMLInputElement).checked;
     const pubGroup = this.titleDetailsGroup().controls.publisher;
     const publisherId = pubGroup.controls.id.value;
-    const selected = this.publishers().find((p) => p.id === publisherId);
+    
+    if (!publisherId) return;
+
+    // Try to find publisher in publishers list first
+    let selected = this.publishers().find((p) => p.id === publisherId);
+
+    // If not found, fetch it or use option label
+    if (!selected) {
+      this.publisherService
+        .getPublisherById(publisherId)
+        .then((fetchedPublisher) => {
+          if (checked && fetchedPublisher) {
+            pubGroup.controls.displayName.setValue(fetchedPublisher.name);
+            this.titleDetailsGroup().controls.publisherDisplay.setValue(
+              fetchedPublisher.name
+            );
+          }
+        })
+        .catch(() => {
+          // If fetch fails, try to get name from the option label
+          const option = this.publisherOptions().find(
+            (opt) => opt.value === publisherId
+          );
+          if (checked && option) {
+            pubGroup.controls.displayName.setValue(option.label);
+            this.titleDetailsGroup().controls.publisherDisplay.setValue(
+              option.label
+            );
+          }
+        });
+      return;
+    }
 
     if (checked && selected) {
       pubGroup.controls.displayName.setValue(selected.name);
@@ -629,12 +911,66 @@ export class TempBookDetails implements OnDestroy {
       index
     ) as FormGroup<AuthorFormGroup>;
     const authorId = authorCtrl.controls.id.value;
-    const selected = this.authorsList().find((a) => a.id === authorId);
+    
+    if (!authorId) return;
+
+    // Try to find author in authorsList first
+    let selected = this.authorsList().find((a) => a.id === authorId);
+
+    // If not found, fetch it from the API
+    if (!selected) {
+      this.authorService
+        .getAuthorrById(authorId)
+        .then((fetchedAuthor) => {
+          if (checked && fetchedAuthor) {
+            // Use fullName if available, otherwise construct from firstName + lastName
+            const fullName = fetchedAuthor.user?.fullName 
+              ? fetchedAuthor.user.fullName.trim()
+              : fetchedAuthor.user
+              ? `${fetchedAuthor.user.firstName || ''} ${fetchedAuthor.user.lastName || ''}`.trim()
+              : '';
+            const displayName = fullName && fetchedAuthor.username
+              ? `${fullName} (${fetchedAuthor.username})`
+              : '';
+            if (displayName) {
+              authorCtrl.controls.displayName.setValue(displayName);
+            }
+          }
+        })
+        .catch(() => {
+          // If fetch fails, try to construct display name from the option label
+          const option = this.authorOptions().find(
+            (opt) => opt.value === authorId
+          );
+          if (checked && option) {
+            // Extract name from label format: "FirstName LastName (username) (id)"
+            const match = option.label.match(
+              /^(.+?)\s*\(([^)]+)\)\s*\((\d+)\)$/
+            );
+            if (match) {
+              // match[1] is "FirstName LastName", match[2] is "username"
+              // Display name format should be: "FirstName LastName (username)" - with space before parenthesis
+              const displayName = `${match[1]} (${match[2]})`;
+              authorCtrl.controls.displayName.setValue(displayName);
+            }
+          }
+        });
+      return;
+    }
 
     if (checked && selected) {
-      authorCtrl.controls.displayName.setValue(
-        `${selected.user?.firstName} ${selected.user?.lastName}(${selected.username})`
-      );
+      // Use fullName if available, otherwise construct from firstName + lastName
+      const fullName = selected.user?.fullName 
+        ? selected.user.fullName.trim()
+        : selected.user
+        ? `${selected.user.firstName || ''} ${selected.user.lastName || ''}`.trim()
+        : '';
+      const displayName = fullName && selected.username
+        ? `${fullName} (${selected.username})`
+        : '';
+      if (displayName) {
+        authorCtrl.controls.displayName.setValue(displayName);
+      }
     }
   }
 
@@ -649,6 +985,12 @@ export class TempBookDetails implements OnDestroy {
     ) as FormGroup<AuthorFormGroup>;
     if (!authorCtrl) return;
 
+    // Get current keepSame value - preserve it, don't reset it
+    const currentKeepSame = authorCtrl.controls.keepSame.value;
+    
+    // Get current display name to check if it already matches
+    const currentDisplayName = authorCtrl.controls.displayName.value || '';
+
     // Try to find author in authorsList first
     let selected = this.authorsList().find((a) => a.id === authorId);
 
@@ -662,11 +1004,37 @@ export class TempBookDetails implements OnDestroy {
           .getAuthorrById(authorId)
           .then((fetchedAuthor) => {
             if (fetchedAuthor) {
-              const keepSame = authorCtrl.controls.keepSame.value ?? true; // Default to true if not set
-              // Always set display name if keepSame is true (default behavior, like publisher)
-              if (keepSame) {
-                const displayName = `${fetchedAuthor.user?.firstName} ${fetchedAuthor.user?.lastName}(${fetchedAuthor.username})`;
-                authorCtrl.controls.displayName.setValue(displayName);
+              // Construct expected display name
+              const fullName = fetchedAuthor.user?.fullName 
+                ? fetchedAuthor.user.fullName.trim()
+                : fetchedAuthor.user
+                ? `${fetchedAuthor.user.firstName || ''} ${fetchedAuthor.user.lastName || ''}`.trim()
+                : '';
+              
+              const expectedDisplayName = fullName && fetchedAuthor.username
+                ? `${fullName} (${fetchedAuthor.username})`
+                : '';
+              
+              // Normalize for comparison: remove all special characters and convert to lowercase
+              const normalizeForComparison = (str: string): string => {
+                return (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+              };
+              
+              const normalizedExpected = normalizeForComparison(expectedDisplayName);
+              const normalizedCurrent = normalizeForComparison(currentDisplayName);
+              
+              // When selecting a new author, always set display name to expected format
+              // and set keepSame to true since we're setting it to match
+              if (normalizedExpected !== normalizedCurrent || !currentDisplayName) {
+                authorCtrl.controls.displayName.setValue(expectedDisplayName);
+                // After setting to expected format, keepSame should be true
+                authorCtrl.controls.keepSame.setValue(true);
+              } else {
+                // If display name already matches, update keepSame based on comparison
+                const shouldKeepSame = normalizedExpected === normalizedCurrent && normalizedExpected !== '';
+                if (currentKeepSame !== shouldKeepSame) {
+                  authorCtrl.controls.keepSame.setValue(shouldKeepSame);
+                }
               }
             }
           })
@@ -681,10 +1049,30 @@ export class TempBookDetails implements OnDestroy {
                 /^(.+?)\s*\(([^)]+)\)\s*\((\d+)\)$/
               );
               if (match) {
-                const keepSame = authorCtrl.controls.keepSame.value ?? true; // Default to true if not set
-                if (keepSame) {
-                  const displayName = `${match[1]}(${match[2]})`;
-                  authorCtrl.controls.displayName.setValue(displayName);
+                // match[1] is "FirstName LastName", match[2] is "username", match[3] is "id"
+                // Display name format should be: "FirstName LastName (username)" - with space before parenthesis
+                const expectedDisplayName = `${match[1]} (${match[2]})`;
+                
+                // Normalize for comparison: remove all special characters and convert to lowercase
+                const normalizeForComparison = (str: string): string => {
+                  return (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                };
+                
+                const normalizedExpected = normalizeForComparison(expectedDisplayName);
+                const normalizedCurrent = normalizeForComparison(currentDisplayName);
+                
+                // When selecting a new author, always set display name to expected format
+                // and set keepSame to true since we're setting it to match
+                if (normalizedExpected !== normalizedCurrent || !currentDisplayName) {
+                  authorCtrl.controls.displayName.setValue(expectedDisplayName);
+                  // After setting to expected format, keepSame should be true
+                  authorCtrl.controls.keepSame.setValue(true);
+                } else {
+                  // If display name already matches, update keepSame based on comparison
+                  const shouldKeepSame = normalizedExpected === normalizedCurrent && normalizedExpected !== '';
+                  if (currentKeepSame !== shouldKeepSame) {
+                    authorCtrl.controls.keepSame.setValue(shouldKeepSame);
+                  }
                 }
               }
             }
@@ -693,11 +1081,39 @@ export class TempBookDetails implements OnDestroy {
       return; // Exit early, will set display name in promise
     }
 
-    const keepSame = authorCtrl.controls.keepSame.value ?? true; // Default to true if not set
-    // Always set display name if keepSame is true (default behavior, like publisher)
-    if (keepSame && selected) {
-      const displayName = `${selected.user?.firstName} ${selected.user?.lastName}(${selected.username})`;
-      authorCtrl.controls.displayName.setValue(displayName);
+    // Construct expected display name
+    const fullName = selected.user?.fullName 
+      ? selected.user.fullName.trim()
+      : selected.user
+      ? `${selected.user.firstName || ''} ${selected.user.lastName || ''}`.trim()
+      : '';
+    
+    const expectedDisplayName = fullName && selected.username
+      ? `${fullName} (${selected.username})`
+      : '';
+    
+    // Normalize for comparison: remove all special characters and convert to lowercase
+    const normalizeForComparison = (str: string): string => {
+      return (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    };
+    
+    const normalizedExpected = normalizeForComparison(expectedDisplayName);
+    const normalizedCurrent = normalizeForComparison(currentDisplayName);
+    
+    // When selecting a new author, always set display name to expected format
+    // and set keepSame to true since we're setting it to match
+    if (selected) {
+      if (normalizedExpected !== normalizedCurrent || !currentDisplayName) {
+        authorCtrl.controls.displayName.setValue(expectedDisplayName);
+        // After setting to expected format, keepSame should be true
+        authorCtrl.controls.keepSame.setValue(true);
+      } else {
+        // If display name already matches, update keepSame based on comparison
+        const shouldKeepSame = normalizedExpected === normalizedCurrent && normalizedExpected !== '';
+        if (currentKeepSame !== shouldKeepSame) {
+          authorCtrl.controls.keepSame.setValue(shouldKeepSame);
+        }
+      }
     }
   }
 

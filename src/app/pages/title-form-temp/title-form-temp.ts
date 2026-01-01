@@ -2069,7 +2069,6 @@ export class TitleFormTemp implements OnDestroy {
         name: data.name,
         subTitle: data.subTitle,
         longDescription: data.longDescription,
-        shortDescription: data.shortDescription,
         edition: data.edition,
         language: data.language,
         subject: data.subject,
@@ -2199,11 +2198,34 @@ export class TitleFormTemp implements OnDestroy {
     this.publisherSignal.set(data.publisher);
 
     data.authors?.forEach(({ author, display_name, allowAuthorCopy }) => {
+      // Construct the expected display name format: "FirstName LastName(username)"
+      // Use fullName if available, otherwise construct from firstName + lastName
+      const fullName = author.user?.fullName 
+        ? author.user.fullName.trim()
+        : author.user
+        ? `${author.user.firstName || ''} ${author.user.lastName || ''}`.trim()
+        : '';
+      
+      const expectedDisplayName = fullName && author.username
+        ? `${fullName} (${author.username})`
+        : '';
+      
+      // Normalize both strings: remove all special characters (spaces, brackets, etc.) and convert to lowercase
+      const normalizeForComparison = (str: string): string => {
+        return (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      };
+      
+      const normalizedExpected = normalizeForComparison(expectedDisplayName);
+      const normalizedDisplayName = normalizeForComparison(display_name);
+      
+      // Check if display_name matches the expected format (case-insensitive, no special chars)
+      const keepSame = normalizedExpected === normalizedDisplayName && normalizedExpected !== '';
+      
       this.tempForm.controls.titleDetails.controls.authorIds.push(
         new FormGroup<AuthorFormGroup>({
           id: new FormControl<number | null>(author.id),
-          name: new FormControl<string>(author.name),
-          keepSame: new FormControl<boolean>(author.name === display_name),
+          name: new FormControl<string>(fullName),
+          keepSame: new FormControl<boolean>(keepSame),
           displayName: new FormControl<string>(display_name),
           allowAuthorCopy: new FormControl<boolean | null>(!!allowAuthorCopy),
         })
@@ -2944,17 +2966,14 @@ export class TitleFormTemp implements OnDestroy {
         Validators.required,
         this.minWordsValidator(40),
       ]),
-      shortDescription: new FormControl<string>('', [
-        this.maxWordsValidator(40), // Max 40 words
-      ]),
       edition: new FormControl<number>(1), // Default to 1
-      language: new FormControl<string>(''),
+      language: new FormControl<string>('', Validators.required),
       subject: new FormControl<string>(''), // Made optional - no validators
       status: new FormControl<TitleStatus>(TitleStatus.DRAFT),
-      category: new FormControl<number | null>(null),
-      subCategory: new FormControl<number | null>(null),
-      tradeCategory: new FormControl<number | null>(null),
-      genre: new FormControl<number | null>(null),
+      category: new FormControl<number | null>(null, Validators.required),
+      subCategory: new FormControl<number | null>(null, Validators.required),
+      tradeCategory: new FormControl<number | null>(null, Validators.required),
+      genre: new FormControl<number | null>(null, Validators.required),
       keywords: new FormControl<string>(''),
       isUniqueIdentifier: new FormControl<boolean>(false),
       keywordOption: new FormControl<string>('auto'),
@@ -3440,7 +3459,6 @@ export class TitleFormTemp implements OnDestroy {
       subject: titleDetails.subject as string,
       language: titleDetails.language,
       longDescription: titleDetails.longDescription,
-      shortDescription: titleDetails.shortDescription,
       edition: titleDetails.edition,
       keywords: titleDetails.keywords,
       printingOnly: this.tempForm.controls.printingFormat.value === 'printOnly',

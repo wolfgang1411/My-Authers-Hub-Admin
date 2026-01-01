@@ -110,6 +110,10 @@
             formControlName="name"
             required
           />
+          @if(titleDetailsGroup().controls.name.hasError('required') &&
+          titleDetailsGroup().controls.name.touched) {
+          <mat-error>{{ "titlename" | translate }} is required</mat-error>
+          }
         </mat-form-field>
         <mat-form-field>
           <mat-label>{{ "subtitle" | translate }}</mat-label>
@@ -149,6 +153,10 @@
             <mat-option [value]="language">{{ language }}</mat-option>
             }
           </mat-select>
+          @if(titleDetailsGroup().controls.language.hasError('required') &&
+          titleDetailsGroup().controls.language.touched) {
+          <mat-error>{{ "language" | translate }} is required</mat-error>
+          }
         </mat-form-field>
         <mat-form-field>
           <mat-label>{{ "bookedition" | translate }}</mat-label>
@@ -173,6 +181,16 @@
         <mat-error class="text-sm">
           {{ "longdescriptionmustbeatleast40words" | translate }}
         </mat-error>
+        } @if(titleDetailsGroup().controls.longDescription.hasError('maxLength') &&
+        titleDetailsGroup().controls.longDescription.touched) {
+        <mat-error class="text-sm">
+          Long description exceeds maximum length
+        </mat-error>
+        } @if(titleDetailsGroup().controls.longDescription.hasError('maxWords') &&
+        titleDetailsGroup().controls.longDescription.touched) {
+        <mat-error class="text-sm">
+          Long description exceeds maximum word count
+        </mat-error>
         } @if(titleDetailsGroup().controls.longDescription.hasError('required')
         && titleDetailsGroup().controls.longDescription.touched) {
         <mat-error class="text-sm">
@@ -192,6 +210,10 @@
             <mat-option [value]="item.id">{{ item.name }}</mat-option>
             }
           </mat-select>
+          @if(titleDetailsGroup().controls.category.hasError('required') &&
+          titleDetailsGroup().controls.category.touched) {
+          <mat-error>{{ "category" | translate }} is required</mat-error>
+          }
         </mat-form-field>
         <mat-form-field>
           <mat-label>
@@ -202,6 +224,10 @@
             <mat-option [value]="item.id">{{ item.name }}</mat-option>
             }
           </mat-select>
+          @if(titleDetailsGroup().controls.subCategory.hasError('required') &&
+          titleDetailsGroup().controls.subCategory.touched) {
+          <mat-error>{{ "subcategory" | translate }} is required</mat-error>
+          }
         </mat-form-field>
         <mat-form-field>
           <mat-label>
@@ -212,6 +238,10 @@
             <mat-option [value]="item.id">{{ item.name }}</mat-option>
             }
           </mat-select>
+          @if(titleDetailsGroup().controls.genre.hasError('required') &&
+          titleDetailsGroup().controls.genre.touched) {
+          <mat-error>{{ "genre" | translate }} is required</mat-error>
+          }
         </mat-form-field>
         <mat-form-field>
           <mat-label>
@@ -222,6 +252,10 @@
             <mat-option [value]="item.id">{{ item.name }}</mat-option>
             }
           </mat-select>
+          @if(titleDetailsGroup().controls.tradeCategory.hasError('required') &&
+          titleDetailsGroup().controls.tradeCategory.touched) {
+          <mat-error>{{ "tradecategory" | translate }} is required</mat-error>
+          }
         </mat-form-field>
       </div>
 
@@ -230,15 +264,30 @@
         formGroupName="publisher"
       >
         @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
-        <app-searchable-select
-          [label]="'Select Publisher'"
-          [placeholder]="'Type to search publishers...'"
-          [optionsSignal]="publisherOptions"
-          [isLoading]="isSearchingPublishers()"
-          [formControl]="titleDetailsGroup().controls.publisher.controls.id"
-          (searchChange)="onPublisherSearch($event)"
-          (selectionChange)="onPublisherSelected($event)"
-        ></app-searchable-select>
+        <mat-form-field class="w-full">
+          <mat-label>Select Publisher</mat-label>
+          <mat-select
+            [formControl]="titleDetailsGroup().controls.publisher.controls.id"
+            (selectionChange)="onPublisherSelected($event.value)"
+          >
+            <mat-option>
+              <ngx-mat-select-search
+                [formControl]="publisherSearchControl"
+                [placeholderLabel]="'Type to search publishers...'"
+                [noEntriesFoundLabel]="'No publishers found'"
+              ></ngx-mat-select-search>
+            </mat-option>
+            @if (isSearchingPublishers()) {
+            <mat-option disabled>
+              <mat-spinner diameter="20"></mat-spinner>
+              <span class="ml-2">Searching...</span>
+            </mat-option>
+            }
+            @for (option of filteredPublisherOptions(); track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
         }
         <div class="flex flex-col">
           <mat-form-field>
@@ -269,16 +318,30 @@
         'author' + $index){
         <div class="flex flex-col">
           <div class="grid grid-cols-[0.8fr_0.8fr_0.2fr] items-start gap-2">
-            <app-searchable-select
-              class="w-full"
-              [label]="'Author'"
-              [placeholder]="'Type to search authors...'"
-              [optionsSignal]="authorOptions"
-              [isLoading]="isSearchingAuthors()"
+            <mat-form-field class="w-full">
+              <mat-label>Author</mat-label>
+              <mat-select
                 [formControl]="item.controls.id"
-              (searchChange)="onAuthorSearch($event, $index)"
-              (selectionChange)="onAuthorSelected($event, $index)"
-            ></app-searchable-select>
+                (selectionChange)="onAuthorSelected($event.value, $index)"
+              >
+                <mat-option>
+                  <ngx-mat-select-search
+                    [formControl]="authorSearchControl"
+                    [placeholderLabel]="'Type to search authors...'"
+                    [noEntriesFoundLabel]="'No authors found'"
+                  ></ngx-mat-select-search>
+                </mat-option>
+                @if (isSearchingAuthors()) {
+                <mat-option disabled>
+                  <mat-spinner diameter="20"></mat-spinner>
+                  <span class="ml-2">Searching...</span>
+                </mat-option>
+                }
+                @for (option of filteredAuthorOptions(); track option.value) {
+                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
             <mat-form-field>
               <mat-label>{{ "displaynameforauthor" | translate }}</mat-label>
               <input

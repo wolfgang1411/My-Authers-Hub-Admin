@@ -519,7 +519,6 @@ export interface TitleDetailsFormGroup {
   name: FormControl<string | null | undefined>;
   subTitle: FormControl<string | null | undefined>;
   longDescription: FormControl<string | null | undefined>;
-  shortDescription: FormControl<string | null | undefined>;
   edition: FormControl<number | null | undefined>;
   language: FormControl<string | null | undefined>;
   subject: FormControl<string | null | undefined>;
