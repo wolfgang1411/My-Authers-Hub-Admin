@@ -1569,8 +1569,8 @@ export class AddPublisher {
         break;
 
       case 1: // Address
-        const existingAddress = this.publisherDetails()?.address?.[0];
-        if (!existingAddress) {
+        const existingAddressForButton = this.publisherDetails()?.address?.[0];
+        if (!existingAddressForButton) {
           actionText = this.translateService.instant('create') || 'Create';
         } else if (canUpdateDirectly) {
           actionText = this.translateService.instant('update') || 'Update';
@@ -1581,8 +1581,8 @@ export class AddPublisher {
         break;
 
       case 2: // Bank Details
-        const existingBank = this.publisherDetails()?.bankDetails?.[0];
-        if (!existingBank) {
+        const existingBankForButton = this.publisherDetails()?.bankDetails?.[0];
+        if (!existingBankForButton) {
           actionText = this.translateService.instant('create') || 'Create';
         } else if (canUpdateDirectly) {
           actionText = this.translateService.instant('update') || 'Update';
@@ -2054,10 +2054,19 @@ export class AddPublisher {
       }
     }
 
-    if (this.canUpdateDirectly()) {
+    const existingPublisher = this.publisherDetails();
+    const existingAddress = existingPublisher?.address?.[0];
+    const isOwnProfile = 
+      this.loggedInUser()?.accessLevel === 'PUBLISHER' &&
+      this.loggedInUser()?.publisher?.id === this.publisherId;
+    
+    // Allow creating if nothing exists (for own profile), or if can update directly
+    const canCreateOrUpdate = 
+      (!existingAddress && isOwnProfile) || // Can create if nothing exists (own profile)
+      this.canUpdateDirectly(); // Can update if status allows
+
+    if (canCreateOrUpdate) {
       // Create or update address directly
-      const existingPublisher = this.publisherDetails();
-      const existingAddress = existingPublisher?.address?.[0];
       const wasNewAddress = !existingAddress;
 
       // In invite flow, always use CREATE (remove id) but still prefill form
@@ -2173,10 +2182,19 @@ export class AddPublisher {
       }
     }
 
-    if (this.canUpdateDirectly()) {
+    const existingPublisher = this.publisherDetails();
+    const existingBank = existingPublisher?.bankDetails?.[0];
+    const isOwnProfile = 
+      this.loggedInUser()?.accessLevel === 'PUBLISHER' &&
+      this.loggedInUser()?.publisher?.id === this.publisherId;
+    
+    // Allow creating if nothing exists (for own profile), or if can update directly
+    const canCreateOrUpdate = 
+      (!existingBank && isOwnProfile) || // Can create if nothing exists (own profile)
+      this.canUpdateDirectly(); // Can update if status allows
+
+    if (canCreateOrUpdate) {
       // Create or update bank details directly
-      const existingPublisher = this.publisherDetails();
-      const existingBank = existingPublisher?.bankDetails?.[0];
       const wasNewBank = !existingBank;
 
       const bankDetailsValue = { ...this.publisherBankDetails.value };

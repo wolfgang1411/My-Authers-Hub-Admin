@@ -1579,7 +1579,14 @@ export class AddAuthor implements OnInit {
     // Determine action text
     switch (currentTab) {
       case 0: // Basic Details
+        const existingMediaForButton = this.authorDetails()?.medias?.[0];
+        const isOwnProfileForButton = 
+          this.loggedInUser()?.accessLevel === 'AUTHER' &&
+          this.loggedInUser()?.auther?.id === this.authorId;
         if (!this.authorId) {
+          actionText = this.translateService.instant('create') || 'Create';
+        } else if (!existingMediaForButton && isOwnProfileForButton) {
+          // Can create media if nothing exists (own profile)
           actionText = this.translateService.instant('create') || 'Create';
         } else if (canUpdateDirectly) {
           actionText = this.translateService.instant('update') || 'Update';
@@ -1590,8 +1597,8 @@ export class AddAuthor implements OnInit {
         break;
 
       case 1: // Address
-        const existingAddress = this.authorDetails()?.address?.[0];
-        if (!existingAddress) {
+        const existingAddressForButton = this.authorDetails()?.address?.[0];
+        if (!existingAddressForButton) {
           actionText = this.translateService.instant('create') || 'Create';
         } else if (canUpdateDirectly) {
           actionText = this.translateService.instant('update') || 'Update';
@@ -1602,8 +1609,8 @@ export class AddAuthor implements OnInit {
         break;
 
       case 2: // Bank Details
-        const existingBank = this.authorDetails()?.bankDetails?.[0];
-        if (!existingBank) {
+        const existingBankForButton = this.authorDetails()?.bankDetails?.[0];
+        if (!existingBankForButton) {
           actionText = this.translateService.instant('create') || 'Create';
         } else if (canUpdateDirectly) {
           actionText = this.translateService.instant('update') || 'Update';
@@ -1622,14 +1629,28 @@ export class AddAuthor implements OnInit {
     let shouldRaiseTicket = false;
     switch (currentTab) {
       case 0: // Basic Details
-        shouldRaiseTicket = !!this.authorId && !canUpdateDirectly;
+        const existingMedia = this.authorDetails()?.medias?.[0];
+        const isOwnProfileForTicket = 
+          this.loggedInUser()?.accessLevel === 'AUTHER' &&
+          this.loggedInUser()?.auther?.id === this.authorId;
+        // Require ticket only if media exists AND can't update directly
+        // If nothing exists, we can create (no ticket needed for own profile)
+        // Also check if author details have changes that require ticket
+        const hasAuthorChanges = this.authorId && this.authorDetails()
+          ? this.hasAuthorChanges(this.authorDetails())
+          : false;
+        shouldRaiseTicket = (!!existingMedia && !canUpdateDirectly) || (hasAuthorChanges && !!this.authorId && !canUpdateDirectly);
         break;
       case 1: // Address
         const existingAddress = this.authorDetails()?.address?.[0];
+        // Require ticket only if address exists AND can't update directly
+        // If nothing exists, we can create (no ticket needed for own profile)
         shouldRaiseTicket = !!existingAddress && !canUpdateDirectly;
         break;
       case 2: // Bank Details
         const existingBank = this.authorDetails()?.bankDetails?.[0];
+        // Require ticket only if bank exists AND can't update directly
+        // If nothing exists, we can create (no ticket needed for own profile)
         shouldRaiseTicket = !!existingBank && !canUpdateDirectly;
         break;
     }
@@ -1645,7 +1666,7 @@ export class AddAuthor implements OnInit {
         navigationText = this.translateService.instant('back') || 'Back';
       }
     } else {
-      // Not last tab - show "Back" when raising ticket, otherwise "Next"
+      // Not last tab - show "Back" ONLY when raising ticket, otherwise "Next"
       if (shouldRaiseTicket) {
         navigationText = this.translateService.instant('back') || 'Back';
       } else {
@@ -1666,7 +1687,16 @@ export class AddAuthor implements OnInit {
     let shouldRaiseTicket = false;
     switch (currentTab) {
       case 0: // Basic Details
-        shouldRaiseTicket = !!this.authorId && !canUpdateDirectly;
+        const existingMedia = this.authorDetails()?.medias?.[0];
+        const isOwnProfile = 
+          this.loggedInUser()?.accessLevel === 'AUTHER' &&
+          this.loggedInUser()?.auther?.id === this.authorId;
+        // Require ticket only if media exists AND can't update directly
+        // If nothing exists, we can create (no ticket needed for own profile)
+        const hasAuthorChanges = this.authorId && this.authorDetails()
+          ? this.hasAuthorChanges(this.authorDetails())
+          : false;
+        shouldRaiseTicket = (!!existingMedia && !canUpdateDirectly) || (hasAuthorChanges && !!this.authorId && !canUpdateDirectly);
         break;
       case 1: // Address
         const existingAddress = this.authorDetails()?.address?.[0];
@@ -1819,7 +1849,20 @@ export class AddAuthor implements OnInit {
       signupCode: this.signupCode || undefined,
     } as Author;
 
-    if (this.canUpdateDirectly()) {
+    const existingAuthor = this.authorDetails();
+    const existingMedia = existingAuthor?.medias?.[0];
+    const isOwnProfile = 
+      this.loggedInUser()?.accessLevel === 'AUTHER' &&
+      this.loggedInUser()?.auther?.id === this.authorId;
+    
+    // Allow creating/updating if:
+    // 1. Can update directly (status is Pending/Dormant or SuperAdmin)
+    // 2. Media doesn't exist AND it's own profile (allow creation even if Active)
+    const canCreateOrUpdate = 
+      this.canUpdateDirectly() || // Can update if status allows
+      (!existingMedia && isOwnProfile); // Can create media if nothing exists (own profile)
+
+    if (canCreateOrUpdate) {
       // Create new author or update directly
       const response = (await this.authorsService.createAuthor(
         authorData as Author
@@ -1921,6 +1964,15 @@ export class AddAuthor implements OnInit {
         return updated;
       });
 
+      // Refresh logged-in user data so guard can detect profile completion
+      // Only refresh if this is the logged-in user's own profile
+      const isOwnProfile = 
+        this.loggedInUser()?.accessLevel === 'AUTHER' &&
+        this.loggedInUser()?.auther?.id === finalAuthorId;
+      if (isOwnProfile) {
+        await this.userService.refreshLoggedInUser();
+      }
+
       // Success popup removed - only show on last tab (bank details)
       return false; // No navigation occurred, direct update
     } else {
@@ -1961,7 +2013,22 @@ export class AddAuthor implements OnInit {
       // Only raise AUTHOR ticket for author details or media changes, NOT social media
       // When raising tickets, do NOT update social media - keep it in form state only
       // Social media will be saved when the ticket is approved or on direct update
-      if (hasAuthorChange || hasMediaChange) {
+      // Only raise ticket for media if it already exists (updating), not for new media (creating)
+      // If media doesn't exist and user is adding it for first time, this should have been handled in canCreateOrUpdate
+      const shouldRaiseTicketForMedia = hasMediaChange && !!existingMedia;
+      
+      // If no changes detected, don't proceed
+      if (!hasAuthorChange && !shouldRaiseTicketForMedia && !hasSocialMediaChange) {
+        await Swal.fire({
+          icon: 'info',
+          title: 'No Changes',
+          text: 'No changes detected',
+          heightAuto: false,
+        });
+        return null; // No changes detected, don't proceed with tab change
+      }
+      
+      if (hasAuthorChange || shouldRaiseTicketForMedia) {
         const payload: any = {
           type: UpdateTicketType.AUTHOR,
           authorId: this.authorId,
@@ -2080,10 +2147,19 @@ export class AddAuthor implements OnInit {
       }
     }
 
-    if (this.canUpdateDirectly()) {
+    const existingAuthor = this.authorDetails();
+    const existingAddress = existingAuthor?.address?.[0];
+    const isOwnProfile = 
+      this.loggedInUser()?.accessLevel === 'AUTHER' &&
+      this.loggedInUser()?.auther?.id === this.authorId;
+    
+    // Allow creating if nothing exists (for own profile), or if can update directly
+    const canCreateOrUpdate = 
+      (!existingAddress && isOwnProfile) || // Can create if nothing exists (own profile)
+      this.canUpdateDirectly(); // Can update if status allows
+
+    if (canCreateOrUpdate) {
       // Create or update address directly
-      const existingAuthor = this.authorDetails();
-      const existingAddress = existingAuthor?.address?.[0];
       const wasNewAddress = !existingAddress;
 
       await this.addressService.createOrUpdateAddress({
@@ -2096,6 +2172,15 @@ export class AddAuthor implements OnInit {
       const updatedAuthor = await this.fetchAuthor(this.authorId);
       if (updatedAuthor) {
         this.authorDetails.set(updatedAuthor);
+      }
+
+      // Refresh logged-in user data so guard can detect profile completion
+      // Only refresh if this is the logged-in user's own profile
+      const isOwnProfile = 
+        this.loggedInUser()?.accessLevel === 'AUTHER' &&
+        this.loggedInUser()?.auther?.id === this.authorId;
+      if (isOwnProfile) {
+        await this.userService.refreshLoggedInUser();
       }
 
       // Clear ticket flag for this tab on successful direct update
@@ -2174,10 +2259,19 @@ export class AddAuthor implements OnInit {
       }
     }
 
-    if (this.canUpdateDirectly()) {
+    const existingAuthor = this.authorDetails();
+    const existingBank = existingAuthor?.bankDetails?.[0];
+    const isOwnProfile = 
+      this.loggedInUser()?.accessLevel === 'AUTHER' &&
+      this.loggedInUser()?.auther?.id === this.authorId;
+    
+    // Allow creating if nothing exists (for own profile), or if can update directly
+    const canCreateOrUpdate = 
+      (!existingBank && isOwnProfile) || // Can create if nothing exists (own profile)
+      this.canUpdateDirectly(); // Can update if status allows
+
+    if (canCreateOrUpdate) {
       // Create or update bank details directly
-      const existingAuthor = this.authorDetails();
-      const existingBank = existingAuthor?.bankDetails?.[0];
       const wasNewBank = !existingBank;
 
       const bankDetailsValue = { ...this.authorBankDetails.value };
@@ -2208,6 +2302,15 @@ export class AddAuthor implements OnInit {
       const updatedAuthor = await this.fetchAuthor(this.authorId);
       if (updatedAuthor) {
         this.authorDetails.set(updatedAuthor);
+      }
+
+      // Refresh logged-in user data so guard can detect profile completion
+      // Only refresh if this is the logged-in user's own profile
+      const isOwnProfile = 
+        this.loggedInUser()?.accessLevel === 'AUTHER' &&
+        this.loggedInUser()?.auther?.id === this.authorId;
+      if (isOwnProfile) {
+        await this.userService.refreshLoggedInUser();
       }
 
       // Clear ticket flag for this tab on successful direct update

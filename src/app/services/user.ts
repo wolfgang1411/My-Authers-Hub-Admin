@@ -29,6 +29,19 @@ export class UserService {
   private loggedInUser = signal<User | null>(null);
   loggedInUser$ = this.loggedInUser.asReadonly();
 
+  async refreshLoggedInUser(): Promise<User | null> {
+    try {
+      const user = await this.server.get<User>('auth/whoami');
+      if (user) {
+        this.loggedInUser.set(user);
+      }
+      return user;
+    } catch (error) {
+      console.error('Error refreshing logged-in user:', error);
+      return null;
+    }
+  }
+
   async fetchUsers(filter: UserFilter) {
     try {
       const { status, accessLevel = 'USER', ...rest } = filter || {};

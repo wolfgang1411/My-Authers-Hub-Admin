@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { privateRouteGuard } from './guards/private-route-guard';
 import { publicRouteGuard } from './guards/public-route-guard';
+import { profileCompletionGuard } from './guards/profile-completion-guard';
 import { AddAuthor } from './pages/add-author/add-author';
 import { TitleFormTemp } from './pages/title-form-temp/title-form-temp';
 import { AddPublisher } from './pages/add-publisher/add-publisher';
@@ -10,7 +11,7 @@ export const routes: Routes = [
     path: 'dashboard',
     loadComponent: () =>
       import('./pages/dashboard/dashboard').then((c) => c.Dashboard),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Dashboard',
@@ -38,7 +39,7 @@ export const routes: Routes = [
     path: 'publisher',
     loadComponent: () =>
       import('./pages/publisher/publisher').then((c) => c.Publisher),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Publishers',
@@ -52,7 +53,7 @@ export const routes: Routes = [
     path: 'author',
     loadComponent: () =>
       import('./pages/authors/authors').then((c) => c.Authors),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Authors',
@@ -81,7 +82,7 @@ export const routes: Routes = [
       import('./pages/author-details/author-details').then(
         (c) => c.AuthorDetails
       ),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Author Details',
@@ -107,7 +108,7 @@ export const routes: Routes = [
   {
     path: 'title/:titleId',
     component: TitleFormTemp,
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Edit Title',
@@ -123,7 +124,7 @@ export const routes: Routes = [
       import('./pages/update-title-ticket/update-title-ticket').then(
         (c) => c.UpdateTitleTicket
       ),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Title Update Tickets',
@@ -139,7 +140,7 @@ export const routes: Routes = [
       import('./pages/update-ticket-list/update-ticket-list').then(
         (c) => c.UpdateTicketList
       ),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Update Tickets',
@@ -152,7 +153,7 @@ export const routes: Routes = [
   {
     path: 'titles',
     loadComponent: () => import('./pages/titles/titles').then((c) => c.Titles),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Titles',
@@ -166,7 +167,7 @@ export const routes: Routes = [
     path: 'titleDetails',
     loadComponent: () =>
       import('./pages/title-details/title-details').then((c) => c.TitleDetails),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Title Details',
@@ -180,7 +181,7 @@ export const routes: Routes = [
     path: 'titleSummary/:titleId',
     loadComponent: () =>
       import('./pages/title-summary/title-summary').then((c) => c.TitleSummary),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Title Summary',
@@ -193,7 +194,7 @@ export const routes: Routes = [
   {
     path: 'wallet',
     loadComponent: () => import('./pages/wallet/wallet').then((c) => c.Wallet),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Wallet',
@@ -207,7 +208,7 @@ export const routes: Routes = [
     path: 'isbn',
     loadComponent: () =>
       import('./pages/isbn-list/isbn-list').then((c) => c.ISBNList),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'ISBN List',
@@ -221,7 +222,7 @@ export const routes: Routes = [
     path: 'royalties',
     loadComponent: () =>
       import('./pages/royalties/royalties').then((c) => c.Royalties),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Royalties',
@@ -237,7 +238,7 @@ export const routes: Routes = [
       import('./pages/publisher-details/publisher-details').then(
         (c) => c.PublisherDetails
       ),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Publisher Details',
@@ -276,7 +277,7 @@ export const routes: Routes = [
   {
     path: 'orders',
     loadComponent: () => import('./pages/orders/orders').then((c) => c.Orders),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Orders',
@@ -290,7 +291,7 @@ export const routes: Routes = [
     path: 'orders/:id',
     loadComponent: () =>
       import('./pages/order-details/order-details').then((c) => c.OrderDetails),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Order Details',
@@ -304,7 +305,7 @@ export const routes: Routes = [
     path: 'transactions',
     loadComponent: () =>
       import('./pages/transactions/transactions').then((c) => c.Transactions),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Transactions',
@@ -318,7 +319,7 @@ export const routes: Routes = [
     path: 'bookings',
     loadComponent: () =>
       import('./pages/bookings/bookings').then((c) => c.Bookings),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Bookings',
@@ -334,7 +335,7 @@ export const routes: Routes = [
       import('./pages/booking-details/booking-details').then(
         (c) => c.BookingDetails
       ),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Booking Details',
@@ -363,7 +364,7 @@ export const routes: Routes = [
     path: 'payouts',
     loadComponent: () =>
       import('./pages/payouts/payouts').then((c) => c.Payouts),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Payouts',
@@ -379,7 +380,7 @@ export const routes: Routes = [
       import('./pages/payout-details/payout-details').then(
         (c) => c.PayoutDetails
       ),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Payout Details',
@@ -393,7 +394,7 @@ export const routes: Routes = [
     path: 'profile',
     loadComponent: () =>
       import('./pages/edit-profile/edit-profile').then((c) => c.EditProfile),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Edit Profile',
@@ -407,7 +408,7 @@ export const routes: Routes = [
     path: 'profile/notifications',
     loadComponent: () =>
       import('./pages/profile/profile').then((c) => c.Profile),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Profile Notifications',
@@ -421,7 +422,7 @@ export const routes: Routes = [
     path: 'settings',
     loadComponent: () =>
       import('./pages/settings/settings').then((c) => c.Settings),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       accessLevels: 'SUPERADMIN',
       seo: {
@@ -436,7 +437,7 @@ export const routes: Routes = [
     path: 'title-settings',
     loadComponent: () =>
       import('./pages/title-setting/title-setting').then((c) => c.TitleSetting),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Title Settings',
@@ -452,7 +453,7 @@ export const routes: Routes = [
       import('./pages/notifications/notifications').then(
         (c) => c.Notifications
       ),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       accessLevels: 'SUPERADMIN',
       seo: {
@@ -466,7 +467,7 @@ export const routes: Routes = [
   {
     path: 'users',
     loadComponent: () => import('./pages/users/users').then((c) => c.Users),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       accessLevels: 'SUPERADMIN',
       seo: {
@@ -481,7 +482,7 @@ export const routes: Routes = [
     path: 'users/:id',
     loadComponent: () =>
       import('./pages/user-details/user-details').then((c) => c.UserDetails),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       accessLevels: 'SUPERADMIN',
       seo: {
@@ -496,7 +497,7 @@ export const routes: Routes = [
     path: 'coupon',
     loadComponent: () =>
       import('./pages/coupon/coupon').then((c) => c.CouponComponent),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Coupons',
@@ -510,7 +511,7 @@ export const routes: Routes = [
     path: 'shared-titles',
     loadComponent: () =>
       import('./pages/shared-titles/shared-titles').then((c) => c.SharedTitles),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Shared Titles',
@@ -674,7 +675,7 @@ export const routes: Routes = [
     path: 'invites',
     loadComponent: () =>
       import('./pages/invites/invites').then((c) => c.Invites),
-    canActivate: [privateRouteGuard],
+    canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
         title: 'Invites',
