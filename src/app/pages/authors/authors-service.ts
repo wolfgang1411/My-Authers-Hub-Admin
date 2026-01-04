@@ -142,6 +142,17 @@ export class AuthorsService {
     }
   }
 
+  async resendEmailVerification(authorId: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post(`authors/${authorId}/resend-email-verification`, {})
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
   async uploadAuthorImage(
     file: File,
     authorId: number,

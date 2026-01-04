@@ -593,6 +593,65 @@ export class Authors {
     });
   }
 
+  async resendEmailVerification(authorId: number) {
+    try {
+      const firstConfirm = await Swal.fire({
+        title: this.translateService.instant('resendemailverification') || 'Resend Email Verification',
+        text: this.translateService.instant('resendemailverificationmessage') || 'Do you wish to send the verification email again?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: this.translateService.instant('yes') || 'Yes',
+        cancelButtonText: this.translateService.instant('cancel') || 'Cancel',
+        heightAuto: false,
+        customClass: {
+          confirmButton: '!bg-primary',
+          cancelButton: '!bg-accent',
+        },
+      });
+
+      if (!firstConfirm.isConfirmed) {
+        return;
+      }
+
+      const secondConfirm = await Swal.fire({
+        title: this.translateService.instant('areyousure') || 'Are you sure?',
+        html: this.translateService.instant('resendemailverificationconfirmation') || 'Are you really sure you want to resend the verification email? The verification link will be valid for 24 hours.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: this.translateService.instant('yesconfirm') || 'Yes, I\'m sure',
+        cancelButtonText: this.translateService.instant('cancel') || 'Cancel',
+        heightAuto: false,
+        customClass: {
+          confirmButton: '!bg-primary',
+          cancelButton: '!bg-accent',
+        },
+      });
+
+      if (!secondConfirm.isConfirmed) {
+        return;
+      }
+
+      await this.authorService.resendEmailVerification(authorId);
+      
+      Swal.fire({
+        icon: 'success',
+        title: this.translateService.instant('success') || 'Success',
+        text: this.translateService.instant('emailverificationsent') || 'Verification email has been sent successfully. The link will be valid for 24 hours.',
+        heightAuto: false,
+      });
+
+      this.fetchAuthors();
+    } catch (error) {
+      console.error('Failed to resend email verification:', error);
+      Swal.fire({
+        icon: 'error',
+        title: this.translateService.instant('error') || 'Error',
+        text: this.translateService.instant('failedtosendverificationemail') || 'Failed to send verification email. Please try again.',
+        heightAuto: false,
+      });
+    }
+  }
+
   async onExportToExcel(): Promise<void> {
     try {
       const authors = this.authors();

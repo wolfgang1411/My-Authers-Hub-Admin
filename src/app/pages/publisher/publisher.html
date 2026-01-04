@@ -287,7 +287,17 @@
       >
         <mat-icon class="!text-white">edit</mat-icon>
       </button>
-      } @if(element.status === PublisherStatus.Active) {
+      } @if(element.user?.isEmailVerified === false) {
+      <button
+        class="!bg-yellow-500"
+        mat-icon-button
+        [appTippyTooltip]="'emailverificationpending' | translate"
+        (click)="resendEmailVerification(element.id)"
+      >
+        <mat-icon class="!text-white">help</mat-icon>
+      </button>
+      } @if(element.status === PublisherStatus.Active &&
+      element.user?.isEmailVerified !== false) {
       <button
         class="!bg-primary"
         mat-icon-button
@@ -296,17 +306,6 @@
       >
         <mat-icon class="!text-white">lock_reset</mat-icon>
       </button>
-      } @if(element.status === PublisherStatus.Active &&
-      loggedInUser()?.accessLevel === 'PUBLISHER') {
-      <button
-        class="!bg-primary"
-        mat-icon-button
-        [routerLink]="['/publisher', element.id]"
-        [appTippyTooltip]="'raiseaticket' | translate"
-      >
-        <mat-icon class="!text-white">support_agent</mat-icon>
-      </button>
-      } @if(element.status === PublisherStatus.Active) {
       <button
         class="!bg-green-600"
         mat-icon-button
@@ -315,11 +314,22 @@
       >
         <mat-icon class="!text-white">share</mat-icon>
       </button>
+      } @if(element.status === PublisherStatus.Active &&
+      loggedInUser()?.accessLevel === 'PUBLISHER' &&
+      element.user?.isEmailVerified !== false) {
+      <button
+        class="!bg-primary"
+        mat-icon-button
+        [routerLink]="['/publisher', element.id]"
+        [appTippyTooltip]="'raiseaticket' | translate"
+      >
+        <mat-icon class="!text-white">support_agent</mat-icon>
+      </button>
       } @if (element.status === PublisherStatus.Pending &&
       (loggedInUser()?.accessLevel ==='SUPERADMIN' ||
       (loggedInUser()?.accessLevel === 'PUBLISHER' &&
-      element.isApprovedByPublisher !== true))) { @if
-      (element.user?.isEmailVerified !== false) {
+      element.isApprovedByPublisher !== true))) {
+      @if (element.user?.isEmailVerified !== false) {
       <button
         class="!bg-green-2 active:bg-green-2/60"
         mat-icon-button
@@ -328,20 +338,7 @@
       >
         <mat-icon class="!text-white">check</mat-icon>
       </button>
-      }
-
-      @if(element.status === PublisherStatus.Pending &&
-      element.user?.isEmailVerified === false) {
-      <button
-        class="!bg-yellow-500"
-        mat-icon-button
-        [appTippyTooltip]="'Email verification pending' | translate"
-      >
-        <mat-icon class="!text-white">help</mat-icon>
-      </button>
-      }
-
-     } @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
+      } } @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
       @if(element.status === PublisherStatus.Active &&
       element.user?.isEmailVerified !== false) {
       <button
@@ -354,7 +351,6 @@
       </button>
       } @if(element.status === PublisherStatus.Pending &&
       element.user?.isEmailVerified !== false) {
-
       <button
         class="!bg-red-colour active:bg-red-colour/60"
         mat-icon-button

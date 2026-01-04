@@ -137,7 +137,7 @@
       @if (isAuthor() || (!isPublisher() || !isPending())) {
       <button
         (click)="goToLogin()"
-        class="btn !bg-primary text-white px-8 py-3 rounded-md font-semibold text-lg hover:opacity-90 transition-opacity shadow-md"
+        class="btn !bg-primary !text-white px-8 py-3 rounded-md font-semibold text-lg hover:opacity-90 transition-opacity shadow-md"
         mat-button
       >
         {{ "continue_to_login" | translate }}

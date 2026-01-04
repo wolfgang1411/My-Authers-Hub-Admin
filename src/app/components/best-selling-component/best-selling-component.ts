@@ -26,7 +26,10 @@ export class TitlePreviewComponent {
   }
 
   async fetchAndUpdateTitles() {
-    const { items } = await this.titleService.getTitles(this.filter());
+    const { items } = await this.titleService.getTitles({
+      ...this.filter(),
+      itemsPerPage: this.filter()?.itemsPerPage || 5,
+    });
     this.titles.update((titles) =>
       titles && titles.length ? [...titles, ...items] : items
     );

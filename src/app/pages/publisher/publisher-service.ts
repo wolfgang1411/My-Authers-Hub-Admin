@@ -174,6 +174,17 @@ export class PublisherService {
     }
   }
 
+  async resendEmailVerification(publisherId: number) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post(`publishers/${publisherId}/resend-email-verification`, {})
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
   async rejectPublisher(publisherId: number) {
     try {
       return await this.loader.loadPromise(

@@ -22,6 +22,7 @@ export class RecentAuthors {
     status: AuthorStatus.Active,
     showTotalEarnings: true,
     approvedAfter: formatDate(subDays(new Date(), 30), 'yyyy-MM-dd'),
+    itemsPerPage: 5,
   };
 
   async ngOnInit() {
