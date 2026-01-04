@@ -473,6 +473,18 @@ export interface TitleDistributionGroup {
   availablePoints: FormControl<number>;
 }
 
+export interface TitleCompleteness {
+  id: number;
+  name: string;
+  publishingType: PublishingType;
+  isComplete: boolean;
+  missingBasicDetails: string[];
+  missingMedia: TitleMediaType[];
+  requiredMedia: TitleMediaType[];
+  hasBasicDetails: boolean;
+  hasRequiredMedia: boolean;
+}
+
 // 👤 Author group
 export interface AuthorFormGroup {
   id: FormControl<number | null | undefined>;

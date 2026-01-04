@@ -31,6 +31,7 @@ import {
   PricingUpdateTicket,
   RoyaltyUpdateTicket,
   CreatePlatformIdentifier,
+  TitleCompleteness,
 } from '../../interfaces/Titles';
 import { Logger } from '../../services/logger';
 import { LoaderService } from '../../services/loader';
@@ -114,6 +115,33 @@ export class TitleService {
       );
     } catch (error) {
       console.error('Error fetching titles:', error);
+      throw error;
+    }
+  }
+
+  async getTitleCompleteness(
+    incompleteOnly: boolean = false,
+    page: number = 1,
+    itemsPerPage: number = 30
+  ) {
+    try {
+      const params: any = {};
+      
+      if (incompleteOnly !== undefined && incompleteOnly !== null) {
+        params.incompleteOnly = incompleteOnly;
+      }
+      if (page !== undefined && page !== null) {
+        params.page = page;
+      }
+      if (itemsPerPage !== undefined && itemsPerPage !== null) {
+        params.itemsPerPage = itemsPerPage;
+      }
+
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<TitleCompleteness>>('titles/completeness', params)
+      );
+    } catch (error) {
+      console.error('Error fetching title completeness:', error);
       throw error;
     }
   }

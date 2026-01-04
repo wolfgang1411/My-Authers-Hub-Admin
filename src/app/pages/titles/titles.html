@@ -26,6 +26,17 @@
     </div>
 
     <div class="flex gap-2">
+      @if (isSuperAdmin()) {
+        <button
+          matButton
+          matButton="filled"
+          class="!bg-primary text-white flex items-center gap-2 rounded-md p-2"
+          [routerLink]="['/incomplete-titles']"
+        >
+          <mat-icon class="material-icons">warning</mat-icon>
+          {{ "incompleteTitles" | translate }}
+        </button>
+      }
       <!-- <button
         matButton="filled"
         class="!bg-primary text-white flex items-center gap-2 rounded-md p-2"

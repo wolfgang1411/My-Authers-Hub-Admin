@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { privateRouteGuard } from './guards/private-route-guard';
 import { publicRouteGuard } from './guards/public-route-guard';
 import { profileCompletionGuard } from './guards/profile-completion-guard';
+import { superadminGuard } from './guards/superadmin-guard';
 import { AddAuthor } from './pages/add-author/add-author';
 import { TitleFormTemp } from './pages/title-form-temp/title-form-temp';
 import { AddPublisher } from './pages/add-publisher/add-publisher';
@@ -158,6 +159,22 @@ export const routes: Routes = [
       seo: {
         title: 'Titles',
         description: 'Manage book titles in your authors hub',
+        noindex: true,
+        nofollow: true,
+      },
+    },
+  },
+  {
+    path: 'incomplete-titles',
+    loadComponent: () =>
+      import('./pages/incomplete-titles/incomplete-titles').then(
+        (c) => c.IncompleteTitles
+      ),
+    canActivate: [privateRouteGuard, profileCompletionGuard, superadminGuard],
+    data: {
+      seo: {
+        title: 'Incomplete Titles',
+        description: 'View and manage incomplete titles',
         noindex: true,
         nofollow: true,
       },

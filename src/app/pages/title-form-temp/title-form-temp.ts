@@ -254,7 +254,12 @@ export class TitleFormTemp implements OnDestroy {
   @ViewChild('scrollTarget') scrollTarget!: ElementRef;
 
   goBack() {
-    this.router.navigate(['/titles']);
+    const returnTo = this.route.snapshot.queryParams['returnTo'];
+    if (returnTo === 'incomplete-titles') {
+      this.router.navigate(['/incomplete-titles']);
+    } else {
+      this.router.navigate(['/titles']);
+    }
   }
 
   onSelectDocumentsReady() {
@@ -707,7 +712,7 @@ export class TitleFormTemp implements OnDestroy {
             this.translateService.instant('errorloadingtitle') ||
             'Failed to load title. Please try again.',
         }).then(() => {
-          this.router.navigate(['/titles']);
+          this.goBackToTitles();
         });
         return;
       } finally {
@@ -3873,7 +3878,7 @@ export class TitleFormTemp implements OnDestroy {
             this.translateService.instant('titlesentforapproval') ||
             'Title has been sent for approval to the admin.',
         }).then(() => {
-          this.router.navigate(['/titles']);
+          this.goBackToTitles();
         });
 
         return;
@@ -5288,7 +5293,7 @@ export class TitleFormTemp implements OnDestroy {
             this.translateService.instant('titlesentforapproval') ||
             'Title has been sent for approval to the admin.',
         }).then(() => {
-          this.router.navigate(['/titles']);
+          this.goBackToTitles();
         });
 
         return;
@@ -5609,7 +5614,12 @@ export class TitleFormTemp implements OnDestroy {
    * Navigate back to titles listing
    */
   goBackToTitles(): void {
-    this.router.navigate(['/titles']);
+    const returnTo = this.route.snapshot.queryParams['returnTo'];
+    if (returnTo === 'incomplete-titles') {
+      this.router.navigate(['/incomplete-titles']);
+    } else {
+      this.router.navigate(['/titles']);
+    }
   }
 
   async onClickPurchasePoint(type: DistributionType) {

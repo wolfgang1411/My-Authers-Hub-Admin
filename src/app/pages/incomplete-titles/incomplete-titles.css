@@ -1,0 +1,28 @@
+.status-complete {
+  @apply text-success font-semibold;
+}
+
+.status-incomplete {
+  @apply text-error font-semibold;
+}
+
+.badge {
+  @apply px-2 py-1 rounded text-xs font-medium;
+}
+
+.badge-error {
+  @apply bg-red-100 text-red-800;
+}
+
+.badge-warning {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.text-success {
+  @apply text-green-600;
+}
+
+.text-error {
+  @apply text-red-600;
+}
+

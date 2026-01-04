@@ -16,7 +16,7 @@ import Swal from 'sweetalert2';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { format } from 'date-fns';
-import { PublishingType, TitleStatus, User } from '../../interfaces';
+import { PublishingType, TitleStatus, User, UserAccessLevel } from '../../interfaces';
 import { ApproveTitle } from '../../components/approve-title/approve-title';
 import { UserService } from '../../services/user';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -59,6 +59,10 @@ export class Titles {
   }
 
   loggedInUser!: Signal<User | null>;
+
+  isSuperAdmin = computed(() => {
+    return this.loggedInUser()?.accessLevel === UserAccessLevel.SUPERADMIN;
+  });
 
   titleDBStatus = computed(() => {
     console.log(this.staticValueService.staticValues(), 'Fdafsaf');
