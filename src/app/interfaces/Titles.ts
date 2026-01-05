@@ -483,6 +483,7 @@ export interface TitleCompleteness {
   requiredMedia: TitleMediaType[];
   hasBasicDetails: boolean;
   hasRequiredMedia: boolean;
+  publisherName?: string;
 }
 
 // 👤 Author group

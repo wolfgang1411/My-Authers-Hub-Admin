@@ -11,8 +11,8 @@
       matButton="filled"
       matButton
       [ngClass]="{
-        '!bg-primary !text-white': filterType() === 'incomplete',
-        '!bg-primary-superlight': filterType() !== 'incomplete'
+        '!bg-primary !text-white': filter().incompleteOnly,
+        '!bg-primary-superlight': !filter().incompleteOnly
       }"
       (click)="onFilterChange('incomplete')"
     >
@@ -25,8 +25,8 @@
       matButton="filled"
       matButton
       [ngClass]="{
-        '!bg-primary !text-white': filterType() === 'all',
-        '!bg-primary-superlight': filterType() !== 'all'
+        '!bg-primary !text-white': !filter().incompleteOnly,
+        '!bg-primary-superlight': filter().incompleteOnly
       }"
       (click)="onFilterChange('all')"
     >
@@ -48,137 +48,27 @@
       <p>{{ "noTitlesFound" | translate }}</p>
     </div>
   } @else {
-    <div class="overflow-x-auto">
-      <table mat-table [dataSource]="dataSource" class="w-full">
-        <!-- Name Column -->
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>
-            {{ "name" | translate }}
-          </th>
-          <td mat-cell *matCellDef="let title">
-            <a
-              [routerLink]="['/titleSummary', title.id]"
-              class="text-primary hover:underline"
-            >
-              {{ title.name }}
-            </a>
-          </td>
-        </ng-container>
-
-        <!-- Publishing Type Column -->
-        <ng-container matColumnDef="publishingType">
-          <th mat-header-cell *matHeaderCellDef>
-            {{ "publishingType" | translate }}
-          </th>
-          <td mat-cell *matCellDef="let title">
-            {{ getPublishingTypeLabel(title.publishingType) }}
-          </td>
-        </ng-container>
-
-        <!-- Status Column -->
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef>
-            {{ "status" | translate }}
-          </th>
-          <td mat-cell *matCellDef="let title">
-            <span [class]="getStatusClass(title)">
-              {{ getStatusText(title) }}
-            </span>
-          </td>
-        </ng-container>
-
-        <!-- Missing Details Column -->
-        <ng-container matColumnDef="missingDetails">
-          <th mat-header-cell *matHeaderCellDef>
-            {{ "missingBasicDetails" | translate }}
-          </th>
-          <td mat-cell *matCellDef="let title">
-            @if (title.missingBasicDetails && title.missingBasicDetails.length > 0) {
-              <div class="flex flex-wrap gap-1">
-                @for (detail of title.missingBasicDetails; track detail) {
-                  <span class="badge badge-error">
-                    {{ getMissingDetailsLabel([detail]) }}
-                  </span>
-                }
-              </div>
-            } @else {
-              <span class="text-success">✓</span>
-            }
-          </td>
-        </ng-container>
-
-        <!-- Missing Media Column -->
-        <ng-container matColumnDef="missingMedia">
-          <th mat-header-cell *matHeaderCellDef>
-            {{ "missingMedia" | translate }}
-          </th>
-          <td mat-cell *matCellDef="let title">
-            @if (title.missingMedia && title.missingMedia.length > 0) {
-              <div class="flex flex-wrap gap-1">
-                @for (media of title.missingMedia; track media) {
-                  <span class="badge badge-warning">
-                    {{ getMissingMediaLabel([media]) }}
-                  </span>
-                }
-              </div>
-            } @else {
-              <span class="text-success">✓</span>
-            }
-          </td>
-        </ng-container>
-
-        <!-- Actions Column -->
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef>
-            {{ "actions" | translate }}
-          </th>
-          <td mat-cell *matCellDef="let title">
-            <div class="flex gap-2">
-              <a
-                [routerLink]="['/titleSummary', title.id]"
-                class="btn btn-sm btn-primary"
-              >
-                {{ "view" | translate }}
-              </a>
-              @if (isSuperAdmin()) {
-                <a
-                  [routerLink]="['/title', title.id]"
-                  [queryParams]="{ returnTo: 'incomplete-titles' }"
-                  class="btn btn-sm btn-secondary"
-                >
-                  <mat-icon class="material-icons">edit</mat-icon>
-                  {{ "edit" | translate }}
-                </a>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-secondary"
-                  (click)="openSkuAndLinks(title)"
-                  [disabled]="isLoading()"
-                >
-                  <mat-icon class="material-icons">link</mat-icon>
-                  {{ "skuandlinks" | translate }}
-                </button>
-              }
-            </div>
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-      </table>
-    </div>
+    <app-list-table
+      class="pt-6"
+      [dataSource]="dataSource"
+      [displayedColumns]="displayedColumns"
+      [actionTemplate]="actionButtons"
+      [isSortable]="isSortable"
+      (sortChange)="onSortChange($event)"
+    >
+    </app-list-table>
 
     <!-- Pagination -->
     <div class="flex items-center justify-between gap-4 mt-4">
       <div class="flex items-center gap-2">
         <span class="text-sm text-[var(--text-secondary)]">
-          {{ "page" | translate }} {{ page() }} {{ "of" | translate }} {{ totalPages() }}
+          {{ "page" | translate }} {{ filter().page || 1 }} {{ "of" | translate }} {{ lastPage() }}
         </span>
         <span class="text-sm text-[var(--text-secondary)]">|</span>
         <span class="text-sm text-[var(--text-secondary)]">{{ "itemsperpage" | translate }}:</span>
         <select
           class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
-          [value]="itemsPerPage()"
+          [value]="filter().itemsPerPage || 30"
           (change)="onItemsPerPageChange(+$any($event.target).value)"
         >
           <option value="10">10</option>
@@ -187,23 +77,83 @@
           <option value="100">100</option>
         </select>
       </div>
+      @if (lastPage() > 1) {
       <div class="flex items-center gap-2">
         <button
-          class="btn btn-sm"
-          [disabled]="page() <= 1"
-          (click)="onPageChange(page() - 1)"
+          class="btn rounded-md !text-primary"
+          matButton="filled"
+          matButton
+          type="button"
+          [disabled]="(filter().page || 1) === 1"
+          (click)="previousPage()"
         >
+          <mat-icon>chevron_left</mat-icon>
           {{ "previous" | translate }}
         </button>
+        <div class="flex items-center gap-1">
+          @for (pageNum of getPageNumbers(); track pageNum) {
+            @if (pageNum === -1) {
+              <span class="px-2 text-[var(--text-secondary)]">...</span>
+            } @else {
+              <button
+                class="btn rounded-md !text-primary min-w-[40px]"
+                matButton="filled"
+                matButton
+                type="button"
+                [ngClass]="{
+                  '!bg-primary !text-white': (filter().page || 1) === pageNum,
+                  '!bg-primary-superlight': (filter().page || 1) !== pageNum
+                }"
+                (click)="goToPage(pageNum)"
+              >
+                {{ pageNum }}
+              </button>
+            }
+          }
+        </div>
         <button
-          class="btn btn-sm"
-          [disabled]="page() >= totalPages()"
-          (click)="onPageChange(page() + 1)"
+          class="btn rounded-md !text-primary"
+          matButton="filled"
+          matButton
+          type="button"
+          [disabled]="(filter().page || 1) === lastPage()"
+          (click)="nextPage()"
         >
           {{ "next" | translate }}
+          <mat-icon>chevron_right</mat-icon>
         </button>
       </div>
+      }
     </div>
   }
 </div>
 
+<ng-template #actionButtons let-element>
+  <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
+    <button
+      class="!bg-primary"
+      mat-icon-button
+      [routerLink]="['/titleSummary', element.id]"
+    >
+      <mat-icon class="!text-white">visibility</mat-icon>
+    </button>
+    @if (isSuperAdmin()) {
+      <button
+        class="!bg-primary"
+        mat-icon-button
+        [routerLink]="['/title', element.id]"
+        [queryParams]="{ returnTo: 'incomplete-titles' }"
+      >
+        <mat-icon class="!text-white">edit</mat-icon>
+      </button>
+      <button
+        class="!bg-primary"
+        mat-icon-button
+        (click)="openSkuAndLinks(element)"
+        [disabled]="isLoading()"
+      >
+        <mat-icon class="!text-white">link</mat-icon>
+      </button>
+    }
+  </div>
+</ng-template>

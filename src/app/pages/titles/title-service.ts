@@ -122,7 +122,9 @@ export class TitleService {
   async getTitleCompleteness(
     incompleteOnly: boolean = false,
     page: number = 1,
-    itemsPerPage: number = 30
+    itemsPerPage: number = 30,
+    orderBy?: string,
+    orderByVal?: 'asc' | 'desc'
   ) {
     try {
       const params: any = {};
@@ -135,6 +137,12 @@ export class TitleService {
       }
       if (itemsPerPage !== undefined && itemsPerPage !== null) {
         params.itemsPerPage = itemsPerPage;
+      }
+      if (orderBy !== undefined && orderBy !== null) {
+        params.orderBy = orderBy;
+      }
+      if (orderByVal !== undefined && orderByVal !== null) {
+        params.orderByVal = orderByVal;
       }
 
       return await this.loader.loadPromise(

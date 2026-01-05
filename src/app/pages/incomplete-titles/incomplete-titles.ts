@@ -1,12 +1,10 @@
-import { Component, OnDestroy, OnInit, signal, computed, Signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, computed, Signal, TemplateRef, ViewChild } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TitleService } from '../titles/title-service';
 import { TitleCompleteness, Title, CreatePlatformIdentifier } from '../../interfaces/Titles';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
+import { MatTableDataSource } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
@@ -17,15 +15,27 @@ import { UserService } from '../../services/user';
 import { User } from '../../interfaces';
 import { ApproveTitle } from '../../components/approve-title/approve-title';
 import Swal from 'sweetalert2';
+import { ListTable } from '../../components/list-table/list-table';
+import { MatButton, MatIconButton } from '@angular/material/button';
+
+interface TitleCompletenessFilter {
+  incompleteOnly: boolean;
+  page: number;
+  itemsPerPage: number;
+  orderBy?: string;
+  orderByVal?: 'asc' | 'desc';
+}
 
 @Component({
   selector: 'app-incomplete-titles',
   imports: [
     SharedModule,
-    MatTableModule,
     MatProgressSpinnerModule,
     MatIconModule,
     RouterLink,
+    ListTable,
+    MatButton,
+    MatIconButton,
   ],
   templateUrl: './incomplete-titles.html',
   styleUrl: './incomplete-titles.css',
@@ -36,13 +46,19 @@ export class IncompleteTitles implements OnInit, OnDestroy {
   titles = signal<TitleCompleteness[]>([]);
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
-  filterType = signal<'all' | 'incomplete'>('incomplete');
-  page = signal(1);
-  itemsPerPage = signal(30);
-  totalCount = signal(0);
+  lastPage = signal(1);
+  
+  filter = signal<TitleCompletenessFilter>({
+    incompleteOnly: true,
+    page: 1,
+    itemsPerPage: 30,
+    orderBy: 'id',
+    orderByVal: 'desc',
+  });
   
   displayedColumns: string[] = [
     'name',
+    'publisherName',
     'publishingType',
     'status',
     'missingDetails',
@@ -50,7 +66,26 @@ export class IncompleteTitles implements OnInit, OnDestroy {
     'actions',
   ];
   
-  dataSource = new MatTableDataSource<TitleCompleteness>([]);
+  dataSource = new MatTableDataSource<any>([]);
+  
+  // Cache to store fetched pages
+  private pageCache = new Map<number, TitleCompleteness[]>();
+  private cachedFilterKey = '';
+  
+  private getFilterKey(): string {
+    const currentFilter = this.filter();
+    return JSON.stringify({
+      incompleteOnly: currentFilter.incompleteOnly,
+      itemsPerPage: currentFilter.itemsPerPage,
+      orderBy: currentFilter.orderBy,
+      orderByVal: currentFilter.orderByVal,
+    });
+  }
+
+  private clearCache() {
+    this.pageCache.clear();
+    this.cachedFilterKey = '';
+  }
   
   publishingTypeLabels = computed<Record<PublishingType, string>>(() => {
     return {
@@ -84,55 +119,177 @@ export class IncompleteTitles implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  async fetchTitles(): Promise<void> {
+  async fetchTitles(showLoader = true): Promise<void> {
     try {
-      this.isLoading.set(true);
+      if (showLoader) {
+        this.isLoading.set(true);
+      }
       this.errorMessage.set(null);
       
-      const incompleteOnly = this.filterType() === 'incomplete';
-      const currentPage = this.page();
-      const currentItemsPerPage = this.itemsPerPage();
+      const currentFilter = this.filter();
+      const currentPage = currentFilter.page || 1;
+      const filterKey = this.getFilterKey();
+      
+      // Clear cache if filter changed
+      if (this.cachedFilterKey !== filterKey) {
+        this.clearCache();
+        this.cachedFilterKey = filterKey;
+      }
+
+      // Check if page is already cached
+      if (this.pageCache.has(currentPage)) {
+        const cachedTitles = this.pageCache.get(currentPage)!;
+        this.titles.set(cachedTitles);
+        this.mapTitlesToDataSource(cachedTitles);
+        if (showLoader) {
+          this.isLoading.set(false);
+        }
+        return;
+      }
       
       const response = await this.titleService.getTitleCompleteness(
-        incompleteOnly,
+        currentFilter.incompleteOnly,
         currentPage,
-        currentItemsPerPage
+        currentFilter.itemsPerPage,
+        currentFilter.orderBy,
+        currentFilter.orderByVal
       );
       
+      // Cache the fetched page
+      this.pageCache.set(currentPage, response.items);
       this.titles.set(response.items);
-      this.totalCount.set(response.totalCount);
-      this.dataSource.data = response.items;
+      this.lastPage.set(Math.ceil(response.totalCount / response.itemsPerPage));
+      this.mapTitlesToDataSource(response.items);
     } catch (error: any) {
       console.error('Error fetching titles:', error);
       const errorMsg = this.translateService.instant('error') || 'An error occurred';
       this.errorMessage.set(errorMsg);
     } finally {
-      this.isLoading.set(false);
+      if (showLoader) {
+        this.isLoading.set(false);
+      }
     }
   }
 
+  private mapTitlesToDataSource(items: TitleCompleteness[]) {
+    const mapped = items.map((title) => ({
+      ...title,
+      publisherName: title.publisherName || '-',
+      publishingType: this.getPublishingTypeLabel(title.publishingType),
+      status: this.getStatusText(title),
+      missingDetails: this.getMissingDetailsLabel(title.missingBasicDetails),
+      missingMedia: this.getMissingMediaLabel(title.missingMedia),
+      actions: '',
+    }));
+    this.dataSource.data = mapped;
+  }
+
   onFilterChange(value: 'all' | 'incomplete'): void {
-    this.filterType.set(value);
-    this.page.set(1);
+    this.filter.update((f) => ({
+      ...f,
+      incompleteOnly: value === 'incomplete',
+      page: 1,
+    }));
+    this.clearCache();
     this.fetchTitles();
   }
 
-  onPageChange(newPage: number): void {
-    this.page.set(newPage);
+  nextPage() {
+    const currentPage = this.filter().page || 1;
+    if (currentPage < this.lastPage()) {
+      this.filter.update((f) => ({ ...f, page: currentPage + 1 }));
+      this.fetchTitles();
+    }
+  }
+
+  previousPage() {
+    const currentPage = this.filter().page || 1;
+    if (currentPage > 1) {
+      this.filter.update((f) => ({ ...f, page: currentPage - 1 }));
+      this.fetchTitles();
+    }
+  }
+
+  goToPage(pageNumber: number) {
+    if (pageNumber >= 1 && pageNumber <= this.lastPage()) {
+      this.filter.update((f) => ({ ...f, page: pageNumber }));
+      this.fetchTitles();
+    }
+  }
+
+  onItemsPerPageChange(itemsPerPage: number) {
+    this.filter.update((f) => ({ ...f, itemsPerPage, page: 1 }));
+    this.clearCache();
     this.fetchTitles();
   }
 
-  onItemsPerPageChange(newItemsPerPage: number): void {
-    this.itemsPerPage.set(newItemsPerPage);
-    this.page.set(1);
-    this.fetchTitles();
+  getPageNumbers(): number[] {
+    const currentPage = this.filter().page || 1;
+    const totalPages = this.lastPage();
+    const pages: number[] = [];
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        pages.push(-1);
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push(-1);
+        pages.push(totalPages);
+      }
+    }
+    return pages;
   }
 
-  totalPages = computed(() => {
-    const total = this.totalCount();
-    const perPage = this.itemsPerPage();
-    return Math.ceil(total / perPage) || 1;
-  });
+  getApiFieldName = (column: string): string | null => {
+    const columnMap: Record<string, string> = {
+      name: 'name',
+      publisherName: 'publisherName',
+      publishingType: 'publishingType',
+    };
+    return columnMap[column] || null;
+  };
+
+  isSortable = (column: string): boolean => {
+    return this.getApiFieldName(column) !== null;
+  };
+
+  onSortChange(sort: { active: string; direction: 'asc' | 'desc' | '' }) {
+    const apiFieldName = this.getApiFieldName(sort.active);
+    if (!apiFieldName) return;
+
+    const direction: 'asc' | 'desc' =
+      sort.direction === 'asc' || sort.direction === 'desc'
+        ? sort.direction
+        : 'desc';
+
+    this.filter.update((f) => ({
+      ...f,
+      orderBy: apiFieldName,
+      orderByVal: direction,
+      page: 1,
+    }));
+    // fetchTitles will handle cache clearing based on filter key change
+    // Don't show loader to avoid UI flicker - dataSource keeps old data until new data arrives
+    this.fetchTitles(false);
+  }
 
   getMissingDetailsLabel(missing: string[]): string {
     if (!missing || missing.length === 0) return '';
@@ -236,4 +393,3 @@ export class IncompleteTitles implements OnInit, OnDestroy {
     }
   }
 }
-
