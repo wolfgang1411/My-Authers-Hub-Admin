@@ -168,8 +168,78 @@
             class="pt-6"
             [dataSource]="bookPublishData"
             [displayedColumns]="displayedColumns"
+            [isSortable]="booksIsSortable"
+            (sortChange)="booksOnSortChange($event)"
           >
           </app-list-table>
+        </div>
+        <div class="flex items-center justify-between gap-4 mt-4">
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-[var(--text-secondary)]">
+              {{ "page" | translate }} {{ booksFilter().page || 1 }}
+              {{ "of" | translate }} {{ booksLastPage() }}
+            </span>
+            <span class="text-sm text-[var(--text-secondary)]">|</span>
+            <span class="text-sm text-[var(--text-secondary)]"
+              >{{ "itemsperpage" | translate }}:</span
+            >
+            <select
+              class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
+              [value]="booksFilter().itemsPerPage || 30"
+              (change)="booksOnItemsPerPageChange(+$any($event.target).value)"
+            >
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="30">30</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+          @if (booksLastPage() > 1) {
+          <div class="flex items-center gap-2">
+            <button
+              class="btn rounded-md !text-primary"
+              matButton="filled"
+              matButton
+              type="button"
+              [disabled]="(booksFilter().page || 1) === 1"
+              (click)="booksPreviousPage()"
+            >
+              <mat-icon>chevron_left</mat-icon>
+              {{ "previous" | translate }}
+            </button>
+            <div class="flex items-center gap-1">
+              @for (pageNum of booksGetPageNumbers(); track pageNum) { @if (pageNum === -1) {
+              <span class="px-2 text-[var(--text-secondary)]">...</span>
+              } @else {
+              <button
+                class="btn rounded-md !text-primary min-w-[40px]"
+                matButton="filled"
+                matButton
+                type="button"
+                [ngClass]="{
+                  '!bg-primary !text-white': (booksFilter().page || 1) === pageNum,
+                  '!bg-primary-superlight': (booksFilter().page || 1) !== pageNum
+                }"
+                (click)="booksGoToPage(pageNum)"
+              >
+                {{ pageNum }}
+              </button>
+              } }
+            </div>
+            <button
+              class="btn rounded-md !text-primary"
+              matButton="filled"
+              matButton
+              type="button"
+              [disabled]="(booksFilter().page || 1) === booksLastPage()"
+              (click)="booksNextPage()"
+            >
+              {{ "next" | translate }}
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          </div>
+          }
         </div>
       </section>
     </mat-tab>
@@ -198,8 +268,78 @@
             class="pt-6"
             [dataSource]="authorData"
             [displayedColumns]="displayedAuthorColumns"
+            [isSortable]="authorsIsSortable"
+            (sortChange)="authorsOnSortChange($event)"
           >
           </app-list-table>
+        </div>
+        <div class="flex items-center justify-between gap-4 mt-4">
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-[var(--text-secondary)]">
+              {{ "page" | translate }} {{ authorsFilter().page || 1 }}
+              {{ "of" | translate }} {{ authorsLastPage() }}
+            </span>
+            <span class="text-sm text-[var(--text-secondary)]">|</span>
+            <span class="text-sm text-[var(--text-secondary)]"
+              >{{ "itemsperpage" | translate }}:</span
+            >
+            <select
+              class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
+              [value]="authorsFilter().itemsPerPage || 30"
+              (change)="authorsOnItemsPerPageChange(+$any($event.target).value)"
+            >
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="30">30</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+          @if (authorsLastPage() > 1) {
+          <div class="flex items-center gap-2">
+            <button
+              class="btn rounded-md !text-primary"
+              matButton="filled"
+              matButton
+              type="button"
+              [disabled]="(authorsFilter().page || 1) === 1"
+              (click)="authorsPreviousPage()"
+            >
+              <mat-icon>chevron_left</mat-icon>
+              {{ "previous" | translate }}
+            </button>
+            <div class="flex items-center gap-1">
+              @for (pageNum of authorsGetPageNumbers(); track pageNum) { @if (pageNum === -1) {
+              <span class="px-2 text-[var(--text-secondary)]">...</span>
+              } @else {
+              <button
+                class="btn rounded-md !text-primary min-w-[40px]"
+                matButton="filled"
+                matButton
+                type="button"
+                [ngClass]="{
+                  '!bg-primary !text-white': (authorsFilter().page || 1) === pageNum,
+                  '!bg-primary-superlight': (authorsFilter().page || 1) !== pageNum
+                }"
+                (click)="authorsGoToPage(pageNum)"
+              >
+                {{ pageNum }}
+              </button>
+              } }
+            </div>
+            <button
+              class="btn rounded-md !text-primary"
+              matButton="filled"
+              matButton
+              type="button"
+              [disabled]="(authorsFilter().page || 1) === authorsLastPage()"
+              (click)="authorsNextPage()"
+            >
+              {{ "next" | translate }}
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          </div>
+          }
         </div>
       </section>
     </mat-tab>
@@ -228,8 +368,78 @@
             class="pt-6"
             [dataSource]="subPublisherData"
             [displayedColumns]="displayedSubPublisherColumns"
+            [isSortable]="subPublishersIsSortable"
+            (sortChange)="subPublishersOnSortChange($event)"
           >
           </app-list-table>
+        </div>
+        <div class="flex items-center justify-between gap-4 mt-4">
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-[var(--text-secondary)]">
+              {{ "page" | translate }} {{ subPublishersFilter().page || 1 }}
+              {{ "of" | translate }} {{ subPublishersLastPage() }}
+            </span>
+            <span class="text-sm text-[var(--text-secondary)]">|</span>
+            <span class="text-sm text-[var(--text-secondary)]"
+              >{{ "itemsperpage" | translate }}:</span
+            >
+            <select
+              class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
+              [value]="subPublishersFilter().itemsPerPage || 30"
+              (change)="subPublishersOnItemsPerPageChange(+$any($event.target).value)"
+            >
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="30">30</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+          @if (subPublishersLastPage() > 1) {
+          <div class="flex items-center gap-2">
+            <button
+              class="btn rounded-md !text-primary"
+              matButton="filled"
+              matButton
+              type="button"
+              [disabled]="(subPublishersFilter().page || 1) === 1"
+              (click)="subPublishersPreviousPage()"
+            >
+              <mat-icon>chevron_left</mat-icon>
+              {{ "previous" | translate }}
+            </button>
+            <div class="flex items-center gap-1">
+              @for (pageNum of subPublishersGetPageNumbers(); track pageNum) { @if (pageNum === -1) {
+              <span class="px-2 text-[var(--text-secondary)]">...</span>
+              } @else {
+              <button
+                class="btn rounded-md !text-primary min-w-[40px]"
+                matButton="filled"
+                matButton
+                type="button"
+                [ngClass]="{
+                  '!bg-primary !text-white': (subPublishersFilter().page || 1) === pageNum,
+                  '!bg-primary-superlight': (subPublishersFilter().page || 1) !== pageNum
+                }"
+                (click)="subPublishersGoToPage(pageNum)"
+              >
+                {{ pageNum }}
+              </button>
+              } }
+            </div>
+            <button
+              class="btn rounded-md !text-primary"
+              matButton="filled"
+              matButton
+              type="button"
+              [disabled]="(subPublishersFilter().page || 1) === subPublishersLastPage()"
+              (click)="subPublishersNextPage()"
+            >
+              {{ "next" | translate }}
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          </div>
+          }
         </div>
       </section>
     </mat-tab>
@@ -279,8 +489,78 @@
           <app-list-table
             [dataSource]="royaltyData"
             [displayedColumns]="displayedRoyaltyColumns()"
+            [isSortable]="royaltyIsSortable"
+            (sortChange)="royaltyOnSortChange($event)"
           >
           </app-list-table>
+        </div>
+        <div class="flex items-center justify-between gap-4 mt-4">
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-[var(--text-secondary)]">
+              {{ "page" | translate }} {{ royaltyFilter().page || 1 }}
+              {{ "of" | translate }} {{ royaltyLastPage() }}
+            </span>
+            <span class="text-sm text-[var(--text-secondary)]">|</span>
+            <span class="text-sm text-[var(--text-secondary)]"
+              >{{ "itemsperpage" | translate }}:</span
+            >
+            <select
+              class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
+              [value]="royaltyFilter().itemsPerPage || 30"
+              (change)="royaltyOnItemsPerPageChange(+$any($event.target).value)"
+            >
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="30">30</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+          @if (royaltyLastPage() > 1) {
+          <div class="flex items-center gap-2">
+            <button
+              class="btn rounded-md !text-primary"
+              matButton="filled"
+              matButton
+              type="button"
+              [disabled]="(royaltyFilter().page || 1) === 1"
+              (click)="royaltyPreviousPage()"
+            >
+              <mat-icon>chevron_left</mat-icon>
+              {{ "previous" | translate }}
+            </button>
+            <div class="flex items-center gap-1">
+              @for (pageNum of royaltyGetPageNumbers(); track pageNum) { @if (pageNum === -1) {
+              <span class="px-2 text-[var(--text-secondary)]">...</span>
+              } @else {
+              <button
+                class="btn rounded-md !text-primary min-w-[40px]"
+                matButton="filled"
+                matButton
+                type="button"
+                [ngClass]="{
+                  '!bg-primary !text-white': (royaltyFilter().page || 1) === pageNum,
+                  '!bg-primary-superlight': (royaltyFilter().page || 1) !== pageNum
+                }"
+                (click)="royaltyGoToPage(pageNum)"
+              >
+                {{ pageNum }}
+              </button>
+              } }
+            </div>
+            <button
+              class="btn rounded-md !text-primary"
+              matButton="filled"
+              matButton
+              type="button"
+              [disabled]="(royaltyFilter().page || 1) === royaltyLastPage()"
+              (click)="royaltyNextPage()"
+            >
+              {{ "next" | translate }}
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          </div>
+          }
         </div>
       </section>
     </mat-tab>
@@ -409,16 +689,121 @@
         id="published-links"
         class="mt-10 bg-white p-6 rounded-xl shadow"
       >
-        <h2 class="heading mb-4">Published Links</h2>
-        <ul class="list-disc pl-6">
-          @for (distribution of distributions(); track $index) {
-          <li>
-            <a target="_blank" [href]="distribution.link" class="text-blue-600">
-              {{ distribution.type | translate }}
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="heading">{{ "publishedlinks" | translate }}</h2>
+          <mat-form-field class="w-64">
+            <mat-label>{{ "search" | translate }}</mat-label>
+            <input
+              matInput
+              #searchInput
+              [placeholder]="'search' | translate"
+              (keyup)="onPublishedLinksSearch(searchInput.value)"
+            />
+            <mat-icon matPrefix>search</mat-icon>
+          </mat-form-field>
+        </div>
+        <app-list-table
+          class="pt-6"
+          [dataSource]="publishedLinksData"
+          [displayedColumns]="displayedPublishedLinksColumns"
+          [actionTemplate]="publishedLinksActionButtons"
+          [isSortable]="publishedLinksIsSortable"
+          (sortChange)="publishedLinksOnSortChange($event)"
+        >
+        </app-list-table>
+        
+        <ng-template #publishedLinksActionButtons let-element>
+          <div class="flex flex-wrap gap-2">
+            @for (linkItem of element.links; track linkItem.link) {
+            <a
+              target="_blank"
+              [href]="linkItem.link"
+              [matTooltip]="linkItem.platformName.replace('_', ' ')"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-[var(--primary-superlight)] hover:bg-[var(--primary-light)] text-[var(--primary)] rounded-lg text-sm transition-colors border border-transparent hover:border-[var(--primary-light)]"
+            >
+              @if (hasPlatformIconUrl(linkItem.platformName)) {
+              <img
+                [src]="getPlatformIconUrl(linkItem.platformName)! | safeUrl"
+                [alt]="linkItem.platformName"
+                class="w-4 h-4 object-contain"
+              />
+              } @else {
+              <mat-icon class="!text-base !w-4 !h-4">{{ getPlatformIcon(linkItem.platformName) }}</mat-icon>
+              }
+              <span class="font-medium">{{ linkItem.platformName.replace('_', ' ') }}</span>
             </a>
-          </li>
+            }
+          </div>
+        </ng-template>
+        
+        <div class="flex items-center justify-between gap-4 mt-4">
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-[var(--text-secondary)]">
+              {{ "page" | translate }} {{ publishedLinksFilter().page || 1 }}
+              {{ "of" | translate }} {{ publishedLinksLastPage() }}
+            </span>
+            <span class="text-sm text-[var(--text-secondary)]">|</span>
+            <span class="text-sm text-[var(--text-secondary)]"
+              >{{ "itemsperpage" | translate }}:</span
+            >
+            <select
+              class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
+              [value]="publishedLinksFilter().itemsPerPage || 30"
+              (change)="publishedLinksOnItemsPerPageChange(+$any($event.target).value)"
+            >
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="30">30</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+          @if (publishedLinksLastPage() > 1) {
+          <div class="flex items-center gap-2">
+            <button
+              class="btn rounded-md !text-primary"
+              matButton="filled"
+              matButton
+              type="button"
+              [disabled]="(publishedLinksFilter().page || 1) === 1"
+              (click)="publishedLinksPreviousPage()"
+            >
+              <mat-icon>chevron_left</mat-icon>
+              {{ "previous" | translate }}
+            </button>
+            <div class="flex items-center gap-1">
+              @for (pageNum of publishedLinksGetPageNumbers(); track pageNum) { @if (pageNum === -1) {
+              <span class="px-2 text-[var(--text-secondary)]">...</span>
+              } @else {
+              <button
+                class="btn rounded-md !text-primary min-w-[40px]"
+                matButton="filled"
+                matButton
+                type="button"
+                [ngClass]="{
+                  '!bg-primary !text-white': (publishedLinksFilter().page || 1) === pageNum,
+                  '!bg-primary-superlight': (publishedLinksFilter().page || 1) !== pageNum
+                }"
+                (click)="publishedLinksGoToPage(pageNum)"
+              >
+                {{ pageNum }}
+              </button>
+              } }
+            </div>
+            <button
+              class="btn rounded-md !text-primary"
+              matButton="filled"
+              matButton
+              type="button"
+              [disabled]="(publishedLinksFilter().page || 1) === publishedLinksLastPage()"
+              (click)="publishedLinksNextPage()"
+            >
+              {{ "next" | translate }}
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          </div>
           }
-        </ul>
+        </div>
       </section>
     </mat-tab>
     <!-- Attachments -->

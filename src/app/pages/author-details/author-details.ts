@@ -9,18 +9,20 @@ import { SalesService } from '../../services/sales';
 import { TranslateService } from '@ngx-translate/core';
 import {
   Author,
-  Publishers,
   Royalty,
-  TitleDistribution,
+  Title,
+  TitleFilter,
+  EarningFilter,
 } from '../../interfaces';
-import { Title } from '@angular/platform-browser';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { formatCurrency } from '@angular/common';
 import { format } from 'date-fns';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { ListTable } from '../../components/list-table/list-table';
 import { MatInputModule } from '@angular/material/input';
-import { PublisherService } from '../publisher/publisher-service';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { SafeUrlPipe } from 'src/app/pipes/safe-url-pipe';
 import { formatIsbn } from 'src/app/shared/utils/isbn.utils';
 
@@ -34,6 +36,9 @@ import { formatIsbn } from 'src/app/shared/utils/isbn.utils';
     MatFormFieldModule,
     ListTable,
     MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTooltipModule,
     SafeUrlPipe,
   ],
   templateUrl: './author-details.html',
@@ -45,8 +50,7 @@ export class AuthorDetails {
     private authorsService: AuthorsService,
     private titleService: TitleService,
     private salesService: SalesService,
-    private translateService: TranslateService,
-    private publisherService: PublisherService
+    private translateService: TranslateService
   ) {
     this.route.params.subscribe(({ id }) => {
       this.authorId = id;
@@ -65,11 +69,43 @@ export class AuthorDetails {
   );
 
   authors = signal<Author[]>([]);
-  subPublishers = signal<Publishers[]>([]);
   royalties = signal<Royalty[]>([]);
-  distributions = signal<TitleDistribution[]>([]);
+  publishedLinks = signal<Array<{ titleName: string; links: Array<{ platformName: string; link: string }> }>>([]);
   attachments = signal<any[]>([]);
-  authorFilter = signal({ page: 1 });
+  
+  // Books Published Pagination
+  booksFilter = signal<TitleFilter>({
+    page: 1,
+    itemsPerPage: 30,
+    authorIds: [],
+    orderBy: 'id',
+    orderByVal: 'desc',
+  });
+  booksLastPage = signal(1);
+  
+  // Royalty Pagination
+  royaltyFilter = signal<EarningFilter>({
+    page: 1,
+    itemsPerPage: 30,
+    authorIds: [],
+    orderBy: 'id',
+    orderByVal: 'desc',
+  });
+  royaltyLastPage = signal(1);
+  
+  // Published Links Pagination
+  publishedLinksFilter = signal<any>({
+    page: 1,
+    itemsPerPage: 30,
+    authorIds: [],
+    orderBy: 'titleName',
+    orderByVal: 'desc',
+    searchStr: '',
+  });
+  publishedLinksLastPage = signal(1);
+  publishedLinksData = new MatTableDataSource<any>([]);
+  displayedPublishedLinksColumns: string[] = ['title', 'actions'];
+  
   displayedColumns: string[] = [
     'serial',
     'title',
@@ -79,6 +115,72 @@ export class AuthorDetails {
     'royaltiesearned',
     'authors',
   ];
+  
+  // Sorting functions for books
+  booksGetApiFieldName = (column: string): string | null => {
+    const columnMap: Record<string, string> = {
+      title: 'name',
+      isbnPrint: 'isbnPrint',
+      isbnEbook: 'isbnEbook',
+      royaltiesearned: 'totalSales',
+    };
+    return columnMap[column] || null;
+  };
+
+  booksIsSortable = (column: string): boolean => {
+    return this.booksGetApiFieldName(column) !== null;
+  };
+
+  booksOnSortChange(sort: { active: string; direction: 'asc' | 'desc' | '' }) {
+    const apiFieldName = this.booksGetApiFieldName(sort.active);
+    if (!apiFieldName) return;
+
+    const direction: 'asc' | 'desc' =
+      sort.direction === 'asc' || sort.direction === 'desc'
+        ? sort.direction
+        : 'desc';
+
+    this.booksFilter.update((f) => ({
+      ...f,
+      orderBy: apiFieldName,
+      orderByVal: direction,
+      page: 1,
+    }));
+    this.fetchTitles();
+  }
+  
+  // Sorting functions for royalty
+  royaltyGetApiFieldName = (column: string): string | null => {
+    const columnMap: Record<string, string> = {
+      title: 'title.name',
+      amount: 'amount',
+      platform: 'platform.name',
+      'paidAt/holduntill': 'paidAt',
+    };
+    return columnMap[column] || null;
+  };
+
+  royaltyIsSortable = (column: string): boolean => {
+    return this.royaltyGetApiFieldName(column) !== null;
+  };
+
+  royaltyOnSortChange(sort: { active: string; direction: 'asc' | 'desc' | '' }) {
+    const apiFieldName = this.royaltyGetApiFieldName(sort.active);
+    if (!apiFieldName) return;
+
+    const direction: 'asc' | 'desc' =
+      sort.direction === 'asc' || sort.direction === 'desc'
+        ? sort.direction
+        : 'desc';
+
+    this.royaltyFilter.update((f) => ({
+      ...f,
+      orderBy: apiFieldName,
+      orderByVal: direction,
+      page: 1,
+    }));
+    this.fetchRoyalty();
+  }
   displayedAuthorColumns: string[] = [
     'serial',
     'name',
@@ -87,13 +189,6 @@ export class AuthorDetails {
     'titles',
     'bookssold',
     'royaltyearned',
-  ];
-  displayedPublisherColumns: string[] = [
-    'name',
-    'nooftitles',
-    'noofauthors',
-    'email',
-    'phonenumber',
   ];
   displayedRoyaltyColumns = signal([
     'title',
@@ -104,23 +199,15 @@ export class AuthorDetails {
   ]);
   bookPublishData = new MatTableDataSource<any>([]);
   authorData = new MatTableDataSource<any>([]);
-  PublisherData = new MatTableDataSource<any>([]);
   royaltyData = new MatTableDataSource<Royalty>();
   async ngOnInit() {
     await this.fetchauthorDetails();
-    await this.fetchPublishers();
+    this.booksFilter.update(f => ({ ...f, authorIds: [this.authorId] }));
+    this.royaltyFilter.update(f => ({ ...f, authorIds: [this.authorId] }));
+    this.publishedLinksFilter.update(f => ({ ...f, authorIds: [this.authorId] }));
     await this.fetchTitles();
     await this.fetchRoyalty();
-    await this.fetchDistributionLinks();
-    this.PublisherData.filterPredicate = (data: any, filter: string) => {
-      const search = filter.trim().toLowerCase();
-
-      return (
-        (data.name ?? '').toLowerCase().includes(search) ||
-        (data.email ?? '').toLowerCase().includes(search) ||
-        (data.phonenumber ?? '').toLowerCase().includes(search)
-      );
-    };
+    await this.fetchPublishedLinks();
     this.bookPublishData.filterPredicate = (data: any, filter: string) => {
       const search = filter.trim().toLowerCase();
 
@@ -154,23 +241,6 @@ export class AuthorDetails {
     }
   }
 
-  async fetchPublishers() {
-    this.publisherService
-      .getPublishers({ authorIds: this.authorId })
-      .then(({ items }) => {
-        const mapped = items.map((publisher) => ({
-          ...publisher,
-          phonenumber:
-            publisher.phoneNumber || publisher.user?.phoneNumber || 'N/A',
-          nooftitles: publisher.noOfTitles,
-          noofauthors: publisher.noOfAuthors,
-        }));
-
-        // ✅ IMPORTANT
-        this.PublisherData.data = mapped;
-      })
-      .catch((error) => console.error('Error fetching publishers:', error));
-  }
 
   // fetchAuthors() {
   //   this.authorsService
@@ -198,71 +268,317 @@ export class AuthorDetails {
   // }
 
   async fetchTitles() {
-    this.titleService
-      .getTitles({ authorIds: [this.authorId] })
-      .then(({ items }) => {
-        const mapped = items.map((title, idx) => ({
-          serial: idx + 1,
-          id: title.id,
-          title: title.name,
+    try {
+      const filter = this.booksFilter();
+      const { items, totalCount, itemsPerPage } = await this.titleService.getTitles(filter);
+      
+      const mapped = items.map((title, idx) => ({
+        serial: ((filter.page || 1) - 1) * itemsPerPage + idx + 1,
+        id: title.id,
+        title: title.name,
 
-          distribution: title.distribution?.length
-            ? title.distribution.map((d) => d.type).join(', ')
-            : 'N/A',
+        distribution: title.distribution?.length
+          ? title.distribution.map((d) => d.type).join(', ')
+          : 'N/A',
 
-          isbnPrint: title.isbnPrint ? formatIsbn(title.isbnPrint) : 'N/A',
-          isbnEbook: title.isbnEbook ? formatIsbn(title.isbnEbook) : 'N/A',
+        isbnPrint: title.isbnPrint ? formatIsbn(title.isbnPrint) : 'N/A',
+        isbnEbook: title.isbnEbook ? formatIsbn(title.isbnEbook) : 'N/A',
 
-          pages: title.printing?.[0]?.totalPages ?? 'N/A',
-          royaltiesearned: title.totalSales,
+        pages: title.printing?.[0]?.totalPages ?? 'N/A',
+        royaltiesearned: title.totalSales,
 
-          authors: title.authors?.length
-            ? title.authors.map((a) => a.display_name).join(', ')
-            : 'N/A',
+        authors: title.authors?.length
+          ? title.authors.map((a) => a.display_name).join(', ')
+          : 'N/A',
 
-          status: title.status,
-        }));
+        status: title.status,
+      }));
 
-        // ✅ IMPORTANT
-        this.bookPublishData.data = mapped;
-      })
-      .catch((error) => {
-        console.error('Error fetching titles:', error);
-      });
+      this.bookPublishData.data = mapped;
+      this.booksLastPage.set(Math.ceil(totalCount / itemsPerPage));
+    } catch (error) {
+      console.error('Error fetching titles:', error);
+    }
+  }
+  
+  booksNextPage() {
+    const currentPage = this.booksFilter().page || 1;
+    if (currentPage < this.booksLastPage()) {
+      this.booksFilter.update((f) => ({ ...f, page: currentPage + 1 }));
+      this.fetchTitles();
+    }
+  }
+
+  booksPreviousPage() {
+    const currentPage = this.booksFilter().page || 1;
+    if (currentPage > 1) {
+      this.booksFilter.update((f) => ({ ...f, page: currentPage - 1 }));
+      this.fetchTitles();
+    }
+  }
+
+  booksOnItemsPerPageChange(itemsPerPage: number) {
+    this.booksFilter.update((f) => ({ ...f, itemsPerPage, page: 1 }));
+    this.fetchTitles();
+  }
+
+  booksGetPageNumbers(): number[] {
+    const currentPage = this.booksFilter().page || 1;
+    const totalPages = this.booksLastPage();
+    const pages: number[] = [];
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        pages.push(-1);
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push(-1);
+        pages.push(totalPages);
+      }
+    }
+    return pages;
+  }
+
+  booksGoToPage(pageNumber: number) {
+    if (pageNumber >= 1 && pageNumber <= this.booksLastPage()) {
+      this.booksFilter.update((f) => ({ ...f, page: pageNumber }));
+      this.fetchTitles();
+    }
   }
 
   async fetchRoyalty() {
-    const { items } = await this.salesService.fetchEarnings({
-      authorIds: [this.authorId],
-    });
+    try {
+      const filter = this.royaltyFilter();
+      const { items, totalCount, itemsPerPage } = await this.salesService.fetchEarnings(filter);
 
-    const mappedData = items?.map((earning) => ({
-      ...earning,
-      title: earning.royalty.title.name,
-      'publisher/author':
-        earning.royalty.publisher?.name ||
-        earning.royalty.author?.user.firstName ||
-        'N/A',
-      amount: formatCurrency(earning.amount, 'en', '', 'INR'),
-      platform:
-        earning.platformName ||
-        this.translateService.instant(earning.platform.name),
-      'paidAt/holduntill': (() => {
-        const date = earning.holdUntil || earning.paidAt;
-        if (!date) return '-';
-        return format(date, 'dd-MM-yyyy');
-      })(),
-    }));
+      const mappedData = items?.map((earning) => ({
+        ...earning,
+        title: earning.royalty.title.name,
+        'publisher/author':
+          earning.royalty.publisher?.name ||
+          earning.royalty.author?.user.firstName ||
+          'N/A',
+        amount: formatCurrency(earning.amount, 'en', '', 'INR'),
+        platform:
+          earning.platformName ||
+          this.translateService.instant(earning.platform.name),
+        'paidAt/holduntill': (() => {
+          const date = earning.holdUntil || earning.paidAt;
+          if (!date) return '-';
+          return format(date, 'dd-MM-yyyy');
+        })(),
+      }));
 
-    this.royaltyData.data = mappedData as any;
+      this.royaltyData.data = mappedData as any;
+      this.royaltyLastPage.set(Math.ceil(totalCount / itemsPerPage));
+    } catch (error) {
+      console.error('Error fetching royalty:', error);
+    }
+  }
+  
+  royaltyNextPage() {
+    const currentPage = this.royaltyFilter().page || 1;
+    if (currentPage < this.royaltyLastPage()) {
+      this.royaltyFilter.update((f) => ({ ...f, page: currentPage + 1 }));
+      this.fetchRoyalty();
+    }
   }
 
-  async fetchDistributionLinks() {
-    const { items } = await this.titleService.fetchTitleDistribution({
-      itemsPerPage: 100,
-      authorIds: this.authorId,
-    });
-    this.distributions.set(items);
+  royaltyPreviousPage() {
+    const currentPage = this.royaltyFilter().page || 1;
+    if (currentPage > 1) {
+      this.royaltyFilter.update((f) => ({ ...f, page: currentPage - 1 }));
+      this.fetchRoyalty();
+    }
+  }
+
+  royaltyOnItemsPerPageChange(itemsPerPage: number) {
+    this.royaltyFilter.update((f) => ({ ...f, itemsPerPage, page: 1 }));
+    this.fetchRoyalty();
+  }
+
+  royaltyGetPageNumbers(): number[] {
+    const currentPage = this.royaltyFilter().page || 1;
+    const totalPages = this.royaltyLastPage();
+    const pages: number[] = [];
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        pages.push(-1);
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push(-1);
+        pages.push(totalPages);
+      }
+    }
+    return pages;
+  }
+
+  royaltyGoToPage(pageNumber: number) {
+    if (pageNumber >= 1 && pageNumber <= this.royaltyLastPage()) {
+      this.royaltyFilter.update((f) => ({ ...f, page: pageNumber }));
+      this.fetchRoyalty();
+    }
+  }
+
+  async fetchPublishedLinks() {
+    try {
+      const filter = this.publishedLinksFilter();
+      const { items, totalCount, itemsPerPage } = await this.titleService.fetchTitlePlatformLinks({
+        page: filter.page || 1,
+        itemsPerPage: filter.itemsPerPage || 30,
+        authorIds: [this.authorId],
+        orderBy: filter.orderBy,
+        orderByVal: filter.orderByVal,
+        searchStr: filter.searchStr,
+      });
+      
+      this.publishedLinks.set(items);
+      this.publishedLinksLastPage.set(Math.ceil(totalCount / itemsPerPage));
+      
+      // Map items to dataSource format
+      const mappedData = items.map((item) => ({
+        title: item.titleName,
+        links: item.links,
+      }));
+      this.publishedLinksData.data = mappedData;
+    } catch (error) {
+      console.error('Error fetching published links:', error);
+    }
+  }
+  
+  publishedLinksNextPage() {
+    const currentPage = this.publishedLinksFilter().page || 1;
+    if (currentPage < this.publishedLinksLastPage()) {
+      this.publishedLinksFilter.update((f) => ({ ...f, page: currentPage + 1 }));
+      this.fetchPublishedLinks();
+    }
+  }
+
+  publishedLinksPreviousPage() {
+    const currentPage = this.publishedLinksFilter().page || 1;
+    if (currentPage > 1) {
+      this.publishedLinksFilter.update((f) => ({ ...f, page: currentPage - 1 }));
+      this.fetchPublishedLinks();
+    }
+  }
+
+  publishedLinksOnItemsPerPageChange(itemsPerPage: number) {
+    this.publishedLinksFilter.update((f) => ({ ...f, itemsPerPage, page: 1 }));
+    this.fetchPublishedLinks();
+  }
+
+  publishedLinksGetPageNumbers(): number[] {
+    const currentPage = this.publishedLinksFilter().page || 1;
+    const totalPages = this.publishedLinksLastPage();
+    const pages: number[] = [];
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        pages.push(-1);
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push(-1);
+        pages.push(totalPages);
+      }
+    }
+    return pages;
+  }
+
+  publishedLinksGoToPage(pageNumber: number) {
+    if (pageNumber >= 1 && pageNumber <= this.publishedLinksLastPage()) {
+      this.publishedLinksFilter.update((f) => ({ ...f, page: pageNumber }));
+      this.fetchPublishedLinks();
+    }
+  }
+
+  onPublishedLinksSearch(value: string) {
+    this.publishedLinksFilter.update((f) => ({ ...f, searchStr: value, page: 1 }));
+    this.fetchPublishedLinks();
+  }
+
+  // Sorting functions for published links
+  publishedLinksGetApiFieldName = (column: string): string | null => {
+    const columnMap: Record<string, string> = {
+      title: 'titleName',
+    };
+    return columnMap[column] || null;
+  };
+
+  publishedLinksIsSortable = (column: string): boolean => {
+    return this.publishedLinksGetApiFieldName(column) !== null;
+  };
+
+  publishedLinksOnSortChange(sort: { active: string; direction: 'asc' | 'desc' | '' }) {
+    const apiFieldName = this.publishedLinksGetApiFieldName(sort.active);
+    if (!apiFieldName) return;
+
+    const direction: 'asc' | 'desc' =
+      sort.direction === 'asc' || sort.direction === 'desc'
+        ? sort.direction
+        : 'desc';
+
+    this.publishedLinksFilter.update((f) => ({
+      ...f,
+      orderBy: apiFieldName,
+      orderByVal: direction,
+      page: 1,
+    }));
+    this.fetchPublishedLinks();
   }
 
   scrollToSection(sectionId: string) {
@@ -287,12 +603,47 @@ export class AuthorDetails {
     const value = (event.target as HTMLInputElement).value.trim().toLowerCase();
     this.authorData.filter = value;
   }
-  applyPublisherFilter(event: Event) {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.PublisherData.filter = filterValue.trim().toLowerCase();
-  }
   applyRoyaltyFilter(event: Event) {
     const value = (event.target as HTMLInputElement).value;
     this.royaltyData.filter = value.trim().toLowerCase();
+  }
+
+  getPlatformIconUrl(platformName?: string): string | null {
+    // Use jsdelivr CDN for Simple Icons (real brand icons)
+    const name = (platformName || '').toUpperCase();
+    if (name === 'AMAZON' || name === 'AMAZON_PRIME') {
+      return 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/amazon.svg';
+    } else if (name === 'FLIPKART') {
+      return 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/flipkart.svg';
+    } else if (name === 'KINDLE') {
+      return 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/amazon.svg';
+    } else if (name === 'GOOGLE_PLAY' || name === 'GOOGLEPLAY') {
+      return 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/googleplay.svg';
+    } else if (name === 'APPLE_BOOKS' || name === 'APPLEBOOKS' || name === 'IBOOKS') {
+      return 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/apple.svg';
+    } else if (name === 'KOBO') {
+      return 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/kobo.svg';
+    } else if (name === 'BARNES_NOBLE' || name === 'BARNESANDNOBLE') {
+      return 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/barnesandnoble.svg';
+    } else if (name === 'SMASHWORDS') {
+      return 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/smashwords.svg';
+    } else if (name === 'KOBO_WRITING_LIFE') {
+      return 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/kobo.svg';
+    } else {
+      return null;
+    }
+  }
+
+  hasPlatformIconUrl(platformName?: string): boolean {
+    return !!this.getPlatformIconUrl(platformName);
+  }
+
+  getPlatformIcon(platformName?: string): string {
+    // Fallback Material icon if no brand icon available
+    const name = (platformName || '').toUpperCase();
+    if (name === 'MAH_PRINT' || name === 'MAH_EBOOK') {
+      return 'store';
+    }
+    return 'link';
   }
 }

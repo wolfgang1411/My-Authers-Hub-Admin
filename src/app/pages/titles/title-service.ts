@@ -515,6 +515,28 @@ export class TitleService {
     }
   }
 
+  async fetchTitlePlatformLinks(filter: {
+    authorIds?: number[];
+    publisherIds?: number[];
+    page?: number;
+    itemsPerPage?: number;
+    orderBy?: string;
+    orderByVal?: 'asc' | 'desc';
+    searchStr?: string;
+  }) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<{ titleName: string; links: Array<{ platformName: string; link: string }> }>>(
+          'title-platform-identifier/platform-links',
+          filter
+        )
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
   async uploadMultiMedia(
     titleId: number,
     data: { file: File; type: TitleMediaType }[]
