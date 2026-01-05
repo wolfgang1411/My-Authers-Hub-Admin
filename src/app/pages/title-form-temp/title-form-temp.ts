@@ -165,6 +165,14 @@ export class TitleFormTemp implements OnDestroy {
         this.isNewTitle = !this.titleId;
       });
 
+    // Read incompleted query param (read from snapshot immediately, then subscribe to changes)
+    this.isIncompletedTitle = this.route.snapshot.queryParams['incompleted'] === 'true';
+    this.route.queryParams
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((params) => {
+        this.isIncompletedTitle = params['incompleted'] === 'true';
+      });
+
     // Setup stepper step tracking after component initialization
     // This will be called in ngOnInit after form is ready
 
@@ -551,6 +559,7 @@ export class TitleFormTemp implements OnDestroy {
   publisherSignal = signal<Publishers | null>(null);
   titleId: number = 0;
   isNewTitle = true;
+  isIncompletedTitle = false; // Flag to track if coming from incomplete titles
   publishers = signal<Publishers[]>([]);
   authorsList = signal<Author[]>([]);
   titleDetails = signal<Title | null>(null);
@@ -766,6 +775,11 @@ export class TitleFormTemp implements OnDestroy {
     await this.manageManuscriptMedia(
       this.tempForm.controls.publishingType.value
     );
+    
+    // Update manuscript validators if coming from incomplete titles
+    if (this.isIncompletedTitle) {
+      this.updateManuscriptValidatorsForIncomplete();
+    }
 
     this.tempForm.controls.printing.controls.bookBindingsId.valueChanges
       .pipe(takeUntil(this.destroy$))
@@ -3085,10 +3099,12 @@ export class TitleFormTemp implements OnDestroy {
         const existingManuscript = this.titleDetails()?.media?.find(
           ({ type }) => type === 'MANUSCRIPT'
         );
+        // Make manuscript optional if coming from incomplete titles
+        const isManuscriptRequired = !this.isIncompletedTitle;
         this.tempForm.controls.documentMedia.push(
           await this.createMedia(
             TitleMediaType.MANUSCRIPT,
-            true,
+            isManuscriptRequired,
             existingManuscript
           )
         );
@@ -3105,6 +3121,31 @@ export class TitleFormTemp implements OnDestroy {
             this.tempForm.controls.documentMedia.removeAt(index);
           }
         }
+      }
+    }
+  }
+
+  /**
+   * Update manuscript validators to make them optional when coming from incomplete titles
+   */
+  private updateManuscriptValidatorsForIncomplete(): void {
+    const manuscriptControls = this.tempForm.controls.documentMedia.controls.filter(
+      ({ controls: { mediaType } }) => mediaType.value === 'MANUSCRIPT'
+    );
+
+    if (manuscriptControls.length > 0 && this.isIncompletedTitle) {
+      const manuscriptControl = manuscriptControls[0];
+      const fileControl = manuscriptControl.controls.file;
+      const urlControl = manuscriptControl.controls.url;
+
+      // Remove required validators if they exist
+      if (fileControl.hasValidator(Validators.required)) {
+        fileControl.removeValidators(Validators.required);
+        fileControl.updateValueAndValidity();
+      }
+      if (urlControl.hasValidator(Validators.required)) {
+        urlControl.removeValidators(Validators.required);
+        urlControl.updateValueAndValidity();
       }
     }
   }

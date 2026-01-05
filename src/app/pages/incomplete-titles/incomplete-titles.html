@@ -142,7 +142,7 @@
         class="!bg-primary"
         mat-icon-button
         [routerLink]="['/title', element.id]"
-        [queryParams]="{ returnTo: 'incomplete-titles' }"
+        [queryParams]="{ returnTo: 'incomplete-titles', incompleted: 'true' }"
       >
         <mat-icon class="!text-white">edit</mat-icon>
       </button>
