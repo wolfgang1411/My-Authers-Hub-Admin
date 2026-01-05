@@ -3278,7 +3278,7 @@ export class TitleFormTemp implements OnDestroy {
       }),
       type: new FormControl(mediaType, { nonNullable: true }),
       file: new FormControl(null, {
-        validators: media?.id ? null : [Validators.required],
+        validators: media?.id ? null : (required ? [Validators.required] : null),
       }),
       mediaType: new FormControl<TitleMediaType>(mediaType, {
         nonNullable: true,
