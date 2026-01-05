@@ -525,6 +525,34 @@ export const routes: Routes = [
     },
   },
   {
+    path: 'blogs',
+    loadComponent: () =>
+      import('./pages/blogs/blogs').then((c) => c.Blogs),
+    canActivate: [privateRouteGuard, profileCompletionGuard],
+    data: {
+      seo: {
+        title: 'Blogs',
+        description: 'Manage blogs',
+        noindex: true,
+        nofollow: true,
+      },
+    },
+  },
+  {
+    path: 'blog/:id',
+    loadComponent: () =>
+      import('./pages/blogs/blog-form/blog-form').then((c) => c.BlogForm),
+    canActivate: [privateRouteGuard, profileCompletionGuard],
+    data: {
+      seo: {
+        title: 'Blog',
+        description: 'Create or edit blog',
+        noindex: true,
+        nofollow: true,
+      },
+    },
+  },
+  {
     path: 'shared-titles',
     loadComponent: () =>
       import('./pages/shared-titles/shared-titles').then((c) => c.SharedTitles),

@@ -1,0 +1,139 @@
+<div class="flex flex-col flex-grow gap-4">
+  <div class="flex items-center justify-between gap-4">
+    <h3 class="heading">
+      {{ "blogs" | translate }}
+    </h3>
+    <div class="flex gap-2">
+      <button
+        class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
+        matButton="filled"
+        matButton
+        [routerLink]="['/blog', 0]"
+      >
+        <mat-icon class="material-icons">add</mat-icon>
+        {{ "addblog" | translate }}
+      </button>
+    </div>
+  </div>
+
+  <div class="flex md:flex-row flex-col justify-between w-full gap-4">
+    <div
+      class="flex h-[38px] items-center justify-center md:min-w-[480px] min-w-full gap-2"
+    >
+      <input
+        class="input-field outline-none w-full"
+        #input
+        (input)="onSearch(input.value)"
+        [placeholder]="'search' | translate"
+      />
+      <button
+        class="btn h-[38px] flex items-center self-end justify-center gap-2"
+        (click)="onSearch(input.value)"
+      >
+        <svg-icon
+          src="images/magnifying-glass-solid-full.svg"
+          class="w-4 fill-white flex"
+        ></svg-icon>
+        {{ "search" | translate }}
+      </button>
+    </div>
+  </div>
+
+  <app-list-table
+    [dataSource]="dataSource"
+    [displayedColumns]="displayedColumns"
+    [actionTemplate]="actionButtons"
+    [isSortable]="isSortable"
+    (sortChange)="onSortChange($event)"
+  >
+  </app-list-table>
+  
+  <div class="flex items-center justify-between gap-4 mt-4">
+    <div class="flex items-center gap-2">
+      <span class="text-sm text-[var(--text-secondary)]">
+        {{ "page" | translate }} {{ filter().page || 1 }} {{ "of" | translate }} {{ lastPage() }}
+      </span>
+      <span class="text-sm text-[var(--text-secondary)]">|</span>
+      <span class="text-sm text-[var(--text-secondary)]">{{ "itemsperpage" | translate }}:</span>
+      <select
+        class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
+        [value]="filter().itemsPerPage || 30"
+        (change)="onItemsPerPageChange(+$any($event.target).value)"
+      >
+        <option value="10">10</option>
+        <option value="20">20</option>
+        <option value="30">30</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+    </div>
+    @if (lastPage() > 1) {
+    <div class="flex items-center gap-2">
+      <button
+        class="btn rounded-md !text-primary"
+        matButton="filled"
+        matButton
+        type="button"
+        [disabled]="(filter().page || 1) === 1"
+        (click)="previousPage()"
+      >
+        <mat-icon>chevron_left</mat-icon>
+        {{ "previous" | translate }}
+      </button>
+      <div class="flex items-center gap-1">
+        @for (pageNum of getPageNumbers(); track pageNum) {
+          @if (pageNum === -1) {
+            <span class="px-2 text-[var(--text-secondary)]">...</span>
+          } @else {
+            <button
+              class="btn rounded-md !text-primary min-w-[40px]"
+              matButton="filled"
+              matButton
+              type="button"
+              [ngClass]="{
+                '!bg-primary !text-white': (filter().page || 1) === pageNum,
+                '!bg-primary-superlight': (filter().page || 1) !== pageNum
+              }"
+              (click)="goToPage(pageNum)"
+            >
+              {{ pageNum }}
+            </button>
+          }
+        }
+      </div>
+      <button
+        class="btn rounded-md !text-primary"
+        matButton="filled"
+        matButton
+        type="button"
+        [disabled]="(filter().page || 1) === lastPage()"
+        (click)="nextPage()"
+      >
+        {{ "next" | translate }}
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+    }
+  </div>
+</div>
+
+<ng-template #actionButtons let-element>
+  <div class="flex gap-2 text-sm items-center justify-end lg:flex-wrap">
+    <button
+      (click)="onEditBlog(element)"
+      class="!text-primary"
+      matIconButton
+    >
+      <mat-icon>edit</mat-icon>
+    </button>
+    <button
+      (click)="onDeleteBlog(element)"
+      class="!text-red-500"
+      matIconButton
+    >
+      <mat-icon>delete</mat-icon>
+    </button>
+  </div>
+</ng-template>
+
+

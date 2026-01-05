@@ -863,5 +863,22 @@
       "title": "Email Verified - My Authors Hub",
       "description": "Your email has been successfully verified"
     }
-  }
+  },
+  "blogs": "Blogs",
+  "addblog": "Add Blog",
+  "editblog": "Edit Blog",
+  "selectauthor": "Select Author",
+  "selectpublisher": "Select Publisher",
+  "saveasdraft": "Save as Draft",
+  "saveandpublish": "Save and Publish",
+  "content": "Content",
+  "slug": "Slug",
+  "optional": "Optional",
+  "none": "None",
+  "contentisrequired": "Content is required",
+  "slugisrequired": "Slug is required",
+  "titleisrequired": "Title is required",
+  "Blog updated successfully": "Blog updated successfully",
+  "Blog created successfully": "Blog created successfully",
+  "Blog has been deleted.": "Blog has been deleted."
 }

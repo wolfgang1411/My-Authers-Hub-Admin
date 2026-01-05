@@ -1,0 +1,145 @@
+<div class="flex flex-col flex-grow gap-4">
+  <div class="flex items-center justify-between">
+    <h3 class="heading">
+      {{ (blogId() ? "editblog" : "addblog") | translate }}
+    </h3>
+    <button
+      matButton
+      [routerLink]="['/blogs']"
+      class="!text-primary"
+    >
+      <mat-icon>arrow_back</mat-icon>
+      {{ "back" | translate }}
+    </button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="flex justify-center items-center py-8">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else {
+    <form [formGroup]="blogForm" class="flex flex-col gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <mat-form-field appearance="fill" class="w-full">
+          <mat-label>{{ "title" | translate }}</mat-label>
+          <input matInput formControlName="title" (blur)="generateSlug()" />
+          @if (blogForm.controls.title.hasError('required') && blogForm.controls.title.touched) {
+            <mat-error>{{ "titleisrequired" | translate }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" class="w-full">
+          <mat-label>{{ "slug" | translate }}</mat-label>
+          <input matInput formControlName="slug" />
+          @if (blogForm.controls.slug.hasError('required') && blogForm.controls.slug.touched) {
+            <mat-error>{{ "slugisrequired" | translate }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      @if (isSuperAdmin()) {
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>{{ "selectauthor" | translate }} ({{ "optional" | translate }})</mat-label>
+            <mat-select formControlName="authorId">
+              <mat-option>
+                <ngx-mat-select-search
+                  [formControl]="authorSearchControl"
+                  [placeholderLabel]="'Type to search authors...'"
+                  [noEntriesFoundLabel]="'No authors found'"
+                ></ngx-mat-select-search>
+              </mat-option>
+              @if (isSearchingAuthors()) {
+                <mat-option disabled>
+                  <mat-spinner diameter="20"></mat-spinner>
+                  <span class="ml-2">Searching...</span>
+                </mat-option>
+              }
+              <mat-option [value]="null">
+                {{ "none" | translate }}
+              </mat-option>
+              @for (option of filteredAuthorOptions(); track option.value) {
+                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>{{ "selectpublisher" | translate }} ({{ "optional" | translate }})</mat-label>
+            <mat-select formControlName="publisherId">
+              <mat-option>
+                <ngx-mat-select-search
+                  [formControl]="publisherSearchControl"
+                  [placeholderLabel]="'Type to search publishers...'"
+                  [noEntriesFoundLabel]="'No publishers found'"
+                ></ngx-mat-select-search>
+              </mat-option>
+              @if (isSearchingPublishers()) {
+                <mat-option disabled>
+                  <mat-spinner diameter="20"></mat-spinner>
+                  <span class="ml-2">Searching...</span>
+                </mat-option>
+              }
+              <mat-option [value]="null">
+                {{ "none" | translate }}
+              </mat-option>
+              @for (option of filteredPublisherOptions(); track option.value) {
+                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+      }
+
+      <div class="flex flex-col">
+        <label class="text-sm font-medium mb-2">{{ "content" | translate }}</label>
+        <div class="ckeditor-wrapper">
+          <ckeditor
+            [editor]="Editor"
+            [config]="editorConfig"
+            (ready)="onEditorReady($event)"
+            (change)="onEditorChange($event)"
+          ></ckeditor>
+        </div>
+        @if (blogForm.controls.content.hasError('required') && blogForm.controls.content.touched) {
+          <mat-error class="mt-1">{{ "contentisrequired" | translate }}</mat-error>
+        }
+      </div>
+
+      <div class="flex gap-3 justify-end mt-4">
+        <button
+          matButton
+          type="button"
+          [routerLink]="['/blogs']"
+        >
+          {{ "cancel" | translate }}
+        </button>
+        <button
+          matButton
+          type="button"
+          class="!text-primary"
+          [disabled]="isSavingAsDraft() || isSaving() || blogForm.invalid"
+          (click)="saveAsDraft()"
+        >
+          @if (isSavingAsDraft()) {
+            <mat-spinner diameter="20" class="mr-2"></mat-spinner>
+          }
+          {{ "saveasdraft" | translate }}
+        </button>
+        <button
+          mat-flat-button
+          type="button"
+          class="!bg-primary !text-white"
+          [disabled]="isSavingAsDraft() || isSaving() || blogForm.invalid"
+          (click)="saveAndPublish()"
+        >
+          @if (isSaving()) {
+            <mat-spinner diameter="20" class="mr-2"></mat-spinner>
+          }
+          {{ "saveandpublish" | translate }}
+        </button>
+      </div>
+    </form>
+  }
+</div>
+
