@@ -412,22 +412,29 @@ export class TitleSummary {
       data: {
         onClose: () => dialog.close(),
         publishingType: title.publishingType,
-        existingIdentifiers: title.titlePlatformIdentifier ?? [],
+        existingIdentifiers: (title.titlePlatformIdentifier ?? []).map(
+          (tpi) => ({
+            platformName: tpi.platform?.name || '',
+            type: tpi.type || (tpi.platform?.isEbookPlatform ? 'EBOOK' : 'PRINT') as 'EBOOK' | 'PRINT',
+            distributionLink: tpi.distributionLink || undefined,
+          })
+        ),
         distribution: title.distribution ?? [],
+        isEditMode: true,
+        skuNumber: title.skuNumber ?? undefined,
         onSubmit: async (data: {
           skuNumber?: string;
           platformIdentifier: CreatePlatformIdentifier[];
         }) => {
-          try {
-            const payload = {
-              platformIdentifier: data.platformIdentifier,
-            };
-
-            const response =
-              await this.titleService.createUpdateTitlePlatformIdentifier(
-                title.id,
-                payload
-              );
+            try {
+            // Use updateTitleSkuAndLinks endpoint which updates SKU and links without approval logic
+            const response = await this.titleService.updateTitleSkuAndLinks(
+              title.id,
+              {
+                skuNumber: data.skuNumber,
+                platformIdentifier: data.platformIdentifier,
+              }
+            );
 
             this.titleDetails.set(response as Title);
 

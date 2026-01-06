@@ -339,7 +339,13 @@ export class IncompleteTitles implements OnInit, OnDestroy {
         data: {
           onClose: () => dialog.close(),
           publishingType: titleDetails.publishingType,
-          existingIdentifiers: titleDetails.titlePlatformIdentifier ?? [],
+          existingIdentifiers: (titleDetails.titlePlatformIdentifier ?? []).map(
+            (tpi) => ({
+              platformName: tpi.platform?.name || '',
+              type: tpi.type || (tpi.platform?.isEbookPlatform ? 'EBOOK' : 'PRINT') as 'EBOOK' | 'PRINT',
+              distributionLink: tpi.distributionLink || undefined,
+            })
+          ),
           distribution: titleDetails.distribution ?? [],
           isEditMode: true,
           skuNumber: titleDetails.skuNumber ?? undefined,
@@ -354,7 +360,7 @@ export class IncompleteTitles implements OnInit, OnDestroy {
                 platformIdentifier: data.platformIdentifier,
               };
 
-              await this.titleService.approveTitle(title.id, payload);
+              await this.titleService.updateTitleSkuAndLinks(title.id, payload);
 
               Swal.fire({
                 icon: 'success',

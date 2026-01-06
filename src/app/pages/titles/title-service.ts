@@ -413,6 +413,20 @@ export class TitleService {
     }
   }
 
+  async updateTitleSkuAndLinks(
+    id: number,
+    data: ApproveTitlePayload
+  ) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.patch<Title>(`titles/${id}/sku-and-links`, data)
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
   async updateTitle(id: number, data: Partial<Title>) {
     try {
       return await this.loader.loadPromise(

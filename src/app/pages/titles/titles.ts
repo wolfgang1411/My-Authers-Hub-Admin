@@ -458,7 +458,13 @@ export class Titles {
       data: {
         onClose: () => dialog.close(),
         publishingType: title.publishingType,
-        existingIdentifiers: title.titlePlatformIdentifier ?? [],
+        existingIdentifiers: (title.titlePlatformIdentifier ?? []).map(
+          (tpi) => ({
+            platformName: tpi.platform?.name || '',
+            type: tpi.type || (tpi.platform?.isEbookPlatform ? 'EBOOK' : 'PRINT') as 'EBOOK' | 'PRINT',
+            distributionLink: tpi.distributionLink || undefined,
+          })
+        ),
         distribution: title.distribution ?? [],
         onSubmit: async (data: {
           skuNumber?: string;

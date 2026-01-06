@@ -36,15 +36,24 @@
         </p>
         }
       </div>
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-sm font-semibold text-[var(--text-heading)]">
+          {{ "distributionlinks" | translate }}
+        </h3>
+        <button
+          type="button"
+          (click)="onAddPlatform(); $event.preventDefault(); $event.stopPropagation()"
+          mat-button
+          class="!px-3 !py-1 !text-xs !rounded-lg !bg-primary !text-white hover:!opacity-90 transition-all !min-w-0"
+        >
+          <mat-icon class="!text-base !mr-1">add</mat-icon>
+          {{ "addplatformlink" | translate }}
+        </button>
+      </div>
       @if (form.controls.platformIdentifier.controls.length > 0) {
       <div
         class="border border-[var(--primary-superlight)] rounded-lg overflow-hidden mb-2"
       >
-        <div
-          class="bg-[var(--light-purple-bg)] px-3 py-1.5 text-xs font-medium text-[var(--text-heading)] border-b border-[var(--primary-superlight)]"
-        >
-          {{ "distributionlinks" | translate }}
-        </div>
         <div class="flex-1 overflow-y-auto p-2 min-h-0">
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
             @for (platformIdentifier of
@@ -82,6 +91,21 @@
             }
           </div>
         </div>
+      </div>
+      } @else {
+      <div class="flex flex-col items-center justify-center py-8 border border-[var(--primary-superlight)] rounded-lg bg-[var(--light-purple-bg)]">
+        <p class="text-sm text-[var(--text-secondary)] mb-4">
+          {{ "noplatformsadded" | translate }}
+        </p>
+        <button
+          type="button"
+          (click)="onAddPlatform()"
+          mat-button
+          class="!px-4 !py-1.5 !text-sm !rounded-lg !bg-primary !text-white hover:!opacity-90 transition-all"
+        >
+          <mat-icon class="!text-base mr-1">add</mat-icon>
+          {{ "addplatformlink" | translate }}
+        </button>
       </div>
       }
     </div>

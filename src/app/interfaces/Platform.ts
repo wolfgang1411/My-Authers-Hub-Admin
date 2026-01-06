@@ -21,4 +21,5 @@ export interface Platform {
 
 export interface PlatformFilter {
   isInventoryPlatform?: boolean;
+  includeInventory?: boolean;
 }

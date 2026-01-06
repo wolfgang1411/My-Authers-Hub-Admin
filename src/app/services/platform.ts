@@ -33,9 +33,19 @@ export class PlatformService {
    */
   async fetchPlatforms(filter?: PlatformFilter): Promise<Platform[]> {
     try {
+      // Build query params - include inventory platforms if needed
+      const queryParams: PlatformFilter & { includeInventory?: boolean } = {
+        ...filter,
+      };
+      
+      // If explicitly requesting inventory platforms, also include regular platforms
+      if (filter?.isInventoryPlatform) {
+        queryParams.includeInventory = true;
+      }
+      
       // Use a specific loader key to make the network call visible
       const platforms = await this.loaderService.loadPromise(
-        this.serverService.get<Platform[]>('platforms', filter),
+        this.serverService.get<Platform[]>('platforms', queryParams),
         'fetch-platforms'
       );
       this.platforms.set(this.sortPlatforms(platforms));

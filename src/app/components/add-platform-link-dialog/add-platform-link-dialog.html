@@ -1,0 +1,142 @@
+<div class="flex flex-col w-full max-w-[500px] p-4">
+  <h2
+    mat-dialog-title
+    class="text-base font-semibold text-[var(--text-heading)] mb-4"
+  >
+    {{ "addplatformlink" | translate }}
+  </h2>
+
+  <mat-dialog-content class="!p-0 !m-0 !overflow-visible">
+    <form [formGroup]="form" class="flex flex-col gap-4">
+      <!-- Selection Mode: Existing or New -->
+      <div class="flex flex-col gap-2">
+        <label class="text-xs font-medium text-[var(--text-heading)]">
+          {{ "selectmode" | translate }}
+        </label>
+        <mat-radio-group
+          [value]="selectionMode()"
+          (change)="onSelectionModeChange($event.value)"
+          class="flex flex-col gap-2"
+        >
+          <mat-radio-button value="existing">
+            {{ "selectexistingplatform" | translate }}
+          </mat-radio-button>
+          <mat-radio-button value="new">
+            {{ "createnewplatform" | translate }}
+          </mat-radio-button>
+        </mat-radio-group>
+      </div>
+
+      <!-- Platform Selection/Input -->
+      <div class="flex flex-col gap-1">
+        @if (selectionMode() === 'existing') {
+        <label class="text-xs font-medium text-[var(--text-heading)]">
+          {{ "selectplatform" | translate }}
+        </label>
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-select
+            [formControl]="form.controls.platformName"
+            [placeholder]="'selectplatform' | translate"
+          >
+            @if (availablePlatforms().length === 0) {
+              <mat-option disabled>{{ "noplatformsavailable" | translate }}</mat-option>
+            }
+            @for (platform of availablePlatforms(); track platform.id) {
+              @if (platform.name && platform.name.trim() !== '') {
+                <mat-option
+                  [value]="platform.name"
+                  (click)="onPlatformSelect(platform)"
+                >
+                  <div class="flex items-center justify-between w-full">
+                    <span>{{ platform.name }}</span>
+                    <span
+                      class="text-[10px] text-[var(--text-secondary)] px-1.5 py-0.5 bg-[var(--light-purple-bg)] rounded border border-[var(--primary-superlight)] ml-2"
+                    >
+                      {{ getPlatformType(platform) }}
+                    </span>
+                  </div>
+                </mat-option>
+              }
+            }
+          </mat-select>
+          @if (
+          form.controls.platformName.hasError('required') &&
+          form.controls.platformName.touched) {
+          <mat-error>{{ "platformrequired" | translate }}</mat-error>
+          }
+        </mat-form-field>
+        } @else {
+        <label class="text-xs font-medium text-[var(--text-heading)]">
+          {{ "platformname" | translate }}
+        </label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input
+            matInput
+            type="text"
+            [formControl]="form.controls.platformName"
+            [placeholder]="'enterplatformname' | translate"
+          />
+          @if (
+          form.controls.platformName.hasError('required') &&
+          form.controls.platformName.touched) {
+          <mat-error>{{ "platformnamerequired" | translate }}</mat-error>
+          }
+        </mat-form-field>
+        }
+      </div>
+
+      <!-- Platform Type Selection - Only show when creating new platform -->
+      @if (selectionMode() === 'new') {
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-medium text-[var(--text-heading)]">
+            {{ "platformtype" | translate }}
+          </label>
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-select [formControl]="form.controls.type">
+              <mat-option value="EBOOK">{{ "ebook" | translate }}</mat-option>
+              <mat-option value="PRINT">{{ "print" | translate }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      }
+
+      <!-- Distribution Link -->
+      <div class="flex flex-col gap-1">
+        <label class="text-xs font-medium text-[var(--text-heading)]">
+          {{ "distributionlink" | translate }} ({{ "optional" | translate }})
+        </label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input
+            matInput
+            type="url"
+            [formControl]="form.controls.distributionLink"
+            [placeholder]="'enterdistributionlink' | translate"
+          />
+        </mat-form-field>
+      </div>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions
+    class="!justify-end !px-0 !py-3 !mt-4 gap-2 border-t border-[var(--primary-superlight)]"
+  >
+    <button
+      (click)="onClose()"
+      mat-button
+      type="button"
+      class="!px-4 !py-1.5 !text-sm !rounded-lg !border !border-[var(--primary-superlight)] !text-[var(--primary)] hover:!bg-[var(--light-purple-bg)] transition-all"
+    >
+      {{ "close" | translate }}
+    </button>
+    <button
+      (click)="onSubmit()"
+      mat-button
+      type="button"
+      class="!px-4 !py-1.5 !text-sm !rounded-lg !bg-primary !text-white hover:!opacity-90 transition-all"
+      [disabled]="!form.valid"
+    >
+      {{ "add" | translate }}
+    </button>
+  </mat-dialog-actions>
+</div>
+
