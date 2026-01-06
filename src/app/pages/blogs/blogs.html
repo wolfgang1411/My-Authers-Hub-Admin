@@ -102,6 +102,7 @@
     [dataSource]="dataSource"
     [displayedColumns]="displayedColumns()"
     [actionTemplate]="actionButtons"
+    [cellTemplate]="cellTemplate"
     [isSortable]="isSortable"
     (sortChange)="onSortChange($event)"
   >
@@ -203,6 +204,14 @@
       <mat-icon>delete</mat-icon>
     </button>
   </div>
+</ng-template>
+
+<ng-template #cellTemplate let-element let-column="column">
+  @if (column === 'about') {
+    <div [innerHTML]="element[column]"></div>
+  } @else {
+    <div [innerHTML]="element[column] ?? '-'"></div>
+  }
 </ng-template>
 
 

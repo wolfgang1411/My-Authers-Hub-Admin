@@ -20,9 +20,10 @@ import { User, UserAccessLevel } from '../../../interfaces';
 import { AuthorsService } from '../../authors/authors-service';
 import { PublisherService } from '../../publisher/publisher-service';
 import { Author, AuthorStatus } from '../../../interfaces';
-import { Publishers } from '../../../interfaces';
+import { Publishers, Title, TitleFilter } from '../../../interfaces';
 import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
+import { TitleService } from '../../titles/title-service';
 
 @Component({
   selector: 'app-blog-form',
@@ -51,6 +52,7 @@ export class BlogForm implements OnInit, OnDestroy {
   userService = inject(UserService);
   authorService = inject(AuthorsService);
   publisherService = inject(PublisherService);
+  titleService = inject(TitleService);
 
   private destroy$ = new Subject<void>();
 
@@ -76,6 +78,12 @@ export class BlogForm implements OnInit, OnDestroy {
   filteredAuthorOptions = signal<{ label: string; value: number }[]>([]);
   filteredPublisherOptions = signal<{ label: string; value: number }[]>([]);
 
+  // Title selection
+  titleOptions = signal<{ label: string; value: number }[]>([]);
+  isSearchingTitles = signal(false);
+  titleSearchControl = new FormControl('');
+  filteredTitleOptions = signal<{ label: string; value: number }[]>([]);
+
   public Editor = ClassicEditor as any;
   public editorConfig: any = {
     toolbar: {
@@ -100,10 +108,12 @@ export class BlogForm implements OnInit, OnDestroy {
 
   blogForm = new FormGroup({
     title: new FormControl('', [Validators.required]),
+    subTitle: new FormControl(''), // Optional subtitle
     slug: new FormControl('', [Validators.required]),
     content: new FormControl('', [Validators.required]),
     authorId: new FormControl<number | null>(null), // For SUPERADMIN
     publisherId: new FormControl<number | null>(null), // For SUPERADMIN to filter authors
+    titleIds: new FormControl<number[]>([]), // Array of title IDs
   });
 
   private isUpdatingFromEditor = false;
@@ -124,6 +134,10 @@ export class BlogForm implements OnInit, OnDestroy {
       // For non-SUPERADMIN, set authorId to logged-in user
       this.blogForm.controls.authorId.setValue(this.loggedInUser()?.id || null);
     }
+
+    // Load titles for all users
+    this.setupTitleSearchControl();
+    await this.loadTitles();
   }
 
   ngOnDestroy() {
@@ -163,6 +177,25 @@ export class BlogForm implements OnInit, OnDestroy {
     // Initialize filtered options
     this.filteredAuthorOptions.set(this.authorOptions());
     this.filteredPublisherOptions.set(this.publisherOptions());
+  }
+
+  setupTitleSearchControl() {
+    this.titleSearchControl.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((searchTerm: string | null) => {
+        if (searchTerm && searchTerm.trim().length > 0) {
+          this.searchTitles(searchTerm.trim());
+        } else {
+          this.filteredTitleOptions.set(this.titleOptions());
+        }
+      });
+
+    // Initialize filtered options
+    this.filteredTitleOptions.set(this.titleOptions());
   }
 
   async loadAuthors() {
@@ -241,17 +274,61 @@ export class BlogForm implements OnInit, OnDestroy {
     }
   }
 
+  async loadTitles() {
+    try {
+      const filter: TitleFilter = {
+        itemsPerPage: 100,
+      };
+      const { items } = await this.titleService.getTitles(filter);
+      this.titleOptions.set(
+        items.map((title) => ({
+          label: `${title.name}${title.subTitle ? ' - ' + title.subTitle : ''}`,
+          value: title.id,
+        }))
+      );
+      this.filteredTitleOptions.set(this.titleOptions());
+    } catch (error) {
+      this.logger.logError(error);
+    }
+  }
+
+  async searchTitles(searchTerm: string) {
+    this.isSearchingTitles.set(true);
+    try {
+      const filter: TitleFilter = {
+        searchStr: searchTerm,
+        itemsPerPage: 100,
+      };
+      const { items } = await this.titleService.getTitles(filter);
+      this.filteredTitleOptions.set(
+        items.map((title) => ({
+          label: `${title.name}${title.subTitle ? ' - ' + title.subTitle : ''}`,
+          value: title.id,
+        }))
+      );
+    } catch (error) {
+      this.logger.logError(error);
+    } finally {
+      this.isSearchingTitles.set(false);
+    }
+  }
+
   async loadBlog(id: number) {
     this.isLoading.set(true);
     try {
       const blog = await this.blogService.fetchBlog(id);
       this.currentBlogStatus.set(blog.status);
+      // Extract title IDs from blog titles array
+      const titleIds = blog.titles?.map((bt) => bt.titleId) || [];
+      
       this.blogForm.patchValue({
         title: blog.title,
+        subTitle: blog.subTitle || '',
         slug: blog.slug,
         content: blog.content,
         authorId: blog.authorId || null,
         publisherId: blog.publisherId || null,
+        titleIds: titleIds,
       });
     } catch (error) {
       this.logger.logError(error);
@@ -311,11 +388,13 @@ export class BlogForm implements OnInit, OnDestroy {
       const formValue = this.blogForm.value;
       const blogData: CreateBlog = {
         title: formValue.title!,
+        subTitle: formValue.subTitle && formValue.subTitle.trim() ? formValue.subTitle.trim() : undefined,
         slug: formValue.slug!,
         content: formValue.content!,
         status: status,
         authorId: this.isSuperAdmin() ? formValue.authorId || undefined : undefined,
         publisherId: this.isSuperAdmin() ? formValue.publisherId || undefined : undefined,
+        titleIds: formValue.titleIds && formValue.titleIds.length > 0 ? formValue.titleIds : undefined,
       };
 
       if (this.blogId()) {

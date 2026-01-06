@@ -1,4 +1,4 @@
-import { Author, Publishers } from './index';
+import { Author, Publishers, Title } from './index';
 
 export enum BlogStatus {
   DRAFT = 'DRAFT',
@@ -6,9 +6,18 @@ export enum BlogStatus {
   ARCHIVED = 'ARCHIVED',
 }
 
+export interface BlogTitle {
+  id: number;
+  blogId: number;
+  titleId: number;
+  title: Title;
+  createdAt: string;
+}
+
 export interface Blog {
   id: number;
   title: string;
+  subTitle?: string | null;
   slug: string;
   content: string;
   status: BlogStatus;
@@ -19,6 +28,7 @@ export interface Blog {
   updatedAt: string;
   author?: Author;
   publisher?: Publishers;
+  titles?: BlogTitle[];
 }
 
 export interface BlogFilter {
@@ -32,13 +42,16 @@ export interface BlogFilter {
 
 export interface CreateBlog {
   title: string;
+  subTitle?: string;
   slug?: string;
   content: string;
   status?: BlogStatus;
   authorId?: number; // For SUPERADMIN to select author (Auther table ID)
   publisherId?: number; // For SUPERADMIN to select publisher (Publisher table ID)
+  titleIds?: number[]; // Array of title IDs to associate with the blog
 }
 
 export interface UpdateBlog extends Partial<CreateBlog> {
   id: number;
+  titleIds?: number[]; // Array of title IDs to associate with the blog
 }

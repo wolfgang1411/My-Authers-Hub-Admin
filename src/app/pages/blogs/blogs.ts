@@ -79,7 +79,7 @@ export class Blogs implements OnInit {
   }
 
   displayedColumns = computed(() => {
-    const baseColumns = ['title'];
+    const baseColumns = ['title', 'about'];
 
     // Only show author and publisher columns for SUPERADMIN
     if (this.isSuperAdmin()) {
@@ -123,13 +123,19 @@ export class Blogs implements OnInit {
     const blogs = this.blogs();
     if (blogs) {
       this.dataSource.data = blogs.map((blog) => {
+        // Format titles with line breaks for "about" column
+        const aboutTitles = blog.titles && blog.titles.length > 0
+          ? blog.titles.map((bt) => bt.title?.name || '').filter(Boolean).join('<br>')
+          : 'N/A';
+
         const mappedBlog: any = {
           ...blog,
           title: blog.title,
+          about: aboutTitles,
           status: blog.status,
           publishedAt: blog.publishedAt
             ? new Date(blog.publishedAt).toLocaleDateString()
-            : 'N/A',
+            : 'N/A                      ',
           createdAt: new Date(blog.createdAt).toLocaleDateString(),
           actions: blog, // Pass the full blog object
         };

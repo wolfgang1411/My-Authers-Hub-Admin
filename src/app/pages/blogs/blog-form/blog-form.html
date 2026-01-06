@@ -37,6 +37,11 @@
         </mat-form-field>
       </div>
 
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>{{ "subtitle" | translate }} ({{ "optional" | translate }})</mat-label>
+        <input matInput formControlName="subTitle" />
+      </mat-form-field>
+
       @if (isSuperAdmin()) {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <mat-form-field appearance="fill" class="w-full">
@@ -90,6 +95,28 @@
           </mat-form-field>
         </div>
       }
+
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>{{ "about" | translate }} ({{ "optional" | translate }})</mat-label>
+        <mat-select formControlName="titleIds" multiple>
+          <mat-option>
+            <ngx-mat-select-search
+              [formControl]="titleSearchControl"
+              [placeholderLabel]="'Type to search titles...'"
+              [noEntriesFoundLabel]="'No titles found'"
+            ></ngx-mat-select-search>
+          </mat-option>
+          @if (isSearchingTitles()) {
+            <mat-option disabled>
+              <mat-spinner diameter="20"></mat-spinner>
+              <span class="ml-2">Searching...</span>
+            </mat-option>
+          }
+          @for (option of filteredTitleOptions(); track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
 
       <div class="flex flex-col">
         <label class="text-sm font-medium mb-2">{{ "content" | translate }}</label>
