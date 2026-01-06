@@ -57,3 +57,12 @@ th[mat-sort-header][disabled] .mat-sort-header-arrow {
   opacity: 1;
   transform: translateY(0) scale(1);
 }
+
+/* Last column header text align left */
+:host ::ng-deep .mat-mdc-header-row th:last-child {
+  text-align: left !important;
+}
+
+:host ::ng-deep .mat-mdc-header-row th:last-child .mat-sort-header-container {
+  justify-content: flex-end !important;
+}

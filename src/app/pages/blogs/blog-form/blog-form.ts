@@ -55,9 +55,11 @@ export class BlogForm implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   blogId = signal<number | null>(null);
+  currentBlogStatus = signal<BlogStatus | null>(null);
   isLoading = signal(false);
   isSaving = signal(false);
   isSavingAsDraft = signal(false);
+  isSavingAsArchive = signal(false);
 
   loggedInUser = computed(() => this.userService.loggedInUser$());
   isSuperAdmin = computed(() => {
@@ -243,6 +245,7 @@ export class BlogForm implements OnInit, OnDestroy {
     this.isLoading.set(true);
     try {
       const blog = await this.blogService.fetchBlog(id);
+      this.currentBlogStatus.set(blog.status);
       this.blogForm.patchValue({
         title: blog.title,
         slug: blog.slug,
@@ -298,6 +301,8 @@ export class BlogForm implements OnInit, OnDestroy {
 
     if (status === BlogStatus.DRAFT) {
       this.isSavingAsDraft.set(true);
+    } else if (status === BlogStatus.ARCHIVED) {
+      this.isSavingAsArchive.set(true);
     } else {
       this.isSaving.set(true);
     }
@@ -338,6 +343,7 @@ export class BlogForm implements OnInit, OnDestroy {
     } finally {
       this.isSaving.set(false);
       this.isSavingAsDraft.set(false);
+      this.isSavingAsArchive.set(false);
     }
   }
 
@@ -347,6 +353,14 @@ export class BlogForm implements OnInit, OnDestroy {
 
   async saveAndPublish() {
     await this.saveBlog(BlogStatus.PUBLISHED);
+  }
+
+  async saveAsArchive() {
+    await this.saveBlog(BlogStatus.ARCHIVED);
+  }
+
+  isPublishedBlog(): boolean {
+    return this.currentBlogStatus() === BlogStatus.PUBLISHED;
   }
 }
 

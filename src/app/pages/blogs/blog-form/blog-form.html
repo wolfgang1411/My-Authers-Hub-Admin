@@ -118,19 +118,19 @@
           matButton
           type="button"
           class="!text-primary"
-          [disabled]="isSavingAsDraft() || isSaving() || blogForm.invalid"
-          (click)="saveAsDraft()"
+          [disabled]="isSavingAsDraft() || isSaving() || isSavingAsArchive() || blogForm.invalid"
+          (click)="isPublishedBlog() ? saveAsArchive() : saveAsDraft()"
         >
-          @if (isSavingAsDraft()) {
+          @if (isPublishedBlog() ? isSavingAsArchive() : isSavingAsDraft()) {
             <mat-spinner diameter="20" class="mr-2"></mat-spinner>
           }
-          {{ "saveasdraft" | translate }}
+          {{ isPublishedBlog() ? ("saveasarchive" | translate) : ("saveasdraft" | translate) }}
         </button>
         <button
           mat-flat-button
           type="button"
           class="!bg-primary !text-white"
-          [disabled]="isSavingAsDraft() || isSaving() || blogForm.invalid"
+          [disabled]="isSavingAsDraft() || isSaving() || isSavingAsArchive() || blogForm.invalid"
           (click)="saveAndPublish()"
         >
           @if (isSaving()) {

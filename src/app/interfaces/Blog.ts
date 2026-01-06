@@ -27,6 +27,7 @@ export interface BlogFilter {
   orderBy?: string;
   orderByVal?: 'asc' | 'desc';
   search?: string;
+  status?: BlogStatus | 'ALL';
 }
 
 export interface CreateBlog {

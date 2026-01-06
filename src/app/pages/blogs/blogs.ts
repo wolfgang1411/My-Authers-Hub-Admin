@@ -47,6 +47,14 @@ export class Blogs implements OnInit {
     page: 1,
     orderBy: 'createdAt',
     orderByVal: 'desc',
+    status: 'ALL',
+  });
+
+  BlogStatus = BlogStatus;
+  lastSelectedStatus: BlogStatus | 'ALL' = 'ALL';
+
+  blogStatuses = computed(() => {
+    return Object.values(BlogStatus);
   });
   blogs = signal<Blog[] | null>(null);
 
@@ -61,6 +69,7 @@ export class Blogs implements OnInit {
       orderBy: currentFilter.orderBy,
       orderByVal: currentFilter.orderByVal,
       search: currentFilter.search,
+      status: currentFilter.status,
     });
   }
 
@@ -69,18 +78,41 @@ export class Blogs implements OnInit {
     this.cachedFilterKey = '';
   }
 
-  displayedColumns: string[] = [
-    'title',
-    'status',
-    'author',
-    'publisher',
-    'publishedAt',
-    'createdAt',
-    'actions',
-  ];
+  displayedColumns = computed(() => {
+    const baseColumns = ['title'];
+
+    // Only show author and publisher columns for SUPERADMIN
+    if (this.isSuperAdmin()) {
+      baseColumns.push('author', 'publisher');
+    }
+
+    baseColumns.push('publishedAt', 'createdAt', 'actions');
+    return baseColumns;
+  });
+
+  // Map display column names to API field names
+  getApiFieldName = (column: string): string | null => {
+    const columnMap: Record<string, string> = {
+      title: 'title',
+      publishedAt: 'publishedAt',
+      createdAt: 'createdAt',
+    };
+    return columnMap[column] || null;
+  };
+
+  onStatusChange(status: BlogStatus | 'ALL') {
+    this.lastSelectedStatus = status;
+    this.filter.update((f) => ({
+      ...f,
+      status: status === 'ALL' ? undefined : status,
+      page: 1,
+    }));
+    this.clearCache();
+    this.fetchAndUpdateBlogs();
+  }
 
   isSortable = (column: string): boolean => {
-    return ['title', 'status', 'publishedAt', 'createdAt'].includes(column);
+    return this.getApiFieldName(column) !== null;
   };
 
   async ngOnInit() {
@@ -90,18 +122,27 @@ export class Blogs implements OnInit {
   mapBlogsToDataSource() {
     const blogs = this.blogs();
     if (blogs) {
-      this.dataSource.data = blogs.map((blog) => ({
-        ...blog,
-        title: blog.title,
-        status: blog.status,
-        author: blog.author?.user?.fullName || 'N/A',
-        publisher: blog.publisher?.name || 'N/A',
-        publishedAt: blog.publishedAt
-          ? new Date(blog.publishedAt).toLocaleDateString()
-          : '-',
-        createdAt: new Date(blog.createdAt).toLocaleDateString(),
-        actions: blog, // Pass the full blog object
-      }));
+      this.dataSource.data = blogs.map((blog) => {
+        const mappedBlog: any = {
+          ...blog,
+          title: blog.title,
+          status: blog.status,
+          publishedAt: blog.publishedAt
+            ? new Date(blog.publishedAt).toLocaleDateString()
+            : 'N/A',
+          createdAt: new Date(blog.createdAt).toLocaleDateString(),
+          actions: blog, // Pass the full blog object
+        };
+
+        // Only include author and publisher if user is SUPERADMIN
+        // (they won't be in the response for non-SUPERADMIN, but this is a safety check)
+        if (this.isSuperAdmin()) {
+          mappedBlog.author = blog.author?.user?.fullName || 'N/A';
+          mappedBlog.publisher = blog.publisher?.name || 'N/A';
+        }
+
+        return mappedBlog;
+      });
     } else {
       this.dataSource.data = [];
     }
@@ -127,12 +168,33 @@ export class Blogs implements OnInit {
         return;
       }
 
+      // Remove undefined/null values from filter before sending to API
+      const cleanFilter: BlogFilter = {};
+      if (currentFilter.page !== undefined && currentFilter.page !== null) {
+        cleanFilter.page = currentFilter.page;
+      }
+      if (currentFilter.itemsPerPage !== undefined && currentFilter.itemsPerPage !== null) {
+        cleanFilter.itemsPerPage = currentFilter.itemsPerPage;
+      }
+      if (currentFilter.orderBy !== undefined && currentFilter.orderBy !== null) {
+        cleanFilter.orderBy = currentFilter.orderBy;
+      }
+      if (currentFilter.orderByVal !== undefined && currentFilter.orderByVal !== null) {
+        cleanFilter.orderByVal = currentFilter.orderByVal;
+      }
+      if (currentFilter.search !== undefined && currentFilter.search !== null && currentFilter.search !== '') {
+        cleanFilter.search = currentFilter.search;
+      }
+      if (currentFilter.status !== undefined && currentFilter.status !== null && currentFilter.status !== 'ALL') {
+        cleanFilter.status = currentFilter.status;
+      }
+
       // Fetch from API (backend handles access level logic)
       const {
         items,
         itemsPerPage: returnedItemsPerPage,
         totalCount,
-      } = await this.blogService.fetchBlogs(currentFilter);
+      } = await this.blogService.fetchBlogs(cleanFilter);
 
       // Cache the fetched page
       this.pageCache.set(currentPage, items);
@@ -210,10 +272,21 @@ export class Blogs implements OnInit {
     if (!event.direction) {
       return;
     }
+
+    const apiFieldName = this.getApiFieldName(event.active);
+    if (!apiFieldName) {
+      return;
+    }
+
+    const direction: 'asc' | 'desc' =
+      event.direction === 'asc' || event.direction === 'desc'
+        ? event.direction
+        : 'desc';
+
     this.filter.update((f) => ({
       ...f,
-      orderBy: event.active,
-      orderByVal: event.direction as 'asc' | 'desc',
+      orderBy: apiFieldName,
+      orderByVal: direction,
       page: 1,
     }));
     this.clearCache();

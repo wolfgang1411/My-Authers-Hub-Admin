@@ -39,9 +39,68 @@
     </div>
   </div>
 
+  <div class="flex w-full gap-4 mt-4 flex-wrap">
+    <button
+      class="btn rounded-md !text-primary"
+      matButton="filled"
+      matButton
+      type="button"
+      [ngClass]="{
+        '!bg-primary !text-white': lastSelectedStatus === 'ALL',
+        '!bg-primary-superlight': lastSelectedStatus !== 'ALL'
+      }"
+      (click)="onStatusChange('ALL')"
+    >
+      <mat-icon>format_list_bulleted</mat-icon>
+      All
+    </button>
+    <button
+      class="btn rounded-md !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white': lastSelectedStatus === BlogStatus.DRAFT,
+        '!bg-primary-superlight': lastSelectedStatus !== BlogStatus.DRAFT
+      }"
+      (click)="onStatusChange(BlogStatus.DRAFT)"
+    >
+      <mat-icon>drafts</mat-icon>
+      DRAFT
+    </button>
+    <button
+      class="btn rounded-md !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white': lastSelectedStatus === BlogStatus.PUBLISHED,
+        '!bg-primary-superlight': lastSelectedStatus !== BlogStatus.PUBLISHED
+      }"
+      (click)="onStatusChange(BlogStatus.PUBLISHED)"
+    >
+      <mat-icon>publish</mat-icon>
+      PUBLISHED
+    </button>
+    <button
+      class="btn rounded-md !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white': lastSelectedStatus === BlogStatus.ARCHIVED,
+        '!bg-primary-superlight': lastSelectedStatus !== BlogStatus.ARCHIVED
+      }"
+      (click)="onStatusChange(BlogStatus.ARCHIVED)"
+    >
+      <mat-icon>archive</mat-icon>
+      ARCHIVED
+    </button>
+  </div>
+
   <app-list-table
     [dataSource]="dataSource"
-    [displayedColumns]="displayedColumns"
+    [displayedColumns]="displayedColumns()"
     [actionTemplate]="actionButtons"
     [isSortable]="isSortable"
     (sortChange)="onSortChange($event)"

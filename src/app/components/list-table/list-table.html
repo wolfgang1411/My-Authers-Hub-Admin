@@ -11,7 +11,9 @@
       *matHeaderCellDef
       [mat-sort-header]="column"
       [disabled]="isSortable && !isSortable(column)"
-      class="select-none"
+      [class.text-left]="$index === displayedColumns.length - 1"
+      [class.select-none]="true"
+      [style.text-align]="$index === displayedColumns.length - 1 ? 'left' : null"
     >
       <span [innerHTML]="column | translate"></span>
     </th>
