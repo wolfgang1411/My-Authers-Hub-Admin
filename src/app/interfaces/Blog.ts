@@ -1,3 +1,5 @@
+import { Author, Publishers } from './index';
+
 export enum BlogStatus {
   DRAFT = 'DRAFT',
   PUBLISHED = 'PUBLISHED',
@@ -15,16 +17,8 @@ export interface Blog {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
-  author?: {
-    id: number;
-    firstName: string;
-    lastName: string;
-    fullName: string;
-  };
-  publisher?: {
-    id: number;
-    name: string;
-  };
+  author?: Author;
+  publisher?: Publishers;
 }
 
 export interface BlogFilter {
@@ -47,4 +41,3 @@ export interface CreateBlog {
 export interface UpdateBlog extends Partial<CreateBlog> {
   id: number;
 }
-

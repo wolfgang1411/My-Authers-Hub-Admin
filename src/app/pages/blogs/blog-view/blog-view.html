@@ -1,0 +1,306 @@
+<div class="blog-view-container">
+  <!-- Back Button -->
+  <div class="back-button-container">
+    <button
+      matButton
+      [routerLink]="['/blogs']"
+      class="back-button"
+    >
+      <span>{{ 'back' | translate }}</span>
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <span>{{ 'loading' | translate }}...</span>
+    </div>
+  } @else if (blog()) {
+    <!-- Blog Content -->
+    <article class="blog-article">
+      <header class="blog-header">
+        <h1 class="blog-title">{{ blog()!.title }}</h1>
+        
+        <div class="blog-meta">
+          <div class="meta-item">
+            @if (blog()!.author) {
+              <div class="author-info">
+                <div class="author-avatar">
+                  {{ (blog()!.author?.user?.fullName || blog()!.author?.username || 'A')[0].toUpperCase() }}
+                </div>
+                <div class="author-details">
+                  <span class="author-name">{{ blog()!.author?.user?.fullName || blog()!.author?.username || 'Anonymous' }}</span>
+                  <span class="meta-label">{{ 'author' | translate }}</span>
+                </div>
+              </div>
+            }
+          </div>
+          
+          @if (blog()!.publisher) {
+            <div class="meta-item">
+              <mat-icon class="meta-icon">business</mat-icon>
+              <div>
+                <span class="meta-value">{{ blog()!.publisher?.name || 'N/A' }}</span>
+                <span class="meta-label">{{ 'publisher' | translate }}</span>
+              </div>
+            </div>
+          }
+          
+          <div class="meta-item">
+            <mat-icon class="meta-icon">schedule</mat-icon>
+            <div>
+              <span class="meta-value">
+                {{ blog()!.publishedAt ? (blog()!.publishedAt | date: 'medium') : ('draft' | translate) }}
+              </span>
+              <span class="meta-label">{{ 'published' | translate }}</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="blog-content prose" [innerHTML]="getSanitizedContent(blog()!.content)"></div>
+    </article>
+
+    <!-- Comments Section -->
+    <section class="comments-section">
+      <div class="comments-header">
+        <h2 class="comments-title">
+          <mat-icon class="comments-icon">comment</mat-icon>
+          <span>{{ 'comments' | translate }}</span>
+          <span class="comments-count">({{ totalCommentsCount() }})</span>
+        </h2>
+      </div>
+
+      <!-- Add Comment Form -->
+      @if (loggedInUser()) {
+        <div class="comment-form-container">
+          <div class="comment-form-avatar">
+            {{ (loggedInUser()?.fullName || loggedInUser()?.email || 'U')[0].toUpperCase() }}
+          </div>
+          <form (ngSubmit)="submitComment()" class="comment-form">
+            <textarea
+              [formControl]="commentContent"
+              class="comment-textarea"
+              rows="4"
+              [placeholder]="'writecomment' | translate"
+            ></textarea>
+            @if (commentContent.invalid && commentContent.touched) {
+              <span class="error-message">{{ 'required' | translate }}</span>
+            }
+            <div class="comment-form-actions">
+              @if (isSubmittingComment()) {
+                <button
+                  type="submit"
+                  matButton
+                  [disabled]="true"
+                  class="submit-button"
+                >
+                  <span>{{ 'submitting' | translate }}...</span>
+                </button>
+              } @else {
+                <button
+                  type="submit"
+                  matButton
+                  [disabled]="commentContent.invalid"
+                  class="submit-button"
+                >
+                  <mat-icon>send</mat-icon>
+                  <span>{{ 'postcomment' | translate }}</span>
+                </button>
+              }
+            </div>
+          </form>
+        </div>
+      }
+
+      <!-- Comments List -->
+      @if (isLoadingComments()) {
+        <div class="loading-container">
+          <div class="loading-spinner"></div>
+          <span>{{ 'loading' | translate }}...</span>
+        </div>
+      } @else if (comments().length === 0) {
+        <div class="empty-state">
+          <mat-icon class="empty-icon">comment_outline</mat-icon>
+          <p class="empty-text">{{ 'nocomments' | translate }}</p>
+        </div>
+      } @else {
+        <div class="comments-list">
+          @for (comment of comments(); track comment.id) {
+            <div class="comment-card">
+              <div class="comment-avatar">
+                {{ (comment.author?.fullName || 'Anonymous')[0].toUpperCase() }}
+              </div>
+              <div class="comment-body">
+                <div class="comment-header">
+                  <div class="comment-author-info">
+                    <span class="comment-author-name">{{ comment.author?.fullName || 'Anonymous' }}</span>
+                    <span class="comment-date">{{ comment.createdAt | date: 'short' }}</span>
+                  </div>
+                  @if (canDeleteComment(comment)) {
+                    <button
+                      matIconButton
+                      (click)="deleteComment(comment)"
+                      class="delete-button"
+                      [title]="'delete' | translate"
+                    >
+                      <mat-icon>delete_outline</mat-icon>
+                    </button>
+                  }
+                </div>
+                <div class="comment-content">{{ comment.content }}</div>
+                
+                <!-- Reply Button -->
+                @if (loggedInUser()) {
+                  <button
+                    matButton
+                    (click)="startReply(comment)"
+                    class="reply-button"
+                  >
+                    <mat-icon>reply</mat-icon>
+                    <span>{{ 'reply' | translate }}</span>
+                  </button>
+                }
+
+                <!-- Reply Form -->
+                @if (replyingTo()?.id === comment.id) {
+                  <div class="reply-form-container">
+                    <div class="reply-form-avatar">
+                      {{ (loggedInUser()?.fullName || loggedInUser()?.email || 'U')[0].toUpperCase() }}
+                    </div>
+                    <form (ngSubmit)="submitReply()" class="reply-form">
+                      <textarea
+                        [formControl]="replyContent"
+                        class="comment-textarea"
+                        rows="3"
+                        [placeholder]="'writereply' | translate"
+                      ></textarea>
+                      @if (replyContent.invalid && replyContent.touched) {
+                        <span class="error-message">{{ 'required' | translate }}</span>
+                      }
+                      <div class="reply-form-actions">
+                        @if (isSubmittingComment()) {
+                          <button
+                            type="submit"
+                            matButton
+                            [disabled]="true"
+                            class="submit-button"
+                          >
+                            <span>{{ 'submitting' | translate }}...</span>
+                          </button>
+                        } @else {
+                          <button
+                            type="submit"
+                            matButton
+                            [disabled]="replyContent.invalid"
+                            class="submit-button"
+                          >
+                            <mat-icon>send</mat-icon>
+                            <span>{{ 'postreply' | translate }}</span>
+                          </button>
+                        }
+                        <button
+                          type="button"
+                          matButton
+                          (click)="cancelReply()"
+                          class="cancel-button"
+                        >
+                          {{ 'cancel' | translate }}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                }
+
+                <!-- View Replies Button -->
+                @if (isLoadingRepliesFor(comment.id)) {
+                  <button
+                    matButton
+                    (click)="loadReplies(comment)"
+                    class="view-replies-button"
+                  >
+                    <div class="loading-spinner-small"></div>
+                    <span>{{ 'loading' | translate }}...</span>
+                  </button>
+                } @else if (getRepliesForComment(comment.id).length > 0) {
+                  <button
+                    matButton
+                    (click)="loadReplies(comment)"
+                    class="view-replies-button"
+                  >
+                    <mat-icon>expand_less</mat-icon>
+                    <span>{{ 'hidereplies' | translate }}</span>
+                  </button>
+                } @else {
+                  <button
+                    matButton
+                    (click)="loadReplies(comment)"
+                    class="view-replies-button"
+                  >
+                    <mat-icon>expand_more</mat-icon>
+                    <span>{{ 'viewreplies' | translate }}</span>
+                  </button>
+                }
+
+                <!-- Replies -->
+                @if (getRepliesForComment(comment.id).length > 0) {
+                  <div class="replies-container">
+                    @for (reply of getRepliesForComment(comment.id); track reply.id) {
+                      <div class="reply-card">
+                        <div class="comment-avatar reply-avatar">
+                          {{ (reply.author?.fullName || 'Anonymous')[0].toUpperCase() }}
+                        </div>
+                        <div class="reply-body">
+                          <div class="comment-header">
+                            <div class="comment-author-info">
+                              <span class="comment-author-name">{{ reply.author?.fullName || 'Anonymous' }}</span>
+                              <span class="comment-date">{{ reply.createdAt | date: 'short' }}</span>
+                            </div>
+                            @if (canDeleteComment(reply)) {
+                              <button
+                                matIconButton
+                                (click)="deleteComment(reply)"
+                                class="delete-button"
+                                [title]="'delete' | translate"
+                              >
+                                <mat-icon>delete_outline</mat-icon>
+                              </button>
+                            }
+                          </div>
+                          <div class="comment-content">{{ reply.content }}</div>
+                        </div>
+                      </div>
+                    }
+                    <!-- Load More Replies -->
+                    <button
+                      matButton
+                      (click)="loadMoreReplies(comment.id)"
+                      class="load-more-button"
+                    >
+                      {{ 'loadmorereplies' | translate }}
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Load More Comments -->
+        @if (hasMoreComments()) {
+          <div class="load-more-container">
+            <button
+              matButton
+              (click)="loadMoreComments()"
+              class="load-more-button-primary"
+            >
+              {{ 'loadmorecomments' | translate }}
+            </button>
+          </div>
+        }
+      }
+    </section>
+  }
+</div>
+

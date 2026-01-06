@@ -553,6 +553,20 @@ export const routes: Routes = [
     },
   },
   {
+    path: 'blogs/view/:id',
+    loadComponent: () =>
+      import('./pages/blogs/blog-view/blog-view').then((c) => c.BlogView),
+    canActivate: [privateRouteGuard, profileCompletionGuard],
+    data: {
+      seo: {
+        title: 'View Blog',
+        description: 'View blog and comments',
+        noindex: true,
+        nofollow: true,
+      },
+    },
+  },
+  {
     path: 'shared-titles',
     loadComponent: () =>
       import('./pages/shared-titles/shared-titles').then((c) => c.SharedTitles),

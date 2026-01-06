@@ -68,7 +68,7 @@ export class Sidebar implements OnInit {
       { name: 'Payouts', url: '/payouts', icon: 'credit_card' },
       { name: 'Wallet', url: '/wallet', icon: 'credit_card' },
       { name: 'coupon', url: '/coupon', icon: 'local_offer' },
-      // { name: 'Blogs', url: '/blogs', icon: 'article' }, // Temporarily hidden until ready
+      { name: 'Blogs', url: '/blogs', icon: 'article' },
       { name: 'Settings', url: '/settings', icon: 'settings' },
     ];
 
@@ -121,14 +121,14 @@ export class Sidebar implements OnInit {
       if (accessLevel === 'AUTHER' && item.name === 'ISBN') {
         return false;
       }
-      // Blogs menu item is temporarily hidden (commented out above)
-      // if (item.name === 'Blogs') {
-      //   return (
-      //     accessLevel === 'AUTHER' ||
-      //     accessLevel === 'PUBLISHER' ||
-      //     accessLevel === 'SUPERADMIN'
-      //   );
-      // }
+      // Show Blogs only for AUTHER, PUBLISHER, and SUPERADMIN
+      if (item.name === 'Blogs') {
+        return (
+          accessLevel === 'AUTHER' ||
+          accessLevel === 'PUBLISHER' ||
+          accessLevel === 'SUPERADMIN'
+        );
+      }
       return true;
     });
   }

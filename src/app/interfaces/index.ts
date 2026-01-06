@@ -26,3 +26,4 @@ export * from './Order';
 export * from './Invite';
 export * from './SEO';
 export * from './Blog';
+export * from './Comment';

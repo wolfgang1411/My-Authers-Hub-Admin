@@ -120,9 +120,18 @@
 <ng-template #actionButtons let-element>
   <div class="flex gap-2 text-sm items-center justify-end lg:flex-wrap">
     <button
+      (click)="onViewBlog(element)"
+      class="!text-primary"
+      matIconButton
+      [title]="'view' | translate"
+    >
+      <mat-icon>visibility</mat-icon>
+    </button>
+    <button
       (click)="onEditBlog(element)"
       class="!text-primary"
       matIconButton
+      [title]="'edit' | translate"
     >
       <mat-icon>edit</mat-icon>
     </button>
@@ -130,6 +139,7 @@
       (click)="onDeleteBlog(element)"
       class="!text-red-500"
       matIconButton
+      [title]="'delete' | translate"
     >
       <mat-icon>delete</mat-icon>
     </button>

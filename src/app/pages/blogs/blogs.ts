@@ -73,6 +73,7 @@ export class Blogs implements OnInit {
     'title',
     'status',
     'author',
+    'publisher',
     'publishedAt',
     'createdAt',
     'actions',
@@ -93,7 +94,8 @@ export class Blogs implements OnInit {
         ...blog,
         title: blog.title,
         status: blog.status,
-        author: blog.author?.fullName || 'Unknown',
+        author: blog.author?.user?.fullName || 'N/A',
+        publisher: blog.publisher?.name || 'N/A',
         publishedAt: blog.publishedAt
           ? new Date(blog.publishedAt).toLocaleDateString()
           : '-',
@@ -230,6 +232,10 @@ export class Blogs implements OnInit {
 
   onEditBlog(blog: Blog) {
     this.router.navigate(['/blog', blog.id]);
+  }
+
+  onViewBlog(blog: Blog) {
+    this.router.navigate(['/blogs/view', blog.id]);
   }
 
   async onDeleteBlog(blog: Blog) {
