@@ -71,14 +71,14 @@ export class Server {
       };
       // For DELETE with body, use request method
       if (body) {
-        const response = await firstValueFrom(
+      const response = await firstValueFrom(
           this.http.request<T>('DELETE', this.parseUrl(url), {
             body,
-            params,
-            headers: {
+          params,
+          headers: {
               'Content-Type': 'application/json',
-            },
-          })
+          },
+        })
         );
         return response;
       }

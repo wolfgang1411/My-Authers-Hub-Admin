@@ -364,6 +364,9 @@ export class CreateOrder implements OnInit {
         coupon: item.couponCode,
       }));
 
+      // Build base URL for order details page
+      const orderDetailsBaseUrl = `${window.location.origin}/orders`;
+
       const orderData = {
         data: orderItems,
         deliveryAddressId: this.selectedDeliveryAddressId()!,
@@ -371,9 +374,12 @@ export class CreateOrder implements OnInit {
           ? undefined
           : this.selectedBillingAddressId()!,
         billingAddressSameAsDelivery: this.billingSameAsDelivery(),
+        // Use PLACEHOLDER which will be replaced with actual order ID after creation
+        successClientUrl: `${orderDetailsBaseUrl}/PLACEHOLDER`,
+        failureClientUrl: `${orderDetailsBaseUrl}/PLACEHOLDER`,
       };
 
-      // Create order
+      // Create order (URLs will be updated with actual order ID in the backend)
       const order = await this.orderService.createOrder(orderData);
 
       // Create transaction and get payment URL
