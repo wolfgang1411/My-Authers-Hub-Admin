@@ -1,0 +1,138 @@
+<div class="flex flex-col w-full" style="max-width: 600px;">
+  <div class="p-4 border-b flex justify-between items-center">
+    <h3 class="text-lg font-semibold">
+      {{ "addaddress" | translate }}
+    </h3>
+    <button
+      class="!text-[var(--text-secondary)]"
+      mat-icon-button
+      (click)="close()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="p-4">
+    <form [formGroup]="addressForm" class="flex flex-col gap-4">
+      <mat-form-field appearance="fill">
+        <mat-label>{{ "country" | translate }}</mat-label>
+        <mat-select formControlName="country" required>
+          <mat-option value="">
+            {{ "selectcountry" | translate }}
+          </mat-option>
+          @for (country of countries; track country.isoCode) {
+          <mat-option [value]="country.isoCode">
+            {{ country.name }}
+          </mat-option>
+          }
+        </mat-select>
+        @if (
+          addressForm.get('country')?.invalid &&
+          addressForm.get('country')?.touched
+        ) {
+        <mat-error>{{ "countryisrequired" | translate }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>{{ "state" | translate }}</mat-label>
+        <mat-select formControlName="state" required [disabled]="!addressForm.get('country')?.value">
+          <mat-option value="">
+            {{ "selectstate" | translate }}
+          </mat-option>
+          @for (state of states; track state.isoCode) {
+          <mat-option [value]="state.isoCode">
+            {{ state.name }}
+          </mat-option>
+          }
+        </mat-select>
+        @if (
+          addressForm.get('state')?.invalid &&
+          addressForm.get('state')?.touched
+        ) {
+        <mat-error>{{ "stateisrequired" | translate }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>{{ "city" | translate }}</mat-label>
+        <mat-select formControlName="city" required [disabled]="!addressForm.get('state')?.value">
+          <mat-option value="">
+            {{ "selectcity" | translate }}
+          </mat-option>
+          @for (city of cities; track city.name) {
+          <mat-option [value]="city.name">
+            {{ city.name }}
+          </mat-option>
+          }
+        </mat-select>
+        @if (
+          addressForm.get('city')?.invalid &&
+          addressForm.get('city')?.touched
+        ) {
+        <mat-error>{{ "cityisrequired" | translate }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>{{ "address" | translate }}</mat-label>
+        <textarea
+          matInput
+          formControlName="address"
+          rows="3"
+          required
+        ></textarea>
+        @if (
+          addressForm.get('address')?.invalid &&
+          addressForm.get('address')?.touched
+        ) {
+        <mat-error>{{ "addressisrequired" | translate }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>{{ "pincode" | translate }}</mat-label>
+        <input
+          matInput
+          formControlName="pincode"
+          required
+          (blur)="validatePincode()"
+        />
+        @if (
+          addressForm.get('pincode')?.invalid &&
+          addressForm.get('pincode')?.touched
+        ) {
+        <mat-error>{{ "pincodeisrequired" | translate }}</mat-error>
+        }
+        @if (addressForm.get('pincode')?.errors?.['invalidPincode']) {
+        <mat-error>{{ "invalidpincode" | translate }}</mat-error>
+        }
+      </mat-form-field>
+
+      <div class="flex justify-end gap-2 mt-4">
+        <button
+          mat-button
+          type="button"
+          (click)="close()"
+          [disabled]="isLoading()"
+        >
+          {{ "cancel" | translate }}
+        </button>
+        <button
+          mat-button
+          color="primary"
+          type="button"
+          (click)="saveAddress()"
+          [disabled]="isLoading() || addressForm.invalid"
+        >
+          @if (isLoading()) {
+          <mat-icon class="animate-spin">refresh</mat-icon>
+          } @else {
+          {{ "save" | translate }}
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+

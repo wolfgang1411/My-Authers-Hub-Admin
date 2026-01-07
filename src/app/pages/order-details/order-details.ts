@@ -23,6 +23,7 @@ import { TransactionService } from '../../services/transaction';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { StaticValuesService } from '../../services/static-values';
+import { UserService } from '../../services/user';
 import Swal from 'sweetalert2';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -49,7 +50,8 @@ export class OrderDetails implements OnInit {
     private logger: Logger,
     private transactionService: TransactionService,
     private staticValuesService: StaticValuesService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private userService: UserService
   ) {
     this.route.params.subscribe(({ id }) => {
       this.orderId = Number(id);
@@ -59,6 +61,9 @@ export class OrderDetails implements OnInit {
   orderId!: number;
   order = signal<Order | null>(null);
   today = new Date();
+  isSuperAdmin = computed(() => {
+    return this.userService.loggedInUser$()?.accessLevel === 'SUPERADMIN';
+  });
   deliveryStatusOptions = computed<DeliveryStatus[]>(() => {
     const enums = this.staticValuesService.staticValues()?.DeliveryStatus || {};
     return Object.keys(enums).map(

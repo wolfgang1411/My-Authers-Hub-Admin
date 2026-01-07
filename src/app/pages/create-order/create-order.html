@@ -6,14 +6,14 @@
     <button
       class="!bg-primary flex items-center gap-2 !text-white rounded-md px-4 py-2"
       matButton="filled"
-      routerLink="/my-orders"
+      routerLink="/orders"
     >
       <mat-icon>arrow_back</mat-icon>
       {{ "backtoorders" | translate }}
     </button>
   </div>
 
-  @if (cartItems().length === 0 && !showTitleBrowser()) {
+  @if (cartItems().length === 0) {
   <!-- Empty Cart State -->
   <div class="flex flex-col items-center justify-center py-16 gap-6">
     <div class="text-center">
@@ -63,10 +63,6 @@
             <h5 class="font-semibold text-lg">
               {{ item.titleDetails?.name || item.title?.name || "Title" }}
             </h5>
-            <p class="text-sm text-[var(--text-secondary)] mt-1">
-              {{ "platform" | translate }}:
-              {{ (typeof item.platform === 'object' ? item.platform.name : item.platform) || item.platformId }}
-            </p>
             <p class="text-lg font-semibold text-primary mt-2">
               ₹{{ item.price.toFixed(2) }} {{ "perunit" | translate }}
             </p>
@@ -146,8 +142,20 @@
 
         <!-- Address Selection -->
         <div class="mb-4">
-          <mat-form-field class="w-full">
-            <mat-label>{{ "deliveryaddress" | translate }}</mat-label>
+          <div class="flex justify-between items-center mb-2">
+            <label class="text-sm font-medium">{{ "deliveryaddress" | translate }}</label>
+            <button
+              mat-button
+              color="primary"
+              class="!text-primary !text-sm"
+              (click)="openAddAddressDialog()"
+            >
+              <mat-icon class="!text-base mr-1">add</mat-icon>
+              {{ "addaddress" | translate }}
+            </button>
+          </div>
+          <mat-form-field class="w-full" appearance="fill">
+            <mat-label>{{ "selectaddress" | translate }}</mat-label>
             <mat-select [value]="selectedDeliveryAddressId()">
               @for (address of addresses(); track address.id) {
               <mat-option
@@ -175,8 +183,20 @@
           </div>
 
           @if (!billingSameAsDelivery()) {
-          <mat-form-field class="w-full">
-            <mat-label>{{ "billingaddress" | translate }}</mat-label>
+          <div class="flex justify-between items-center mb-2">
+            <label class="text-sm font-medium">{{ "billingaddress" | translate }}</label>
+            <button
+              mat-button
+              color="primary"
+              class="!text-primary !text-sm"
+              (click)="openAddAddressDialog()"
+            >
+              <mat-icon class="!text-base mr-1">add</mat-icon>
+              {{ "addaddress" | translate }}
+            </button>
+          </div>
+          <mat-form-field class="w-full" appearance="fill">
+            <mat-label>{{ "selectaddress" | translate }}</mat-label>
             <mat-select [value]="selectedBillingAddressId()">
               @for (address of addresses(); track address.id) {
               <mat-option
@@ -209,66 +229,5 @@
   </div>
   }
 
-  <!-- Title Browser Modal -->
-  @if (showTitleBrowser()) {
-  <div
-    class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-    (click)="closeTitleBrowser()"
-  >
-    <div
-      class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden flex flex-col"
-      (click)="$event.stopPropagation()"
-    >
-      <div class="p-6 border-b flex justify-between items-center">
-        <h3 class="text-xl font-semibold">
-          {{ "browsetitles" | translate }}
-        </h3>
-        <button
-          class="!text-[var(--text-secondary)]"
-          mat-icon-button
-          (click)="closeTitleBrowser()"
-        >
-          <mat-icon>close</mat-icon>
-        </button>
-      </div>
-
-      <div class="p-6 flex-1 overflow-y-auto">
-        <div class="mb-4">
-          <input
-            class="input-field outline-none w-full"
-            #titleInput
-            (input)="titleSearchStr.next(titleInput.value)"
-            [placeholder]="'searchtitles' | translate"
-          />
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          @for (title of titles(); track title.id) {
-          <div class="border rounded-lg p-4">
-            <h5 class="font-semibold">{{ title.name }}</h5>
-            <p class="text-sm text-[var(--text-secondary)] mt-1">
-              {{ title.subTitle }}
-            </p>
-            @if (title.pricing && title.pricing.length > 0) {
-            <div class="mt-4">
-              @for (pricing of title.pricing; track pricing.id) {
-              <button
-                class="!bg-primary-superlight !text-primary rounded-md px-3 py-1 text-sm mr-2 mb-2"
-                matButton="text"
-                (click)="addToCart(title, getPlatformId(pricing.platform), 1)"
-              >
-                {{ getPlatformName(pricing.platform) }} -
-                ₹{{ pricing.salesPrice }}
-              </button>
-              }
-            </div>
-            }
-          </div>
-          }
-        </div>
-      </div>
-    </div>
-  </div>
-  }
 </div>
 

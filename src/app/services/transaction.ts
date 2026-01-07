@@ -35,4 +35,18 @@ export class TransactionService {
       throw error;
     }
   }
+
+  async createTransaction(orderId: number) {
+    try {
+      return await this.loaderService.loadPromise(
+        this.serverService.post<{ url: string }>('transactions', {
+          orderId,
+        }),
+        'createTransaction'
+      );
+    } catch (error) {
+      this.loggerService.logError(error);
+      throw error;
+    }
+  }
 }

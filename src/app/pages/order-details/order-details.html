@@ -168,7 +168,7 @@
           <mat-icon>download</mat-icon>
           {{ "download" | translate }}
         </button>
-        @if (order()?.status === 'COMPLETED') {
+        @if (order()?.status === 'COMPLETED' && isSuperAdmin()) {
         <button
           mat-stroked-button
           color="warn"
