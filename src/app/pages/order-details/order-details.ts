@@ -141,25 +141,50 @@ export class OrderDetails implements OnInit {
     }
   }
 
-  getInvoice(transactions?: Transaction[]) {
+  getInvoice() {
+    const transactions = this.order()?.transactions;
     const successTransaction = transactions?.filter(
       (tx) => tx.status === TransactionStatus.SUCCESS
     );
 
     if (successTransaction && successTransaction.length) {
-      this.transactionService
-        .fetchTransaction(successTransaction[0].id.toString())
-        .then((response: Transaction) => {
-          const a = document.createElement('a');
-          a.href = response.invoice;
-          a.download = 'invoice.pdf';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        })
-        .catch((error) => {
-          this.logger.logError(error);
+      const transaction = successTransaction[0];
+      
+      // Check if invoice is an array with pdfUrl
+      let invoiceUrl: string | null = null;
+      
+      if (Array.isArray(transaction.invoice) && transaction.invoice.length > 0) {
+        // Get the first invoice with pdfUrl (handle both pdfUrl and pdfurl)
+        const invoice = transaction.invoice.find(
+          (inv) => (inv as any).pdfUrl || (inv as any).pdfurl
+        );
+        invoiceUrl = (invoice as any)?.pdfUrl || (invoice as any)?.pdfurl || null;
+      } else if (typeof transaction.invoice === 'string') {
+        // Fallback to string invoice (legacy)
+        invoiceUrl = transaction.invoice;
+      }
+
+      if (invoiceUrl) {
+        const a = document.createElement('a');
+        a.href = invoiceUrl;
+        a.download = 'invoice.pdf';
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        Swal.fire({
+          icon: 'warning',
+          title: this.translateService.instant('error') || 'Error',
+          text: this.translateService.instant('invoicenotavailable') || 'Invoice not available',
         });
+      }
+    } else {
+      Swal.fire({
+        icon: 'warning',
+        title: this.translateService.instant('error') || 'Error',
+        text: this.translateService.instant('invoicenotavailable') || 'Invoice not available',
+      });
     }
   }
 

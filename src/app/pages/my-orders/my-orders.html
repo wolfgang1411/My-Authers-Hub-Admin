@@ -1,9 +1,8 @@
 <div class="flex flex-col flex-grow gap-4">
   <div class="flex justify-between items-center">
     <h3 class="heading">
-      {{ pageTitle() | translate }}
+      {{ "myorders" | translate }}
     </h3>
-    @if (!isSuperAdmin()) {
     <button
       class="!bg-primary flex items-center gap-2 !text-white rounded-md px-4 py-2"
       matButton="filled"
@@ -12,7 +11,6 @@
       <mat-icon>add_shopping_cart</mat-icon>
       {{ "createneworder" | translate }}
     </button>
-    }
   </div>
 
   <div class="flex justify-between w-full gap-4">
@@ -36,47 +34,14 @@
         {{ "search" | translate }}
       </button>
     </div>
-    @if (isSuperAdmin()) {
-    <div class="flex justify-end">
-      <button
-        class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
-        matButton="filled"
-        (click)="onExportToExcel()"
-      >
-        <mat-icon class="material-icons">download</mat-icon>
-        {{ "export" | translate }}
-      </button>
-    </div>
-    }
   </div>
-  <div class="flex flex-col gap-2">
-    <div class="flex gap-2 flex-wrap items-center">
-      @for (tab of deliveryStatusTabs(); track tab.label) {
-      <button
-        class="!bg-primary"
-        matButton="filled"
-        [ngClass]="{
-          '!bg-primary !text-white':
-            filter().deliveryStatus === tab.value ||
-            (!filter().deliveryStatus && !tab.value),
-          '!bg-primary-superlight !text-primary':
-            filter().deliveryStatus !== tab.value &&
-            (filter().deliveryStatus || tab.value)
-        }"
-        (click)="onDeliveryStatusChange(tab.value)"
-      >
-        {{ tab.label | translate }}
-      </button>
-      }
-    </div>
-  </div>
+
+  @if (orders().length > 0) {
   <app-list-table
     class="pt-6"
     [dataSource]="dataSource"
-    [displayedColumns]="displayedColumns()"
+    [displayedColumns]="displayedColumns"
     [actionTemplate]="actionButtons"
-    [isSortable]="isSortable"
-    (sortChange)="onSortChange($event)"
   >
   </app-list-table>
 
@@ -149,6 +114,26 @@
     </div>
     }
   </div>
+  } @else {
+  <div class="flex flex-col items-center justify-center py-16 gap-4">
+    <div class="text-center">
+      <mat-icon class="!text-6xl !text-[var(--text-secondary)] !w-16 !h-16">
+        shopping_cart
+      </mat-icon>
+      <p class="text-lg text-[var(--text-secondary)] mt-4">
+        {{ "noordersfound" | translate }}
+      </p>
+      <button
+        class="!bg-primary flex items-center gap-2 !text-white rounded-md px-4 py-2 mt-6 mx-auto"
+        matButton="filled"
+        routerLink="/create-order"
+      >
+        <mat-icon>add_shopping_cart</mat-icon>
+        {{ "createneworder" | translate }}
+      </button>
+    </div>
+  </div>
+  }
   <ng-template #actionButtons let-element>
     <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
       <button
@@ -158,33 +143,7 @@
       >
         <mat-icon class="!text-white">visibility</mat-icon>
       </button>
-      @if (isSuperAdmin()) {
-      <button
-        class="!px-3 !py-1 !min-w-[140px] !border !border-[var(--primary)]"
-        mat-stroked-button
-        color="primary"
-        [matMenuTriggerFor]="deliveryMenu"
-        [disabled]="
-          element.deliverystatus === 'RETURNED' ||
-          element.deliverystatus === 'CANCELLED'
-        "
-        matTooltip="{{ 'changedeliverystatus' | translate }}"
-      >
-        <mat-icon>swap_horiz</mat-icon>
-        <span class="text-xs">{{ "changedeliverystatus" | translate }}</span>
-      </button>
-      <mat-menu #deliveryMenu="matMenu">
-        @for (opt of deliveryStatusMenuOptions(); track opt) {
-        <button
-          mat-menu-item
-          [disabled]="opt === element.deliverystatus"
-          (click)="changeDeliveryStatus(element.id, opt)"
-        >
-          {{ opt.toLowerCase() | translate }}
-        </button>
-        }
-      </mat-menu>
-      }
     </div>
   </ng-template>
 </div>
+

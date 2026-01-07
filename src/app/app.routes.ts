@@ -305,6 +305,20 @@ export const routes: Routes = [
     },
   },
   {
+    path: 'create-order',
+    loadComponent: () =>
+      import('./pages/create-order/create-order').then((c) => c.CreateOrder),
+    canActivate: [privateRouteGuard, profileCompletionGuard],
+    data: {
+      seo: {
+        title: 'Create Order',
+        description: 'Create a new order',
+        noindex: true,
+        nofollow: true,
+      },
+    },
+  },
+  {
     path: 'orders/:id',
     loadComponent: () =>
       import('./pages/order-details/order-details').then((c) => c.OrderDetails),

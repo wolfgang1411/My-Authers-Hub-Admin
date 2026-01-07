@@ -2,7 +2,13 @@ import { Injectable } from '@angular/core';
 import { Server } from './server';
 import { Logger } from './logger';
 import { LoaderService } from './loader';
-import { Blog, BlogFilter, CreateBlog, UpdateBlog, Pagination } from '../interfaces';
+import {
+  Blog,
+  BlogFilter,
+  CreateBlog,
+  UpdateBlog,
+  Pagination,
+} from '../interfaces';
 
 @Injectable({
   providedIn: 'root',
@@ -58,7 +64,7 @@ export class BlogService {
     }
   }
 
-  async deleteBlog(id: number): Promise<void> {
+  async deleteBlog(id: number) {
     try {
       return await this.loader.loadPromise(
         this.server.delete<void>(`blogs/${id}`)
@@ -69,5 +75,3 @@ export class BlogService {
     }
   }
 }
-
-

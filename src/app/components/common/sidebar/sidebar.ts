@@ -108,10 +108,7 @@ export class Sidebar implements OnInit {
       if (accessLevel !== 'SUPERADMIN' && item.name === 'Users') {
         return false;
       }
-      // Hide Orders for non-superadmin (only show for superadmin)
-      if (accessLevel !== 'SUPERADMIN' && item.name === 'Orders') {
-        return false;
-      }
+      // Orders is always visible - no conditions
       if (
         (accessLevel === 'AUTHER' || accessLevel === 'PUBLISHER') &&
         item.name === 'Settings'

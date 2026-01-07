@@ -2,49 +2,26 @@ import { Injectable } from '@angular/core';
 import { Server } from './server';
 import { LoaderService } from './loader';
 import { Logger } from './logger';
-import { Order, OrderFilter, Pagination } from '../interfaces';
+import { CartItem, AddCartItem, RemoveCartItem, Pagination } from '../interfaces';
 
 @Injectable({
   providedIn: 'root',
 })
-export class OrderService {
+export class CartService {
   constructor(
     private serverService: Server,
     private loader: LoaderService,
     private logger: Logger
   ) {}
 
-  async fetchOrders(filter: OrderFilter) {
+  async getCartItems(page: number = 1, itemsPerPage: number = 30) {
     try {
       return await this.loader.loadPromise(
-        this.serverService.get<Pagination<Order>>('order', filter),
-        'orders'
-      );
-    } catch (error) {
-      this.logger.logError(error);
-      throw error;
-    }
-  }
-
-  async fetchOrder(id: number | string) {
-    try {
-      return await this.loader.loadPromise(
-        this.serverService.get<Order>(`order/${id}`),
-        'order'
-      );
-    } catch (error) {
-      this.logger.logError(error);
-      throw error;
-    }
-  }
-
-  async updateDeliveryStatus(id: number, deliveryStatus: string) {
-    try {
-      return await this.loader.loadPromise(
-        this.serverService.patch<Order>(`order/${id}/delivery-status`, {
-          deliveryStatus,
+        this.serverService.get<Pagination<CartItem>>('cart/items', {
+          page,
+          itemsPerPage,
         }),
-        'order'
+        'cart'
       );
     } catch (error) {
       this.logger.logError(error);
@@ -52,11 +29,11 @@ export class OrderService {
     }
   }
 
-  async cancelOrder(id: number, refund: boolean) {
+  async getCartItem(id: number) {
     try {
       return await this.loader.loadPromise(
-        this.serverService.patch<Order>(`order/${id}/cancel`, { refund }),
-        'order'
+        this.serverService.get<CartItem>(`cart/items/${id}`),
+        'cart'
       );
     } catch (error) {
       this.logger.logError(error);
@@ -64,11 +41,28 @@ export class OrderService {
     }
   }
 
-  async createOrder(orderData: any) {
+  async addCartItems(items: AddCartItem[]) {
     try {
       return await this.loader.loadPromise(
-        this.serverService.post<Order>('order', orderData),
-        'order'
+        this.serverService.post<CartItem[]>('cart/items/add', {
+          data: items,
+        }),
+        'cart'
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async removeCartItems(items: RemoveCartItem[]) {
+    try {
+      return await this.loader.loadPromise(
+        this.serverService.delete<{ success: boolean; message: string }>(
+          'cart/items/remove',
+          { data: items }
+        ),
+        'cart'
       );
     } catch (error) {
       this.logger.logError(error);
@@ -76,3 +70,4 @@ export class OrderService {
     }
   }
 }
+

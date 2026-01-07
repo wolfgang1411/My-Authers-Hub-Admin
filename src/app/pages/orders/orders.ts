@@ -29,6 +29,7 @@ import Swal from 'sweetalert2';
 import { exportToExcel } from '../../common/utils/excel';
 import { format } from 'date-fns';
 import { StaticValuesService } from 'src/app/services/static-values';
+import { UserService } from '../../services/user';
 
 @Component({
   selector: 'app-orders',
@@ -53,8 +54,17 @@ export class Orders implements OnInit {
     private orderService: OrderService,
     private translateService: TranslateService,
     private logger: Logger,
-    private staticValuesService: StaticValuesService
+    private staticValuesService: StaticValuesService,
+    private userService: UserService
   ) {}
+
+  isSuperAdmin = computed(() => {
+    return this.userService.loggedInUser$()?.accessLevel === 'SUPERADMIN';
+  });
+
+  pageTitle = computed(() => {
+    return this.isSuperAdmin() ? 'orders' : 'myorders';
+  });
 
   lastPage = signal(1);
 
@@ -64,7 +74,7 @@ export class Orders implements OnInit {
     searchStr: '',
     orderBy: 'id',
     orderByVal: 'desc',
-    status: ['COMPLETED', 'CANCELLED'] as OrderStatus[],
+    status: undefined,
     deliveryStatus: undefined,
   });
 
@@ -83,14 +93,28 @@ export class Orders implements OnInit {
   private pageCache = new Map<number, Order[]>();
   private cachedFilterKey = '';
 
-  displayedColumns: string[] = [
-    'orderid',
-    'name',
-    'email',
-    'amount',
-    'deliverystatus',
-    'actions',
-  ];
+  displayedColumns = computed(() => {
+    if (this.isSuperAdmin()) {
+      return [
+        'orderid',
+        'name',
+        'email',
+        'amount',
+        'deliverystatus',
+        'actions',
+      ];
+    } else {
+      return [
+        'orderid',
+        'orderdate',
+        'totalamount',
+        'delivery',
+        'status',
+        'numberoftitles',
+        'actions',
+      ];
+    }
+  });
   dataSource = new MatTableDataSource<any>();
 
   deliveryStatusTabs = computed(() => {
@@ -212,23 +236,40 @@ export class Orders implements OnInit {
   }
 
   private mapOrdersToDataSource(orders: Order[]) {
-    this.dataSource.data = orders.map((order, index) => {
-      const booking = order.bookings?.[0];
-      const user = booking?.user || booking?.userDetails || order.user;
-      return {
-        ...order,
-        orderid: `#${order.id}`,
-        serial: index + 1,
-        name:
-          user?.fullName ||
-          `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
-        email: user?.email || '—',
-        title: booking?.title?.name || '—',
-        status: order.status,
-        deliverystatus: order.deliveryStatus,
-        amount: `${order.totalAmount} INR`,
-      };
-    });
+    if (this.isSuperAdmin()) {
+      this.dataSource.data = orders.map((order, index) => {
+        const booking = order.bookings?.[0];
+        const user = booking?.user || booking?.userDetails || order.user;
+        return {
+          ...order,
+          orderid: `#${order.id}`,
+          serial: index + 1,
+          name:
+            user?.fullName ||
+            `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+          email: user?.email || '—',
+          title: booking?.title?.name || '—',
+          status: order.status,
+          deliverystatus: order.deliveryStatus,
+          amount: `${order.totalAmount} INR`,
+        };
+      });
+    } else {
+      this.dataSource.data = orders.map((order) => {
+        const numberOfTitles = order.bookings?.length || 0;
+        return {
+          ...order,
+          orderid: `#${order.id}`,
+          orderdate: order.createdAt
+            ? format(new Date(order.createdAt), 'dd MMM yyyy, hh:mm a')
+            : '—',
+          totalamount: `₹${order.totalAmount.toFixed(2)}`,
+          delivery: `₹${order.delivery?.toFixed(2) || '0.00'}`,
+          status: order.status,
+          numberoftitles: numberOfTitles,
+        };
+      });
+    }
   }
 
   nextPage() {
@@ -360,8 +401,8 @@ export class Orders implements OnInit {
         return;
       }
 
-      const exportColumns = this.displayedColumns.filter(
-        (col) => col !== 'actions'
+      const exportColumns = this.displayedColumns().filter(
+        (col: string) => col !== 'actions'
       );
 
       const exportData = orders.map((order) => {
@@ -369,7 +410,7 @@ export class Orders implements OnInit {
         const user = booking?.user || booking?.userDetails || order.user;
         const dataRow: Record<string, any> = {};
 
-        exportColumns.forEach((col) => {
+        exportColumns.forEach((col: string) => {
           switch (col) {
             case 'orderid':
               dataRow[col] = `#${order.id}`;

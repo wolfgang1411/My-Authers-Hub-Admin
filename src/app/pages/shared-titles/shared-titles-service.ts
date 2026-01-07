@@ -79,7 +79,7 @@ export class SharedTitlesService {
     }
   }
 
-  async deleteSharedTitle(id: number): Promise<void> {
+  async deleteSharedTitle(id: number) {
     try {
       return await this.loader.loadPromise(
         this.server.delete(`shared-titles/${id}`)

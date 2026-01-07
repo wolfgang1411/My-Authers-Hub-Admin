@@ -1,0 +1,274 @@
+<div class="flex flex-col flex-grow gap-6">
+  <div class="flex justify-between items-center">
+    <h3 class="heading">
+      {{ "createorder" | translate }}
+    </h3>
+    <button
+      class="!bg-primary flex items-center gap-2 !text-white rounded-md px-4 py-2"
+      matButton="filled"
+      routerLink="/my-orders"
+    >
+      <mat-icon>arrow_back</mat-icon>
+      {{ "backtoorders" | translate }}
+    </button>
+  </div>
+
+  @if (cartItems().length === 0 && !showTitleBrowser()) {
+  <!-- Empty Cart State -->
+  <div class="flex flex-col items-center justify-center py-16 gap-6">
+    <div class="text-center">
+      <mat-icon class="!text-8xl !text-[var(--text-secondary)] !w-24 !h-24">
+        shopping_cart
+      </mat-icon>
+      <h2 class="text-2xl font-semibold text-[var(--text-primary)] mt-6">
+        {{ "yourcartisempty" | translate }}
+      </h2>
+      <p class="text-lg text-[var(--text-secondary)] mt-2">
+        {{ "addtitlestostartordering" | translate }}
+      </p>
+      <button
+        class="!bg-primary flex items-center gap-2 !text-white rounded-md px-6 py-3 mt-6 mx-auto"
+        matButton="filled"
+        (click)="openTitleBrowser()"
+      >
+        <mat-icon>add_shopping_cart</mat-icon>
+        {{ "addtitles" | translate }}
+      </button>
+    </div>
+  </div>
+  } @else {
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Cart Items Section -->
+    <div class="lg:col-span-2 flex flex-col gap-4">
+      <div class="flex justify-between items-center">
+        <h4 class="text-xl font-semibold">
+          {{ "cartitems" | translate }} ({{ numberOfTitles() }})
+        </h4>
+        <button
+          class="!bg-primary flex items-center gap-2 !text-white rounded-md px-4 py-2"
+          matButton="filled"
+          (click)="openTitleBrowser()"
+        >
+          <mat-icon>add</mat-icon>
+          {{ "addtitles" | translate }}
+        </button>
+      </div>
+
+      <div class="flex flex-col gap-4">
+        @for (item of cartItems(); track item.id) {
+        <div
+          class="bg-white rounded-lg shadow-md p-4 flex flex-col md:flex-row gap-4"
+        >
+          <div class="flex-1">
+            <h5 class="font-semibold text-lg">
+              {{ item.titleDetails?.name || item.title?.name || "Title" }}
+            </h5>
+            <p class="text-sm text-[var(--text-secondary)] mt-1">
+              {{ "platform" | translate }}:
+              {{ (typeof item.platform === 'object' ? item.platform.name : item.platform) || item.platformId }}
+            </p>
+            <p class="text-lg font-semibold text-primary mt-2">
+              ₹{{ item.price.toFixed(2) }} {{ "perunit" | translate }}
+            </p>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2">
+              <button
+                class="!bg-primary-superlight !text-primary rounded-md w-8 h-8 flex items-center justify-center"
+                mat-icon-button
+                (click)="updateQuantity(item, item.quantity - 1)"
+              >
+                <mat-icon class="!text-base">remove</mat-icon>
+              </button>
+              <span class="text-lg font-semibold w-12 text-center">
+                {{ item.quantity }}
+              </span>
+              <button
+                class="!bg-primary-superlight !text-primary rounded-md w-8 h-8 flex items-center justify-center"
+                mat-icon-button
+                (click)="updateQuantity(item, item.quantity + 1)"
+              >
+                <mat-icon class="!text-base">add</mat-icon>
+              </button>
+            </div>
+
+            <div class="flex flex-col items-end">
+              <p class="text-lg font-semibold">
+                ₹{{ item.total.toFixed(2) }}
+              </p>
+              <button
+                class="!text-red-500 !text-sm mt-1"
+                matButton="text"
+                (click)="removeItem(item)"
+              >
+                <mat-icon class="!text-base">delete</mat-icon>
+                {{ "remove" | translate }}
+              </button>
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- Cart Summary Section -->
+    <div class="lg:col-span-1">
+      <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
+        <h4 class="text-xl font-semibold mb-4">
+          {{ "ordersummary" | translate }}
+        </h4>
+
+        <div class="flex flex-col gap-3 mb-4">
+          <div class="flex justify-between">
+            <span class="text-[var(--text-secondary)]">
+              {{ "subtotal" | translate }}
+            </span>
+            <span class="font-semibold">₹{{ subtotal().toFixed(2) }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-[var(--text-secondary)]">
+              {{ "deliverycharges" | translate }}
+            </span>
+            <span class="font-semibold"
+              >₹{{ deliveryCharges().toFixed(2) }}</span
+            >
+          </div>
+          <div class="border-t pt-3 flex justify-between">
+            <span class="text-lg font-semibold">
+              {{ "total" | translate }}
+            </span>
+            <span class="text-lg font-semibold text-primary"
+              >₹{{ totalAmount().toFixed(2) }}</span
+            >
+          </div>
+        </div>
+
+        <!-- Address Selection -->
+        <div class="mb-4">
+          <mat-form-field class="w-full">
+            <mat-label>{{ "deliveryaddress" | translate }}</mat-label>
+            <mat-select [value]="selectedDeliveryAddressId()">
+              @for (address of addresses(); track address.id) {
+              <mat-option
+                [value]="address.id"
+                (click)="selectedDeliveryAddressId.set(address.id)"
+              >
+                {{ address.address }}, {{ address.city }}, {{ address.state }},
+                {{ address.pincode }}
+              </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <div class="flex items-center gap-2 mb-4">
+            <input
+              type="checkbox"
+              id="billingSame"
+              [checked]="billingSameAsDelivery()"
+              (change)="billingSameAsDelivery.set($any($event.target).checked)"
+              class="w-4 h-4"
+            />
+            <label for="billingSame" class="text-sm">
+              {{ "billingaddresssameasdelivery" | translate }}
+            </label>
+          </div>
+
+          @if (!billingSameAsDelivery()) {
+          <mat-form-field class="w-full">
+            <mat-label>{{ "billingaddress" | translate }}</mat-label>
+            <mat-select [value]="selectedBillingAddressId()">
+              @for (address of addresses(); track address.id) {
+              <mat-option
+                [value]="address.id"
+                (click)="selectedBillingAddressId.set(address.id)"
+              >
+                {{ address.address }}, {{ address.city }}, {{ address.state }},
+                {{ address.pincode }}
+              </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          }
+        </div>
+
+        <button
+          class="!bg-primary w-full !text-white rounded-md py-3 font-semibold"
+          matButton="filled"
+          [disabled]="isLoading() || cartItems().length === 0"
+          (click)="placeOrder()"
+        >
+          @if (isLoading()) {
+          <mat-icon class="animate-spin">refresh</mat-icon>
+          } @else {
+          {{ "placeorder" | translate }}
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- Title Browser Modal -->
+  @if (showTitleBrowser()) {
+  <div
+    class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+    (click)="closeTitleBrowser()"
+  >
+    <div
+      class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden flex flex-col"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="p-6 border-b flex justify-between items-center">
+        <h3 class="text-xl font-semibold">
+          {{ "browsetitles" | translate }}
+        </h3>
+        <button
+          class="!text-[var(--text-secondary)]"
+          mat-icon-button
+          (click)="closeTitleBrowser()"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="p-6 flex-1 overflow-y-auto">
+        <div class="mb-4">
+          <input
+            class="input-field outline-none w-full"
+            #titleInput
+            (input)="titleSearchStr.next(titleInput.value)"
+            [placeholder]="'searchtitles' | translate"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          @for (title of titles(); track title.id) {
+          <div class="border rounded-lg p-4">
+            <h5 class="font-semibold">{{ title.name }}</h5>
+            <p class="text-sm text-[var(--text-secondary)] mt-1">
+              {{ title.subTitle }}
+            </p>
+            @if (title.pricing && title.pricing.length > 0) {
+            <div class="mt-4">
+              @for (pricing of title.pricing; track pricing.id) {
+              <button
+                class="!bg-primary-superlight !text-primary rounded-md px-3 py-1 text-sm mr-2 mb-2"
+                matButton="text"
+                (click)="addToCart(title, getPlatformId(pricing.platform), 1)"
+              >
+                {{ getPlatformName(pricing.platform) }} -
+                ₹{{ pricing.salesPrice }}
+              </button>
+              }
+            </div>
+            }
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+</div>
+

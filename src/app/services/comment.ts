@@ -52,10 +52,13 @@ export class CommentService {
     try {
       // Use admin endpoint to allow viewing replies on DRAFT blogs
       return await this.loader.loadPromise(
-        this.server.get<Pagination<Comment>>(`comments/admin/comment/${commentId}/replies`, {
-          page,
-          itemsPerPage,
-        })
+        this.server.get<Pagination<Comment>>(
+          `comments/admin/comment/${commentId}/replies`,
+          {
+            page,
+            itemsPerPage,
+          }
+        )
       );
     } catch (error) {
       this.logger.logError(error);
@@ -86,7 +89,7 @@ export class CommentService {
     }
   }
 
-  async deleteComment(id: number): Promise<void> {
+  async deleteComment(id: number) {
     try {
       return await this.loader.loadPromise(
         this.server.delete<void>(`comments/${id}`)
@@ -97,4 +100,3 @@ export class CommentService {
     }
   }
 }
-

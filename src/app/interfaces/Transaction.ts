@@ -2,6 +2,12 @@ import { Booking } from './Booking';
 import { TransactionStatus } from './StaticValue';
 import { User } from './user';
 
+export interface Invoice {
+  id: number;
+  invoiceNumber: string;
+  pdfUrl?: string;
+}
+
 export interface Transaction {
   id: number;
   booking: Booking;
@@ -16,7 +22,7 @@ export interface Transaction {
   paymentGatewayRef: string;
   userId: number;
   title: string;
-  invoice: string;
+  invoice?: string | Invoice[];
 }
 
 export interface TransactionFilter {
