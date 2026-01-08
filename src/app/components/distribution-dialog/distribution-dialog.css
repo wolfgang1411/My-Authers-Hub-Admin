@@ -119,9 +119,53 @@
   justify-content: center;
   align-items: flex-start;
   padding-bottom: 8px;
-  min-height: 60px;
+  min-height: 80px;
   max-width: 100%;
-  overflow: hidden;
+  overflow: visible;
+}
+
+.table-min-row {
+  background: #fff9e6;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.min-cell {
+  padding: 8px;
+  background: #fff9e6;
+  justify-content: center;
+  align-items: center;
+  min-height: 40px;
+  font-size: 12px;
+}
+
+.min-value-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #f57c00;
+  font-weight: 500;
+}
+
+.min-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #f57c00;
+}
+
+.min-label {
+  font-weight: 600;
+  color: #f57c00;
+}
+
+.min-amount {
+  font-weight: 700;
+  color: #e65100;
+}
+
+.min-no-value {
+  color: #999;
+  font-style: italic;
 }
 
 .amount-field {
@@ -201,12 +245,13 @@
   display: block;
 }
 
-/* Hide error messages completely */
+/* Show error messages with proper spacing */
 ::ng-deep .distribution-dialog-container .mat-mdc-form-field-subscript-wrapper {
-  display: none !important;
-  height: 0 !important;
-  margin: 0 !important;
+  display: block !important;
+  height: auto !important;
+  margin-top: 4px !important;
   padding: 0 !important;
+  min-height: 20px !important;
 }
 
 /* Red border for invalid fields */
@@ -326,13 +371,24 @@
   opacity: 1;
 }
 
-/* Hide all error messages */
+/* Show error messages */
 ::ng-deep .distribution-dialog-container .mat-mdc-form-field-error-wrapper {
-  display: none !important;
+  display: block !important;
 }
 
 ::ng-deep .distribution-dialog-container .mat-mdc-form-field-error {
-  display: none !important;
+  display: block !important;
+  font-size: 11px !important;
+  color: #f44336 !important;
+  margin-top: 2px !important;
+}
+
+::ng-deep .distribution-dialog-container .mat-mdc-form-field-hint-wrapper,
+::ng-deep .distribution-dialog-container .mat-mdc-form-field-hint {
+  display: block !important;
+  font-size: 11px !important;
+  color: rgba(0, 0, 0, 0.6) !important;
+  margin-top: 2px !important;
 }
 
 /* Ensure subscript wrapper doesn't overlap input */

@@ -433,10 +433,15 @@ export class Titles {
         skuNumber: undefined,
         platformIdentifier: [],
       });
+      // Clear cache to ensure fresh data on next fetch
+      this.clearCache();
+      // Update local state immediately for instant UI update
       this.titles.update((titles) => {
         return titles.map((t) => (t.id === response.id ? response : t));
       });
       this.mapDataList();
+      // Refresh current page data from server to ensure consistency
+      this.fetchTitleDetails();
 
       return;
     }
@@ -475,11 +480,16 @@ export class Titles {
               title.id,
               data
             );
+            // Clear cache to ensure fresh data on next fetch
+            this.clearCache();
+            // Update local state immediately for instant UI update
             this.titles.update((titles) => {
               return titles.map((t) => (t.id === response.id ? response : t));
             });
             this.mapDataList();
             dialog.close();
+            // Refresh current page data from server to ensure consistency
+            this.fetchTitleDetails();
           } catch (error) {
             console.log(error);
           }

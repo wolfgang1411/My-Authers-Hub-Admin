@@ -13,7 +13,7 @@ import {
   MatDialogActions,
 } from '@angular/material/dialog';
 import { AddressService } from '../../services/address-service';
-import { Address, Countries, States, Cities } from '../../interfaces';
+import { Address, AddressLinkType, Countries, States, Cities } from '../../interfaces';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
@@ -154,6 +154,7 @@ export class AddAddressDialog implements OnInit {
         state: formValue.state,
         country: formValue.country,
         pincode: formValue.pincode,
+        type: AddressLinkType.USER, // General address dialog links to user
         // Don't send autherId or publisherId - link to user instead
       };
 

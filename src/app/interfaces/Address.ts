@@ -1,3 +1,9 @@
+export enum AddressLinkType {
+  PUBLISHER = 'PUBLISHER',
+  AUTHOR = 'AUTHOR',
+  USER = 'USER',
+}
+
 export interface Address {
   id: number;
   address: string;
@@ -8,6 +14,7 @@ export interface Address {
   autherId?: number;
   publisherId?: number;
   signupCode?: string; // Optional country for the address
+  type?: AddressLinkType; // Type to determine linking: PUBLISHER, AUTHOR, or USER
 }
 export interface Countries {
   name: string;

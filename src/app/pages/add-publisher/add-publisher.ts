@@ -37,6 +37,7 @@ import { UploadFile } from '../../components/upload-file/upload-file';
 import { PublisherService } from '../publisher/publisher-service';
 import {
   Address,
+  AddressLinkType,
   BankDetails,
   BankOption,
   Cities,
@@ -780,6 +781,7 @@ export class AddPublisher {
       // In invite flow, always use CREATE (remove id) but still prefill form
       const addressPayload: any = {
         ...publisherAddressData,
+        type: AddressLinkType.PUBLISHER, // Link address to publisher
       };
       if (this.signupCode) {
         addressPayload.id = undefined;
@@ -2073,6 +2075,7 @@ export class AddPublisher {
       const addressPayload: any = {
         ...this.publisherAddressDetails.value,
         publisherId: this.publisherId,
+        type: AddressLinkType.PUBLISHER, // Link address to publisher
       };
       // Remove id if signupCode is present (force CREATE)
       if (this.signupCode) {

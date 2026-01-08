@@ -19,6 +19,32 @@
               }
             </div>
 
+            <!-- Minimum Values Row (if baseDistributionPoints exists) -->
+            @if (data.baseDistributionPoints &&
+            data.baseDistributionPoints.length > 0) {
+            <div class="table-row table-min-row">
+              @for(dist of distributions.controls; track $index){
+              <div class="table-cell min-cell">
+                @if (getBaseAmount(dist.controls.distributionType.value)) {
+                <div class="min-value-info">
+                  <mat-icon class="min-icon">info</mat-icon>
+                  <span class="min-label">Min:</span>
+                  <span class="min-amount"
+                    >₹
+                    {{
+                      getBaseAmount(dist.controls.distributionType.value)
+                        | number : "1.2-2"
+                    }}</span
+                  >
+                </div>
+                } @else {
+                <span class="min-no-value">-</span>
+                }
+              </div>
+              }
+            </div>
+            }
+
             <!-- Values Row -->
             <div class="table-row table-body">
               @for(dist of distributions.controls; track $index){
@@ -35,10 +61,44 @@
                     type="number"
                     formControlName="amount"
                     required
-                    min="0"
+                    [min]="
+                      getBaseAmount(dist.controls.distributionType.value) || 0
+                    "
                     step="0.01"
-                    placeholder="₹ 0.00"
+                    [placeholder]="
+                      getBaseAmount(dist.controls.distributionType.value)
+                        ? '₹ ' +
+                          (getBaseAmount(dist.controls.distributionType.value)
+                            | number : '1.2-2')
+                        : '₹ 0.00'
+                    "
                   />
+                  @if (dist.controls.amount.invalid &&
+                  dist.controls.amount.touched) {
+                  <mat-error>
+                    @if (dist.controls.amount.errors?.['required']) { Amount is
+                    required } @else if
+                    (dist.controls.amount.errors?.['positiveNumber']) { Amount
+                    must be a positive number } @else { @if
+                    (getMinFromBaseError(dist.controls.amount)) { Minimum amount
+                    is ₹
+                    {{
+                      getMinFromBaseError(dist.controls.amount)
+                        | number : "1.2-2"
+                    }}
+                    } @else if (dist.controls.amount.errors?.['min']) { Amount
+                    must be at least 0 } }
+                  </mat-error>
+                  } @if (getBaseAmount(dist.controls.distributionType.value) &&
+                  !dist.controls.amount.errors?.['minFromBase']) {
+                  <mat-hint
+                    >Minimum: ₹
+                    {{
+                      getBaseAmount(dist.controls.distributionType.value)
+                        | number : "1.2-2"
+                    }}</mat-hint
+                  >
+                  }
                 </mat-form-field>
               </div>
               }

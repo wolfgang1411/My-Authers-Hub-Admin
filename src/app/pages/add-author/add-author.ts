@@ -34,6 +34,7 @@ import { MatCardModule } from '@angular/material/card';
 import { UploadFile } from '../../components/upload-file/upload-file';
 import {
   Address,
+  AddressLinkType,
   createBankDetails,
   Author,
   SocialMediaType,
@@ -770,6 +771,7 @@ export class AddAuthor implements OnInit {
       const addressPayload: any = {
         ...this.authorAddressDetails.value,
         autherId: finalAuthorId,
+        type: AddressLinkType.AUTHOR, // Link address to author
       };
       if (this.signupCode) {
         addressPayload.id = undefined; // Force CREATE
@@ -1306,6 +1308,7 @@ export class AddAuthor implements OnInit {
             ...this.authorAddressDetails.value,
             id: existingAddress.id,
             autherId: this.authorId,
+            type: AddressLinkType.AUTHOR, // Link address to author
           } as Address);
         }
 
@@ -2166,6 +2169,7 @@ export class AddAuthor implements OnInit {
         ...this.authorAddressDetails.value,
         id: existingAddress?.id,
         autherId: this.authorId,
+        type: AddressLinkType.AUTHOR, // Link address to author
       } as Address);
 
       // Reload author details to get updated address (use fetchAuthor to handle invite flow)

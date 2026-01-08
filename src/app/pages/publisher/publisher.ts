@@ -426,10 +426,26 @@ export class Publisher implements OnInit {
           );
 
           if (response) {
+            // Update publisher in list based on response
+            // For PUBLISHER approval: change status from Dormant to Pending, set isApprovedByPublisher
+            // For SUPERADMIN approval: change status from Pending to Active
+            const loggedInUser = this.userService.loggedInUser$();
+            const isPublisherApproval = loggedInUser?.accessLevel === 'PUBLISHER';
+            
+            // Clear cache to ensure fresh data on next fetch
+            this.clearCache();
+            
+            // Update local state immediately for instant UI update
             this.publishers.update((list) =>
               list.map((p) =>
                 p.id === targetPublisherId
-                  ? { ...p, status: PublisherStatus.Active }
+                  ? {
+                      ...p,
+                      isApprovedByPublisher: true,
+                      // PUBLISHER approval: Dormant -> Pending
+                      // SUPERADMIN approval: Pending -> Active
+                      status: isPublisherApproval ? PublisherStatus.Pending : PublisherStatus.Active
+                    }
                   : p
               )
             );
@@ -437,20 +453,20 @@ export class Publisher implements OnInit {
             // re-map to table
             this.mapPublishersToDataSource(this.publishers());
 
-            // this.dataSource.data = this.dataSource.data.map((item) =>
-            //   item.id === targetPublisherId
-            //     ? { ...item, status: PublisherStatus.Active }
-            //     : item
-            // );
-
             Swal.fire({
               title: 'Success',
-              text: 'The publisher has been approved successfully!',
+              text: isPublisherApproval
+                ? 'The publisher has been approved by you. It is now pending for admin approval.'
+                : 'The publisher has been approved successfully!',
               icon: 'success',
               heightAuto: false,
             }).then(() => {
               this.dialog.closeAll();
             });
+            
+            // Refresh the list immediately to get updated data from server
+            // This ensures buttons update correctly based on new status
+            this.fetchPublishers(false);
           }
         },
 
@@ -480,12 +496,23 @@ export class Publisher implements OnInit {
           publisherId
         );
         if (response) {
-          const updatedData = this.dataSource.data.map((item) =>
-            item.id === publisherId
-              ? { ...item, status: PublisherStatus.Rejected }
-              : item
+          // Clear cache to ensure fresh data on next fetch
+          this.clearCache();
+          
+          // Update local state immediately
+          this.publishers.update((list) =>
+            list.map((p) =>
+              p.id === publisherId
+                ? { ...p, status: PublisherStatus.Rejected }
+                : p
+            )
           );
-          this.dataSource.data = updatedData;
+          
+          // Re-map to data source
+          this.mapPublishersToDataSource(this.publishers());
+          
+          // Refresh from server to ensure consistency
+          this.fetchPublishers();
           Swal.fire({
             text: 'The publisher has been rejected!',
             icon: 'success',

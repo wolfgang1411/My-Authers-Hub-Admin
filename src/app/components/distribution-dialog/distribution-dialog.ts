@@ -21,6 +21,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
+import { MatError } from '@angular/material/form-field';
+import { CommonModule } from '@angular/common';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { Distribution } from '../../interfaces/Distribution';
 import { DistributionType, PublishingPointCost } from '../../interfaces';
@@ -39,6 +41,8 @@ import { DistributionType, PublishingPointCost } from '../../interfaces';
     MatButtonModule,
     MatDialogTitle,
     MatIconModule,
+    MatError,
+    CommonModule,
   ],
   templateUrl: './distribution-dialog.html',
   styleUrl: './distribution-dialog.css',
@@ -135,6 +139,25 @@ export class DistributionDialog {
     }>
   > {
     return this.form.get('distributions') as FormArray;
+  }
+
+  getBaseAmount(distributionType: DistributionType): number | null {
+    if (!this.data.baseDistributionPoints || this.data.baseDistributionPoints.length === 0) {
+      return null;
+    }
+    const base = this.data.baseDistributionPoints.find(
+      (p) => p.distributionType === distributionType
+    );
+    return base ? base.amount : null;
+  }
+
+  getMinFromBaseError(control: AbstractControl): number | null {
+    const errors = control.errors;
+    if (errors && errors['minFromBase'] && typeof errors['minFromBase'] === 'object') {
+      const minFromBase = errors['minFromBase'] as { requiredMin?: number };
+      return minFromBase.requiredMin ?? null;
+    }
+    return null;
   }
 
   onSubmit() {
