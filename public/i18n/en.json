@@ -950,11 +950,6 @@
   "loadmorecomments": "Load More Comments",
   "nocomments": "No comments yet. Be the first to comment!",
   "submitting": "Submitting",
-  "author": "Author",
-  "publisher": "Publisher",
   "published": "Published",
   "draft": "Draft",
-  "required": "This field is required",
-  "loading": "Loading",
-  "cancel": "Cancel"
-}
+  "required": "This field is required"}

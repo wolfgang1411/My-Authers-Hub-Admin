@@ -1,5 +1,5 @@
 <div class="flex flex-col flex-grow gap-4">
-  <div class="flex justify-between">
+  <div class="flex flex-col lg:flex-row lg:justify-between gap-3">
     <h3 class="heading">
       {{ "authors" | translate }}
     </h3>
@@ -56,7 +56,7 @@
     </div>
   </div>
 
-  <div class="flex justify-between w-full gap-4">
+  <div class="flex flex-col lg:flex-row w-full gap-3">
     <div
       class="flex h-[38px] items-center justify-center md:min-w-[480px] min-w-full gap-2"
     >
@@ -115,15 +115,93 @@
       {{ "dormant" | translate }}
     </button>
   </div> -->
-  <app-list-table
-    class="pt-6"
-    [dataSource]="dataSource"
-    [displayedColumns]="displayedColumns"
-    [actionTemplate]="actionButtons"
-    [isSortable]="isSortable"
-    (sortChange)="onSortChange($event)"
-  >
-  </app-list-table>
+  <!-- Desktop Table -->
+  <div class="hidden lg:block pt-6">
+    <app-list-table
+      [dataSource]="dataSource"
+      [displayedColumns]="displayedColumns"
+      [actionTemplate]="actionButtons"
+      [isSortable]="isSortable"
+      (sortChange)="onSortChange($event)"
+    ></app-list-table>
+  </div>
+  <!-- Mobile Author Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 lg:hidden pt-4">
+    @for (author of dataSource.data; track $index) {
+    <div
+      class="bg-white rounded-2xl shadow-md border border-gray-200 p-5 flex flex-col gap-4 hover:shadow-lg transition"
+    >
+      <!-- Header -->
+      <div class="flex justify-between items-start">
+        <div>
+          <h3 class="text-base font-semibold text-primary leading-tight">
+            {{ author.user?.firstName }} {{ author.user?.lastName }}
+          </h3>
+          <p class="text-sm text-gray-500">
+            {{ author.user?.email || "No email" }}
+          </p>
+        </div>
+
+        <span
+          class="px-3 py-1 text-xs rounded-full font-medium"
+          [ngClass]="{
+            'bg-green-100 text-green-700': author.status === 'Active',
+            'bg-yellow-100 text-yellow-700': author.status === 'Pending',
+            'bg-red-100 text-red-700': author.status === 'Deactivated'
+          }"
+        >
+          {{ author.status }}
+        </span>
+      </div>
+
+      <!-- Details -->
+      <div class="grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <p class="text-gray-400">Role</p>
+          <p class="font-medium">{{ author.accessLevel }}</p>
+        </div>
+
+        <div>
+          <p class="text-gray-400">Verified</p>
+          <p class="font-medium">
+            {{ author.user?.isEmailVerified ? "Yes" : "No" }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex flex-wrap gap-2 pt-3 border-t">
+        <button
+          class="bg-primary text-white rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
+          [routerLink]="['/authorDetails', author.id]"
+        >
+          <mat-icon class="text-sm">visibility</mat-icon>
+          View
+        </button>
+        @if (loggedInUser()?.accessLevel !== 'AUTHER') {
+        <button
+          class="bg-gray-100 rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
+          [routerLink]="['/author', author.id]"
+        >
+          <mat-icon class="text-sm">edit</mat-icon>
+          Edit
+        </button>
+        }
+        <button
+          class="bg-gray-100 rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
+          (click)="toggleExpand(author.id)"
+        >
+          <mat-icon class="text-sm">
+            {{
+              expandedAuthorId() === author.id ? "expand_less" : "expand_more"
+            }}
+          </mat-icon>
+          Titles
+        </button>
+      </div>
+    </div>
+    }
+  </div>
 
   <div class="flex items-center justify-between gap-4 mt-4">
     <div class="flex items-center gap-2">

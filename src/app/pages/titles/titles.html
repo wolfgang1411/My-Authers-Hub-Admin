@@ -265,8 +265,8 @@
 
   <!-- Mobile / Tablet Cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-6 lg:hidden">
+    @for (item of dataSource.data; track $index) {
     <div
-      *ngFor="let item of dataSource.data"
       class="bg-white rounded-2xl shadow-md border border-gray-200 p-5 flex flex-col gap-3 hover:shadow-lg transition"
     >
       <!-- Title & Status -->
@@ -331,6 +331,7 @@
         </button>
       </div>
     </div>
+    }
   </div>
 
   <div class="flex items-center justify-between gap-4 mt-4">

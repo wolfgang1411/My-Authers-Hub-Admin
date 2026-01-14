@@ -1,6 +1,8 @@
-<div class="flex flex-col flex-grow gap-4">
-  <nav class="flex flex-col gap-6 sticky z-10 py-4">
-    <div class="flex justify-between items-center">
+<div class="flex flex-col flex-grow gap-3 sm:gap-4">
+  <nav class="flex flex-col gap-3 sm:gap-6 sticky z-10 py-3 sm:py-4">
+    <div
+      class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2"
+    >
       <h3 class="heading">{{ "authorDetails" | translate }}</h3>
       <app-back></app-back>
     </div>
@@ -14,12 +16,16 @@
       </ng-template>
 
       <!-- MAIN CARD -->
-      <section class="mt-8 bg-white p-8 rounded-xl shadow-md mat-elevation-z4">
+      <section
+        class="mt-5 sm:mt-8 bg-white p-4 sm:p-6 lg:p-8 rounded-xl shadow-md mat-elevation-z4"
+      >
         <!-- ================= HEADER ================= -->
-        <div class="flex items-center gap-6 pb-6 border-b">
+        <div
+          class="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 pb-5 sm:pb-6 border-b"
+        >
           <!-- Profile Image -->
           <div
-            class="w-28 h-28 rounded-full overflow-hidden shadow border flex items-center justify-center"
+            class="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden shadow border flex items-center justify-center"
           >
             @if (authorDetails() && authorDetails()?.medias &&
             authorDetails()?.medias?.length) {
@@ -37,7 +43,9 @@
 
           <!-- Title -->
           <div>
-            <h2 class="text-2xl font-medium text-text-heading capitalize">
+            <h2
+              class="text-lg sm:text-xl lg:text-2xl font-medium text-text-heading capitalize"
+            >
               {{ authorDetails()?.user?.firstName }}
               {{ authorDetails()?.user?.lastName }}
             </h2>
@@ -58,7 +66,9 @@
             {{ "authorDetails" | translate }}
           </h3>
 
-          <div class="grid grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+          <div
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 text-sm"
+          >
             <div>
               <span class="font-medium">Username:</span>
               {{ authorDetails()?.username }}
@@ -94,7 +104,9 @@
             {{ "bankdetails" | translate }}
           </h3>
 
-          <div class="grid grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+          <div
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 text-sm"
+          >
             <div>
               <span class="font-medium">Bank Name:</span>
               {{ authorDetails()?.bankDetails?.[0]?.name || "Not Provided" }}
@@ -127,11 +139,14 @@
           {{ "bookspublished" | translate }}
         </span>
       </ng-template>
+
       <section
         id="books-published"
-        class="mt-10 bg-white p-6 rounded-xl shadow"
+        class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow"
       >
-        <div class="flex justify-between">
+        <div
+          class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
+        >
           <h2 class="heading mb-4">{{ "bookspublished" | translate }}</h2>
           <mat-form-field>
             <mat-label>{{ "filter" | translate }}</mat-label>
@@ -143,14 +158,16 @@
             />
           </mat-form-field>
         </div>
-        <app-list-table
-          class="pt-6"
-          [dataSource]="bookPublishData"
-          [displayedColumns]="displayedColumns"
-          [isSortable]="booksIsSortable"
-          (sortChange)="booksOnSortChange($event)"
-        >
-        </app-list-table>
+        <div class="overflow-x-auto">
+          <app-list-table
+            class="pt-6"
+            [dataSource]="bookPublishData"
+            [displayedColumns]="displayedColumns"
+            [isSortable]="booksIsSortable"
+            (sortChange)="booksOnSortChange($event)"
+          >
+          </app-list-table>
+        </div>
         <div class="flex items-center justify-between gap-4 mt-4">
           <div class="flex items-center gap-2">
             <span class="text-sm text-[var(--text-secondary)]">
@@ -187,7 +204,8 @@
               {{ "previous" | translate }}
             </button>
             <div class="flex items-center gap-1">
-              @for (pageNum of booksGetPageNumbers(); track pageNum) { @if (pageNum === -1) {
+              @for (pageNum of booksGetPageNumbers(); track pageNum) { @if
+              (pageNum === -1) {
               <span class="px-2 text-[var(--text-secondary)]">...</span>
               } @else {
               <button
@@ -196,8 +214,10 @@
                 matButton
                 type="button"
                 [ngClass]="{
-                  '!bg-primary !text-white': (booksFilter().page || 1) === pageNum,
-                  '!bg-primary-superlight': (booksFilter().page || 1) !== pageNum
+                  '!bg-primary !text-white':
+                    (booksFilter().page || 1) === pageNum,
+                  '!bg-primary-superlight':
+                    (booksFilter().page || 1) !== pageNum
                 }"
                 (click)="booksGoToPage(pageNum)"
               >
@@ -221,35 +241,6 @@
         </div>
       </section>
     </mat-tab>
-    <!-- Authors -->
-    <!-- <mat-tab>
-      <ng-template mat-tab-label>
-        <span class="text-text-heading font-medium">
-          {{ "authors" | translate }}
-        </span>
-      </ng-template>
-      <section id="authors" class="mt-10 bg-white p-6 rounded-xl shadow">
-        <div class="flex justify-between">
-          <h2 class="heading mb-4">{{ "authors" | translate }}</h2>
-          <mat-form-field>
-            <mat-label>{{ "filter" | translate }}</mat-label>
-            <input
-              matInput
-              (input)="applyAuthorFilter($event)"
-              placeholder="Ex. ium"
-              #input
-            />
-          </mat-form-field>
-        </div>
-        <app-list-table
-          class="pt-6"
-          [dataSource]="authorData"
-          [displayedColumns]="displayedAuthorColumns"
-        >
-        </app-list-table>
-      </section>
-    </mat-tab> -->
-    <!-- Royalties -->
     <mat-tab>
       <ng-template mat-tab-label>
         <span class="text-text-heading font-medium">
@@ -258,9 +249,11 @@
       </ng-template>
       <section
         id="royalties"
-        class="mt-10 bg-white p-6 rounded-xl shadow flex flex-col gap-6"
+        class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow flex flex-col gap-4 sm:gap-6"
       >
-        <div class="flex justify-between">
+        <div
+          class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
+        >
           <h2 class="heading">{{ "Royalties&Wallet" | translate }}</h2>
           <mat-form-field>
             <mat-label>{{ "filter" | translate }}</mat-label>
@@ -288,14 +281,15 @@
             }}</label>
           </li>
         </ul>
-
-        <app-list-table
-          [dataSource]="royaltyData"
-          [displayedColumns]="displayedRoyaltyColumns()"
-          [isSortable]="royaltyIsSortable"
-          (sortChange)="royaltyOnSortChange($event)"
-        >
-        </app-list-table>
+        <div class="overflow-x-auto">
+          <app-list-table
+            [dataSource]="royaltyData"
+            [displayedColumns]="displayedRoyaltyColumns()"
+            [isSortable]="royaltyIsSortable"
+            (sortChange)="royaltyOnSortChange($event)"
+          >
+          </app-list-table>
+        </div>
         <div class="flex items-center justify-between gap-4 mt-4">
           <div class="flex items-center gap-2">
             <span class="text-sm text-[var(--text-secondary)]">
@@ -332,7 +326,8 @@
               {{ "previous" | translate }}
             </button>
             <div class="flex items-center gap-1">
-              @for (pageNum of royaltyGetPageNumbers(); track pageNum) { @if (pageNum === -1) {
+              @for (pageNum of royaltyGetPageNumbers(); track pageNum) { @if
+              (pageNum === -1) {
               <span class="px-2 text-[var(--text-secondary)]">...</span>
               } @else {
               <button
@@ -341,8 +336,10 @@
                 matButton
                 type="button"
                 [ngClass]="{
-                  '!bg-primary !text-white': (royaltyFilter().page || 1) === pageNum,
-                  '!bg-primary-superlight': (royaltyFilter().page || 1) !== pageNum
+                  '!bg-primary !text-white':
+                    (royaltyFilter().page || 1) === pageNum,
+                  '!bg-primary-superlight':
+                    (royaltyFilter().page || 1) !== pageNum
                 }"
                 (click)="royaltyGoToPage(pageNum)"
               >
@@ -376,9 +373,11 @@
       </ng-template>
       <section
         id="published-links"
-        class="mt-10 bg-white p-6 rounded-xl shadow"
+        class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow"
       >
-        <div class="flex justify-between items-center mb-4">
+        <div
+          class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4"
+        >
           <h2 class="heading">{{ "publishedlinks" | translate }}</h2>
           <mat-form-field class="w-64">
             <mat-label>{{ "search" | translate }}</mat-label>
@@ -400,7 +399,7 @@
           (sortChange)="publishedLinksOnSortChange($event)"
         >
         </app-list-table>
-        
+
         <ng-template #publishedLinksActionButtons let-element>
           <div class="flex flex-wrap gap-2">
             @for (linkItem of element.links; track linkItem.link) {
@@ -417,14 +416,18 @@
                 class="w-4 h-4 object-contain"
               />
               } @else {
-              <mat-icon class="!text-base !w-4 !h-4">{{ getPlatformIcon(linkItem.platformName) }}</mat-icon>
+              <mat-icon class="!text-base !w-4 !h-4">{{
+                getPlatformIcon(linkItem.platformName)
+              }}</mat-icon>
               }
-              <span class="font-medium">{{ linkItem.platformName.replace('_', ' ') }}</span>
+              <span class="font-medium">{{
+                linkItem.platformName.replace("_", " ")
+              }}</span>
             </a>
             }
           </div>
         </ng-template>
-        
+
         <div class="flex items-center justify-between gap-4 mt-4">
           <div class="flex items-center gap-2">
             <span class="text-sm text-[var(--text-secondary)]">
@@ -438,7 +441,9 @@
             <select
               class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
               [value]="publishedLinksFilter().itemsPerPage || 30"
-              (change)="publishedLinksOnItemsPerPageChange(+$any($event.target).value)"
+              (change)="
+                publishedLinksOnItemsPerPageChange(+$any($event.target).value)
+              "
             >
               <option value="10">10</option>
               <option value="20">20</option>
@@ -461,7 +466,8 @@
               {{ "previous" | translate }}
             </button>
             <div class="flex items-center gap-1">
-              @for (pageNum of publishedLinksGetPageNumbers(); track pageNum) { @if (pageNum === -1) {
+              @for (pageNum of publishedLinksGetPageNumbers(); track pageNum) {
+              @if (pageNum === -1) {
               <span class="px-2 text-[var(--text-secondary)]">...</span>
               } @else {
               <button
@@ -470,8 +476,10 @@
                 matButton
                 type="button"
                 [ngClass]="{
-                  '!bg-primary !text-white': (publishedLinksFilter().page || 1) === pageNum,
-                  '!bg-primary-superlight': (publishedLinksFilter().page || 1) !== pageNum
+                  '!bg-primary !text-white':
+                    (publishedLinksFilter().page || 1) === pageNum,
+                  '!bg-primary-superlight':
+                    (publishedLinksFilter().page || 1) !== pageNum
                 }"
                 (click)="publishedLinksGoToPage(pageNum)"
               >
@@ -484,7 +492,9 @@
               matButton="filled"
               matButton
               type="button"
-              [disabled]="(publishedLinksFilter().page || 1) === publishedLinksLastPage()"
+              [disabled]="
+                (publishedLinksFilter().page || 1) === publishedLinksLastPage()
+              "
               (click)="publishedLinksNextPage()"
             >
               {{ "next" | translate }}

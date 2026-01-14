@@ -1,4 +1,4 @@
-<div class="flex justify-between">
+<div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
   <h3 class="heading">
     {{ "authordetails" | translate }}
   </h3>
@@ -12,7 +12,7 @@
 <mat-tab-group
   [selectedIndex]="currentTabIndex()"
   (selectedIndexChange)="onTabChange($event)"
-  class="!my-4"
+  class="my-3 sm:my-4"
 >
   <!-- Tab 0: Basic Details & Social Media -->
   <mat-tab>
@@ -23,12 +23,14 @@
       </span>
     </ng-template>
 
-    <div class="mx-auto py-6 space-y-10">
+    <div class="mx-auto py-4 sm:py-6 space-y-6 sm:space-y-10">
       <form [formGroup]="authorFormGroup">
-        <div class="bg-white shadow-sm border rounded-xl px-6 py-8">
-          <div class="flex flex-col md:flex-row gap-10">
+        <div
+          class="bg-white shadow-sm border rounded-xl px-4 sm:px-6 py-5 sm:py-8"
+        >
+          <div class="flex flex-col lg:flex-row gap-6 lg:gap-10">
             <!-- ⬅ Profile Image Upload -->
-            <div class="flex flex-col items-center shrink-0">
+            <div class="flex flex-col items-center lg:items-start shrink-0">
               <app-upload-file
                 [prefillMedia]="mediaControl.value ?? null"
                 (mediaAdded)="onMediaAdded($event)"
@@ -45,7 +47,7 @@
 
             <!-- 🔹 Author Fields -->
             <div
-              class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full items-start"
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full items-start"
             >
               <mat-form-field class="w-full">
                 <mat-label>{{ "authorname" | translate }}</mat-label>
@@ -106,8 +108,12 @@
       </form>
 
       <!-- 🔷 SOCIAL MEDIA LINKS -->
-      <div class="bg-white shadow-sm border rounded-xl px-6 py-8">
-        <div class="flex justify-between items-center">
+      <div
+        class="bg-white shadow-sm border rounded-xl px-4 sm:px-6 py-5 sm:py-8"
+      >
+        <div
+          class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
+        >
           <h2 class="text-lg font-semibold">
             {{ "addsocialmedialinks" | translate }}
           </h2>
@@ -155,7 +161,9 @@
     </ng-template>
 
     <form [formGroup]="authorAddressDetails">
-      <div class="grid-cols-4 grid gap-4 my-4">
+      <div
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-3 sm:my-4"
+      >
         <mat-form-field>
           <mat-label>{{ "country" | translate }}</mat-label>
           <mat-select formControlName="country" required>
@@ -206,12 +214,15 @@
           <mat-label>{{ "pincode" | translate }}</mat-label>
           <input matInput formControlName="pincode" placeholder="" required />
           @if (verifyingPin()) {
-          <span matSuffix style="padding-right: 8px;">
-            <mat-spinner diameter="16" mode="indeterminate" style="display: inline-block;"></mat-spinner>
+          <span matSuffix style="padding-right: 8px">
+            <mat-spinner
+              diameter="16"
+              mode="indeterminate"
+              style="display: inline-block"
+            ></mat-spinner>
           </span>
-          }
-          @if (authorAddressDetails.controls.pincode.hasError('invalidPincode'))
-          {
+          } @if
+          (authorAddressDetails.controls.pincode.hasError('invalidPincode')) {
           <mat-error>
             {{ "invalidpincode" | translate }}
           </mat-error>
@@ -231,7 +242,9 @@
     </ng-template>
 
     <form [formGroup]="authorBankDetails">
-      <div class="grid-cols-4 grid gap-4 my-4">
+      <div
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-3 sm:my-4"
+      >
         <mat-form-field>
           <mat-label>{{ "bankname" | translate }}</mat-label>
           <mat-select formControlName="name" required>
@@ -325,11 +338,13 @@
 </mat-tab-group>
 
 <!-- Navigation Buttons -->
-<div class="flex justify-between items-center gap-3 mt-6">
+<div
+  class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mt-6"
+>
   <!-- Previous/Back Button (Left) -->
   <button
     matButton="filled"
-    class="!bg-primary !text-white"
+    class="!bg-primary !text-white w-full sm:w-auto"
     [disabled]="currentTabIndex() === 0"
     (click)="prevTab()"
   >
@@ -340,7 +355,7 @@
   <!-- Action Button (Right) -->
   <button
     matButton="filled"
-    class="!bg-primary !text-white"
+    class="!bg-primary !text-white w-full sm:w-auto"
     (click)="handleTabAction()"
     [disabled]="isSaving()"
   >
