@@ -204,7 +204,9 @@
   </tr>
   } }
   <ng-template #actionButtons let-element>
-    <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
+    <div
+      class="flex gap-2 text-blue-600 text-sm items-center justify-end lg:flex-wrap"
+    >
       <button
         class="!bg-primary"
         mat-icon-button
@@ -258,8 +260,8 @@
       >
         <mat-icon class="!text-white">lock</mat-icon>
       </button>
-      } @if(element.status === AuthorStatus.Pending) {
-      @if (element.user?.isEmailVerified !== false) {
+      } @if(element.status === AuthorStatus.Pending) { @if
+      (element.user?.isEmailVerified !== false) {
       <button
         class="!bg-green-2 active:bg-green-2/60"
         mat-icon-button
@@ -297,8 +299,7 @@
       >
         <mat-icon class="!text-white">support_agent</mat-icon>
       </button>
-      }
-      @if(element.user?.isEmailVerified !== false) {
+      } @if(element.user?.isEmailVerified !== false) {
       <button
         class="!bg-primary"
         mat-icon-button

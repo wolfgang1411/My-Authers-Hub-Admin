@@ -27,15 +27,15 @@
 
     <div class="flex gap-2">
       @if (isSuperAdmin()) {
-        <button
-          matButton
-          matButton="filled"
-          class="!bg-primary text-white flex items-center gap-2 rounded-md p-2"
-          [routerLink]="['/incomplete-titles']"
-        >
-          <mat-icon class="material-icons">warning</mat-icon>
-          {{ "incompleteTitles" | translate }}
-        </button>
+      <button
+        matButton
+        matButton="filled"
+        class="!bg-primary text-white flex items-center gap-2 rounded-md p-2"
+        [routerLink]="['/incomplete-titles']"
+      >
+        <mat-icon class="material-icons">warning</mat-icon>
+        {{ "incompleteTitles" | translate }}
+      </button>
       }
       <!-- <button
         matButton="filled"
@@ -251,15 +251,87 @@
     </button>
   </div>
 
-  <app-list-table
-    class="pt-6"
-    [dataSource]="dataSource"
-    [displayedColumns]="displayedColumns"
-    [actionTemplate]="actionButtons"
-    [isSortable]="isSortable"
-    (sortChange)="onSortChange($event)"
-  >
-  </app-list-table>
+  <!-- Desktop Table -->
+  <div class="hidden lg:block pt-6">
+    <app-list-table
+      [dataSource]="dataSource"
+      [displayedColumns]="displayedColumns"
+      [actionTemplate]="actionButtons"
+      [isSortable]="isSortable"
+      (sortChange)="onSortChange($event)"
+    >
+    </app-list-table>
+  </div>
+
+  <!-- Mobile / Tablet Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-6 lg:hidden">
+    <div
+      *ngFor="let item of dataSource.data"
+      class="bg-white rounded-2xl shadow-md border border-gray-200 p-5 flex flex-col gap-3 hover:shadow-lg transition"
+    >
+      <!-- Title & Status -->
+      <div class="flex justify-between items-start">
+        <div>
+          <h3 class="text-lg font-semibold text-primary">{{ item.name }}</h3>
+          <p class="text-sm text-gray-500">ISBN: {{ item.isbn }}</p>
+        </div>
+
+        <span
+          class="px-3 py-1 text-xs rounded-full font-medium"
+          [ngClass]="{
+            'bg-green-100 text-green-700': item.status === 'APPROVED',
+            'bg-yellow-100 text-yellow-700': item.status === 'PENDING',
+            'bg-red-100 text-red-700': item.status === 'REJECTED',
+            'bg-gray-200 text-gray-700': item.status === 'DRAFT'
+          }"
+        >
+          {{ item.status }}
+        </span>
+      </div>
+
+      <!-- Info Grid -->
+      <div class="grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <p class="text-gray-400">Author</p>
+          <p class="font-medium">{{ item.authors }}</p>
+        </div>
+
+        <div>
+          <p class="text-gray-400">Launch</p>
+          <p class="font-medium">{{ item.launchDate | date }}</p>
+        </div>
+
+        <div>
+          <p class="text-gray-400">Books Sold</p>
+          <p class="font-medium">{{ item.booksSold }}</p>
+        </div>
+
+        <div>
+          <p class="text-gray-400">Distribution</p>
+          <p class="font-medium">{{ item.selectedDistributions }}</p>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-end gap-2 pt-3 border-t">
+        <button
+          class="bg-primary text-white rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
+          [routerLink]="['/titleSummary', item.id]"
+        >
+          <mat-icon class="text-sm">visibility</mat-icon>
+          View
+        </button>
+
+        <button
+          class="bg-gray-100 rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
+          [routerLink]="['/title', item.id]"
+        >
+          <mat-icon class="text-sm">edit</mat-icon>
+          Edit
+        </button>
+      </div>
+    </div>
+  </div>
 
   <div class="flex items-center justify-between gap-4 mt-4">
     <div class="flex items-center gap-2">
@@ -331,7 +403,9 @@
     }
   </div>
   <ng-template #actionButtons let-element>
-    <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
+    <div
+      class="flex gap-2 text-blue-600 text-sm items-center justify-end lg:flex-wrap"
+    >
       <button
         class="!bg-primary"
         mat-icon-button
@@ -407,49 +481,4 @@
       }
     </div>
   </ng-template>
-
-  <!-- <div class="bg-[var(--surface)] rounded-md shadow border pt-6">
-    <div
-      class="grid grid-cols-[1fr_150px_150px_150px_1fr_1fr_1fr] px-4 py-3 text-sm font-medium text-[var(--text-primary)] bg-[var(--surface-alt)] border-bottom"
-    >
-      <div>{{ "title" | translate }}</div>
-      <div>{{ "ISBN" | translate }}</div>
-      <div>{{"pages" |translate}}</div>
-      <div>{{ "royaltiesEarned" | translate }}</div>
-      <div>{{ "authorname" | translate }}</div>
-      <div>{{ "links" | translate }}</div>
-      <div>{{ "actions" | translate }}</div>
-    </div>
-
-    @if (titles() && titles().length ){
-    <ul class="divide-y">
-      @for (title of titles(); track title; let i = $index) {
-      <li
-        class="grid grid-cols-[1fr_150px_150px_150px_1fr_1fr_1fr] items-center px-4 py-3 text-sm text-[var(--text-secondary)] border-bottom hover:bg-gray-50 dark:hover:bg-[var(--surface-alt)] transition"
-      >
-        <div>{{ title.name}}</div>
-        <div>{{  title.isbn.isbnNumber }}</div>
-        <div>{{title.pages}}</div>
-        <div>{{0  }}</div>
-        <div>{{ title.author.name }}</div>
-        <div>{{ title.links && title.links.length > 0 ? title.links.join(", ") : "No Links Available"}}</div>
-        <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
-          <button
-            [routerLink]="['/title', title.id]"
-            routerLinkActive="router-link-active"
-            class="btn h-[38px] w-[38px] !p-0"
-            ><svg-icon class="flex fill-white w-6" src="images/eye-solid-full.svg"></svg-icon></button>
-          <button
-            [routerLink]="['/title', title.id]"
-            class="btn h-[38px] w-[38px] !p-0"
-            ><svg-icon class="flex fill-white w-6" src="images/pen-to-square-regular-full.svg"></svg-icon></button
-          >
-
-          <button class="btn h-[38px] w-[38px] !p-0 border-accent !bg-red-200"><svg-icon class="flex fill-accent w-6" src="images/trash-can-solid-full.svg"></svg-icon></button>
-        </div>
-      </li>
-      }
-    </ul>
-    }
-  </div> -->
 </div>
