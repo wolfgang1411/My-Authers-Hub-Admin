@@ -30,6 +30,7 @@ export interface Author {
   socialMedias: socialMediaGroup[];
   noOfTitles: number;
   booksSold: number;
+  lifeTimeEarnings: number
 }
 
 export interface AuthorResponse {

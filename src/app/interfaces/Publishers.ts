@@ -34,6 +34,7 @@ export interface Publishers {
   type: PublisherType;
   addedBy: User;
   isApprovedByPublisher: boolean;
+  lifeTimeEarnings: number
 }
 
 export interface CreatePublisher {
