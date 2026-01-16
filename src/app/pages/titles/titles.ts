@@ -186,7 +186,7 @@ export class Titles {
   getApiFieldName = (column: string): string | null => {
     const columnMap: Record<string, string> = {
       name: 'name',
-      bookssold: 'totalSales', // handled in API as special case
+      bookssold: 'copiesSold', // handled in API as special case
       isbn: 'isbnPrint',
       launchdate: 'launch_date',
       status: 'status',
