@@ -7,9 +7,15 @@ import { Component, Input, signal } from '@angular/core';
   styleUrl: './mobile-section.css',
 })
 export class MobileSection {
-  @Input({ required: true }) title!: string;
+  @Input() title!: string;
+
+  @Input() defaultOpen = false;
 
   isOpen = signal(false);
+
+  ngOnInit() {
+    this.isOpen.set(this.defaultOpen);
+  }
 
   toggle() {
     this.isOpen.update((v) => !v);

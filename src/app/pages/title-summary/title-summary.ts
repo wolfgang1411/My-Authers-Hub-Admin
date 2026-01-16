@@ -29,6 +29,7 @@ import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MobileSection } from 'src/app/components/mobile-section/mobile-section';
 
 @Component({
   selector: 'app-title-summary',
@@ -44,6 +45,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     CurrencyPipe,
     SharedModule,
     IsbnFormatPipe,
+    MobileSection,
   ],
   templateUrl: './title-summary.html',
   styleUrl: './title-summary.css',

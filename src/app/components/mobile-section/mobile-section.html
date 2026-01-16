@@ -1,24 +1,17 @@
-<div
-  class="bg-white rounded-xl border border-[var(--primary-superlight)] shadow-sm overflow-hidden"
->
-  <!-- HEADER -->
+<div class="border border-[var(--primary-superlight)] rounded-xl bg-white">
+  <!-- Header -->
   <button
     type="button"
-    class="w-full flex justify-between items-center px-4 py-3 text-left"
     (click)="toggle()"
+    class="w-full flex justify-between items-center p-4 font-medium text-[var(--text-heading)]"
   >
-    <span class="font-medium text-[var(--text-heading)]">
-      {{ title }}
-    </span>
-
-    <mat-icon class="text-[var(--primary)]">
-      {{ isOpen() ? "expand_less" : "expand_more" }}
-    </mat-icon>
+    {{ title }}
+    <mat-icon>{{ isOpen() ? "expand_less" : "expand_more" }}</mat-icon>
   </button>
 
-  <!-- CONTENT -->
+  <!-- Content -->
   @if (isOpen()) {
-  <div class="border-t border-[var(--primary-superlight)] p-4">
+  <div class="p-4 border-t border-[var(--primary-superlight)]">
     <ng-content></ng-content>
   </div>
   }
