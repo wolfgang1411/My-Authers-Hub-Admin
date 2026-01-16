@@ -649,78 +649,16 @@ mat-label {
     var(--mat-sys-surface-variant)
   ) !important;
 }
-@media (max-width: 640px) {
-  .mat-icon {
-    font-size: 20px;
-  }
-}
-
 @media (max-width: 700px) {
-  .mobile-fix * {
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-
-  /* Kill horizontal squeezing */
   .mobile-fix {
     overflow-x: hidden;
   }
-
-  /* Prevent table-like grids from crushing */
-  .mobile-fix .grid-cols-14 {
-    grid-template-columns: 1fr 1fr !important;
-    row-gap: 0.75rem;
-  }
-
-  /* Force stacked sections */
-  .mobile-fix .min-h-\[220px\],
-  .mobile-fix .h-\[250px\],
-  .mobile-fix .h-\[240px\],
-  .mobile-fix .h-\[220px\] {
-    height: auto !important;
-    min-height: unset !important;
-  }
-
-  /* Reduce typography */
-  .mobile-fix h1 {
-    font-size: 1.1rem;
-  }
-  .mobile-fix h2 {
-    font-size: 1rem;
-  }
-  .mobile-fix h3 {
-    font-size: 0.95rem;
-  }
-  .mobile-fix p,
-  .mobile-fix span,
-  .mobile-fix label {
-    font-size: 0.85rem;
-  }
-
-  /* Tighten cards */
-  .mobile-fix .p-6 {
-    padding: 0.75rem !important;
-  }
-  .mobile-fix .p-5 {
-    padding: 0.75rem !important;
-  }
-  .mobile-fix .p-4 {
-    padding: 0.5rem !important;
-  }
-
-  /* Prevent icon overflow */
-  .mobile-fix mat-icon {
-    font-size: 18px !important;
-  }
-
-  /* Buttons become full width */
-  .mobile-fix button {
-    max-width: 100%;
-  }
 }
-@media (max-width: 700px) {
-  .grid-cols-14 {
-    grid-template-columns: 1fr 1fr !important;
+
+@media (max-width: 640px) {
+  .mat-mdc-tab-label-content {
+    font-size: 0.85rem;
+    gap: 4px;
   }
 }
 

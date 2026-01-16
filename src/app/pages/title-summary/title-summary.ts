@@ -27,6 +27,8 @@ import { EditPlatformIdentifier } from 'src/app/components/edit-platform-identif
 import { IsbnFormatPipe } from 'src/app/pipes/isbn-format-pipe';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-title-summary',
@@ -52,7 +54,7 @@ export class TitleSummary {
   loggedInUser!: Signal<User | null>;
   royaltyAmountsCache = signal<Map<string, number>>(new Map());
   selectedTabIndex = signal<number>(0);
-
+  isMobile = signal(false);
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -61,9 +63,16 @@ export class TitleSummary {
     private userService: UserService,
     private translateService: TranslateService,
     private matDialog: MatDialog,
-    private royaltyService: RoyaltyService
+    private royaltyService: RoyaltyService,
+    private breakpointObserver: BreakpointObserver
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
+    this.breakpointObserver
+      .observe([Breakpoints.Handset])
+      .pipe(takeUntilDestroyed())
+      .subscribe((result) => {
+        this.isMobile.set(result.matches);
+      });
   }
   ngOnInit() {
     // Read tab index from query params
@@ -205,7 +214,8 @@ export class TitleSummary {
     if (!printing) return null;
 
     const rawPrice =
-      printing.customPrintCost !== null && printing.customPrintCost !== undefined
+      printing.customPrintCost !== null &&
+      printing.customPrintCost !== undefined
         ? Number(printing.customPrintCost)
         : printing.printCost !== null && printing.printCost !== undefined
         ? Number(printing.printCost)
@@ -415,7 +425,11 @@ export class TitleSummary {
         existingIdentifiers: (title.titlePlatformIdentifier ?? []).map(
           (tpi) => ({
             platformName: tpi.platform?.name || '',
-            type: tpi.type || (tpi.platform?.isEbookPlatform ? 'EBOOK' : 'PRINT') as 'EBOOK' | 'PRINT',
+            type:
+              tpi.type ||
+              ((tpi.platform?.isEbookPlatform ? 'EBOOK' : 'PRINT') as
+                | 'EBOOK'
+                | 'PRINT'),
             distributionLink: tpi.distributionLink || undefined,
           })
         ),
@@ -426,7 +440,7 @@ export class TitleSummary {
           skuNumber?: string;
           platformIdentifier: CreatePlatformIdentifier[];
         }) => {
-            try {
+          try {
             // Use updateTitleSkuAndLinks endpoint which updates SKU and links without approval logic
             const response = await this.titleService.updateTitleSkuAndLinks(
               title.id,

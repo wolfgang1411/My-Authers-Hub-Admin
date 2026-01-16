@@ -1,0 +1,11 @@
+.mat-mdc-tab-header {
+  overflow-x: auto;
+}
+
+.mat-mdc-tab-labels {
+  min-width: max-content;
+}
+
+.mat-mdc-tab {
+  white-space: nowrap;
+}

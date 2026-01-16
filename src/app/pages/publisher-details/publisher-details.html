@@ -1,6 +1,8 @@
-<div class="flex flex-col flex-grow gap-4">
-  <nav class="flex flex-col gap-6 sticky z-10 py-4">
-    <div class="flex justify-between items-center">
+<div class="flex flex-col flex-grow gap-3 sm:gap-4 px-1 sm:px-0">
+  <nav class="flex flex-col gap-3 sm:gap-6 sticky z-10 py-3 sm:py-4">
+    <div
+      class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2"
+    >
       <h3 class="heading">{{ "publisherdetails" | translate }}</h3>
       <app-back></app-back>
     </div>
@@ -9,7 +11,7 @@
     dynamicHeight
     [selectedIndex]="selectedTabIndex()"
     (selectedTabChange)="onTabChange($event.index)"
-    class="publisher-tabs"
+    class="publisher-tabs my-3 sm:my-4"
   >
     <mat-tab>
       <ng-template mat-tab-label>
@@ -19,10 +21,12 @@
       </ng-template>
 
       <!-- MAIN CARD -->
-      <section class="mt-8 bg-white p-8 rounded-xl shadow-md mat-elevation-z4">
+      <section
+        class="mt-5 sm:mt-8 bg-white p-4 sm:p-6 lg:p-8 rounded-xl shadow-md mat-elevation-z4"
+      >
         <!-- ================= HEADER ================= -->
         <div
-          class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pb-6 border-b"
+          class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pb-5 sm:pb-6 border-b"
         >
           <!-- Profile Image -->
           <div
@@ -64,7 +68,7 @@
           </h3>
 
           <div
-            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 text-sm"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 text-sm"
           >
             <div>
               <span class="font-medium">Company Name:</span>
@@ -110,7 +114,7 @@
           </h3>
 
           <div
-            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 text-sm"
           >
             <div>
               <span class="font-medium">Bank Name:</span>
@@ -149,9 +153,11 @@
       </ng-template>
       <section
         id="books-published"
-        class="mt-10 bg-white p-6 rounded-xl shadow"
+        class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow"
       >
-        <div class="flex justify-between">
+        <div
+          class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
+        >
           <h2 class="heading mb-4">{{ "bookspublished" | translate }}</h2>
           <mat-form-field>
             <mat-label>{{ "filter" | translate }}</mat-label>
@@ -173,7 +179,9 @@
           >
           </app-list-table>
         </div>
-        <div class="flex items-center justify-between gap-4 mt-4">
+        <div
+          class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4"
+        >
           <div class="flex items-center gap-2">
             <span class="text-sm text-[var(--text-secondary)]">
               {{ "page" | translate }} {{ booksFilter().page || 1 }}
@@ -209,7 +217,8 @@
               {{ "previous" | translate }}
             </button>
             <div class="flex items-center gap-1">
-              @for (pageNum of booksGetPageNumbers(); track pageNum) { @if (pageNum === -1) {
+              @for (pageNum of booksGetPageNumbers(); track pageNum) { @if
+              (pageNum === -1) {
               <span class="px-2 text-[var(--text-secondary)]">...</span>
               } @else {
               <button
@@ -218,8 +227,10 @@
                 matButton
                 type="button"
                 [ngClass]="{
-                  '!bg-primary !text-white': (booksFilter().page || 1) === pageNum,
-                  '!bg-primary-superlight': (booksFilter().page || 1) !== pageNum
+                  '!bg-primary !text-white':
+                    (booksFilter().page || 1) === pageNum,
+                  '!bg-primary-superlight':
+                    (booksFilter().page || 1) !== pageNum
                 }"
                 (click)="booksGoToPage(pageNum)"
               >
@@ -250,8 +261,13 @@
           {{ "authors" | translate }}
         </span>
       </ng-template>
-      <section id="authors" class="mt-10 bg-white p-6 rounded-xl shadow">
-        <div class="flex justify-between">
+      <section
+        id="authors"
+        class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow"
+      >
+        <div
+          class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
+        >
           <h2 class="heading mb-4">{{ "authors" | translate }}</h2>
           <mat-form-field>
             <mat-label>{{ "filter" | translate }}</mat-label>
@@ -309,7 +325,8 @@
               {{ "previous" | translate }}
             </button>
             <div class="flex items-center gap-1">
-              @for (pageNum of authorsGetPageNumbers(); track pageNum) { @if (pageNum === -1) {
+              @for (pageNum of authorsGetPageNumbers(); track pageNum) { @if
+              (pageNum === -1) {
               <span class="px-2 text-[var(--text-secondary)]">...</span>
               } @else {
               <button
@@ -318,8 +335,10 @@
                 matButton
                 type="button"
                 [ngClass]="{
-                  '!bg-primary !text-white': (authorsFilter().page || 1) === pageNum,
-                  '!bg-primary-superlight': (authorsFilter().page || 1) !== pageNum
+                  '!bg-primary !text-white':
+                    (authorsFilter().page || 1) === pageNum,
+                  '!bg-primary-superlight':
+                    (authorsFilter().page || 1) !== pageNum
                 }"
                 (click)="authorsGoToPage(pageNum)"
               >
@@ -350,8 +369,13 @@
           {{ "subpublishers" | translate }}
         </span>
       </ng-template>
-      <section id="sub-publishers" class="mt-10 bg-white p-6 rounded-xl shadow">
-        <div class="flex justify-between">
+      <section
+        id="sub-publishers"
+        class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow"
+      >
+        <div
+          class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
+        >
           <h2 class="heading mb-4">{{ "subpublishers" | translate }}</h2>
           <mat-form-field>
             <mat-label>{{ "filter" | translate }}</mat-label>
@@ -386,7 +410,9 @@
             <select
               class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
               [value]="subPublishersFilter().itemsPerPage || 30"
-              (change)="subPublishersOnItemsPerPageChange(+$any($event.target).value)"
+              (change)="
+                subPublishersOnItemsPerPageChange(+$any($event.target).value)
+              "
             >
               <option value="10">10</option>
               <option value="20">20</option>
@@ -409,7 +435,8 @@
               {{ "previous" | translate }}
             </button>
             <div class="flex items-center gap-1">
-              @for (pageNum of subPublishersGetPageNumbers(); track pageNum) { @if (pageNum === -1) {
+              @for (pageNum of subPublishersGetPageNumbers(); track pageNum) {
+              @if (pageNum === -1) {
               <span class="px-2 text-[var(--text-secondary)]">...</span>
               } @else {
               <button
@@ -418,8 +445,10 @@
                 matButton
                 type="button"
                 [ngClass]="{
-                  '!bg-primary !text-white': (subPublishersFilter().page || 1) === pageNum,
-                  '!bg-primary-superlight': (subPublishersFilter().page || 1) !== pageNum
+                  '!bg-primary !text-white':
+                    (subPublishersFilter().page || 1) === pageNum,
+                  '!bg-primary-superlight':
+                    (subPublishersFilter().page || 1) !== pageNum
                 }"
                 (click)="subPublishersGoToPage(pageNum)"
               >
@@ -432,7 +461,9 @@
               matButton="filled"
               matButton
               type="button"
-              [disabled]="(subPublishersFilter().page || 1) === subPublishersLastPage()"
+              [disabled]="
+                (subPublishersFilter().page || 1) === subPublishersLastPage()
+              "
               (click)="subPublishersNextPage()"
             >
               {{ "next" | translate }}
@@ -454,9 +485,11 @@
       </ng-template>
       <section
         id="royalties"
-        class="mt-10 bg-white p-6 rounded-xl shadow flex flex-col gap-6"
+        class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow flex flex-col gap-6"
       >
-        <div class="flex justify-between">
+        <div
+          class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
+        >
           <h2 class="heading">{{ "Royalties&Wallet" | translate }}</h2>
           <mat-form-field>
             <mat-label>{{ "filter" | translate }}</mat-label>
@@ -530,7 +563,8 @@
               {{ "previous" | translate }}
             </button>
             <div class="flex items-center gap-1">
-              @for (pageNum of royaltyGetPageNumbers(); track pageNum) { @if (pageNum === -1) {
+              @for (pageNum of royaltyGetPageNumbers(); track pageNum) { @if
+              (pageNum === -1) {
               <span class="px-2 text-[var(--text-secondary)]">...</span>
               } @else {
               <button
@@ -539,8 +573,10 @@
                 matButton
                 type="button"
                 [ngClass]="{
-                  '!bg-primary !text-white': (royaltyFilter().page || 1) === pageNum,
-                  '!bg-primary-superlight': (royaltyFilter().page || 1) !== pageNum
+                  '!bg-primary !text-white':
+                    (royaltyFilter().page || 1) === pageNum,
+                  '!bg-primary-superlight':
+                    (royaltyFilter().page || 1) !== pageNum
                 }"
                 (click)="royaltyGoToPage(pageNum)"
               >
@@ -573,16 +609,18 @@
 
       <section
         id="publishing-points"
-        class="mt-10 bg-white p-6 rounded-xl shadow"
+        class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow"
       >
-        @if (publishingpoints().length) {
-        <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
+        > @if (publishingpoints().length) {
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
           @for (point of publishingpoints(); track $index) {
           <div
             class="group border border-[var(--primary-superlight)] rounded-xl p-4 bg-gradient-to-br from-white to-[var(--light-purple-bg)] hover:shadow-lg hover:scale-[1.02] transition-all"
           >
             <!-- Header Row -->
-            <div class="flex items-center justify-between mb-3">
+            <div
+              class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:mb-3"
+            >
               <div class="flex items-center gap-2">
                 <div
                   class="p-2 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)]"
@@ -687,9 +725,12 @@
       </ng-template>
       <section
         id="published-links"
-        class="mt-10 bg-white p-6 rounded-xl shadow"
+        class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow"
       >
-        <div class="flex justify-between items-center mb-4">
+        >
+        <div
+          class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:mb-4"
+        >
           <h2 class="heading">{{ "publishedlinks" | translate }}</h2>
           <mat-form-field class="w-64">
             <mat-label>{{ "search" | translate }}</mat-label>
@@ -711,7 +752,7 @@
           (sortChange)="publishedLinksOnSortChange($event)"
         >
         </app-list-table>
-        
+
         <ng-template #publishedLinksActionButtons let-element>
           <div class="flex flex-wrap gap-2">
             @for (linkItem of element.links; track linkItem.link) {
@@ -728,14 +769,18 @@
                 class="w-4 h-4 object-contain"
               />
               } @else {
-              <mat-icon class="!text-base !w-4 !h-4">{{ getPlatformIcon(linkItem.platformName) }}</mat-icon>
+              <mat-icon class="!text-base !w-4 !h-4">{{
+                getPlatformIcon(linkItem.platformName)
+              }}</mat-icon>
               }
-              <span class="font-medium">{{ linkItem.platformName.replace('_', ' ') }}</span>
+              <span class="font-medium">{{
+                linkItem.platformName.replace("_", " ")
+              }}</span>
             </a>
             }
           </div>
         </ng-template>
-        
+
         <div class="flex items-center justify-between gap-4 mt-4">
           <div class="flex items-center gap-2">
             <span class="text-sm text-[var(--text-secondary)]">
@@ -749,7 +794,9 @@
             <select
               class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
               [value]="publishedLinksFilter().itemsPerPage || 30"
-              (change)="publishedLinksOnItemsPerPageChange(+$any($event.target).value)"
+              (change)="
+                publishedLinksOnItemsPerPageChange(+$any($event.target).value)
+              "
             >
               <option value="10">10</option>
               <option value="20">20</option>
@@ -772,7 +819,8 @@
               {{ "previous" | translate }}
             </button>
             <div class="flex items-center gap-1">
-              @for (pageNum of publishedLinksGetPageNumbers(); track pageNum) { @if (pageNum === -1) {
+              @for (pageNum of publishedLinksGetPageNumbers(); track pageNum) {
+              @if (pageNum === -1) {
               <span class="px-2 text-[var(--text-secondary)]">...</span>
               } @else {
               <button
@@ -781,8 +829,10 @@
                 matButton
                 type="button"
                 [ngClass]="{
-                  '!bg-primary !text-white': (publishedLinksFilter().page || 1) === pageNum,
-                  '!bg-primary-superlight': (publishedLinksFilter().page || 1) !== pageNum
+                  '!bg-primary !text-white':
+                    (publishedLinksFilter().page || 1) === pageNum,
+                  '!bg-primary-superlight':
+                    (publishedLinksFilter().page || 1) !== pageNum
                 }"
                 (click)="publishedLinksGoToPage(pageNum)"
               >
@@ -795,7 +845,9 @@
               matButton="filled"
               matButton
               type="button"
-              [disabled]="(publishedLinksFilter().page || 1) === publishedLinksLastPage()"
+              [disabled]="
+                (publishedLinksFilter().page || 1) === publishedLinksLastPage()
+              "
               (click)="publishedLinksNextPage()"
             >
               {{ "next" | translate }}
