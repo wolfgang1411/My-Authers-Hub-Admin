@@ -2,7 +2,7 @@ export interface Wallet {
   id: number;
   totalAmount: number;
   holdAmount: number;
-  lifeTimeEarnings: number;
+  earningTillNow: number;
   createdAt: string;
   updatedAt: string;
 }

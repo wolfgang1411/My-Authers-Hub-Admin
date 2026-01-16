@@ -98,6 +98,7 @@ export class Publisher implements OnInit {
         'noofauthors',
         'email',
         'phonenumber',
+        "royaltiesearned",
         'type',
         'addedBy',
         'actions',
@@ -186,6 +187,7 @@ export class Publisher implements OnInit {
       phonenumber: publisher.phoneNumber || publisher.user.phoneNumber,
       nooftitles: publisher.noOfTitles,
       noofauthors: publisher.noOfAuthors,
+      royaltiesearned: Math.round(publisher.lifeTimeEarnings),
       type: this.translate.instant(`${publisher.type}`),
       addedBy: publisher.addedBy?.publisher?.name || '-',
       actions: '',
@@ -239,6 +241,7 @@ export class Publisher implements OnInit {
       phonenumber: 'phoneNumber',
       nooftitles: 'titleCount',
       noofauthors: 'authorCount',
+      royaltiesearned: 'lifeTimeEarnings',
     };
     return columnMap[column] || null;
   };
@@ -752,6 +755,9 @@ export class Publisher implements OnInit {
             case 'phonenumber':
               dataRow[col] =
                 publisher.phoneNumber || publisher.user?.phoneNumber || '-';
+              break;
+            case 'royaltiesearned':
+              dataRow[col] = Number(publisher.lifeTimeEarnings || 0).toFixed(2);
               break;
             default:
               dataRow[col] = (publisher as any)[col] || '-';
