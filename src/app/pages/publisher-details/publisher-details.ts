@@ -527,7 +527,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
         phonenumber: author.user.phoneNumber ?? 'N/A',
         titles: author.noOfTitles,
         bookssold: author.booksSold,
-        royaltyearned: author.totalEarning || 0,
+        royaltyearned: author.lifeTimeEarnings || 0,
         links: author.socialMedias?.length
           ? author.socialMedias.map((sm) => sm.url).join(', ')
           : 'N/A',

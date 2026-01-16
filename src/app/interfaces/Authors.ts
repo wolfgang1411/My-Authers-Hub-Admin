@@ -19,7 +19,7 @@ export interface Author {
   about: string;
   medias: Media[];
   bankDetails?: BankDetails[];
-  totalEarning: number;
+  lifeTimeEarnings: number;
   links: string[];
   address: Address[];
   status: AuthorStatus;
@@ -30,7 +30,6 @@ export interface Author {
   socialMedias: socialMediaGroup[];
   noOfTitles: number;
   booksSold: number;
-  lifeTimeEarnings: number
 }
 
 export interface AuthorResponse {
