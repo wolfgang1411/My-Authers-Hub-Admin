@@ -192,7 +192,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
     'phonenumber',
     'titles',
     'bookssold',
-    'royaltyearned',
+    'wallet',
   ];
   displayedSubPublisherColumns: string[] = [
     'name',
@@ -200,6 +200,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
     'noofauthors',
     'email',
     'phonenumber',
+    'wallet',
   ];
   displayedRoyaltyColumns = signal([
     'title',
@@ -286,7 +287,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
       name: 'fullName',
       titles: 'TitleAuthor',
       bookssold: 'sales',
-      royaltyearned: 'lifeTimeEarnings',
+      wallet: 'wallet',
     };
     return columnMap[column] || null;
   };
@@ -319,6 +320,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
       name: 'name',
       nooftitles: 'noOfTitles',
       noofauthors: 'noOfAuthors',
+      wallet: 'wallet',
     };
     return columnMap[column] || null;
   };
@@ -440,6 +442,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
         ...publisher,
         phonenumber:
           publisher.phoneNumber || publisher.user?.phoneNumber || 'N/A',
+        wallet: Math.round((publisher?.user?.wallet?.totalAmount || 0)) || 0,
         nooftitles: publisher.noOfTitles,
         noofauthors: publisher.noOfAuthors,
       }));
@@ -527,7 +530,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
         phonenumber: author.user.phoneNumber ?? 'N/A',
         titles: author.noOfTitles,
         bookssold: author.booksSold,
-        royaltyearned: author.lifeTimeEarnings || 0,
+        wallet: (author.user.wallet?.totalAmount || 0) - (author.user.wallet?.holdAmount || 0),
         links: author.socialMedias?.length
           ? author.socialMedias.map((sm) => sm.url).join(', ')
           : 'N/A',

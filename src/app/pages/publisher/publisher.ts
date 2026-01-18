@@ -98,7 +98,7 @@ export class Publisher implements OnInit {
         'noofauthors',
         'email',
         'phonenumber',
-        "royaltiesearned",
+        "wallet",
         'type',
         'addedBy',
         'actions',
@@ -187,7 +187,7 @@ export class Publisher implements OnInit {
       phonenumber: publisher.phoneNumber || publisher.user.phoneNumber,
       nooftitles: publisher.noOfTitles,
       noofauthors: publisher.noOfAuthors,
-      royaltiesearned: Math.round(publisher.lifeTimeEarnings),
+      wallet: Math.round((publisher?.user?.wallet?.totalAmount || 0)) || 0,
       type: this.translate.instant(`${publisher.type}`),
       addedBy: publisher.addedBy?.publisher?.name || '-',
       actions: '',
@@ -241,7 +241,7 @@ export class Publisher implements OnInit {
       phonenumber: 'phoneNumber',
       nooftitles: 'titleCount',
       noofauthors: 'authorCount',
-      royaltiesearned: 'lifeTimeEarnings',
+      wallet: 'wallet',
     };
     return columnMap[column] || null;
   };
