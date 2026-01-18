@@ -96,6 +96,7 @@ export class Dashboard {
   async fetchStats() {
     const user = this.userService.loggedInUser$();
     const isAuthor = user?.accessLevel === 'AUTHER';
+    const isSuperAdmin = user?.accessLevel === 'SUPERADMIN';
 
     const totalTitles = await this.titleService.getTitleCount({});
     const totalSales = await this.salesService.fetchSalesCount({});
@@ -123,11 +124,12 @@ export class Dashboard {
         value: totalSales.totalAmount || 0,
         isCurreny: true,
       },
+      !isSuperAdmin ?
       {
         title: 'Total Earnings',
         value: totalSalesUser.totalAmount || 0,
         isCurreny: true,
-      },
+        } : null,
     ].filter(Boolean); // 🔥 removes null
 
     this.stats.set(stats as any);
