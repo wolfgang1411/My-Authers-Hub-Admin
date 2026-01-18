@@ -127,7 +127,7 @@ export class Dashboard {
       !isSuperAdmin ?
       {
         title: 'Total Earnings',
-        value: totalSalesUser.totalAmount || 0,
+          value: user?.publisher?.lifeTimeEarnings || user?.auther?.lifeTimeEarnings,
         isCurreny: true,
         } : null,
     ].filter(Boolean); // 🔥 removes null
