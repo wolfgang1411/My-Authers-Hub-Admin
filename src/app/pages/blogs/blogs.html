@@ -47,7 +47,7 @@
       type="button"
       [ngClass]="{
         '!bg-primary !text-white': lastSelectedStatus === 'ALL',
-        '!bg-primary-superlight': lastSelectedStatus !== 'ALL'
+        '!bg-primary-superlight': lastSelectedStatus !== 'ALL',
       }"
       (click)="onStatusChange('ALL')"
     >
@@ -61,7 +61,7 @@
       matButton
       [ngClass]="{
         '!bg-primary !text-white': lastSelectedStatus === BlogStatus.DRAFT,
-        '!bg-primary-superlight': lastSelectedStatus !== BlogStatus.DRAFT
+        '!bg-primary-superlight': lastSelectedStatus !== BlogStatus.DRAFT,
       }"
       (click)="onStatusChange(BlogStatus.DRAFT)"
     >
@@ -75,7 +75,7 @@
       matButton
       [ngClass]="{
         '!bg-primary !text-white': lastSelectedStatus === BlogStatus.PUBLISHED,
-        '!bg-primary-superlight': lastSelectedStatus !== BlogStatus.PUBLISHED
+        '!bg-primary-superlight': lastSelectedStatus !== BlogStatus.PUBLISHED,
       }"
       (click)="onStatusChange(BlogStatus.PUBLISHED)"
     >
@@ -89,7 +89,7 @@
       matButton
       [ngClass]="{
         '!bg-primary !text-white': lastSelectedStatus === BlogStatus.ARCHIVED,
-        '!bg-primary-superlight': lastSelectedStatus !== BlogStatus.ARCHIVED
+        '!bg-primary-superlight': lastSelectedStatus !== BlogStatus.ARCHIVED,
       }"
       (click)="onStatusChange(BlogStatus.ARCHIVED)"
     >
@@ -98,23 +98,100 @@
     </button>
   </div>
 
-  <app-list-table
-    [dataSource]="dataSource"
-    [displayedColumns]="displayedColumns()"
-    [actionTemplate]="actionButtons"
-    [cellTemplate]="cellTemplate"
-    [isSortable]="isSortable"
-    (sortChange)="onSortChange($event)"
-  >
-  </app-list-table>
-  
+  <div class="hidden lg:block">
+    <app-list-table
+      [dataSource]="dataSource"
+      [displayedColumns]="displayedColumns()"
+      [actionTemplate]="actionButtons"
+      [cellTemplate]="cellTemplate"
+      [isSortable]="isSortable"
+      (sortChange)="onSortChange($event)"
+    >
+    </app-list-table>
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden mt-4">
+    @for (blog of dataSource.data; track blog.id) {
+      <div
+        class="bg-white rounded-xl border border-[var(--primary-superlight)] shadow-sm p-4 flex flex-col gap-3"
+      >
+        <div class="flex justify-between items-start gap-3">
+          <div>
+            <p class="text-xs text-gray-400">Title</p>
+            <p class="text-base font-semibold text-primary line-clamp-2">
+              {{ blog.title }}
+            </p>
+          </div>
+
+          <span
+            class="px-2 py-1 text-xs rounded-full font-medium whitespace-nowrap"
+            [ngClass]="{
+              'bg-yellow-100 text-yellow-800': blog.status === 'DRAFT',
+              'bg-green-100 text-green-800': blog.status === 'PUBLISHED',
+              'bg-gray-200 text-gray-700': blog.status === 'ARCHIVED',
+            }"
+          >
+            {{ blog.status }}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <p class="text-gray-400">Author</p>
+            <p class="font-medium text-gray-700">
+              {{ blog.author?.name || "-" }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-gray-400">Created On</p>
+            <p class="font-medium text-gray-700">
+              {{ blog.createdAt | date: "shortDate" }}
+            </p>
+          </div>
+        </div>
+        <div>
+          <p class="text-gray-400 text-sm mb-1">About</p>
+          <div
+            class="text-sm text-gray-700 line-clamp-3"
+            [innerHTML]="blog.about || '-'"
+          ></div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button
+            (click)="onViewBlog(blog)"
+            class="bg-primary text-white rounded-lg px-4 py-1.5 text-sm"
+          >
+            View
+          </button>
+
+          <button
+            (click)="onEditBlog(blog)"
+            class="bg-primary-superlight text-primary rounded-lg px-4 py-1.5 text-sm"
+          >
+            Edit
+          </button>
+
+          <button
+            (click)="onDeleteBlog(blog)"
+            class="bg-red-100 text-red-700 rounded-lg px-4 py-1.5 text-sm"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
   <div class="flex items-center justify-between gap-4 mt-4">
     <div class="flex items-center gap-2">
       <span class="text-sm text-[var(--text-secondary)]">
-        {{ "page" | translate }} {{ filter().page || 1 }} {{ "of" | translate }} {{ lastPage() }}
+        {{ "page" | translate }} {{ filter().page || 1 }} {{ "of" | translate }}
+        {{ lastPage() }}
       </span>
       <span class="text-sm text-[var(--text-secondary)]">|</span>
-      <span class="text-sm text-[var(--text-secondary)]">{{ "itemsperpage" | translate }}:</span>
+      <span class="text-sm text-[var(--text-secondary)]"
+        >{{ "itemsperpage" | translate }}:</span
+      >
       <select
         class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
         [value]="filter().itemsPerPage || 30"
@@ -128,51 +205,51 @@
       </select>
     </div>
     @if (lastPage() > 1) {
-    <div class="flex items-center gap-2">
-      <button
-        class="btn rounded-md !text-primary"
-        matButton="filled"
-        matButton
-        type="button"
-        [disabled]="(filter().page || 1) === 1"
-        (click)="previousPage()"
-      >
-        <mat-icon>chevron_left</mat-icon>
-        {{ "previous" | translate }}
-      </button>
-      <div class="flex items-center gap-1">
-        @for (pageNum of getPageNumbers(); track pageNum) {
-          @if (pageNum === -1) {
-            <span class="px-2 text-[var(--text-secondary)]">...</span>
-          } @else {
-            <button
-              class="btn rounded-md !text-primary min-w-[40px]"
-              matButton="filled"
-              matButton
-              type="button"
-              [ngClass]="{
-                '!bg-primary !text-white': (filter().page || 1) === pageNum,
-                '!bg-primary-superlight': (filter().page || 1) !== pageNum
-              }"
-              (click)="goToPage(pageNum)"
-            >
-              {{ pageNum }}
-            </button>
+      <div class="flex items-center gap-2">
+        <button
+          class="btn rounded-md !text-primary"
+          matButton="filled"
+          matButton
+          type="button"
+          [disabled]="(filter().page || 1) === 1"
+          (click)="previousPage()"
+        >
+          <mat-icon>chevron_left</mat-icon>
+          {{ "previous" | translate }}
+        </button>
+        <div class="flex items-center gap-1">
+          @for (pageNum of getPageNumbers(); track pageNum) {
+            @if (pageNum === -1) {
+              <span class="px-2 text-[var(--text-secondary)]">...</span>
+            } @else {
+              <button
+                class="btn rounded-md !text-primary min-w-[40px]"
+                matButton="filled"
+                matButton
+                type="button"
+                [ngClass]="{
+                  '!bg-primary !text-white': (filter().page || 1) === pageNum,
+                  '!bg-primary-superlight': (filter().page || 1) !== pageNum,
+                }"
+                (click)="goToPage(pageNum)"
+              >
+                {{ pageNum }}
+              </button>
+            }
           }
-        }
+        </div>
+        <button
+          class="btn rounded-md !text-primary"
+          matButton="filled"
+          matButton
+          type="button"
+          [disabled]="(filter().page || 1) === lastPage()"
+          (click)="nextPage()"
+        >
+          {{ "next" | translate }}
+          <mat-icon>chevron_right</mat-icon>
+        </button>
       </div>
-      <button
-        class="btn rounded-md !text-primary"
-        matButton="filled"
-        matButton
-        type="button"
-        [disabled]="(filter().page || 1) === lastPage()"
-        (click)="nextPage()"
-      >
-        {{ "next" | translate }}
-        <mat-icon>chevron_right</mat-icon>
-      </button>
-    </div>
     }
   </div>
 </div>
@@ -207,11 +284,9 @@
 </ng-template>
 
 <ng-template #cellTemplate let-element let-column="column">
-  @if (column === 'about') {
+  @if (column === "about") {
     <div [innerHTML]="element[column]"></div>
   } @else {
     <div [innerHTML]="element[column] ?? '-'"></div>
   }
 </ng-template>
-
-

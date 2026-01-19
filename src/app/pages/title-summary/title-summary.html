@@ -20,19 +20,19 @@
           class="w-full sm:w-[160px] lg:w-[180px] h-[220px] sm:h-[240px] lg:h-[250px] mx-auto lg:mx-0 rounded-xl overflow-hidden shadow-lg border border-[var(--primary-light)] bg-white flex items-center justify-center text-[var(--text-placeholder)] font-medium text-sm"
         >
           @if (frontCoverUrl()) {
-          <img
-            [src]="frontCoverUrl()"
-            alt="Front Cover"
-            class="object-cover w-full h-full rounded-xl"
-          />
+            <img
+              [src]="frontCoverUrl()"
+              alt="Front Cover"
+              class="object-cover w-full h-full rounded-xl"
+            />
           } @else {
-          <span>COVER</span>
+            <span>COVER</span>
           }
         </div>
 
         <!-- Book Info -->
         <div class="flex-1">
-          <div class="flex items-center gap-3 mb-2">
+          <div class="flex flex-col sm:flex-row items-center gap-3 mb-2">
             <h2
               class="text-lg sm:text-xl lg:text-2xl font-bold text-[var(--primary)] capitalize m-0"
             >
@@ -44,11 +44,11 @@
                 'bg-[var(--light-green-bg)] text-[var(--green-2)] border border-[var(--light-green-2)]':
                   titleDetails()?.status === 'APPROVED',
                 'bg-[var(--light-purple-bg)] text-[var(--primary)] border border-[var(--primary-light)]':
-                  titleDetails()?.status !== 'APPROVED'
+                  titleDetails()?.status !== 'APPROVED',
               }"
             >
-              @if(titleDetails()?.status !== 'APPROVED') {
-              <mat-icon class="text-sm">check_circle</mat-icon>
+              @if (titleDetails()?.status !== "APPROVED") {
+                <mat-icon class="text-sm">check_circle</mat-icon>
               }
               {{ titleDetails()?.status }}
             </span>
@@ -112,70 +112,77 @@
           <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
             <!-- AUTHORS LIST WITH PRINT PRICE -->
             @if (titleDetails()?.authors?.length) {
-            <div>
-              <h3
-                class="text-sm font-medium text-[var(--text-heading)] mb-2 underline"
-              >
-                Authors
-              </h3>
+              <div>
+                <h3
+                  class="text-sm font-medium text-[var(--text-heading)] mb-2 underline"
+                >
+                  Authors
+                </h3>
 
-              <ul class="text-sm text-[var(--text-primary)] space-y-2">
-                @for (a of titleDetails()?.authors; track a.id) {
-                <li class="flex flex-col">
-                  <!-- Author Name -->
-                  <span
-                    class="font-medium text-[var(--text-heading)] capitalize"
-                  >
-                    {{ a.display_name }}
-                  </span>
+                <ul class="text-sm text-[var(--text-primary)] space-y-2">
+                  @for (a of titleDetails()?.authors; track a.id) {
+                    <li class="flex flex-col">
+                      <!-- Author Name -->
+                      <span
+                        class="font-medium text-[var(--text-heading)] capitalize"
+                      >
+                        {{ a.display_name }}
+                      </span>
 
-                  <!-- Author Copy Access -->
-                  @if (a.allowAuthorCopy && getAuthorCopyPrice() !== null) {
-                  <span class="text-[var(--green-2)] font-medium">
-                    Author Copies Price: ₹{{
-                      getAuthorCopyPrice() | number : "1.2-2"
-                    }}
-                  </span>
+                      <!-- Author Copy Access -->
+                      @if (a.allowAuthorCopy && getAuthorCopyPrice() !== null) {
+                        <span class="text-[var(--green-2)] font-medium">
+                          Author Copies Price: ₹{{
+                            getAuthorCopyPrice() | number: "1.2-2"
+                          }}
+                        </span>
+                      }
+                    </li>
                   }
-                </li>
-                }
-              </ul>
-            </div>
+                </ul>
+              </div>
             }
 
             <!-- PLATFORM LINKS (ICONS ONLY) -->
-            @if (titleDetails()?.titlePlatformIdentifier?.length ) {
-            <div>
-              <div class="flex flex-wrap gap-3">
-                @for (pid of titleDetails()?.titlePlatformIdentifier; track
-                pid.id) { @if (pid.distributionLink) {
-                <button
-                  type="button"
-                  (click)="openDistributionLink(pid.distributionLink!)"
-                  [title]="pid.platform.name"
-                  class="w-12 h-12 rounded-full flex items-center justify-center border-2 border-[var(--primary-superlight)] hover:border-[var(--primary)] hover:shadow-md transition-all cursor-pointer overflow-hidden relative"
-                  [style.background-color]="
-                    !hasValidIcon(pid.platform.icon)
-                      ? getRandomColor(pid.platform.name)
-                      : 'white'
-                  "
-                >
-                  @if (hasValidIcon(pid.platform.icon)) {
-                  <img
-                    [src]="pid.platform.icon"
-                    [alt]="pid.platform.name"
-                    class="w-full h-full object-cover"
-                    (error)="handleImageError($event, pid.platform.name)"
-                  />
-                  } @if (!hasValidIcon(pid.platform.icon)) {
-                  <span class="text-xs font-semibold text-white">
-                    {{ pid.platform.name.charAt(0).toUpperCase() }}
-                  </span>
+            @if (titleDetails()?.titlePlatformIdentifier?.length) {
+              <div>
+                <div class="flex flex-wrap gap-3">
+                  @for (
+                    pid of titleDetails()?.titlePlatformIdentifier;
+                    track pid.id
+                  ) {
+                    @if (pid.distributionLink) {
+                      <button
+                        type="button"
+                        (click)="openDistributionLink(pid.distributionLink!)"
+                        [title]="pid.platform.name"
+                        class="w-12 h-12 rounded-full flex items-center justify-center border-2 border-[var(--primary-superlight)] hover:border-[var(--primary)] hover:shadow-md transition-all cursor-pointer overflow-hidden relative"
+                        [style.background-color]="
+                          !hasValidIcon(pid.platform.icon)
+                            ? getRandomColor(pid.platform.name)
+                            : 'white'
+                        "
+                      >
+                        @if (hasValidIcon(pid.platform.icon)) {
+                          <img
+                            [src]="pid.platform.icon"
+                            [alt]="pid.platform.name"
+                            class="w-full h-full object-cover"
+                            (error)="
+                              handleImageError($event, pid.platform.name)
+                            "
+                          />
+                        }
+                        @if (!hasValidIcon(pid.platform.icon)) {
+                          <span class="text-xs font-semibold text-white">
+                            {{ pid.platform.name.charAt(0).toUpperCase() }}
+                          </span>
+                        }
+                      </button>
+                    }
                   }
-                </button>
-                } }
+                </div>
               </div>
-            </div>
             }
           </div>
         </div>
@@ -218,7 +225,7 @@
     <div
       class="bg-white border border-[var(--primary-superlight)] rounded-2xl shadow-md p-4 sm:p-5 lg:p-6 mb-8 m-3 sm:m-4 lg:m-6 transition-all hover:shadow-lg"
     >
-      <div class="flex justify-between items-start pb-4">
+      <div class="flex sm:flex-row flex-col justify-between items-start pb-4">
         <h3
           class="text-lg font-medium text-[var(--primary)] mb-6 flex items-center gap-2"
         >
@@ -235,125 +242,133 @@
       </div>
 
       @if (!titleDetails()?.media?.length) {
-      <div
-        class="flex flex-col items-center justify-center py-12 bg-[var(--light-purple-bg)] rounded-xl border border-[var(--primary-light)]"
-      >
-        <mat-icon class="text-[var(--primary)] text-4xl mb-2"
-          >photo_library</mat-icon
-        >
-        <p class="text-[var(--text-primary)] text-sm">No media uploaded yet.</p>
-      </div>
-      } @if (titleDetails()?.media?.length) {
-      <div
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6"
-      >
-        @for (media of titleDetails()?.media; track $index) {
         <div
-          class="group rounded-2xl overflow-hidden border border-[var(--primary-light)] bg-[var(--light-purple-bg)] shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all"
+          class="flex flex-col items-center justify-center py-12 bg-[var(--light-purple-bg)] rounded-xl border border-[var(--primary-light)]"
         >
-          <div class="p-4 flex flex-col justify-between h-full">
-            <div class="flex items-center justify-between mb-3">
-              <p class="font-medium text-[var(--text-heading)] text-sm">
-                {{ media.type.replace("_", " ") }}
-              </p>
-              @if (media?.type === 'MANUSCRIPT') {
-              <mat-icon class="text-[var(--primary)] text-base"
-                >description</mat-icon
-              >
-              } @else if (media?.url?.toLowerCase()?.includes('.pdf')) {
-              <mat-icon class="text-[var(--primary)] text-base"
-                >picture_as_pdf</mat-icon
-              >
-              }
-            </div>
-
-            <!-- 📄 MANUSCRIPT Document -->
-            @if (media.type === 'MANUSCRIPT' && media.url &&
-            loggedInUser()?.accessLevel !== 'AUTHER') {
-            <div
-              class="h-48 flex flex-col items-center justify-center bg-gradient-to-br from-[var(--light-purple-bg)] to-[var(--primary-superlight)] rounded-lg border border-[var(--primary-light)]"
-            >
-              <mat-icon class="text-[var(--primary)] text-5xl mb-3"
-                >description</mat-icon
-              >
-              <a
-                [href]="media.url"
-                [download]="media.name"
-                class="bg-[var(--primary)] text-white text-sm px-4 py-2 rounded-md shadow hover:bg-[var(--purple)] transition flex items-center gap-2"
-              >
-                <mat-icon class="text-base">download</mat-icon>
-                Download
-              </a>
-            </div>
-            }
-
-            <!-- 📄 PDF Preview -->
-            @else if (media.url && media.url.toLowerCase().includes('.pdf')) {
-            <div
-              class="relative bg-white rounded-lg border border-[var(--primary-superlight)] overflow-hidden"
-            >
-              <iframe
-                [src]="media.url | safeUrl"
-                class="w-full h-48"
-                frameborder="0"
-              ></iframe>
-
-              <div
-                class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-              >
-                <a
-                  [href]="media.url"
-                  target="_blank"
-                  class="bg-[var(--primary)] text-white text-sm px-3 py-3 rounded-md shadow hover:bg-[var(--purple)] transition"
-                >
-                  Open PDF
-                </a>
-              </div>
-            </div>
-            }
-
-            <!-- 🖼 Image Preview -->
-            @else if (media.url) {
-            <div
-              class="relative overflow-hidden rounded-lg border border-[var(--primary-superlight)]"
-            >
-              <img
-                [src]="media.url"
-                alt="{{ media.name }}"
-                class="object-cover w-full h-48 rounded-lg bg-white group-hover:scale-[1.05] transition-transform"
-              />
-
-              <div
-                class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-              >
-                <a
-                  [href]="media.url"
-                  target="_blank"
-                  class="text-white text-sm font-medium bg-[var(--primary)] px-3 py-3 rounded-md shadow hover:bg-[var(--purple)] transition"
-                >
-                  View Image
-                </a>
-              </div>
-            </div>
-            }
-
-            <!-- 🚫 Placeholder -->
-            @else {
-            <div
-              class="h-48 flex flex-col items-center justify-center bg-gradient-to-br from-[var(--light-purple-bg)] to-[var(--primary-superlight)] rounded-lg border border-[var(--primary-light)]"
-            >
-              <mat-icon class="text-[var(--primary)] text-3xl mb-2"
-                >insert_photo</mat-icon
-              >
-              <p class="text-xs text-[var(--text-primary)]">
-                No preview available
-              </p>
-            </div>
-            }
-          </div>
+          <mat-icon class="text-[var(--primary)] text-4xl mb-2"
+            >photo_library</mat-icon
+          >
+          <p class="text-[var(--text-primary)] text-sm">
+            No media uploaded yet.
+          </p>
         </div>
-        }
-      </div>
+      }
+      @if (titleDetails()?.media?.length) {
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6"
+        >
+          @for (media of titleDetails()?.media; track $index) {
+            <div
+              class="group rounded-2xl overflow-hidden border border-[var(--primary-light)] bg-[var(--light-purple-bg)] shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all"
+            >
+              <div class="p-4 flex flex-col justify-between h-full">
+                <div class="flex items-center justify-between mb-3">
+                  <p class="font-medium text-[var(--text-heading)] text-sm">
+                    {{ media.type.replace("_", " ") }}
+                  </p>
+                  @if (media?.type === "MANUSCRIPT") {
+                    <mat-icon class="text-[var(--primary)] text-base"
+                      >description</mat-icon
+                    >
+                  } @else if (media?.url?.toLowerCase()?.includes(".pdf")) {
+                    <mat-icon class="text-[var(--primary)] text-base"
+                      >picture_as_pdf</mat-icon
+                    >
+                  }
+                </div>
+
+                <!-- 📄 MANUSCRIPT Document -->
+                @if (
+                  media.type === "MANUSCRIPT" &&
+                  media.url &&
+                  loggedInUser()?.accessLevel !== "AUTHER"
+                ) {
+                  <div
+                    class="h-48 flex flex-col items-center justify-center bg-gradient-to-br from-[var(--light-purple-bg)] to-[var(--primary-superlight)] rounded-lg border border-[var(--primary-light)]"
+                  >
+                    <mat-icon class="text-[var(--primary)] text-5xl mb-3"
+                      >description</mat-icon
+                    >
+                    <a
+                      [href]="media.url"
+                      [download]="media.name"
+                      class="bg-[var(--primary)] text-white text-sm px-4 py-2 rounded-md shadow hover:bg-[var(--purple)] transition flex items-center gap-2"
+                    >
+                      <mat-icon class="text-base">download</mat-icon>
+                      Download
+                    </a>
+                  </div>
+                }
+
+                <!-- 📄 PDF Preview -->
+                @else if (
+                  media.url && media.url.toLowerCase().includes(".pdf")
+                ) {
+                  <div
+                    class="relative bg-white rounded-lg border border-[var(--primary-superlight)] overflow-hidden"
+                  >
+                    <iframe
+                      [src]="media.url | safeUrl"
+                      class="w-full h-48"
+                      frameborder="0"
+                    ></iframe>
+
+                    <div
+                      class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                    >
+                      <a
+                        [href]="media.url"
+                        target="_blank"
+                        class="bg-[var(--primary)] text-white text-sm px-3 py-3 rounded-md shadow hover:bg-[var(--purple)] transition"
+                      >
+                        Open PDF
+                      </a>
+                    </div>
+                  </div>
+                }
+
+                <!-- 🖼 Image Preview -->
+                @else if (media.url) {
+                  <div
+                    class="relative overflow-hidden rounded-lg border border-[var(--primary-superlight)]"
+                  >
+                    <img
+                      [src]="media.url"
+                      alt="{{ media.name }}"
+                      class="object-cover w-full h-48 rounded-lg bg-white group-hover:scale-[1.05] transition-transform"
+                    />
+
+                    <div
+                      class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                    >
+                      <a
+                        [href]="media.url"
+                        target="_blank"
+                        class="text-white text-sm font-medium bg-[var(--primary)] px-3 py-3 rounded-md shadow hover:bg-[var(--purple)] transition"
+                      >
+                        View Image
+                      </a>
+                    </div>
+                  </div>
+                }
+
+                <!-- 🚫 Placeholder -->
+                @else {
+                  <div
+                    class="h-48 flex flex-col items-center justify-center bg-gradient-to-br from-[var(--light-purple-bg)] to-[var(--primary-superlight)] rounded-lg border border-[var(--primary-light)]"
+                  >
+                    <mat-icon class="text-[var(--primary)] text-3xl mb-2"
+                      >insert_photo</mat-icon
+                    >
+                    <p class="text-xs text-[var(--text-primary)]">
+                      No preview available
+                    </p>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
       }
     </div></ng-template
   >
@@ -382,167 +397,175 @@
             PRINT CONFIGURATION
           </span> -->
       </div>
-      @if (titleDetails()?.printing?.length) { @let p =
-      titleDetails()?.printing?.[0];
-      <div
-        class="bg-white border border-[var(--primary-superlight)] rounded-2xl p-6 shadow-md hover:shadow-lg transition-all hover:scale-[1.01]"
-      >
-        <div class="flex items-center gap-3 mb-6">
-          <div
-            class="p-3 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)] shadow-inner"
-          >
-            <mat-icon>local_printshop</mat-icon>
-          </div>
-          <div>
-            <h4 class="font-medium text-[var(--text-heading)] text-lg">
-              Printing Setup
-            </h4>
-            <p class="text-[var(--text-primary)] text-sm">
-              Below are the details for your selected printing configuration
-            </p>
-          </div>
-        </div>
-
-        <!-- Details Grid -->
+      @if (titleDetails()?.printing?.length) {
+        @let p = titleDetails()?.printing?.[0];
         <div
-          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 lg:gap-x-10 gap-y-4 lg:gap-y-5"
+          class="bg-white border border-[var(--primary-superlight)] rounded-2xl p-6 shadow-md hover:shadow-lg transition-all hover:scale-[1.01]"
         >
-          <div class="flex items-center gap-2">
-            <mat-icon class="text-[var(--primary)] text-base">money</mat-icon>
-            <p class="font-semibold">
-              <label>Print Cost : </label>
-              {{
-                p?.customPrintCost !== null
-                  ? (p?.customPrintCost | currency : "INR")
-                  : (p?.printCost | currency : "INR")
-              }}
-            </p>
-          </div>
-          <div class="flex items-center gap-2">
-            <mat-icon class="text-[var(--primary)] text-base">style</mat-icon>
-            <p>
-              <label class="font-medium">Binding : </label>
-              {{ p?.bindingType?.name }}
-            </p>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <mat-icon class="text-[var(--primary)] text-base">layers</mat-icon>
-            <p>
-              <label class="font-medium">Paper Quality : </label>
-              {{ p?.paperQuailty?.name }}
-            </p>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <mat-icon class="text-[var(--primary)] text-base">brush</mat-icon>
-            <p>
-              <label class="font-medium">Lamination:</label>
-              {{ p?.laminationType?.name }}
-            </p>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <mat-icon class="text-[var(--primary)] text-base"
-              >aspect_ratio</mat-icon
+          <div class="flex items-center gap-3 mb-6">
+            <div
+              class="p-3 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)] shadow-inner"
             >
-            <p>
-              <label class="font-medium">Size : </label>
-              {{ p?.size?.size }}
-            </p>
+              <mat-icon>local_printshop</mat-icon>
+            </div>
+            <div>
+              <h4 class="font-medium text-[var(--text-heading)] text-lg">
+                Printing Setup
+              </h4>
+              <p class="text-[var(--text-primary)] text-sm">
+                Below are the details for your selected printing configuration
+              </p>
+            </div>
           </div>
 
-          <div class="flex items-center gap-2">
-            <mat-icon class="text-[var(--primary)] text-base"
-              >description</mat-icon
-            >
-            <p>
-              <label class="font-medium">Total Pages : </label>
-              {{ p?.totalPages }}
-            </p>
-          </div>
+          <!-- Details Grid -->
+          <div
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 lg:gap-x-10 gap-y-4 lg:gap-y-5"
+          >
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--primary)] text-base">money</mat-icon>
+              <p class="font-semibold">
+                <label>Print Cost : </label>
+                {{
+                  p?.customPrintCost !== null
+                    ? (p?.customPrintCost | currency: "INR")
+                    : (p?.printCost | currency: "INR")
+                }}
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--primary)] text-base">style</mat-icon>
+              <p>
+                <label class="font-medium">Binding : </label>
+                {{ p?.bindingType?.name }}
+              </p>
+            </div>
 
-          <div class="flex items-center gap-2">
-            <mat-icon class="text-[var(--primary)] text-base">palette</mat-icon>
-            <p>
-              <label class="font-medium">Color Pages : </label>
-              {{ p?.colorPages }}
-            </p>
-          </div>
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--primary)] text-base"
+                >layers</mat-icon
+              >
+              <p>
+                <label class="font-medium">Paper Quality : </label>
+                {{ p?.paperQuailty?.name }}
+              </p>
+            </div>
 
-          <div class="flex items-center gap-2">
-            <mat-icon class="text-[var(--primary)] text-base"
-              >layers_clear</mat-icon
-            >
-            <p>
-              <label class="font-medium">Inside Cover : </label>
-              {{ p?.insideCover ? "Yes" : "No" }}
-            </p>
-          </div>
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--primary)] text-base">brush</mat-icon>
+              <p>
+                <label class="font-medium">Lamination:</label>
+                {{ p?.laminationType?.name }}
+              </p>
+            </div>
 
-          <div class="flex items-center gap-2">
-            <mat-icon class="text-[var(--primary)] text-base">layers</mat-icon>
-            <p>
-              <label class="font-medium">Paper Type : </label>
-              {{ p?.paperType }}
-            </p>
-          </div>
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--primary)] text-base"
+                >aspect_ratio</mat-icon
+              >
+              <p>
+                <label class="font-medium">Size : </label>
+                {{ p?.size?.size }}
+              </p>
+            </div>
 
-          <!-- Print Cost - Show based on user role -->
-          @if (loggedInUser()?.accessLevel === 'AUTHER') {
-          <!-- Authors: Show only custom print price if available -->
-          @if (p?.customPrintCost) {
-          <div class="flex items-center gap-2">
-            <mat-icon class="text-[var(--green-2)] text-base"
-              >payments</mat-icon
-            >
-            <p>
-              <label class="font-medium">Print Cost : </label>
-              <span class="text-[var(--green-2)] font-medium">{{
-                p?.customPrintCost | currency : "INR"
-              }}</span>
-            </p>
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--primary)] text-base"
+                >description</mat-icon
+              >
+              <p>
+                <label class="font-medium">Total Pages : </label>
+                {{ p?.totalPages }}
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--primary)] text-base"
+                >palette</mat-icon
+              >
+              <p>
+                <label class="font-medium">Color Pages : </label>
+                {{ p?.colorPages }}
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--primary)] text-base"
+                >layers_clear</mat-icon
+              >
+              <p>
+                <label class="font-medium">Inside Cover : </label>
+                {{ p?.insideCover ? "Yes" : "No" }}
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-[var(--primary)] text-base"
+                >layers</mat-icon
+              >
+              <p>
+                <label class="font-medium">Paper Type : </label>
+                {{ p?.paperType }}
+              </p>
+            </div>
+
+            <!-- Print Cost - Show based on user role -->
+            @if (loggedInUser()?.accessLevel === "AUTHER") {
+              <!-- Authors: Show only custom print price if available -->
+              @if (p?.customPrintCost) {
+                <div class="flex items-center gap-2">
+                  <mat-icon class="text-[var(--green-2)] text-base"
+                    >payments</mat-icon
+                  >
+                  <p>
+                    <label class="font-medium">Print Cost : </label>
+                    <span class="text-[var(--green-2)] font-medium">{{
+                      p?.customPrintCost | currency: "INR"
+                    }}</span>
+                  </p>
+                </div>
+              }
+            } @else {
+              <!-- Superadmins and Publishers: Show both actual and custom print price -->
+              <div class="flex items-center gap-2">
+                <mat-icon class="text-[var(--green-2)] text-base"
+                  >payments</mat-icon
+                >
+                <p>
+                  <label class="font-medium">Print Cost : </label>
+                  <span class="text-[var(--green-2)] font-medium">{{
+                    p?.printCost | currency: "INR"
+                  }}</span>
+                </p>
+              </div>
+              @if (p?.customPrintCost) {
+                <div class="flex items-center gap-2">
+                  <mat-icon class="text-[var(--green-2)] text-base"
+                    >payments</mat-icon
+                  >
+                  <p>
+                    <label class="font-medium">Custom Print Cost : </label>
+                    <span class="text-[var(--green-2)] font-medium">{{
+                      p?.customPrintCost | currency: "INR"
+                    }}</span>
+                  </p>
+                </div>
+              }
+            }
           </div>
-          } } @else {
-          <!-- Superadmins and Publishers: Show both actual and custom print price -->
-          <div class="flex items-center gap-2">
-            <mat-icon class="text-[var(--green-2)] text-base"
-              >payments</mat-icon
-            >
-            <p>
-              <label class="font-medium">Print Cost : </label>
-              <span class="text-[var(--green-2)] font-medium">{{
-                p?.printCost | currency : "INR"
-              }}</span>
-            </p>
-          </div>
-          @if (p?.customPrintCost) {
-          <div class="flex items-center gap-2">
-            <mat-icon class="text-[var(--green-2)] text-base"
-              >payments</mat-icon
-            >
-            <p>
-              <label class="font-medium">Custom Print Cost : </label>
-              <span class="text-[var(--green-2)] font-medium">{{
-                p?.customPrintCost | currency : "INR"
-              }}</span>
-            </p>
-          </div>
-          } }
         </div>
-      </div>
       } @else {
-      <!-- Empty State -->
-      <div
-        class="flex flex-col items-center justify-center py-12 bg-[var(--light-purple-bg)] rounded-2xl border border-[var(--primary-light)]"
-      >
-        <mat-icon class="text-[var(--primary)] text-5xl mb-3"
-          >print_disabled</mat-icon
+        <!-- Empty State -->
+        <div
+          class="flex flex-col items-center justify-center py-12 bg-[var(--light-purple-bg)] rounded-2xl border border-[var(--primary-light)]"
         >
-        <p class="text-[var(--text-primary)] text-sm">
-          No printing setup available for this title.
-        </p>
-      </div>
+          <mat-icon class="text-[var(--primary)] text-5xl mb-3"
+            >print_disabled</mat-icon
+          >
+          <p class="text-[var(--text-primary)] text-sm">
+            No printing setup available for this title.
+          </p>
+        </div>
       }
     </div>
   </ng-template>
@@ -562,355 +585,374 @@
       </h3>
 
       @if (platformsWithData().length > 0) {
-      <!-- Cards grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        @for (platform of platformsWithData(); track platform) {
-        <div
-          class="group relative border border-[var(--primary-superlight)] rounded-2xl p-5 bg-gradient-to-br from-white to-[var(--light-purple-bg)] hover:shadow-lg transition-all flex flex-col"
-          [attr.aria-labelledby]="'card-' + platform + '-title'"
-        >
-          <!-- HEADER -->
-          <div class="flex items-start justify-between mb-3">
-            <div class="flex items-center gap-3">
-              <div
-                class="p-3 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)] shadow-inner"
-              >
-                <mat-icon>storefront</mat-icon>
-              </div>
-              <div>
-                <h4
-                  id="card-{{ platform }}-title"
-                  class="font-semibold text-[var(--text-heading)] uppercase tracking-wide"
-                >
-                  {{ platform }}
-                </h4>
-                <p class="text-xs text-[var(--text-secondary)] mt-0.5">
-                  Platform overview
-                </p>
-              </div>
-            </div>
-
-            @if ( loggedInUser()?.accessLevel !== 'AUTHER' ) {
-            <div class="text-right">
-              <span
-                class="text-[var(--green-2)] text-xs font-medium bg-[var(--light-green-bg)] px-3 py-1 rounded-full border border-[var(--light-green-2)]"
-              >
-                {{ getPriceByPlatform(platform)?.status || "INACTIVE" }}
-              </span>
-              <p class="text-xs text-[var(--text-primary)] italic mt-1">
-                Total:
-                <span class="font-semibold"
-                  >{{ getTotalRoyalty(platform) }}%</span
-                >
-              </p>
-            </div>
-            }
-          </div>
-
-          <!-- CONTENT SECTION WITH FIXED HEIGHT -->
-
-          <div class="flex flex-col gap-4 md:gap-6 min-h-[220px]">
-            <!-- LEFT: Pricing block -->
-            @if ( loggedInUser()?.accessLevel !== 'AUTHER' ) {
-            <div class="w-full">
-              <div class="text-sm text-[var(--text-primary)] space-y-2">
-                <div class="flex justify-between">
-                  <span class="font-medium text-[var(--text-heading)]"
-                    >MRP:</span
+        <!-- Cards grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          @for (platform of platformsWithData(); track platform) {
+            <div
+              class="group relative border border-[var(--primary-superlight)] rounded-2xl p-5 bg-gradient-to-br from-white to-[var(--light-purple-bg)] hover:shadow-lg transition-all flex flex-col"
+              [attr.aria-labelledby]="'card-' + platform + '-title'"
+            >
+              <!-- HEADER -->
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="p-3 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)] shadow-inner"
                   >
-                  <span class="font-semibold text-[var(--primary)]"
-                    >₹{{ getPriceByPlatform(platform)?.mrp ?? "N/A" }}</span
-                  >
+                    <mat-icon>storefront</mat-icon>
+                  </div>
+                  <div>
+                    <h4
+                      id="card-{{ platform }}-title"
+                      class="font-semibold text-[var(--text-heading)] uppercase tracking-wide"
+                    >
+                      {{ platform }}
+                    </h4>
+                    <p class="text-xs text-[var(--text-secondary)] mt-0.5">
+                      Platform overview
+                    </p>
+                  </div>
                 </div>
 
-                <div class="flex justify-between">
-                  <span class="font-medium text-[var(--text-heading)]"
-                    >Sales Price:</span
-                  >
-                  <span class="font-semibold text-[var(--green-2)]"
-                    >₹{{
-                      getPriceByPlatform(platform)?.salesPrice ?? "N/A"
-                    }}</span
-                  >
-                </div>
-
-                <div class="flex justify-between">
-                  <span class="font-medium text-[var(--text-heading)]"
-                    >MSP:</span
-                  >
-                  <span class="font-medium text-[var(--primary)]"
-                    >₹{{ getPriceByPlatform(platform)?.msp ?? "N/A" }}</span
-                  >
-                </div>
-
-                <div class="flex justify-between">
-                  <span class="font-medium text-[var(--text-heading)]"
-                    >Delivery Charges:</span
-                  >
-                  <span class="text-[var(--text-secondary)] font-medium"
-                    >₹{{
-                      getPriceByPlatform(platform)?.deliveryCharges ?? "N/A"
-                    }}</span
-                  >
-                </div>
-              </div>
-            </div>
-            }
-            <!-- RIGHT: Royalty section -->
-            <div class="w-full flex flex-col">
-              <!-- Title -->
-              <div class="flex items-center gap-3 mb-3">
-                <div
-                  class="p-2 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)]"
-                >
-                  <mat-icon>percent</mat-icon>
-                </div>
-
-                <div class="flex-1">
-                  <p class="text-[var(--text-heading)] font-medium">
-                    Royalty Breakdown
-                  </p>
-                  <p class="text-xs text-[var(--text-secondary)]">
-                    Publisher & author splits
-                  </p>
-                </div>
-
-                <!-- <div class="text-xs font-semibold text-[var(--primary)]">
-                    Total: {{ getTotalRoyalty(platform) }}%
-                  </div> -->
-                @if (loggedInUser()?.accessLevel !== 'AUTHER') {
-
-                <div class="text-xs font-semibold text-[var(--primary)]">
-                  Total:
-                  {{
-                    loggedInUser()?.accessLevel === "AUTHER"
-                      ? getAuthorRoyaltyOnly(platform)
-                      : getTotalRoyalty(platform)
-                  }}%
-                </div>
+                @if (loggedInUser()?.accessLevel !== "AUTHER") {
+                  <div class="text-right">
+                    <span
+                      class="text-[var(--green-2)] text-xs font-medium bg-[var(--light-green-bg)] px-3 py-1 rounded-full border border-[var(--light-green-2)]"
+                    >
+                      {{ getPriceByPlatform(platform)?.status || "INACTIVE" }}
+                    </span>
+                    <p class="text-xs text-[var(--text-primary)] italic mt-1">
+                      Total:
+                      <span class="font-semibold"
+                        >{{ getTotalRoyalty(platform) }}%</span
+                      >
+                    </p>
+                  </div>
                 }
               </div>
 
-              <!-- Table -->
-              <div
-                class="bg-white min-h-[110px] overflow-y-auto rounded-lg border border-[var(--primary-superlight)] shadow-sm overflow-hidden overflow-x-auto"
-              >
-                <!-- Header -->
-                <div
-                  class="grid grid-cols-14 px-3 py-2 bg-[var(--primary-superlight)] text-[var(--text-heading)] font-medium text-sm"
-                >
-                  <div class="col-span-5">Name</div>
-                  <div class="col-span-3 text-center">Role</div>
-                  @if(loggedInUser()?.accessLevel !== 'AUTHER'){
-                  <div class="col-span-3 text-right">(%)</div>
-                  }
-                  <div class="col-span-3 text-right">(₹)</div>
-                </div>
-                <div>
-                  <div
-                    class="divide-y divide-[var(--primary-superlight)] border border-b-[var(--primary-superlight)]"
-                  >
-                    <!-- Publisher row -->
-                    @if (getPublisherRoyalty(platform) &&
-                    loggedInUser()?.accessLevel !== 'AUTHER') {
-                    <div
-                      class="grid grid-cols-14 px-3 py-2 hover:bg-[var(--light-purple-bg)] transition"
-                    >
-                      <div
-                        class="col-span-5 font-medium text-[var(--text-heading)]"
-                      >
-                        {{ getPublisherName() }}
-                      </div>
+              <!-- CONTENT SECTION WITH FIXED HEIGHT -->
 
-                      <div
-                        class="col-span-3 text-center text-xs text-[var(--text-primary)]"
-                      >
-                        Publisher
-                      </div>
-
-                      <div
-                        class="col-span-3 text-right font-semibold text-[var(--primary)]"
-                      >
-                        {{ getPublisherRoyalty(platform)?.percentage }}%
-                      </div>
-
-                      <div
-                        class="col-span-3 text-right text-xs text-[var(--primary)]"
-                      >
-                        ₹{{
-                          getRoyaltyAmount(
-                            platform,
-                            getPublisherRoyalty(platform)?.percentage,
-                            true,
-                            null,
-                            getPublisherRoyalty(platform)?.publisherId
-                          ) | number : "1.0-2"
-                        }}
-                        @if ( (loggedInUser()?.accessLevel === 'SUPERADMIN' ||
-                        loggedInUser()?.accessLevel === 'PUBLISHER') &&
-                        getPublisherMargin(platform) > 0 ) {
-                        <span class="text-[var(--green-2)] text-xs ml-1"
-                          >(+₹{{
-                            getPublisherMargin(platform) | number : "1.0-2"
-                          }}
-                          margin)</span
+              <div class="flex flex-col gap-4 md:gap-6 min-h-[220px]">
+                <!-- LEFT: Pricing block -->
+                @if (loggedInUser()?.accessLevel !== "AUTHER") {
+                  <div class="w-full">
+                    <div class="text-sm text-[var(--text-primary)] space-y-2">
+                      <div class="flex justify-between">
+                        <span class="font-medium text-[var(--text-heading)]"
+                          >MRP:</span
                         >
+                        <span class="font-semibold text-[var(--primary)]"
+                          >₹{{
+                            getPriceByPlatform(platform)?.mrp ?? "N/A"
+                          }}</span
+                        >
+                      </div>
+
+                      <div class="flex justify-between">
+                        <span class="font-medium text-[var(--text-heading)]"
+                          >Sales Price:</span
+                        >
+                        <span class="font-semibold text-[var(--green-2)]"
+                          >₹{{
+                            getPriceByPlatform(platform)?.salesPrice ?? "N/A"
+                          }}</span
+                        >
+                      </div>
+
+                      <div class="flex justify-between">
+                        <span class="font-medium text-[var(--text-heading)]"
+                          >MSP:</span
+                        >
+                        <span class="font-medium text-[var(--primary)]"
+                          >₹{{
+                            getPriceByPlatform(platform)?.msp ?? "N/A"
+                          }}</span
+                        >
+                      </div>
+
+                      <div class="flex justify-between">
+                        <span class="font-medium text-[var(--text-heading)]"
+                          >Delivery Charges:</span
+                        >
+                        <span class="text-[var(--text-secondary)] font-medium"
+                          >₹{{
+                            getPriceByPlatform(platform)?.deliveryCharges ??
+                              "N/A"
+                          }}</span
+                        >
+                      </div>
+                    </div>
+                  </div>
+                }
+                <!-- RIGHT: Royalty section -->
+                <div class="w-full flex flex-col">
+                  <!-- Title -->
+                  <div class="flex items-center gap-3 mb-3">
+                    <div
+                      class="p-2 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)]"
+                    >
+                      <mat-icon>percent</mat-icon>
+                    </div>
+
+                    <div class="flex-1">
+                      <p class="text-[var(--text-heading)] font-medium">
+                        Royalty Breakdown
+                      </p>
+                      <p class="text-xs text-[var(--text-secondary)]">
+                        Publisher & author splits
+                      </p>
+                    </div>
+
+                    <!-- <div class="text-xs font-semibold text-[var(--primary)]">
+                    Total: {{ getTotalRoyalty(platform) }}%
+                  </div> -->
+                    @if (loggedInUser()?.accessLevel !== "AUTHER") {
+                      <div class="text-xs font-semibold text-[var(--primary)]">
+                        Total:
+                        {{
+                          loggedInUser()?.accessLevel === "AUTHER"
+                            ? getAuthorRoyaltyOnly(platform)
+                            : getTotalRoyalty(platform)
+                        }}%
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Table -->
+                  <div
+                    class="bg-white min-h-[110px] overflow-y-auto rounded-lg border border-[var(--primary-superlight)] shadow-sm overflow-hidden overflow-x-auto"
+                  >
+                    <!-- Header -->
+                    <div
+                      class="grid grid-cols-14 px-3 py-2 bg-[var(--primary-superlight)] text-[var(--text-heading)] font-medium text-sm"
+                    >
+                      <div class="col-span-5">Name</div>
+                      <div class="col-span-3 text-center">Role</div>
+                      @if (loggedInUser()?.accessLevel !== "AUTHER") {
+                        <div class="col-span-3 text-right">(%)</div>
+                      }
+                      <div class="col-span-3 text-right">(₹)</div>
+                    </div>
+                    <div>
+                      <div
+                        class="divide-y divide-[var(--primary-superlight)] border border-b-[var(--primary-superlight)]"
+                      >
+                        <!-- Publisher row -->
+                        @if (
+                          getPublisherRoyalty(platform) &&
+                          loggedInUser()?.accessLevel !== "AUTHER"
+                        ) {
+                          <div
+                            class="grid grid-cols-14 px-3 py-2 hover:bg-[var(--light-purple-bg)] transition"
+                          >
+                            <div
+                              class="col-span-5 font-medium text-[var(--text-heading)]"
+                            >
+                              {{ getPublisherName() }}
+                            </div>
+
+                            <div
+                              class="col-span-3 text-center text-xs text-[var(--text-primary)]"
+                            >
+                              Publisher
+                            </div>
+
+                            <div
+                              class="col-span-3 text-right font-semibold text-[var(--primary)]"
+                            >
+                              {{ getPublisherRoyalty(platform)?.percentage }}%
+                            </div>
+
+                            <div
+                              class="col-span-3 text-right text-xs text-[var(--primary)]"
+                            >
+                              ₹{{
+                                getRoyaltyAmount(
+                                  platform,
+                                  getPublisherRoyalty(platform)?.percentage,
+                                  true,
+                                  null,
+                                  getPublisherRoyalty(platform)?.publisherId
+                                ) | number: "1.0-2"
+                              }}
+                              @if (
+                                (loggedInUser()?.accessLevel === "SUPERADMIN" ||
+                                  loggedInUser()?.accessLevel ===
+                                    "PUBLISHER") &&
+                                getPublisherMargin(platform) > 0
+                              ) {
+                                <span class="text-[var(--green-2)] text-xs ml-1"
+                                  >(+₹{{
+                                    getPublisherMargin(platform)
+                                      | number: "1.0-2"
+                                  }}
+                                  margin)</span
+                                >
+                              }
+                            </div>
+                          </div>
+                        }
+                        @for (
+                          r of getAuthorRoyalties(platform);
+                          track r.authorId
+                        ) {
+                          @if (
+                            loggedInUser()?.accessLevel !== "AUTHER" ||
+                            (loggedInUser()?.accessLevel === "AUTHER" &&
+                              r.authorId === loggedInUser()?.auther?.id)
+                          ) {
+                            <div
+                              class="grid grid-cols-14 px-3 py-2 hover:bg-[var(--light-purple-bg)] transition"
+                            >
+                              <div
+                                class="col-span-5 font-medium text-[var(--text-heading)]"
+                              >
+                                {{ getAuthorName(r.authorId) }}
+                              </div>
+
+                              <div
+                                class="col-span-3 text-center text-xs text-[var(--text-primary)]"
+                              >
+                                Author
+                              </div>
+                              @if (loggedInUser()?.accessLevel !== "AUTHER") {
+                                <div
+                                  class="col-span-3 text-right font-semibold text-[var(--green-2)]"
+                                >
+                                  {{ r.percentage }}%
+                                </div>
+                              }
+
+                              <div
+                                class="col-span-3 text-right text-xs text-[var(--green-2)]"
+                              >
+                                ₹{{
+                                  getRoyaltyAmount(
+                                    platform,
+                                    r.percentage,
+                                    false,
+                                    r.authorId
+                                  ) | number: "1.0-2"
+                                }}
+                              </div>
+                            </div>
+                          }
                         }
                       </div>
                     </div>
-                    } @for (r of getAuthorRoyalties(platform); track r.authorId)
-                    { @if ( loggedInUser()?.accessLevel !== 'AUTHER' ||
-                    (loggedInUser()?.accessLevel === 'AUTHER' && r.authorId ===
-                    loggedInUser()?.auther?.id) ) {
-                    <div
-                      class="grid grid-cols-14 px-3 py-2 hover:bg-[var(--light-purple-bg)] transition"
-                    >
-                      <div
-                        class="col-span-5 font-medium text-[var(--text-heading)]"
-                      >
-                        {{ getAuthorName(r.authorId) }}
-                      </div>
+                    <!-- MOBILE ROYALTY CARDS -->
+                    <div class="block md:hidden space-y-4 m-4">
+                      <!-- Publisher card -->
+                      @if (getPublisherRoyalty(platform)) {
+                        <div
+                          class="bg-white rounded-xl p-4 border border-[var(--primary-superlight)] shadow-sm"
+                        >
+                          <div class="text-xs text-[var(--text-secondary)]">
+                            Publisher
+                          </div>
+                          <div class="font-medium text-[var(--text-heading)]">
+                            {{ getPublisherName() }}
+                          </div>
 
-                      <div
-                        class="col-span-3 text-center text-xs text-[var(--text-primary)]"
-                      >
-                        Author
-                      </div>
-                      @if (loggedInUser()?.accessLevel !== 'AUTHER') {
+                          <div class="mt-2 flex justify-between text-sm">
+                            <span>Royalty %</span>
+                            <span class="font-semibold text-[var(--primary)]">
+                              {{ getPublisherRoyalty(platform)?.percentage }}%
+                            </span>
+                          </div>
 
-                      <div
-                        class="col-span-3 text-right font-semibold text-[var(--green-2)]"
-                      >
-                        {{ r.percentage }}%
-                      </div>
+                          <div class="mt-1 flex justify-between text-sm">
+                            <span>Amount</span>
+                            <span class="font-semibold text-[var(--green-2)]">
+                              ₹{{
+                                getRoyaltyAmount(
+                                  platform,
+                                  getPublisherRoyalty(platform)?.percentage,
+                                  true,
+                                  null,
+                                  getPublisherRoyalty(platform)?.publisherId
+                                ) | number: "1.0-2"
+                              }}
+                            </span>
+                          </div>
+                        </div>
                       }
 
+                      <!-- Author cards -->
+                      @for (
+                        r of getAuthorRoyalties(platform);
+                        track r.authorId
+                      ) {
+                        <div
+                          class="bg-white rounded-xl p-4 border border-[var(--primary-superlight)] shadow-sm"
+                        >
+                          <div class="text-xs text-[var(--text-secondary)]">
+                            Author
+                          </div>
+                          <div class="font-medium text-[var(--text-heading)]">
+                            {{ getAuthorName(r.authorId) }}
+                          </div>
+
+                          <div class="mt-2 flex justify-between text-sm">
+                            <span>Royalty %</span>
+                            <span class="font-semibold text-[var(--green-2)]">
+                              {{ r.percentage }}%
+                            </span>
+                          </div>
+
+                          <div class="mt-1 flex justify-between text-sm">
+                            <span>Amount</span>
+                            <span class="font-semibold text-[var(--green-2)]">
+                              ₹{{
+                                getRoyaltyAmount(
+                                  platform,
+                                  r.percentage,
+                                  false,
+                                  r.authorId
+                                ) | number: "1.0-2"
+                              }}
+                            </span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Royalty Bar -->
+                  @if (loggedInUser()?.accessLevel !== "AUTHER") {
+                    <div class="mt-4">
+                      <p class="text-xs text-[var(--text-secondary)] mb-1">
+                        % Royalty Distribution (Total
+                        {{ getTotalRoyalty(platform) }}%)
+                      </p>
+
                       <div
-                        class="col-span-3 text-right text-xs text-[var(--green-2)]"
+                        class="relative h-2 bg-[var(--primary-superlight)] rounded-full overflow-hidden"
                       >
-                        ₹{{
-                          getRoyaltyAmount(
-                            platform,
-                            r.percentage,
-                            false,
-                            r.authorId
-                          ) | number : "1.0-2"
-                        }}
+                        <div
+                          class="absolute top-0 left-0 h-2 bg-[var(--green-2)] transition-all duration-500"
+                          [style.width]="getTotalRoyalty(platform) + '%'"
+                        ></div>
                       </div>
                     </div>
-                    } }
-                  </div>
-                </div>
-                <!-- MOBILE ROYALTY CARDS -->
-                <div class="block md:hidden space-y-4 m-4">
-                  <!-- Publisher card -->
-                  @if (getPublisherRoyalty(platform)) {
-                  <div
-                    class="bg-white rounded-xl p-4 border border-[var(--primary-superlight)] shadow-sm"
-                  >
-                    <div class="text-xs text-[var(--text-secondary)]">
-                      Publisher
-                    </div>
-                    <div class="font-medium text-[var(--text-heading)]">
-                      {{ getPublisherName() }}
-                    </div>
-
-                    <div class="mt-2 flex justify-between text-sm">
-                      <span>Royalty %</span>
-                      <span class="font-semibold text-[var(--primary)]">
-                        {{ getPublisherRoyalty(platform)?.percentage }}%
-                      </span>
-                    </div>
-
-                    <div class="mt-1 flex justify-between text-sm">
-                      <span>Amount</span>
-                      <span class="font-semibold text-[var(--green-2)]">
-                        ₹{{
-                          getRoyaltyAmount(
-                            platform,
-                            getPublisherRoyalty(platform)?.percentage,
-                            true,
-                            null,
-                            getPublisherRoyalty(platform)?.publisherId
-                          ) | number : "1.0-2"
-                        }}
-                      </span>
-                    </div>
-                  </div>
-                  }
-
-                  <!-- Author cards -->
-                  @for (r of getAuthorRoyalties(platform); track r.authorId) {
-                  <div
-                    class="bg-white rounded-xl p-4 border border-[var(--primary-superlight)] shadow-sm"
-                  >
-                    <div class="text-xs text-[var(--text-secondary)]">
-                      Author
-                    </div>
-                    <div class="font-medium text-[var(--text-heading)]">
-                      {{ getAuthorName(r.authorId) }}
-                    </div>
-
-                    <div class="mt-2 flex justify-between text-sm">
-                      <span>Royalty %</span>
-                      <span class="font-semibold text-[var(--green-2)]">
-                        {{ r.percentage }}%
-                      </span>
-                    </div>
-
-                    <div class="mt-1 flex justify-between text-sm">
-                      <span>Amount</span>
-                      <span class="font-semibold text-[var(--green-2)]">
-                        ₹{{
-                          getRoyaltyAmount(
-                            platform,
-                            r.percentage,
-                            false,
-                            r.authorId
-                          ) | number : "1.0-2"
-                        }}
-                      </span>
-                    </div>
-                  </div>
                   }
                 </div>
               </div>
-
-              <!-- Royalty Bar -->
-              @if ( loggedInUser()?.accessLevel !== 'AUTHER' ) {
-              <div class="mt-4">
-                <p class="text-xs text-[var(--text-secondary)] mb-1">
-                  % Royalty Distribution (Total
-                  {{ getTotalRoyalty(platform) }}%)
-                </p>
-
-                <div
-                  class="relative h-2 bg-[var(--primary-superlight)] rounded-full overflow-hidden"
-                >
-                  <div
-                    class="absolute top-0 left-0 h-2 bg-[var(--green-2)] transition-all duration-500"
-                    [style.width]="getTotalRoyalty(platform) + '%'"
-                  ></div>
-                </div>
-              </div>
-              }
             </div>
-          </div>
+          }
         </div>
-        }
-      </div>
       } @else {
-      <!-- Empty State -->
-      <div
-        class="flex flex-col items-center justify-center py-12 bg-[var(--light-purple-bg)] rounded-2xl border border-[var(--primary-light)]"
-      >
-        <mat-icon class="text-[var(--primary)] text-5xl mb-3"
-          >payments</mat-icon
+        <!-- Empty State -->
+        <div
+          class="flex flex-col items-center justify-center py-12 bg-[var(--light-purple-bg)] rounded-2xl border border-[var(--primary-light)]"
         >
-        <p class="text-[var(--text-primary)] text-sm">
-          No pricing data available for this title.
-        </p>
-      </div>
+          <mat-icon class="text-[var(--primary)] text-5xl mb-3"
+            >payments</mat-icon
+          >
+          <p class="text-[var(--text-primary)] text-sm">
+            No pricing data available for this title.
+          </p>
+        </div>
       }
     </div>
   </ng-template>
@@ -960,11 +1002,11 @@
 
         <div class="flex flex-wrap gap-3 mt-4">
           @for (d of titleDetails()?.distribution; track $index) {
-          <div
-            class="px-4 py-2 rounded-full text-sm font-medium border border-[var(--light-green-2)] bg-[var(--light-green-bg)] text-[var(--green-2)] shadow-sm hover:scale-105 transition-transform cursor-default"
-          >
-            {{ d.type }}
-          </div>
+            <div
+              class="px-4 py-2 rounded-full text-sm font-medium border border-[var(--light-green-2)] bg-[var(--light-green-bg)] text-[var(--green-2)] shadow-sm hover:scale-105 transition-transform cursor-default"
+            >
+              {{ d.type }}
+            </div>
           }
         </div>
       </div>
@@ -987,210 +1029,224 @@
                 Platform-specific identifiers and publishing types
               </p>
             </div>
-            @if(loggedInUser()?.accessLevel === 'SUPERADMIN') {
-            <button
-              mat-raised-button
-              color="primary"
-              (click)="addPlatformIdentifier()"
-              class="!px-4 flex gap-1 items-center"
-            >
-              <mat-icon>add</mat-icon>
-              {{ "addmore" | translate }}
-            </button>
+            @if (loggedInUser()?.accessLevel === "SUPERADMIN") {
+              <button
+                mat-raised-button
+                color="primary"
+                (click)="addPlatformIdentifier()"
+                class="!px-4 flex gap-1 items-center"
+              >
+                <mat-icon>add</mat-icon>
+                {{ "addmore" | translate }}
+              </button>
             }
           </div>
         </div>
         @if (titleDetails()?.titlePlatformIdentifier?.length) {
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
-          @for (pid of titleDetails()?.titlePlatformIdentifier; track $index) {
           <div
-            class="group border border-[var(--primary-superlight)] rounded-xl p-4 bg-gradient-to-br from-white to-[var(--light-purple-bg)] hover:shadow-lg hover:scale-[1.02] transition-all"
+            class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mt-4"
           >
-            <div class="flex items-center justify-between mb-3">
-              <div class="flex items-center gap-2">
-                <div
-                  class="p-2 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)]"
-                >
-                  <mat-icon>storefront</mat-icon>
-                </div>
-                <h5 class="font-medium text-[var(--text-heading)] text-base">
-                  {{ pid.platform.name }}
-                </h5>
-              </div>
-              <span
-                class="text-[var(--green-2)] text-xs font-medium bg-[var(--light-green-bg)] px-3 py-1 rounded-full border border-[var(--light-green-2)]"
+            @for (
+              pid of titleDetails()?.titlePlatformIdentifier;
+              track $index
+            ) {
+              <div
+                class="group border border-[var(--primary-superlight)] rounded-xl p-4 bg-gradient-to-br from-white to-[var(--light-purple-bg)] hover:shadow-lg hover:scale-[1.02] transition-all"
               >
-                {{ pid.type }}
-              </span>
-            </div>
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="p-2 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)]"
+                    >
+                      <mat-icon>storefront</mat-icon>
+                    </div>
+                    <h5
+                      class="font-medium text-[var(--text-heading)] text-base"
+                    >
+                      {{ pid.platform.name }}
+                    </h5>
+                  </div>
+                  <span
+                    class="text-[var(--green-2)] text-xs font-medium bg-[var(--light-green-bg)] px-3 py-1 rounded-full border border-[var(--light-green-2)]"
+                  >
+                    {{ pid.type }}
+                  </span>
+                </div>
 
-            <div class="flex flex-col gap-2 text-sm text-[var(--text-primary)]">
-              @if(loggedInUser()?.accessLevel === 'SUPERADMIN') {
-              <div class="flex flex-col gap-1">
-                <span class="font-medium text-[var(--text-heading)] text-xs">
-                  Distribution Link:
-                </span>
-                @if(pid.distributionLink) {
                 <div
-                  class="flex items-center gap-2 p-2 bg-[var(--light-purple-bg)] rounded-lg border border-[var(--primary-superlight)]"
+                  class="flex flex-col gap-2 text-sm text-[var(--text-primary)]"
                 >
-                  <a
-                    target="_blank"
-                    [href]="pid.distributionLink"
-                    class="flex-1 text-[var(--primary)] hover:underline text-xs break-all"
-                    [title]="pid.distributionLink"
-                  >
-                    {{ pid.distributionLink }}
-                  </a>
-                  <button
-                    type="button"
-                    (click)="copyDistributionLink(pid.distributionLink)"
-                    title="Copy link"
-                    class="flex-shrink-0 p-1 hover:bg-[var(--primary-superlight)] rounded transition-colors"
-                  >
-                    <mat-icon class="!text-base text-[var(--primary)]"
-                      >content_copy</mat-icon
-                    >
-                  </button>
-                  <a
-                    target="_blank"
-                    [href]="pid.distributionLink"
-                    title="Open in new tab"
-                    class="flex-shrink-0 p-1 hover:bg-[var(--primary-superlight)] rounded transition-colors"
-                  >
-                    <mat-icon class="!text-base text-[var(--primary)]"
-                      >open_in_new</mat-icon
-                    >
-                  </a>
-                  <button
-                    type="button"
-                    (click)="editPlatformIdentifier(pid)"
-                    title="Edit"
-                    class="flex-shrink-0 p-1 hover:bg-[var(--primary-superlight)] rounded transition-colors"
-                  >
-                    <mat-icon class="!text-base text-[var(--primary)]"
-                      >edit</mat-icon
-                    >
-                  </button>
+                  @if (loggedInUser()?.accessLevel === "SUPERADMIN") {
+                    <div class="flex flex-col gap-1">
+                      <span
+                        class="font-medium text-[var(--text-heading)] text-xs"
+                      >
+                        Distribution Link:
+                      </span>
+                      @if (pid.distributionLink) {
+                        <div
+                          class="flex items-center gap-2 p-2 bg-[var(--light-purple-bg)] rounded-lg border border-[var(--primary-superlight)]"
+                        >
+                          <a
+                            target="_blank"
+                            [href]="pid.distributionLink"
+                            class="flex-1 text-[var(--primary)] hover:underline text-xs break-all"
+                            [title]="pid.distributionLink"
+                          >
+                            {{ pid.distributionLink }}
+                          </a>
+                          <button
+                            type="button"
+                            (click)="copyDistributionLink(pid.distributionLink)"
+                            title="Copy link"
+                            class="flex-shrink-0 p-1 hover:bg-[var(--primary-superlight)] rounded transition-colors"
+                          >
+                            <mat-icon class="!text-base text-[var(--primary)]"
+                              >content_copy</mat-icon
+                            >
+                          </button>
+                          <a
+                            target="_blank"
+                            [href]="pid.distributionLink"
+                            title="Open in new tab"
+                            class="flex-shrink-0 p-1 hover:bg-[var(--primary-superlight)] rounded transition-colors"
+                          >
+                            <mat-icon class="!text-base text-[var(--primary)]"
+                              >open_in_new</mat-icon
+                            >
+                          </a>
+                          <button
+                            type="button"
+                            (click)="editPlatformIdentifier(pid)"
+                            title="Edit"
+                            class="flex-shrink-0 p-1 hover:bg-[var(--primary-superlight)] rounded transition-colors"
+                          >
+                            <mat-icon class="!text-base text-[var(--primary)]"
+                              >edit</mat-icon
+                            >
+                          </button>
+                        </div>
+                      } @else {
+                        <div class="flex items-center gap-2">
+                          <span
+                            class="text-[var(--text-secondary)] text-xs italic"
+                            >No link available</span
+                          >
+                          <button
+                            type="button"
+                            (click)="editPlatformIdentifier(pid)"
+                            title="Edit"
+                            class="flex-shrink-0 p-1 hover:bg-[var(--primary-superlight)] rounded transition-colors"
+                          >
+                            <mat-icon class="!text-base text-[var(--primary)]"
+                              >edit</mat-icon
+                            >
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  }
+                  @if (loggedInUser()?.accessLevel !== "AUTHER") {
+                    <p>
+                      <span class="font-medium text-[var(--text-heading)]">
+                        Total Sales:
+                      </span>
+
+                      <span>
+                        @if (pid.totalAmount) {
+                          {{ pid.sales }}
+                        } @else {
+                          <span>0</span>
+                        }
+                      </span>
+                    </p>
+                    <p>
+                      <span class="font-medium text-[var(--text-heading)]">
+                        Total Sales Amount:
+                      </span>
+
+                      <span>
+                        @if (pid.totalAmount) {
+                          {{ pid.totalAmount | currency }}
+                        } @else {
+                          <span>0</span>
+                        }
+                      </span>
+                    </p>
+                  }
                 </div>
-                } @else {
-                <div class="flex items-center gap-2">
-                  <span class="text-[var(--text-secondary)] text-xs italic"
-                    >No link available</span
-                  >
-                  <button
-                    type="button"
-                    (click)="editPlatformIdentifier(pid)"
-                    title="Edit"
-                    class="flex-shrink-0 p-1 hover:bg-[var(--primary-superlight)] rounded transition-colors"
-                  >
-                    <mat-icon class="!text-base text-[var(--primary)]"
-                      >edit</mat-icon
-                    >
-                  </button>
-                </div>
-                }
               </div>
-              } @if ( loggedInUser()?.accessLevel !== 'AUTHER' ) {
-              <p>
-                <span class="font-medium text-[var(--text-heading)]">
-                  Total Sales:
-                </span>
-
-                <span>
-                  @if(pid.totalAmount) {
-                  {{ pid.sales }}
-                  } @else {
-                  <span>0</span>
-                  }
-                </span>
-              </p>
-              <p>
-                <span class="font-medium text-[var(--text-heading)]">
-                  Total Sales Amount:
-                </span>
-
-                <span>
-                  @if(pid.totalAmount) {
-                  {{ pid.totalAmount | currency }}
-                  } @else {
-                  <span>0</span>
-                  }
-                </span>
-              </p>
-              }
-            </div>
+            }
           </div>
-          }
-        </div>
         } @else {
-        <div
-          class="flex flex-col items-center justify-center py-8 bg-[var(--light-purple-bg)] rounded-2xl border border-[var(--primary-light)]"
-        >
-          <mat-icon class="text-[var(--primary)] text-5xl mb-3"
-            >data_object</mat-icon
+          <div
+            class="flex flex-col items-center justify-center py-8 bg-[var(--light-purple-bg)] rounded-2xl border border-[var(--primary-light)]"
           >
-          <p class="text-[var(--text-primary)] text-sm text-center">
-            No platform identifiers available for this title.
-          </p>
-        </div>
+            <mat-icon class="text-[var(--primary)] text-5xl mb-3"
+              >data_object</mat-icon
+            >
+            <p class="text-[var(--text-primary)] text-sm text-center">
+              No platform identifiers available for this title.
+            </p>
+          </div>
         }
       </div>
     </div>
   </ng-template>
   @if (!isMobile()) {
-  <mat-tab-group
-    class="bg-white rounded-2xl shadow-sm border border-[var(--primary-superlight)]"
-    [selectedIndex]="selectedTabIndex()"
-    (selectedIndexChange)="onTabChange($event)"
-  >
-    <!-- OVERVIEW TAB -->
-    <mat-tab label="Overview">
-      <ng-container *ngTemplateOutlet="overviewTpl"></ng-container>
-    </mat-tab>
+    <mat-tab-group
+      class="bg-white rounded-2xl shadow-sm border border-[var(--primary-superlight)]"
+      [selectedIndex]="selectedTabIndex()"
+      (selectedIndexChange)="onTabChange($event)"
+    >
+      <!-- OVERVIEW TAB -->
+      <mat-tab label="Overview">
+        <ng-container *ngTemplateOutlet="overviewTpl"></ng-container>
+      </mat-tab>
 
-    <!-- MEDIA TAB -->
-    <mat-tab label="Media">
-      <ng-container *ngTemplateOutlet="mediaTpl"></ng-container>
-    </mat-tab>
+      <!-- MEDIA TAB -->
+      <mat-tab label="Media">
+        <ng-container *ngTemplateOutlet="mediaTpl"></ng-container>
+      </mat-tab>
 
-    <!-- PRINTING TAB -->
-    <mat-tab label="Printing">
-      <ng-container *ngTemplateOutlet="printingTpl"></ng-container>
-    </mat-tab>
+      <!-- PRINTING TAB -->
+      <mat-tab label="Printing">
+        <ng-container *ngTemplateOutlet="printingTpl"></ng-container>
+      </mat-tab>
 
-    <!-- PRICING & ROYALTY TAB -->
-    @if ( titleDetails()?.printingOnly !== true ) {
-    <mat-tab label="Pricing & Royalty">
-      <ng-container *ngTemplateOutlet="pricingTpl"></ng-container
-    ></mat-tab>
+      <!-- PRICING & ROYALTY TAB -->
+      @if (titleDetails()?.printingOnly !== true) {
+        <mat-tab label="Pricing & Royalty">
+          <ng-container *ngTemplateOutlet="pricingTpl"></ng-container
+        ></mat-tab>
 
-    <mat-tab label="Distribution">
-      <ng-container *ngTemplateOutlet="distributionTpl"></ng-container>
-    </mat-tab>
-    }
-  </mat-tab-group>
-  } @if (isMobile()) {
-  <div class="space-y-4 mt-4">
-    <app-mobile-section title="Overview" [defaultOpen]="true">
-      <ng-container *ngTemplateOutlet="overviewTpl"></ng-container>
-    </app-mobile-section>
+        <mat-tab label="Distribution">
+          <ng-container *ngTemplateOutlet="distributionTpl"></ng-container>
+        </mat-tab>
+      }
+    </mat-tab-group>
+  }
+  @if (isMobile()) {
+    <div class="space-y-4 mt-4">
+      <app-mobile-section title="Overview" [defaultOpen]="true">
+        <ng-container *ngTemplateOutlet="overviewTpl"></ng-container>
+      </app-mobile-section>
 
-    <app-mobile-section title="Media">
-      <ng-container *ngTemplateOutlet="mediaTpl"></ng-container>
-    </app-mobile-section>
+      <app-mobile-section title="Media">
+        <ng-container *ngTemplateOutlet="mediaTpl"></ng-container>
+      </app-mobile-section>
 
-    <app-mobile-section title="Printing">
-      <ng-container *ngTemplateOutlet="printingTpl"></ng-container>
-    </app-mobile-section>
+      <app-mobile-section title="Printing">
+        <ng-container *ngTemplateOutlet="printingTpl"></ng-container>
+      </app-mobile-section>
 
-    <app-mobile-section title="Pricing & Royalty">
-      <ng-container *ngTemplateOutlet="pricingTpl"></ng-container>
-    </app-mobile-section>
+      <app-mobile-section title="Pricing & Royalty">
+        <ng-container *ngTemplateOutlet="pricingTpl"></ng-container>
+      </app-mobile-section>
 
-    <app-mobile-section title="Distribution">
-      <ng-container *ngTemplateOutlet="distributionTpl"></ng-container>
-    </app-mobile-section>
-  </div>
+      <app-mobile-section title="Distribution">
+        <ng-container *ngTemplateOutlet="distributionTpl"></ng-container>
+      </app-mobile-section>
+    </div>
   }
 </div>

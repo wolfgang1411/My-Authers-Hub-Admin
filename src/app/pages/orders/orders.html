@@ -4,14 +4,14 @@
       {{ pageTitle() | translate }}
     </h3>
     @if (!isSuperAdmin()) {
-    <button
-      class="!bg-primary flex items-center gap-2 !text-white rounded-md px-4 py-2"
-      matButton="filled"
-      routerLink="/create-order"
-    >
-      <mat-icon>add_shopping_cart</mat-icon>
-      {{ "createneworder" | translate }}
-    </button>
+      <button
+        class="!bg-primary flex items-center gap-2 !text-white rounded-md px-4 py-2"
+        matButton="filled"
+        routerLink="/create-order"
+      >
+        <mat-icon>add_shopping_cart</mat-icon>
+        {{ "createneworder" | translate }}
+      </button>
     }
   </div>
 
@@ -37,54 +37,158 @@
       </button>
     </div>
     @if (isSuperAdmin()) {
-    <div class="flex justify-end">
-      <button
-        class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
-        matButton="filled"
-        (click)="onExportToExcel()"
-      >
-        <mat-icon class="material-icons">download</mat-icon>
-        {{ "export" | translate }}
-      </button>
-    </div>
+      <div class="flex justify-end">
+        <button
+          class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
+          matButton="filled"
+          (click)="onExportToExcel()"
+        >
+          <mat-icon class="material-icons">download</mat-icon>
+          {{ "export" | translate }}
+        </button>
+      </div>
     }
   </div>
   <div class="flex flex-col gap-2">
     <div class="flex gap-2 flex-wrap items-center">
       @for (tab of deliveryStatusTabs(); track tab.label) {
-      <button
-        class="!bg-primary"
-        matButton="filled"
-        [ngClass]="{
-          '!bg-primary !text-white':
-            filter().deliveryStatus === tab.value ||
-            (!filter().deliveryStatus && !tab.value),
-          '!bg-primary-superlight !text-primary':
-            filter().deliveryStatus !== tab.value &&
-            (filter().deliveryStatus || tab.value)
-        }"
-        (click)="onDeliveryStatusChange(tab.value)"
-      >
-        {{ tab.label | translate }}
-      </button>
+        <button
+          class="!bg-primary"
+          matButton="filled"
+          [ngClass]="{
+            '!bg-primary !text-white':
+              filter().deliveryStatus === tab.value ||
+              (!filter().deliveryStatus && !tab.value),
+            '!bg-primary-superlight !text-primary':
+              filter().deliveryStatus !== tab.value &&
+              (filter().deliveryStatus || tab.value),
+          }"
+          (click)="onDeliveryStatusChange(tab.value)"
+        >
+          {{ tab.label | translate }}
+        </button>
       }
     </div>
   </div>
-  <app-list-table
-    class="pt-6"
-    [dataSource]="dataSource"
-    [displayedColumns]="displayedColumns()"
-    [actionTemplate]="actionButtons"
-    [isSortable]="isSortable"
-    (sortChange)="onSortChange($event)"
-  >
-  </app-list-table>
+  <div class="hidden lg:block">
+    <app-list-table
+      class="pt-6"
+      [dataSource]="dataSource"
+      [displayedColumns]="displayedColumns()"
+      [actionTemplate]="actionButtons"
+      [isSortable]="isSortable"
+      (sortChange)="onSortChange($event)"
+    >
+    </app-list-table>
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden pt-4">
+    @for (order of dataSource.data; track order.id) {
+      <div
+        class="bg-white rounded-2xl border border-[var(--primary-superlight)] shadow-sm p-4 flex flex-col gap-4"
+      >
+        <!-- Header -->
+        <div class="flex justify-between items-start gap-3">
+          <div>
+            <h4 class="text-sm font-semibold text-[var(--primary)]">
+              #{{ order.orderNumber || order.id }}
+            </h4>
+            <p class="text-xs text-[var(--text-secondary)]">
+              {{ order.customerName || "-" }}
+            </p>
+          </div>
+
+          <span
+            class="px-3 py-1 text-xs rounded-full font-medium"
+            [ngClass]="{
+              'bg-green-100 text-green-700':
+                order.deliverystatus === 'DELIVERED',
+              'bg-yellow-100 text-yellow-700':
+                order.deliverystatus === 'PENDING',
+              'bg-red-100 text-red-700':
+                order.deliverystatus === 'CANCELLED' ||
+                order.deliverystatus === 'RETURNED',
+            }"
+          >
+            {{ order.deliverystatus | translate }}
+          </span>
+        </div>
+
+        <!-- Details -->
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <p class="text-[var(--text-secondary)]">Total Amount</p>
+            <p class="font-medium text-[var(--text-primary)]">
+              {{ order.totalAmount | currency: "INR" }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-[var(--text-secondary)]">Payment Mode</p>
+            <p class="font-medium text-[var(--text-primary)]">
+              {{ order.paymentMode || "-" }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-[var(--text-secondary)]">Order Date</p>
+            <p class="font-medium text-[var(--text-primary)]">
+              {{ order.createdAt | date: "dd-MM-yyyy" }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-[var(--text-secondary)]">Delivery Status</p>
+            <p class="font-medium text-[var(--text-primary)]">
+              {{ order.deliverystatus | translate }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div
+          class="flex justify-end gap-2 pt-3 border-t border-[var(--primary-superlight)]"
+        >
+          <button
+            [routerLink]="['/orders', order.id]"
+            class="px-3 py-1.5 rounded-md bg-[var(--primary)] text-white text-xs"
+          >
+            View
+          </button>
+
+          @if (isSuperAdmin()) {
+            <button
+              class="px-3 py-1.5 rounded-md border border-[var(--primary)] text-[var(--primary)] text-xs"
+              [disabled]="
+                order.deliverystatus === 'RETURNED' ||
+                order.deliverystatus === 'CANCELLED'
+              "
+              [matMenuTriggerFor]="mobileDeliveryMenu"
+            >
+              Change Status
+            </button>
+
+            <mat-menu #mobileDeliveryMenu="matMenu">
+              @for (opt of deliveryStatusMenuOptions(); track opt) {
+                <button
+                  mat-menu-item
+                  [disabled]="opt === order.deliverystatus"
+                  (click)="changeDeliveryStatus(order.id, opt)"
+                >
+                  {{ opt.toLowerCase() | translate }}
+                </button>
+              }
+            </mat-menu>
+          }
+        </div>
+      </div>
+    }
+  </div>
 
   <div class="flex items-center justify-between gap-4 mt-4">
     <div class="flex items-center gap-2">
       <span class="text-sm text-[var(--text-secondary)]">
-        {{ "page" | translate }} {{ filter().page || 1 }}
-        {{ "of" | translate }} {{ lastPage() }}
+        {{ "page" | translate }} {{ filter().page || 1 }} {{ "of" | translate }}
+        {{ lastPage() }}
       </span>
       <span class="text-sm text-[var(--text-secondary)]">|</span>
       <span class="text-sm text-[var(--text-secondary)]"
@@ -103,50 +207,51 @@
       </select>
     </div>
     @if (lastPage() > 1) {
-    <div class="flex items-center gap-2">
-      <button
-        class="btn rounded-md !text-primary"
-        matButton="filled"
-        matButton
-        type="button"
-        [disabled]="(filter().page || 1) === 1"
-        (click)="previousPage()"
-      >
-        <mat-icon>chevron_left</mat-icon>
-        {{ "previous" | translate }}
-      </button>
-      <div class="flex items-center gap-1">
-        @for (pageNum of getPageNumbers(); track pageNum) { @if (pageNum === -1)
-        {
-        <span class="px-2 text-[var(--text-secondary)]">...</span>
-        } @else {
+      <div class="flex items-center gap-2">
         <button
-          class="btn rounded-md !text-primary min-w-[40px]"
+          class="btn rounded-md !text-primary"
           matButton="filled"
           matButton
           type="button"
-          [ngClass]="{
-            '!bg-primary !text-white': (filter().page || 1) === pageNum,
-            '!bg-primary-superlight': (filter().page || 1) !== pageNum
-          }"
-          (click)="goToPage(pageNum)"
+          [disabled]="(filter().page || 1) === 1"
+          (click)="previousPage()"
         >
-          {{ pageNum }}
+          <mat-icon>chevron_left</mat-icon>
+          {{ "previous" | translate }}
         </button>
-        } }
+        <div class="flex items-center gap-1">
+          @for (pageNum of getPageNumbers(); track pageNum) {
+            @if (pageNum === -1) {
+              <span class="px-2 text-[var(--text-secondary)]">...</span>
+            } @else {
+              <button
+                class="btn rounded-md !text-primary min-w-[40px]"
+                matButton="filled"
+                matButton
+                type="button"
+                [ngClass]="{
+                  '!bg-primary !text-white': (filter().page || 1) === pageNum,
+                  '!bg-primary-superlight': (filter().page || 1) !== pageNum,
+                }"
+                (click)="goToPage(pageNum)"
+              >
+                {{ pageNum }}
+              </button>
+            }
+          }
+        </div>
+        <button
+          class="btn rounded-md !text-primary"
+          matButton="filled"
+          matButton
+          type="button"
+          [disabled]="(filter().page || 1) === lastPage()"
+          (click)="nextPage()"
+        >
+          {{ "next" | translate }}
+          <mat-icon>chevron_right</mat-icon>
+        </button>
       </div>
-      <button
-        class="btn rounded-md !text-primary"
-        matButton="filled"
-        matButton
-        type="button"
-        [disabled]="(filter().page || 1) === lastPage()"
-        (click)="nextPage()"
-      >
-        {{ "next" | translate }}
-        <mat-icon>chevron_right</mat-icon>
-      </button>
-    </div>
     }
   </div>
   <ng-template #actionButtons let-element>
@@ -159,31 +264,31 @@
         <mat-icon class="!text-white">visibility</mat-icon>
       </button>
       @if (isSuperAdmin()) {
-      <button
-        class="!px-3 !py-1 !min-w-[140px] !border !border-[var(--primary)]"
-        mat-stroked-button
-        color="primary"
-        [matMenuTriggerFor]="deliveryMenu"
-        [disabled]="
-          element.deliverystatus === 'RETURNED' ||
-          element.deliverystatus === 'CANCELLED'
-        "
-        matTooltip="{{ 'changedeliverystatus' | translate }}"
-      >
-        <mat-icon>swap_horiz</mat-icon>
-        <span class="text-xs">{{ "changedeliverystatus" | translate }}</span>
-      </button>
-      <mat-menu #deliveryMenu="matMenu">
-        @for (opt of deliveryStatusMenuOptions(); track opt) {
         <button
-          mat-menu-item
-          [disabled]="opt === element.deliverystatus"
-          (click)="changeDeliveryStatus(element.id, opt)"
+          class="!px-3 !py-1 !min-w-[140px] !border !border-[var(--primary)]"
+          mat-stroked-button
+          color="primary"
+          [matMenuTriggerFor]="deliveryMenu"
+          [disabled]="
+            element.deliverystatus === 'RETURNED' ||
+            element.deliverystatus === 'CANCELLED'
+          "
+          matTooltip="{{ 'changedeliverystatus' | translate }}"
         >
-          {{ opt.toLowerCase() | translate }}
+          <mat-icon>swap_horiz</mat-icon>
+          <span class="text-xs">{{ "changedeliverystatus" | translate }}</span>
         </button>
-        }
-      </mat-menu>
+        <mat-menu #deliveryMenu="matMenu">
+          @for (opt of deliveryStatusMenuOptions(); track opt) {
+            <button
+              mat-menu-item
+              [disabled]="opt === element.deliverystatus"
+              (click)="changeDeliveryStatus(element.id, opt)"
+            >
+              {{ opt.toLowerCase() | translate }}
+            </button>
+          }
+        </mat-menu>
       }
     </div>
   </ng-template>

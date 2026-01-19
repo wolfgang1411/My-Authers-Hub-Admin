@@ -17,7 +17,7 @@ import {
   ValidationErrors,
   AsyncValidatorFn,
 } from '@angular/forms';
-import { BreakpointObserver } from '@angular/cdk/layout';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import {
   StepperOrientation,
   MatStepperModule,
@@ -71,6 +71,7 @@ import {
   CountryISO,
   NgxMaterialIntlTelInputComponent,
 } from 'ngx-material-intl-tel-input';
+import { MobileSection } from 'src/app/components/mobile-section/mobile-section';
 
 @Component({
   selector: 'app-add-author',
@@ -90,6 +91,7 @@ import {
     FormsModule,
     ReactiveFormsModule,
     NgxMaterialIntlTelInputComponent,
+    MobileSection,
   ],
   templateUrl: './add-author.html',
   styleUrls: ['./add-author.css'],
@@ -105,12 +107,14 @@ export class AddAuthor implements OnInit {
     private socialService: SocialMediaService,
     private userService: UserService,
     private translateService: TranslateService,
-    private loader: LoaderService
+    private loader: LoaderService,
+    private breakpointObserver: BreakpointObserver,
   ) {
-    const breakpointObserver = inject(BreakpointObserver);
-    this.stepperOrientation = breakpointObserver
-      .observe('(min-width: 800px)')
-      .pipe(map(({ matches }) => (matches ? 'horizontal' : 'vertical')));
+    this.breakpointObserver
+      .observe([Breakpoints.Handset])
+      .subscribe((result) => {
+        this.isMobile.set(result.matches);
+      });
     this.route.params.subscribe(({ id, signupCode }) => {
       this.authorId = Number(id) || undefined;
       this.signupCode = signupCode;
@@ -134,7 +138,7 @@ export class AddAuthor implements OnInit {
 
     this.loggedInUser = this.userService.loggedInUser$;
   }
-
+  isMobile = signal(false);
   countryISO = CountryISO;
   authorId?: number;
   signupCode?: string;
@@ -193,7 +197,7 @@ export class AddAuthor implements OnInit {
   ifscCodeValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const prefix = this.bankOptions().find(
-        ({ name }) => name === this.authorBankDetails.controls.name.value
+        ({ name }) => name === this.authorBankDetails.controls.name.value,
       )?.bankCode;
       if (!prefix) return null;
       const value = control.value?.toUpperCase?.().trim?.() || '';
@@ -205,7 +209,7 @@ export class AddAuthor implements OnInit {
               'invalidifscodestartwitherror',
               {
                 prefix,
-              }
+              },
             ),
           };
     };
@@ -217,7 +221,7 @@ export class AddAuthor implements OnInit {
       const country = this.authorAddressDetails?.controls?.country?.value;
       const state = this.authorAddressDetails?.controls?.state?.value;
       const isIndia = ['IN', 'INDIA', 'india', 'India', 'in'].includes(
-        country || ''
+        country || '',
       );
 
       // Skip async validation if field is empty
@@ -308,7 +312,7 @@ export class AddAuthor implements OnInit {
       if (!confirm.value) {
         delete confirmErrors['notMatching'];
         confirm.setErrors(
-          Object.keys(confirmErrors).length ? confirmErrors : null
+          Object.keys(confirmErrors).length ? confirmErrors : null,
         );
         return null;
       }
@@ -317,7 +321,7 @@ export class AddAuthor implements OnInit {
       } else {
         delete confirmErrors['notMatching'];
         confirm.setErrors(
-          Object.keys(confirmErrors).length ? confirmErrors : null
+          Object.keys(confirmErrors).length ? confirmErrors : null,
         );
       }
 
@@ -338,13 +342,13 @@ export class AddAuthor implements OnInit {
     }
 
     this.authorFormGroup.controls.signupCode.patchValue(
-      this.signupCode || null
+      this.signupCode || null,
     );
     this.authorBankDetails.controls.signupCode.patchValue(
-      this.signupCode || null
+      this.signupCode || null,
     );
     this.authorAddressDetails.controls.signupCode.patchValue(
-      this.signupCode || null
+      this.signupCode || null,
     );
 
     // Set up social media type tracking using valueChanges instead of effect
@@ -365,7 +369,7 @@ export class AddAuthor implements OnInit {
 
     this.authorBankDetails.controls.name.valueChanges.subscribe((v) => {
       this.selectedBankPrefix.set(
-        this.bankOptions().find(({ name }) => name === v)?.bankCode || null
+        this.bankOptions().find(({ name }) => name === v)?.bankCode || null,
       );
     });
 
@@ -377,7 +381,7 @@ export class AddAuthor implements OnInit {
       .get('country')
       ?.valueChanges.subscribe((countryIso) => {
         const isIndia = ['IN', 'INDIA', 'india', 'India', 'in'].includes(
-          countryIso || ''
+          countryIso || '',
         );
 
         if (!isIndia) {
@@ -401,7 +405,7 @@ export class AddAuthor implements OnInit {
           this.cities = City.getCitiesOfState(countryIso, stateIso).map(
             (c) => ({
               name: c.name,
-            })
+            }),
           );
           this.authorAddressDetails.patchValue({ city: '' });
         }
@@ -478,7 +482,7 @@ export class AddAuthor implements OnInit {
         // Invite flow: ALWAYS use the invite API endpoint
         // This uses /authors/by-invite/:signupCode which works for any status
         const author = await this.authorsService.findAuthorByInvite(
-          this.signupCode
+          this.signupCode,
         );
         if (author) {
           return author;
@@ -546,7 +550,6 @@ export class AddAuthor implements OnInit {
   // }
 
   private _formBuilder = inject(FormBuilder);
-  stepperOrientation: Observable<StepperOrientation>;
   authorFormGroup = this._formBuilder.group({
     id: <number | null>null,
     name: ['', Validators.required],
@@ -576,7 +579,7 @@ export class AddAuthor implements OnInit {
     },
     {
       validators: [this.accountMatchValidator()],
-    }
+    },
   );
   authorAddressDetails = this._formBuilder.group({
     id: <number | null>null,
@@ -620,7 +623,7 @@ export class AddAuthor implements OnInit {
         name: new FormControl<string | null>(null),
         autherId: new FormControl<number | null>(null),
         id: new FormControl<number | null>(null),
-      })
+      }),
     );
   }
   prefillForm(authorDetails: Author) {
@@ -644,7 +647,7 @@ export class AddAuthor implements OnInit {
         this.countries.find(
           (c) =>
             addr.country?.toLowerCase() === c.name.toLowerCase() ||
-            addr.country?.toLowerCase() === c.isoCode.toLowerCase()
+            addr.country?.toLowerCase() === c.isoCode.toLowerCase(),
         )?.isoCode || '';
 
       this.authorAddressDetails.patchValue({
@@ -660,7 +663,7 @@ export class AddAuthor implements OnInit {
       console.log(this.states, 'states');
       const stateIso =
         this.states.find(
-          (s) => s.isoCode.toLowerCase() === addr.state?.toLowerCase()
+          (s) => s.isoCode.toLowerCase() === addr.state?.toLowerCase(),
         )?.isoCode || '';
       console.log({ stateIso }, 'stateIso');
       this.authorAddressDetails.patchValue({
@@ -673,7 +676,7 @@ export class AddAuthor implements OnInit {
 
       const cityName =
         this.cities.find(
-          (c) => c.name.toLowerCase() === addr.city?.toLowerCase()
+          (c) => c.name.toLowerCase() === addr.city?.toLowerCase(),
         )?.name || '';
 
       this.authorAddressDetails.patchValue({
@@ -687,7 +690,7 @@ export class AddAuthor implements OnInit {
       const bankDetail = authorDetails.bankDetails[0];
       this.selectedBankPrefix.set(
         this.bankOptions().find(({ name }) => name === bankDetail?.name)
-          ?.bankCode || null
+          ?.bankCode || null,
       );
       this.authorBankDetails.patchValue({
         id: bankDetail.id,
@@ -704,7 +707,7 @@ export class AddAuthor implements OnInit {
 
     // Prefill social media (always try to prefill, even if empty array)
     const socialMediaArray = this.authorSocialMediaGroup.get(
-      'socialMedia'
+      'socialMedia',
     ) as FormArray<FormGroup<SocialMediaGroupType>>;
 
     socialMediaArray.clear();
@@ -745,7 +748,7 @@ export class AddAuthor implements OnInit {
     // Step 1: Create/Update Basic Details (Author info)
     // Always pass signupCode if present (for invite flow)
     const response = (await this.authorsService.createAuthor(
-      authorData as Author
+      authorData as Author,
     )) as Author;
 
     // Store authorId if it's a new author
@@ -781,7 +784,7 @@ export class AddAuthor implements OnInit {
         addressPayload.id = existingAddress?.id;
       }
       await this.addressService.createOrUpdateAddress(
-        addressPayload as Address
+        addressPayload as Address,
       );
 
       // Step 3: Create/Update Bank Details
@@ -807,7 +810,7 @@ export class AddAuthor implements OnInit {
         bankPayload.id = existingBank?.id;
       }
       await this.bankDetailService.createOrUpdateBankDetail(
-        bankPayload as createBankDetails
+        bankPayload as createBankDetails,
       );
 
       // Step 4: Create/Update Social Media
@@ -835,7 +838,7 @@ export class AddAuthor implements OnInit {
 
       if (socialMediaData.length > 0) {
         await this.socialService.createOrUpdateSocialMediaLinks(
-          socialMediaData as socialMediaGroup[]
+          socialMediaData as socialMediaGroup[],
         );
       }
 
@@ -846,10 +849,10 @@ export class AddAuthor implements OnInit {
         await this.authorsService.updateMyImage(
           media.file,
           finalAuthorId,
-          this.signupCode
+          this.signupCode,
         );
         console.log(
-          '⬆ Image uploaded (API handles deletion of old media if exists)'
+          '⬆ Image uploaded (API handles deletion of old media if exists)',
         );
       }
     }
@@ -907,7 +910,7 @@ export class AddAuthor implements OnInit {
       this.compareValues(formValue.name, existingBank.name) ||
       this.compareValues(
         formValue.accountHolderName,
-        existingBank.accountHolderName
+        existingBank.accountHolderName,
       ) ||
       this.compareValues(formValue.accountNo, existingBank.accountNo) ||
       this.compareValues(formValue.ifsc, existingBank.ifsc) ||
@@ -986,7 +989,7 @@ export class AddAuthor implements OnInit {
    * Check if social media has changes
    */
   private hasSocialMediaChanges(
-    existingSocialMedia: socialMediaGroup[]
+    existingSocialMedia: socialMediaGroup[],
   ): boolean {
     const newSocialMedia = this.socialMediaArray.controls
       .map((group) => ({
@@ -1006,16 +1009,16 @@ export class AddAuthor implements OnInit {
 
     // Sort both arrays for comparison
     const sortedNew = [...newSocialMedia].sort((a, b) =>
-      `${a.type}-${a.url}`.localeCompare(`${b.type}-${b.url}`)
+      `${a.type}-${a.url}`.localeCompare(`${b.type}-${b.url}`),
     );
     const sortedExisting = [...existing].sort((a, b) =>
-      `${a.type}-${a.url}`.localeCompare(`${b.type}-${b.url}`)
+      `${a.type}-${a.url}`.localeCompare(`${b.type}-${b.url}`),
     );
 
     return sortedNew.some(
       (newItem, index) =>
         newItem.type !== sortedExisting[index]?.type ||
-        newItem.url !== sortedExisting[index]?.url
+        newItem.url !== sortedExisting[index]?.url,
     );
   }
 
@@ -1026,7 +1029,7 @@ export class AddAuthor implements OnInit {
     field: string,
     existingAuthor?: Author,
     existingAddress?: Address,
-    existingBank?: BankDetails
+    existingBank?: BankDetails,
   ): any {
     const fieldMap: Record<string, () => any> = {
       // Address fields
@@ -1061,7 +1064,7 @@ export class AddAuthor implements OnInit {
   }
 
   async handleAuthorUpdateFlow(
-    authorData: Author
+    authorData: Author,
   ): Promise<{ ticketsRaised: boolean; shouldNavigateBack: boolean }> {
     // Publishers can only raise ADDRESS and BANK tickets
     // AUTHOR type tickets are only for authors updating their own info
@@ -1179,7 +1182,7 @@ export class AddAuthor implements OnInit {
     // Only create tickets for sections with actual changes
     for (const section of sections) {
       console.log(
-        `Processing section: ${section.type}, hasChange: ${section.hasChange}`
+        `Processing section: ${section.type}, hasChange: ${section.hasChange}`,
       );
 
       if (!section.hasChange) {
@@ -1198,7 +1201,7 @@ export class AddAuthor implements OnInit {
             field,
             existingAuthor,
             existingAddress,
-            existingBank
+            existingBank,
           );
 
           // For authorName, compare by splitting into first/last name parts
@@ -1254,7 +1257,7 @@ export class AddAuthor implements OnInit {
       console.log(
         `Section ${section.type} payload:`,
         payload,
-        `hasValues: ${hasValues}`
+        `hasValues: ${hasValues}`,
       );
 
       if (hasValues) {
@@ -1344,7 +1347,7 @@ export class AddAuthor implements OnInit {
 
       if (socialMediaData.length > 0) {
         await this.socialService.createOrUpdateSocialMediaLinks(
-          socialMediaData as socialMediaGroup[]
+          socialMediaData as socialMediaGroup[],
         );
       }
     }
@@ -1357,10 +1360,10 @@ export class AddAuthor implements OnInit {
         await this.authorsService.updateMyImage(
           media.file,
           this.authorId as number,
-          this.signupCode
+          this.signupCode,
         );
         console.log(
-          '⬆ Image uploaded (API handles deletion of old media if exists)'
+          '⬆ Image uploaded (API handles deletion of old media if exists)',
         );
       }
     }
@@ -1583,7 +1586,7 @@ export class AddAuthor implements OnInit {
     switch (currentTab) {
       case 0: // Basic Details
         const existingMediaForButton = this.authorDetails()?.medias?.[0];
-        const isOwnProfileForButton = 
+        const isOwnProfileForButton =
           this.loggedInUser()?.accessLevel === 'AUTHER' &&
           this.loggedInUser()?.auther?.id === this.authorId;
         if (!this.authorId) {
@@ -1633,16 +1636,19 @@ export class AddAuthor implements OnInit {
     switch (currentTab) {
       case 0: // Basic Details
         const existingMedia = this.authorDetails()?.medias?.[0];
-        const isOwnProfileForTicket = 
+        const isOwnProfileForTicket =
           this.loggedInUser()?.accessLevel === 'AUTHER' &&
           this.loggedInUser()?.auther?.id === this.authorId;
         // Require ticket only if media exists AND can't update directly
         // If nothing exists, we can create (no ticket needed for own profile)
         // Also check if author details have changes that require ticket
-        const hasAuthorChanges = this.authorId && this.authorDetails()
-          ? this.hasAuthorChanges(this.authorDetails())
-          : false;
-        shouldRaiseTicket = (!!existingMedia && !canUpdateDirectly) || (hasAuthorChanges && !!this.authorId && !canUpdateDirectly);
+        const hasAuthorChanges =
+          this.authorId && this.authorDetails()
+            ? this.hasAuthorChanges(this.authorDetails())
+            : false;
+        shouldRaiseTicket =
+          (!!existingMedia && !canUpdateDirectly) ||
+          (hasAuthorChanges && !!this.authorId && !canUpdateDirectly);
         break;
       case 1: // Address
         const existingAddress = this.authorDetails()?.address?.[0];
@@ -1691,15 +1697,18 @@ export class AddAuthor implements OnInit {
     switch (currentTab) {
       case 0: // Basic Details
         const existingMedia = this.authorDetails()?.medias?.[0];
-        const isOwnProfile = 
+        const isOwnProfile =
           this.loggedInUser()?.accessLevel === 'AUTHER' &&
           this.loggedInUser()?.auther?.id === this.authorId;
         // Require ticket only if media exists AND can't update directly
         // If nothing exists, we can create (no ticket needed for own profile)
-        const hasAuthorChanges = this.authorId && this.authorDetails()
-          ? this.hasAuthorChanges(this.authorDetails())
-          : false;
-        shouldRaiseTicket = (!!existingMedia && !canUpdateDirectly) || (hasAuthorChanges && !!this.authorId && !canUpdateDirectly);
+        const hasAuthorChanges =
+          this.authorId && this.authorDetails()
+            ? this.hasAuthorChanges(this.authorDetails())
+            : false;
+        shouldRaiseTicket =
+          (!!existingMedia && !canUpdateDirectly) ||
+          (hasAuthorChanges && !!this.authorId && !canUpdateDirectly);
         break;
       case 1: // Address
         const existingAddress = this.authorDetails()?.address?.[0];
@@ -1847,28 +1856,28 @@ export class AddAuthor implements OnInit {
       email: this.authorFormGroup.controls.email.value,
       phoneNumber: this.authorFormGroup.controls.phoneNumber.value?.replaceAll(
         ' ',
-        ''
+        '',
       ),
       signupCode: this.signupCode || undefined,
     } as Author;
 
     const existingAuthor = this.authorDetails();
     const existingMedia = existingAuthor?.medias?.[0];
-    const isOwnProfile = 
+    const isOwnProfile =
       this.loggedInUser()?.accessLevel === 'AUTHER' &&
       this.loggedInUser()?.auther?.id === this.authorId;
-    
+
     // Allow creating/updating if:
     // 1. Can update directly (status is Pending/Dormant or SuperAdmin)
     // 2. Media doesn't exist AND it's own profile (allow creation even if Active)
-    const canCreateOrUpdate = 
+    const canCreateOrUpdate =
       this.canUpdateDirectly() || // Can update if status allows
       (!existingMedia && isOwnProfile); // Can create media if nothing exists (own profile)
 
     if (canCreateOrUpdate) {
       // Create new author or update directly
       const response = (await this.authorsService.createAuthor(
-        authorData as Author
+        authorData as Author,
       )) as Author;
 
       // Store authorId if it's a new author
@@ -1897,9 +1906,9 @@ export class AddAuthor implements OnInit {
           this.authorsService.updateMyImage(
             media.file,
             finalAuthorId,
-            this.signupCode
+            this.signupCode,
           ),
-          'upload-media'
+          'upload-media',
         );
       }
 
@@ -1929,7 +1938,7 @@ export class AddAuthor implements OnInit {
 
         if (socialMediaData.length > 0) {
           await this.socialService.createOrUpdateSocialMediaLinks(
-            socialMediaData as socialMediaGroup[]
+            socialMediaData as socialMediaGroup[],
           );
 
           // Reload author details to get updated social media with IDs (use fetchAuthor to handle invite flow)
@@ -1940,7 +1949,7 @@ export class AddAuthor implements OnInit {
 
             // Update form with IDs from saved social media to enable PATCH on next save
             const socialMediaArray = this.authorSocialMediaGroup.get(
-              'socialMedia'
+              'socialMedia',
             ) as FormArray<FormGroup<SocialMediaGroupType>>;
             const savedSocialMedia = updatedAuthor.socialMedias || [];
 
@@ -1950,7 +1959,7 @@ export class AddAuthor implements OnInit {
               const savedItem = savedSocialMedia.find(
                 (saved) =>
                   saved.type === formValue.type &&
-                  saved.url?.trim() === formValue.url?.trim()
+                  saved.url?.trim() === formValue.url?.trim(),
               );
               if (savedItem?.id) {
                 control.patchValue({ id: savedItem.id });
@@ -1969,7 +1978,7 @@ export class AddAuthor implements OnInit {
 
       // Refresh logged-in user data so guard can detect profile completion
       // Only refresh if this is the logged-in user's own profile
-      const isOwnProfile = 
+      const isOwnProfile =
         this.loggedInUser()?.accessLevel === 'AUTHER' &&
         this.loggedInUser()?.auther?.id === finalAuthorId;
       if (isOwnProfile) {
@@ -2019,9 +2028,13 @@ export class AddAuthor implements OnInit {
       // Only raise ticket for media if it already exists (updating), not for new media (creating)
       // If media doesn't exist and user is adding it for first time, this should have been handled in canCreateOrUpdate
       const shouldRaiseTicketForMedia = hasMediaChange && !!existingMedia;
-      
+
       // If no changes detected, don't proceed
-      if (!hasAuthorChange && !shouldRaiseTicketForMedia && !hasSocialMediaChange) {
+      if (
+        !hasAuthorChange &&
+        !shouldRaiseTicketForMedia &&
+        !hasSocialMediaChange
+      ) {
         await Swal.fire({
           icon: 'info',
           title: 'No Changes',
@@ -2030,7 +2043,7 @@ export class AddAuthor implements OnInit {
         });
         return null; // No changes detected, don't proceed with tab change
       }
-      
+
       if (hasAuthorChange || shouldRaiseTicketForMedia) {
         const payload: any = {
           type: UpdateTicketType.AUTHOR,
@@ -2079,7 +2092,7 @@ export class AddAuthor implements OnInit {
 
           if (socialMediaData.length > 0) {
             await this.socialService.createOrUpdateSocialMediaLinks(
-              socialMediaData as socialMediaGroup[]
+              socialMediaData as socialMediaGroup[],
             );
 
             // Reload author details to get updated social media with IDs (use fetchAuthor to handle invite flow)
@@ -2090,7 +2103,7 @@ export class AddAuthor implements OnInit {
 
               // Update form with IDs from saved social media to enable PATCH on next save
               const socialMediaArray = this.authorSocialMediaGroup.get(
-                'socialMedia'
+                'socialMedia',
               ) as FormArray<FormGroup<SocialMediaGroupType>>;
               const savedSocialMedia = updatedAuthor.socialMedias || [];
 
@@ -2100,7 +2113,7 @@ export class AddAuthor implements OnInit {
                 const savedItem = savedSocialMedia.find(
                   (saved) =>
                     saved.type === formValue.type &&
-                    saved.url?.trim() === formValue.url?.trim()
+                    saved.url?.trim() === formValue.url?.trim(),
                 );
                 if (savedItem?.id) {
                   control.patchValue({ id: savedItem.id });
@@ -2152,12 +2165,12 @@ export class AddAuthor implements OnInit {
 
     const existingAuthor = this.authorDetails();
     const existingAddress = existingAuthor?.address?.[0];
-    const isOwnProfile = 
+    const isOwnProfile =
       this.loggedInUser()?.accessLevel === 'AUTHER' &&
       this.loggedInUser()?.auther?.id === this.authorId;
-    
+
     // Allow creating if nothing exists (for own profile), or if can update directly
-    const canCreateOrUpdate = 
+    const canCreateOrUpdate =
       (!existingAddress && isOwnProfile) || // Can create if nothing exists (own profile)
       this.canUpdateDirectly(); // Can update if status allows
 
@@ -2180,7 +2193,7 @@ export class AddAuthor implements OnInit {
 
       // Refresh logged-in user data so guard can detect profile completion
       // Only refresh if this is the logged-in user's own profile
-      const isOwnProfile = 
+      const isOwnProfile =
         this.loggedInUser()?.accessLevel === 'AUTHER' &&
         this.loggedInUser()?.auther?.id === this.authorId;
       if (isOwnProfile) {
@@ -2265,12 +2278,12 @@ export class AddAuthor implements OnInit {
 
     const existingAuthor = this.authorDetails();
     const existingBank = existingAuthor?.bankDetails?.[0];
-    const isOwnProfile = 
+    const isOwnProfile =
       this.loggedInUser()?.accessLevel === 'AUTHER' &&
       this.loggedInUser()?.auther?.id === this.authorId;
-    
+
     // Allow creating if nothing exists (for own profile), or if can update directly
-    const canCreateOrUpdate = 
+    const canCreateOrUpdate =
       (!existingBank && isOwnProfile) || // Can create if nothing exists (own profile)
       this.canUpdateDirectly(); // Can update if status allows
 
@@ -2299,7 +2312,7 @@ export class AddAuthor implements OnInit {
       }
 
       await this.bankDetailService.createOrUpdateBankDetail(
-        bankPayload as createBankDetails
+        bankPayload as createBankDetails,
       );
 
       // Reload author details to get updated bank details (use fetchAuthor to handle invite flow)
@@ -2310,7 +2323,7 @@ export class AddAuthor implements OnInit {
 
       // Refresh logged-in user data so guard can detect profile completion
       // Only refresh if this is the logged-in user's own profile
-      const isOwnProfile = 
+      const isOwnProfile =
         this.loggedInUser()?.accessLevel === 'AUTHER' &&
         this.loggedInUser()?.auther?.id === this.authorId;
       if (isOwnProfile) {

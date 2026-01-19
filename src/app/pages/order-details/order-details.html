@@ -1,23 +1,25 @@
 <div class="order-details flex flex-col h-full p-4">
-  <div class="flex justify-between items-center">
+  <div
+    class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3"
+  >
     <h2 class="text-xl heading !text-primary">
       {{ "orderdetails" | translate }}
     </h2>
     <app-back></app-back>
   </div>
+
   <div
-    class="flex justify-between items-center bg-primary text-white p-4 rounded-md shadow order-card"
+    class="bg-primary text-white p-4 rounded-md shadow order-card flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between"
   >
-    <div class="flex justify-between gap-2 w-full items-center">
-      <h2 class="text-lg font-semibold">
-        {{ "order" | translate }}: #{{ orderId }}
-      </h2>
-      <p class="text-sm">
-        {{ "createdat" | translate }}:
-        {{ order()?.createdAt | date : "mediumDate" }}
-      </p>
-    </div>
+    <h2 class="text-lg font-semibold">
+      {{ "order" | translate }}: #{{ orderId }}
+    </h2>
+    <p class="text-sm">
+      {{ "createdat" | translate }}:
+      {{ order()?.createdAt | date: "mediumDate" }}
+    </p>
   </div>
+
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <div class="flex flex-col gap-4">
       <div class="bg-white shadow-md rounded-md p-4 order-card">
@@ -49,37 +51,37 @@
                     order()?.deliveryStatus === 'DELIVERED',
                   'bg-red-100 text-red-800':
                     order()?.deliveryStatus === 'RETURNED' ||
-                    order()?.deliveryStatus === 'CANCELLED'
+                    order()?.deliveryStatus === 'CANCELLED',
                 }"
               >
                 {{ order()?.deliveryStatus }}
               </span>
               @if (canChangeDeliveryStatus(order()?.deliveryStatus)) {
-              <button
-                mat-stroked-button
-                color="primary"
-                class="!px-3 !py-1 !min-w-[140px] !border !border-[var(--primary)]"
-                [matMenuTriggerFor]="detailsDeliveryMenu"
-                matTooltip="{{ 'change' | translate }} {{
-                  'deliverystatus' | translate
-                }}"
-              >
-                <mat-icon>swap_horiz</mat-icon>
-                <span class="text-xs">
-                  {{ "changedeliverystatus" | translate }}
-                </span>
-              </button>
-              <mat-menu #detailsDeliveryMenu="matMenu">
-                @for (opt of deliveryStatusOptions(); track opt) {
                 <button
-                  mat-menu-item
-                  [disabled]="opt === order()?.deliveryStatus"
-                  (click)="changeDeliveryStatus(opt)"
+                  mat-stroked-button
+                  color="primary"
+                  class="!px-3 !py-1 !min-w-[140px] !border !border-[var(--primary)]"
+                  [matMenuTriggerFor]="detailsDeliveryMenu"
+                  matTooltip="{{ 'change' | translate }} {{
+                    'deliverystatus' | translate
+                  }}"
                 >
-                  {{ opt.toLowerCase() | translate }}
+                  <mat-icon>swap_horiz</mat-icon>
+                  <span class="text-xs">
+                    {{ "changedeliverystatus" | translate }}
+                  </span>
                 </button>
-                }
-              </mat-menu>
+                <mat-menu #detailsDeliveryMenu="matMenu">
+                  @for (opt of deliveryStatusOptions(); track opt) {
+                    <button
+                      mat-menu-item
+                      [disabled]="opt === order()?.deliveryStatus"
+                      (click)="changeDeliveryStatus(opt)"
+                    >
+                      {{ opt.toLowerCase() | translate }}
+                    </button>
+                  }
+                </mat-menu>
               }
             </span>
           </div>
@@ -88,7 +90,7 @@
               {{ "totalamount" | translate }}
             </span>
             <span class="summary-value">
-              {{ order()?.totalAmount | currency : "INR" }}
+              {{ order()?.totalAmount | currency: "INR" }}
             </span>
           </div>
           <div class="summary-item">
@@ -96,7 +98,7 @@
               {{ "deliverycharges" | translate }}
             </span>
             <span class="summary-value">
-              {{ order()?.delivery | currency : "INR" }}
+              {{ order()?.delivery | currency: "INR" }}
             </span>
           </div>
           <div class="summary-item">
@@ -158,35 +160,39 @@
           {{ order()?.billingAddress?.pincode }}
         </p>
       </div>
-      <div class="bg-white shadow-md rounded-md p-4 order-card order-actions">
+      <div
+        class="bg-white shadow-md rounded-md p-4 order-card order-actions flex flex-col sm:flex-row gap-3"
+      >
         <button
           mat-stroked-button
           color="primary"
-          class="!bg-primary !text-white"
+          class="!bg-primary !text-white w-full sm:w-auto"
           (click)="getInvoice()"
         >
           <mat-icon>download</mat-icon>
           {{ "download" | translate }}
         </button>
-        @if (order()?.status === 'COMPLETED' && isSuperAdmin()) {
-        <button
-          mat-stroked-button
-          color="warn"
-          class="!text-white !bg-red-colour"
-          (click)="onCancel(false)"
-        >
-          <mat-icon>block</mat-icon>
-          {{ "cancelorder" | translate }}
-        </button>
-        <button
-          mat-stroked-button
-          color="warn"
-          class="!text-white !bg-red-colour"
-          (click)="onCancel(true)"
-        >
-          <mat-icon>undo</mat-icon>
-          {{ "cancelandrefund" | translate }}
-        </button>
+
+        @if (order()?.status === "COMPLETED" && isSuperAdmin()) {
+          <button
+            mat-stroked-button
+            color="warn"
+            class="!text-white !bg-red-colour w-full sm:w-auto"
+            (click)="onCancel(false)"
+          >
+            <mat-icon>block</mat-icon>
+            {{ "cancelorder" | translate }}
+          </button>
+
+          <button
+            mat-stroked-button
+            color="warn"
+            class="!text-white !bg-red-colour w-full sm:w-auto"
+            (click)="onCancel(true)"
+          >
+            <mat-icon>undo</mat-icon>
+            {{ "cancelandrefund" | translate }}
+          </button>
         }
       </div>
     </div>
@@ -197,7 +203,7 @@
       <mat-icon>menu_book</mat-icon>
       {{ "bookings" | translate }}
     </h3>
-    <div class="overflow-auto order-table mt-2">
+    <div class="hidden lg:block overflow-auto order-table mt-2">
       <table class="min-w-full text-sm">
         <thead>
           <tr class="text-left border-b">
@@ -210,16 +216,46 @@
         </thead>
         <tbody>
           @for (bk of order()?.bookings; track bk.id) {
-          <tr class="border-b">
-            <td class="p-2">{{ bk.id }}</td>
-            <td class="p-2">{{ bk.title.name }}</td>
-            <td class="p-2">{{ bk.quantity }}</td>
-            <td class="p-2">{{ bk.totalAmount || bk.amount }}</td>
-            <td class="p-2">{{ bk.status }}</td>
-          </tr>
+            <tr class="border-b">
+              <td class="p-2">{{ bk.id }}</td>
+              <td class="p-2">{{ bk.title.name }}</td>
+              <td class="p-2">{{ bk.quantity }}</td>
+              <td class="p-2">{{ bk.totalAmount || bk.amount }}</td>
+              <td class="p-2">{{ bk.status }}</td>
+            </tr>
           }
         </tbody>
       </table>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden mt-4">
+      @for (bk of order()?.bookings; track bk.id) {
+        <div
+          class="bg-white rounded-xl border border-[var(--primary-superlight)] shadow-sm p-4 flex flex-col gap-3"
+        >
+          <div class="flex justify-between items-start">
+            <h4 class="font-semibold text-primary text-sm">
+              {{ bk.title.name }}
+            </h4>
+            <span class="text-xs px-2 py-1 rounded-full bg-gray-100">
+              {{ bk.status }}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <p class="text-gray-400">Quantity</p>
+              <p class="font-medium">{{ bk.quantity }}</p>
+            </div>
+
+            <div>
+              <p class="text-gray-400">Amount</p>
+              <p class="font-medium">
+                {{ bk.totalAmount || bk.amount | currency: "INR" }}
+              </p>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   </div>
   <div class="flex-grow">
@@ -228,9 +264,9 @@
       {{ "transactions" | translate }}
     </h3>
     @if (order()?.transactions) {
-    <app-transaction-table
-      [transactions]="order()?.transactions"
-    ></app-transaction-table>
+      <app-transaction-table
+        [transactions]="order()?.transactions"
+      ></app-transaction-table>
     }
   </div>
 </div>

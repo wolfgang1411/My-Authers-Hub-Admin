@@ -27,15 +27,15 @@
 
     <div class="flex gap-2">
       @if (isSuperAdmin()) {
-      <button
-        matButton
-        matButton="filled"
-        class="!bg-primary text-white flex items-center gap-2 rounded-md p-2"
-        [routerLink]="['/incomplete-titles']"
-      >
-        <mat-icon class="material-icons">warning</mat-icon>
-        {{ "incompleteTitles" | translate }}
-      </button>
+        <button
+          matButton
+          matButton="filled"
+          class="!bg-primary text-white flex items-center gap-2 rounded-md p-2"
+          [routerLink]="['/incomplete-titles']"
+        >
+          <mat-icon class="material-icons">warning</mat-icon>
+          {{ "incompleteTitles" | translate }}
+        </button>
       }
       <!-- <button
         matButton="filled"
@@ -63,87 +63,85 @@
           </mat-select>
         </mat-form-field>
       </div> -->
-      @if (loggedInUser()?.accessLevel !== 'AUTHER') {
+      @if (loggedInUser()?.accessLevel !== "AUTHER") {
+        <button
+          matButton
+          matButton="filled"
+          class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+          [routerLink]="['/title-update-tickets']"
+          routerLinkActive="router-link-active"
+        >
+          <mat-icon class="material-icons">support_agent</mat-icon>
+          {{ "updatetickets" | translate }}
+        </button>
 
-      <button
-        matButton
-        matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
-        [routerLink]="['/title-update-tickets']"
-        routerLinkActive="router-link-active"
-      >
-        <mat-icon class="material-icons">support_agent</mat-icon>
-        {{ "updatetickets" | translate }}
-      </button>
-
-      <button
-        matButton
-        matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
-        [routerLink]="['/titleDetails']"
-        routerLinkActive="router-link-active"
-      >
-        <mat-icon>menu_book</mat-icon>
-        {{ "mytitles" | translate }}
-      </button>
-      <button
-        matButton
-        matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
-        [routerLink]="['/title', 0]"
-        routerLinkActive="router-link-active"
-      >
-        <mat-icon class="material-icons">add_circle_outline</mat-icon>
-        {{ "addtitle" | translate }}
-      </button>
-      <button
-        class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
-        matButton="filled"
-        matButton
-        (click)="onExportToExcel()"
-      >
-        <mat-icon class="material-icons">download</mat-icon>
-        {{ "export" | translate }}
-      </button>
+        <button
+          matButton
+          matButton="filled"
+          class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+          [routerLink]="['/titleDetails']"
+          routerLinkActive="router-link-active"
+        >
+          <mat-icon>menu_book</mat-icon>
+          {{ "mytitles" | translate }}
+        </button>
+        <button
+          matButton
+          matButton="filled"
+          class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+          [routerLink]="['/title', 0]"
+          routerLinkActive="router-link-active"
+        >
+          <mat-icon class="material-icons">add_circle_outline</mat-icon>
+          {{ "addtitle" | translate }}
+        </button>
+        <button
+          class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
+          matButton="filled"
+          matButton
+          (click)="onExportToExcel()"
+        >
+          <mat-icon class="material-icons">download</mat-icon>
+          {{ "export" | translate }}
+        </button>
       }
     </div>
   </div>
-  @if (loggedInUser()?.accessLevel !== 'AUTHER') {
-  <div class="flex w-full gap-4 mt-4 flex-wrap">
-    <button
-      class="btn rounded-md !text-primary"
-      matButton="filled"
-      matButton
-      type="button"
-      [ngClass]="{
-        '!bg-primary !text-white': lastSelectedPublishingType === 'ALL',
-        '!bg-primary-superlight': lastSelectedPublishingType !== 'ALL'
-      }"
-      (click)="selectPublishingType('ALL')"
-    >
-      <mat-icon>library_books</mat-icon>
-      All Publishing Types
-    </button>
-    @for (type of publishingTypes(); track type) {
-    <button
-      class="btn rounded-md !text-primary"
-      type="button"
-      matButton="filled"
-      matButton
-      [ngClass]="{
-        '!bg-primary !text-white': lastSelectedPublishingType === type,
-        '!bg-primary-superlight': lastSelectedPublishingType !== type
-      }"
-      (click)="selectPublishingType(type)"
-    >
-      <mat-icon>menu_book</mat-icon>
-      {{ type | translate }}
-    </button>
-    }
-  </div>
+  @if (loggedInUser()?.accessLevel !== "AUTHER") {
+    <div class="flex w-full gap-4 mt-4 flex-wrap">
+      <button
+        class="btn rounded-md !text-primary"
+        matButton="filled"
+        matButton
+        type="button"
+        [ngClass]="{
+          '!bg-primary !text-white': lastSelectedPublishingType === 'ALL',
+          '!bg-primary-superlight': lastSelectedPublishingType !== 'ALL',
+        }"
+        (click)="selectPublishingType('ALL')"
+      >
+        <mat-icon>library_books</mat-icon>
+        All Publishing Types
+      </button>
+      @for (type of publishingTypes(); track type) {
+        <button
+          class="btn rounded-md !text-primary"
+          type="button"
+          matButton="filled"
+          matButton
+          [ngClass]="{
+            '!bg-primary !text-white': lastSelectedPublishingType === type,
+            '!bg-primary-superlight': lastSelectedPublishingType !== type,
+          }"
+          (click)="selectPublishingType(type)"
+        >
+          <mat-icon>menu_book</mat-icon>
+          {{ type | translate }}
+        </button>
+      }
+    </div>
   }
   <div class="flex w-full gap-4 mt-2">
-    @if (loggedInUser()?.accessLevel !== 'AUTHER') {
     <button
       class="btn rounded-md !text-primary"
       matButton="filled"
@@ -151,88 +149,93 @@
       type="button"
       [ngClass]="{
         '!bg-primary !text-white': lastSelectedStatus === 'ALL',
-        '!bg-primary-superlight': lastSelectedStatus !== 'ALL'
+        '!bg-primary-superlight': lastSelectedStatus !== 'ALL',
       }"
       (click)="selectStatus('ALL')"
     >
       <mat-icon>format_list_bulleted</mat-icon>
       All
     </button>
-    <button
-      class="btn rounded-md !text-primary"
-      type="button"
-      matButton="filled"
-      matButton
-      [ngClass]="{
-        '!bg-primary !text-white': lastSelectedStatus === titleStatus.DRAFT,
-        '!bg-primary-superlight': lastSelectedStatus !== titleStatus.DRAFT
-      }"
-      (click)="selectStatus(titleStatus.DRAFT)"
-    >
-      <mat-icon>drafts</mat-icon>
+    @if (loggedInUser()?.accessLevel !== "AUTHER") {
+      <button
+        class="btn rounded-md !text-primary"
+        type="button"
+        matButton="filled"
+        matButton
+        [ngClass]="{
+          '!bg-primary !text-white': lastSelectedStatus === titleStatus.DRAFT,
+          '!bg-primary-superlight': lastSelectedStatus !== titleStatus.DRAFT,
+        }"
+        (click)="selectStatus(titleStatus.DRAFT)"
+      >
+        <mat-icon>drafts</mat-icon>
 
-      DRAFT
-    </button>
-    <button
-      class="btn rounded-md bg-primary-superlight !text-primary"
-      type="button"
-      matButton="filled"
-      matButton
-      [ngClass]="{
-        '!bg-primary !text-white': lastSelectedStatus === titleStatus.PENDING,
-        '!bg-primary-superlight': lastSelectedStatus !== titleStatus.PENDING
-      }"
-      (click)="selectStatus(titleStatus.PENDING)"
-    >
-      <mat-icon>hourglass_top</mat-icon>
+        DRAFT
+      </button>
+      <button
+        class="btn rounded-md bg-primary-superlight !text-primary"
+        type="button"
+        matButton="filled"
+        matButton
+        [ngClass]="{
+          '!bg-primary !text-white': lastSelectedStatus === titleStatus.PENDING,
+          '!bg-primary-superlight': lastSelectedStatus !== titleStatus.PENDING,
+        }"
+        (click)="selectStatus(titleStatus.PENDING)"
+      >
+        <mat-icon>hourglass_top</mat-icon>
 
-      PENDING
-    </button>
-    <button
-      class="btn rounded-md bg-primary-superlight !text-primary"
-      type="button"
-      matButton="filled"
-      matButton
-      [ngClass]="{
-        '!bg-primary !text-white': lastSelectedStatus === titleStatus.APPROVED,
-        '!bg-primary-superlight': lastSelectedStatus !== titleStatus.APPROVED
-      }"
-      (click)="selectStatus(titleStatus.APPROVED)"
-    >
-      <mat-icon>check_circle</mat-icon>
+        PENDING
+      </button>
+      <button
+        class="btn rounded-md bg-primary-superlight !text-primary"
+        type="button"
+        matButton="filled"
+        matButton
+        [ngClass]="{
+          '!bg-primary !text-white':
+            lastSelectedStatus === titleStatus.APPROVED,
+          '!bg-primary-superlight': lastSelectedStatus !== titleStatus.APPROVED,
+        }"
+        (click)="selectStatus(titleStatus.APPROVED)"
+      >
+        <mat-icon>check_circle</mat-icon>
 
-      APPROVED
-    </button>
-    <button
-      class="btn rounded-md bg-primary-superlight !text-primary"
-      type="button"
-      matButton="filled"
-      matButton
-      [ngClass]="{
-        '!bg-primary !text-white': lastSelectedStatus === titleStatus.REJECTED,
-        '!bg-primary-superlight': lastSelectedStatus !== titleStatus.REJECTED
-      }"
-      (click)="selectStatus(titleStatus.REJECTED)"
-    >
-      <mat-icon>cancel</mat-icon>
+        APPROVED
+      </button>
+      <button
+        class="btn rounded-md bg-primary-superlight !text-primary"
+        type="button"
+        matButton="filled"
+        matButton
+        [ngClass]="{
+          '!bg-primary !text-white':
+            lastSelectedStatus === titleStatus.REJECTED,
+          '!bg-primary-superlight': lastSelectedStatus !== titleStatus.REJECTED,
+        }"
+        (click)="selectStatus(titleStatus.REJECTED)"
+      >
+        <mat-icon>cancel</mat-icon>
 
-      REJECTED
-    </button>
-    <button
-      class="btn rounded-md bg-primary-superlight !text-primary"
-      type="button"
-      matButton="filled"
-      matButton
-      [ngClass]="{
-        '!bg-primary !text-white': lastSelectedStatus === titleStatus.SUBMITTED,
-        '!bg-primary-superlight': lastSelectedStatus !== titleStatus.SUBMITTED
-      }"
-      (click)="selectStatus(titleStatus.SUBMITTED)"
-    >
-      <mat-icon>send</mat-icon>
+        REJECTED
+      </button>
+      <button
+        class="btn rounded-md bg-primary-superlight !text-primary"
+        type="button"
+        matButton="filled"
+        matButton
+        [ngClass]="{
+          '!bg-primary !text-white':
+            lastSelectedStatus === titleStatus.SUBMITTED,
+          '!bg-primary-superlight':
+            lastSelectedStatus !== titleStatus.SUBMITTED,
+        }"
+        (click)="selectStatus(titleStatus.SUBMITTED)"
+      >
+        <mat-icon>send</mat-icon>
 
-      SUBMITTED
-    </button>
+        SUBMITTED
+      </button>
     }
     <button
       class="btn rounded-md bg-primary-superlight !text-primary"
@@ -241,7 +244,7 @@
       matButton
       [ngClass]="{
         '!bg-primary !text-white': lastSelectedStatus === titleStatus.DELETED,
-        '!bg-primary-superlight': lastSelectedStatus !== titleStatus.DELETED
+        '!bg-primary-superlight': lastSelectedStatus !== titleStatus.DELETED,
       }"
       (click)="selectStatus(titleStatus.DELETED)"
     >
@@ -266,79 +269,79 @@
   <!-- Mobile / Tablet Cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-6 lg:hidden">
     @for (item of dataSource.data; track $index) {
-    <div
-      class="bg-white rounded-2xl shadow-md border border-gray-200 p-5 flex flex-col gap-3 hover:shadow-lg transition"
-    >
-      <!-- Title & Status -->
-      <div class="flex justify-between items-start">
-        <div>
-          <h3 class="text-lg font-semibold text-primary">{{ item.name }}</h3>
-          <p class="text-sm text-gray-500">ISBN: {{ item.isbn }}</p>
+      <div
+        class="bg-white rounded-2xl shadow-md border border-gray-200 p-5 flex flex-col gap-3 hover:shadow-lg transition"
+      >
+        <!-- Title & Status -->
+        <div class="flex justify-between items-start">
+          <div>
+            <h3 class="text-lg font-semibold text-primary">{{ item.name }}</h3>
+            <p class="text-sm text-gray-500">ISBN: {{ item.isbn }}</p>
+          </div>
+
+          <span
+            class="px-3 py-1 text-xs rounded-full font-medium"
+            [ngClass]="{
+              'bg-green-100 text-green-700': item.status === 'APPROVED',
+              'bg-yellow-100 text-yellow-700': item.status === 'PENDING',
+              'bg-red-100 text-red-700': item.status === 'REJECTED',
+              'bg-gray-200 text-gray-700': item.status === 'DRAFT',
+            }"
+          >
+            {{ item.status }}
+          </span>
         </div>
 
-        <span
-          class="px-3 py-1 text-xs rounded-full font-medium"
-          [ngClass]="{
-            'bg-green-100 text-green-700': item.status === 'APPROVED',
-            'bg-yellow-100 text-yellow-700': item.status === 'PENDING',
-            'bg-red-100 text-red-700': item.status === 'REJECTED',
-            'bg-gray-200 text-gray-700': item.status === 'DRAFT'
-          }"
-        >
-          {{ item.status }}
-        </span>
+        <!-- Info Grid -->
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <p class="text-gray-400">Author</p>
+            <p class="font-medium">{{ item.authors }}</p>
+          </div>
+
+          <div>
+            <p class="text-gray-400">Launch</p>
+            <p class="font-medium">{{ item.launchDate | date }}</p>
+          </div>
+
+          <div>
+            <p class="text-gray-400">Books Sold</p>
+            <p class="font-medium">{{ item.booksSold }}</p>
+          </div>
+
+          <div>
+            <p class="text-gray-400">Distribution</p>
+            <p class="font-medium">{{ item.selectedDistributions }}</p>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button
+            class="bg-primary text-white rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
+            [routerLink]="['/titleSummary', item.id]"
+          >
+            <mat-icon class="text-sm">visibility</mat-icon>
+            View
+          </button>
+
+          <button
+            class="bg-gray-100 rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
+            [routerLink]="['/title', item.id]"
+          >
+            <mat-icon class="text-sm">edit</mat-icon>
+            Edit
+          </button>
+        </div>
       </div>
-
-      <!-- Info Grid -->
-      <div class="grid grid-cols-2 gap-3 text-sm">
-        <div>
-          <p class="text-gray-400">Author</p>
-          <p class="font-medium">{{ item.authors }}</p>
-        </div>
-
-        <div>
-          <p class="text-gray-400">Launch</p>
-          <p class="font-medium">{{ item.launchDate | date }}</p>
-        </div>
-
-        <div>
-          <p class="text-gray-400">Books Sold</p>
-          <p class="font-medium">{{ item.booksSold }}</p>
-        </div>
-
-        <div>
-          <p class="text-gray-400">Distribution</p>
-          <p class="font-medium">{{ item.selectedDistributions }}</p>
-        </div>
-      </div>
-
-      <!-- Actions -->
-      <div class="flex justify-end gap-2 pt-3 border-t">
-        <button
-          class="bg-primary text-white rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
-          [routerLink]="['/titleSummary', item.id]"
-        >
-          <mat-icon class="text-sm">visibility</mat-icon>
-          View
-        </button>
-
-        <button
-          class="bg-gray-100 rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
-          [routerLink]="['/title', item.id]"
-        >
-          <mat-icon class="text-sm">edit</mat-icon>
-          Edit
-        </button>
-      </div>
-    </div>
     }
   </div>
 
   <div class="flex items-center justify-between gap-4 mt-4">
     <div class="flex items-center gap-2">
       <span class="text-sm text-[var(--text-secondary)]">
-        {{ "page" | translate }} {{ filter().page || 1 }}
-        {{ "of" | translate }} {{ lastPage() }}
+        {{ "page" | translate }} {{ filter().page || 1 }} {{ "of" | translate }}
+        {{ lastPage() }}
       </span>
       <span class="text-sm text-[var(--text-secondary)]">|</span>
       <span class="text-sm text-[var(--text-secondary)]"
@@ -357,50 +360,51 @@
       </select>
     </div>
     @if (lastPage() > 1) {
-    <div class="flex items-center gap-2">
-      <button
-        class="btn rounded-md !text-primary"
-        matButton="filled"
-        matButton
-        type="button"
-        [disabled]="(filter().page || 1) === 1"
-        (click)="previousPage()"
-      >
-        <mat-icon>chevron_left</mat-icon>
-        {{ "previous" | translate }}
-      </button>
-      <div class="flex items-center gap-1">
-        @for (pageNum of getPageNumbers(); track pageNum) { @if (pageNum === -1)
-        {
-        <span class="px-2 text-[var(--text-secondary)]">...</span>
-        } @else {
+      <div class="flex items-center gap-2">
         <button
-          class="btn rounded-md !text-primary min-w-[40px]"
+          class="btn rounded-md !text-primary"
           matButton="filled"
           matButton
           type="button"
-          [ngClass]="{
-            '!bg-primary !text-white': (filter().page || 1) === pageNum,
-            '!bg-primary-superlight': (filter().page || 1) !== pageNum
-          }"
-          (click)="goToPage(pageNum)"
+          [disabled]="(filter().page || 1) === 1"
+          (click)="previousPage()"
         >
-          {{ pageNum }}
+          <mat-icon>chevron_left</mat-icon>
+          {{ "previous" | translate }}
         </button>
-        } }
+        <div class="flex items-center gap-1">
+          @for (pageNum of getPageNumbers(); track pageNum) {
+            @if (pageNum === -1) {
+              <span class="px-2 text-[var(--text-secondary)]">...</span>
+            } @else {
+              <button
+                class="btn rounded-md !text-primary min-w-[40px]"
+                matButton="filled"
+                matButton
+                type="button"
+                [ngClass]="{
+                  '!bg-primary !text-white': (filter().page || 1) === pageNum,
+                  '!bg-primary-superlight': (filter().page || 1) !== pageNum,
+                }"
+                (click)="goToPage(pageNum)"
+              >
+                {{ pageNum }}
+              </button>
+            }
+          }
+        </div>
+        <button
+          class="btn rounded-md !text-primary"
+          matButton="filled"
+          matButton
+          type="button"
+          [disabled]="(filter().page || 1) === lastPage()"
+          (click)="nextPage()"
+        >
+          {{ "next" | translate }}
+          <mat-icon>chevron_right</mat-icon>
+        </button>
       </div>
-      <button
-        class="btn rounded-md !text-primary"
-        matButton="filled"
-        matButton
-        type="button"
-        [disabled]="(filter().page || 1) === lastPage()"
-        (click)="nextPage()"
-      >
-        {{ "next" | translate }}
-        <mat-icon>chevron_right</mat-icon>
-      </button>
-    </div>
     }
   </div>
   <ng-template #actionButtons let-element>
@@ -414,71 +418,76 @@
       >
         <mat-icon class="!text-white">visibility</mat-icon>
       </button>
-      @if(loggedInUser()?.accessLevel === 'PUBLISHER') { @if(element.status ===
-      'APPROVED') {
-      <button
-        class="!bg-primary"
-        mat-icon-button
-        [routerLink]="['/title', element.id]"
-        [title]="'raiseupdateticket' | translate"
-      >
-        <mat-icon class="!text-white">support_agent</mat-icon>
-      </button>
-      } @else if(element.status !== 'REJECTED') {
-      <button
-        class="!bg-primary"
-        mat-icon-button
-        [routerLink]="['/title', element.id]"
-        [title]="'edit' | translate"
-      >
-        <mat-icon class="!text-white">edit</mat-icon>
-      </button>
-      } } @else if(loggedInUser()?.accessLevel !== 'PUBLISHER' &&
-      loggedInUser()?.accessLevel !== 'AUTHER') {
-      <button
-        class="!bg-primary"
-        mat-icon-button
-        [routerLink]="['/title', element.id]"
-        [title]="'edit' | translate"
-      >
-        <mat-icon class="!text-white">edit</mat-icon>
-      </button>
-      } @if(loggedInUser()?.accessLevel === 'SUPERADMIN') { @if (element.status
-      === 'PENDING') {
-      <button
-        (click)="onClickApprove(element)"
-        title="Approve"
-        class="!bg-green-700"
-        mat-icon-button
-      >
-        <mat-icon class="!text-white">thumb_up</mat-icon>
-      </button>
-      <button
-        (click)="onClickReject(element)"
-        title="Reject"
-        class="!bg-accent"
-        mat-icon-button
-      >
-        <mat-icon class="!text-white">thumb_down</mat-icon>
-      </button>
-      } @if (element.status === 'APPROVED') {
-      <button
-        (click)="onClickShareTitle(element)"
-        [title]="'share' | translate"
-        class="!bg-primary"
-        mat-icon-button
-      >
-        <mat-icon class="!text-white">share</mat-icon>
-      </button>
+      @if (loggedInUser()?.accessLevel === "PUBLISHER") {
+        @if (element.status === "APPROVED") {
+          <button
+            class="!bg-primary"
+            mat-icon-button
+            [routerLink]="['/title', element.id]"
+            [title]="'raiseupdateticket' | translate"
+          >
+            <mat-icon class="!text-white">support_agent</mat-icon>
+          </button>
+        } @else if (element.status !== "REJECTED") {
+          <button
+            class="!bg-primary"
+            mat-icon-button
+            [routerLink]="['/title', element.id]"
+            [title]="'edit' | translate"
+          >
+            <mat-icon class="!text-white">edit</mat-icon>
+          </button>
+        }
+      } @else if (
+        loggedInUser()?.accessLevel !== "PUBLISHER" &&
+        loggedInUser()?.accessLevel !== "AUTHER"
+      ) {
+        <button
+          class="!bg-primary"
+          mat-icon-button
+          [routerLink]="['/title', element.id]"
+          [title]="'edit' | translate"
+        >
+          <mat-icon class="!text-white">edit</mat-icon>
+        </button>
       }
+      @if (loggedInUser()?.accessLevel === "SUPERADMIN") {
+        @if (element.status === "PENDING") {
+          <button
+            (click)="onClickApprove(element)"
+            title="Approve"
+            class="!bg-green-700"
+            mat-icon-button
+          >
+            <mat-icon class="!text-white">thumb_up</mat-icon>
+          </button>
+          <button
+            (click)="onClickReject(element)"
+            title="Reject"
+            class="!bg-accent"
+            mat-icon-button
+          >
+            <mat-icon class="!text-white">thumb_down</mat-icon>
+          </button>
+        }
+        @if (element.status === "APPROVED") {
+          <button
+            (click)="onClickShareTitle(element)"
+            [title]="'share' | translate"
+            class="!bg-primary"
+            mat-icon-button
+          >
+            <mat-icon class="!text-white">share</mat-icon>
+          </button>
+        }
 
-      <button
-        (click)="onClickDeleteTitle(element)"
-        class="!bg-accent"
-        mat-icon-button
-      >
-        <mat-icon class="!text-white">delete</mat-icon>
-      </button>
+        <button
+          (click)="onClickDeleteTitle(element)"
+          class="!bg-accent"
+          mat-icon-button
+        >
+          <mat-icon class="!text-white">delete</mat-icon>
+        </button>
       }
     </div>
   </ng-template>

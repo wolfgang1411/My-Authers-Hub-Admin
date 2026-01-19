@@ -68,4 +68,6 @@
   border-color: #f44336;
 }
 
-
+.mobile-select-panel {
+  max-height: 60vh;
+}

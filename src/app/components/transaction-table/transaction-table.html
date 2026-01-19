@@ -1,13 +1,83 @@
 <div class="flex flex-col flex-grow gap-4">
-  <app-list-table
-    class="pt-6"
-    [dataSource]="dataSource"
-    [displayedColumns]="displayedColumns"
-    [actionTemplate]="actionButtons"
-    [isSortable]="isSortable()"
-    (sortChange)="sortChange.emit($event)"
-  >
-  </app-list-table>
+  <div class="hidden lg:block">
+    <app-list-table
+      class="pt-6"
+      [dataSource]="dataSource"
+      [displayedColumns]="displayedColumns"
+      [actionTemplate]="actionButtons"
+      [isSortable]="isSortable()"
+      (sortChange)="sortChange.emit($event)"
+    >
+    </app-list-table>
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden mt-4">
+    @for (tx of dataSource.data; track tx.id) {
+      <div
+        class="bg-white rounded-xl border border-[var(--primary-superlight)] shadow-sm p-4 flex flex-col gap-3"
+      >
+        <!-- Header -->
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs text-gray-400">Transaction ID</p>
+            <p class="font-semibold text-primary">#{{ tx.id }}</p>
+          </div>
+
+          <span
+            class="px-2 py-1 text-xs rounded-full font-medium"
+            [ngClass]="{
+              'bg-green-100 text-green-700': tx.status === 'SUCCESS',
+              'bg-yellow-100 text-yellow-700': tx.status === 'PENDING',
+              'bg-red-100 text-red-700': tx.status === 'FAILED',
+            }"
+          >
+            {{ tx.status }}
+          </span>
+        </div>
+
+        <!-- Details -->
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <p class="text-gray-400">Amount</p>
+            <p class="font-medium">
+              {{ tx.amount | currency: "INR" }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-gray-400">Payment</p>
+            <p class="font-medium">
+              {{ tx.paymentMethod || "-" }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-gray-400">Date</p>
+            <p class="font-medium">
+              {{ tx.createdAt | date: "short" }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-gray-400">Reference</p>
+            <p class="font-medium break-all">
+              {{ tx.referenceId || "-" }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Action -->
+        <div class="flex justify-end pt-2 border-t">
+          <button
+            [routerLink]="['/transactions', tx.id]"
+            class="bg-primary text-white rounded-lg px-4 py-1.5 text-sm"
+          >
+            View
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
   <ng-template #actionButtons let-element>
     <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
       <button

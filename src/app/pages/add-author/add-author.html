@@ -9,131 +9,116 @@
   <!-- <app-back></app-back> -->
 </div>
 
-<mat-tab-group
-  [selectedIndex]="currentTabIndex()"
-  (selectedIndexChange)="onTabChange($event)"
-  class="my-3 sm:my-4"
->
-  <!-- Tab 0: Basic Details & Social Media -->
-  <mat-tab>
-    <ng-template mat-tab-label>
-      <span class="flex items-center gap-2">
-        <mat-icon>person</mat-icon>
-        Basic Details
-      </span>
-    </ng-template>
-
-    <div class="mx-auto py-4 sm:py-6 space-y-6 sm:space-y-10">
-      <form [formGroup]="authorFormGroup">
-        <div
-          class="bg-white shadow-sm border rounded-xl px-4 sm:px-6 py-5 sm:py-8"
-        >
-          <div class="flex flex-col lg:flex-row gap-6 lg:gap-10">
-            <!-- ⬅ Profile Image Upload -->
-            <div class="flex flex-col items-center lg:items-start shrink-0">
-              <app-upload-file
-                [prefillMedia]="mediaControl.value ?? null"
-                (mediaAdded)="onMediaAdded($event)"
-              ></app-upload-file>
-
-              <p
-                class="mt-2 text-[11px] text-gray-500 text-center leading-tight"
-              >
-                Upload Author Profile Image <br />
-                Recommended 300×300px – Max 2MB <br />
-                JPG · PNG · GIF Supported
-              </p>
-            </div>
-
-            <!-- 🔹 Author Fields -->
-            <div
-              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full items-start"
-            >
-              <mat-form-field class="w-full">
-                <mat-label>{{ "authorname" | translate }}</mat-label>
-                <input
-                  matInput
-                  placeholder="Author Name"
-                  formControlName="name"
-                />
-              </mat-form-field>
-
-              <mat-form-field class="w-full">
-                <mat-label>{{ "emailid" | translate }}</mat-label>
-                <input
-                  matInput
-                  placeholder="author@gmail.com"
-                  formControlName="email"
-                />
-              </mat-form-field>
-
-              <mat-form-field class="w-full">
-                <mat-label>{{ "username" | translate }}</mat-label>
-                <input
-                  matInput
-                  placeholder="username"
-                  formControlName="username"
-                />
-              </mat-form-field>
-
-              <div class="w-full">
-                <ngx-material-intl-tel-input
-                  matInput
-                  [preferredCountries]="['IN']"
-                  [appearance]="'fill'"
-                  [fieldControl]="authorFormGroup.controls.phoneNumber"
-                  [autoSelectedCountry]="countryISO.India"
-                  [autoSelectCountry]="true"
-                  [hidePhoneIcon]="true"
-                  [iconMakeCall]="false"
-                  [autoIpLookup]="false"
-                  [mainLabel]="' '"
-                  [enablePlaceholder]="false"
-                  class="tel-input"
-                />
-              </div>
-
-              <mat-form-field class="md:col-span-3 w-full">
-                <mat-label>{{ "about" | translate }}</mat-label>
-                <textarea
-                  matInput
-                  formControlName="about"
-                  rows="4"
-                  placeholder="Short biography..."
-                ></textarea>
-              </mat-form-field>
-            </div>
-          </div>
-        </div>
-      </form>
-
-      <!-- 🔷 SOCIAL MEDIA LINKS -->
+<ng-template #basicDetailsTpl>
+  <div class="mx-auto py-4 sm:py-6 space-y-6 sm:space-y-10">
+    <form [formGroup]="authorFormGroup">
       <div
         class="bg-white shadow-sm border rounded-xl px-4 sm:px-6 py-5 sm:py-8"
       >
-        <div
-          class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
-        >
-          <h2 class="text-lg font-semibold">
-            {{ "addsocialmedialinks" | translate }}
-          </h2>
+        <div class="flex flex-col lg:flex-row gap-6 lg:gap-10">
+          <!-- ⬅ Profile Image Upload -->
+          <div class="flex flex-col items-center lg:items-start shrink-0">
+            <app-upload-file
+              [prefillMedia]="mediaControl.value ?? null"
+              (mediaAdded)="onMediaAdded($event)"
+            ></app-upload-file>
 
-          <button
-            mat-raised-button
-            color="primary"
-            (click)="addSocialMedia()"
-            [disabled]="isAllSelected()"
-            class="!px-4 flex gap-1 items-center"
+            <p class="mt-2 text-[11px] text-gray-500 text-center leading-tight">
+              Upload Author Profile Image <br />
+              Recommended 300×300px – Max 2MB <br />
+              JPG · PNG · GIF Supported
+            </p>
+          </div>
+
+          <!-- 🔹 Author Fields -->
+          <div
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full items-start"
           >
-            <mat-icon>add</mat-icon>
-            {{ "addmore" | translate }}
-          </button>
-        </div>
+            <mat-form-field class="w-full">
+              <mat-label>{{ "authorname" | translate }}</mat-label>
+              <input
+                matInput
+                placeholder="Author Name"
+                formControlName="name"
+              />
+            </mat-form-field>
 
-        <form [formGroup]="authorSocialMediaGroup" class="mt-6">
-          <div formArrayName="socialMedia" class="space-y-4">
-            @for (group of authorSocialMediaGroup.controls.socialMedia.controls;
-            track $index) {
+            <mat-form-field class="w-full">
+              <mat-label>{{ "emailid" | translate }}</mat-label>
+              <input
+                matInput
+                placeholder="author@gmail.com"
+                formControlName="email"
+              />
+            </mat-form-field>
+
+            <mat-form-field class="w-full">
+              <mat-label>{{ "username" | translate }}</mat-label>
+              <input
+                matInput
+                placeholder="username"
+                formControlName="username"
+              />
+            </mat-form-field>
+
+            <div class="w-full">
+              <ngx-material-intl-tel-input
+                matInput
+                [preferredCountries]="['IN']"
+                [appearance]="'fill'"
+                [fieldControl]="authorFormGroup.controls.phoneNumber"
+                [autoSelectedCountry]="countryISO.India"
+                [autoSelectCountry]="true"
+                [hidePhoneIcon]="true"
+                [iconMakeCall]="false"
+                [autoIpLookup]="false"
+                [mainLabel]="' '"
+                [enablePlaceholder]="false"
+                class="tel-input"
+              />
+            </div>
+
+            <mat-form-field class="md:col-span-3 w-full">
+              <mat-label>{{ "about" | translate }}</mat-label>
+              <textarea
+                matInput
+                formControlName="about"
+                rows="4"
+                placeholder="Short biography..."
+              ></textarea>
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <!-- 🔷 SOCIAL MEDIA LINKS -->
+    <div class="bg-white shadow-sm border rounded-xl px-4 sm:px-6 py-5 sm:py-8">
+      <div
+        class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
+      >
+        <h2 class="text-lg font-semibold">
+          {{ "addsocialmedialinks" | translate }}
+        </h2>
+
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="addSocialMedia()"
+          [disabled]="isAllSelected()"
+          class="!px-4 flex gap-1 items-center"
+        >
+          <mat-icon>add</mat-icon>
+          {{ "addmore" | translate }}
+        </button>
+      </div>
+
+      <form [formGroup]="authorSocialMediaGroup" class="mt-6">
+        <div formArrayName="socialMedia" class="space-y-4">
+          @for (
+            group of authorSocialMediaGroup.controls.socialMedia.controls;
+            track $index
+          ) {
             <div
               class="bg-gray-50 border rounded-lg p-4"
               [formGroupName]="$index"
@@ -144,76 +129,64 @@
                 [index]="$index"
               ></app-social-media>
             </div>
-            }
-          </div>
-        </form>
-      </div>
+          }
+        </div>
+      </form>
     </div>
-  </mat-tab>
-
-  <!-- Tab 1: Address -->
-  <mat-tab>
-    <ng-template mat-tab-label>
-      <span class="flex items-center gap-2">
-        <mat-icon>location_on</mat-icon>
-        Address
-      </span>
-    </ng-template>
-
-    <form [formGroup]="authorAddressDetails">
-      <div
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-3 sm:my-4"
-      >
-        <mat-form-field>
-          <mat-label>{{ "country" | translate }}</mat-label>
-          <mat-select formControlName="country" required>
-            <mat-option value="">
-              {{ "selectcountry" | translate }}
-            </mat-option>
-            @for (item of countries; track $index) {
-
+  </div>
+</ng-template>
+<ng-template #addressTpl>
+  <form [formGroup]="authorAddressDetails">
+    <div
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-3 sm:my-4"
+    >
+      <mat-form-field>
+        <mat-label>{{ "country" | translate }}</mat-label>
+        <mat-select formControlName="country" required>
+          <mat-option value="">
+            {{ "selectcountry" | translate }}
+          </mat-option>
+          @for (item of countries; track $index) {
             <mat-option [value]="item.isoCode">{{ item.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ "state" | translate }}</mat-label>
-          <mat-select formControlName="state" required>
-            <mat-option value="">
-              {{ "selectstate" | translate }}
-            </mat-option>
-            @for (item of states; track $index) {
-
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ "state" | translate }}</mat-label>
+        <mat-select formControlName="state" required>
+          <mat-option value="">
+            {{ "selectstate" | translate }}
+          </mat-option>
+          @for (item of states; track $index) {
             <mat-option [value]="item.isoCode">{{ item.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ "city" | translate }}</mat-label>
-          <mat-select formControlName="city" required>
-            <mat-option value="">
-              {{ "selectcity" | translate }}
-            </mat-option>
-            @for (item of cities; track $index) {
-
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ "city" | translate }}</mat-label>
+        <mat-select formControlName="city" required>
+          <mat-option value="">
+            {{ "selectcity" | translate }}
+          </mat-option>
+          @for (item of cities; track $index) {
             <mat-option [value]="item.name">{{ item.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ "address" | translate }}</mat-label>
-          <input
-            matInput
-            formControlName="address"
-            placeholder="Ex. 1 Main St, New York, NY"
-            required
-          />
-        </mat-form-field>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ "address" | translate }}</mat-label>
+        <input
+          matInput
+          formControlName="address"
+          placeholder="Ex. 1 Main St, New York, NY"
+          required
+        />
+      </mat-form-field>
 
-        <mat-form-field>
-          <mat-label>{{ "pincode" | translate }}</mat-label>
-          <input matInput formControlName="pincode" placeholder="" required />
-          @if (verifyingPin()) {
+      <mat-form-field>
+        <mat-label>{{ "pincode" | translate }}</mat-label>
+        <input matInput formControlName="pincode" placeholder="" required />
+        @if (verifyingPin()) {
           <span matSuffix style="padding-right: 8px">
             <mat-spinner
               diameter="16"
@@ -221,121 +194,146 @@
               style="display: inline-block"
             ></mat-spinner>
           </span>
-          } @if
-          (authorAddressDetails.controls.pincode.hasError('invalidPincode')) {
+        }
+        @if (authorAddressDetails.controls.pincode.hasError("invalidPincode")) {
           <mat-error>
             {{ "invalidpincode" | translate }}
           </mat-error>
-          }
-        </mat-form-field>
-      </div>
-    </form>
-  </mat-tab>
-
-  <!-- Tab 2: Bank Details -->
-  <mat-tab>
-    <ng-template mat-tab-label>
-      <span class="flex items-center gap-2">
-        <mat-icon>account_balance</mat-icon>
-        Bank Details
-      </span>
-    </ng-template>
-
-    <form [formGroup]="authorBankDetails">
-      <div
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-3 sm:my-4"
-      >
-        <mat-form-field>
-          <mat-label>{{ "bankname" | translate }}</mat-label>
-          <mat-select formControlName="name" required>
-            <mat-option value="">Select Bank</mat-option>
-            @for (bank of bankOptions(); track $index) {
-            <mat-option [value]="bank.name">{{ bank.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ "bankaccnumber" | translate }}</mat-label>
-          <input
-            matInput
-            formControlName="accountNo"
-            placeholder="78************56"
-            required
-          />
-          @if (authorBankDetails.get('accountNo')?.hasError('required')) {
-          <mat-error> Account number is required </mat-error>
-          }
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>Re-enter Account Number</mat-label>
-          <input
-            matInput
-            type="password"
-            formControlName="confirmAccountNo"
-            placeholder="**************"
-            required
-          />
-          @if (authorBankDetails.get('confirmAccountNo')?.hasError('required'))
-          {
-          <mat-error> Please re-enter your account number </mat-error>
-          }
-          @if(authorBankDetails.get('confirmAccountNo')?.hasError('notMatching')
-          ){
-          <mat-error> Account numbers do not match </mat-error>
-          }
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ "accountholdername" | translate }}</mat-label>
-          <input
-            matInput
-            formControlName="accountHolderName"
-            placeholder="M Singh"
-            required
-          />
-        </mat-form-field>
-        <mat-form-field appearance="fill">
-          <mat-label>IFSC Code</mat-label>
-          <input
-            matInput
-            formControlName="ifsc"
-            placeholder="e.g. HDFC0001234"
-            required
-          />
-        </mat-form-field>
-        @if (verifying) {
-        <div class="text-sm text-gray-500 mt-2">Verifying IFSC code...</div>
         }
-        <mat-form-field>
-          <mat-label>{{ "panCardNo" | translate }}</mat-label>
-          <input matInput formControlName="panCardNo" placeholder="" />
-          @if (authorBankDetails.get('panCardNo')?.hasError('invalidPan')) {
-          <mat-error> Enter a valid PAN number (e.g., ABCDE1234F) </mat-error>
+      </mat-form-field>
+    </div>
+  </form>
+</ng-template>
+<ng-template #bankDetailsTpl>
+  <form [formGroup]="authorBankDetails">
+    <div
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-3 sm:my-4"
+    >
+      <mat-form-field>
+        <mat-label>{{ "bankname" | translate }}</mat-label>
+        <mat-select formControlName="name" required>
+          <mat-option value="">Select Bank</mat-option>
+          @for (bank of bankOptions(); track $index) {
+            <mat-option [value]="bank.name">{{ bank.name }}</mat-option>
           }
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>GST Number</mat-label>
-          <input
-            matInput
-            formControlName="gstNumber"
-            placeholder="e.g., 27ABCDE1234F1Z5"
-          />
-          @if (authorBankDetails.get('gstNumber')?.hasError('invalidGst')) {
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ "bankaccnumber" | translate }}</mat-label>
+        <input
+          matInput
+          formControlName="accountNo"
+          placeholder="78************56"
+          required
+        />
+        @if (authorBankDetails.get("accountNo")?.hasError("required")) {
+          <mat-error> Account number is required </mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Re-enter Account Number</mat-label>
+        <input
+          matInput
+          type="password"
+          formControlName="confirmAccountNo"
+          placeholder="**************"
+          required
+        />
+        @if (authorBankDetails.get("confirmAccountNo")?.hasError("required")) {
+          <mat-error> Please re-enter your account number </mat-error>
+        }
+        @if (
+          authorBankDetails.get("confirmAccountNo")?.hasError("notMatching")
+        ) {
+          <mat-error> Account numbers do not match </mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ "accountholdername" | translate }}</mat-label>
+        <input
+          matInput
+          formControlName="accountHolderName"
+          placeholder="M Singh"
+          required
+        />
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>IFSC Code</mat-label>
+        <input
+          matInput
+          formControlName="ifsc"
+          placeholder="e.g. HDFC0001234"
+          required
+        />
+      </mat-form-field>
+      @if (verifying) {
+        <div class="text-sm text-gray-500 mt-2">Verifying IFSC code...</div>
+      }
+      <mat-form-field>
+        <mat-label>{{ "panCardNo" | translate }}</mat-label>
+        <input matInput formControlName="panCardNo" placeholder="" />
+        @if (authorBankDetails.get("panCardNo")?.hasError("invalidPan")) {
+          <mat-error> Enter a valid PAN number (e.g., ABCDE1234F) </mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>GST Number</mat-label>
+        <input
+          matInput
+          formControlName="gstNumber"
+          placeholder="e.g., 27ABCDE1234F1Z5"
+        />
+        @if (authorBankDetails.get("gstNumber")?.hasError("invalidGst")) {
           <mat-error>
             Enter a valid GST number (e.g., 27ABCDE1234F1Z5)
           </mat-error>
-          }
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ "accountType" | translate }}</mat-label>
-          <mat-select formControlName="accountType" placeholder="" required>
-            <mat-option value="SAVING">SAVING</mat-option>
-            <mat-option value="CURRENT">CURRENT</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
-    </form>
-  </mat-tab>
-</mat-tab-group>
+        }
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ "accountType" | translate }}</mat-label>
+        <mat-select formControlName="accountType" placeholder="" required>
+          <mat-option value="SAVING">SAVING</mat-option>
+          <mat-option value="CURRENT">CURRENT</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </form>
+</ng-template>
+
+@if (!isMobile()) {
+  <mat-tab-group
+    [selectedIndex]="currentTabIndex()"
+    (selectedIndexChange)="onTabChange($event)"
+    class="my-3 sm:my-4"
+  >
+    <mat-tab label="Basic Details">
+      <ng-container *ngTemplateOutlet="basicDetailsTpl"></ng-container>
+    </mat-tab>
+
+    <mat-tab label="Address">
+      <ng-container *ngTemplateOutlet="addressTpl"></ng-container>
+    </mat-tab>
+
+    <mat-tab label="Bank Details">
+      <ng-container *ngTemplateOutlet="bankDetailsTpl"></ng-container>
+    </mat-tab>
+  </mat-tab-group>
+}
+@if (isMobile()) {
+  <div class="space-y-4 mt-4">
+    <app-mobile-section title="Basic Details" [defaultOpen]="true">
+      <ng-container *ngTemplateOutlet="basicDetailsTpl"></ng-container>
+    </app-mobile-section>
+
+    <app-mobile-section title="Address">
+      <ng-container *ngTemplateOutlet="addressTpl"></ng-container>
+    </app-mobile-section>
+
+    <app-mobile-section title="Bank Details">
+      <ng-container *ngTemplateOutlet="bankDetailsTpl"></ng-container>
+    </app-mobile-section>
+  </div>
+}
 
 <!-- Navigation Buttons -->
 <div

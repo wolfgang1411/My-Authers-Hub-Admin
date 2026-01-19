@@ -1,12 +1,15 @@
 <div class="flex flex-col flex-grow gap-4">
-  <div class="flex items-center justify-between">
+  <div
+    class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+  >
     <h3 class="heading">
       {{ (blogId() ? "editblog" : "addblog") | translate }}
     </h3>
+
     <button
       matButton
       [routerLink]="['/blogs']"
-      class="!text-primary"
+      class="!text-primary self-start sm:self-auto"
     >
       <mat-icon>arrow_back</mat-icon>
       {{ "back" | translate }}
@@ -23,7 +26,10 @@
         <mat-form-field appearance="fill" class="w-full">
           <mat-label>{{ "title" | translate }}</mat-label>
           <input matInput formControlName="title" (blur)="generateSlug()" />
-          @if (blogForm.controls.title.hasError('required') && blogForm.controls.title.touched) {
+          @if (
+            blogForm.controls.title.hasError("required") &&
+            blogForm.controls.title.touched
+          ) {
             <mat-error>{{ "titleisrequired" | translate }}</mat-error>
           }
         </mat-form-field>
@@ -31,21 +37,32 @@
         <mat-form-field appearance="fill" class="w-full">
           <mat-label>{{ "slug" | translate }}</mat-label>
           <input matInput formControlName="slug" />
-          @if (blogForm.controls.slug.hasError('required') && blogForm.controls.slug.touched) {
+          @if (
+            blogForm.controls.slug.hasError("required") &&
+            blogForm.controls.slug.touched
+          ) {
             <mat-error>{{ "slugisrequired" | translate }}</mat-error>
           }
         </mat-form-field>
       </div>
 
       <mat-form-field appearance="fill" class="w-full">
-        <mat-label>{{ "subtitle" | translate }} ({{ "optional" | translate }})</mat-label>
+        <mat-label
+          >{{ "subtitle" | translate }} ({{
+            "optional" | translate
+          }})</mat-label
+        >
         <input matInput formControlName="subTitle" />
       </mat-form-field>
 
       @if (isSuperAdmin()) {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <mat-form-field appearance="fill" class="w-full">
-            <mat-label>{{ "selectauthor" | translate }} ({{ "optional" | translate }})</mat-label>
+            <mat-label
+              >{{ "selectauthor" | translate }} ({{
+                "optional" | translate
+              }})</mat-label
+            >
             <mat-select formControlName="authorId">
               <mat-option>
                 <ngx-mat-select-search
@@ -64,13 +81,19 @@
                 {{ "none" | translate }}
               </mat-option>
               @for (option of filteredAuthorOptions(); track option.value) {
-                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                <mat-option [value]="option.value">{{
+                  option.label
+                }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
 
           <mat-form-field appearance="fill" class="w-full">
-            <mat-label>{{ "selectpublisher" | translate }} ({{ "optional" | translate }})</mat-label>
+            <mat-label
+              >{{ "selectpublisher" | translate }} ({{
+                "optional" | translate
+              }})</mat-label
+            >
             <mat-select formControlName="publisherId">
               <mat-option>
                 <ngx-mat-select-search
@@ -89,7 +112,9 @@
                 {{ "none" | translate }}
               </mat-option>
               @for (option of filteredPublisherOptions(); track option.value) {
-                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                <mat-option [value]="option.value">{{
+                  option.label
+                }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
@@ -97,8 +122,14 @@
       }
 
       <mat-form-field appearance="fill" class="w-full">
-        <mat-label>{{ "about" | translate }} ({{ "optional" | translate }})</mat-label>
-        <mat-select formControlName="titleIds" multiple>
+        <mat-label
+          >{{ "about" | translate }} ({{ "optional" | translate }})</mat-label
+        >
+        <mat-select
+          formControlName="titleIds"
+          multiple
+          panelClass="mobile-select-panel"
+        >
           <mat-option>
             <ngx-mat-select-search
               [formControl]="titleSearchControl"
@@ -119,7 +150,9 @@
       </mat-form-field>
 
       <div class="flex flex-col">
-        <label class="text-sm font-medium mb-2">{{ "content" | translate }}</label>
+        <label class="text-sm font-medium mb-2">{{
+          "content" | translate
+        }}</label>
         <div class="ckeditor-wrapper">
           <ckeditor
             [editor]="Editor"
@@ -128,36 +161,51 @@
             (change)="onEditorChange($event)"
           ></ckeditor>
         </div>
-        @if (blogForm.controls.content.hasError('required') && blogForm.controls.content.touched) {
-          <mat-error class="mt-1">{{ "contentisrequired" | translate }}</mat-error>
+        @if (
+          blogForm.controls.content.hasError("required") &&
+          blogForm.controls.content.touched
+        ) {
+          <mat-error class="mt-1">{{
+            "contentisrequired" | translate
+          }}</mat-error>
         }
       </div>
 
-      <div class="flex gap-3 justify-end mt-4">
-        <button
-          matButton
-          type="button"
-          [routerLink]="['/blogs']"
-        >
+      <div class="flex flex-col sm:flex-row gap-3 justify-end mt-6">
+        <button matButton type="button" [routerLink]="['/blogs']">
           {{ "cancel" | translate }}
         </button>
         <button
           matButton
           type="button"
           class="!text-primary"
-          [disabled]="isSavingAsDraft() || isSaving() || isSavingAsArchive() || blogForm.invalid"
+          [disabled]="
+            isSavingAsDraft() ||
+            isSaving() ||
+            isSavingAsArchive() ||
+            blogForm.invalid
+          "
           (click)="isPublishedBlog() ? saveAsArchive() : saveAsDraft()"
         >
           @if (isPublishedBlog() ? isSavingAsArchive() : isSavingAsDraft()) {
             <mat-spinner diameter="20" class="mr-2"></mat-spinner>
           }
-          {{ isPublishedBlog() ? ("saveasarchive" | translate) : ("saveasdraft" | translate) }}
+          {{
+            isPublishedBlog()
+              ? ("saveasarchive" | translate)
+              : ("saveasdraft" | translate)
+          }}
         </button>
         <button
           mat-flat-button
           type="button"
           class="!bg-primary !text-white"
-          [disabled]="isSavingAsDraft() || isSaving() || isSavingAsArchive() || blogForm.invalid"
+          [disabled]="
+            isSavingAsDraft() ||
+            isSaving() ||
+            isSavingAsArchive() ||
+            blogForm.invalid
+          "
           (click)="saveAndPublish()"
         >
           @if (isSaving()) {
@@ -169,4 +217,3 @@
     </form>
   }
 </div>
-
