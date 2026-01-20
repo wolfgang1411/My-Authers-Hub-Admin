@@ -16,7 +16,11 @@ import { Back } from '../../components/back/back';
 import { Title, TitleFilter } from '../../interfaces/Titles';
 import { EarningFilter } from '../../interfaces';
 import { Author, AuthorFilter } from '../../interfaces/Authors';
-import { Publishers, PublishingPoints, PublisherFilter } from '../../interfaces/Publishers';
+import {
+  Publishers,
+  PublishingPoints,
+  PublisherFilter,
+} from '../../interfaces/Publishers';
 import { Royalty } from '../../interfaces/Royalty';
 import { Wallet } from '../../interfaces/Wallet';
 import { AuthorsService } from '../authors/authors-service';
@@ -39,6 +43,7 @@ import { SafeUrlPipe } from 'src/app/pipes/safe-url-pipe';
 import { BuyAssignPointsButton } from '../../components/buy-assign-points-button/buy-assign-points-button';
 import { formatIsbn } from 'src/app/shared/utils/isbn.utils';
 import { UserService } from 'src/app/services/user';
+import { MobileSection } from 'src/app/components/mobile-section/mobile-section';
 @Component({
   selector: 'app-publisher-details',
   imports: [
@@ -54,6 +59,7 @@ import { UserService } from 'src/app/services/user';
     MatTooltipModule,
     SafeUrlPipe,
     BuyAssignPointsButton,
+    MobileSection,
   ],
   templateUrl: './publisher-details.html',
   styleUrl: './publisher-details.css',
@@ -72,7 +78,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
     private titleService: TitleService,
     private salesService: SalesService,
     private translateService: TranslateService,
-    public staticValueService: StaticValuesService
+    public staticValueService: StaticValuesService,
   ) {
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(({ id }) => {
       this.publisherId = id;
@@ -99,7 +105,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
 
   distributionType = computed(() => {
     return Object.keys(
-      this.staticValueService.staticValues()?.DistributionType || {}
+      this.staticValueService.staticValues()?.DistributionType || {},
     ) as DistributionType[];
   });
 
@@ -111,16 +117,21 @@ export class PublisherDetails implements OnInit, OnDestroy {
       ?.address?.map((address) => {
         return `${address.address}, ${address.city}, ${address.state}, ${address.country}, ${address.pincode}`;
       })
-      .join(' | ')
+      .join(' | '),
   );
 
   authors = signal<Author[]>([]);
   subPublishers = signal<Publishers[]>([]);
   royalties = signal<Royalty[]>([]);
-  publishedLinks = signal<Array<{ titleName: string; links: Array<{ platformName: string; link: string }> }>>([]);
+  publishedLinks = signal<
+    Array<{
+      titleName: string;
+      links: Array<{ platformName: string; link: string }>;
+    }>
+  >([]);
   attachments = signal<any[]>([]);
   publishingpoints = signal<PublishingPoints[]>([]);
-  
+
   // Authors Pagination
   authorsFilter = signal<AuthorFilter>({
     page: 1,
@@ -131,7 +142,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
     orderVal: 'desc',
   });
   authorsLastPage = signal(1);
-  
+
   // Sub-Publishers Pagination
   subPublishersFilter = signal<PublisherFilter>({
     page: 1,
@@ -141,7 +152,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
     orderByVal: 'desc',
   });
   subPublishersLastPage = signal(1);
-  
+
   // Books Published Pagination
   booksFilter = signal<TitleFilter>({
     page: 1,
@@ -151,7 +162,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
     orderByVal: 'desc',
   });
   booksLastPage = signal(1);
-  
+
   // Royalty Pagination
   royaltyFilter = signal<EarningFilter>({
     page: 1,
@@ -161,7 +172,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
     orderByVal: 'desc',
   });
   royaltyLastPage = signal(1);
-  
+
   // Published Links Pagination
   publishedLinksFilter = signal<any>({
     page: 1,
@@ -174,7 +185,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
   publishedLinksLastPage = signal(1);
   publishedLinksData = new MatTableDataSource<any>([]);
   displayedPublishedLinksColumns: string[] = ['title', 'actions'];
-  
+
   displayedColumns: string[] = [
     'serial',
     'title',
@@ -213,7 +224,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
   authorData = new MatTableDataSource<any>([]);
   subPublisherData = new MatTableDataSource<any>([]);
   royaltyData = new MatTableDataSource<Royalty>();
-  
+
   // Sorting functions for books
   booksGetApiFieldName = (column: string): string | null => {
     const columnMap: Record<string, string> = {
@@ -247,7 +258,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
     }));
     this.fetchTitles();
   }
-  
+
   // Sorting functions for royalty
   royaltyGetApiFieldName = (column: string): string | null => {
     const columnMap: Record<string, string> = {
@@ -263,7 +274,10 @@ export class PublisherDetails implements OnInit, OnDestroy {
     return this.royaltyGetApiFieldName(column) !== null;
   };
 
-  royaltyOnSortChange(sort: { active: string; direction: 'asc' | 'desc' | '' }) {
+  royaltyOnSortChange(sort: {
+    active: string;
+    direction: 'asc' | 'desc' | '';
+  }) {
     const apiFieldName = this.royaltyGetApiFieldName(sort.active);
     if (!apiFieldName) return;
 
@@ -280,7 +294,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
     }));
     this.fetchRoyalty();
   }
-  
+
   // Sorting functions for authors
   authorsGetApiFieldName = (column: string): string | null => {
     const columnMap: Record<string, string> = {
@@ -296,7 +310,10 @@ export class PublisherDetails implements OnInit, OnDestroy {
     return this.authorsGetApiFieldName(column) !== null;
   };
 
-  authorsOnSortChange(sort: { active: string; direction: 'asc' | 'desc' | '' }) {
+  authorsOnSortChange(sort: {
+    active: string;
+    direction: 'asc' | 'desc' | '';
+  }) {
     const apiFieldName = this.authorsGetApiFieldName(sort.active);
     if (!apiFieldName) return;
 
@@ -313,7 +330,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
     }));
     this.fetchAuthors();
   }
-  
+
   // Sorting functions for sub-publishers
   subPublishersGetApiFieldName = (column: string): string | null => {
     const columnMap: Record<string, string> = {
@@ -329,7 +346,10 @@ export class PublisherDetails implements OnInit, OnDestroy {
     return this.subPublishersGetApiFieldName(column) !== null;
   };
 
-  subPublishersOnSortChange(sort: { active: string; direction: 'asc' | 'desc' | '' }) {
+  subPublishersOnSortChange(sort: {
+    active: string;
+    direction: 'asc' | 'desc' | '';
+  }) {
     const apiFieldName = this.subPublishersGetApiFieldName(sort.active);
     if (!apiFieldName) return;
 
@@ -356,11 +376,26 @@ export class PublisherDetails implements OnInit, OnDestroy {
 
   async ngOnInit() {
     await this.fetchPublisherDetails();
-    this.authorsFilter.update(f => ({ ...f, publisherIds: [this.publisherId] }));
-    this.subPublishersFilter.update(f => ({ ...f, parentPublisherId: this.publisherId }));
-    this.booksFilter.update(f => ({ ...f, publisherIds: [this.publisherId] }));
-    this.royaltyFilter.update(f => ({ ...f, publisherIds: [this.publisherId] }));
-    this.publishedLinksFilter.update(f => ({ ...f, publisherIds: [this.publisherId] }));
+    this.authorsFilter.update((f) => ({
+      ...f,
+      publisherIds: [this.publisherId],
+    }));
+    this.subPublishersFilter.update((f) => ({
+      ...f,
+      parentPublisherId: this.publisherId,
+    }));
+    this.booksFilter.update((f) => ({
+      ...f,
+      publisherIds: [this.publisherId],
+    }));
+    this.royaltyFilter.update((f) => ({
+      ...f,
+      publisherIds: [this.publisherId],
+    }));
+    this.publishedLinksFilter.update((f) => ({
+      ...f,
+      publisherIds: [this.publisherId],
+    }));
     await this.fetchSubPublishers();
     await this.fetchAuthors();
     await this.fetchTitles();
@@ -413,7 +448,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
   async fetchPublisherDetails() {
     try {
       const response = await this.publisherService.getPublisherById(
-        this.publisherId
+        this.publisherId,
       );
       this.publisherDetails.set(response as Publishers);
     } catch (error) {
@@ -436,13 +471,14 @@ export class PublisherDetails implements OnInit, OnDestroy {
   async fetchSubPublishers() {
     try {
       const filter = this.subPublishersFilter();
-      const { items, totalCount, itemsPerPage } = await this.publisherService.getPublishers(filter);
-      
+      const { items, totalCount, itemsPerPage } =
+        await this.publisherService.getPublishers(filter);
+
       const mapped = items.map((publisher) => ({
         ...publisher,
         phonenumber:
           publisher.phoneNumber || publisher.user?.phoneNumber || 'N/A',
-        wallet: Math.round((publisher?.user?.wallet?.totalAmount || 0)) || 0,
+        wallet: Math.round(publisher?.user?.wallet?.totalAmount || 0) || 0,
         nooftitles: publisher.noOfTitles,
         noofauthors: publisher.noOfAuthors,
       }));
@@ -453,7 +489,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
       console.error('Error fetching sub publishers:', error);
     }
   }
-  
+
   subPublishersNextPage() {
     const currentPage = this.subPublishersFilter().page || 1;
     if (currentPage < this.subPublishersLastPage()) {
@@ -520,8 +556,9 @@ export class PublisherDetails implements OnInit, OnDestroy {
   async fetchAuthors() {
     try {
       const filter = this.authorsFilter();
-      const { items, totalCount, itemsPerPage } = await this.authorsService.getAuthors(filter);
-      
+      const { items, totalCount, itemsPerPage } =
+        await this.authorsService.getAuthors(filter);
+
       const mapped = items.map((author, idx) => ({
         ...author,
         serial: ((filter.page || 1) - 1) * itemsPerPage + idx + 1,
@@ -530,7 +567,9 @@ export class PublisherDetails implements OnInit, OnDestroy {
         phonenumber: author.user.phoneNumber ?? 'N/A',
         titles: author.noOfTitles,
         bookssold: author.booksSold,
-        wallet: (author.user.wallet?.totalAmount || 0) - (author.user.wallet?.holdAmount || 0),
+        wallet:
+          (author.user.wallet?.totalAmount || 0) -
+          (author.user.wallet?.holdAmount || 0),
         links: author.socialMedias?.length
           ? author.socialMedias.map((sm) => sm.url).join(', ')
           : 'N/A',
@@ -542,7 +581,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
       console.error('Error fetching authors:', error);
     }
   }
-  
+
   authorsNextPage() {
     const currentPage = this.authorsFilter().page || 1;
     if (currentPage < this.authorsLastPage()) {
@@ -609,7 +648,8 @@ export class PublisherDetails implements OnInit, OnDestroy {
   async fetchTitles() {
     try {
       const filter = this.booksFilter();
-      const { items, totalCount, itemsPerPage } = await this.titleService.getTitles(filter);
+      const { items, totalCount, itemsPerPage } =
+        await this.titleService.getTitles(filter);
 
       const mapped = items.map((title, idx) => ({
         serial: ((filter.page || 1) - 1) * itemsPerPage + idx + 1,
@@ -641,7 +681,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
       console.error('Error fetching titles:', error);
     }
   }
-  
+
   booksNextPage() {
     const currentPage = this.booksFilter().page || 1;
     if (currentPage < this.booksLastPage()) {
@@ -708,7 +748,8 @@ export class PublisherDetails implements OnInit, OnDestroy {
   async fetchRoyalty() {
     try {
       const filter = this.royaltyFilter();
-      const { items, totalCount, itemsPerPage } = await this.salesService.fetchEarnings(filter);
+      const { items, totalCount, itemsPerPage } =
+        await this.salesService.fetchEarnings(filter);
 
       const mappedData = items?.map((earning) => ({
         ...earning,
@@ -734,7 +775,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
       console.error('Error fetching royalty:', error);
     }
   }
-  
+
   royaltyNextPage() {
     const currentPage = this.royaltyFilter().page || 1;
     if (currentPage < this.royaltyLastPage()) {
@@ -801,18 +842,19 @@ export class PublisherDetails implements OnInit, OnDestroy {
   async fetchPublishedLinks() {
     try {
       const filter = this.publishedLinksFilter();
-      const { items, totalCount, itemsPerPage } = await this.titleService.fetchTitlePlatformLinks({
-        page: filter.page || 1,
-        itemsPerPage: filter.itemsPerPage || 30,
-        publisherIds: [this.publisherId],
-        orderBy: filter.orderBy,
-        orderByVal: filter.orderByVal,
-        searchStr: filter.searchStr,
-      });
-      
+      const { items, totalCount, itemsPerPage } =
+        await this.titleService.fetchTitlePlatformLinks({
+          page: filter.page || 1,
+          itemsPerPage: filter.itemsPerPage || 30,
+          publisherIds: [this.publisherId],
+          orderBy: filter.orderBy,
+          orderByVal: filter.orderByVal,
+          searchStr: filter.searchStr,
+        });
+
       this.publishedLinks.set(items);
       this.publishedLinksLastPage.set(Math.ceil(totalCount / itemsPerPage));
-      
+
       // Map items to dataSource format
       const mappedData = items.map((item) => ({
         title: item.titleName,
@@ -823,11 +865,14 @@ export class PublisherDetails implements OnInit, OnDestroy {
       console.error('Error fetching published links:', error);
     }
   }
-  
+
   publishedLinksNextPage() {
     const currentPage = this.publishedLinksFilter().page || 1;
     if (currentPage < this.publishedLinksLastPage()) {
-      this.publishedLinksFilter.update((f) => ({ ...f, page: currentPage + 1 }));
+      this.publishedLinksFilter.update((f) => ({
+        ...f,
+        page: currentPage + 1,
+      }));
       this.fetchPublishedLinks();
     }
   }
@@ -835,7 +880,10 @@ export class PublisherDetails implements OnInit, OnDestroy {
   publishedLinksPreviousPage() {
     const currentPage = this.publishedLinksFilter().page || 1;
     if (currentPage > 1) {
-      this.publishedLinksFilter.update((f) => ({ ...f, page: currentPage - 1 }));
+      this.publishedLinksFilter.update((f) => ({
+        ...f,
+        page: currentPage - 1,
+      }));
       this.fetchPublishedLinks();
     }
   }
@@ -888,7 +936,11 @@ export class PublisherDetails implements OnInit, OnDestroy {
   }
 
   onPublishedLinksSearch(value: string) {
-    this.publishedLinksFilter.update((f) => ({ ...f, searchStr: value, page: 1 }));
+    this.publishedLinksFilter.update((f) => ({
+      ...f,
+      searchStr: value,
+      page: 1,
+    }));
     this.fetchPublishedLinks();
   }
 
@@ -904,7 +956,10 @@ export class PublisherDetails implements OnInit, OnDestroy {
     return this.publishedLinksGetApiFieldName(column) !== null;
   };
 
-  publishedLinksOnSortChange(sort: { active: string; direction: 'asc' | 'desc' | '' }) {
+  publishedLinksOnSortChange(sort: {
+    active: string;
+    direction: 'asc' | 'desc' | '';
+  }) {
     const apiFieldName = this.publishedLinksGetApiFieldName(sort.active);
     if (!apiFieldName) return;
 
@@ -997,7 +1052,11 @@ export class PublisherDetails implements OnInit, OnDestroy {
       return 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/amazon.svg';
     } else if (name === 'GOOGLE_PLAY' || name === 'GOOGLEPLAY') {
       return 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/googleplay.svg';
-    } else if (name === 'APPLE_BOOKS' || name === 'APPLEBOOKS' || name === 'IBOOKS') {
+    } else if (
+      name === 'APPLE_BOOKS' ||
+      name === 'APPLEBOOKS' ||
+      name === 'IBOOKS'
+    ) {
       return 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/apple.svg';
     } else if (name === 'KOBO') {
       return 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/kobo.svg';

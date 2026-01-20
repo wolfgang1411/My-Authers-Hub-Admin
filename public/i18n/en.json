@@ -952,4 +952,5 @@
   "submitting": "Submitting",
   "published": "Published",
   "draft": "Draft",
-  "required": "This field is required"}
+  "required": "This field is required",
+"norecordsfound" : "No Records found"}

@@ -7,203 +7,227 @@
       <app-back></app-back>
     </div>
   </nav>
-  <mat-tab-group
-    dynamicHeight
-    [selectedIndex]="selectedTabIndex()"
-    (selectedTabChange)="onTabChange($event.index)"
-    class="publisher-tabs my-3 sm:my-4"
-  >
-    <mat-tab>
-      <ng-template mat-tab-label>
-        <span class="text-text-heading font-medium">
-          {{ "publisherdetails" | translate }}
-        </span>
-      </ng-template>
 
-      <!-- MAIN CARD -->
-      <section
-        class="mt-5 sm:mt-8 bg-white p-4 sm:p-6 lg:p-8 rounded-xl shadow-md mat-elevation-z4"
+  <ng-template #publisherDetailsTpl>
+    <section
+      class="mt-5 sm:mt-8 bg-white p-4 sm:p-6 lg:p-8 rounded-xl shadow-md mat-elevation-z4"
+    >
+      <!-- ================= HEADER ================= -->
+      <div
+        class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pb-5 sm:pb-6 border-b"
       >
-        <!-- ================= HEADER ================= -->
+        <!-- Profile Image -->
         <div
-          class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pb-5 sm:pb-6 border-b"
+          class="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden shadow border flex items-center justify-center mx-auto sm:mx-0"
         >
-          <!-- Profile Image -->
-          <div
-            class="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden shadow border flex items-center justify-center mx-auto sm:mx-0"
-          >
-            @if (publisherDetails()?.medias?.length) {
+          @if (publisherDetails()?.medias?.length) {
             <img
-              [src]="(publisherDetails()?.medias?.[0]?.url ?? 'images/user-solid-full.svg') | safeUrl"
+              [src]="
+                publisherDetails()?.medias?.[0]?.url ??
+                  'images/user-solid-full.svg' | safeUrl
+              "
               class="w-full h-full object-cover"
             />
-            } @else {
+          } @else {
             <img
               src="images/user-solid-full.svg"
               class="w-14 h-14 opacity-60"
             />
-            }
-          </div>
-
-          <!-- Title -->
-          <div class="text-center sm:text-left">
-            <h2
-              class="text-xl sm:text-2xl font-medium text-text-heading capitalize"
-            >
-              {{ publisherDetails()?.name }}
-            </h2>
-            <p class="text-gray-500 text-sm mt-1 capitalize">
-              {{ publisherDetails()?.designation || "No Designation" }}
-            </p>
-            <p class="text-gray-600 text-sm mt-1 break-all">
-              {{ publisherDetails()?.email }}
-            </p>
-          </div>
+          }
         </div>
 
-        <!-- ================= PUBLISHER DETAILS ================= -->
-        <div class="mt-8">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4">
-            {{ "publisherdetails" | translate }}
-          </h3>
-
-          <div
-            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 text-sm"
+        <!-- Title -->
+        <div class="text-center sm:text-left">
+          <h2
+            class="text-xl sm:text-2xl font-medium text-text-heading capitalize"
           >
-            <div>
-              <span class="font-medium">Company Name:</span>
-              {{ publisherDetails()?.name }}
-            </div>
-            <div>
-              <span class="font-medium">Official Email:</span>
-              <span class="break-all"> {{ publisherDetails()?.email }} </span>
-            </div>
-            <div>
-              <span class="font-medium">Publisher:</span>
-              {{ publisherDetails()?.user?.firstName }}
-              {{ publisherDetails()?.user?.lastName }}
-            </div>
-
-            <div>
-              <span class="font-medium">Contact Number:</span>
-              {{ publisherDetails()?.user?.phoneNumber }} ,
-              {{ publisherDetails()?.phoneNumber }}
-            </div>
-            <div>
-              <span class="font-medium">Publisher Email:</span>
-              {{ publisherDetails()?.user?.email }}
-            </div>
-            <div>
-              <span class="font-medium">Designation:</span>
-              {{ publisherDetails()?.designation }}
-            </div>
-
-            <div class="sm:col-span-2 lg:col-span-3">
-              <span class="font-medium">Address:</span>
-              <span class="block mt-1 text-gray-700 break-words">
-                {{ completeAddress() }}
-              </span>
-            </div>
-          </div>
+            {{ publisherDetails()?.name }}
+          </h2>
+          <p class="text-gray-500 text-sm mt-1 capitalize">
+            {{ publisherDetails()?.designation || "No Designation" }}
+          </p>
+          <p class="text-gray-600 text-sm mt-1 break-all">
+            {{ publisherDetails()?.email }}
+          </p>
         </div>
+      </div>
 
-        <!-- ================= BANK DETAILS ================= -->
-        <div class="mt-10">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4">
-            {{ "bankdetails" | translate }}
-          </h3>
+      <!-- ================= PUBLISHER DETAILS ================= -->
+      <div class="mt-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+          {{ "publisherdetails" | translate }}
+        </h3>
 
-          <div
-            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 text-sm"
-          >
-            <div>
-              <span class="font-medium">Bank Name:</span>
-              {{ publisherDetails()?.bankDetails?.[0]?.name || "Not Provided" }}
-            </div>
-            <div>
-              <span class="font-medium">Account Number:</span>
-              {{ publisherDetails()?.bankDetails?.[0]?.accountNo }}
-            </div>
-            <div>
-              <span class="font-medium">IFSC Code:</span>
-              {{ publisherDetails()?.bankDetails?.[0]?.ifsc }}
-            </div>
-            <div>
-              <span class="font-medium">Account Type:</span>
-              {{ publisherDetails()?.bankDetails?.[0]?.accountType }}
-            </div>
-            <div>
-              <span class="font-medium">PAN Number:</span>
-              {{ publisherDetails()?.bankDetails?.[0]?.panCardNo }}
-            </div>
-          </div>
-        </div>
-      </section>
-    </mat-tab>
-
-    @if (loggedInUser()?.accessLevel === 'SUPERADMIN' ||
-    (loggedInUser()?.accessLevel === 'PUBLISHER' && publisherDetails()?.type !==
-    'Sub_Publisher') || loggedInUser()?.id === publisherDetails()?.user?.id) {
-    <!-- Books Published -->
-    <mat-tab>
-      <ng-template mat-tab-label>
-        <span class="text-text-heading font-medium">
-          {{ "bookspublished" | translate }}
-        </span>
-      </ng-template>
-      <section
-        id="books-published"
-        class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow"
-      >
         <div
-          class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 text-sm"
         >
-          <h2 class="heading mb-4">{{ "bookspublished" | translate }}</h2>
-          <mat-form-field>
-            <mat-label>{{ "filter" | translate }}</mat-label>
-            <input
-              matInput
-              (keyup)="applyFilter($event)"
-              placeholder="Ex. ium"
-              #input
-            />
-          </mat-form-field>
-        </div>
-        <div class="overflow-x-auto">
-          <app-list-table
-            class="pt-6"
-            [dataSource]="bookPublishData"
-            [displayedColumns]="displayedColumns"
-            [isSortable]="booksIsSortable"
-            (sortChange)="booksOnSortChange($event)"
-          >
-          </app-list-table>
-        </div>
-        <div
-          class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4"
-        >
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-[var(--text-secondary)]">
-              {{ "page" | translate }} {{ booksFilter().page || 1 }}
-              {{ "of" | translate }} {{ booksLastPage() }}
+          <div>
+            <span class="font-medium">Company Name:</span>
+            {{ publisherDetails()?.name }}
+          </div>
+          <div>
+            <span class="font-medium">Official Email:</span>
+            <span class="break-all"> {{ publisherDetails()?.email }} </span>
+          </div>
+          <div>
+            <span class="font-medium">Publisher:</span>
+            {{ publisherDetails()?.user?.firstName }}
+            {{ publisherDetails()?.user?.lastName }}
+          </div>
+
+          <div>
+            <span class="font-medium">Contact Number:</span>
+            {{ publisherDetails()?.user?.phoneNumber }} ,
+            {{ publisherDetails()?.phoneNumber }}
+          </div>
+          <div>
+            <span class="font-medium">Publisher Email:</span>
+            {{ publisherDetails()?.user?.email }}
+          </div>
+          <div>
+            <span class="font-medium">Designation:</span>
+            {{ publisherDetails()?.designation }}
+          </div>
+
+          <div class="sm:col-span-2 lg:col-span-3">
+            <span class="font-medium">Address:</span>
+            <span class="block mt-1 text-gray-700 break-words">
+              {{ completeAddress() }}
             </span>
-            <span class="text-sm text-[var(--text-secondary)]">|</span>
-            <span class="text-sm text-[var(--text-secondary)]"
-              >{{ "itemsperpage" | translate }}:</span
-            >
-            <select
-              class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
-              [value]="booksFilter().itemsPerPage || 30"
-              (change)="booksOnItemsPerPageChange(+$any($event.target).value)"
-            >
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="30">30</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
           </div>
-          @if (booksLastPage() > 1) {
+        </div>
+      </div>
+
+      <!-- ================= BANK DETAILS ================= -->
+      <div class="mt-10">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+          {{ "bankdetails" | translate }}
+        </h3>
+
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 text-sm"
+        >
+          <div>
+            <span class="font-medium">Bank Name:</span>
+            {{ publisherDetails()?.bankDetails?.[0]?.name || "Not Provided" }}
+          </div>
+          <div>
+            <span class="font-medium">Account Number:</span>
+            {{ publisherDetails()?.bankDetails?.[0]?.accountNo }}
+          </div>
+          <div>
+            <span class="font-medium">IFSC Code:</span>
+            {{ publisherDetails()?.bankDetails?.[0]?.ifsc }}
+          </div>
+          <div>
+            <span class="font-medium">Account Type:</span>
+            {{ publisherDetails()?.bankDetails?.[0]?.accountType }}
+          </div>
+          <div>
+            <span class="font-medium">PAN Number:</span>
+            {{ publisherDetails()?.bankDetails?.[0]?.panCardNo }}
+          </div>
+        </div>
+      </div>
+    </section>
+  </ng-template>
+
+  <ng-template #booksTpl>
+    <section
+      id="books-published"
+      class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow"
+    >
+      <div
+        class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
+      >
+        <h2 class="heading mb-4">{{ "bookspublished" | translate }}</h2>
+        <mat-form-field>
+          <mat-label>{{ "filter" | translate }}</mat-label>
+          <input
+            matInput
+            (keyup)="applyFilter($event)"
+            placeholder="Ex. ium"
+            #input
+          />
+        </mat-form-field>
+      </div>
+      <div class="hidden md:block">
+        <app-list-table
+          class="pt-6"
+          [dataSource]="bookPublishData"
+          [displayedColumns]="displayedColumns"
+          [isSortable]="booksIsSortable"
+          (sortChange)="booksOnSortChange($event)"
+        >
+        </app-list-table>
+      </div>
+      <div class="md:hidden flex flex-col gap-4 pt-4">
+        @for (book of bookPublishData.data; track book.id) {
+          <div class="bg-white border rounded-xl p-4 shadow-sm space-y-3">
+            <h4 class="font-semibold text-gray-800">
+              {{ book.title }}
+            </h4>
+
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p class="text-gray-400">ISBN (Print)</p>
+                <p>{{ book.isbnPrint }}</p>
+              </div>
+
+              <div>
+                <p class="text-gray-400">ISBN (E-Book)</p>
+                <p>{{ book.isbnEbook }}</p>
+              </div>
+
+              <div>
+                <p class="text-gray-400">Pages</p>
+                <p>{{ book.pages }}</p>
+              </div>
+
+              <div>
+                <p class="text-gray-400">Copies Sold</p>
+                <p>{{ book.copiessold }}</p>
+              </div>
+
+              <div>
+                <p class="text-gray-400">Royalties</p>
+                <p>{{ book.royaltiesearned }}</p>
+              </div>
+            </div>
+
+            <div>
+              <p class="text-gray-400 text-sm">Authors</p>
+              <p class="text-sm">{{ book.authors }}</p>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4"
+      >
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-[var(--text-secondary)]">
+            {{ "page" | translate }} {{ booksFilter().page || 1 }}
+            {{ "of" | translate }} {{ booksLastPage() }}
+          </span>
+          <span class="text-sm text-[var(--text-secondary)]">|</span>
+          <span class="text-sm text-[var(--text-secondary)]"
+            >{{ "itemsperpage" | translate }}:</span
+          >
+          <select
+            class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
+            [value]="booksFilter().itemsPerPage || 30"
+            (change)="booksOnItemsPerPageChange(+$any($event.target).value)"
+          >
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+        @if (booksLastPage() > 1) {
           <div class="flex items-center gap-2">
             <button
               class="btn rounded-md !text-primary"
@@ -217,26 +241,27 @@
               {{ "previous" | translate }}
             </button>
             <div class="flex items-center gap-1">
-              @for (pageNum of booksGetPageNumbers(); track pageNum) { @if
-              (pageNum === -1) {
-              <span class="px-2 text-[var(--text-secondary)]">...</span>
-              } @else {
-              <button
-                class="btn rounded-md !text-primary min-w-[40px]"
-                matButton="filled"
-                matButton
-                type="button"
-                [ngClass]="{
-                  '!bg-primary !text-white':
-                    (booksFilter().page || 1) === pageNum,
-                  '!bg-primary-superlight':
-                    (booksFilter().page || 1) !== pageNum
-                }"
-                (click)="booksGoToPage(pageNum)"
-              >
-                {{ pageNum }}
-              </button>
-              } }
+              @for (pageNum of booksGetPageNumbers(); track pageNum) {
+                @if (pageNum === -1) {
+                  <span class="px-2 text-[var(--text-secondary)]">...</span>
+                } @else {
+                  <button
+                    class="btn rounded-md !text-primary min-w-[40px]"
+                    matButton="filled"
+                    matButton
+                    type="button"
+                    [ngClass]="{
+                      '!bg-primary !text-white':
+                        (booksFilter().page || 1) === pageNum,
+                      '!bg-primary-superlight':
+                        (booksFilter().page || 1) !== pageNum,
+                    }"
+                    (click)="booksGoToPage(pageNum)"
+                  >
+                    {{ pageNum }}
+                  </button>
+                }
+              }
             </div>
             <button
               class="btn rounded-md !text-primary"
@@ -250,68 +275,94 @@
               <mat-icon>chevron_right</mat-icon>
             </button>
           </div>
-          }
-        </div>
-      </section>
-    </mat-tab>
-    <!-- Authors -->
-    <mat-tab>
-      <ng-template mat-tab-label>
-        <span class="text-text-heading font-medium">
-          {{ "authors" | translate }}
-        </span>
-      </ng-template>
-      <section
-        id="authors"
-        class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow"
+        }
+      </div>
+    </section>
+  </ng-template>
+
+  <ng-template #authorsTpl>
+    <section
+      id="authors"
+      class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow"
+    >
+      <div
+        class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
       >
-        <div
-          class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
+        <h2 class="heading mb-4">{{ "authors" | translate }}</h2>
+        <mat-form-field>
+          <mat-label>{{ "filter" | translate }}</mat-label>
+          <input
+            matInput
+            (input)="applyAuthorFilter($event)"
+            placeholder="Ex. ium"
+            #input
+          />
+        </mat-form-field>
+      </div>
+      <div class="hidden md:block">
+        <app-list-table
+          class="pt-6"
+          [dataSource]="authorData"
+          [displayedColumns]="displayedAuthorColumns"
+          [isSortable]="authorsIsSortable"
+          (sortChange)="authorsOnSortChange($event)"
         >
-          <h2 class="heading mb-4">{{ "authors" | translate }}</h2>
-          <mat-form-field>
-            <mat-label>{{ "filter" | translate }}</mat-label>
-            <input
-              matInput
-              (input)="applyAuthorFilter($event)"
-              placeholder="Ex. ium"
-              #input
-            />
-          </mat-form-field>
-        </div>
-        <div class="overflow-x-auto">
-          <app-list-table
-            class="pt-6"
-            [dataSource]="authorData"
-            [displayedColumns]="displayedAuthorColumns"
-            [isSortable]="authorsIsSortable"
-            (sortChange)="authorsOnSortChange($event)"
-          >
-          </app-list-table>
-        </div>
-        <div class="flex items-center justify-between gap-4 mt-4">
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-[var(--text-secondary)]">
-              {{ "page" | translate }} {{ authorsFilter().page || 1 }}
-              {{ "of" | translate }} {{ authorsLastPage() }}
-            </span>
-            <span class="text-sm text-[var(--text-secondary)]">|</span>
-            <span class="text-sm text-[var(--text-secondary)]"
-              >{{ "itemsperpage" | translate }}:</span
-            >
-            <select
-              class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
-              [value]="authorsFilter().itemsPerPage || 30"
-              (change)="authorsOnItemsPerPageChange(+$any($event.target).value)"
-            >
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="30">30</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
+        </app-list-table>
+      </div>
+      <div class="md:hidden flex flex-col gap-4 pt-4">
+        @for (author of authorData.data; track author.email) {
+          <div class="bg-white border rounded-xl p-4 shadow-sm space-y-3">
+            <h4 class="font-semibold">{{ author.name }}</h4>
+            <p class="text-sm text-gray-500">{{ author.email }}</p>
+
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p class="text-gray-400">Phone</p>
+                <p>{{ author.phonenumber }}</p>
+              </div>
+
+              <div>
+                <p class="text-gray-400">Titles</p>
+                <p>{{ author.titles }}</p>
+              </div>
+
+              <div>
+                <p class="text-gray-400">Books Sold</p>
+                <p>{{ author.bookssold }}</p>
+              </div>
+
+              <div>
+                <p class="text-gray-400">Wallet</p>
+                <p>{{ author.wallet | currency: "INR" }}</p>
+              </div>
+            </div>
           </div>
-          @if (authorsLastPage() > 1) {
+        }
+      </div>
+
+      <div class="flex items-center justify-between gap-4 mt-4">
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-[var(--text-secondary)]">
+            {{ "page" | translate }} {{ authorsFilter().page || 1 }}
+            {{ "of" | translate }} {{ authorsLastPage() }}
+          </span>
+          <span class="text-sm text-[var(--text-secondary)]">|</span>
+          <span class="text-sm text-[var(--text-secondary)]"
+            >{{ "itemsperpage" | translate }}:</span
+          >
+          <select
+            class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
+            [value]="authorsFilter().itemsPerPage || 30"
+            (change)="authorsOnItemsPerPageChange(+$any($event.target).value)"
+          >
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+        @if (authorsLastPage() > 1) {
           <div class="flex items-center gap-2">
             <button
               class="btn rounded-md !text-primary"
@@ -325,26 +376,27 @@
               {{ "previous" | translate }}
             </button>
             <div class="flex items-center gap-1">
-              @for (pageNum of authorsGetPageNumbers(); track pageNum) { @if
-              (pageNum === -1) {
-              <span class="px-2 text-[var(--text-secondary)]">...</span>
-              } @else {
-              <button
-                class="btn rounded-md !text-primary min-w-[40px]"
-                matButton="filled"
-                matButton
-                type="button"
-                [ngClass]="{
-                  '!bg-primary !text-white':
-                    (authorsFilter().page || 1) === pageNum,
-                  '!bg-primary-superlight':
-                    (authorsFilter().page || 1) !== pageNum
-                }"
-                (click)="authorsGoToPage(pageNum)"
-              >
-                {{ pageNum }}
-              </button>
-              } }
+              @for (pageNum of authorsGetPageNumbers(); track pageNum) {
+                @if (pageNum === -1) {
+                  <span class="px-2 text-[var(--text-secondary)]">...</span>
+                } @else {
+                  <button
+                    class="btn rounded-md !text-primary min-w-[40px]"
+                    matButton="filled"
+                    matButton
+                    type="button"
+                    [ngClass]="{
+                      '!bg-primary !text-white':
+                        (authorsFilter().page || 1) === pageNum,
+                      '!bg-primary-superlight':
+                        (authorsFilter().page || 1) !== pageNum,
+                    }"
+                    (click)="authorsGoToPage(pageNum)"
+                  >
+                    {{ pageNum }}
+                  </button>
+                }
+              }
             </div>
             <button
               class="btn rounded-md !text-primary"
@@ -358,70 +410,96 @@
               <mat-icon>chevron_right</mat-icon>
             </button>
           </div>
-          }
-        </div>
-      </section>
-    </mat-tab>
-    <!-- Sub-Publishers -->
-    <mat-tab>
-      <ng-template mat-tab-label>
-        <span class="text-text-heading font-medium">
-          {{ "subpublishers" | translate }}
-        </span>
-      </ng-template>
-      <section
-        id="sub-publishers"
-        class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow"
+        }
+      </div>
+    </section>
+  </ng-template>
+
+  <ng-template #subPublishersTpl>
+    <section
+      id="sub-publishers"
+      class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow"
+    >
+      <div
+        class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
       >
-        <div
-          class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
+        <h2 class="heading mb-4">{{ "subpublishers" | translate }}</h2>
+        <mat-form-field>
+          <mat-label>{{ "filter" | translate }}</mat-label>
+          <input
+            matInput
+            (keyup)="applySubPublisherFilter($event)"
+            placeholder="Ex. ium"
+            #input
+          />
+        </mat-form-field>
+      </div>
+      <div class="hidden md:block">
+        <app-list-table
+          class="pt-6"
+          [dataSource]="subPublisherData"
+          [displayedColumns]="displayedSubPublisherColumns"
+          [isSortable]="subPublishersIsSortable"
+          (sortChange)="subPublishersOnSortChange($event)"
         >
-          <h2 class="heading mb-4">{{ "subpublishers" | translate }}</h2>
-          <mat-form-field>
-            <mat-label>{{ "filter" | translate }}</mat-label>
-            <input
-              matInput
-              (keyup)="applySubPublisherFilter($event)"
-              placeholder="Ex. ium"
-              #input
-            />
-          </mat-form-field>
-        </div>
-        <div class="overflow-x-auto">
-          <app-list-table
-            class="pt-6"
-            [dataSource]="subPublisherData"
-            [displayedColumns]="displayedSubPublisherColumns"
-            [isSortable]="subPublishersIsSortable"
-            (sortChange)="subPublishersOnSortChange($event)"
-          >
-          </app-list-table>
-        </div>
-        <div class="flex items-center justify-between gap-4 mt-4">
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-[var(--text-secondary)]">
-              {{ "page" | translate }} {{ subPublishersFilter().page || 1 }}
-              {{ "of" | translate }} {{ subPublishersLastPage() }}
-            </span>
-            <span class="text-sm text-[var(--text-secondary)]">|</span>
-            <span class="text-sm text-[var(--text-secondary)]"
-              >{{ "itemsperpage" | translate }}:</span
-            >
-            <select
-              class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
-              [value]="subPublishersFilter().itemsPerPage || 30"
-              (change)="
-                subPublishersOnItemsPerPageChange(+$any($event.target).value)
-              "
-            >
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="30">30</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
+        </app-list-table>
+      </div>
+      <div class="md:hidden flex flex-col gap-4 pt-4">
+        @for (pub of subPublisherData.data; track pub.name) {
+          <div class="bg-white border rounded-xl p-4 shadow-sm space-y-3">
+            <h4 class="font-semibold">{{ pub.name }}</h4>
+            <p class="text-sm text-gray-500">{{ pub.email }}</p>
+
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p class="text-gray-400">Phone</p>
+                <p>{{ pub.phonenumber }}</p>
+              </div>
+
+              <div>
+                <p class="text-gray-400">Titles</p>
+                <p>{{ pub.nooftitles }}</p>
+              </div>
+
+              <div>
+                <p class="text-gray-400">Authors</p>
+                <p>{{ pub.noofauthors }}</p>
+              </div>
+
+              <div>
+                <p class="text-gray-400">Wallet</p>
+                <p>{{ pub.wallet | currency: "INR" }}</p>
+              </div>
+            </div>
           </div>
-          @if (subPublishersLastPage() > 1) {
+        }
+      </div>
+
+      <div class="flex items-center justify-between gap-4 mt-4">
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-[var(--text-secondary)]">
+            {{ "page" | translate }} {{ subPublishersFilter().page || 1 }}
+            {{ "of" | translate }} {{ subPublishersLastPage() }}
+          </span>
+          <span class="text-sm text-[var(--text-secondary)]">|</span>
+          <span class="text-sm text-[var(--text-secondary)]"
+            >{{ "itemsperpage" | translate }}:</span
+          >
+          <select
+            class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
+            [value]="subPublishersFilter().itemsPerPage || 30"
+            (change)="
+              subPublishersOnItemsPerPageChange(+$any($event.target).value)
+            "
+          >
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+        @if (subPublishersLastPage() > 1) {
           <div class="flex items-center gap-2">
             <button
               class="btn rounded-md !text-primary"
@@ -436,25 +514,26 @@
             </button>
             <div class="flex items-center gap-1">
               @for (pageNum of subPublishersGetPageNumbers(); track pageNum) {
-              @if (pageNum === -1) {
-              <span class="px-2 text-[var(--text-secondary)]">...</span>
-              } @else {
-              <button
-                class="btn rounded-md !text-primary min-w-[40px]"
-                matButton="filled"
-                matButton
-                type="button"
-                [ngClass]="{
-                  '!bg-primary !text-white':
-                    (subPublishersFilter().page || 1) === pageNum,
-                  '!bg-primary-superlight':
-                    (subPublishersFilter().page || 1) !== pageNum
-                }"
-                (click)="subPublishersGoToPage(pageNum)"
-              >
-                {{ pageNum }}
-              </button>
-              } }
+                @if (pageNum === -1) {
+                  <span class="px-2 text-[var(--text-secondary)]">...</span>
+                } @else {
+                  <button
+                    class="btn rounded-md !text-primary min-w-[40px]"
+                    matButton="filled"
+                    matButton
+                    type="button"
+                    [ngClass]="{
+                      '!bg-primary !text-white':
+                        (subPublishersFilter().page || 1) === pageNum,
+                      '!bg-primary-superlight':
+                        (subPublishersFilter().page || 1) !== pageNum,
+                    }"
+                    (click)="subPublishersGoToPage(pageNum)"
+                  >
+                    {{ pageNum }}
+                  </button>
+                }
+              }
             </div>
             <button
               class="btn rounded-md !text-primary"
@@ -470,86 +549,111 @@
               <mat-icon>chevron_right</mat-icon>
             </button>
           </div>
-          }
-        </div>
-      </section>
-    </mat-tab>
-    }
+        }
+      </div>
+    </section>
+  </ng-template>
 
-    <!-- Royalties -->
-    <mat-tab>
-      <ng-template mat-tab-label>
-        <span class="text-text-heading font-medium">
-          {{ "royalties&wallet" | translate }}
-        </span>
-      </ng-template>
-      <section
-        id="royalties"
-        class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow flex flex-col gap-6"
+  <ng-template #royaltiesTpl>
+    <section
+      id="royalties"
+      class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow flex flex-col gap-6"
+    >
+      <div
+        class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
       >
-        <div
-          class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
+        <h2 class="heading">{{ "Royalties&Wallet" | translate }}</h2>
+        <mat-form-field>
+          <mat-label>{{ "filter" | translate }}</mat-label>
+          <input
+            matInput
+            (keyup)="applyRoyaltyFilter($event)"
+            placeholder="Ex. ium"
+            #input
+          />
+        </mat-form-field>
+      </div>
+      <ul class="space-y-2">
+        <li>
+          🪙 {{ "walletbalance" | translate }} :
+          <label class="font-medium">{{
+            (publisherDetails()?.user?.wallet?.totalAmount || 0) -
+              (publisherDetails()?.user?.wallet?.holdAmount || 0)
+              | currency: "INR"
+          }}</label>
+        </li>
+        <li>
+          ⏳{{ "onhold" | translate }} :
+          <label class="font-medium">{{
+            publisherDetails()?.user?.wallet?.holdAmount || 0 | currency: "INR"
+          }}</label>
+        </li>
+      </ul>
+      <div class="hidden md:block">
+        <app-list-table
+          [dataSource]="royaltyData"
+          [displayedColumns]="displayedRoyaltyColumns()"
+          [isSortable]="royaltyIsSortable"
+          (sortChange)="royaltyOnSortChange($event)"
         >
-          <h2 class="heading">{{ "Royalties&Wallet" | translate }}</h2>
-          <mat-form-field>
-            <mat-label>{{ "filter" | translate }}</mat-label>
-            <input
-              matInput
-              (keyup)="applyRoyaltyFilter($event)"
-              placeholder="Ex. ium"
-              #input
-            />
-          </mat-form-field>
-        </div>
-        <ul class="space-y-2">
-          <li>
-            🪙 {{ "walletbalance" | translate }} :
-            <label class="font-medium">{{
-              (publisherDetails()?.user?.wallet?.totalAmount || 0) -
-                (publisherDetails()?.user?.wallet?.holdAmount || 0)
-                | currency : "INR"
-            }}</label>
-          </li>
-          <li>
-            ⏳{{ "onhold" | translate }} :
-            <label class="font-medium">{{
-              publisherDetails()?.user?.wallet?.holdAmount || 0
-                | currency : "INR"
-            }}</label>
-          </li>
-        </ul>
-        <div class="overflow-x-auto">
-          <app-list-table
-            [dataSource]="royaltyData"
-            [displayedColumns]="displayedRoyaltyColumns()"
-            [isSortable]="royaltyIsSortable"
-            (sortChange)="royaltyOnSortChange($event)"
-          >
-          </app-list-table>
-        </div>
-        <div class="flex items-center justify-between gap-4 mt-4">
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-[var(--text-secondary)]">
-              {{ "page" | translate }} {{ royaltyFilter().page || 1 }}
-              {{ "of" | translate }} {{ royaltyLastPage() }}
-            </span>
-            <span class="text-sm text-[var(--text-secondary)]">|</span>
-            <span class="text-sm text-[var(--text-secondary)]"
-              >{{ "itemsperpage" | translate }}:</span
-            >
-            <select
-              class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
-              [value]="royaltyFilter().itemsPerPage || 30"
-              (change)="royaltyOnItemsPerPageChange(+$any($event.target).value)"
-            >
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="30">30</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
+        </app-list-table>
+      </div>
+      <!-- ✅ MOBILE ROYALTY VIEW -->
+      <div class="md:hidden flex flex-col gap-4 pt-4">
+        @for (row of royaltyData.data; track $index) {
+          <div class="bg-white border rounded-xl p-4 shadow-sm space-y-3">
+            <h4 class="font-semibold">
+              {{ $any(row).title }}
+            </h4>
+
+            <div class="text-sm space-y-1">
+              <p>
+                <span class="text-gray-400">By:</span>
+                {{ $any(row)["publisher/author"] }}
+              </p>
+
+              <p>
+                <span class="text-gray-400">Platform:</span>
+                {{ $any(row).platform }}
+              </p>
+
+              <p>
+                <span class="text-gray-400">Amount:</span>
+                {{ $any(row).amount }}
+              </p>
+
+              <p>
+                <span class="text-gray-400">Date:</span>
+                {{ $any(row)["paidAt/holduntill"] }}
+              </p>
+            </div>
           </div>
-          @if (royaltyLastPage() > 1) {
+        }
+      </div>
+
+      <div class="flex items-center justify-between gap-4 mt-4">
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-[var(--text-secondary)]">
+            {{ "page" | translate }} {{ royaltyFilter().page || 1 }}
+            {{ "of" | translate }} {{ royaltyLastPage() }}
+          </span>
+          <span class="text-sm text-[var(--text-secondary)]">|</span>
+          <span class="text-sm text-[var(--text-secondary)]"
+            >{{ "itemsperpage" | translate }}:</span
+          >
+          <select
+            class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
+            [value]="royaltyFilter().itemsPerPage || 30"
+            (change)="royaltyOnItemsPerPageChange(+$any($event.target).value)"
+          >
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+        @if (royaltyLastPage() > 1) {
           <div class="flex items-center gap-2">
             <button
               class="btn rounded-md !text-primary"
@@ -563,26 +667,27 @@
               {{ "previous" | translate }}
             </button>
             <div class="flex items-center gap-1">
-              @for (pageNum of royaltyGetPageNumbers(); track pageNum) { @if
-              (pageNum === -1) {
-              <span class="px-2 text-[var(--text-secondary)]">...</span>
-              } @else {
-              <button
-                class="btn rounded-md !text-primary min-w-[40px]"
-                matButton="filled"
-                matButton
-                type="button"
-                [ngClass]="{
-                  '!bg-primary !text-white':
-                    (royaltyFilter().page || 1) === pageNum,
-                  '!bg-primary-superlight':
-                    (royaltyFilter().page || 1) !== pageNum
-                }"
-                (click)="royaltyGoToPage(pageNum)"
-              >
-                {{ pageNum }}
-              </button>
-              } }
+              @for (pageNum of royaltyGetPageNumbers(); track pageNum) {
+                @if (pageNum === -1) {
+                  <span class="px-2 text-[var(--text-secondary)]">...</span>
+                } @else {
+                  <button
+                    class="btn rounded-md !text-primary min-w-[40px]"
+                    matButton="filled"
+                    matButton
+                    type="button"
+                    [ngClass]="{
+                      '!bg-primary !text-white':
+                        (royaltyFilter().page || 1) === pageNum,
+                      '!bg-primary-superlight':
+                        (royaltyFilter().page || 1) !== pageNum,
+                    }"
+                    (click)="royaltyGoToPage(pageNum)"
+                  >
+                    {{ pageNum }}
+                  </button>
+                }
+              }
             </div>
             <button
               class="btn rounded-md !text-primary"
@@ -596,166 +701,207 @@
               <mat-icon>chevron_right</mat-icon>
             </button>
           </div>
-          }
-        </div>
-      </section>
-    </mat-tab>
-    <mat-tab>
-      <ng-template mat-tab-label>
-        <span class="text-text-heading font-medium">
-          {{ "publishingpoints" | translate }}
-        </span>
-      </ng-template>
+        }
+      </div>
+    </section>
+  </ng-template>
 
-      <section
-        id="publishing-points"
-        class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow"
-      >
-        > @if (publishingpoints().length) {
+  <ng-template #publishingPointsTpl>
+    <section
+      id="publishing-points"
+      class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow"
+    >
+      @if (publishingpoints().length) {
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
           @for (point of publishingpoints(); track $index) {
-          <div
-            class="group border border-[var(--primary-superlight)] rounded-xl p-4 bg-gradient-to-br from-white to-[var(--light-purple-bg)] hover:shadow-lg hover:scale-[1.02] transition-all"
-          >
-            <!-- Header Row -->
-            <div
-              class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:mb-3"
-            >
-              <div class="flex items-center gap-2">
-                <div
-                  class="p-2 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)]"
-                >
-                  <mat-icon>redeem</mat-icon>
-                </div>
-                <h5
-                  class="font-medium text-[var(--text-heading)] text-base capitalize"
-                >
-                  {{ point.distributionType.replace("_", " ") }}
-                </h5>
-              </div>
-              <span
-                class="text-[var(--green-2)] text-xs font-medium bg-[var(--light-green-bg)] px-3 py-1 rounded-full border border-[var(--light-green-2)]"
-              >
-                {{ point.availablePoints }} Points
-              </span>
-            </div>
-
-            <!-- Details -->
-            <div class="text-sm text-[var(--text-primary)]">
-              <p class="flex items-center">
-                <span class="font-medium text-[var(--text-heading)]">ID:</span>
-                <span
-                  class="ml-2 px-2 py-[2px] rounded bg-[var(--primary-superlight)] text-[var(--primary)] font-medium text-xs"
-                  >{{ point.id }}</span
-                >
-              </p>
-              <p class="mt-2">
-                <span class="font-medium text-[var(--text-heading)]"
-                  >Created:</span
-                >
-                <span class="ml-2 text-xs text-gray-600">{{
-                  point.createdAt | date : "mediumDate"
-                }}</span>
-              </p>
-            </div>
-
-            <!-- Buy Button -->
-            <div class="mt-4 flex justify-end">
-              <app-buy-assign-points-button
-                [returnUrl]="returnUrl()"
-                [distributionType]="point.distributionType"
-                [publisherId]="publisherId"
-                [publisherName]="publisherDetails()?.name"
-                (onSuccess)="onPointsPurchased()"
-              ></app-buy-assign-points-button>
-            </div>
-          </div>
-          }
-        </div>
-        } @else {
-        <div
-          class="flex flex-col justify-center p-8 bg-[var(--light-purple-bg)] rounded-2xl border border-[var(--primary-light)]"
-        >
-          <!-- Show all 5 Distribution Channels -->
-          <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mt-6">
-            @for (type of distributionType(); track type) {
             <div
               class="group border border-[var(--primary-superlight)] rounded-xl p-4 bg-gradient-to-br from-white to-[var(--light-purple-bg)] hover:shadow-lg hover:scale-[1.02] transition-all"
             >
-              <div class="flex items-center gap-2 mb-3">
-                <div
-                  class="p-2 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)]"
-                >
-                  <mat-icon>storefront</mat-icon>
+              <!-- Header Row -->
+              <div
+                class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:mb-3"
+              >
+                <div class="flex items-center gap-2">
+                  <div
+                    class="p-2 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)]"
+                  >
+                    <mat-icon>redeem</mat-icon>
+                  </div>
+                  <h5
+                    class="font-medium text-[var(--text-heading)] text-base capitalize"
+                  >
+                    {{ point.distributionType.replace("_", " ") }}
+                  </h5>
                 </div>
-                <h5
-                  class="font-medium text-[var(--text-heading)] text-base capitalize"
+                <span
+                  class="text-[var(--green-2)] text-xs font-medium bg-[var(--light-green-bg)] px-3 py-1 rounded-full border border-[var(--light-green-2)]"
                 >
-                  {{ type.replace("_", " ") }}
-                </h5>
+                  {{ point.availablePoints }} Points
+                </span>
               </div>
 
-              <div class="text-sm text-[var(--text-primary)]">
-                <p>No points purchased yet for this channel.</p>
+              <!-- Details -->
+              <div class="text-sm text-[var(--text-primary)] mt-4">
+                <p class="flex items-center">
+                  <span class="font-medium text-[var(--text-heading)]"
+                    >ID:</span
+                  >
+                  <span
+                    class="ml-2 px-2 py-[2px] rounded bg-[var(--primary-superlight)] text-[var(--primary)] font-medium text-xs"
+                    >{{ point.id }}</span
+                  >
+                </p>
+                <p class="mt-2">
+                  <span class="font-medium text-[var(--text-heading)]"
+                    >Created:</span
+                  >
+                  <span class="ml-2 text-xs text-gray-600">{{
+                    point.createdAt | date: "mediumDate"
+                  }}</span>
+                </p>
               </div>
 
+              <!-- Buy Button -->
               <div class="mt-4 flex justify-end">
                 <app-buy-assign-points-button
                   [returnUrl]="returnUrl()"
-                  [distributionType]="type"
+                  [distributionType]="point.distributionType"
                   [publisherId]="publisherId"
                   [publisherName]="publisherDetails()?.name"
                   (onSuccess)="onPointsPurchased()"
                 ></app-buy-assign-points-button>
               </div>
             </div>
+          }
+        </div>
+      } @else {
+        <div
+          class="flex flex-col justify-center p-8 bg-[var(--light-purple-bg)] rounded-2xl border border-[var(--primary-light)]"
+        >
+          <!-- Show all 5 Distribution Channels -->
+          <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mt-6">
+            @for (type of distributionType(); track type) {
+              <div
+                class="group border border-[var(--primary-superlight)] rounded-xl p-4 bg-gradient-to-br from-white to-[var(--light-purple-bg)] hover:shadow-lg hover:scale-[1.02] transition-all"
+              >
+                <div class="flex items-center gap-2 mb-3">
+                  <div
+                    class="p-2 rounded-full bg-[var(--light-purple-bg)] text-[var(--primary)]"
+                  >
+                    <mat-icon>storefront</mat-icon>
+                  </div>
+                  <h5
+                    class="font-medium text-[var(--text-heading)] text-base capitalize"
+                  >
+                    {{ type.replace("_", " ") }}
+                  </h5>
+                </div>
+
+                <div class="text-sm text-[var(--text-primary)]">
+                  <p>No points purchased yet for this channel.</p>
+                </div>
+
+                <div class="mt-4 flex justify-end">
+                  <app-buy-assign-points-button
+                    [returnUrl]="returnUrl()"
+                    [distributionType]="type"
+                    [publisherId]="publisherId"
+                    [publisherName]="publisherDetails()?.name"
+                    (onSuccess)="onPointsPurchased()"
+                  ></app-buy-assign-points-button>
+                </div>
+              </div>
             }
           </div>
         </div>
-        }
-      </section>
-    </mat-tab>
+      }
+    </section>
+  </ng-template>
 
-    <!-- Published Links -->
-    <mat-tab>
-      <ng-template mat-tab-label>
-        <span class="text-text-heading font-medium">
-          {{ "publishedlinks" | translate }}
-        </span>
-      </ng-template>
-      <section
-        id="published-links"
-        class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow"
+  <ng-template #publishedLinksTpl>
+    <section
+      id="published-links"
+      class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow"
+    >
+      <div
+        class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:mb-4"
       >
-        >
-        <div
-          class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:mb-4"
-        >
-          <h2 class="heading">{{ "publishedlinks" | translate }}</h2>
-          <mat-form-field class="w-64">
-            <mat-label>{{ "search" | translate }}</mat-label>
-            <input
-              matInput
-              #searchInput
-              [placeholder]="'search' | translate"
-              (keyup)="onPublishedLinksSearch(searchInput.value)"
-            />
-            <mat-icon matPrefix>search</mat-icon>
-          </mat-form-field>
-        </div>
+        <h2 class="heading">{{ "publishedlinks" | translate }}</h2>
+        <mat-form-field class="w-64">
+          <mat-label>{{ "search" | translate }}</mat-label>
+          <input
+            matInput
+            #searchInput
+            [placeholder]="'search' | translate"
+            (keyup)="onPublishedLinksSearch(searchInput.value)"
+          />
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+      </div>
+      <!-- DESKTOP TABLE -->
+      <div class="hidden md:block pt-6">
         <app-list-table
-          class="pt-6"
           [dataSource]="publishedLinksData"
           [displayedColumns]="displayedPublishedLinksColumns"
           [actionTemplate]="publishedLinksActionButtons"
           [isSortable]="publishedLinksIsSortable"
           (sortChange)="publishedLinksOnSortChange($event)"
-        >
-        </app-list-table>
+        ></app-list-table>
+      </div>
+      <!-- MOBILE CARDS -->
+      <!-- MOBILE VIEW : Published Links -->
+      <!-- MOBILE VIEW -->
+      <div class="md:hidden flex flex-col gap-4 pt-4">
+        @for (item of publishedLinksData.data; track item.title) {
+          <div class="bg-white border rounded-xl shadow-sm p-4 space-y-3">
+            <!-- Title -->
+            <div>
+              <p class="text-xs text-gray-400">
+                {{ "title" | translate }}
+              </p>
+              <h4 class="font-medium text-gray-800 break-words">
+                {{ item.title }}
+              </h4>
+            </div>
 
-        <ng-template #publishedLinksActionButtons let-element>
-          <div class="flex flex-wrap gap-2">
-            @for (linkItem of element.links; track linkItem.link) {
+            <!-- Platform Links -->
+            <div class="flex flex-wrap gap-2">
+              @for (link of item.links; track link.link) {
+                <a
+                  [href]="link.link"
+                  target="_blank"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition"
+                >
+                  <!-- Platform Icon -->
+                  @if (hasPlatformIconUrl(link.platformName)) {
+                    <img
+                      [src]="getPlatformIconUrl(link.platformName)! | safeUrl"
+                      class="w-4 h-4 object-contain"
+                    />
+                  } @else {
+                    <mat-icon class="!text-sm">
+                      {{ getPlatformIcon(link.platformName) }}
+                    </mat-icon>
+                  }
+
+                  {{ link.platformName.replace("_", " ") }}
+                </a>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Empty State -->
+        @if (!publishedLinksData.data.length) {
+          <div class="text-center text-sm text-gray-500 py-6">
+            {{ "norecordsfound" | translate }}
+          </div>
+        }
+      </div>
+
+      <ng-template #publishedLinksActionButtons let-element>
+        <div class="flex flex-wrap gap-2">
+          @for (linkItem of element.links; track linkItem.link) {
             <a
               target="_blank"
               [href]="linkItem.link"
@@ -763,49 +909,49 @@
               class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-[var(--primary-superlight)] hover:bg-[var(--primary-light)] text-[var(--primary)] rounded-lg text-sm transition-colors border border-transparent hover:border-[var(--primary-light)]"
             >
               @if (hasPlatformIconUrl(linkItem.platformName)) {
-              <img
-                [src]="getPlatformIconUrl(linkItem.platformName)! | safeUrl"
-                [alt]="linkItem.platformName"
-                class="w-4 h-4 object-contain"
-              />
+                <img
+                  [src]="getPlatformIconUrl(linkItem.platformName)! | safeUrl"
+                  [alt]="linkItem.platformName"
+                  class="w-4 h-4 object-contain"
+                />
               } @else {
-              <mat-icon class="!text-base !w-4 !h-4">{{
-                getPlatformIcon(linkItem.platformName)
-              }}</mat-icon>
+                <mat-icon class="!text-base !w-4 !h-4">{{
+                  getPlatformIcon(linkItem.platformName)
+                }}</mat-icon>
               }
               <span class="font-medium">{{
                 linkItem.platformName.replace("_", " ")
               }}</span>
             </a>
-            }
-          </div>
-        </ng-template>
+          }
+        </div>
+      </ng-template>
 
-        <div class="flex items-center justify-between gap-4 mt-4">
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-[var(--text-secondary)]">
-              {{ "page" | translate }} {{ publishedLinksFilter().page || 1 }}
-              {{ "of" | translate }} {{ publishedLinksLastPage() }}
-            </span>
-            <span class="text-sm text-[var(--text-secondary)]">|</span>
-            <span class="text-sm text-[var(--text-secondary)]"
-              >{{ "itemsperpage" | translate }}:</span
-            >
-            <select
-              class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
-              [value]="publishedLinksFilter().itemsPerPage || 30"
-              (change)="
-                publishedLinksOnItemsPerPageChange(+$any($event.target).value)
-              "
-            >
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="30">30</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
-          </div>
-          @if (publishedLinksLastPage() > 1) {
+      <div class="flex items-center justify-between gap-4 mt-4">
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-[var(--text-secondary)]">
+            {{ "page" | translate }} {{ publishedLinksFilter().page || 1 }}
+            {{ "of" | translate }} {{ publishedLinksLastPage() }}
+          </span>
+          <span class="text-sm text-[var(--text-secondary)]">|</span>
+          <span class="text-sm text-[var(--text-secondary)]"
+            >{{ "itemsperpage" | translate }}:</span
+          >
+          <select
+            class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
+            [value]="publishedLinksFilter().itemsPerPage || 30"
+            (change)="
+              publishedLinksOnItemsPerPageChange(+$any($event.target).value)
+            "
+          >
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+        @if (publishedLinksLastPage() > 1) {
           <div class="flex items-center gap-2">
             <button
               class="btn rounded-md !text-primary"
@@ -820,25 +966,26 @@
             </button>
             <div class="flex items-center gap-1">
               @for (pageNum of publishedLinksGetPageNumbers(); track pageNum) {
-              @if (pageNum === -1) {
-              <span class="px-2 text-[var(--text-secondary)]">...</span>
-              } @else {
-              <button
-                class="btn rounded-md !text-primary min-w-[40px]"
-                matButton="filled"
-                matButton
-                type="button"
-                [ngClass]="{
-                  '!bg-primary !text-white':
-                    (publishedLinksFilter().page || 1) === pageNum,
-                  '!bg-primary-superlight':
-                    (publishedLinksFilter().page || 1) !== pageNum
-                }"
-                (click)="publishedLinksGoToPage(pageNum)"
-              >
-                {{ pageNum }}
-              </button>
-              } }
+                @if (pageNum === -1) {
+                  <span class="px-2 text-[var(--text-secondary)]">...</span>
+                } @else {
+                  <button
+                    class="btn rounded-md !text-primary min-w-[40px]"
+                    matButton="filled"
+                    matButton
+                    type="button"
+                    [ngClass]="{
+                      '!bg-primary !text-white':
+                        (publishedLinksFilter().page || 1) === pageNum,
+                      '!bg-primary-superlight':
+                        (publishedLinksFilter().page || 1) !== pageNum,
+                    }"
+                    (click)="publishedLinksGoToPage(pageNum)"
+                  >
+                    {{ pageNum }}
+                  </button>
+                }
+              }
             </div>
             <button
               class="btn rounded-md !text-primary"
@@ -854,24 +1001,75 @@
               <mat-icon>chevron_right</mat-icon>
             </button>
           </div>
-          }
-        </div>
-      </section>
-    </mat-tab>
-    <!-- Attachments -->
-    <!-- <mat-tab>
-      <ng-template mat-tab-label>
-        <span class="text-text-heading font-medium">
-          {{ "attachments" | translate }}
-        </span>
-      </ng-template>
-      <section id="attachments" class="mt-10 bg-white p-6 rounded-xl shadow">
-        <h2 class="heading mb-4">Attachments</h2>
-        <ul class="list-disc pl-6">
-          <li><a href="#" class="text-blue-600">PAN Document</a></li>
-          <li><a href="#" class="text-blue-600">Publisher Agreement</a></li>
-        </ul>
-      </section>
-    </mat-tab> -->
-  </mat-tab-group>
+        }
+      </div>
+    </section>
+  </ng-template>
+  <!-- ================= DESKTOP ================= -->
+  <div class="hidden md:block">
+    <mat-tab-group
+      dynamicHeight
+      [selectedIndex]="selectedTabIndex()"
+      (selectedTabChange)="onTabChange($event.index)"
+      class="publisher-tabs my-4"
+    >
+      <mat-tab label="Publisher Details">
+        <ng-container *ngTemplateOutlet="publisherDetailsTpl"></ng-container>
+      </mat-tab>
+
+      <mat-tab label="Books Published">
+        <ng-container *ngTemplateOutlet="booksTpl"></ng-container>
+      </mat-tab>
+
+      <mat-tab label="Authors">
+        <ng-container *ngTemplateOutlet="authorsTpl"></ng-container>
+      </mat-tab>
+
+      <mat-tab label="Sub Publishers">
+        <ng-container *ngTemplateOutlet="subPublishersTpl"></ng-container>
+      </mat-tab>
+
+      <mat-tab label="Royalties & Wallet">
+        <ng-container *ngTemplateOutlet="royaltiesTpl"></ng-container>
+      </mat-tab>
+
+      <mat-tab label="Publishing Points">
+        <ng-container *ngTemplateOutlet="publishingPointsTpl"></ng-container>
+      </mat-tab>
+
+      <mat-tab label="Published Links">
+        <ng-container *ngTemplateOutlet="publishedLinksTpl"></ng-container>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+  <!-- ================= MOBILE ================= -->
+  <div class="md:hidden space-y-4 mt-4">
+    <app-mobile-section title="Publisher Details" [defaultOpen]="true">
+      <ng-container *ngTemplateOutlet="publisherDetailsTpl"></ng-container>
+    </app-mobile-section>
+
+    <app-mobile-section title="Books Published">
+      <ng-container *ngTemplateOutlet="booksTpl"></ng-container>
+    </app-mobile-section>
+
+    <app-mobile-section title="Authors">
+      <ng-container *ngTemplateOutlet="authorsTpl"></ng-container>
+    </app-mobile-section>
+
+    <app-mobile-section title="Sub Publishers">
+      <ng-container *ngTemplateOutlet="subPublishersTpl"></ng-container>
+    </app-mobile-section>
+
+    <app-mobile-section title="Royalties & Wallet">
+      <ng-container *ngTemplateOutlet="royaltiesTpl"></ng-container>
+    </app-mobile-section>
+
+    <app-mobile-section title="Publishing Points">
+      <ng-container *ngTemplateOutlet="publishingPointsTpl"></ng-container>
+    </app-mobile-section>
+
+    <app-mobile-section title="Published Links">
+      <ng-container *ngTemplateOutlet="publishedLinksTpl"></ng-container>
+    </app-mobile-section>
+  </div>
 </div>

@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  ElementRef,
   inject,
   OnInit,
   Signal,
@@ -42,6 +41,7 @@ import { exportToExcel } from '../../common/utils/excel';
 import { Logger } from '../../services/logger';
 import { format } from 'date-fns';
 import { TippyTooltipDirective } from '../../directives/tippy-tooltip';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 
 @Component({
   selector: 'app-publisher',
@@ -70,16 +70,22 @@ export class Publisher implements OnInit {
     private authService: AuthService,
     private translateService: TranslateService,
     private logger: Logger,
-    private translate: TranslateService
+    private translate: TranslateService,
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
+    this.breakpointObserver
+      .observe([Breakpoints.Handset])
+      .subscribe((result) => {
+        this.isMobile.set(result.matches);
+      });
   }
   loggedInUser!: Signal<User | null>;
+  readonly isMobile = signal(false);
   publisherDBStatus = computed(() => {
     console.log(this.staticValueService.staticValues(), 'Fdafsaf');
 
     return Object.keys(
-      this.staticValueService.staticValues()?.PuplisherStatus || {}
+      this.staticValueService.staticValues()?.PuplisherStatus || {},
     );
   });
   searchStr = new Subject<string>();
@@ -87,6 +93,7 @@ export class Publisher implements OnInit {
   test!: Subject<string>;
   publishers = signal<Publishers[]>([]);
   dataSource = new MatTableDataSource<any>();
+  private breakpointObserver = inject(BreakpointObserver);
   displayedColumns = computed(() => {
     const user = this.loggedInUser();
 
@@ -98,7 +105,7 @@ export class Publisher implements OnInit {
         'noofauthors',
         'email',
         'phonenumber',
-        "wallet",
+        'wallet',
         'type',
         'addedBy',
         'actions',
@@ -167,7 +174,7 @@ export class Publisher implements OnInit {
       .getPublishers(currentFilter, showLoader)
       .then(({ items, totalCount, itemsPerPage: returnedItemsPerPage }) => {
         items = items.filter(
-          ({ user: { id } }) => id !== this.userService.loggedInUser$()?.id
+          ({ user: { id } }) => id !== this.userService.loggedInUser$()?.id,
         );
 
         // Cache the fetched page
@@ -187,7 +194,7 @@ export class Publisher implements OnInit {
       phonenumber: publisher.phoneNumber || publisher.user.phoneNumber,
       nooftitles: publisher.noOfTitles,
       noofauthors: publisher.noOfAuthors,
-      wallet: Math.round((publisher?.user?.wallet?.totalAmount || 0)) || 0,
+      wallet: Math.round(publisher?.user?.wallet?.totalAmount || 0) || 0,
       type: this.translate.instant(`${publisher.type}`),
       addedBy: publisher.addedBy?.publisher?.name || '-',
       actions: '',
@@ -320,7 +327,9 @@ export class Publisher implements OnInit {
       Swal.fire({
         icon: 'success',
         title: this.translateService.instant('success') || 'Success',
-        text: this.translateService.instant('linkCopiedToClipboard') || 'Share link has been copied to clipboard successfully!',
+        text:
+          this.translateService.instant('linkCopiedToClipboard') ||
+          'Share link has been copied to clipboard successfully!',
         timer: 3000,
         showConfirmButton: true,
         confirmButtonText: this.translateService.instant('ok') || 'OK',
@@ -330,7 +339,9 @@ export class Publisher implements OnInit {
       Swal.fire({
         icon: 'error',
         title: this.translateService.instant('error') || 'Error',
-        text: this.translateService.instant('failedToCopyLink') || 'Failed to copy link to clipboard. Please try again.',
+        text:
+          this.translateService.instant('failedToCopyLink') ||
+          'Failed to copy link to clipboard. Please try again.',
         confirmButtonText: this.translateService.instant('ok') || 'OK',
       });
     }
@@ -361,7 +372,7 @@ export class Publisher implements OnInit {
   }
   async openDistributionDialog(targetPublisherId: number) {
     const targetPublisher = this.publishers().find(
-      (p) => p.id === targetPublisherId
+      (p) => p.id === targetPublisherId,
     );
     const loggedInUser = this.loggedInUser();
 
@@ -374,9 +385,8 @@ export class Publisher implements OnInit {
      * 1️⃣ PREFILL → ALWAYS fetch target publisher points
      * ------------------------------------------------- */
     {
-      const res = await this.publisherService.fetchPublishingPointCost(
-        targetPublisherId
-      );
+      const res =
+        await this.publisherService.fetchPublishingPointCost(targetPublisherId);
       currentDistributionPoints = res.items;
     }
 
@@ -392,9 +402,10 @@ export class Publisher implements OnInit {
       const parentPublisherId = targetPublisher.addedBy?.publisher?.id;
 
       if (parentPublisherId) {
-        const res = await this.publisherService.fetchPublishingPointCost(
-          parentPublisherId
-        );
+        const res =
+          await this.publisherService.fetchPublishingPointCost(
+            parentPublisherId,
+          );
         baseDistributionPoints = res.items;
       }
     }
@@ -402,7 +413,7 @@ export class Publisher implements OnInit {
     // PUBLISHER approving SUB_PUBLISHER
     if (loggedInUser.accessLevel === 'PUBLISHER') {
       const res = await this.publisherService.fetchPublishingPointCost(
-        loggedInUser.publisher?.id as number
+        loggedInUser.publisher?.id as number,
       );
       baseDistributionPoints = res.items;
     }
@@ -418,14 +429,14 @@ export class Publisher implements OnInit {
         onSubmit: async (
           distributionData: Distribution[],
           allowCustomPrintingPrice?: boolean,
-          allowAuthorCopyPrice?: boolean
+          allowAuthorCopyPrice?: boolean,
         ) => {
           // 🔐 ALWAYS approve the TARGET publisher (sub-publisher)
           const response = await this.publisherService.approvePublisher(
             distributionData,
             targetPublisherId,
             allowCustomPrintingPrice,
-            allowAuthorCopyPrice
+            allowAuthorCopyPrice,
           );
 
           if (response) {
@@ -433,11 +444,12 @@ export class Publisher implements OnInit {
             // For PUBLISHER approval: change status from Dormant to Pending, set isApprovedByPublisher
             // For SUPERADMIN approval: change status from Pending to Active
             const loggedInUser = this.userService.loggedInUser$();
-            const isPublisherApproval = loggedInUser?.accessLevel === 'PUBLISHER';
-            
+            const isPublisherApproval =
+              loggedInUser?.accessLevel === 'PUBLISHER';
+
             // Clear cache to ensure fresh data on next fetch
             this.clearCache();
-            
+
             // Update local state immediately for instant UI update
             this.publishers.update((list) =>
               list.map((p) =>
@@ -447,10 +459,12 @@ export class Publisher implements OnInit {
                       isApprovedByPublisher: true,
                       // PUBLISHER approval: Dormant -> Pending
                       // SUPERADMIN approval: Pending -> Active
-                      status: isPublisherApproval ? PublisherStatus.Pending : PublisherStatus.Active
+                      status: isPublisherApproval
+                        ? PublisherStatus.Pending
+                        : PublisherStatus.Active,
                     }
-                  : p
-              )
+                  : p,
+              ),
             );
 
             // re-map to table
@@ -466,7 +480,7 @@ export class Publisher implements OnInit {
             }).then(() => {
               this.dialog.closeAll();
             });
-            
+
             // Refresh the list immediately to get updated data from server
             // This ensures buttons update correctly based on new status
             this.fetchPublishers(false);
@@ -495,25 +509,24 @@ export class Publisher implements OnInit {
       heightAuto: false,
     }).then(async (result) => {
       if (result.isConfirmed) {
-        const response = await this.publisherService.rejectPublisher(
-          publisherId
-        );
+        const response =
+          await this.publisherService.rejectPublisher(publisherId);
         if (response) {
           // Clear cache to ensure fresh data on next fetch
           this.clearCache();
-          
+
           // Update local state immediately
           this.publishers.update((list) =>
             list.map((p) =>
               p.id === publisherId
                 ? { ...p, status: PublisherStatus.Rejected }
-                : p
-            )
+                : p,
+            ),
           );
-          
+
           // Re-map to data source
           this.mapPublishersToDataSource(this.publishers());
-          
+
           // Refresh from server to ensure consistency
           this.fetchPublishers();
           Swal.fire({
@@ -563,7 +576,7 @@ export class Publisher implements OnInit {
         if (isDeactivating) {
           const checkbox = (
             Swal.getPopup()?.querySelector(
-              '#delistCheckbox'
+              '#delistCheckbox',
             ) as HTMLInputElement
           )?.checked;
           return { delist: checkbox };
@@ -580,7 +593,7 @@ export class Publisher implements OnInit {
     try {
       await this.publisherService.updatePublisherStatus(
         { status: status as any, delinkTitle: result.value['delist'] },
-        publisherId
+        publisherId,
       );
 
       Swal.fire({
@@ -593,7 +606,7 @@ export class Publisher implements OnInit {
       });
 
       this.dataSource.data = this.dataSource.data.map((item) =>
-        item.id === publisherId ? { ...item, status } : item
+        item.id === publisherId ? { ...item, status } : item,
       );
     } catch (error) {
       Swal.fire({
@@ -614,7 +627,7 @@ export class Publisher implements OnInit {
             type: 'PUBLISHER',
           };
           const response = await this.publisherService.sendInviteLink(
-            inviteData as Invite
+            inviteData as Invite,
           );
           if (response) {
             dialogRef.close();
@@ -639,8 +652,12 @@ export class Publisher implements OnInit {
   async resendEmailVerification(publisherId: number) {
     try {
       const firstConfirm = await Swal.fire({
-        title: this.translateService.instant('resendemailverification') || 'Resend Email Verification',
-        text: this.translateService.instant('resendemailverificationmessage') || 'Do you wish to send the verification email again?',
+        title:
+          this.translateService.instant('resendemailverification') ||
+          'Resend Email Verification',
+        text:
+          this.translateService.instant('resendemailverificationmessage') ||
+          'Do you wish to send the verification email again?',
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: this.translateService.instant('yes') || 'Yes',
@@ -658,10 +675,15 @@ export class Publisher implements OnInit {
 
       const secondConfirm = await Swal.fire({
         title: this.translateService.instant('areyousure') || 'Are you sure?',
-        html: this.translateService.instant('resendemailverificationconfirmation') || 'Are you really sure you want to resend the verification email? The verification link will be valid for 24 hours.',
+        html:
+          this.translateService.instant(
+            'resendemailverificationconfirmation',
+          ) ||
+          'Are you really sure you want to resend the verification email? The verification link will be valid for 24 hours.',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: this.translateService.instant('yesconfirm') || 'Yes, I\'m sure',
+        confirmButtonText:
+          this.translateService.instant('yesconfirm') || "Yes, I'm sure",
         cancelButtonText: this.translateService.instant('cancel') || 'Cancel',
         heightAuto: false,
         customClass: {
@@ -675,11 +697,13 @@ export class Publisher implements OnInit {
       }
 
       await this.publisherService.resendEmailVerification(publisherId);
-      
+
       Swal.fire({
         icon: 'success',
         title: this.translateService.instant('success') || 'Success',
-        text: this.translateService.instant('emailverificationsent') || 'Verification email has been sent successfully. The link will be valid for 24 hours.',
+        text:
+          this.translateService.instant('emailverificationsent') ||
+          'Verification email has been sent successfully. The link will be valid for 24 hours.',
         heightAuto: false,
       });
 
@@ -689,7 +713,9 @@ export class Publisher implements OnInit {
       Swal.fire({
         icon: 'error',
         title: this.translateService.instant('error') || 'Error',
-        text: this.translateService.instant('failedtosendverificationemail') || 'Failed to send verification email. Please try again.',
+        text:
+          this.translateService.instant('failedtosendverificationemail') ||
+          'Failed to send verification email. Please try again.',
         heightAuto: false,
       });
     }
@@ -703,7 +729,7 @@ export class Publisher implements OnInit {
           console.log({ password });
           await this.authService.changeAuthorPublisherPassword(
             publisher.user.id,
-            password
+            password,
           );
           Swal.fire({
             icon: 'success',
@@ -732,7 +758,7 @@ export class Publisher implements OnInit {
 
       // Only export the columns that are displayed in the UI (excluding 'actions')
       const exportColumns = this.displayedColumns().filter(
-        (col) => col !== 'actions'
+        (col) => col !== 'actions',
       );
 
       const exportData = publishers.map((publisher) => {
@@ -781,7 +807,7 @@ export class Publisher implements OnInit {
       const currentPage = this.filter().page || 1;
       const fileName = `publishers-page-${currentPage}-${format(
         new Date(),
-        'dd-MM-yyyy'
+        'dd-MM-yyyy',
       )}`;
 
       exportToExcel(exportData, fileName, headers, 'Publishers');

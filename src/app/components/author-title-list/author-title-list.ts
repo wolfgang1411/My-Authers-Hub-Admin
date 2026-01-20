@@ -1,4 +1,4 @@
-import { Component, Input, signal } from '@angular/core';
+import { Component, HostListener, Input, signal } from '@angular/core';
 import { Author, Title } from '../../interfaces';
 import { TitleService } from '../../pages/titles/title-service';
 import { MatIconModule } from '@angular/material/icon';
@@ -30,9 +30,8 @@ export class AuthorTitleList {
 
   constructor(
     private titleService: TitleService,
-    private authorService: AuthorsService
+    private authorService: AuthorsService,
   ) {}
-
   ngOnInit() {
     this.titleService
       .getTitles({ authorIds: this.authorId })

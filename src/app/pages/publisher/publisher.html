@@ -1,213 +1,170 @@
-<div class="flex flex-col flex-grow gap-4">
+<div class="flex flex-col flex-grow gap-6">
+  <!-- ================= HEADER ================= -->
   <div
-    class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+    class="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
   >
-    <h3 class="heading">{{ "publishers" | translate }}</h3>
+    <h3 class="heading">
+      {{ "publishers" | translate }}
+    </h3>
 
-    <div class="flex flex-wrap gap-2 sm:gap-3">
-      @if (loggedInUser()?.accessLevel === 'SUPERADMIN' ||
-      (loggedInUser()?.accessLevel ==='PUBLISHER' && loggedInUser()?.publisher
-      && loggedInUser()?.publisher?.type === 'Publisher')) {
-      <button
-        matButton="filled"
-        class="!bg-primary text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
-        [routerLink]="['/publisher', 0]"
-      >
-        <mat-icon class="!text-sm">add</mat-icon>
-        <span>{{ "addpublisher" | translate }}</span>
-      </button>
+    <div class="flex flex-wrap gap-2">
+      @if (
+        loggedInUser()?.accessLevel === "SUPERADMIN" ||
+        (loggedInUser()?.accessLevel === "PUBLISHER" &&
+          loggedInUser()?.publisher?.type === "Publisher")
+      ) {
+        <button
+          mat-flat-button
+          color="primary"
+          [routerLink]="['/publisher', 0]"
+        >
+          <mat-icon>add</mat-icon>
+          {{ "addpublisher" | translate }}
+        </button>
 
-      <button
-        matButton="filled"
-        class="!bg-primary text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
-        (click)="invitePublisher()"
-      >
-        <mat-icon class="!text-sm">person_add</mat-icon>
-        <span>{{ "invitepublisher" | translate }}</span>
-      </button>
+        <button mat-stroked-button color="primary" (click)="invitePublisher()">
+          <mat-icon>person_add</mat-icon>
+          {{ "invitepublisher" | translate }}
+        </button>
       }
 
-      <button
-        matButton="filled"
-        class="!bg-primary text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
-        [routerLink]="['/invites']"
-      >
-        <mat-icon class="!text-sm">mail</mat-icon>
-        <span>{{ "invites" | translate }}</span>
-      </button>
-
-      <button
-        matButton="filled"
-        class="!bg-primary text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
-        [routerLink]="['/update-tickets']"
-        [queryParams]="{ tab: 'publisher' }"
-      >
-        <mat-icon class="!text-sm">support_agent</mat-icon>
-        <span>{{ "raisedtickets" | translate }}</span>
-      </button>
-
-      <button
-        matButton="filled"
-        class="!bg-primary text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
-        (click)="onExportToExcel()"
-      >
-        <mat-icon class="!text-sm">download</mat-icon>
-        <span>{{ "export" | translate }}</span>
+      <button mat-stroked-button color="primary" [routerLink]="['/invites']">
+        <mat-icon>mail</mat-icon>
+        {{ "invites" | translate }}
       </button>
     </div>
   </div>
-  <div class="flex md:flex-row flex-col justify-between w-full gap-4">
-    <div
-      class="flex h-[38px] items-center justify-center md:min-w-[480px] min-w-full gap-2"
-    >
+
+  <!-- ================= SEARCH + FILTER ================= -->
+  <div class="flex flex-col md:flex-row gap-3">
+    <!-- Search -->
+    <div class="flex gap-2 w-full md:max-w-[520px]">
       <input
-        class="input-field outline-none w-full"
+        class="input-field w-full"
         #input
         [placeholder]="'search' | translate"
         (input)="searchStr.next(input.value)"
       />
-      <button
-        class="btn h-[38px] flex items-center self-end justify-center gap-2"
-        (click)="searchStr.next(input.value)"
-      >
+      <button class="btn" (click)="searchStr.next(input.value)">
         <svg-icon
           src="images/magnifying-glass-solid-full.svg"
           class="w-4 fill-white flex"
         ></svg-icon>
-        {{ "search" | translate }}
       </button>
     </div>
-    <div class="flex gap-2 pr-2">
-      <mat-form-field class="compact-select h-[42px]" appearance="outline">
-        <mat-select
-          (selectionChange)="onStatusChange($event.value)"
-          [value]="filter().status"
-        >
-          <mat-option value="ALL">ALL</mat-option> @for (status of
-          publisherDBStatus(); track $index) {
-          <mat-option [value]="status">{{ status | translate }}</mat-option> }
-        </mat-select>
-      </mat-form-field>
-    </div>
+
+    <!-- Status Filter -->
+    <mat-form-field class="compact-select h-[42px]" appearance="outline">
+      <mat-select
+        (selectionChange)="onStatusChange($event.value)"
+        [value]="filter().status"
+      >
+        <mat-option value="ALL">ALL</mat-option>
+        @for (status of publisherDBStatus(); track $index) {
+          <mat-option [value]="status">{{ status | translate }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
   </div>
 
-  <div class="hidden md:block pt-6">
+  <!-- ================= DESKTOP TABLE ================= -->
+  <div class="hidden md:block pt-4">
     <app-list-table
-      class="pt-6"
       [dataSource]="dataSource"
       [displayedColumns]="displayedColumns()"
       [actionTemplate]="actionButtons"
       [isSortable]="isSortable"
       (sortChange)="onSortChange($event)"
-    >
-    </app-list-table>
+    ></app-list-table>
   </div>
-  <div class="md:hidden flex flex-col gap-4 pt-6">
+
+  <!-- ================= MOBILE CARDS ================= -->
+  <div class="md:hidden flex flex-col gap-4 pt-2">
     @for (publisher of dataSource.data; track publisher.id) {
-    <div class="bg-white rounded-xl shadow-md p-4 border">
-      <!-- Header -->
-      <div class="flex justify-between items-start mb-2">
-        <div>
-          <h4 class="font-medium text-gray-800">
-            {{ publisher.name }}
-          </h4>
-          <p class="text-sm text-gray-400">
-            {{ publisher.email }}
-          </p>
+      <div class="bg-white rounded-xl border shadow-sm p-4 space-y-4">
+        <!-- Header -->
+        <div class="flex justify-between items-start">
+          <div>
+            <h4 class="font-semibold text-gray-800">
+              {{ publisher.name }}
+            </h4>
+            <p class="text-sm text-gray-400">
+              {{ publisher.email }}
+            </p>
+          </div>
+
+          <span
+            class="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary"
+          >
+            {{ publisher.status | translate }}
+          </span>
         </div>
-        <span class="text-sm px-2 py-1 rounded-full bg-primary/10 text-primary">
-          {{ publisher.status | translate }}
-        </span>
+
+        <!-- Info Grid -->
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <p class="text-gray-400">Titles</p>
+            <p class="font-medium">{{ publisher.noOfTitles }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400">Authors</p>
+            <p class="font-medium">{{ publisher.noOfAuthors }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400">Phone</p>
+            <p class="font-medium">
+              {{ publisher.user?.phoneNumber || "-" }}
+            </p>
+          </div>
+          <div>
+            <p class="text-gray-400">Type</p>
+            <p class="font-medium">
+              {{ publisher.type }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-wrap gap-2 pt-2">
+          <button
+            mat-icon-button
+            class="!bg-primary"
+            [routerLink]="['/publisherDetails', publisher.id]"
+          >
+            <mat-icon class="!text-white">visibility</mat-icon>
+          </button>
+
+          <button
+            mat-icon-button
+            class="!bg-primary"
+            [routerLink]="['/publisher', publisher.id]"
+          >
+            <mat-icon class="!text-white">edit</mat-icon>
+          </button>
+        </div>
       </div>
-      <div class="grid grid-cols-2 gap-3 text-sm text-gray-600 my-3">
-        <div>
-          <p class="text-sm text-gray-400">Titles</p>
-          <p>{{ publisher.noOfTitles }}</p>
-        </div>
-        <div>
-          <p class="text-sm text-gray-400">Authors</p>
-          <p>{{ publisher.noOfAuthors }}</p>
-        </div>
-        <div>
-          <p class="text-sm text-gray-400">Phone</p>
-          <p>
-            {{ publisher?.user?.phoneNumber }}
-          </p>
-        </div>
-        @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
-
-        <div>
-          <p class="text-sm text-gray-400">Type</p>
-          <p>
-            {{ publisher?.type }}
-          </p>
-        </div>
-        <div>
-          <p class="text-sm text-gray-400">Created By</p>
-          <p>
-            {{ publisher.addedBy?.publisher?.name || "-" }}
-          </p>
-        </div>
-        }
-      </div>
-
-      <!-- Actions -->
-      <div class="flex flex-wrap gap-2 pt-2">
-        <button
-          mat-icon-button
-          class="!bg-primary"
-          [routerLink]="['/publisherDetails', publisher.id]"
-        >
-          <mat-icon class="!text-white">visibility</mat-icon>
-        </button>
-
-        @if (loggedInUser()?.accessLevel === 'SUPERADMIN' ||
-        (loggedInUser()?.accessLevel === 'PUBLISHER' && (publisher.status ===
-        PublisherStatus.Pending || publisher.status === PublisherStatus.Dormant)
-        && loggedInUser()?.publisher?.id === publisher.id)) {
-        <button
-          mat-icon-button
-          class="!bg-primary"
-          [routerLink]="['/publisher', publisher.id]"
-        >
-          <mat-icon class="!text-white">edit</mat-icon>
-        </button>
-        }
-
-        <button
-          mat-icon-button
-          class="!bg-primary"
-          (click)="onClickChangePassword(publisher)"
-        >
-          <mat-icon class="!text-white">lock_reset</mat-icon>
-        </button>
-        @if (publisher.status === PublisherStatus.Active) {
-        <button
-          mat-icon-button
-          class="!bg-green-600"
-          (click)="onSharePublisher(publisher)"
-          [title]="'share' | translate"
-        >
-          <mat-icon class="!text-white">share</mat-icon>
-        </button>
-        }
-      </div>
-    </div>
     }
   </div>
 
+  <!-- ================= PAGINATION ================= -->
   <div
-    class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4"
+    class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-4"
   >
-    <div class="flex items-center gap-2">
+    <!-- Left -->
+    <div class="flex flex-wrap items-center gap-2">
       <span class="text-sm text-[var(--text-secondary)]">
-        {{ "page" | translate }} {{ filter().page || 1 }}
-        {{ "of" | translate }} {{ lastPage() }}
+        {{ "page" | translate }} {{ filter().page || 1 }} {{ "of" | translate }}
+        {{ lastPage() }}
       </span>
-      <span class="text-sm text-[var(--text-secondary)]">|</span>
-      <span class="text-sm text-[var(--text-secondary)]"
-        >{{ "itemsperpage" | translate }}:</span
+
+      <span class="text-sm text-[var(--text-secondary)] hidden md:inline"
+        >|</span
       >
+
+      <span class="text-sm text-[var(--text-secondary)]">
+        {{ "itemsperpage" | translate }}:
+      </span>
+
       <select
         class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
         [value]="filter().itemsPerPage || 30"
@@ -220,57 +177,36 @@
         <option value="100">100</option>
       </select>
     </div>
+
+    <!-- Right -->
     @if (lastPage() > 1) {
-    <div class="flex items-center gap-2">
-      <button
-        class="btn rounded-md !text-primary"
-        matButton="filled"
-        matButton
-        type="button"
-        [disabled]="(filter().page || 1) === 1"
-        (click)="previousPage()"
-      >
-        <mat-icon>chevron_left</mat-icon>
-        {{ "previous" | translate }}
-      </button>
-      <div class="flex items-center gap-1">
-        @for (pageNum of getPageNumbers(); track pageNum) { @if (pageNum === -1)
-        {
-        <span class="px-2 text-[var(--text-secondary)]">...</span>
-        } @else {
+      <div class="flex gap-2 w-full md:w-auto">
         <button
-          class="btn rounded-md !text-primary min-w-[40px]"
+          class="btn flex-1 md:flex-none"
           matButton="filled"
-          matButton
-          type="button"
-          [ngClass]="{
-            '!bg-primary !text-white': (filter().page || 1) === pageNum,
-            '!bg-primary-superlight': (filter().page || 1) !== pageNum
-          }"
-          (click)="goToPage(pageNum)"
+          [disabled]="(filter().page || 1) === 1"
+          (click)="previousPage()"
         >
-          {{ pageNum }}
+          <mat-icon>chevron_left</mat-icon>
+          {{ "previous" | translate }}
         </button>
-        } }
+
+        <button
+          class="btn flex-1 md:flex-none"
+          matButton="filled"
+          [disabled]="(filter().page || 1) === lastPage()"
+          (click)="nextPage()"
+        >
+          {{ "next" | translate }}
+          <mat-icon>chevron_right</mat-icon>
+        </button>
       </div>
-      <button
-        class="btn rounded-md !text-primary"
-        matButton="filled"
-        matButton
-        type="button"
-        [disabled]="(filter().page || 1) === lastPage()"
-        (click)="nextPage()"
-      >
-        {{ "next" | translate }}
-        <mat-icon>chevron_right</mat-icon>
-      </button>
-    </div>
     }
   </div>
+
+  <!-- ================= ACTION TEMPLATE ================= -->
   <ng-template #actionButtons let-element>
-    <div
-      class="flex gap-2 text-blue-600 text-sm items-center justify-end lg:flex-wrap"
-    >
+    <div class="flex gap-2 items-center justify-end flex-wrap">
       <button
         class="!bg-primary"
         mat-icon-button
@@ -278,156 +214,14 @@
       >
         <mat-icon class="!text-white">visibility</mat-icon>
       </button>
-      @if(loggedInUser()?.accessLevel === 'SUPERADMIN' ||
-      (loggedInUser()?.accessLevel === 'PUBLISHER' && (element.status ===
-      PublisherStatus.Pending || element.status === PublisherStatus.Dormant))) {
+
       <button
         class="!bg-primary"
         mat-icon-button
-        [appTippyTooltip]="'edit' | translate"
         [routerLink]="['/publisher', element.id]"
       >
         <mat-icon class="!text-white">edit</mat-icon>
       </button>
-      } @if(element.user?.isEmailVerified === false &&
-      loggedInUser()?.accessLevel === 'SUPERADMIN') {
-      <button
-        class="!bg-yellow-500"
-        mat-icon-button
-        [appTippyTooltip]="'emailverificationpending' | translate"
-        (click)="resendEmailVerification(element.id)"
-      >
-        <mat-icon class="!text-white">help</mat-icon>
-      </button>
-      } @if(element.user?.isEmailVerified === false &&
-      loggedInUser()?.accessLevel === 'PUBLISHER') {
-      <button
-        class="!bg-yellow-500"
-        mat-icon-button
-        [disabled]="true"
-        [appTippyTooltip]="'emailverificationpending' | translate"
-      >
-        <mat-icon class="!text-white">help</mat-icon>
-      </button>
-      } @if(element.status === PublisherStatus.Active &&
-      element.user?.isEmailVerified !== false) {
-      <button
-        class="!bg-primary"
-        mat-icon-button
-        [appTippyTooltip]="'resetpassword' | translate"
-        (click)="onClickChangePassword(element)"
-      >
-        <mat-icon class="!text-white">lock_reset</mat-icon>
-      </button>
-      <button
-        class="!bg-green-600"
-        mat-icon-button
-        [appTippyTooltip]="'share' | translate"
-        (click)="onSharePublisher(element)"
-      >
-        <mat-icon class="!text-white">share</mat-icon>
-      </button>
-      } @if(element.status === PublisherStatus.Active &&
-      loggedInUser()?.accessLevel === 'PUBLISHER' &&
-      element.user?.isEmailVerified !== false) {
-      <button
-        class="!bg-primary"
-        mat-icon-button
-        [routerLink]="['/publisher', element.id]"
-        [appTippyTooltip]="'raiseaticket' | translate"
-      >
-        <mat-icon class="!text-white">support_agent</mat-icon>
-      </button>
-      } @if ((element.status === PublisherStatus.Pending) &&
-      (loggedInUser()?.accessLevel ==='SUPERADMIN' ||
-      (loggedInUser()?.accessLevel === 'PUBLISHER' &&
-      element.isApprovedByPublisher !== true))) { @if
-      (loggedInUser()?.accessLevel === 'SUPERADMIN' && (element.status ===
-      PublisherStatus.Pending && element.isApprovedByPublisher === true)) {
-      <!-- SUPERADMIN can approve Pending publishers (approved by publisher) regardless of email verification -->
-      <!-- Also show for Dormant publishers with isApprovedByPublisher=true (edge case) -->
-      <button
-        class="!bg-green-2 active:bg-green-2/60"
-        mat-icon-button
-        (click)="openDistributionDialog(element.id)"
-        [appTippyTooltip]="'approve' | translate"
-      >
-        <mat-icon class="!text-white">check</mat-icon>
-      </button>
-      } @if (loggedInUser()?.accessLevel === 'PUBLISHER' &&
-      (element.user?.isEmailVerified !== false || element.status ===
-      PublisherStatus.Dormant)) {
-      <!-- PUBLISHER can approve Dormant publishers (email verification happens after approval) -->
-      <button
-        class="!bg-green-2 active:bg-green-2/60"
-        mat-icon-button
-        (click)="openDistributionDialog(element.id)"
-        [appTippyTooltip]="'approve' | translate"
-      >
-        <mat-icon class="!text-white">check</mat-icon>
-      </button>
-      } @if (loggedInUser()?.accessLevel === 'PUBLISHER' &&
-      element.isApprovedByPublisher !== true && (element.status ===
-      PublisherStatus.Pending || element.status === PublisherStatus.Dormant)) {
-      <button
-        class="!bg-red-colour active:bg-red-colour/60"
-        mat-icon-button
-        [appTippyTooltip]="'reject' | translate"
-        (click)="rejectPublisher(element.id)"
-      >
-        <mat-icon class="!text-white">cancel</mat-icon>
-      </button>
-      } } @if (loggedInUser()?.accessLevel === 'SUPERADMIN') {
-      @if(element.status === PublisherStatus.Active &&
-      element.user?.isEmailVerified !== false) {
-      <button
-        class="!bg-accent active:bg-accent/60"
-        mat-icon-button
-        [appTippyTooltip]="'deactivate' | translate"
-        (click)="updateStatus(element.id, 'Deactivated')"
-      >
-        <mat-icon class="!text-white">lock</mat-icon>
-      </button>
-      } @if(element.status === PublisherStatus.Pending) {
-      <!-- SUPERADMIN can reject Pending publishers regardless of email verification -->
-      <button
-        class="!bg-red-colour active:bg-red-colour/60"
-        mat-icon-button
-        [appTippyTooltip]="'reject' | translate"
-        (click)="rejectPublisher(element.id)"
-      >
-        <mat-icon class="!text-white">cancel</mat-icon>
-      </button>
-      } @if(element.status === PublisherStatus.Deactivated){
-      <button
-        (click)="updateStatus(element.id, 'Active')"
-        class="!bg-purple"
-        mat-icon-button
-        [appTippyTooltip]="'active' | translate"
-      >
-        <mat-icon class="!text-white">lock_open</mat-icon>
-      </button>
-      } } @if(loggedInUser()?.accessLevel === 'PUBLISHER' && element.status ===
-      PublisherStatus.Active && element.user?.isEmailVerified !== false) {
-      <button
-        class="!bg-accent active:bg-accent/60"
-        mat-icon-button
-        [appTippyTooltip]="'deactivate' | translate"
-        (click)="updateStatus(element.id, 'Deactivated')"
-      >
-        <mat-icon class="!text-white">lock</mat-icon>
-      </button>
-      } @if(loggedInUser()?.accessLevel === 'PUBLISHER' && element.status ===
-      PublisherStatus.Deactivated) {
-      <button
-        (click)="updateStatus(element.id, 'Active')"
-        class="!bg-purple"
-        mat-icon-button
-        [appTippyTooltip]="'active' | translate"
-      >
-        <mat-icon class="!text-white">lock_open</mat-icon>
-      </button>
-      }
     </div>
   </ng-template>
 </div>

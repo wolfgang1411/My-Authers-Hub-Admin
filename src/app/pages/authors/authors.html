@@ -1,9 +1,11 @@
-<div class="flex flex-col flex-grow gap-4">
-  <div class="flex flex-col lg:flex-row lg:justify-between gap-3">
+<div class="flex flex-col flex-grow gap-6">
+  <div
+    class="flex flex-col md:flex-row md:items-start md:justify-between gap-4"
+  >
     <h3 class="heading">
       {{ "authors" | translate }}
     </h3>
-    <div class="flex gap-4">
+    <div class="flex flex-wrap gap-2 justify-end">
       <button
         matButton
         matButton="filled"
@@ -56,7 +58,7 @@
     </div>
   </div>
 
-  <div class="flex flex-col lg:flex-row w-full gap-3">
+  <div class="flex flex-col md:flex-row w-full gap-3 justify-between">
     <div
       class="flex h-[38px] items-center justify-center md:min-w-[480px] min-w-full gap-2"
     >
@@ -86,7 +88,7 @@
         >
           <mat-option value="ALL">ALL</mat-option>
           @for (status of authorDBStatus(); track $index) {
-          <mat-option [value]="status">{{ status | translate }}</mat-option>
+            <mat-option [value]="status">{{ status | translate }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -128,86 +130,86 @@
   <!-- Mobile Author Cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 lg:hidden pt-4">
     @for (author of dataSource.data; track $index) {
-    <div
-      class="bg-white rounded-2xl shadow-md border border-gray-200 p-5 flex flex-col gap-4 hover:shadow-lg transition"
-    >
-      <!-- Header -->
-      <div class="flex justify-between items-start">
-        <div>
-          <h3 class="text-base font-semibold text-primary leading-tight">
-            {{ author.user?.firstName }} {{ author.user?.lastName }}
-          </h3>
-          <p class="text-sm text-gray-500">
-            {{ author.user?.email || "No email" }}
-          </p>
+      <div
+        class="bg-white rounded-2xl shadow-md border border-gray-200 p-5 flex flex-col gap-4 hover:shadow-lg transition"
+      >
+        <!-- Header -->
+        <div class="flex justify-between items-start">
+          <div>
+            <h3 class="text-base font-semibold text-primary leading-tight">
+              {{ author.user?.firstName }} {{ author.user?.lastName }}
+            </h3>
+            <p class="text-sm text-gray-500">
+              {{ author.user?.email || "No email" }}
+            </p>
+          </div>
+
+          <span
+            class="px-3 py-1 text-xs rounded-full font-medium"
+            [ngClass]="{
+              'bg-green-100 text-green-700': author.status === 'Active',
+              'bg-yellow-100 text-yellow-700': author.status === 'Pending',
+              'bg-red-100 text-red-700': author.status === 'Deactivated',
+            }"
+          >
+            {{ author.status }}
+          </span>
         </div>
 
-        <span
-          class="px-3 py-1 text-xs rounded-full font-medium"
-          [ngClass]="{
-            'bg-green-100 text-green-700': author.status === 'Active',
-            'bg-yellow-100 text-yellow-700': author.status === 'Pending',
-            'bg-red-100 text-red-700': author.status === 'Deactivated'
-          }"
-        >
-          {{ author.status }}
-        </span>
-      </div>
+        <!-- Details -->
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <p class="text-gray-400">Role</p>
+            <p class="font-medium">{{ author.accessLevel }}</p>
+          </div>
 
-      <!-- Details -->
-      <div class="grid grid-cols-2 gap-3 text-sm">
-        <div>
-          <p class="text-gray-400">Role</p>
-          <p class="font-medium">{{ author.accessLevel }}</p>
+          <div>
+            <p class="text-gray-400">Verified</p>
+            <p class="font-medium">
+              {{ author.user?.isEmailVerified ? "Yes" : "No" }}
+            </p>
+          </div>
         </div>
 
-        <div>
-          <p class="text-gray-400">Verified</p>
-          <p class="font-medium">
-            {{ author.user?.isEmailVerified ? "Yes" : "No" }}
-          </p>
+        <!-- Actions -->
+        <div class="flex flex-wrap gap-2 pt-3 border-t">
+          <button
+            class="bg-primary text-white rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
+            [routerLink]="['/authorDetails', author.id]"
+          >
+            <mat-icon class="text-sm">visibility</mat-icon>
+            View
+          </button>
+          @if (loggedInUser()?.accessLevel !== "AUTHER") {
+            <button
+              class="bg-gray-100 rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
+              [routerLink]="['/author', author.id]"
+            >
+              <mat-icon class="text-sm">edit</mat-icon>
+              Edit
+            </button>
+          }
+          <button
+            class="bg-gray-100 rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
+            (click)="toggleExpand(author.id)"
+          >
+            <mat-icon class="text-sm">
+              {{
+                expandedAuthorId() === author.id ? "expand_less" : "expand_more"
+              }}
+            </mat-icon>
+            Titles
+          </button>
         </div>
       </div>
-
-      <!-- Actions -->
-      <div class="flex flex-wrap gap-2 pt-3 border-t">
-        <button
-          class="bg-primary text-white rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
-          [routerLink]="['/authorDetails', author.id]"
-        >
-          <mat-icon class="text-sm">visibility</mat-icon>
-          View
-        </button>
-        @if (loggedInUser()?.accessLevel !== 'AUTHER') {
-        <button
-          class="bg-gray-100 rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
-          [routerLink]="['/author', author.id]"
-        >
-          <mat-icon class="text-sm">edit</mat-icon>
-          Edit
-        </button>
-        }
-        <button
-          class="bg-gray-100 rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
-          (click)="toggleExpand(author.id)"
-        >
-          <mat-icon class="text-sm">
-            {{
-              expandedAuthorId() === author.id ? "expand_less" : "expand_more"
-            }}
-          </mat-icon>
-          Titles
-        </button>
-      </div>
-    </div>
     }
   </div>
 
   <div class="flex items-center justify-between gap-4 mt-4">
     <div class="flex items-center gap-2">
       <span class="text-sm text-[var(--text-secondary)]">
-        {{ "page" | translate }} {{ filter().page || 1 }}
-        {{ "of" | translate }} {{ lastPage() }}
+        {{ "page" | translate }} {{ filter().page || 1 }} {{ "of" | translate }}
+        {{ lastPage() }}
       </span>
       <span class="text-sm text-[var(--text-secondary)]">|</span>
       <span class="text-sm text-[var(--text-secondary)]"
@@ -226,61 +228,63 @@
       </select>
     </div>
     @if (lastPage() > 1) {
-    <div class="flex items-center gap-2">
-      <button
-        class="btn rounded-md !text-primary"
-        matButton="filled"
-        matButton
-        type="button"
-        [disabled]="(filter().page || 1) === 1"
-        (click)="previousPage()"
-      >
-        <mat-icon>chevron_left</mat-icon>
-        {{ "previous" | translate }}
-      </button>
-      <div class="flex items-center gap-1">
-        @for (pageNum of getPageNumbers(); track pageNum) { @if (pageNum === -1)
-        {
-        <span class="px-2 text-[var(--text-secondary)]">...</span>
-        } @else {
+      <div class="flex items-center gap-2">
         <button
-          class="btn rounded-md !text-primary min-w-[40px]"
+          class="btn rounded-md !text-primary"
           matButton="filled"
           matButton
           type="button"
-          [ngClass]="{
-            '!bg-primary !text-white': (filter().page || 1) === pageNum,
-            '!bg-primary-superlight': (filter().page || 1) !== pageNum
-          }"
-          (click)="goToPage(pageNum)"
+          [disabled]="(filter().page || 1) === 1"
+          (click)="previousPage()"
         >
-          {{ pageNum }}
+          <mat-icon>chevron_left</mat-icon>
+          {{ "previous" | translate }}
         </button>
-        } }
+        <div class="flex items-center gap-1">
+          @for (pageNum of getPageNumbers(); track pageNum) {
+            @if (pageNum === -1) {
+              <span class="px-2 text-[var(--text-secondary)]">...</span>
+            } @else {
+              <button
+                class="btn rounded-md !text-primary min-w-[40px]"
+                matButton="filled"
+                matButton
+                type="button"
+                [ngClass]="{
+                  '!bg-primary !text-white': (filter().page || 1) === pageNum,
+                  '!bg-primary-superlight': (filter().page || 1) !== pageNum,
+                }"
+                (click)="goToPage(pageNum)"
+              >
+                {{ pageNum }}
+              </button>
+            }
+          }
+        </div>
+        <button
+          class="btn rounded-md !text-primary"
+          matButton="filled"
+          matButton
+          type="button"
+          [disabled]="(filter().page || 1) === lastPage()"
+          (click)="nextPage()"
+        >
+          {{ "next" | translate }}
+          <mat-icon>chevron_right</mat-icon>
+        </button>
       </div>
-      <button
-        class="btn rounded-md !text-primary"
-        matButton="filled"
-        matButton
-        type="button"
-        [disabled]="(filter().page || 1) === lastPage()"
-        (click)="nextPage()"
-      >
-        {{ "next" | translate }}
-        <mat-icon>chevron_right</mat-icon>
-      </button>
-    </div>
     }
   </div>
 
-  @for (author of dataSource.data; track author.id) { @if (expandedAuthorId()
-  === author.id) {
-  <tr class="w-full bg-white shadow-lg p-8">
-    <td colspan="100%" class="p-0">
-      <app-author-title-list [authorId]="author.id"></app-author-title-list>
-    </td>
-  </tr>
-  } }
+  @for (author of dataSource.data; track author.id) {
+    @if (expandedAuthorId() === author.id) {
+      <tr class="w-full bg-white shadow-lg p-8">
+        <td colspan="100%" class="p-0">
+          <app-author-title-list [authorId]="author.id"></app-author-title-list>
+        </td>
+      </tr>
+    }
+  }
   <ng-template #actionButtons let-element>
     <div
       class="flex gap-2 text-blue-600 text-sm items-center justify-end lg:flex-wrap"
@@ -292,105 +296,118 @@
       >
         <mat-icon class="!text-white">visibility</mat-icon>
       </button>
-      @if(loggedInUser()?.accessLevel === 'SUPERADMIN' ||
-      (loggedInUser()?.accessLevel === 'PUBLISHER' && (element.status ===
-      AuthorStatus.Pending || element.status === AuthorStatus.Dormant))) {
-      <button
-        class="!bg-primary"
-        mat-icon-button
-        [appTippyTooltip]="'edit' | translate"
-        [routerLink]="['/author', element.id]"
-      >
-        <mat-icon class="!text-white">edit</mat-icon>
-      </button>
-      } @if(element.user?.isEmailVerified === false) {
-      <button
-        class="!bg-yellow-500"
-        mat-icon-button
-        [appTippyTooltip]="'emailverificationpending' | translate"
-        (click)="resendEmailVerification(element.id)"
-      >
-        <mat-icon class="!text-white">help</mat-icon>
-      </button>
-      } @if(element.status === AuthorStatus.Active &&
-      element.user?.isEmailVerified !== false) {
-      <button
-        class="!bg-primary"
-        mat-icon-button
-        [appTippyTooltip]="'resetpassword' | translate"
-        (click)="onClickChangePassword(element)"
-      >
-        <mat-icon class="!text-white">lock_reset</mat-icon>
-      </button>
-      <button
-        class="!bg-green-600"
-        mat-icon-button
-        [appTippyTooltip]="'share' | translate"
-        (click)="onShareAuthor(element)"
-      >
-        <mat-icon class="!text-white">share</mat-icon>
-      </button>
-      <button
-        class="!bg-accent active:bg-accent/60"
-        mat-icon-button
-        [appTippyTooltip]="'deactivate' | translate"
-        (click)="updateStatus(element.id, 'Deactivated')"
-      >
-        <mat-icon class="!text-white">lock</mat-icon>
-      </button>
-      } @if(element.status === AuthorStatus.Pending) { @if
-      (element.user?.isEmailVerified !== false) {
-      <button
-        class="!bg-green-2 active:bg-green-2/60"
-        mat-icon-button
-        (click)="approveAuthor(element.id)"
-        [appTippyTooltip]="'approve' | translate"
-      >
-        <mat-icon class="!text-white">check</mat-icon>
-      </button>
-      <button
-        class="!bg-red-colour active:bg-red-colour/60"
-        mat-icon-button
-        [appTippyTooltip]="'reject' | translate"
-        (click)="rejectAuthor(element.id)"
-      >
-        <mat-icon class="!text-white">cancel</mat-icon>
-      </button>
-      } } @if(element.status === AuthorStatus.Deactivated){
-      <button
-        (click)="updateStatus(element.id, 'Active')"
-        class="!bg-purple"
-        mat-icon-button
-        [appTippyTooltip]="'active' | translate"
-      >
-        <mat-icon class="!text-white">lock_up</mat-icon>
-      </button>
-
-      } @if(element.status === AuthorStatus.Active &&
-      loggedInUser()?.accessLevel === 'PUBLISHER' &&
-      element.user?.isEmailVerified !== false) {
-      <button
-        class="!bg-primary"
-        mat-icon-button
-        [routerLink]="['/author', element.id]"
-        [appTippyTooltip]="'raiseaticket' | translate"
-      >
-        <mat-icon class="!text-white">support_agent</mat-icon>
-      </button>
-      } @if(element.user?.isEmailVerified !== false) {
-      <button
-        class="!bg-primary"
-        mat-icon-button
-        (click)="toggleExpand(element.id)"
-      >
-        <mat-icon class="!text-white">
-          {{
-            expandedAuthorId() === element.id
-              ? "keyboard_arrow_up"
-              : "keyboard_arrow_down"
-          }}
-        </mat-icon>
-      </button>
+      @if (
+        loggedInUser()?.accessLevel === "SUPERADMIN" ||
+        (loggedInUser()?.accessLevel === "PUBLISHER" &&
+          (element.status === AuthorStatus.Pending ||
+            element.status === AuthorStatus.Dormant))
+      ) {
+        <button
+          class="!bg-primary"
+          mat-icon-button
+          [appTippyTooltip]="'edit' | translate"
+          [routerLink]="['/author', element.id]"
+        >
+          <mat-icon class="!text-white">edit</mat-icon>
+        </button>
+      }
+      @if (element.user?.isEmailVerified === false) {
+        <button
+          class="!bg-yellow-500"
+          mat-icon-button
+          [appTippyTooltip]="'emailverificationpending' | translate"
+          (click)="resendEmailVerification(element.id)"
+        >
+          <mat-icon class="!text-white">help</mat-icon>
+        </button>
+      }
+      @if (
+        element.status === AuthorStatus.Active &&
+        element.user?.isEmailVerified !== false
+      ) {
+        <button
+          class="!bg-primary"
+          mat-icon-button
+          [appTippyTooltip]="'resetpassword' | translate"
+          (click)="onClickChangePassword(element)"
+        >
+          <mat-icon class="!text-white">lock_reset</mat-icon>
+        </button>
+        <button
+          class="!bg-green-600"
+          mat-icon-button
+          [appTippyTooltip]="'share' | translate"
+          (click)="onShareAuthor(element)"
+        >
+          <mat-icon class="!text-white">share</mat-icon>
+        </button>
+        <button
+          class="!bg-accent active:bg-accent/60"
+          mat-icon-button
+          [appTippyTooltip]="'deactivate' | translate"
+          (click)="updateStatus(element.id, 'Deactivated')"
+        >
+          <mat-icon class="!text-white">lock</mat-icon>
+        </button>
+      }
+      @if (element.status === AuthorStatus.Pending) {
+        @if (element.user?.isEmailVerified !== false) {
+          <button
+            class="!bg-green-2 active:bg-green-2/60"
+            mat-icon-button
+            (click)="approveAuthor(element.id)"
+            [appTippyTooltip]="'approve' | translate"
+          >
+            <mat-icon class="!text-white">check</mat-icon>
+          </button>
+          <button
+            class="!bg-red-colour active:bg-red-colour/60"
+            mat-icon-button
+            [appTippyTooltip]="'reject' | translate"
+            (click)="rejectAuthor(element.id)"
+          >
+            <mat-icon class="!text-white">cancel</mat-icon>
+          </button>
+        }
+      }
+      @if (element.status === AuthorStatus.Deactivated) {
+        <button
+          (click)="updateStatus(element.id, 'Active')"
+          class="!bg-purple"
+          mat-icon-button
+          [appTippyTooltip]="'active' | translate"
+        >
+          <mat-icon class="!text-white">lock_up</mat-icon>
+        </button>
+      }
+      @if (
+        element.status === AuthorStatus.Active &&
+        loggedInUser()?.accessLevel === "PUBLISHER" &&
+        element.user?.isEmailVerified !== false
+      ) {
+        <button
+          class="!bg-primary"
+          mat-icon-button
+          [routerLink]="['/author', element.id]"
+          [appTippyTooltip]="'raiseaticket' | translate"
+        >
+          <mat-icon class="!text-white">support_agent</mat-icon>
+        </button>
+      }
+      @if (element.user?.isEmailVerified !== false) {
+        <button
+          class="!bg-primary"
+          mat-icon-button
+          (click)="toggleExpand(element.id)"
+        >
+          <mat-icon class="!text-white">
+            {{
+              expandedAuthorId() === element.id
+                ? "keyboard_arrow_up"
+                : "keyboard_arrow_down"
+            }}
+          </mat-icon>
+        </button>
       }
     </div>
   </ng-template>

@@ -19,7 +19,7 @@ import {
   AbstractControl,
   AsyncValidatorFn,
 } from '@angular/forms';
-import { BreakpointObserver } from '@angular/cdk/layout';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import {
   StepperOrientation,
   MatStepperModule,
@@ -75,6 +75,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LoaderService } from '../../services/loader';
 import { City, Country, State } from 'country-state-city';
 import { NgxMaterialIntlTelInputComponent } from 'ngx-material-intl-tel-input';
+import { MobileSection } from 'src/app/components/mobile-section/mobile-section';
 
 @Component({
   selector: 'app-add-publisher',
@@ -95,6 +96,7 @@ import { NgxMaterialIntlTelInputComponent } from 'ngx-material-intl-tel-input';
     MatIcon,
     MatProgressSpinnerModule,
     NgxMaterialIntlTelInputComponent,
+    MobileSection,
   ],
   templateUrl: './add-publisher.html',
   styleUrl: './add-publisher.css',
@@ -110,7 +112,7 @@ export class AddPublisher {
     private socialService: SocialMediaService,
     private userService: UserService,
     private translateService: TranslateService,
-    private loader: LoaderService
+    private loader: LoaderService,
   ) {
     effect(() => {
       const selected =
@@ -121,9 +123,11 @@ export class AddPublisher {
     });
 
     const breakpointObserver = inject(BreakpointObserver);
-    this.stepperOrientation = breakpointObserver
-      .observe('(min-width: 800px)')
-      .pipe(map(({ matches }) => (matches ? 'horizontal' : 'vertical')));
+    this.breakpointObserver
+      .observe([Breakpoints.Handset])
+      .subscribe((result) => {
+        this.isMobile.set(result.matches);
+      });
     this.route.params.subscribe(({ id, signupCode }) => {
       // In invite flow, don't set publisherId from route id param
       // publisherId should only come from existing publisher found via invite API
@@ -146,8 +150,9 @@ export class AddPublisher {
       }
     });
   }
+  private breakpointObserver = inject(BreakpointObserver);
   countryISO = CountryISO;
-
+  isMobile = signal<boolean>(false);
   bankOptions = signal<BankOption[]>([]);
   signupCode?: string;
   publisherId?: number;
@@ -241,13 +246,13 @@ export class AddPublisher {
     }
 
     this.publisherFormGroup.controls.signupCode.patchValue(
-      this.signupCode || null
+      this.signupCode || null,
     );
     this.publisherAddressDetails.controls.signupCode.patchValue(
-      this.signupCode || null
+      this.signupCode || null,
     );
     this.publisherBankDetails.controls.signupCode.patchValue(
-      this.signupCode || null
+      this.signupCode || null,
     );
     this.countries = Country.getAllCountries().map((c) => ({
       name: c.name,
@@ -275,7 +280,7 @@ export class AddPublisher {
           this.cities = City.getCitiesOfState(countryIso, stateIso).map(
             (c) => ({
               name: c.name,
-            })
+            }),
           );
           this.publisherAddressDetails.patchValue({ city: '' });
         }
@@ -299,7 +304,7 @@ export class AddPublisher {
     }
     this.publisherBankDetails.controls.name.valueChanges.subscribe((v) => {
       this.selectedBankPrefix.set(
-        this.bankOptions().find(({ name }) => name === v)?.bankCode || null
+        this.bankOptions().find(({ name }) => name === v)?.bankCode || null,
       );
     });
     this.bankOptions.set(this.bankDetailService.fetchBankOptions());
@@ -370,7 +375,7 @@ export class AddPublisher {
         // Invite flow: ALWAYS use the invite API endpoint
         // This uses /publishers/by-invite/:signupCode which works for any status
         const publisher = await this.publisherService.findPublisherByInvite(
-          this.signupCode
+          this.signupCode,
         );
         if (publisher) {
           return publisher;
@@ -419,7 +424,6 @@ export class AddPublisher {
   //     });
   // }
   private _formBuilder = inject(FormBuilder);
-  stepperOrientation: Observable<StepperOrientation>;
 
   validatePincode(): AsyncValidatorFn {
     return async (control) => {
@@ -427,7 +431,7 @@ export class AddPublisher {
       const country = this.publisherAddressDetails.controls?.country?.value;
       const state = this.publisherAddressDetails.controls?.state?.value;
       const isIndia = ['IN', 'INDIA', 'india', 'India', 'in'].includes(
-        country || ''
+        country || '',
       );
 
       // Skip async validation if field is empty
@@ -489,7 +493,7 @@ export class AddPublisher {
   ifscCodeValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const prefix = this.bankOptions().find(
-        ({ name }) => name === this.publisherBankDetails.controls.name.value
+        ({ name }) => name === this.publisherBankDetails.controls.name.value,
       )?.bankCode;
       if (!prefix) return null;
       const value = control.value?.toUpperCase?.().trim?.() || '';
@@ -501,7 +505,7 @@ export class AddPublisher {
               'invalidifscodestartwitherror',
               {
                 prefix,
-              }
+              },
             ),
           };
     };
@@ -519,7 +523,7 @@ export class AddPublisher {
       if (!confirm.value) {
         delete confirmErrors['notMatching'];
         confirm.setErrors(
-          Object.keys(confirmErrors).length ? confirmErrors : null
+          Object.keys(confirmErrors).length ? confirmErrors : null,
         );
         return null;
       }
@@ -528,7 +532,7 @@ export class AddPublisher {
       } else {
         delete confirmErrors['notMatching'];
         confirm.setErrors(
-          Object.keys(confirmErrors).length ? confirmErrors : null
+          Object.keys(confirmErrors).length ? confirmErrors : null,
         );
       }
 
@@ -567,7 +571,7 @@ export class AddPublisher {
     },
     {
       validators: [this.accountMatchValidator()],
-    }
+    },
   );
 
   publisherAddressDetails = this._formBuilder.group({
@@ -641,7 +645,7 @@ export class AddPublisher {
         name: new FormControl<string | null>(null),
         autherId: new FormControl<number | null>(null),
         id: new FormControl<number | null>(null),
-      })
+      }),
     );
   }
   prefillForm(publisherDetails: Publishers) {
@@ -663,7 +667,7 @@ export class AddPublisher {
         this.countries.find(
           (c) =>
             addr.country?.toLowerCase() === c.name.toLowerCase() ||
-            addr.country?.toLowerCase() === c.isoCode.toLowerCase()
+            addr.country?.toLowerCase() === c.isoCode.toLowerCase(),
         )?.isoCode || '';
 
       this.publisherAddressDetails.patchValue({
@@ -679,7 +683,7 @@ export class AddPublisher {
       console.log(this.states, 'states');
       const stateIso =
         this.states.find(
-          (s) => s.isoCode.toLowerCase() === addr.state?.toLowerCase()
+          (s) => s.isoCode.toLowerCase() === addr.state?.toLowerCase(),
         )?.isoCode || '';
       console.log({ stateIso }, 'stateIso');
       this.publisherAddressDetails.patchValue({
@@ -692,7 +696,7 @@ export class AddPublisher {
 
       const cityName =
         this.cities.find(
-          (c) => c.name.toLowerCase() === addr.city?.toLowerCase()
+          (c) => c.name.toLowerCase() === addr.city?.toLowerCase(),
         )?.name || '';
 
       this.publisherAddressDetails.patchValue({
@@ -703,8 +707,8 @@ export class AddPublisher {
 
     this.selectedBankPrefix.set(
       this.bankOptions().find(
-        ({ name }) => name === publisherDetails.bankDetails?.[0]?.name
-      )?.bankCode || null
+        ({ name }) => name === publisherDetails.bankDetails?.[0]?.name,
+      )?.bankCode || null,
     );
     this.publisherBankDetails.patchValue({
       id: publisherDetails.bankDetails?.[0]?.id,
@@ -718,7 +722,7 @@ export class AddPublisher {
       gstNumber: publisherDetails.bankDetails?.[0]?.gstNumber,
     });
     const socialMediaArray = this.publisherSocialMediaGroup.get(
-      'socialMedia'
+      'socialMedia',
     ) as FormArray<FormGroup<SocialMediaGroupType>>;
 
     socialMediaArray.clear();
@@ -768,7 +772,7 @@ export class AddPublisher {
     // Always pass signupCode if present (for invite flow)
     const response = (await this.publisherService.createPublisher(
       publisherData,
-      this.signupCode
+      this.signupCode,
     )) as Publishers;
     this.publisherId = response.id;
 
@@ -787,7 +791,7 @@ export class AddPublisher {
         addressPayload.id = undefined;
       }
       await this.addressService.createOrUpdateAddress(
-        addressPayload as Address
+        addressPayload as Address,
       );
 
       const bankDetailsValue = { ...this.publisherBankDetails.value };
@@ -809,7 +813,7 @@ export class AddPublisher {
       }
 
       await this.bankDetailService.createOrUpdateBankDetail(
-        publisherBankData as createBankDetails
+        publisherBankData as createBankDetails,
       );
       const socialMediaData = this.socialMediaArray.controls
         .map((group) => {
@@ -835,7 +839,7 @@ export class AddPublisher {
 
       if (socialMediaData.length > 0) {
         await this.socialService.createOrUpdateSocialMediaLinks(
-          socialMediaData as socialMediaGroup[]
+          socialMediaData as socialMediaGroup[],
         );
 
         // Reload publisher details to get updated social media with IDs
@@ -845,7 +849,7 @@ export class AddPublisher {
 
           // Update form with IDs from saved social media to enable PATCH on next save
           const socialMediaArray = this.publisherSocialMediaGroup.get(
-            'socialMedia'
+            'socialMedia',
           ) as FormArray<FormGroup<SocialMediaGroupType>>;
           const savedSocialMedia = updatedPublisher.socialMedias || [];
 
@@ -855,7 +859,7 @@ export class AddPublisher {
             const savedItem = savedSocialMedia.find(
               (saved) =>
                 saved.type === formValue.type &&
-                saved.url?.trim() === formValue.url?.trim()
+                saved.url?.trim() === formValue.url?.trim(),
             );
             if (savedItem?.id) {
               control.patchValue({ id: savedItem.id });
@@ -871,14 +875,14 @@ export class AddPublisher {
         await this.publisherService.updateMyImage(
           media.file,
           response.id,
-          this.signupCode
+          this.signupCode,
         );
         console.log('⬆ New image uploaded');
       } else if (!this.mediaToDeleteId && media?.file) {
         await this.publisherService.updateMyImage(
           media.file,
           response.id,
-          this.signupCode
+          this.signupCode,
         );
         console.log('📤 New image uploaded (no old media existed)');
       }
@@ -942,7 +946,7 @@ export class AddPublisher {
     field: string,
     existingPublisher?: Publishers,
     existingAddress?: Address,
-    existingBank?: BankDetails
+    existingBank?: BankDetails,
   ): any {
     const fieldMap: Record<string, () => any> = {
       // Address fields
@@ -1040,7 +1044,7 @@ export class AddPublisher {
 
   // Check if social media has changes
   private hasSocialMediaChanges(
-    existingSocialMedia: socialMediaGroup[]
+    existingSocialMedia: socialMediaGroup[],
   ): boolean {
     const newSocialMedia = this.socialMediaArray.controls
       .map((group) => ({
@@ -1060,16 +1064,16 @@ export class AddPublisher {
 
     // Sort both arrays for comparison
     const sortedNew = [...newSocialMedia].sort((a, b) =>
-      `${a.type}-${a.url}`.localeCompare(`${b.type}-${b.url}`)
+      `${a.type}-${a.url}`.localeCompare(`${b.type}-${b.url}`),
     );
     const sortedExisting = [...existing].sort((a, b) =>
-      `${a.type}-${a.url}`.localeCompare(`${b.type}-${b.url}`)
+      `${a.type}-${a.url}`.localeCompare(`${b.type}-${b.url}`),
     );
 
     return sortedNew.some(
       (newItem, index) =>
         newItem.type !== sortedExisting[index]?.type ||
-        newItem.url !== sortedExisting[index]?.url
+        newItem.url !== sortedExisting[index]?.url,
     );
   }
 
@@ -1123,14 +1127,14 @@ export class AddPublisher {
       this.compareValues(formBank.accountType, existingBank.accountType) ||
       this.compareValues(
         formBank.accountHolderName,
-        existingBank.accountHolderName
+        existingBank.accountHolderName,
       ) ||
       this.compareValues((formBank as any).gstNumber, existingBank.gstNumber)
     );
   }
 
   async handlePublisherUpdateFlow(
-    publisherData: Publishers
+    publisherData: Publishers,
   ): Promise<{ ticketsRaised: boolean; shouldNavigateBack: boolean }> {
     let ticketsRaised = false;
 
@@ -1195,7 +1199,7 @@ export class AddPublisher {
 
     for (const section of sections) {
       console.log(
-        `Processing section: ${section.type}, hasChanges: ${section.hasChanges}`
+        `Processing section: ${section.type}, hasChanges: ${section.hasChanges}`,
       );
 
       // Skip if no changes detected for this section
@@ -1215,7 +1219,7 @@ export class AddPublisher {
             field,
             existingPublisher,
             existingAddress,
-            existingBank
+            existingBank,
           );
 
           // For publisherPocName, compare by splitting into first/last name parts
@@ -1271,7 +1275,7 @@ export class AddPublisher {
       console.log(
         `Section ${section.type} payload:`,
         payload,
-        `hasValues: ${hasValues}`
+        `hasValues: ${hasValues}`,
       );
 
       if (hasValues) {
@@ -1316,7 +1320,7 @@ export class AddPublisher {
 
     if (socialMediaData.length > 0) {
       await this.socialService.createOrUpdateSocialMediaLinks(
-        socialMediaData as socialMediaGroup[]
+        socialMediaData as socialMediaGroup[],
       );
     }
 
@@ -1328,14 +1332,14 @@ export class AddPublisher {
       await this.publisherService.updateMyImage(
         media.file,
         this.publisherId as number,
-        this.signupCode
+        this.signupCode,
       );
       console.log('⬆ New image uploaded');
     } else if (!this.mediaToDeleteId && media?.file) {
       await this.publisherService.updateMyImage(
         media.file,
         this.publisherId as number,
-        this.signupCode
+        this.signupCode,
       );
       console.log('📤 New image uploaded (no old media existed)');
     }
@@ -1422,7 +1426,7 @@ export class AddPublisher {
           this.publisherFormGroup.value,
           this.publisherSocialMediaGroup.value,
           this.publisherAddressDetails.value,
-          this.publisherBankDetails.value
+          this.publisherBankDetails.value,
         );
         return;
       }
@@ -1441,7 +1445,7 @@ export class AddPublisher {
         pocPhoneNumber:
           this.publisherFormGroup.controls.pocPhoneNumber.value?.replaceAll(
             ' ',
-            ''
+            '',
           ),
       } as any;
       let updateFlowResult = {
@@ -1464,14 +1468,13 @@ export class AddPublisher {
         const status = this.publisherDetails()?.status;
         if (status === 'Pending' || status === 'Dormant') {
           console.log(
-            '📝 Publisher is pending - direct update without tickets'
+            '📝 Publisher is pending - direct update without tickets',
           );
           await this.handleNewOrSuperAdminSubmission(publisherData);
         } else {
           // Existing active/approved publisher being edited → raise tickets
-          updateFlowResult = await this.handlePublisherUpdateFlow(
-            publisherData
-          );
+          updateFlowResult =
+            await this.handlePublisherUpdateFlow(publisherData);
         }
       }
       console.log('🔀 Publisher redirect logic:', {
@@ -1748,7 +1751,7 @@ export class AddPublisher {
       pocPhoneNumber:
         this.publisherFormGroup.controls.pocPhoneNumber.value?.replaceAll(
           ' ',
-          ''
+          '',
         ),
     };
     // Only include id if no signupCode (allow PATCH/update)
@@ -1761,7 +1764,7 @@ export class AddPublisher {
       // Always pass signupCode if present (for invite flow)
       const response = (await this.publisherService.createPublisher(
         publisherData,
-        this.signupCode
+        this.signupCode,
       )) as Publishers;
 
       // Store publisherId if it's a new publisher
@@ -1792,9 +1795,9 @@ export class AddPublisher {
           this.publisherService.updateMyImage(
             media.file,
             finalPublisherId,
-            this.signupCode
+            this.signupCode,
           ),
-          'upload-media'
+          'upload-media',
         );
       }
 
@@ -1824,7 +1827,7 @@ export class AddPublisher {
 
         if (socialMediaData.length > 0) {
           await this.socialService.createOrUpdateSocialMediaLinks(
-            socialMediaData as socialMediaGroup[]
+            socialMediaData as socialMediaGroup[],
           );
 
           // Reload publisher details to get updated social media with IDs
@@ -1835,7 +1838,7 @@ export class AddPublisher {
 
             // Update form with IDs from saved social media to enable PATCH on next save
             const socialMediaArray = this.publisherSocialMediaGroup.get(
-              'socialMedia'
+              'socialMedia',
             ) as FormArray<FormGroup<SocialMediaGroupType>>;
             const savedSocialMedia = updatedPublisher.socialMedias || [];
 
@@ -1845,7 +1848,7 @@ export class AddPublisher {
               const savedItem = savedSocialMedia.find(
                 (saved) =>
                   saved.type === formValue.type &&
-                  saved.url?.trim() === formValue.url?.trim()
+                  saved.url?.trim() === formValue.url?.trim(),
               );
               if (savedItem?.id) {
                 control.patchValue({ id: savedItem.id });
@@ -1967,20 +1970,20 @@ export class AddPublisher {
 
           if (socialMediaData.length > 0) {
             await this.socialService.createOrUpdateSocialMediaLinks(
-              socialMediaData as socialMediaGroup[]
+              socialMediaData as socialMediaGroup[],
             );
 
             // Reload publisher details to get updated social media with IDs
             // This ensures form state is preserved for PATCH operations later
             const updatedPublisher = await this.fetchPublisher(
-              this.publisherId
+              this.publisherId,
             );
             if (updatedPublisher) {
               this.publisherDetails.set(updatedPublisher);
 
               // Update form with IDs from saved social media to enable PATCH on next save
               const socialMediaArray = this.publisherSocialMediaGroup.get(
-                'socialMedia'
+                'socialMedia',
               ) as FormArray<FormGroup<SocialMediaGroupType>>;
               const savedSocialMedia = updatedPublisher.socialMedias || [];
 
@@ -1990,7 +1993,7 @@ export class AddPublisher {
                 const savedItem = savedSocialMedia.find(
                   (saved) =>
                     saved.type === formValue.type &&
-                    saved.url?.trim() === formValue.url?.trim()
+                    saved.url?.trim() === formValue.url?.trim(),
                 );
                 if (savedItem?.id) {
                   control.patchValue({ id: savedItem.id });
@@ -2058,12 +2061,12 @@ export class AddPublisher {
 
     const existingPublisher = this.publisherDetails();
     const existingAddress = existingPublisher?.address?.[0];
-    const isOwnProfile = 
+    const isOwnProfile =
       this.loggedInUser()?.accessLevel === 'PUBLISHER' &&
       this.loggedInUser()?.publisher?.id === this.publisherId;
-    
+
     // Allow creating if nothing exists (for own profile), or if can update directly
-    const canCreateOrUpdate = 
+    const canCreateOrUpdate =
       (!existingAddress && isOwnProfile) || // Can create if nothing exists (own profile)
       this.canUpdateDirectly(); // Can update if status allows
 
@@ -2084,7 +2087,7 @@ export class AddPublisher {
         addressPayload.id = existingAddress?.id;
       }
       await this.addressService.createOrUpdateAddress(
-        addressPayload as Address
+        addressPayload as Address,
       );
 
       // Reload publisher details to get updated address
@@ -2187,12 +2190,12 @@ export class AddPublisher {
 
     const existingPublisher = this.publisherDetails();
     const existingBank = existingPublisher?.bankDetails?.[0];
-    const isOwnProfile = 
+    const isOwnProfile =
       this.loggedInUser()?.accessLevel === 'PUBLISHER' &&
       this.loggedInUser()?.publisher?.id === this.publisherId;
-    
+
     // Allow creating if nothing exists (for own profile), or if can update directly
-    const canCreateOrUpdate = 
+    const canCreateOrUpdate =
       (!existingBank && isOwnProfile) || // Can create if nothing exists (own profile)
       this.canUpdateDirectly(); // Can update if status allows
 
@@ -2221,7 +2224,7 @@ export class AddPublisher {
         bankPayload.id = existingBank?.id;
       }
       await this.bankDetailService.createOrUpdateBankDetail(
-        bankPayload as createBankDetails
+        bankPayload as createBankDetails,
       );
 
       // Reload publisher details to get updated bank details
