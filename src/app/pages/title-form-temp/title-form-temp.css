@@ -1,16 +1,85 @@
-::ng-deep .mat-horizontal-stepper-header-container {
-  display: flex;
-  flex-wrap: nowrap !important;
-  overflow-x: auto !important;
-  overflow-y: hidden;
-}
+/* =======================================================
+   BASE MATERIAL FIXES (YOUR EXISTING CSS)
+   ======================================================= */
 
-::ng-deep .mat-step-header {
-  flex: 0 0 auto !important;
-  min-width: 120px;
-}
 ::ng-deep .mat-mdc-form-field-infix {
   display: flex !important;
   width: 100%;
 }
 
+/* =======================================================
+   RESPONSIVE STEPPER (SCOPED)
+   Add class="responsive-stepper" on mat-stepper
+   ======================================================= */
+
+::ng-deep .responsive-stepper .mat-horizontal-stepper-header-container {
+  display: flex;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+}
+
+::ng-deep
+  .responsive-stepper
+  .mat-horizontal-stepper-header-container::-webkit-scrollbar {
+  display: none; /* Chrome / Safari */
+}
+
+/* Individual step header */
+::ng-deep .responsive-stepper .mat-step-header {
+  flex: 0 0 auto !important;
+  min-width: 120px;
+  padding: 12px 14px;
+  white-space: nowrap;
+}
+
+/* Step label text */
+::ng-deep .responsive-stepper .mat-step-label {
+  white-space: nowrap;
+}
+
+/* Step icon */
+::ng-deep .responsive-stepper .mat-step-icon {
+  margin-right: 6px;
+}
+
+/* =======================================================
+   MOBILE (≤ 640px)
+   ======================================================= */
+
+@media (max-width: 640px) {
+  /* Smaller step headers */
+  ::ng-deep .responsive-stepper .mat-step-header {
+    min-width: 96px !important;
+    padding: 8px 10px !important;
+  }
+
+  /* Smaller label text */
+  ::ng-deep .responsive-stepper .mat-step-label {
+    font-size: 12px;
+  }
+
+  /* Reduce content padding */
+  ::ng-deep .responsive-stepper .mat-horizontal-content-container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+
+/* =======================================================
+   TABLE SAFETY (FOR STEPS WITH TABLES)
+   ======================================================= */
+
+.responsive-stepper .overflow-x-auto {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+button {
+  max-width: 100%;
+}
+
+/* =======================================================
+   END
+   ======================================================= */

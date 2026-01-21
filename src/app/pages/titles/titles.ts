@@ -16,7 +16,12 @@ import Swal from 'sweetalert2';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { format } from 'date-fns';
-import { PublishingType, TitleStatus, User, UserAccessLevel } from '../../interfaces';
+import {
+  PublishingType,
+  TitleStatus,
+  User,
+  UserAccessLevel,
+} from '../../interfaces';
 import { ApproveTitle } from '../../components/approve-title/approve-title';
 import { UserService } from '../../services/user';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -53,7 +58,7 @@ export class Titles {
     private logger: Logger,
     private route: ActivatedRoute,
     private router: Router,
-    private sharedTitlesService: SharedTitlesService
+    private sharedTitlesService: SharedTitlesService,
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -68,12 +73,12 @@ export class Titles {
     console.log(this.staticValueService.staticValues(), 'Fdafsaf');
 
     return Object.keys(
-      this.staticValueService.staticValues()?.TitleStatus || {}
+      this.staticValueService.staticValues()?.TitleStatus || {},
     );
   });
   publishingTypes = computed<PublishingType[]>(() => {
     return Object.keys(
-      this.staticValueService.staticValues()?.PublishingType || {}
+      this.staticValueService.staticValues()?.PublishingType || {},
     ) as PublishingType[];
   });
   searchStr = new Subject<string>();
@@ -82,7 +87,7 @@ export class Titles {
   selectStatus(
     status: TitleStatus | 'ALL',
     updateQueryParams: boolean = true,
-    triggerFetch: boolean = true
+    triggerFetch: boolean = true,
   ) {
     this.lastSelectedStatus = status;
     this.filter.update((f) => ({
@@ -109,7 +114,7 @@ export class Titles {
   selectPublishingType(
     publishingType: PublishingType | 'ALL',
     updateQueryParams: boolean = true,
-    triggerFetch: boolean = true
+    triggerFetch: boolean = true,
   ) {
     this.lastSelectedPublishingType = publishingType;
     this.filter.update((f) => {
@@ -333,7 +338,7 @@ export class Titles {
                   author.display_name ||
                   (author.author?.user.firstName || '') +
                     ' ' +
-                    (author.author.user.lastName || '')
+                    (author.author.user.lastName || ''),
               )
               .join(' ,')
           : 'N/A',
@@ -369,7 +374,7 @@ export class Titles {
         publishingTypeParam &&
         (publishingTypeParam === 'ALL' ||
           Object.values(PublishingType).includes(
-            publishingTypeParam as PublishingType
+            publishingTypeParam as PublishingType,
           ));
 
       const initialStatus: TitleStatus | 'ALL' = isValidStatus
@@ -454,7 +459,6 @@ export class Titles {
       });
       return;
     }
-
     const dialog = this.matDialog.open(ApproveTitle, {
       maxWidth: '95vw',
       width: '90vw',
@@ -466,9 +470,13 @@ export class Titles {
         existingIdentifiers: (title.titlePlatformIdentifier ?? []).map(
           (tpi) => ({
             platformName: tpi.platform?.name || '',
-            type: tpi.type || (tpi.platform?.isEbookPlatform ? 'EBOOK' : 'PRINT') as 'EBOOK' | 'PRINT',
+            type:
+              tpi.type ||
+              ((tpi.platform?.isEbookPlatform ? 'EBOOK' : 'PRINT') as
+                | 'EBOOK'
+                | 'PRINT'),
             distributionLink: tpi.distributionLink || undefined,
-          })
+          }),
         ),
         distribution: title.distribution ?? [],
         onSubmit: async (data: {
@@ -478,7 +486,7 @@ export class Titles {
           try {
             const response = await this.titleService.approveTitle(
               title.id,
-              data
+              data,
             );
             // Clear cache to ensure fresh data on next fetch
             this.clearCache();
@@ -533,7 +541,7 @@ export class Titles {
       return titles.map((t) => (t.id === response.id ? response : t));
     });
     this.dataSource.data = this.dataSource.data.map((t) =>
-      t.id === title.id ? { ...t, status: 'REJECTED' } : t
+      t.id === title.id ? { ...t, status: 'REJECTED' } : t,
     );
   }
 
@@ -557,7 +565,7 @@ export class Titles {
     await this.titleService.deleteTitle(title.id);
     this.titles.update((titles) => titles.filter((t) => t.id !== title.id));
     this.dataSource.data = this.dataSource.data.filter(
-      ({ id }) => id !== title.id
+      ({ id }) => id !== title.id,
     );
   }
 
@@ -588,7 +596,7 @@ export class Titles {
                     author.display_name ||
                     (author.author?.user.firstName || '') +
                       ' ' +
-                      (author.author?.user.lastName || '')
+                      (author.author?.user.lastName || ''),
                 )
                 .join(', ')
             : 'N/A',
@@ -621,7 +629,7 @@ export class Titles {
       const currentPage = this.filter().page || 1;
       const fileName = `titles-page-${currentPage}-${format(
         new Date(),
-        'dd-MM-yyyy'
+        'dd-MM-yyyy',
       )}`;
 
       exportToExcel(exportData, fileName, headers, 'Titles');
@@ -659,8 +667,9 @@ export class Titles {
         return;
       }
 
-      const sharedTitle =
-        await this.sharedTitlesService.createSharedTitle(title.id);
+      const sharedTitle = await this.sharedTitlesService.createSharedTitle(
+        title.id,
+      );
 
       // Generate the share URL
       const shareUrl = `${window.location.origin}/shared-title-view/${sharedTitle.code}`;
@@ -670,8 +679,7 @@ export class Titles {
         await navigator.clipboard.writeText(shareUrl);
         Swal.fire({
           icon: 'success',
-          title:
-            this.translateService.instant('linkcopied') || 'Link Copied',
+          title: this.translateService.instant('linkcopied') || 'Link Copied',
           html: `${this.translateService.instant('sharelinkcopied') || 'Share link copied to clipboard!'}<br><br><small>${this.translateService.instant('linkvaliduntil') || 'Link valid until'}: ${sharedTitle.sharedUntil ? new Date(sharedTitle.sharedUntil).toLocaleDateString() : 'N/A'}</small>`,
           showConfirmButton: true,
         });
@@ -682,8 +690,7 @@ export class Titles {
           icon: 'info',
           title: this.translateService.instant('sharelink') || 'Share Link',
           html: `<div style="word-break: break-all;">${shareUrl}</div><br><small>${this.translateService.instant('linkvaliduntil') || 'Link valid until'}: ${sharedTitle.sharedUntil ? new Date(sharedTitle.sharedUntil).toLocaleDateString() : 'N/A'}</small>`,
-          confirmButtonText:
-            this.translateService.instant('close') || 'Close',
+          confirmButtonText: this.translateService.instant('close') || 'Close',
         });
       }
     } catch (error) {

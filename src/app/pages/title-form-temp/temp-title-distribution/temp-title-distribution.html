@@ -1,106 +1,112 @@
 <div class="flex flex-col gap-4 py-8 pl-2">
   <h2 class="text-lg font-medium">{{ "selectdistributions" | translate }}</h2>
   @if (distributionControl().hasError("invalid")) {
-  <mat-error
-    >*{{ distributionControl().getError("invalid") | translate }}</mat-error
-  >
+    <mat-error
+      >*{{ distributionControl().getError("invalid") | translate }}</mat-error
+    >
   }
 
-  <ul class="flex flex-wrap gap-4">
-    @for (distribution of distributionControl().controls; track $index) { @if
-    (!shouldHideDistribution(distribution)) {
-    <li class="w-[200px] aspect-square">
-      <mat-card
-        class="p-4 aspect-square flex flex-col items-center justify-center"
-        [ngClass]="{
-          '!bg-primary': distribution.controls.isSelected.value
-        }"
-      >
-        <div
-          class="rounded-full w-[48px] aspect-square flex items-center justify-center"
-          [ngClass]="{
-            'bg-primary': !distribution.controls.isSelected.value,
-            'bg-white': distribution.controls.isSelected.value
-          }"
-        >
-          <mat-icon
+  <ul class="flex flex-wrap justify-center gap-4">
+    @for (distribution of distributionControl().controls; track $index) {
+      @if (!shouldHideDistribution(distribution)) {
+        <li class="w-[200px] aspect-square">
+          <mat-card
+            class="p-4 aspect-square flex flex-col items-center justify-center"
             [ngClass]="{
-              'text-white': !distribution.controls.isSelected.value,
-              'text-primary': distribution.controls.isSelected.value
+              '!bg-primary': distribution.controls.isSelected.value,
             }"
           >
-            {{ getIconByType(distribution.controls.type.value) }}
-          </mat-icon>
-        </div>
-        <h3
-          class="text-[16px] font-medium text-primary mt-4"
-          [ngClass]="{
-            'text-primary': !distribution.controls.isSelected.value,
-            'text-white': distribution.controls.isSelected.value
-          }"
-        >
-          {{ distribution.controls.name.value | translate }}
-        </h3>
-        @if (distribution.controls.type.value !== DistributionType.MAH) {
-          <span
-            [ngClass]="{
-              'text-white': distribution.controls.isSelected.value
-            }"
-            class="mt-1 font-medium"
-          >
-            {{ "availablepoints" | translate }}({{
-              distribution.controls.availablePoints.value
-            }})
-          </span>
-        }
-        @if (
-          distribution.controls.type.value !== DistributionType.MAH &&
-          !distribution.controls.availablePoints.value &&
-          !distribution.controls.id.value
-        ) {
-          <div class="mt-4">
-            <app-buy-assign-points-button
-              [distributionType]="distribution.controls.type.value"
-              [publisherId]="publisherId()"
-              [publisherName]="publisherName()"
-              [returnUrl]="returnUrl()"
-              [buttonClass]="
-                'btn btn__primary !rounded-full' +
-                (animateBuyButton() === distribution.controls.type.value
-                  ? ' shake'
-                  : '')
-              "
-              (onSuccess)="onPointsPurchased.emit()"
-            ></app-buy-assign-points-button>
-          </div>
-        } @else if (distribution.controls.type.value !== DistributionType.MAH) {
-          <button
-            class="mt-4 btn btn__primary !rounded-full flex items-center gap-2"
-            [ngClass]="{
-              shake: animateBuyButton() === distribution.controls.type.value,
-              '!bg-white': distribution.controls.isSelected.value,
-              'text-primary': distribution.controls.isSelected.value,
-            }"
-            (click)="onClickDistribution(distribution)"
-            [disabled]="distribution.controls.id.value"
-            [title]="
-              distribution.controls.id.value
-                ? 'Cannot remove already processed distribution type'
-                : ''
-            "
-          >
-            <span>{{ "publish" | translate }}</span>
-            <mat-icon>
-              {{ !distribution.controls.isSelected.value ? "add" : "check" }}
-            </mat-icon>
-          </button>
-        } @else {
-          <div class="mt-4 text-white font-medium">
-            {{ "included" | translate }} (Free)
-          </div>
-        }
-      </mat-card>
-    </li>
-    } }
+            <div
+              class="rounded-full w-[48px] aspect-square flex items-center justify-center"
+              [ngClass]="{
+                'bg-primary': !distribution.controls.isSelected.value,
+                'bg-white': distribution.controls.isSelected.value,
+              }"
+            >
+              <mat-icon
+                [ngClass]="{
+                  'text-white': !distribution.controls.isSelected.value,
+                  'text-primary': distribution.controls.isSelected.value,
+                }"
+              >
+                {{ getIconByType(distribution.controls.type.value) }}
+              </mat-icon>
+            </div>
+            <h3
+              class="text-[16px] font-medium text-primary mt-4"
+              [ngClass]="{
+                'text-primary': !distribution.controls.isSelected.value,
+                'text-white': distribution.controls.isSelected.value,
+              }"
+            >
+              {{ distribution.controls.name.value | translate }}
+            </h3>
+            @if (distribution.controls.type.value !== DistributionType.MAH) {
+              <span
+                [ngClass]="{
+                  'text-white': distribution.controls.isSelected.value,
+                }"
+                class="mt-1 font-medium"
+              >
+                {{ "availablepoints" | translate }}({{
+                  distribution.controls.availablePoints.value
+                }})
+              </span>
+            }
+            @if (
+              distribution.controls.type.value !== DistributionType.MAH &&
+              !distribution.controls.availablePoints.value &&
+              !distribution.controls.id.value
+            ) {
+              <div class="mt-4">
+                <app-buy-assign-points-button
+                  [distributionType]="distribution.controls.type.value"
+                  [publisherId]="publisherId()"
+                  [publisherName]="publisherName()"
+                  [returnUrl]="returnUrl()"
+                  [buttonClass]="
+                    'btn btn__primary !rounded-full' +
+                    (animateBuyButton() === distribution.controls.type.value
+                      ? ' shake'
+                      : '')
+                  "
+                  (onSuccess)="onPointsPurchased.emit()"
+                ></app-buy-assign-points-button>
+              </div>
+            } @else if (
+              distribution.controls.type.value !== DistributionType.MAH
+            ) {
+              <button
+                class="mt-4 btn btn__primary !rounded-full flex items-center gap-2"
+                [ngClass]="{
+                  shake:
+                    animateBuyButton() === distribution.controls.type.value,
+                  '!bg-white': distribution.controls.isSelected.value,
+                  'text-primary': distribution.controls.isSelected.value,
+                }"
+                (click)="onClickDistribution(distribution)"
+                [disabled]="distribution.controls.id.value"
+                [title]="
+                  distribution.controls.id.value
+                    ? 'Cannot remove already processed distribution type'
+                    : ''
+                "
+              >
+                <span>{{ "publish" | translate }}</span>
+                <mat-icon>
+                  {{
+                    !distribution.controls.isSelected.value ? "add" : "check"
+                  }}
+                </mat-icon>
+              </button>
+            } @else {
+              <div class="mt-4 text-white font-medium">
+                {{ "included" | translate }} (Free)
+              </div>
+            }
+          </mat-card>
+        </li>
+      }
+    }
   </ul>
 </div>
