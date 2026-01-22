@@ -149,7 +149,7 @@ export class Titles {
   displayedColumns: string[] = [
     'name',
     'bookssold',
-    'authors',
+    'publisher',
     'isbn',
     'launchdate',
     'status',
@@ -342,7 +342,7 @@ export class Titles {
               )
               .join(' ,')
           : 'N/A',
-
+      publisher: title.publisher?.name || 'N/A',
       status: title.status,
       bookssold: title.copiesSold,
       launchdate: title.launch_date

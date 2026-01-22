@@ -107,7 +107,7 @@ export class Publisher implements OnInit {
         'phonenumber',
         'wallet',
         'type',
-        'addedBy',
+        'publisher',
         'actions',
       ];
     }
@@ -196,7 +196,7 @@ export class Publisher implements OnInit {
       noofauthors: publisher.noOfAuthors,
       wallet: Math.round(publisher?.user?.wallet?.totalAmount || 0) || 0,
       type: this.translate.instant(`${publisher.type}`),
-      addedBy: publisher.addedBy?.publisher?.name || '-',
+      publisher: publisher.parentPublishers?.map((p) => p.name)?.join(', ') || '-',
       actions: '',
     }));
 
