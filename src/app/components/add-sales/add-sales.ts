@@ -787,7 +787,13 @@ export class AddSales implements OnInit, OnDestroy {
           availableOptions.includes(title.id);
         return matchesSearch && matchesAvailable;
       })
-      .map((title) => ({ label: title.name, value: title.id }));
+      .map((title) => ({
+        label:
+          title.name +
+          (title.publisher ? `(${title.publisher.name})` : '') +
+          (title.skuNumber ? `(${title.skuNumber})` : ''),
+        value: title.id,
+      }));
 
     signal.set(filtered);
   }
@@ -818,7 +824,10 @@ export class AddSales implements OnInit, OnDestroy {
             availableOptions.includes(title.id)
           );
         })
-        .map((title) => ({ label: title.name, value: title.id }));
+        .map((title) => ({
+          label: title.name + (title.skuNumber ? `-${title.skuNumber}` : ''),
+          value: title.id,
+        }));
 
       filteredSignal.set(filtered);
     } catch (error) {
