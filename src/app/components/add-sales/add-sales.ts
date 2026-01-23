@@ -90,11 +90,11 @@ export class TitleFilterBySale implements PipeTransform {
 })
 export class AddSales implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
-  
+
   constructor(
     private titleService: TitleService,
     private staticValueService: StaticValuesService,
-    private platformService: PlatformService
+    private platformService: PlatformService,
   ) {}
 
   data = inject<Inputs>(MAT_DIALOG_DATA);
@@ -106,17 +106,20 @@ export class AddSales implements OnInit, OnDestroy {
   salesTypes = SalesType;
   salesType = computed(() => {
     return Object.keys(
-      this.staticValueService.staticValues()?.SalesType || {}
+      this.staticValueService.staticValues()?.SalesType || {},
     ) as SalesType[];
   });
 
   platforms = signal<Platform[]>([]);
 
   titles = signal<Title[] | null>(null);
-  
+
   // Title search controls - one per form array item
   titleSearchControls = new Map<number, FormControl<string | null>>();
-  filteredTitleOptions = new Map<number, WritableSignal<{ label: string; value: number }[]>>();
+  filteredTitleOptions = new Map<
+    number,
+    WritableSignal<{ label: string; value: number }[]>
+  >();
   isSearchingTitles = new Map<number, WritableSignal<boolean>>();
 
   // Computed map of available platforms by titleId (kept for backward compatibility if needed)
@@ -148,17 +151,17 @@ export class AddSales implements OnInit, OnDestroy {
 
       // Filter platforms that have pricing and match the publishing type
       let filteredPlatforms = allPlatforms.filter((platform) =>
-        pricingPlatformNames.includes(platform.name)
+        pricingPlatformNames.includes(platform.name),
       );
 
       // Filter based on publishing type
       if (isOnlyEbook) {
         filteredPlatforms = filteredPlatforms.filter(
-          (platform) => platform.isEbookPlatform
+          (platform) => platform.isEbookPlatform,
         );
       } else if (isOnlyPrint) {
         filteredPlatforms = filteredPlatforms.filter(
-          (platform) => !platform.isEbookPlatform
+          (platform) => !platform.isEbookPlatform,
         );
       }
 
@@ -250,11 +253,18 @@ export class AddSales implements OnInit, OnDestroy {
       const fetchedPlatforms = await this.platformService.fetchPlatforms({
         isInventoryPlatform: true,
       });
-      this.platforms.set(fetchedPlatforms);
+      this.platforms.set(
+        fetchedPlatforms.sort((a, b) => {
+          if (a.name === 'AMAZON') return -10;
+          if (a.name === 'FLIPKART') return -9;
+          if (!a.isEbookPlatform) return -2;
+          return 1;
+        }),
+      );
       console.log(
         'Platforms fetched successfully:',
         fetchedPlatforms.length,
-        'platforms'
+        'platforms',
       );
       // Update platformOptions for all existing groups after fetch
       await this.updateAllGroupsPlatformOptions();
@@ -267,7 +277,7 @@ export class AddSales implements OnInit, OnDestroy {
         console.log(
           'Using cached platforms:',
           cachedPlatforms.length,
-          'platforms'
+          'platforms',
         );
         // Update platformOptions for all existing groups after using cached
         await this.updateAllGroupsPlatformOptions();
@@ -279,7 +289,7 @@ export class AddSales implements OnInit, OnDestroy {
     if (this.data.defaultTitles) {
       // Filter out titles where printingOnly is true
       const filteredTitles = this.data.defaultTitles.filter(
-        (title) => !title.printingOnly
+        (title) => !title.printingOnly,
       );
       this.titles.set(filteredTitles);
     }
@@ -317,7 +327,7 @@ export class AddSales implements OnInit, OnDestroy {
 
   addSalesGroup(
     type: SalesType,
-    data?: Partial<CreateSale & { availableTitles: number[] }>
+    data?: Partial<CreateSale & { availableTitles: number[] }>,
   ) {
     const newIndex = this.form.controls.salesArray.length;
     this.form.controls.salesArray.push(this.createSalesGroup(type, data));
@@ -350,11 +360,11 @@ export class AddSales implements OnInit, OnDestroy {
       this.titles.update((titles) => {
         const result = [...(titles || []), ...filteredItems].reduce(
           (a, b) => (a.map(({ id }) => id).includes(b.id) ? a : [...a, b]),
-          Array<Title>()
+          Array<Title>(),
         );
         return result;
       });
-      
+
       // Update title options for all indices
       this.filteredTitleOptions.forEach((_, index) => {
         this.updateTitleOptions(index);
@@ -369,7 +379,7 @@ export class AddSales implements OnInit, OnDestroy {
    */
   private async updatePlatformOptionsForGroup(
     group: FormGroup<CreateSaleForm>,
-    titleId: number | null | undefined
+    titleId: number | null | undefined,
   ): Promise<void> {
     const platformOptionsArray = group.get('platformOptions') as FormArray<
       FormControl<Platform>
@@ -394,29 +404,47 @@ export class AddSales implements OnInit, OnDestroy {
     // Find title in local cache first
     let title = this.titles()?.find((t) => t.id === Number(titleId));
     const ebooPlatofrm = allPlatforms.filter(
-      ({ isEbookPlatform }) => isEbookPlatform
+      ({ isEbookPlatform }) => isEbookPlatform,
     );
     const printPlatforms = allPlatforms.filter(
-      ({ isEbookPlatform }) => !isEbookPlatform
+      ({ isEbookPlatform }) => !isEbookPlatform,
     );
 
     // Include all platforms that match publishing type
     // Inventory platforms are available for all sale types (they don't require pricing)
-    const filteredPlatforms = [
+    [
       ...ebooPlatofrm.filter(
-        () => title?.publishingType !== PublishingType.ONLY_PRINT
+        () => title?.publishingType !== PublishingType.ONLY_PRINT,
       ),
       ...printPlatforms.filter(
-        () => title?.publishingType !== PublishingType.ONLY_EBOOK
+        () => title?.publishingType !== PublishingType.ONLY_EBOOK,
       ),
     ]
       .filter(
         ({ isInventoryPlatform }) =>
-          !isInventoryPlatform || saleType === SalesType.INVENTORY
+          !isInventoryPlatform || saleType === SalesType.INVENTORY,
       )
+      .sort((a, b) => {
+        if (a.name === 'AMAZON' && b.name !== 'AMAZON') return -1;
+        if (b.name === 'AMAZON' && a.name !== 'AMAZON') return 1;
+
+        if (a.name === 'FLIPKART' && b.name !== 'FLIPKART') return -1;
+        if (b.name === 'FLIPKART' && a.name !== 'FLIPKART') return 1;
+
+        if (a.name === 'AMAZON_PRIME' && b.name !== 'AMAZON_PRIME') return -1;
+        if (b.name === 'AMAZON_PRIME' && a.name !== 'AMAZON_PRIME') return 1;
+
+        if (a.name === 'MAH_PRINT' && b.name !== 'MAH_PRINT') return -1;
+        if (b.name === 'MAH_PRINT' && a.name !== 'MAH_PRINT') return 1;
+
+        if (a.isEbookPlatform && !b.isEbookPlatform) return -1;
+        if (!a.isEbookPlatform && b.isEbookPlatform) return 1;
+
+        return 0;
+      })
       .forEach((p) => {
         platformOptionsArray.push(
-          new FormControl<Platform>(p, { nonNullable: true })
+          new FormControl<Platform>(p, { nonNullable: true }),
         );
       });
   }
@@ -431,7 +459,7 @@ export class AddSales implements OnInit, OnDestroy {
         if (titleId) {
           await this.updatePlatformOptionsForGroup(group, titleId);
         }
-      }
+      },
     );
     await Promise.all(promises);
   }
@@ -479,7 +507,7 @@ export class AddSales implements OnInit, OnDestroy {
   createSalesGroup(
     type?: SalesType,
     data?: Partial<CreateSale & { availableTitles: number[] }>,
-    groupIndex?: number
+    groupIndex?: number,
   ) {
     let selectedTitle = data?.titleId;
 
@@ -504,7 +532,7 @@ export class AddSales implements OnInit, OnDestroy {
           nonNullable: true,
         }),
         availableOptions: new FormControl<number[] | null | undefined>(
-          data?.availableTitles
+          data?.availableTitles,
         ),
       }),
 
@@ -537,7 +565,7 @@ export class AddSales implements OnInit, OnDestroy {
 
       soldAt: new FormControl<CreateSale['soldAt']>(
         data?.soldAt || new Date().toISOString(),
-        { nonNullable: false }
+        { nonNullable: false },
       ),
     });
     // Update amount validators based on sale type
@@ -587,7 +615,7 @@ export class AddSales implements OnInit, OnDestroy {
       }
       group.get('platform')?.updateValueAndValidity();
     });
-    
+
     // Initialize platform control disabled state based on initial title
     const initialTitleId = group.get('title.id')?.value;
     const platformControl = group.get('platform');
@@ -605,7 +633,9 @@ export class AddSales implements OnInit, OnDestroy {
     // Initialize platformName validation if platform is already set
     const initialPlatform = group.get('platform')?.value;
     if (initialPlatform) {
-      const platformRecord = this.platforms().find((p) => p.name === initialPlatform);
+      const platformRecord = this.platforms().find(
+        (p) => p.name === initialPlatform,
+      );
       const isOtherPlatform = platformRecord?.isOtherPlatform ?? false;
       const platformNameControl = group.get('platformName');
       if (isOtherPlatform) {
@@ -673,7 +703,7 @@ export class AddSales implements OnInit, OnDestroy {
   removeSale(index: number) {
     this.form.controls.salesArray.removeAt(index);
     this.cleanupTitleSearchForIndex(index);
-    
+
     // Reindex remaining controls
     const currentControls = Array.from(this.titleSearchControls.keys()).sort();
     currentControls.forEach((oldIndex) => {
@@ -681,42 +711,44 @@ export class AddSales implements OnInit, OnDestroy {
         const titleControl = this.titleSearchControls.get(oldIndex);
         const titleOptions = this.filteredTitleOptions.get(oldIndex);
         const titleLoading = this.isSearchingTitles.get(oldIndex);
-        
-        if (titleControl) this.titleSearchControls.set(oldIndex - 1, titleControl);
-        if (titleOptions) this.filteredTitleOptions.set(oldIndex - 1, titleOptions);
-        if (titleLoading) this.isSearchingTitles.set(oldIndex - 1, titleLoading);
-        
+
+        if (titleControl)
+          this.titleSearchControls.set(oldIndex - 1, titleControl);
+        if (titleOptions)
+          this.filteredTitleOptions.set(oldIndex - 1, titleOptions);
+        if (titleLoading)
+          this.isSearchingTitles.set(oldIndex - 1, titleLoading);
+
         this.cleanupTitleSearchForIndex(oldIndex);
       }
     });
-    
+
     this.updateSummary();
   }
-  
+
   private cleanupTitleSearchForIndex(index: number) {
     this.titleSearchControls.delete(index);
     this.filteredTitleOptions.delete(index);
     this.isSearchingTitles.delete(index);
   }
-  
+
   private initializeTitleSearchForIndex(index: number) {
     // Create search control for this index
     const titleSearchControl = new FormControl<string | null>('');
     this.titleSearchControls.set(index, titleSearchControl);
-    
+
     // Create filtered options signal
-    this.filteredTitleOptions.set(index, signal<{ label: string; value: number }[]>([]));
-    
+    this.filteredTitleOptions.set(
+      index,
+      signal<{ label: string; value: number }[]>([]),
+    );
+
     // Create loading signal
     this.isSearchingTitles.set(index, signal(false));
-    
+
     // Setup subscription
     titleSearchControl.valueChanges
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        takeUntil(this.destroy$)
-      )
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe((searchTerm) => {
         if (searchTerm && searchTerm.trim().length > 0) {
           this.searchTitles(searchTerm.trim(), index);
@@ -724,63 +756,79 @@ export class AddSales implements OnInit, OnDestroy {
           this.updateTitleOptions(index);
         }
       });
-    
+
     // Initialize options
     this.updateTitleOptions(index);
   }
-  
+
   private updateTitleOptions(index: number) {
     const titles = this.titles();
     const signal = this.filteredTitleOptions.get(index);
     if (!signal) return;
-    
+
     if (!titles) {
       signal.set([]);
       return;
     }
-    
+
     const searchControl = this.titleSearchControls.get(index);
     const searchValue = (searchControl?.value || '').toLowerCase();
     const saleGroup = this.form.controls.salesArray.at(index);
     const availableOptions = saleGroup?.get('title.availableOptions')?.value;
-    
+
     let filtered = titles
       .filter((title) => {
         // Filter by search term
         const matchesSearch = title.name.toLowerCase().includes(searchValue);
         // Filter by available options if set
-        const matchesAvailable = !availableOptions || availableOptions.length === 0 || availableOptions.includes(title.id);
+        const matchesAvailable =
+          !availableOptions ||
+          availableOptions.length === 0 ||
+          availableOptions.includes(title.id);
         return matchesSearch && matchesAvailable;
       })
-      .map((title) => ({ label: title.name, value: title.id }));
-    
+      .map((title) => ({
+        label:
+          title.name +
+          (title.publisher ? `(${title.publisher.name})` : '') +
+          (title.skuNumber ? `(${title.skuNumber})` : ''),
+        value: title.id,
+      }));
+
     signal.set(filtered);
   }
-  
+
   private async searchTitles(searchTerm: string, index: number) {
     const loadingSignal = this.isSearchingTitles.get(index);
     const filteredSignal = this.filteredTitleOptions.get(index);
     if (!loadingSignal || !filteredSignal) return;
-    
+
     loadingSignal.set(true);
     try {
-      const { items } = await this.titleService.getTitles({ 
+      const { items } = await this.titleService.getTitles({
         searchStr: searchTerm,
-        status: TitleStatus.APPROVED 
+        status: TitleStatus.APPROVED,
       });
-      
+
       const saleGroup = this.form.controls.salesArray.at(index);
       const availableOptions = saleGroup?.get('title.availableOptions')?.value;
-      
+
       // Filter out titles where printingOnly is true
       let filtered = items
         .filter((title) => !title.printingOnly)
         .filter((title) => {
           // Filter by available options if set
-          return !availableOptions || availableOptions.length === 0 || availableOptions.includes(title.id);
+          return (
+            !availableOptions ||
+            availableOptions.length === 0 ||
+            availableOptions.includes(title.id)
+          );
         })
-        .map((title) => ({ label: title.name, value: title.id }));
-      
+        .map((title) => ({
+          label: title.name + (title.skuNumber ? `-${title.skuNumber}` : ''),
+          value: title.id,
+        }));
+
       filteredSignal.set(filtered);
     } catch (error) {
       console.error('Error searching titles:', error);
@@ -789,7 +837,7 @@ export class AddSales implements OnInit, OnDestroy {
       loadingSignal.set(false);
     }
   }
-  
+
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
@@ -821,7 +869,7 @@ export class AddSales implements OnInit, OnDestroy {
 
           // Include amount for INVENTORY sales or inventory platforms
           const platformRecord = this.platforms().find(
-            (p) => p.name === platform.value
+            (p) => p.name === platform.value,
           );
           const isInventoryPlatform =
             platformRecord?.isInventoryPlatform ?? false;
@@ -840,7 +888,7 @@ export class AddSales implements OnInit, OnDestroy {
           }
 
           return saleData;
-        }
+        },
       );
 
       this.data.onSubmit(data);

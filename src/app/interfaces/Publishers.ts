@@ -33,6 +33,7 @@ export interface Publishers {
   allowAuthorCopyPrice?: boolean;
   type: PublisherType;
   addedBy: User;
+  parentPublishers?: Publishers[]
   isApprovedByPublisher: boolean;
   lifeTimeEarnings: number
 }
