@@ -224,6 +224,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
   authorData = new MatTableDataSource<any>([]);
   subPublisherData = new MatTableDataSource<any>([]);
   royaltyData = new MatTableDataSource<Royalty>();
+  private authorSearchTimeout?: any;
 
   // Sorting functions for books
   booksGetApiFieldName = (column: string): string | null => {
@@ -991,26 +992,124 @@ export class PublisherDetails implements OnInit, OnDestroy {
       });
     }
   }
-  applyFilter(event: Event) {
-    const filterValue = (event.target as HTMLInputElement).value;
-    console.log(filterValue, 'filterrrr');
-    this.bookPublishData.filter = filterValue.trim().toLowerCase();
+  private bookSearchTimeout?: any;
 
-    console.log('FILTER VALUE:', this.bookPublishData.filter);
-    console.log('FILTERED DATA:', this.bookPublishData.filteredData);
+  applyFilter(event: Event) {
+    const value = (event.target as HTMLInputElement).value.trim().toLowerCase();
+    this.bookPublishData.filter = value;
+    if (!value) {
+      this.booksFilter.update((f) => ({
+        ...f,
+        searchStr: undefined,
+        page: 1,
+      }));
+      this.fetchTitles();
+      return;
+    }
+    if (this.bookPublishData.filteredData.length > 0) {
+      return;
+    }
+    clearTimeout(this.bookSearchTimeout);
+    this.bookSearchTimeout = setTimeout(() => {
+      this.booksFilter.update((f) => ({
+        ...f,
+        searchStr: value,
+        page: 1,
+      }));
+      this.fetchTitles();
+    }, 400);
   }
+
   applyAuthorFilter(event: Event) {
-    const value = (event.target as HTMLInputElement).value;
-    this.authorData.filter = value.trim().toLowerCase();
+    const value = (event.target as HTMLInputElement).value.trim().toLowerCase();
+    this.authorData.filter = value;
+    if (!value) {
+      this.authorsFilter.update((f) => ({
+        ...f,
+        searchStr: undefined,
+        page: 1,
+      }));
+      this.fetchAuthors();
+      return;
+    }
+    if (this.authorData.filteredData.length > 0) {
+      return;
+    }
+
+    clearTimeout(this.authorSearchTimeout);
+
+    this.authorSearchTimeout = setTimeout(() => {
+      this.authorsFilter.update((f) => ({
+        ...f,
+        searchStr: value,
+        page: 1,
+      }));
+      this.fetchAuthors();
+    }, 400);
   }
+
+  private subPublisherSearchTimeout?: any;
 
   applySubPublisherFilter(event: Event) {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.subPublisherData.filter = filterValue.trim().toLowerCase();
+    const value = (event.target as HTMLInputElement).value.trim().toLowerCase();
+
+    this.subPublisherData.filter = value;
+
+    if (!value) {
+      this.subPublishersFilter.update((f) => ({
+        ...f,
+        searchStr: undefined,
+        page: 1,
+      }));
+      this.fetchSubPublishers();
+      return;
+    }
+
+    if (this.subPublisherData.filteredData.length > 0) {
+      return;
+    }
+
+    clearTimeout(this.subPublisherSearchTimeout);
+    this.subPublisherSearchTimeout = setTimeout(() => {
+      this.subPublishersFilter.update((f) => ({
+        ...f,
+        searchStr: value,
+        page: 1,
+      }));
+      this.fetchSubPublishers();
+    }, 400);
   }
+
+  private royaltySearchTimeout?: any;
+
   applyRoyaltyFilter(event: Event) {
-    const value = (event.target as HTMLInputElement).value;
-    this.royaltyData.filter = value.trim().toLowerCase();
+    const value = (event.target as HTMLInputElement).value.trim().toLowerCase();
+
+    this.royaltyData.filter = value;
+
+    if (!value) {
+      this.royaltyFilter.update((f) => ({
+        ...f,
+        searchStr: undefined,
+        page: 1,
+      }));
+      this.fetchRoyalty();
+      return;
+    }
+
+    if (this.royaltyData.filteredData.length > 0) {
+      return;
+    }
+
+    clearTimeout(this.royaltySearchTimeout);
+    this.royaltySearchTimeout = setTimeout(() => {
+      this.royaltyFilter.update((f) => ({
+        ...f,
+        searchStr: value,
+        page: 1,
+      }));
+      this.fetchRoyalty();
+    }, 400);
   }
 
   returnUrl(): string {

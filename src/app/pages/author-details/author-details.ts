@@ -25,6 +25,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { SafeUrlPipe } from 'src/app/pipes/safe-url-pipe';
 import { formatIsbn } from 'src/app/shared/utils/isbn.utils';
+import { MobileSection } from 'src/app/components/mobile-section/mobile-section';
+import { Earnings } from 'src/app/interfaces/Earnings';
 
 @Component({
   selector: 'app-author-details',
@@ -40,6 +42,7 @@ import { formatIsbn } from 'src/app/shared/utils/isbn.utils';
     MatIconModule,
     MatTooltipModule,
     SafeUrlPipe,
+    MobileSection,
   ],
   templateUrl: './author-details.html',
   styleUrl: './author-details.css',
@@ -50,7 +53,7 @@ export class AuthorDetails {
     private authorsService: AuthorsService,
     private titleService: TitleService,
     private salesService: SalesService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
   ) {
     this.route.params.subscribe(({ id }) => {
       this.authorId = id;
@@ -65,14 +68,19 @@ export class AuthorDetails {
       ?.address?.map((address) => {
         return `${address.address}, ${address.city}, ${address.state}, ${address.country}, ${address.pincode}`;
       })
-      .join(' | ')
+      .join(' | '),
   );
 
   authors = signal<Author[]>([]);
   royalties = signal<Royalty[]>([]);
-  publishedLinks = signal<Array<{ titleName: string; links: Array<{ platformName: string; link: string }> }>>([]);
+  publishedLinks = signal<
+    Array<{
+      titleName: string;
+      links: Array<{ platformName: string; link: string }>;
+    }>
+  >([]);
   attachments = signal<any[]>([]);
-  
+
   // Books Published Pagination
   booksFilter = signal<TitleFilter>({
     page: 1,
@@ -82,7 +90,7 @@ export class AuthorDetails {
     orderByVal: 'desc',
   });
   booksLastPage = signal(1);
-  
+
   // Royalty Pagination
   royaltyFilter = signal<EarningFilter>({
     page: 1,
@@ -92,7 +100,7 @@ export class AuthorDetails {
     orderByVal: 'desc',
   });
   royaltyLastPage = signal(1);
-  
+
   // Published Links Pagination
   publishedLinksFilter = signal<any>({
     page: 1,
@@ -105,7 +113,7 @@ export class AuthorDetails {
   publishedLinksLastPage = signal(1);
   publishedLinksData = new MatTableDataSource<any>([]);
   displayedPublishedLinksColumns: string[] = ['title', 'actions'];
-  
+
   displayedColumns: string[] = [
     'serial',
     'title',
@@ -115,7 +123,7 @@ export class AuthorDetails {
     'royaltiesearned',
     'authors',
   ];
-  
+
   // Sorting functions for books
   booksGetApiFieldName = (column: string): string | null => {
     const columnMap: Record<string, string> = {
@@ -148,7 +156,7 @@ export class AuthorDetails {
     }));
     this.fetchTitles();
   }
-  
+
   // Sorting functions for royalty
   royaltyGetApiFieldName = (column: string): string | null => {
     const columnMap: Record<string, string> = {
@@ -164,7 +172,10 @@ export class AuthorDetails {
     return this.royaltyGetApiFieldName(column) !== null;
   };
 
-  royaltyOnSortChange(sort: { active: string; direction: 'asc' | 'desc' | '' }) {
+  royaltyOnSortChange(sort: {
+    active: string;
+    direction: 'asc' | 'desc' | '';
+  }) {
     const apiFieldName = this.royaltyGetApiFieldName(sort.active);
     if (!apiFieldName) return;
 
@@ -200,11 +211,15 @@ export class AuthorDetails {
   bookPublishData = new MatTableDataSource<any>([]);
   authorData = new MatTableDataSource<any>([]);
   royaltyData = new MatTableDataSource<Royalty>();
+  rawRoyalties = signal<Earnings[]>([]);
   async ngOnInit() {
     await this.fetchauthorDetails();
-    this.booksFilter.update(f => ({ ...f, authorIds: [this.authorId] }));
-    this.royaltyFilter.update(f => ({ ...f, authorIds: [this.authorId] }));
-    this.publishedLinksFilter.update(f => ({ ...f, authorIds: [this.authorId] }));
+    this.booksFilter.update((f) => ({ ...f, authorIds: [this.authorId] }));
+    this.royaltyFilter.update((f) => ({ ...f, authorIds: [this.authorId] }));
+    this.publishedLinksFilter.update((f) => ({
+      ...f,
+      authorIds: [this.authorId],
+    }));
     await this.fetchTitles();
     await this.fetchRoyalty();
     await this.fetchPublishedLinks();
@@ -241,7 +256,6 @@ export class AuthorDetails {
     }
   }
 
-
   // fetchAuthors() {
   //   this.authorsService
   //     .getAuthors({ publisherId: this.publisherId, showTotalEarnings: true })
@@ -270,8 +284,9 @@ export class AuthorDetails {
   async fetchTitles() {
     try {
       const filter = this.booksFilter();
-      const { items, totalCount, itemsPerPage } = await this.titleService.getTitles(filter);
-      
+      const { items, totalCount, itemsPerPage } =
+        await this.titleService.getTitles(filter);
+
       const mapped = items.map((title, idx) => ({
         serial: ((filter.page || 1) - 1) * itemsPerPage + idx + 1,
         id: title.id,
@@ -300,7 +315,7 @@ export class AuthorDetails {
       console.error('Error fetching titles:', error);
     }
   }
-  
+
   booksNextPage() {
     const currentPage = this.booksFilter().page || 1;
     if (currentPage < this.booksLastPage()) {
@@ -367,8 +382,9 @@ export class AuthorDetails {
   async fetchRoyalty() {
     try {
       const filter = this.royaltyFilter();
-      const { items, totalCount, itemsPerPage } = await this.salesService.fetchEarnings(filter);
-
+      const { items, totalCount, itemsPerPage } =
+        await this.salesService.fetchEarnings(filter);
+      this.rawRoyalties.set(items);
       const mappedData = items?.map((earning) => ({
         ...earning,
         title: earning.royalty.title.name,
@@ -393,7 +409,7 @@ export class AuthorDetails {
       console.error('Error fetching royalty:', error);
     }
   }
-  
+
   royaltyNextPage() {
     const currentPage = this.royaltyFilter().page || 1;
     if (currentPage < this.royaltyLastPage()) {
@@ -460,18 +476,19 @@ export class AuthorDetails {
   async fetchPublishedLinks() {
     try {
       const filter = this.publishedLinksFilter();
-      const { items, totalCount, itemsPerPage } = await this.titleService.fetchTitlePlatformLinks({
-        page: filter.page || 1,
-        itemsPerPage: filter.itemsPerPage || 30,
-        authorIds: [this.authorId],
-        orderBy: filter.orderBy,
-        orderByVal: filter.orderByVal,
-        searchStr: filter.searchStr,
-      });
-      
+      const { items, totalCount, itemsPerPage } =
+        await this.titleService.fetchTitlePlatformLinks({
+          page: filter.page || 1,
+          itemsPerPage: filter.itemsPerPage || 30,
+          authorIds: [this.authorId],
+          orderBy: filter.orderBy,
+          orderByVal: filter.orderByVal,
+          searchStr: filter.searchStr,
+        });
+
       this.publishedLinks.set(items);
       this.publishedLinksLastPage.set(Math.ceil(totalCount / itemsPerPage));
-      
+
       // Map items to dataSource format
       const mappedData = items.map((item) => ({
         title: item.titleName,
@@ -482,11 +499,14 @@ export class AuthorDetails {
       console.error('Error fetching published links:', error);
     }
   }
-  
+
   publishedLinksNextPage() {
     const currentPage = this.publishedLinksFilter().page || 1;
     if (currentPage < this.publishedLinksLastPage()) {
-      this.publishedLinksFilter.update((f) => ({ ...f, page: currentPage + 1 }));
+      this.publishedLinksFilter.update((f) => ({
+        ...f,
+        page: currentPage + 1,
+      }));
       this.fetchPublishedLinks();
     }
   }
@@ -494,7 +514,10 @@ export class AuthorDetails {
   publishedLinksPreviousPage() {
     const currentPage = this.publishedLinksFilter().page || 1;
     if (currentPage > 1) {
-      this.publishedLinksFilter.update((f) => ({ ...f, page: currentPage - 1 }));
+      this.publishedLinksFilter.update((f) => ({
+        ...f,
+        page: currentPage - 1,
+      }));
       this.fetchPublishedLinks();
     }
   }
@@ -547,7 +570,11 @@ export class AuthorDetails {
   }
 
   onPublishedLinksSearch(value: string) {
-    this.publishedLinksFilter.update((f) => ({ ...f, searchStr: value, page: 1 }));
+    this.publishedLinksFilter.update((f) => ({
+      ...f,
+      searchStr: value,
+      page: 1,
+    }));
     this.fetchPublishedLinks();
   }
 
@@ -563,7 +590,10 @@ export class AuthorDetails {
     return this.publishedLinksGetApiFieldName(column) !== null;
   };
 
-  publishedLinksOnSortChange(sort: { active: string; direction: 'asc' | 'desc' | '' }) {
+  publishedLinksOnSortChange(sort: {
+    active: string;
+    direction: 'asc' | 'desc' | '';
+  }) {
     const apiFieldName = this.publishedLinksGetApiFieldName(sort.active);
     if (!apiFieldName) return;
 
@@ -595,17 +625,63 @@ export class AuthorDetails {
       });
     }
   }
+  private bookSearchTimeout?: any;
+
   applyFilter(event: Event) {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.bookPublishData.filter = filterValue.trim().toLowerCase();
-  }
-  applyAuthorFilter(event: Event) {
     const value = (event.target as HTMLInputElement).value.trim().toLowerCase();
-    this.authorData.filter = value;
+    this.bookPublishData.filter = value;
+    if (!value) {
+      this.booksFilter.update((f) => ({
+        ...f,
+        searchStr: undefined,
+        page: 1,
+      }));
+      this.fetchTitles();
+      return;
+    }
+    if (this.bookPublishData.filteredData.length > 0) {
+      return;
+    }
+    clearTimeout(this.bookSearchTimeout);
+    this.bookSearchTimeout = setTimeout(() => {
+      this.booksFilter.update((f) => ({
+        ...f,
+        searchStr: value,
+        page: 1,
+      }));
+      this.fetchTitles();
+    }, 400);
   }
+  private royaltySearchTimeout?: any;
+
   applyRoyaltyFilter(event: Event) {
-    const value = (event.target as HTMLInputElement).value;
-    this.royaltyData.filter = value.trim().toLowerCase();
+    const value = (event.target as HTMLInputElement).value.trim().toLowerCase();
+
+    this.royaltyData.filter = value;
+
+    if (!value) {
+      this.royaltyFilter.update((f) => ({
+        ...f,
+        searchStr: undefined,
+        page: 1,
+      }));
+      this.fetchRoyalty();
+      return;
+    }
+
+    if (this.royaltyData.filteredData.length > 0) {
+      return;
+    }
+
+    clearTimeout(this.royaltySearchTimeout);
+    this.royaltySearchTimeout = setTimeout(() => {
+      this.royaltyFilter.update((f) => ({
+        ...f,
+        searchStr: value,
+        page: 1,
+      }));
+      this.fetchRoyalty();
+    }, 400);
   }
 
   getPlatformIconUrl(platformName?: string): string | null {
@@ -619,7 +695,11 @@ export class AuthorDetails {
       return 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/amazon.svg';
     } else if (name === 'GOOGLE_PLAY' || name === 'GOOGLEPLAY') {
       return 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/googleplay.svg';
-    } else if (name === 'APPLE_BOOKS' || name === 'APPLEBOOKS' || name === 'IBOOKS') {
+    } else if (
+      name === 'APPLE_BOOKS' ||
+      name === 'APPLEBOOKS' ||
+      name === 'IBOOKS'
+    ) {
       return 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/apple.svg';
     } else if (name === 'KOBO') {
       return 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/kobo.svg';
