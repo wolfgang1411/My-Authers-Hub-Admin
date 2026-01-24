@@ -557,7 +557,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
     try {
       const filter = this.authorsFilter();
       const { items, totalCount, itemsPerPage } =
-        await this.authorsService.getAuthors(filter);
+        await this.authorsService.getAuthorsRaw(filter);
 
       const mapped = items.map((author, idx) => ({
         ...author,

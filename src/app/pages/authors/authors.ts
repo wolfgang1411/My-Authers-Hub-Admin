@@ -66,7 +66,7 @@ export class Authors {
     private titleService: TitleService,
     private salesService: SalesService,
     private userService: UserService,
-    private logger: Logger
+    private logger: Logger,
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -94,7 +94,7 @@ export class Authors {
   @ViewChild('numberOfTitlesMenu') numberOfTitlesMenu!: TemplateRef<any>;
   @ViewChild('booksSoldMenu') booksSoldMenu!: TemplateRef<any>;
   lastPage = signal(1);
-  
+
   filter = signal<AuthorFilter>({
     page: 1,
     itemsPerPage: 30,
@@ -103,11 +103,11 @@ export class Authors {
     orderBy: 'id',
     orderVal: 'desc',
   });
-  
+
   // Cache to store fetched pages
   private pageCache = new Map<number, Author[]>();
   private cachedFilterKey = '';
-  
+
   private getFilterKey(): string {
     const currentFilter = this.filter();
     return JSON.stringify({
@@ -147,7 +147,7 @@ export class Authors {
     const currentFilter = this.filter();
     const currentPage = currentFilter.page || 1;
     const filterKey = this.getFilterKey();
-    
+
     // Clear cache if filter changed
     if (this.cachedFilterKey !== filterKey) {
       this.clearCache();
@@ -164,7 +164,7 @@ export class Authors {
 
     // Fetch from API
     this.authorService
-      .getAuthors(currentFilter, showLoader)
+      .getAuthorsRaw(currentFilter, showLoader)
       .then(({ items, totalCount, itemsPerPage: returnedItemsPerPage }) => {
         // Cache the fetched page
         this.pageCache.set(currentPage, items);
@@ -176,19 +176,19 @@ export class Authors {
         console.error('Error fetching authors:', error);
       });
   }
-  
+
   private mapAuthorsToDataSource(items: Author[]) {
     const mapped = items.map((author, idx) => ({
       ...author,
       name: author.user.firstName + ' ' + author.user.lastName,
       numberoftitles: author.noOfTitles,
       bookssold: author.booksSold,
-      wallet: Math.round((author?.user?.wallet?.totalAmount || 0)) || 0,
+      wallet: Math.round(author?.user?.wallet?.totalAmount || 0) || 0,
       actions: '',
     }));
     this.dataSource.data = mapped;
   }
-  
+
   onStatusChange(status: any) {
     this.filter.update((f) => ({ ...f, status, page: 1 }));
     this.clearCache();
@@ -302,7 +302,9 @@ export class Authors {
       Swal.fire({
         icon: 'success',
         title: this.translateService.instant('success') || 'Success',
-        text: this.translateService.instant('linkCopiedToClipboard') || 'Share link has been copied to clipboard successfully!',
+        text:
+          this.translateService.instant('linkCopiedToClipboard') ||
+          'Share link has been copied to clipboard successfully!',
         timer: 3000,
         showConfirmButton: true,
         confirmButtonText: this.translateService.instant('ok') || 'OK',
@@ -312,7 +314,9 @@ export class Authors {
       Swal.fire({
         icon: 'error',
         title: this.translateService.instant('error') || 'Error',
-        text: this.translateService.instant('failedToCopyLink') || 'Failed to copy link to clipboard. Please try again.',
+        text:
+          this.translateService.instant('failedToCopyLink') ||
+          'Failed to copy link to clipboard. Please try again.',
         confirmButtonText: this.translateService.instant('ok') || 'OK',
       });
     }
@@ -331,15 +335,14 @@ export class Authors {
           [authorId]: items,
         }));
         const publisherIds = Array.from(
-          new Set(items.map((t) => t.publisherId).filter((id) => !!id))
+          new Set(items.map((t) => t.publisherId).filter((id) => !!id)),
         );
         await Promise.all(
           publisherIds.map(async (id) => {
             if (!this.publishers()[id]) {
               try {
-                const publisher = await this.publisherService.getPublisherById(
-                  id
-                );
+                const publisher =
+                  await this.publisherService.getPublisherById(id);
                 this.publishers.update((prev) => ({
                   ...prev,
                   [id]: publisher,
@@ -348,7 +351,7 @@ export class Authors {
                 console.error(`Error fetching publisher ${id}:`, err);
               }
             }
-          })
+          }),
         );
       })
       .catch((err) => {
@@ -381,7 +384,7 @@ export class Authors {
   }
   authorDBStatus = computed(() => {
     return Object.keys(
-      this.staticValueService.staticValues()?.AuthorStatus || {}
+      this.staticValueService.staticValues()?.AuthorStatus || {},
     );
   });
 
@@ -445,13 +448,13 @@ export class Authors {
       if (result.isConfirmed) {
         const response = await this.authorService.updateAuthorStatus(
           { status: AuthorStatus.Active },
-          authorId
+          authorId,
         );
         if (response) {
           const updatedData = this.dataSource.data.map((item) =>
             item.id === authorId
               ? { ...item, status: AuthorStatus.Active }
-              : item
+              : item,
           );
           this.dataSource.data = updatedData;
           Swal.fire({
@@ -482,13 +485,13 @@ export class Authors {
       if (result.isConfirmed) {
         const response = await this.authorService.updateAuthorStatus(
           { status: AuthorStatus.Rejected },
-          authorId
+          authorId,
         );
         if (response) {
           const updatedData = this.dataSource.data.map((item) =>
             item.id === authorId
               ? { ...item, status: AuthorStatus.Rejected }
-              : item
+              : item,
           );
           this.dataSource.data = updatedData;
           Swal.fire({
@@ -537,7 +540,7 @@ export class Authors {
         if (isDeactivating) {
           const checkbox = (
             Swal.getPopup()?.querySelector(
-              '#delistCheckbox'
+              '#delistCheckbox',
             ) as HTMLInputElement
           )?.checked;
           return { delist: checkbox };
@@ -552,7 +555,7 @@ export class Authors {
     try {
       await this.authorService.updateAuthorStatus(
         { status: status as any, delinkTitle: result.value['delist'] },
-        authorId
+        authorId,
       );
 
       Swal.fire({
@@ -565,7 +568,7 @@ export class Authors {
       });
 
       this.dataSource.data = this.dataSource.data.map((item) =>
-        item.id === authorId ? { ...item, status } : item
+        item.id === authorId ? { ...item, status } : item,
       );
     } catch (error) {
       console.log(error);
@@ -580,7 +583,7 @@ export class Authors {
           console.log({ password });
           await this.authService.changeAuthorPublisherPassword(
             author.user.id,
-            password
+            password,
           );
           Swal.fire({
             icon: 'success',
@@ -596,8 +599,12 @@ export class Authors {
   async resendEmailVerification(authorId: number) {
     try {
       const firstConfirm = await Swal.fire({
-        title: this.translateService.instant('resendemailverification') || 'Resend Email Verification',
-        text: this.translateService.instant('resendemailverificationmessage') || 'Do you wish to send the verification email again?',
+        title:
+          this.translateService.instant('resendemailverification') ||
+          'Resend Email Verification',
+        text:
+          this.translateService.instant('resendemailverificationmessage') ||
+          'Do you wish to send the verification email again?',
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: this.translateService.instant('yes') || 'Yes',
@@ -615,10 +622,15 @@ export class Authors {
 
       const secondConfirm = await Swal.fire({
         title: this.translateService.instant('areyousure') || 'Are you sure?',
-        html: this.translateService.instant('resendemailverificationconfirmation') || 'Are you really sure you want to resend the verification email? The verification link will be valid for 24 hours.',
+        html:
+          this.translateService.instant(
+            'resendemailverificationconfirmation',
+          ) ||
+          'Are you really sure you want to resend the verification email? The verification link will be valid for 24 hours.',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: this.translateService.instant('yesconfirm') || 'Yes, I\'m sure',
+        confirmButtonText:
+          this.translateService.instant('yesconfirm') || "Yes, I'm sure",
         cancelButtonText: this.translateService.instant('cancel') || 'Cancel',
         heightAuto: false,
         customClass: {
@@ -632,11 +644,13 @@ export class Authors {
       }
 
       await this.authorService.resendEmailVerification(authorId);
-      
+
       Swal.fire({
         icon: 'success',
         title: this.translateService.instant('success') || 'Success',
-        text: this.translateService.instant('emailverificationsent') || 'Verification email has been sent successfully. The link will be valid for 24 hours.',
+        text:
+          this.translateService.instant('emailverificationsent') ||
+          'Verification email has been sent successfully. The link will be valid for 24 hours.',
         heightAuto: false,
       });
 
@@ -646,7 +660,9 @@ export class Authors {
       Swal.fire({
         icon: 'error',
         title: this.translateService.instant('error') || 'Error',
-        text: this.translateService.instant('failedtosendverificationemail') || 'Failed to send verification email. Please try again.',
+        text:
+          this.translateService.instant('failedtosendverificationemail') ||
+          'Failed to send verification email. Please try again.',
         heightAuto: false,
       });
     }
@@ -667,7 +683,7 @@ export class Authors {
       }
 
       const exportColumns = this.displayedColumns.filter(
-        (col) => col !== 'actions'
+        (col) => col !== 'actions',
       );
 
       const exportData = authors.map((author) => {
@@ -676,8 +692,7 @@ export class Authors {
         exportColumns.forEach((col) => {
           switch (col) {
             case 'name':
-              dataRow[col] =
-                author.user.firstName + ' ' + author.user.lastName;
+              dataRow[col] = author.user.firstName + ' ' + author.user.lastName;
               break;
             case 'numberoftitles':
               dataRow[col] = author.noOfTitles || 0;
@@ -702,10 +717,8 @@ export class Authors {
       const headers: Record<string, string> = {
         name: this.translateService.instant('name') || 'Name',
         numberoftitles:
-          this.translateService.instant('numberoftitles') ||
-          'Number of Titles',
-        bookssold:
-          this.translateService.instant('bookssold') || 'Books Sold',
+          this.translateService.instant('numberoftitles') || 'Number of Titles',
+        bookssold: this.translateService.instant('bookssold') || 'Books Sold',
         royaltiesearned:
           this.translateService.instant('royaltiesearned') ||
           'Royalties Earned',
@@ -715,7 +728,7 @@ export class Authors {
       const currentPage = this.filter().page || 1;
       const fileName = `authors-page-${currentPage}-${format(
         new Date(),
-        'dd-MM-yyyy'
+        'dd-MM-yyyy',
       )}`;
 
       exportToExcel(exportData, fileName, headers, 'Authors');

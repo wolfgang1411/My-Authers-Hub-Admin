@@ -50,6 +50,23 @@ export class AuthorsService {
     }
   }
 
+  async getAuthorsRaw(filter?: AuthorFilter, showLoader = true) {
+    try {
+      filter = { ...filter };
+      if (!filter.status || filter.status.toLocaleString() === ('all' as any)) {
+        delete filter.status;
+      }
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<Author>>('authors/raw', filter),
+        'fetch-authors',
+        !showLoader
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
   async getAuthors(filter?: AuthorFilter, showLoader = true) {
     try {
       filter = { ...filter };
