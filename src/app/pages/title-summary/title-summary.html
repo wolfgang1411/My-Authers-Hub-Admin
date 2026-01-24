@@ -1236,9 +1236,11 @@
         <ng-container *ngTemplateOutlet="overviewTpl"></ng-container>
       </app-mobile-section>
 
-      <app-mobile-section title="Media">
-        <ng-container *ngTemplateOutlet="mediaTpl"></ng-container>
-      </app-mobile-section>
+      @if (loggedInUser()?.accessLevel !== "AUTHER") {
+        <app-mobile-section title="Media">
+          <ng-container *ngTemplateOutlet="mediaTpl"></ng-container>
+        </app-mobile-section>
+      }
 
       <app-mobile-section title="Printing">
         <ng-container *ngTemplateOutlet="printingTpl"></ng-container>
