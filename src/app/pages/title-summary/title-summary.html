@@ -1207,9 +1207,11 @@
       </mat-tab>
 
       <!-- MEDIA TAB -->
-      <mat-tab label="Media">
-        <ng-container *ngTemplateOutlet="mediaTpl"></ng-container>
-      </mat-tab>
+      @if (loggedInUser()?.accessLevel !== "AUTHER") {
+        <mat-tab label="Media">
+          <ng-container *ngTemplateOutlet="mediaTpl"></ng-container>
+        </mat-tab>
+      }
 
       <!-- PRINTING TAB -->
       <mat-tab label="Printing">
