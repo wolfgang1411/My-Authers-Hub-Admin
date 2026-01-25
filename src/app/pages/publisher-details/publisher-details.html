@@ -573,22 +573,43 @@
           />
         </mat-form-field>
       </div>
-      <ul class="space-y-2">
-        <li>
-          🪙 {{ "walletbalance" | translate }} :
-          <label class="font-medium">{{
-            (publisherDetails()?.user?.wallet?.totalAmount || 0) -
-              (publisherDetails()?.user?.wallet?.holdAmount || 0)
-              | currency: "INR"
-          }}</label>
-        </li>
-        <li>
-          ⏳{{ "onhold" | translate }} :
-          <label class="font-medium">{{
-            publisherDetails()?.user?.wallet?.holdAmount || 0 | currency: "INR"
-          }}</label>
-        </li>
-      </ul>
+      <div class="flex justify-between">
+        <ul class="space-y-2">
+          <li>
+            🪙 {{ "walletbalance" | translate }} :
+            <label class="font-medium">{{
+              (publisherDetails()?.user?.wallet?.totalAmount || 0) -
+                (publisherDetails()?.user?.wallet?.holdAmount || 0)
+                | currency: "INR"
+            }}</label>
+          </li>
+          <li>
+            ⏳{{ "onhold" | translate }} :
+            <label class="font-medium">{{
+              publisherDetails()?.user?.wallet?.holdAmount || 0
+                | currency: "INR"
+            }}</label>
+          </li>
+        </ul>
+
+        @if (
+          ["SUPERADMIN", "PUBLISHER"].includes(
+            loggedInUser()?.accessLevel || ""
+          ) &&
+          publisherId.toString() !== loggedInUser()?.publisher?.id?.toString()
+        ) {
+          <div>
+            <button
+              (click)="onClickAddWalletAmount()"
+              color="primary"
+              mat-raised-button
+            >
+              {{ "addwalletamount" | translate }}
+            </button>
+          </div>
+        }
+      </div>
+
       <div class="hidden md:block">
         <app-list-table
           [dataSource]="royaltyData"
@@ -1025,9 +1046,11 @@
         <ng-container *ngTemplateOutlet="authorsTpl"></ng-container>
       </mat-tab>
 
-      <mat-tab label="Sub Publishers">
-        <ng-container *ngTemplateOutlet="subPublishersTpl"></ng-container>
-      </mat-tab>
+      @if (publisherDetails()?.type !== "Sub_Publisher") {
+        <mat-tab label="Sub Publishers">
+          <ng-container *ngTemplateOutlet="subPublishersTpl"></ng-container>
+        </mat-tab>
+      }
 
       <mat-tab label="Royalties & Wallet">
         <ng-container *ngTemplateOutlet="royaltiesTpl"></ng-container>
@@ -1056,9 +1079,11 @@
       <ng-container *ngTemplateOutlet="authorsTpl"></ng-container>
     </app-mobile-section>
 
-    <app-mobile-section title="Sub Publishers">
-      <ng-container *ngTemplateOutlet="subPublishersTpl"></ng-container>
-    </app-mobile-section>
+    @if (publisherDetails()?.type !== "Sub_Publisher") {
+      <app-mobile-section title="Sub Publishers">
+        <ng-container *ngTemplateOutlet="subPublishersTpl"></ng-container>
+      </app-mobile-section>
+    }
 
     <app-mobile-section title="Royalties & Wallet">
       <ng-container *ngTemplateOutlet="royaltiesTpl"></ng-container>

@@ -320,21 +320,42 @@
           />
         </mat-form-field>
       </div>
-      <ul class="space-y-2">
-        <li>
-          🪙 {{ "walletbalance" | translate }} :
-          <label class="font-medium">{{
-            (authorDetails()?.user?.wallet?.totalAmount || 0) -
-              (authorDetails()?.user?.wallet?.holdAmount || 0) | currency: "INR"
-          }}</label>
-        </li>
-        <li>
-          ⏳{{ "onhold" | translate }} :
-          <label class="font-medium">{{
-            authorDetails()?.user?.wallet?.holdAmount || 0 | currency: "INR"
-          }}</label>
-        </li>
-      </ul>
+      <div class="flex justify-between">
+        <ul class="space-y-2">
+          <li>
+            <div>
+              🪙 {{ "walletbalance" | translate }} :
+              <label class="font-medium">{{
+                (authorDetails()?.user?.wallet?.totalAmount || 0) -
+                  (authorDetails()?.user?.wallet?.holdAmount || 0)
+                  | currency: "INR"
+              }}</label>
+            </div>
+          </li>
+          <li>
+            ⏳{{ "onhold" | translate }} :
+            <label class="font-medium">{{
+              authorDetails()?.user?.wallet?.holdAmount || 0 | currency: "INR"
+            }}</label>
+          </li>
+        </ul>
+        @if (
+          ["SUPERADMIN", "PUBLISHER"].includes(
+            loggedInUser()?.accessLevel || ""
+          )
+        ) {
+          <div>
+            <button
+              (click)="onClickAddWalletAmount()"
+              color="primary"
+              mat-raised-button
+            >
+              {{ "addwalletamount" | translate }}
+            </button>
+          </div>
+        }
+      </div>
+
       <!-- DESKTOP -->
       <div class="hidden md:block overflow-x-auto">
         <app-list-table

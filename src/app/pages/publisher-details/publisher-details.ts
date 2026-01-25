@@ -44,6 +44,10 @@ import { BuyAssignPointsButton } from '../../components/buy-assign-points-button
 import { formatIsbn } from 'src/app/shared/utils/isbn.utils';
 import { UserService } from 'src/app/services/user';
 import { MobileSection } from 'src/app/components/mobile-section/mobile-section';
+import { MatDialog } from '@angular/material/dialog';
+import { WalletService } from 'src/app/services/wallet';
+import { AddWalletAmount } from 'src/app/components/add-wallet-amount/add-wallet-amount';
+import Swal from 'sweetalert2';
 @Component({
   selector: 'app-publisher-details',
   imports: [
@@ -79,6 +83,8 @@ export class PublisherDetails implements OnInit, OnDestroy {
     private salesService: SalesService,
     private translateService: TranslateService,
     public staticValueService: StaticValuesService,
+    private matDialog: MatDialog,
+    private walletService: WalletService,
   ) {
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(({ id }) => {
       this.publisherId = id;
@@ -1181,5 +1187,76 @@ export class PublisherDetails implements OnInit, OnDestroy {
       return 'store';
     }
     return 'link';
+  }
+
+  onClickAddWalletAmount() {
+    const dialog = this.matDialog.open(AddWalletAmount, {
+      data: {
+        onClose: () => dialog.close(),
+        onSubmit: (data: {
+          amount: number;
+          method?: 'GATEWAY' | 'WALLET';
+          sendMails: boolean;
+        }) => {
+          const returnUrl = `publisherDetails/${this.publisherId}?tab=4`;
+          this.walletService
+            .addWalletAmount({
+              amount: data.amount,
+              method: data.method || 'SUPERADMIN',
+              sendMail: data.sendMails,
+              returnUrl,
+              publisherId: Number(this.publisherId),
+            })
+            .then((response) => {
+              if (response.status === 'pending' && response.url) {
+                dialog.close();
+                window.open(response.url, '_blank');
+                return;
+              }
+
+              if (response.status === 'success') {
+                Swal.fire({
+                  icon: 'success',
+                  html: response.message,
+                });
+                dialog.close();
+                const publisherDetails = this.publisherDetails();
+                if (publisherDetails) {
+                  const finalAmount =
+                    (publisherDetails.user.wallet?.totalAmount || 0) +
+                    data.amount;
+
+                  this.publisherDetails.update(() => {
+                    if (publisherDetails.user && publisherDetails.user.wallet) {
+                      publisherDetails['user']['wallet']['totalAmount'] =
+                        finalAmount;
+                    }
+
+                    return publisherDetails;
+                  });
+                }
+
+                const loggedInUser = this.loggedInUser();
+                if (
+                  loggedInUser &&
+                  loggedInUser.accessLevel == 'PUBLISHER' &&
+                  loggedInUser.wallet &&
+                  data.method === 'WALLET'
+                ) {
+                  const updatedAmount =
+                    loggedInUser['wallet']['totalAmount'] - data.amount;
+                  loggedInUser['wallet']['totalAmount'] = updatedAmount;
+                  this.userService.setLoggedInUser(loggedInUser);
+                }
+
+                return;
+              }
+            })
+            .catch((error) => {
+              console.log(error);
+            });
+        },
+      },
+    });
   }
 }

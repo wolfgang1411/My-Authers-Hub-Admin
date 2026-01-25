@@ -1,0 +1,47 @@
+<div class="w-[400px] max-w-[90vw]">
+  <h1 mat-dialog-title>
+    {{ "addwalletamount" | translate }}
+  </h1>
+
+  <mat-dialog-content>
+    <mat-form-field class="w-full">
+      <input
+        matInput
+        [formControl]="amount"
+        [placeholder]="'amount' | translate"
+        type="number"
+      />
+    </mat-form-field>
+
+    @if (method.enabled) {
+      <mat-form-field class="w-full">
+        <mat-select placeholder="Method" [formControl]="method">
+          <mat-option value="GATEWAY">GATEWAY</mat-option>
+          <mat-option value="WALLET">WALLET</mat-option>
+        </mat-select>
+      </mat-form-field>
+    }
+
+    @if (method.value === "WALLET") {
+      <p class="font-medium text-primary">
+        {{
+          "availableamount"
+            | translate: { availableAmount: availableWalletAmount() | currency }
+        }}
+      </p>
+    }
+
+    <mat-checkbox [formControl]="sendMails">
+      {{ "sendemails" | translate }}
+    </mat-checkbox>
+  </mat-dialog-content>
+
+  <mat-dialog-actions>
+    <button (click)="data.onClose()" type="button" mat-raised-button>
+      {{ "close" | translate }}
+    </button>
+    <button (click)="onSubmit()" mat-raised-button [color]="'primary'">
+      {{ "addmount" | translate }}
+    </button>
+  </mat-dialog-actions>
+</div>

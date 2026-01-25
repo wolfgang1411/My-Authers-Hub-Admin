@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, Signal, signal } from '@angular/core';
 import { Back } from '../../components/back/back';
 import { MatTabGroup, MatTab, MatTabsModule } from '@angular/material/tabs';
 import { SharedModule } from '../../modules/shared/shared-module';
@@ -13,6 +13,7 @@ import {
   Title,
   TitleFilter,
   EarningFilter,
+  User,
 } from '../../interfaces';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { formatCurrency } from '@angular/common';
@@ -27,6 +28,11 @@ import { SafeUrlPipe } from 'src/app/pipes/safe-url-pipe';
 import { formatIsbn } from 'src/app/shared/utils/isbn.utils';
 import { MobileSection } from 'src/app/components/mobile-section/mobile-section';
 import { Earnings } from 'src/app/interfaces/Earnings';
+import { UserService } from '../../services/user';
+import { MatDialog } from '@angular/material/dialog';
+import { AddWalletAmount } from 'src/app/components/add-wallet-amount/add-wallet-amount';
+import { WalletService } from 'src/app/services/wallet';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-author-details',
@@ -54,12 +60,17 @@ export class AuthorDetails {
     private titleService: TitleService,
     private salesService: SalesService,
     private translateService: TranslateService,
+    private userService: UserService,
+    private readonly matDialog: MatDialog,
+    private readonly walletService: WalletService,
   ) {
+    this.loggedInUser = userService.loggedInUser$;
     this.route.params.subscribe(({ id }) => {
       this.authorId = id;
     });
   }
 
+  loggedInUser!: Signal<User | null>;
   authorId!: number;
   authorDetails = signal<Author | null>(null);
   booksPublished = signal<Title[]>([]);
@@ -123,6 +134,76 @@ export class AuthorDetails {
     'royaltiesearned',
     'authors',
   ];
+
+  onClickAddWalletAmount() {
+    const dialog = this.matDialog.open(AddWalletAmount, {
+      data: {
+        onClose: () => dialog.close(),
+        onSubmit: (data: {
+          amount: number;
+          method?: 'GATEWAY' | 'WALLET';
+          sendMails: boolean;
+        }) => {
+          const returnUrl = `authorDetails/${this.authorId}`;
+          this.walletService
+            .addWalletAmount({
+              amount: data.amount,
+              method: data.method || 'SUPERADMIN',
+              sendMail: data.sendMails,
+              returnUrl,
+              authorId: Number(this.authorId),
+            })
+            .then((response) => {
+              if (response.status === 'pending' && response.url) {
+                dialog.close();
+                window.open(response.url, '_blank');
+                return;
+              }
+
+              if (response.status === 'success') {
+                Swal.fire({
+                  icon: 'success',
+                  html: response.message,
+                });
+                dialog.close();
+                const authorDetails = this.authorDetails();
+                if (authorDetails) {
+                  const finalAmount =
+                    (authorDetails.user.wallet?.totalAmount || 0) + data.amount;
+
+                  this.authorDetails.update(() => {
+                    if (authorDetails.user && authorDetails.user.wallet) {
+                      authorDetails['user']['wallet']['totalAmount'] =
+                        finalAmount;
+                    }
+
+                    return authorDetails;
+                  });
+                }
+
+                const loggedInUser = this.loggedInUser();
+                if (
+                  loggedInUser &&
+                  loggedInUser.accessLevel == 'PUBLISHER' &&
+                  loggedInUser.wallet &&
+                  data.method === 'WALLET'
+                ) {
+                  const updatedAmount =
+                    loggedInUser['wallet']['totalAmount'] - data.amount;
+                  loggedInUser['wallet']['totalAmount'] = updatedAmount;
+                  this.userService.setLoggedInUser(loggedInUser);
+                }
+
+                return;
+              }
+            })
+            .catch((error) => {
+              console.log(error);
+            });
+        },
+      },
+    });
+  }
 
   // Sorting functions for books
   booksGetApiFieldName = (column: string): string | null => {

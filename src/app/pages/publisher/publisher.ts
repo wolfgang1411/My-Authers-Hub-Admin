@@ -196,17 +196,10 @@ export class Publisher implements OnInit {
       noofauthors: publisher.noOfAuthors,
       wallet: Math.round(publisher?.user?.wallet?.totalAmount || 0) || 0,
       type: this.translate.instant(`${publisher.type}`),
-      publisher: publisher.parentPublishers?.map((p) => p.name)?.join(', ') || '-',
+      publisher:
+        publisher.parentPublishers?.map((p) => p.name)?.join(', ') || '-',
       actions: '',
     }));
-
-    if (mapped.length > 0) {
-      const filtrCol = { ...mapped[0] };
-      delete (filtrCol as any).id;
-      // if (this.dataSource.data.length === 0) {
-      //   this.displayedColumns = Object.keys(filtrCol);
-      // }
-    }
     this.dataSource.data = mapped;
   }
 
