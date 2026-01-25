@@ -59,15 +59,15 @@
         Edit Profile
       </button>
 
-      @if (userService.loggedInUser$()?.accessLevel !== 'AUTHER') {
-      <button
-        matButton="filled"
-        class="w-full sm:flex-1 h-11 sm:h-10 md:h-11 !bg-primary !text-white rounded-lg text-sm sm:text-base flex items-center justify-center gap-2"
-        [routerLink]="['/settings']"
-      >
-        <mat-icon>settings</mat-icon>
-        Settings
-      </button>
+      @if (userService.loggedInUser$()?.accessLevel !== "AUTHER") {
+        <button
+          matButton="filled"
+          class="w-full sm:flex-1 h-11 sm:h-10 md:h-11 !bg-primary !text-white rounded-lg text-sm sm:text-base flex items-center justify-center gap-2"
+          [routerLink]="['/settings']"
+        >
+          <mat-icon>settings</mat-icon>
+          Settings
+        </button>
       }
     </div>
   </div>

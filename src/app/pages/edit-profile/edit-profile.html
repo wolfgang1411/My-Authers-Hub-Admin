@@ -7,16 +7,17 @@
         <div
           class="relative w-30 h-30 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden"
         >
-          @if (loggedInUser()?.url !==null) {
-          <img
-            [src]="loggedInUser()?.url ?? '' | safeUrl"
-            class="w-full h-full object-cover"
-          />
-          } @if (!loggedInUser()?.url ) {
-          <img
-            src="images/user-solid-full.svg"
-            class="w-[50px] h-[50px] opacity-60 object-contain"
-          />
+          @if (loggedInUser()?.url !== null) {
+            <img
+              [src]="loggedInUser()?.url ?? '' | safeUrl"
+              class="w-full h-full object-cover"
+            />
+          }
+          @if (!loggedInUser()?.url) {
+            <img
+              src="images/user-solid-full.svg"
+              class="w-[50px] h-[50px] opacity-60 object-contain"
+            />
           }
           <button
             type="button"
@@ -33,10 +34,16 @@
           <h2 class="text-lg font-semibold">
             {{ loggedInUser()?.firstName + " " + loggedInUser()?.lastName }}
           </h2>
-          <p class="text-sm text-gray-500">{{ loggedInUser()?.accessLevel }}</p>
-          @if(this.userAddress()?.address || this.userAddress()?.city ||
-          this.userAddress()?.state || this.userAddress()?.country ) {
-          <p class="text-sm text-gray-500">{{ completeAddress() }}</p>
+          <p class="text-sm text-gray-500">
+            {{ loggedInUser()?.accessLevel | translate }}
+          </p>
+          @if (
+            this.userAddress()?.address ||
+            this.userAddress()?.city ||
+            this.userAddress()?.state ||
+            this.userAddress()?.country
+          ) {
+            <p class="text-sm text-gray-500">{{ completeAddress() }}</p>
           }
         </div>
       </div>
@@ -47,67 +54,73 @@
           <span class="ml-2">Edit Profile</span>
         </button> -->
 
-        @if (loggedInUser()?.accessLevel === 'PUBLISHER') {
-        <button
-          mat-flat-button
-          color="accent"
-          class="w-full !bg-primary"
-          [routerLink]="['/publisherDetails', loggedInUser()?.publisher?.id]"
-        >
-          <mat-icon>visibility</mat-icon>
-          <span class="ml-2">My Publishing Details</span>
-        </button>
-        } @if (loggedInUser()?.publisher?.id) {
-        @if (publisher()?.status === 'Dormant' || publisher()?.status === 'Pending' || loggedInUser()?.accessLevel === 'SUPERADMIN') {
-        <button
-          mat-flat-button
-          color="accent"
-          class="w-full !bg-primary"
-          (click)="navigateToEditPublisher()"
-        >
-          <mat-icon>edit</mat-icon>
-          <span class="ml-2">Edit Publisher Details</span>
-        </button>
+        @if (loggedInUser()?.accessLevel === "PUBLISHER") {
+          <button
+            mat-flat-button
+            color="accent"
+            class="w-full !bg-primary"
+            [routerLink]="['/publisherDetails', loggedInUser()?.publisher?.id]"
+          >
+            <mat-icon>visibility</mat-icon>
+            <span class="ml-2">My Publishing Details</span>
+          </button>
         }
-        @if (publisher()?.status === 'Active') {
-        <button
-          mat-flat-button
-          color="accent"
-          class="w-full !bg-accent"
-          (click)="navigateToUpdateTickets('publisher')"
-        >
-          <mat-icon>visibility</mat-icon>
-          <span class="ml-2">View My Tickets</span>
-        </button>
+        @if (loggedInUser()?.publisher?.id) {
+          @if (
+            publisher()?.status === "Dormant" ||
+            publisher()?.status === "Pending" ||
+            loggedInUser()?.accessLevel === "SUPERADMIN"
+          ) {
+            <button
+              mat-flat-button
+              color="accent"
+              class="w-full !bg-primary"
+              (click)="navigateToEditPublisher()"
+            >
+              <mat-icon>edit</mat-icon>
+              <span class="ml-2">Edit Publisher Details</span>
+            </button>
+          }
+          @if (publisher()?.status === "Active") {
+            <button
+              mat-flat-button
+              color="accent"
+              class="w-full !bg-accent"
+              (click)="navigateToUpdateTickets('publisher')"
+            >
+              <mat-icon>visibility</mat-icon>
+              <span class="ml-2">View My Tickets</span>
+            </button>
+          }
         }
-        } @if (loggedInUser()?.auther?.id) {
-        <button
-          mat-flat-button
-          color="accent"
-          class="w-full !bg-primary"
-          (click)="navigateToEditAuthor()"
-        >
-          <mat-icon>edit</mat-icon>
-          <span class="ml-2">Edit Author Details</span>
-        </button>
-        <button
-          mat-flat-button
-          color="accent"
-          class="w-full !bg-primary"
-          [routerLink]="['/invites']"
-        >
-          <mat-icon>mail</mat-icon>
-          <span class="ml-2">{{ "invites" | translate }}</span>
-        </button>
-        <button
-          mat-flat-button
-          color="accent"
-          class="w-full !bg-accent"
-          (click)="navigateToUpdateTickets('author')"
-        >
-          <mat-icon>visibility</mat-icon>
-          <span class="ml-2">View My Tickets</span>
-        </button>
+        @if (loggedInUser()?.auther?.id) {
+          <button
+            mat-flat-button
+            color="accent"
+            class="w-full !bg-primary"
+            (click)="navigateToEditAuthor()"
+          >
+            <mat-icon>edit</mat-icon>
+            <span class="ml-2">Edit Author Details</span>
+          </button>
+          <button
+            mat-flat-button
+            color="accent"
+            class="w-full !bg-primary"
+            [routerLink]="['/invites']"
+          >
+            <mat-icon>mail</mat-icon>
+            <span class="ml-2">{{ "invites" | translate }}</span>
+          </button>
+          <button
+            mat-flat-button
+            color="accent"
+            class="w-full !bg-accent"
+            (click)="navigateToUpdateTickets('author')"
+          >
+            <mat-icon>visibility</mat-icon>
+            <span class="ml-2">View My Tickets</span>
+          </button>
         }
         <!-- <button
           mat-flat-button
@@ -174,10 +187,11 @@
               placeholder="First name"
             />
             <mat-icon matSuffix>person</mat-icon>
-            @if(personalForm.controls.firstName.invalid &&
-            personalForm.controls.firstName.touched) {
-
-            <mat-hint class="text-red-600">Required</mat-hint>
+            @if (
+              personalForm.controls.firstName.invalid &&
+              personalForm.controls.firstName.touched
+            ) {
+              <mat-hint class="text-red-600">Required</mat-hint>
             }
           </mat-form-field>
 
@@ -200,10 +214,11 @@
               placeholder="you@example.com"
             />
             <mat-icon matSuffix>email</mat-icon>
-            @if( personalForm.controls.email.invalid &&
-            personalForm.controls.email.touched) {
-
-            <mat-hint class="text-red-600">Enter a valid email</mat-hint>
+            @if (
+              personalForm.controls.email.invalid &&
+              personalForm.controls.email.touched
+            ) {
+              <mat-hint class="text-red-600">Enter a valid email</mat-hint>
             }
           </mat-form-field>
           <ngx-material-intl-tel-input
@@ -321,12 +336,14 @@
             <mat-icon matSuffix (click)="openPassword()" class="cursor-pointer"
               >visibility</mat-icon
             >
-            @if(passwordForm.controls.newPassword.invalid &&
-            passwordForm.controls.newPassword.touched) {
-            <mat-hint class="text-red-600">
-              Password must be at least 8 characters, include uppercase,
-              lowercase & number
-            </mat-hint>
+            @if (
+              passwordForm.controls.newPassword.invalid &&
+              passwordForm.controls.newPassword.touched
+            ) {
+              <mat-hint class="text-red-600">
+                Password must be at least 8 characters, include uppercase,
+                lowercase & number
+              </mat-hint>
             }
           </mat-form-field>
 
