@@ -21,14 +21,14 @@
         <mat-icon>download</mat-icon>
         {{ "export" | translate }}
       </button>
-      @if (loggedInUser()?.accessLevel !== 'SUPERADMIN' || true) {
-      <button
-        (click)="onClickRequestPayout()"
-        class="flex items-center gap-2 bg-[var(--primary)] text-white font-medium px-4 py-2 rounded-lg hover:opacity-90 transition"
-      >
-        <mat-icon>add</mat-icon>
-        Request Payout
-      </button>
+      @if (loggedInUser()?.accessLevel !== "SUPERADMIN") {
+        <button
+          (click)="onClickRequestPayout()"
+          class="flex items-center gap-2 bg-[var(--primary)] text-white font-medium px-4 py-2 rounded-lg hover:opacity-90 transition"
+        >
+          <mat-icon>add</mat-icon>
+          Request Payout
+        </button>
       }
     </div>
   </div>
@@ -67,14 +67,17 @@
     >
     </app-list-table>
   </div>
-  
+
   <div class="flex items-center justify-between gap-4 mt-4">
     <div class="flex items-center gap-2">
       <span class="text-sm text-[var(--text-secondary)]">
-        {{ "page" | translate }} {{ filter().page || 1 }} {{ "of" | translate }} {{ lastPage() }}
+        {{ "page" | translate }} {{ filter().page || 1 }} {{ "of" | translate }}
+        {{ lastPage() }}
       </span>
       <span class="text-sm text-[var(--text-secondary)]">|</span>
-      <span class="text-sm text-[var(--text-secondary)]">{{ "itemsperpage" | translate }}:</span>
+      <span class="text-sm text-[var(--text-secondary)]"
+        >{{ "itemsperpage" | translate }}:</span
+      >
       <select
         class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
         [value]="filter().itemsPerPage || 30"
@@ -88,123 +91,124 @@
       </select>
     </div>
     @if (lastPage() > 1) {
-    <div class="flex items-center gap-2">
-      <button
-        class="btn rounded-md !text-primary"
-        matButton="filled"
-        matButton
-        type="button"
-        [disabled]="(filter().page || 1) === 1"
-        (click)="previousPage()"
-      >
-        <mat-icon>chevron_left</mat-icon>
-        {{ "previous" | translate }}
-      </button>
-      <div class="flex items-center gap-1">
-        @for (pageNum of getPageNumbers(); track pageNum) {
-          @if (pageNum === -1) {
-            <span class="px-2 text-[var(--text-secondary)]">...</span>
-          } @else {
-            <button
-              class="btn rounded-md !text-primary min-w-[40px]"
-              matButton="filled"
-              matButton
-              type="button"
-              [ngClass]="{
-                '!bg-primary !text-white': (filter().page || 1) === pageNum,
-                '!bg-primary-superlight': (filter().page || 1) !== pageNum
-              }"
-              (click)="goToPage(pageNum)"
-            >
-              {{ pageNum }}
-            </button>
+      <div class="flex items-center gap-2">
+        <button
+          class="btn rounded-md !text-primary"
+          matButton="filled"
+          matButton
+          type="button"
+          [disabled]="(filter().page || 1) === 1"
+          (click)="previousPage()"
+        >
+          <mat-icon>chevron_left</mat-icon>
+          {{ "previous" | translate }}
+        </button>
+        <div class="flex items-center gap-1">
+          @for (pageNum of getPageNumbers(); track pageNum) {
+            @if (pageNum === -1) {
+              <span class="px-2 text-[var(--text-secondary)]">...</span>
+            } @else {
+              <button
+                class="btn rounded-md !text-primary min-w-[40px]"
+                matButton="filled"
+                matButton
+                type="button"
+                [ngClass]="{
+                  '!bg-primary !text-white': (filter().page || 1) === pageNum,
+                  '!bg-primary-superlight': (filter().page || 1) !== pageNum,
+                }"
+                (click)="goToPage(pageNum)"
+              >
+                {{ pageNum }}
+              </button>
+            }
           }
-        }
+        </div>
+        <button
+          class="btn rounded-md !text-primary"
+          matButton="filled"
+          matButton
+          type="button"
+          [disabled]="(filter().page || 1) === lastPage()"
+          (click)="nextPage()"
+        >
+          {{ "next" | translate }}
+          <mat-icon>chevron_right</mat-icon>
+        </button>
       </div>
-      <button
-        class="btn rounded-md !text-primary"
-        matButton="filled"
-        matButton
-        type="button"
-        [disabled]="(filter().page || 1) === lastPage()"
-        (click)="nextPage()"
-      >
-        {{ "next" | translate }}
-        <mat-icon>chevron_right</mat-icon>
-      </button>
-    </div>
     }
   </div>
 
   <!-- Action Buttons Template -->
   <ng-template #actionButtons let-element>
-    @if( loggedInUser()?.accessLevel === 'SUPERADMIN') {
-    <div class="flex gap-2 items-center">
-      <!-- View -->
+    @if (loggedInUser()?.accessLevel === "SUPERADMIN") {
+      <div class="flex gap-2 items-center">
+        <!-- View -->
+        <button
+          mat-icon-button
+          [routerLink]="['/payouts', element.id]"
+          title="View"
+          class="!bg-[var(--primary)] hover:opacity-90 rounded-full p-2"
+        >
+          <mat-icon class="!text-white">visibility</mat-icon>
+        </button>
+        @if (element.payoutStatus === "PENDING") {
+          <ng-container>
+            <button
+              (click)="onUpdatePayout(element.id, 'APPROVED')"
+              title="Approve"
+              mat-icon-button
+              class="!bg-[var(--green-2)] hover:opacity-90 rounded-full p-2"
+            >
+              <mat-icon class="!text-white">thumb_up</mat-icon>
+            </button>
+            <button
+              (click)="onUpdatePayout(element.id, 'REJECTED')"
+              title="Reject"
+              mat-icon-button
+              class="!bg-red-500 hover:opacity-90 rounded-full p-2"
+            >
+              <mat-icon class="!text-white">thumb_down</mat-icon>
+            </button>
+          </ng-container>
+        } @else if (element.payoutStatus === "REJECTED") {
+          <button
+            mat-icon-button
+            disabled
+            class="!bg-red-500 rounded-full p-2 opacity-80"
+          >
+            <mat-icon class="!text-white">close</mat-icon>
+          </button>
+        } @else if (element.payoutStatus === "PAID") {
+          <button
+            mat-icon-button
+            disabled
+            title="Paid"
+            class="!bg-[var(--primary)] rounded-full p-2 opacity-80"
+          >
+            <mat-icon class="!text-white">check</mat-icon>
+          </button>
+        } @else if (element.payoutStatus === "APPROVED") {
+          <button
+            mat-icon-button
+            disabled
+            class="!bg-[var(--green-2)] rounded-full p-2 opacity-80"
+          >
+            <mat-icon class="!text-white">check_circle</mat-icon>
+          </button>
+        }
+      </div>
+    }
+    @if (loggedInUser()?.accessLevel === "PUBLISHER") {
       <button
-        mat-icon-button
-        [routerLink]="['/payouts', element.id]"
+        matButton="filled"
+        [routerLink]="['/wallet']"
         title="View"
-        class="!bg-[var(--primary)] hover:opacity-90 rounded-full p-2"
+        class="!bg-[var(--primary)] hover:opacity-90 rounded-full p-2 !text-white"
       >
         <mat-icon class="!text-white">visibility</mat-icon>
+        {{ "viewwallet" | translate }}
       </button>
-      @if (element.payoutStatus === 'PENDING') {
-      <ng-container>
-        <button
-          (click)="onUpdatePayout(element.id, 'APPROVED')"
-          title="Approve"
-          mat-icon-button
-          class="!bg-[var(--green-2)] hover:opacity-90 rounded-full p-2"
-        >
-          <mat-icon class="!text-white">thumb_up</mat-icon>
-        </button>
-        <button
-          (click)="onUpdatePayout(element.id, 'REJECTED')"
-          title="Reject"
-          mat-icon-button
-          class="!bg-red-500 hover:opacity-90 rounded-full p-2"
-        >
-          <mat-icon class="!text-white">thumb_down</mat-icon>
-        </button>
-      </ng-container>
-      } @else if (element.payoutStatus === 'REJECTED') {
-      <button
-        mat-icon-button
-        disabled
-        class="!bg-red-500 rounded-full p-2 opacity-80"
-      >
-        <mat-icon class="!text-white">close</mat-icon>
-      </button>
-      } @else if (element.payoutStatus === 'PAID') {
-      <button
-        mat-icon-button
-        disabled
-        title="Paid"
-        class="!bg-[var(--primary)] rounded-full p-2 opacity-80"
-      >
-        <mat-icon class="!text-white">check</mat-icon>
-      </button>
-      } @else if (element.payoutStatus === 'APPROVED') {
-      <button
-        mat-icon-button
-        disabled
-        class="!bg-[var(--green-2)] rounded-full p-2 opacity-80"
-      >
-        <mat-icon class="!text-white">check_circle</mat-icon>
-      </button>
-      }
-    </div>
-    } @if ( loggedInUser()?.accessLevel === 'PUBLISHER') {
-    <button
-      matButton="filled"
-      [routerLink]="['/wallet']"
-      title="View"
-      class="!bg-[var(--primary)] hover:opacity-90 rounded-full p-2 !text-white"
-    >
-      <mat-icon class="!text-white">visibility</mat-icon>
-      {{ "viewwallet" | translate }}
-    </button>
     }
   </ng-template>
 </section>
