@@ -1,0 +1,190 @@
+<section class="p-4 sm:p-6 rounded-xl bg-[var(--surface)] min-h-screen">
+  <!-- Header -->
+  <div
+    class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6"
+  >
+    <div>
+      <h2 class="text-2xl font-medium text-[var(--text-heading)]">
+        Wallet Transactions
+      </h2>
+      <p class="text-sm text-[var(--text-secondary)]">
+        Track all wallet credit transactions.
+      </p>
+    </div>
+
+    <button
+      class="flex items-center gap-2 bg-[var(--primary)] text-white px-4 py-2 rounded-lg hover:opacity-90"
+      (click)="onExportToExcel()"
+    >
+      <mat-icon>download</mat-icon>
+      Export
+    </button>
+  </div>
+
+  <!-- Search -->
+  <div
+    class="flex items-center gap-3 mb-6 bg-white border border-[var(--primary-superlight)] rounded-xl p-3 shadow-sm"
+  >
+    <mat-icon class="text-[var(--text-secondary)]">search</mat-icon>
+    <input
+      #input
+      type="text"
+      (input)="searchStr.next(input.value)"
+      placeholder="Search transactions..."
+      class="w-full bg-transparent outline-none text-sm"
+    />
+    <button
+      class="bg-[var(--primary)] text-white px-4 py-2 rounded-lg text-sm"
+      (click)="searchStr.next(input.value)"
+    >
+      Search
+    </button>
+  </div>
+
+  <!-- DESKTOP TABLE -->
+  <div
+    class="hidden md:block bg-white rounded-2xl border shadow-md overflow-hidden"
+  >
+    <app-list-table
+      [dataSource]="dataSource"
+      [displayedColumns]="displayedColumns"
+      [isSortable]="isSortable"
+      (sortChange)="onSortChange($event)"
+    >
+    </app-list-table>
+  </div>
+
+  <!-- MOBILE CARDS -->
+  <div class="md:hidden flex flex-col gap-4">
+    @for (tx of transactions(); track tx.id) {
+      <div class="bg-white rounded-xl p-4 shadow border">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-sm font-medium text-[var(--primary)]">
+            {{ tx.amount }} INR
+          </span>
+          <span
+            class="text-xs px-2 py-1 rounded-full"
+            [ngClass]="{
+              'bg-green-100 text-green-700': tx.status === 'COMPLETED',
+              'bg-yellow-100 text-yellow-700': tx.status === 'PENDING',
+              'bg-red-100 text-red-700': tx.status === 'FAILED',
+            }"
+          >
+            {{ tx.status }}
+          </span>
+        </div>
+
+        <div class="text-sm text-[var(--text-secondary)] space-y-1">
+          <p>
+            <b>Added By:</b>
+            {{
+              tx.addedBy.publisher?.name || tx.addedBy.fullName || "Superadmin"
+            }}
+          </p>
+          <p>
+            <b>Recipient:</b>
+            {{ tx.wallet.user.publisher?.name || tx.wallet.user.fullName }}
+          </p>
+          <p><b>Email:</b> {{ tx.wallet.user.email }}</p>
+          <p><b>Method:</b> {{ tx.addedMethod }}</p>
+          <p><b>Type:</b> {{ tx.type }}</p>
+          <p><b>Comment:</b> {{ tx.comment || "-" }}</p>
+          <p><b>Date:</b> {{ tx.createdAt | date: "mediumDate" }}</p>
+        </div>
+
+        <div class="mt-3 flex justify-end">
+          <button
+            mat-icon-button
+            [routerLink]="['/wallet', tx.wallet.id]"
+            class="!bg-[var(--primary)] rounded-full"
+          >
+            <mat-icon class="!text-white">visibility</mat-icon>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- PAGINATION -->
+  <div class="flex items-center justify-between gap-4 mt-4">
+    <div class="flex items-center gap-2">
+      <span class="text-sm text-[var(--text-secondary)]">
+        {{ "page" | translate }} {{ filter().page || 1 }} {{ "of" | translate }}
+        {{ lastPage() }}
+      </span>
+      <span class="text-sm text-[var(--text-secondary)]">|</span>
+      <span class="text-sm text-[var(--text-secondary)]"
+        >{{ "itemsperpage" | translate }}:</span
+      >
+      <select
+        class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
+        [value]="filter().itemsPerPage || 30"
+        (change)="onItemsPerPageChange(+$any($event.target).value)"
+      >
+        <option value="10">10</option>
+        <option value="20">20</option>
+        <option value="30">30</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+    </div>
+    @if (lastPage() > 1) {
+      <div class="flex items-center gap-2">
+        <button
+          class="btn rounded-md !text-primary"
+          matButton="filled"
+          matButton
+          type="button"
+          [disabled]="(filter().page || 1) === 1"
+          (click)="previousPage()"
+        >
+          <mat-icon>chevron_left</mat-icon>
+          {{ "previous" | translate }}
+        </button>
+        <div class="flex items-center gap-1">
+          @for (pageNum of getPageNumbers(); track pageNum) {
+            @if (pageNum === -1) {
+              <span class="px-2 text-[var(--text-secondary)]">...</span>
+            } @else {
+              <button
+                class="btn rounded-md !text-primary min-w-[40px]"
+                matButton="filled"
+                matButton
+                type="button"
+                [ngClass]="{
+                  '!bg-primary !text-white': (filter().page || 1) === pageNum,
+                  '!bg-primary-superlight': (filter().page || 1) !== pageNum,
+                }"
+                (click)="goToPage(pageNum)"
+              >
+                {{ pageNum }}
+              </button>
+            }
+          }
+        </div>
+        <button
+          class="btn rounded-md !text-primary"
+          matButton="filled"
+          matButton
+          type="button"
+          [disabled]="(filter().page || 1) === lastPage()"
+          (click)="nextPage()"
+        >
+          {{ "next" | translate }}
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- ACTIONS -->
+  <!-- <ng-template #actionButtons let-row>
+    <button
+      mat-icon-button
+      [routerLink]="['/wallet', row.walletId]"
+      class="!bg-[var(--primary)] rounded-full"
+    >
+      <mat-icon class="!text-white">visibility</mat-icon>
+    </button>
+  </ng-template> -->
+</section>

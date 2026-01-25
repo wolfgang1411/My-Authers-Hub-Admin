@@ -29,7 +29,8 @@ export const routes: Routes = [
     data: {
       seo: {
         title: 'Login - My Authors Hub',
-        description: 'Login to your My Authors Hub account to manage your publishing platform',
+        description:
+          'Login to your My Authors Hub account to manage your publishing platform',
         keywords: ['login', 'sign in', 'authors hub', 'publishing'],
         ogType: 'website',
         canonicalUrl: '/login',
@@ -81,7 +82,7 @@ export const routes: Routes = [
     path: 'authorDetails/:id',
     loadComponent: () =>
       import('./pages/author-details/author-details').then(
-        (c) => c.AuthorDetails
+        (c) => c.AuthorDetails,
       ),
     canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
@@ -123,7 +124,7 @@ export const routes: Routes = [
     path: 'title-update-tickets',
     loadComponent: () =>
       import('./pages/update-title-ticket/update-title-ticket').then(
-        (c) => c.UpdateTitleTicket
+        (c) => c.UpdateTitleTicket,
       ),
     canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
@@ -139,7 +140,7 @@ export const routes: Routes = [
     path: 'update-tickets',
     loadComponent: () =>
       import('./pages/update-ticket-list/update-ticket-list').then(
-        (c) => c.UpdateTicketList
+        (c) => c.UpdateTicketList,
       ),
     canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
@@ -168,7 +169,7 @@ export const routes: Routes = [
     path: 'incomplete-titles',
     loadComponent: () =>
       import('./pages/incomplete-titles/incomplete-titles').then(
-        (c) => c.IncompleteTitles
+        (c) => c.IncompleteTitles,
       ),
     canActivate: [privateRouteGuard, profileCompletionGuard, superadminGuard],
     data: {
@@ -253,7 +254,7 @@ export const routes: Routes = [
     path: 'publisherDetails/:id',
     loadComponent: () =>
       import('./pages/publisher-details/publisher-details').then(
-        (c) => c.PublisherDetails
+        (c) => c.PublisherDetails,
       ),
     canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
@@ -364,7 +365,7 @@ export const routes: Routes = [
     path: 'bookings/:id',
     loadComponent: () =>
       import('./pages/booking-details/booking-details').then(
-        (c) => c.BookingDetails
+        (c) => c.BookingDetails,
       ),
     canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
@@ -380,7 +381,7 @@ export const routes: Routes = [
     path: 'transactions/:id',
     loadComponent: () =>
       import('./pages/transaction-details/transaction-details').then(
-        (c) => c.TransactionDetails
+        (c) => c.TransactionDetails,
       ),
     data: {
       seo: {
@@ -406,10 +407,26 @@ export const routes: Routes = [
     },
   },
   {
+    path: 'outward-payouts',
+    loadComponent: () =>
+      import('./pages/wallet-amount-transaction/wallet-amount-transaction').then(
+        (c) => c.WalletAmountTransaction,
+      ),
+    canActivate: [privateRouteGuard, profileCompletionGuard],
+    data: {
+      seo: {
+        title: 'OutwardPayouts',
+        description: 'View and manage your Outward payouts',
+        noindex: true,
+        nofollow: true,
+      },
+    },
+  },
+  {
     path: 'payouts/:id',
     loadComponent: () =>
       import('./pages/payout-details/payout-details').then(
-        (c) => c.PayoutDetails
+        (c) => c.PayoutDetails,
       ),
     canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
@@ -482,7 +499,7 @@ export const routes: Routes = [
     path: 'notifications',
     loadComponent: () =>
       import('./pages/notifications/notifications').then(
-        (c) => c.Notifications
+        (c) => c.Notifications,
       ),
     canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
@@ -540,8 +557,7 @@ export const routes: Routes = [
   },
   {
     path: 'blogs',
-    loadComponent: () =>
-      import('./pages/blogs/blogs').then((c) => c.Blogs),
+    loadComponent: () => import('./pages/blogs/blogs').then((c) => c.Blogs),
     canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {
@@ -598,7 +614,7 @@ export const routes: Routes = [
     path: 'shared-title-view/:code',
     loadComponent: () =>
       import('./pages/shared-title-view/shared-title-view').then(
-        (c) => c.SharedTitleView
+        (c) => c.SharedTitleView,
       ),
     data: {
       seo: {
@@ -614,7 +630,7 @@ export const routes: Routes = [
     path: 'shared/authors/:id',
     loadComponent: () =>
       import('./pages/shared-author-view/shared-author-view').then(
-        (c) => c.SharedAuthorView
+        (c) => c.SharedAuthorView,
       ),
     data: {
       seo: {
@@ -630,7 +646,7 @@ export const routes: Routes = [
     path: 'shared/publishers/:id',
     loadComponent: () =>
       import('./pages/shared-publisher-view/shared-publisher-view').then(
-        (c) => c.SharedPublisherView
+        (c) => c.SharedPublisherView,
       ),
     data: {
       seo: {
@@ -646,7 +662,7 @@ export const routes: Routes = [
     path: 'forgot',
     loadComponent: () =>
       import('./pages/forgot-password/forgot-password').then(
-        (c) => c.ForgotPassword
+        (c) => c.ForgotPassword,
       ),
     data: {
       seo: {
@@ -662,7 +678,7 @@ export const routes: Routes = [
     path: 'forgot/verify',
     loadComponent: () =>
       import('./pages/verify-password/verify-password').then(
-        (c) => c.VerifyPassword
+        (c) => c.VerifyPassword,
       ),
     data: {
       seo: {
@@ -681,7 +697,8 @@ export const routes: Routes = [
     data: {
       seo: {
         title: 'User Policies - My Authors Hub',
-        description: 'Review our user policies and guidelines for My Authors Hub',
+        description:
+          'Review our user policies and guidelines for My Authors Hub',
         keywords: ['user policies', 'terms', 'guidelines', 'policies'],
         ogType: 'website',
         canonicalUrl: '/user-policies',
@@ -708,8 +725,15 @@ export const routes: Routes = [
     data: {
       seo: {
         title: 'Contact Us - My Authors Hub',
-        description: 'Get in touch with My Authors Hub team. We are here to help you with your publishing needs.',
-        keywords: ['contact', 'support', 'help', 'publishing', 'customer service'],
+        description:
+          'Get in touch with My Authors Hub team. We are here to help you with your publishing needs.',
+        keywords: [
+          'contact',
+          'support',
+          'help',
+          'publishing',
+          'customer service',
+        ],
         ogType: 'website',
         canonicalUrl: '/contact',
       },
@@ -721,7 +745,8 @@ export const routes: Routes = [
     data: {
       seo: {
         title: 'Frequently Asked Questions - My Authors Hub',
-        description: 'Find answers to common questions about My Authors Hub publishing platform',
+        description:
+          'Find answers to common questions about My Authors Hub publishing platform',
         keywords: ['faq', 'questions', 'answers', 'help', 'support'],
         ogType: 'website',
         canonicalUrl: '/faq',
@@ -732,7 +757,7 @@ export const routes: Routes = [
     path: 'email-verified',
     loadComponent: () =>
       import('./pages/email-verified/email-verified').then(
-        (c) => c.EmailVerified
+        (c) => c.EmailVerified,
       ),
     data: {
       seo: {

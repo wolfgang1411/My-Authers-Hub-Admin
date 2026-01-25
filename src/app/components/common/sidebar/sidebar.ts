@@ -39,7 +39,7 @@ export class Sidebar implements OnInit {
     private layoutService: LayoutService,
     @Inject(AuthService) private authService: AuthService,
     private observer: BreakpointObserver,
-    private userService: UserService
+    private userService: UserService,
   ) {
     this.isSidemenuOpen = layoutService.isSidemenuOpen$;
     this.showHeader = layoutService.showHeader$;
@@ -65,7 +65,14 @@ export class Sidebar implements OnInit {
       { name: 'Users', url: '/users', icon: 'group' },
       { name: 'Orders', url: '/orders', icon: 'receipt_long' },
       { name: 'Transactions', url: '/transactions', icon: 'receipt_long' },
+      {
+        name: 'Outward Payouts',
+        url: '/outward-payouts',
+        icon: 'receipt_long',
+      },
+
       { name: 'Payouts', url: '/payouts', icon: 'credit_card' },
+
       { name: 'Wallet', url: '/wallet', icon: 'credit_card' },
       { name: 'coupon', url: '/coupon', icon: 'local_offer' },
       { name: 'Blogs', url: '/blogs', icon: 'article' },

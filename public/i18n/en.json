@@ -957,5 +957,7 @@
   "addwalletamount": "Add wallet amount",
   "addmount": "Add amount",
   "availableamount": "Available Wallet Amount {{availableAmount}}",
-  "sendemails": "Send Notifications"
+  "sendemails": "Send Notifications",
+  "recipient": "Recipient",
+  "method": "Method"
 }

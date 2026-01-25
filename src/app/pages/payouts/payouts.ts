@@ -37,7 +37,7 @@ export class Payouts implements OnInit {
     public userService: UserService,
     private matDialog: MatDialog,
     private translateService: TranslateService,
-    private logger: Logger
+    private logger: Logger,
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -355,7 +355,7 @@ export class Payouts implements OnInit {
       const res = await this.payoutService.updatePayout(id, payload);
 
       const temp = this.payouts()?.map((payout) =>
-        payout.id === id ? res : payout
+        payout.id === id ? res : payout,
       );
       this.payouts.set(temp || []);
       this.setDataSource();
@@ -451,7 +451,7 @@ export class Payouts implements OnInit {
       }
 
       const exportColumns = this.displayedColumns.filter(
-        (col) => col !== 'actions'
+        (col) => col !== 'actions',
       );
 
       const exportData = payouts.map((payout) => {
@@ -512,9 +512,8 @@ export class Payouts implements OnInit {
               dataRow[col] = email;
               break;
             case 'bankdetails':
-              dataRow[
-                col
-              ] = `Account Holder: ${accountName}, Bank: ${bankName}, Account: ${accountNo}, IFSC: ${ifscCode}`;
+              dataRow[col] =
+                `Account Holder: ${accountName}, Bank: ${bankName}, Account: ${accountNo}, IFSC: ${ifscCode}`;
               break;
             case 'amount':
               dataRow[col] = `${payout.requestedAmount} INR`;
@@ -543,7 +542,7 @@ export class Payouts implements OnInit {
       const currentPage = this.filter().page || 1;
       const fileName = `payouts-page-${currentPage}-${format(
         new Date(),
-        'dd-MM-yyyy'
+        'dd-MM-yyyy',
       )}`;
 
       exportToExcel(exportData, fileName, headers, 'Payouts');
