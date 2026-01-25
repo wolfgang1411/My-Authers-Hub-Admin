@@ -159,7 +159,7 @@ export class Dashboard {
     this.royaltyPending.set(pendingearining.count || 0);
 
     const appliedisbn = await this.isbnService.getISBNCount({
-      status: ISBNStatus.APPLIED,
+      status: ISBNStatus.PENDING,
       page: 0,
       itemsPerPage: 0,
       searchStr: '',

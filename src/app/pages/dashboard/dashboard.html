@@ -9,55 +9,55 @@
   </div>
 
   <!-- ░ NOTIFICATIONS BAR ░ -->
-  @if (userService.loggedInUser$()?.accessLevel === 'SUPERADMIN') {
-  <div
-    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 mb-8"
-  >
-    <!-- Pending Titles -->
+  @if (userService.loggedInUser$()?.accessLevel === "SUPERADMIN") {
     <div
-      class="flex items-center justify-between p-4 rounded-xl shadow-md cursor-pointer bg-gradient-to-r from-[#e9d5ff] to-[#c4b5fd] hover:scale-[1.03] hover:shadow-xl transition-all duration-300"
-      (click)="goToPendingTitles()"
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 mb-8"
     >
-      <div>
-        <p class="text-sm opacity-80">Pending Titles</p>
-        <p class="text-2xl font-bold">{{ pendingTitles() }}</p>
+      <!-- Pending Titles -->
+      <div
+        class="flex items-center justify-between p-4 rounded-xl shadow-md cursor-pointer bg-gradient-to-r from-[#e9d5ff] to-[#c4b5fd] hover:scale-[1.03] hover:shadow-xl transition-all duration-300"
+        (click)="goToPendingTitles()"
+      >
+        <div>
+          <p class="text-sm opacity-80">Pending Titles</p>
+          <p class="text-2xl font-bold">{{ pendingTitles() }}</p>
+        </div>
+        <mat-icon class="text-[#6B21A8] text-3xl">hourglass_empty</mat-icon>
       </div>
-      <mat-icon class="text-[#6B21A8] text-3xl">hourglass_empty</mat-icon>
-    </div>
 
-    <!-- Royalty Approval -->
-    <div
-      class="flex items-center justify-between p-4 rounded-xl shadow-md cursor-pointer bg-gradient-to-r from-[#c7d2fe] to-[#93c5fd] hover:scale-[1.03] hover:shadow-xl transition-all duration-300"
-      (click)="goToRoyaltyApproval()"
-    >
-      <div>
-        <p class="text-sm opacity-80">Royalty Approval</p>
-        <p class="text-2xl font-bold">{{ royaltyPending() }}</p>
+      <!-- Royalty Approval -->
+      <div
+        class="flex items-center justify-between p-4 rounded-xl shadow-md cursor-pointer bg-gradient-to-r from-[#c7d2fe] to-[#93c5fd] hover:scale-[1.03] hover:shadow-xl transition-all duration-300"
+        (click)="goToRoyaltyApproval()"
+      >
+        <div>
+          <p class="text-sm opacity-80">Royalty Approval</p>
+          <p class="text-2xl font-bold">{{ royaltyPending() }}</p>
+        </div>
+        <mat-icon class="text-indigo-700 text-3xl">payments</mat-icon>
       </div>
-      <mat-icon class="text-indigo-700 text-3xl">payments</mat-icon>
-    </div>
 
-    <!-- ISBN Applied -->
-    <div
-      class="flex items-center justify-between p-4 rounded-xl shadow-md cursor-pointer bg-gradient-to-r from-[#ddd6fe] to-[#bfdbfe] hover:scale-[1.03] hover:shadow-xl transition-all duration-300"
-      (click)="goToIsbnApplied()"
-    >
-      <div>
-        <p class="text-sm opacity-80">ISBN Applied</p>
-        <p class="text-2xl font-bold">{{ isbnApplied() }}</p>
+      <!-- ISBN Applied -->
+      <div
+        class="flex items-center justify-between p-4 rounded-xl shadow-md cursor-pointer bg-gradient-to-r from-[#ddd6fe] to-[#bfdbfe] hover:scale-[1.03] hover:shadow-xl transition-all duration-300"
+        (click)="goToIsbnApplied()"
+      >
+        <div>
+          <p class="text-sm opacity-80">ISBN Pending</p>
+          <p class="text-2xl font-bold">{{ isbnApplied() }}</p>
+        </div>
+        <mat-icon class="text-indigo-700 text-3xl">library_books</mat-icon>
       </div>
-      <mat-icon class="text-indigo-700 text-3xl">library_books</mat-icon>
     </div>
-  </div>
   }
 
   <!-- ░ STATS SECTION ░ -->
   <div [ngClass]="gridClass()">
-    @for(stat of stats(); track $index){
-    <app-stat-card-component
-      [stat]="stat"
-      class="bg-white p-5 rounded-xl shadow-md border border-gray-200"
-    ></app-stat-card-component>
+    @for (stat of stats(); track $index) {
+      <app-stat-card-component
+        [stat]="stat"
+        class="bg-white p-5 rounded-xl shadow-md border border-gray-200"
+      ></app-stat-card-component>
     }
   </div>
 
@@ -67,18 +67,18 @@
         class="bg-white p-6 rounded-xl shadow-md border border-gray-200"
       ></app-sales-analytics-component>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 min-h-[250px]">
-        @if (userService.loggedInUser$()?.accessLevel !== 'AUTHER') {
-        <app-recent-authors
-          class="bg-white p-6 rounded-xl shadow-md border border-gray-200"
-        >
-          <ng-template #empty>
-            <div
-              class="h-[120px] flex flex-col items-center justify-center text-gray-400 italic"
-            >
-              No authors yet — start adding 🎯
-            </div>
-          </ng-template>
-        </app-recent-authors>
+        @if (userService.loggedInUser$()?.accessLevel !== "AUTHER") {
+          <app-recent-authors
+            class="bg-white p-6 rounded-xl shadow-md border border-gray-200"
+          >
+            <ng-template #empty>
+              <div
+                class="h-[120px] flex flex-col items-center justify-center text-gray-400 italic"
+              >
+                No authors yet — start adding 🎯
+              </div>
+            </ng-template>
+          </app-recent-authors>
         }
         <app-title-preview-component
           [heading]="titleConfigs().bestSelling.heading"
