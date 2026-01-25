@@ -21,7 +21,7 @@ export class Server {
           headers: {
             contentType: 'application/json',
           },
-        })
+        }),
       );
       return response;
     } catch (error) {
@@ -37,7 +37,7 @@ export class Server {
           headers: {
             contentType: 'application/json',
           },
-        })
+        }),
       );
       return response;
     } catch (error) {
@@ -53,7 +53,7 @@ export class Server {
           headers: {
             contentType: 'application/json',
           },
-        })
+        }),
       );
       return response;
     } catch (error) {
@@ -65,25 +65,23 @@ export class Server {
     try {
       const options: any = {
         params,
-        headers: {
-          'Content-Type': 'application/json',
-        },
       };
+
       // For DELETE with body, use request method
       if (body) {
-      const response = await firstValueFrom(
+        const response = await firstValueFrom(
           this.http.request<T>('DELETE', this.parseUrl(url), {
             body,
-          params,
-          headers: {
+            params,
+            headers: {
               'Content-Type': 'application/json',
-          },
-        })
+            },
+          }),
         );
         return response;
       }
       const response = await firstValueFrom(
-        this.http.delete<T>(this.parseUrl(url), options)
+        this.http.delete<T>(this.parseUrl(url), options),
       );
       return response;
     } catch (error) {
@@ -110,7 +108,7 @@ export class Server {
           },
           responseType: 'blob',
           observe: 'response',
-        })
+        }),
       )
         .then((response) => {
           resolve(response);
