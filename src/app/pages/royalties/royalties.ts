@@ -62,7 +62,7 @@ export class Royalties {
     public userService: UserService,
     private translateService: TranslateService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
   ) {}
 
   lastPage = signal(1);
@@ -169,7 +169,7 @@ export class Royalties {
     this.cachedFilterKey = '';
   }
 
-  async updateRoyaltyList() {
+  async updateRoyaltyList(skipCache = false) {
     const currentFilter = this.filter();
     const currentPage = currentFilter.page || 1;
     const filterKey = this.getFilterKey();
@@ -177,7 +177,7 @@ export class Royalties {
       this.clearCache();
       this.cachedFilterKey = filterKey;
     }
-    if (this.pageCache.has(currentPage)) {
+    if (this.pageCache.has(currentPage) && !skipCache) {
       this.earningList.set(this.pageCache.get(currentPage)!);
       return;
     }
@@ -340,7 +340,7 @@ export class Royalties {
         onClose: () => dialog.close(),
         onSubmit: async (data: CreateSale[]) => {
           await this.salesService.createSalesMulti(data);
-          await this.updateRoyaltyList();
+          await this.updateRoyaltyList(true);
           dialog.close();
           Swal.fire({
             icon: 'success',
@@ -390,8 +390,8 @@ export class Royalties {
               availableTitles: items?.length ? items.map(({ id }) => id) : [],
               soldAt: formattedSoldAt,
             };
-          }
-        )
+          },
+        ),
       );
 
     this.addRoyalty(salesData);
@@ -490,7 +490,7 @@ export class Royalties {
             this.translateService.instant(
               typeof earning.platform === 'string'
                 ? earning.platform
-                : (earning.platform as any)?.name || earning.platform || ''
+                : (earning.platform as any)?.name || earning.platform || '',
             ),
           quantity: earning.quantity || 0,
           addedAt: earning.paidAt
@@ -531,7 +531,7 @@ export class Royalties {
       const currentPage = this.filter().page || 1;
       const fileName = `royalties-page-${currentPage}-${format(
         new Date(),
-        'dd-MM-yyyy'
+        'dd-MM-yyyy',
       )}`;
 
       exportToExcel(exportData, fileName, headers, 'Royalties');

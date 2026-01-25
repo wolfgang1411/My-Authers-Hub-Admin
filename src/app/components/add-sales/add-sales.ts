@@ -354,18 +354,18 @@ export class AddSales implements OnInit, OnDestroy {
         status: TitleStatus.APPROVED,
       });
 
-      // Filter out titles where printingOnly is true
+      // ORIGINAL behavior
       const filteredItems = items.filter((title) => !title.printingOnly);
 
-      this.titles.update((titles) => {
-        const result = [...(titles || []), ...filteredItems].reduce(
-          (a, b) => (a.map(({ id }) => id).includes(b.id) ? a : [...a, b]),
-          Array<Title>(),
-        );
-        return result;
+      // ✅ FIX: merge into main titles cache
+      this.titles.update((existing) => {
+        const map = new Map<number, Title>();
+        (existing ?? []).forEach((t) => map.set(t.id, t));
+        filteredItems.forEach((t) => map.set(t.id, t));
+        return Array.from(map.values());
       });
 
-      // Update title options for all indices
+      // ORIGINAL behavior
       this.filteredTitleOptions.forEach((_, index) => {
         this.updateTitleOptions(index);
       });
@@ -801,23 +801,38 @@ export class AddSales implements OnInit, OnDestroy {
   private async searchTitles(searchTerm: string, index: number) {
     const loadingSignal = this.isSearchingTitles.get(index);
     const filteredSignal = this.filteredTitleOptions.get(index);
+
     if (!loadingSignal || !filteredSignal) return;
 
     loadingSignal.set(true);
+
     try {
       const { items } = await this.titleService.getTitles({
         searchStr: searchTerm,
         status: TitleStatus.APPROVED,
       });
 
+      // ORIGINAL behavior: remove printing-only titles
+      const filteredItems = items.filter((title) => !title.printingOnly);
+
+      // ✅ FIX (ADD ONLY):
+      // Merge searched titles into the main titles source
+      // so selected options never disappear from mat-select
+      this.titles.update((existing) => {
+        const map = new Map<number, Title>();
+
+        (existing ?? []).forEach((t) => map.set(t.id, t));
+        filteredItems.forEach((t) => map.set(t.id, t));
+
+        return Array.from(map.values());
+      });
+
       const saleGroup = this.form.controls.salesArray.at(index);
       const availableOptions = saleGroup?.get('title.availableOptions')?.value;
 
-      // Filter out titles where printingOnly is true
-      let filtered = items
-        .filter((title) => !title.printingOnly)
+      // ORIGINAL option building logic
+      const options = filteredItems
         .filter((title) => {
-          // Filter by available options if set
           return (
             !availableOptions ||
             availableOptions.length === 0 ||
@@ -825,11 +840,14 @@ export class AddSales implements OnInit, OnDestroy {
           );
         })
         .map((title) => ({
-          label: title.name + (title.skuNumber ? `-${title.skuNumber}` : ''),
+          label:
+            title.name +
+            (title.publisher ? `(${title.publisher.name})` : '') +
+            (title.skuNumber ? `(${title.skuNumber})` : ''),
           value: title.id,
         }));
 
-      filteredSignal.set(filtered);
+      filteredSignal.set(options);
     } catch (error) {
       console.error('Error searching titles:', error);
       this.updateTitleOptions(index);
