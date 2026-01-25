@@ -6,25 +6,28 @@
       {{ "authors" | translate }}
     </h3>
     <div class="flex flex-wrap gap-2 justify-end">
-      <button
-        matButton
-        matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
-        [routerLink]="['/author', 0]"
-        routerLinkActive="router-link-active"
-      >
-        <mat-icon class="material-icons">add_circle_outline</mat-icon>
-        {{ "addauthor" | translate }}
-      </button>
-      <button
-        matButton
-        matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
-        (click)="inviteAuthor()"
-      >
-        <mat-icon class="material-icons">person_add</mat-icon>
-        {{ "inviteauthor" | translate }}
-      </button>
+      @if (loggedInUser()?.accessLevel !== "AUTHER") {
+        <button
+          matButton
+          matButton="filled"
+          class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+          [routerLink]="['/author', 0]"
+          routerLinkActive="router-link-active"
+        >
+          <mat-icon class="material-icons">add_circle_outline</mat-icon>
+          {{ "addauthor" | translate }}
+        </button>
+        <button
+          matButton
+          matButton="filled"
+          class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+          (click)="inviteAuthor()"
+        >
+          <mat-icon class="material-icons">person_add</mat-icon>
+          {{ "inviteauthor" | translate }}
+        </button>
+      }
+
       <button
         matButton
         matButton="filled"
@@ -46,15 +49,17 @@
         <mat-icon class="material-icons">support_agent</mat-icon>
         {{ "raisedtickets" | translate }}
       </button>
-      <button
-        matButton
-        matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
-        (click)="onExportToExcel()"
-      >
-        <mat-icon class="material-icons">download</mat-icon>
-        {{ "export" | translate }}
-      </button>
+      @if (loggedInUser()?.accessLevel !== "AUTHER") {
+        <button
+          matButton
+          matButton="filled"
+          class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+          (click)="onExportToExcel()"
+        >
+          <mat-icon class="material-icons">download</mat-icon>
+          {{ "export" | translate }}
+        </button>
+      }
     </div>
   </div>
 
@@ -188,18 +193,21 @@
               <mat-icon class="text-sm">edit</mat-icon>
               Edit
             </button>
+
+            <button
+              class="bg-gray-100 rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
+              (click)="toggleExpand(author.id)"
+            >
+              <mat-icon class="text-sm">
+                {{
+                  expandedAuthorId() === author.id
+                    ? "expand_less"
+                    : "expand_more"
+                }}
+              </mat-icon>
+              Titles
+            </button>
           }
-          <button
-            class="bg-gray-100 rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
-            (click)="toggleExpand(author.id)"
-          >
-            <mat-icon class="text-sm">
-              {{
-                expandedAuthorId() === author.id ? "expand_less" : "expand_more"
-              }}
-            </mat-icon>
-            Titles
-          </button>
         </div>
       </div>
     }
@@ -311,7 +319,10 @@
           <mat-icon class="!text-white">edit</mat-icon>
         </button>
       }
-      @if (element.user?.isEmailVerified === false) {
+      @if (
+        element.user?.isEmailVerified === false &&
+        loggedInUser()?.accessLevel !== "AUTHER"
+      ) {
         <button
           class="!bg-yellow-500"
           mat-icon-button
@@ -323,7 +334,8 @@
       }
       @if (
         element.status === AuthorStatus.Active &&
-        element.user?.isEmailVerified !== false
+        element.user?.isEmailVerified !== false &&
+        loggedInUser()?.accessLevel !== "AUTHER"
       ) {
         <button
           class="!bg-primary"
@@ -350,7 +362,10 @@
           <mat-icon class="!text-white">lock</mat-icon>
         </button>
       }
-      @if (element.status === AuthorStatus.Pending) {
+      @if (
+        element.status === AuthorStatus.Pending &&
+        loggedInUser()?.accessLevel !== "AUTHER"
+      ) {
         @if (element.user?.isEmailVerified !== false) {
           <button
             class="!bg-green-2 active:bg-green-2/60"
@@ -370,7 +385,10 @@
           </button>
         }
       }
-      @if (element.status === AuthorStatus.Deactivated) {
+      @if (
+        element.status === AuthorStatus.Deactivated &&
+        loggedInUser()?.accessLevel !== "AUTHER"
+      ) {
         <button
           (click)="updateStatus(element.id, 'Active')"
           class="!bg-purple"
@@ -394,7 +412,10 @@
           <mat-icon class="!text-white">support_agent</mat-icon>
         </button>
       }
-      @if (element.user?.isEmailVerified !== false) {
+      @if (
+        element.user?.isEmailVerified !== false &&
+        loggedInUser()?.accessLevel !== "AUTHER"
+      ) {
         <button
           class="!bg-primary"
           mat-icon-button
