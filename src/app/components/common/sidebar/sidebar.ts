@@ -2,6 +2,7 @@ import {
   Component,
   EventEmitter,
   Inject,
+  Input,
   OnInit,
   Output,
   Signal,
@@ -54,6 +55,7 @@ export class Sidebar implements OnInit {
   onItemClick() {
     this.closeSidebar.emit();
   }
+
   sidebarMenu() {
     const menuItems = [
       { name: 'Dashboard', url: '/dashboard', icon: 'dashboard' },
