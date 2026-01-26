@@ -9,9 +9,9 @@
       <!-- Logo -->
       <div class="flex justify-center mb-5">
         <img
-          src="images/my Author(1).png"
+          src="images/MY AUTHORS HUB (1).svg"
           alt="My Author's Hub"
-          class="h-16 sm:h-20 object-contain"
+          class="h-16 sm:h-20 object-contain !bg-primary"
         />
       </div>
 
@@ -66,11 +66,13 @@
             </mat-icon>
           </div>
 
-          @if ( loginForm.controls.password.invalid &&
-          loginForm.controls.password.touched ) {
-          <span class="text-xs text-red-600">
-            Password must be at least 8 characters
-          </span>
+          @if (
+            loginForm.controls.password.invalid &&
+            loginForm.controls.password.touched
+          ) {
+            <span class="text-xs text-red-600">
+              Password must be at least 8 characters
+            </span>
           }
         </div>
 
