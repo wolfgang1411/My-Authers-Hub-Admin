@@ -62,5 +62,6 @@ interface Inputs {
   saveButtonLabel?: string;
   placeholder?: string;
   validators?: ValidatorFn[];
+  showErrors?: boolean;
   type?: string;
 }

@@ -15,6 +15,7 @@ import { PayoutsService } from '../../services/payouts';
 import Swal from 'sweetalert2';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { InviteDialog } from '../../components/invite-dialog/invite-dialog';
+import { Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-wallet',
@@ -37,7 +38,7 @@ export class Wallet {
     private userService: UserService,
     private salesService: SalesService,
     private payoutService: PayoutsService,
-    private matDialog: MatDialog
+    private matDialog: MatDialog,
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
     effect(() => {
@@ -55,7 +56,7 @@ export class Wallet {
   uniquePlatformsCount = computed(() => {
     const earnings = this.earningList();
     const uniquePlatforms = Array.from(
-      new Set(earnings.map((e) => e.platform))
+      new Set(earnings.map((e) => e.platform)),
     );
     return uniquePlatforms.length;
   });
@@ -96,7 +97,7 @@ export class Wallet {
       await this.salesService.fetchEarnings(this.filter);
 
     this.earningList.update((earningList) =>
-      page > 1 && earningList.length ? [...earningList, ...items] : items
+      page > 1 && earningList.length ? [...earningList, ...items] : items,
     );
     this.lastPage.set(Math.ceil(totalCount / itemsPerPage));
   }
@@ -125,6 +126,12 @@ export class Wallet {
         heading: 'Payout request',
         label: `Request amount (Max ${availableAmount} INR)`,
         type: 'number',
+        validators: [
+          Validators.max(availableAmount),
+          Validators.min(150),
+          Validators.required,
+        ],
+        showErrors: true,
         onClose: () => dialog.close(),
         onSave: async (val: string | number) => {
           val = Number(val);

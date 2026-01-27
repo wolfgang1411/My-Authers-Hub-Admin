@@ -959,5 +959,8 @@
   "availableamount": "Available Wallet Amount {{availableAmount}}",
   "sendemails": "Send Notifications",
   "recipient": "Recipient",
-  "method": "Method"
+  "method": "Method",
+  "fieldisrequired": "Field is required",
+  "minvalueis": "Min allowed value is ({{min}})",
+  "maxvalueis": "Max allowed value is ({{max}})"
 }
