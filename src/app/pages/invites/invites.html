@@ -1,161 +1,243 @@
 <div class="flex flex-col flex-grow gap-4">
   <div class="flex justify-between">
     <h3 class="heading">{{ "invites" | translate }}</h3>
+    <app-back></app-back>
   </div>
 
   <!-- Filter Buttons -->
   @if (showFilterButtons()) {
-  <div class="flex gap-2 flex-wrap">
-    <button
-      class="btn rounded-md bg-primary-superlight !text-primary"
-      type="button"
-      matButton="filled"
-      matButton
-      [ngClass]="{
-        '!bg-primary !text-white': selectedInviteType() === 'ALL',
-        '!bg-primary-superlight': selectedInviteType() !== 'ALL'
-      }"
-      (click)="onInviteTypeChange('ALL')"
-    >
-      {{ "all" | translate }}
-    </button>
-    @for (type of availableInviteTypes(); track type) {
-    <button
-      class="btn rounded-md bg-primary-superlight !text-primary"
-      type="button"
-      matButton="filled"
-      matButton
-      [ngClass]="{
-        '!bg-primary !text-white': selectedInviteType() === type,
-        '!bg-primary-superlight': selectedInviteType() !== type
-      }"
-      (click)="onInviteTypeChange(type)"
-    >
-      {{ type | translate }}
-    </button>
-    }
-  </div>
+    <div class="flex gap-2 flex-wrap">
+      <button
+        class="btn rounded-md bg-primary-superlight !text-primary"
+        type="button"
+        matButton="filled"
+        matButton
+        [ngClass]="{
+          '!bg-primary !text-white': selectedInviteType() === 'ALL',
+          '!bg-primary-superlight': selectedInviteType() !== 'ALL',
+        }"
+        (click)="onInviteTypeChange('ALL')"
+      >
+        {{ "all" | translate }}
+      </button>
+      @for (type of availableInviteTypes(); track type) {
+        <button
+          class="btn rounded-md bg-primary-superlight !text-primary"
+          type="button"
+          matButton="filled"
+          matButton
+          [ngClass]="{
+            '!bg-primary !text-white': selectedInviteType() === type,
+            '!bg-primary-superlight': selectedInviteType() !== type,
+          }"
+          (click)="onInviteTypeChange(type)"
+        >
+          {{ type | translate }}
+        </button>
+      }
+    </div>
   }
 
   @if (isLoading()) {
-  <div class="flex justify-center items-center py-8">
-    <span>{{ "loading" | translate }}...</span>
-  </div>
+    <div class="flex justify-center items-center py-8">
+      <span>{{ "loading" | translate }}...</span>
+    </div>
   } @else if (errorMessage()) {
-  <div class="flex justify-center items-center py-8 text-red-600">
-    <span>{{ errorMessage() }}</span>
-  </div>
+    <div class="flex justify-center items-center py-8 text-red-600">
+      <span>{{ errorMessage() }}</span>
+    </div>
   } @else {
-  <app-list-table
-    class="pt-6"
-    [dataSource]="dataSource"
-    [displayedColumns]="displayedColumns()"
-    [actionTemplate]="actionButtons"
-  >
-  </app-list-table>
-
-  <div class="flex items-center justify-between gap-4 mt-4">
-    <div class="flex items-center gap-2">
-      <span class="text-sm text-[var(--text-secondary)]">
-        {{ "page" | translate }} {{ filter().page || 1 }}
-        {{ "of" | translate }} {{ lastPage() }}
-      </span>
-      <span class="text-sm text-[var(--text-secondary)]">|</span>
-      <span class="text-sm text-[var(--text-secondary)]"
-        >{{ "itemsperpage" | translate }}:</span
+    <div class="hidden md:block">
+      <app-list-table
+        class="pt-6"
+        [dataSource]="dataSource"
+        [displayedColumns]="displayedColumns()"
+        [actionTemplate]="actionButtons"
       >
-      <select
-        class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
-        [value]="filter().itemsPerPage || 30"
-        (change)="onItemsPerPageChange(+$any($event.target).value)"
-      >
-        <option value="10">10</option>
-        <option value="20">20</option>
-        <option value="30">30</option>
-        <option value="50">50</option>
-        <option value="100">100</option>
-      </select>
+      </app-list-table>
     </div>
-    @if (lastPage() > 1) {
-    <div class="flex items-center gap-2">
-      <button
-        class="btn rounded-md !text-primary"
-        matButton="filled"
-        matButton
-        type="button"
-        [disabled]="(filter().page || 1) === 1"
-        (click)="previousPage()"
-      >
-        <mat-icon>chevron_left</mat-icon>
-        {{ "previous" | translate }}
-      </button>
-      <div class="flex items-center gap-1">
-        @for (pageNum of getPageNumbers(); track pageNum) { @if (pageNum === -1)
-        {
-        <span class="px-2 text-[var(--text-secondary)]">...</span>
-        } @else {
-        <button
-          class="btn rounded-md !text-primary min-w-[40px]"
-          matButton="filled"
-          matButton
-          type="button"
-          [ngClass]="{
-            '!bg-primary !text-white': (filter().page || 1) === pageNum,
-            '!bg-primary-superlight': (filter().page || 1) !== pageNum
-          }"
-          (click)="goToPage(pageNum)"
+    <!-- ================= MOBILE VIEW ================= -->
+    <div class="md:hidden pt-6">
+      @if (!dataSource.data.length) {
+        <!-- NO DATA STATE -->
+        <div
+          class="flex flex-col items-center justify-center py-12 text-center gap-2"
         >
-          {{ pageNum }}
-        </button>
-        } }
-      </div>
-      <button
-        class="btn rounded-md !text-primary"
-        matButton="filled"
-        matButton
-        type="button"
-        [disabled]="(filter().page || 1) === lastPage()"
-        (click)="nextPage()"
-      >
-        {{ "next" | translate }}
-        <mat-icon>chevron_right</mat-icon>
-      </button>
+          <mat-icon class="text-gray-400 text-5xl"> inbox </mat-icon>
+
+          <p class="text-sm text-gray-500 font-medium">
+            {{ "nodatafound" | translate }}
+          </p>
+
+          <p class="text-xs text-gray-400">
+            {{ "trychangingfiltersorsearch" | translate }}
+          </p>
+        </div>
+      } @else {
+        <!-- MOBILE CARDS -->
+        <div class="flex flex-col gap-4">
+          @for (invite of dataSource.data; track invite.id) {
+            <div class="bg-white rounded-xl shadow-md p-4 border space-y-3">
+              <!-- Header -->
+              <div class="flex justify-between items-start">
+                <div>
+                  <h4 class="font-medium text-gray-800">
+                    {{ invite.email || "-" }}
+                  </h4>
+                  <p class="text-sm text-gray-400">
+                    {{ invite.type | translate }}
+                  </p>
+                </div>
+
+                <span
+                  class="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary"
+                >
+                  {{ invite.status | translate }}
+                </span>
+              </div>
+
+              <!-- Info -->
+              <div class="grid grid-cols-2 gap-3 text-sm text-gray-600">
+                <div>
+                  <p class="text-gray-400">
+                    {{
+                      isAuthor()
+                        ? ("invitedBy" | translate)
+                        : ("invitedTo" | translate)
+                    }}
+                  </p>
+                  <p>
+                    {{ isAuthor() ? invite.invitedBy : invite.invitedTo }}
+                  </p>
+                </div>
+
+                <div>
+                  <p class="text-gray-400">
+                    {{ "createdAt" | translate }}
+                  </p>
+                  <p>
+                    {{ invite.createdAt }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="pt-2">
+                <ng-container
+                  *ngTemplateOutlet="
+                    actionButtons;
+                    context: { $implicit: invite }
+                  "
+                ></ng-container>
+              </div>
+            </div>
+          }
+        </div>
+      }
     </div>
-    }
-  </div>
+
+    <div class="flex items-center justify-between gap-4 mt-4">
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-[var(--text-secondary)]">
+          {{ "page" | translate }} {{ filter().page || 1 }}
+          {{ "of" | translate }} {{ lastPage() }}
+        </span>
+        <span class="text-sm text-[var(--text-secondary)]">|</span>
+        <span class="text-sm text-[var(--text-secondary)]"
+          >{{ "itemsperpage" | translate }}:</span
+        >
+        <select
+          class="px-2 py-1 border border-[var(--primary-superlight)] rounded-md text-sm"
+          [value]="filter().itemsPerPage || 30"
+          (change)="onItemsPerPageChange(+$any($event.target).value)"
+        >
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="30">30</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+      </div>
+      @if (lastPage() > 1) {
+        <div class="flex items-center gap-2">
+          <button
+            class="btn rounded-md !text-primary"
+            matButton="filled"
+            matButton
+            type="button"
+            [disabled]="(filter().page || 1) === 1"
+            (click)="previousPage()"
+          >
+            <mat-icon>chevron_left</mat-icon>
+            {{ "previous" | translate }}
+          </button>
+          <div class="flex items-center gap-1">
+            @for (pageNum of getPageNumbers(); track pageNum) {
+              @if (pageNum === -1) {
+                <span class="px-2 text-[var(--text-secondary)]">...</span>
+              } @else {
+                <button
+                  class="btn rounded-md !text-primary min-w-[40px]"
+                  matButton="filled"
+                  matButton
+                  type="button"
+                  [ngClass]="{
+                    '!bg-primary !text-white': (filter().page || 1) === pageNum,
+                    '!bg-primary-superlight': (filter().page || 1) !== pageNum,
+                  }"
+                  (click)="goToPage(pageNum)"
+                >
+                  {{ pageNum }}
+                </button>
+              }
+            }
+          </div>
+          <button
+            class="btn rounded-md !text-primary"
+            matButton="filled"
+            matButton
+            type="button"
+            [disabled]="(filter().page || 1) === lastPage()"
+            (click)="nextPage()"
+          >
+            {{ "next" | translate }}
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+      }
+    </div>
   }
 
   <ng-template #actionButtons let-element>
     <div class="flex gap-2 text-blue-600 text-sm items-center">
       @if (canAcceptOrRejectInvite(element)) {
-      <button
-        class="!bg-green-2 active:bg-green-2/60"
-        mat-icon-button
-        (click)="onAcceptInvite(element)"
-        [title]="'accept' | translate"
-      >
-        <mat-icon class="!text-white">check</mat-icon>
-      </button>
-      <button
-        class="!bg-red-colour active:bg-red-colour/60"
-        mat-icon-button
-        (click)="onRejectInvite(element)"
-        [title]="'reject' | translate"
-      >
-        <mat-icon class="!text-white">close</mat-icon>
-      </button>
+        <button
+          class="!bg-green-2 active:bg-green-2/60"
+          mat-icon-button
+          (click)="onAcceptInvite(element)"
+          [title]="'accept' | translate"
+        >
+          <mat-icon class="!text-white">check</mat-icon>
+        </button>
+        <button
+          class="!bg-red-colour active:bg-red-colour/60"
+          mat-icon-button
+          (click)="onRejectInvite(element)"
+          [title]="'reject' | translate"
+        >
+          <mat-icon class="!text-white">close</mat-icon>
+        </button>
       }
       @if (canRevokeInvite(element)) {
-      <button
-        class="!bg-red-colour active:bg-red-colour/60"
-        mat-icon-button
-        (click)="onRevokeInvite(element)"
-        [title]="'revoke' | translate"
-      >
-        <mat-icon class="!text-white">cancel</mat-icon>
-      </button>
+        <button
+          class="!bg-red-colour active:bg-red-colour/60"
+          mat-icon-button
+          (click)="onRevokeInvite(element)"
+          [title]="'revoke' | translate"
+        >
+          <mat-icon class="!text-white">cancel</mat-icon>
+        </button>
       }
     </div>
   </ng-template>
 </div>
-

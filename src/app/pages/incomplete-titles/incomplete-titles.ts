@@ -1,8 +1,21 @@
-import { Component, OnDestroy, OnInit, signal, computed, Signal, TemplateRef, ViewChild } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  signal,
+  computed,
+  Signal,
+  TemplateRef,
+  ViewChild,
+} from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TitleService } from '../titles/title-service';
-import { TitleCompleteness, Title, CreatePlatformIdentifier } from '../../interfaces/Titles';
+import {
+  TitleCompleteness,
+  Title,
+  CreatePlatformIdentifier,
+} from '../../interfaces/Titles';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -10,13 +23,18 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { PublishingType, TitleMediaType, UserAccessLevel } from '../../interfaces';
+import {
+  PublishingType,
+  TitleMediaType,
+  UserAccessLevel,
+} from '../../interfaces';
 import { UserService } from '../../services/user';
 import { User } from '../../interfaces';
 import { ApproveTitle } from '../../components/approve-title/approve-title';
 import Swal from 'sweetalert2';
 import { ListTable } from '../../components/list-table/list-table';
 import { MatButton, MatIconButton } from '@angular/material/button';
+import { Back } from 'src/app/components/back/back';
 
 interface TitleCompletenessFilter {
   incompleteOnly: boolean;
@@ -36,18 +54,19 @@ interface TitleCompletenessFilter {
     ListTable,
     MatButton,
     MatIconButton,
+    Back,
   ],
   templateUrl: './incomplete-titles.html',
   styleUrl: './incomplete-titles.css',
 })
 export class IncompleteTitles implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
-  
+
   titles = signal<TitleCompleteness[]>([]);
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
   lastPage = signal(1);
-  
+
   filter = signal<TitleCompletenessFilter>({
     incompleteOnly: true,
     page: 1,
@@ -55,7 +74,7 @@ export class IncompleteTitles implements OnInit, OnDestroy {
     orderBy: 'id',
     orderByVal: 'desc',
   });
-  
+
   displayedColumns: string[] = [
     'name',
     'publisherName',
@@ -65,13 +84,13 @@ export class IncompleteTitles implements OnInit, OnDestroy {
     'missingMedia',
     'actions',
   ];
-  
+
   dataSource = new MatTableDataSource<any>([]);
-  
+
   // Cache to store fetched pages
   private pageCache = new Map<number, TitleCompleteness[]>();
   private cachedFilterKey = '';
-  
+
   private getFilterKey(): string {
     const currentFilter = this.filter();
     return JSON.stringify({
@@ -86,12 +105,15 @@ export class IncompleteTitles implements OnInit, OnDestroy {
     this.pageCache.clear();
     this.cachedFilterKey = '';
   }
-  
+
   publishingTypeLabels = computed<Record<PublishingType, string>>(() => {
     return {
-      [PublishingType.ONLY_EBOOK]: this.translateService.instant('ebookonly') || 'Ebook Only',
-      [PublishingType.ONLY_PRINT]: this.translateService.instant('printbookonly') || 'Print Only',
-      [PublishingType.PRINT_EBOOK]: this.translateService.instant('print&ebook') || 'Print & Ebook',
+      [PublishingType.ONLY_EBOOK]:
+        this.translateService.instant('ebookonly') || 'Ebook Only',
+      [PublishingType.ONLY_PRINT]:
+        this.translateService.instant('printbookonly') || 'Print Only',
+      [PublishingType.PRINT_EBOOK]:
+        this.translateService.instant('print&ebook') || 'Print & Ebook',
     };
   });
 
@@ -105,7 +127,7 @@ export class IncompleteTitles implements OnInit, OnDestroy {
     private titleService: TitleService,
     private translateService: TranslateService,
     private userService: UserService,
-    private matDialog: MatDialog
+    private matDialog: MatDialog,
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -125,11 +147,11 @@ export class IncompleteTitles implements OnInit, OnDestroy {
         this.isLoading.set(true);
       }
       this.errorMessage.set(null);
-      
+
       const currentFilter = this.filter();
       const currentPage = currentFilter.page || 1;
       const filterKey = this.getFilterKey();
-      
+
       // Clear cache if filter changed
       if (this.cachedFilterKey !== filterKey) {
         this.clearCache();
@@ -146,15 +168,15 @@ export class IncompleteTitles implements OnInit, OnDestroy {
         }
         return;
       }
-      
+
       const response = await this.titleService.getTitleCompleteness(
         currentFilter.incompleteOnly,
         currentPage,
         currentFilter.itemsPerPage,
         currentFilter.orderBy,
-        currentFilter.orderByVal
+        currentFilter.orderByVal,
       );
-      
+
       // Cache the fetched page
       this.pageCache.set(currentPage, response.items);
       this.titles.set(response.items);
@@ -162,7 +184,8 @@ export class IncompleteTitles implements OnInit, OnDestroy {
       this.mapTitlesToDataSource(response.items);
     } catch (error: any) {
       console.error('Error fetching titles:', error);
-      const errorMsg = this.translateService.instant('error') || 'An error occurred';
+      const errorMsg =
+        this.translateService.instant('error') || 'An error occurred';
       this.errorMessage.set(errorMsg);
     } finally {
       if (showLoader) {
@@ -293,16 +316,20 @@ export class IncompleteTitles implements OnInit, OnDestroy {
 
   getMissingDetailsLabel(missing: string[]): string {
     if (!missing || missing.length === 0) return '';
-    return missing.map(key => this.translateService.instant(key) || key).join(', ');
+    return missing
+      .map((key) => this.translateService.instant(key) || key)
+      .join(', ');
   }
 
   getMissingMediaLabel(missing: TitleMediaType[]): string {
     if (!missing || missing.length === 0) return '';
-    return missing.map(type => {
-      const key = `mediaType.${type}`;
-      const translated = this.translateService.instant(key);
-      return translated !== key ? translated : type;
-    }).join(', ');
+    return missing
+      .map((type) => {
+        const key = `mediaType.${type}`;
+        const translated = this.translateService.instant(key);
+        return translated !== key ? translated : type;
+      })
+      .join(', ');
   }
 
   getStatusClass(title: TitleCompleteness): string {
@@ -327,10 +354,10 @@ export class IncompleteTitles implements OnInit, OnDestroy {
   async openSkuAndLinks(title: TitleCompleteness): Promise<void> {
     try {
       this.isLoading.set(true);
-      
+
       // Fetch full title details
       const titleDetails = await this.titleService.getTitleById(title.id);
-      
+
       const dialog = this.matDialog.open(ApproveTitle, {
         maxWidth: '95vw',
         width: '90vw',
@@ -342,9 +369,13 @@ export class IncompleteTitles implements OnInit, OnDestroy {
           existingIdentifiers: (titleDetails.titlePlatformIdentifier ?? []).map(
             (tpi) => ({
               platformName: tpi.platform?.name || '',
-              type: tpi.type || (tpi.platform?.isEbookPlatform ? 'EBOOK' : 'PRINT') as 'EBOOK' | 'PRINT',
+              type:
+                tpi.type ||
+                ((tpi.platform?.isEbookPlatform ? 'EBOOK' : 'PRINT') as
+                  | 'EBOOK'
+                  | 'PRINT'),
               distributionLink: tpi.distributionLink || undefined,
-            })
+            }),
           ),
           distribution: titleDetails.distribution ?? [],
           isEditMode: true,
@@ -365,22 +396,28 @@ export class IncompleteTitles implements OnInit, OnDestroy {
               Swal.fire({
                 icon: 'success',
                 title: this.translateService.instant('success') || 'Success',
-                text: this.translateService.instant('updatedsuccessfully') || 'Updated successfully',
+                text:
+                  this.translateService.instant('updatedsuccessfully') ||
+                  'Updated successfully',
                 timer: 2000,
                 showConfirmButton: false,
               });
 
               // Refresh the titles list
               this.fetchTitles();
-              
+
               dialog.close();
             } catch (error: any) {
               console.error('Error updating SKU and links:', error);
-              const errorMsg = this.translateService.instant('error') || 'An error occurred';
+              const errorMsg =
+                this.translateService.instant('error') || 'An error occurred';
               Swal.fire({
                 icon: 'error',
                 title: errorMsg,
-                text: error?.error?.error_description || error?.message || 'Failed to update',
+                text:
+                  error?.error?.error_description ||
+                  error?.message ||
+                  'Failed to update',
               });
             }
           },
@@ -388,11 +425,15 @@ export class IncompleteTitles implements OnInit, OnDestroy {
       });
     } catch (error: any) {
       console.error('Error fetching title details:', error);
-      const errorMsg = this.translateService.instant('error') || 'An error occurred';
+      const errorMsg =
+        this.translateService.instant('error') || 'An error occurred';
       Swal.fire({
         icon: 'error',
         title: errorMsg,
-        text: error?.error?.error_description || error?.message || 'Failed to load title details',
+        text:
+          error?.error?.error_description ||
+          error?.message ||
+          'Failed to load title details',
       });
     } finally {
       this.isLoading.set(false);

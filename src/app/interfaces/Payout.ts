@@ -7,6 +7,7 @@ export interface Payout {
   wallet: Wallet;
   status: PayoutStatus;
   user: User;
+  isRefunded: boolean;
   createdAt: string;
   approvedBy?: User;
 }

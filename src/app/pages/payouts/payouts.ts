@@ -139,14 +139,14 @@ export class Payouts implements OnInit {
           switch (payout.status) {
             case 'PAID':
               return this.loggedInUser()?.accessLevel === 'SUPERADMIN'
-                ? 'Added to wallet'
+                ? 'PAID'
                 : 'WITHDRAWN';
             case 'PENDING':
               return 'On Hold';
             case 'APPROVED':
               return 'Approved';
             case 'REJECTED':
-              return 'Rejected';
+              return payout.isRefunded ? 'Rejected & Refunded' : 'Rejected';
           }
           return 'Pending';
         })();
@@ -487,14 +487,15 @@ export class Payouts implements OnInit {
           switch (payout.status) {
             case 'PAID':
               return this.loggedInUser()?.accessLevel === 'SUPERADMIN'
-                ? 'Added to wallet'
+                ? 'PAID'
                 : 'WITHDRAWN';
             case 'PENDING':
               return 'On Hold';
             case 'APPROVED':
               return 'Approved';
             case 'REJECTED':
-              return 'Rejected';
+            case 'REJECTED':
+              return payout.isRefunded ? 'Rejected & Refunded' : 'Rejected';
           }
           return 'Pending';
         })();

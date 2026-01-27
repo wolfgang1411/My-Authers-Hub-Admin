@@ -130,12 +130,16 @@
                       </span>
 
                       <!-- Author Copy Access -->
-                      @if (a.allowAuthorCopy && getAuthorCopyPrice() !== null) {
-                        <span class="text-[var(--green-2)] font-medium">
-                          Author Copies Price: ₹{{
-                            getAuthorCopyPrice() | number: "1.2-2"
-                          }}
-                        </span>
+                      @if (loggedInUser()?.accessLevel !== "AUTHER") {
+                        @if (
+                          a.allowAuthorCopy && getAuthorCopyPrice() !== null
+                        ) {
+                          <span class="text-[var(--green-2)] font-medium">
+                            Author Copies Price: ₹{{
+                              getAuthorCopyPrice() | number: "1.2-2"
+                            }}
+                          </span>
+                        }
                       }
                     </li>
                   }
@@ -422,17 +426,21 @@
           <div
             class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 lg:gap-x-10 gap-y-4 lg:gap-y-5"
           >
-            <div class="flex items-center gap-2">
-              <mat-icon class="text-[var(--primary)] text-base">money</mat-icon>
-              <p class="font-semibold">
-                <label>Print Cost : </label>
-                {{
-                  p?.customPrintCost !== null
-                    ? (p?.customPrintCost | currency: "INR")
-                    : (p?.printCost | currency: "INR")
-                }}
-              </p>
-            </div>
+            @if (loggedInUser()?.accessLevel !== "AUTHER") {
+              <div class="flex items-center gap-2">
+                <mat-icon class="text-[var(--primary)] text-base"
+                  >money</mat-icon
+                >
+                <p class="font-semibold">
+                  <label>Print Cost : </label>
+                  {{
+                    p?.customPrintCost !== null
+                      ? (p?.customPrintCost | currency: "INR")
+                      : (p?.printCost | currency: "INR")
+                  }}
+                </p>
+              </div>
+            }
             <div class="flex items-center gap-2">
               <mat-icon class="text-[var(--primary)] text-base">style</mat-icon>
               <p>
@@ -510,9 +518,9 @@
             </div>
 
             <!-- Print Cost - Show based on user role -->
-            @if (loggedInUser()?.accessLevel === "AUTHER") {
+            @if (loggedInUser()?.accessLevel !== "AUTHER") {
               <!-- Authors: Show only custom print price if available -->
-              @if (p?.customPrintCost) {
+              <!-- @if (p?.customPrintCost) {
                 <div class="flex items-center gap-2">
                   <mat-icon class="text-[var(--green-2)] text-base"
                     >payments</mat-icon
@@ -525,7 +533,7 @@
                   </p>
                 </div>
               }
-            } @else {
+            } @else { -->
               <!-- Superadmins and Publishers: Show both actual and custom print price -->
               <div class="flex items-center gap-2">
                 <mat-icon class="text-[var(--green-2)] text-base"

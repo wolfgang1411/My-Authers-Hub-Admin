@@ -21,20 +21,15 @@ import { User } from '../../interfaces';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Logger } from '../../services/logger';
 import Swal from 'sweetalert2';
+import { Back } from 'src/app/components/back/back';
 
 @Component({
   selector: 'app-invites',
-  imports: [
-    SharedModule,
-    ListTable,
-    MatButtonModule,
-    MatIconModule,
-  ],
+  imports: [SharedModule, ListTable, MatButtonModule, MatIconModule, Back],
   templateUrl: './invites.html',
   styleUrl: './invites.css',
 })
@@ -44,7 +39,7 @@ export class Invites implements OnInit, OnDestroy {
     private userService: UserService,
     private router: Router,
     private translateService: TranslateService,
-    private logger: Logger
+    private logger: Logger,
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -89,7 +84,10 @@ export class Invites implements OnInit, OnDestroy {
     if (user.accessLevel === 'AUTHER') {
       return [];
     }
-    if (user.accessLevel === 'PUBLISHER' && user.publisher?.type === 'Sub_Publisher') {
+    if (
+      user.accessLevel === 'PUBLISHER' &&
+      user.publisher?.type === 'Sub_Publisher'
+    ) {
       return [];
     }
 
@@ -109,12 +107,14 @@ export class Invites implements OnInit, OnDestroy {
     if (user.accessLevel === 'AUTHER') {
       return false;
     }
-    if (user.accessLevel === 'PUBLISHER' && user.publisher?.type === 'Sub_Publisher') {
+    if (
+      user.accessLevel === 'PUBLISHER' &&
+      user.publisher?.type === 'Sub_Publisher'
+    ) {
       return false;
     }
     return true;
   });
-
 
   InviteType = InviteType;
   InviteStatus = InviteStatus;
@@ -157,7 +157,6 @@ export class Invites implements OnInit, OnDestroy {
     this.fetchInvites();
   }
 
-
   async fetchInvites(showLoader = true) {
     try {
       this.isLoading.set(true);
@@ -166,7 +165,7 @@ export class Invites implements OnInit, OnDestroy {
       const currentFilter = this.filter();
       const response = await this.inviteService.findMany(
         currentFilter,
-        showLoader
+        showLoader,
       );
 
       this.invites.set(response.items);
@@ -282,11 +281,16 @@ export class Invites implements OnInit, OnDestroy {
 
       if (isAuthor && isPublisherInvite) {
         // Special message for authors accepting publisher invites
-        confirmText = this.translateService.instant('acceptpublisherinviteconfirm');
+        confirmText = this.translateService.instant(
+          'acceptpublisherinviteconfirm',
+        );
       } else {
         // Default message for other cases
-        const defaultText = this.translateService.instant('acceptinviteconfirm');
-        const reloadWarning = this.translateService.instant('sitereloadwarning');
+        const defaultText = this.translateService.instant(
+          'acceptinviteconfirm',
+        );
+        const reloadWarning =
+          this.translateService.instant('sitereloadwarning');
         confirmText = `${defaultText} ${reloadWarning}`;
       }
 
@@ -403,8 +407,7 @@ export class Invites implements OnInit, OnDestroy {
     // Check both invite.userId and invite.user?.id to handle different data structures
     const inviteUserId = invite.userId || invite.user?.id;
     return (
-      invite.status === InviteStatus.PENDING &&
-      inviteUserId === loggedInUserId
+      invite.status === InviteStatus.PENDING && inviteUserId === loggedInUserId
     );
   }
 
@@ -425,4 +428,3 @@ export class Invites implements OnInit, OnDestroy {
     );
   }
 }
-
