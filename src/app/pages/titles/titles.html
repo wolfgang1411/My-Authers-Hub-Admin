@@ -3,18 +3,18 @@
     {{ "titles" | translate }}
   </h3>
 
-  <div class="flex flex-col lg:flex-row justify-between w-full gap-4">
+  <div class="flex flex-col sm:flex-row justify-between w-full gap-4">
     <div
-      class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:max-w-[520px]"
+      class="flex flex-col sm:flex-row items-stretch gap-2 w-full lg:max-w-[520px]"
     >
       <input
-        class="input-field outline-none w-full h-[38px]"
+        class="input-field outline-none sm:flex-1 min-w-0 w-full h-[38px]"
         #input
         (input)="searchStr.next(input.value)"
         [placeholder]="'search' | translate"
       />
       <button
-        class="btn h-[38px] flex items-center self-end justify-center gap-2"
+        class="btn h-[38px] inline-flex items-center self-start justify-center gap-2 shrink-0 whitespace-nowrap"
         (click)="searchStr.next(input.value)"
       >
         <svg-icon
@@ -109,9 +109,7 @@
   </div>
   @if (loggedInUser()?.accessLevel !== "AUTHER") {
     <div class="mt-4">
-      <div
-        class="gap-2 overflow-x-auto pb-1 grid grid-cols-2 sm:flex-wrap sm:overflow-visible lg:grid lg:grid-cols-4 lg:gap-3"
-      >
+      <div class="grid grid-cols-2 sm:flex w-full gap-4 mt-2">
         <!-- ALL -->
         <button
           class="btn rounded-md !text-primary whitespace-nowrap shrink-0"
@@ -145,8 +143,8 @@
     </div>
   }
 
-  <div class="mt-3 overflow-x-auto">
-    <div class="flex gap-2 min-w-max sm:grid sm:grid-cols-4 sm:min-w-0">
+  <div class="mt-3">
+    <div class="grid grid-cols-2 sm:flex w-full gap-4 mt-2">
       <button
         class="btn rounded-md !text-primary"
         matButton="filled"
@@ -161,6 +159,89 @@
       </button>
 
       @if (loggedInUser()?.accessLevel !== "AUTHER") {
+        <button
+          class="btn rounded-md !text-primary"
+          type="button"
+          matButton="filled"
+          matButton
+          [ngClass]="{
+            '!bg-primary !text-white': lastSelectedStatus === titleStatus.DRAFT,
+            '!bg-primary-superlight': lastSelectedStatus !== titleStatus.DRAFT,
+          }"
+          (click)="selectStatus(titleStatus.DRAFT)"
+        >
+          <mat-icon>drafts</mat-icon>
+
+          DRAFT
+        </button>
+        <button
+          class="btn rounded-md bg-primary-superlight !text-primary"
+          type="button"
+          matButton="filled"
+          matButton
+          [ngClass]="{
+            '!bg-primary !text-white':
+              lastSelectedStatus === titleStatus.PENDING,
+            '!bg-primary-superlight':
+              lastSelectedStatus !== titleStatus.PENDING,
+          }"
+          (click)="selectStatus(titleStatus.PENDING)"
+        >
+          <mat-icon>hourglass_top</mat-icon>
+
+          PENDING
+        </button>
+        <button
+          class="btn rounded-md bg-primary-superlight !text-primary"
+          type="button"
+          matButton="filled"
+          matButton
+          [ngClass]="{
+            '!bg-primary !text-white':
+              lastSelectedStatus === titleStatus.APPROVED,
+            '!bg-primary-superlight':
+              lastSelectedStatus !== titleStatus.APPROVED,
+          }"
+          (click)="selectStatus(titleStatus.APPROVED)"
+        >
+          <mat-icon>check_circle</mat-icon>
+
+          APPROVED
+        </button>
+        <button
+          class="btn rounded-md bg-primary-superlight !text-primary"
+          type="button"
+          matButton="filled"
+          matButton
+          [ngClass]="{
+            '!bg-primary !text-white':
+              lastSelectedStatus === titleStatus.REJECTED,
+            '!bg-primary-superlight':
+              lastSelectedStatus !== titleStatus.REJECTED,
+          }"
+          (click)="selectStatus(titleStatus.REJECTED)"
+        >
+          <mat-icon>cancel</mat-icon>
+
+          REJECTED
+        </button>
+        <button
+          class="btn rounded-md bg-primary-superlight !text-primary"
+          type="button"
+          matButton="filled"
+          matButton
+          [ngClass]="{
+            '!bg-primary !text-white':
+              lastSelectedStatus === titleStatus.SUBMITTED,
+            '!bg-primary-superlight':
+              lastSelectedStatus !== titleStatus.SUBMITTED,
+          }"
+          (click)="selectStatus(titleStatus.SUBMITTED)"
+        >
+          <mat-icon>send</mat-icon>
+
+          SUBMITTED
+        </button>
         <!-- SAME BUTTONS AS BEFORE (UNCHANGED LOGIC) -->
         <!-- Just wrapped correctly -->
         <!-- DRAFT / PENDING / APPROVED / REJECTED / SUBMITTED -->
@@ -242,23 +323,10 @@
           </div>
         </div>
 
-        <!-- Actions -->
-        <div class="flex justify-end gap-2 pt-3 border-t">
-          <button
-            class="bg-primary text-white rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
-            [routerLink]="['/titleSummary', item.id]"
-          >
-            <mat-icon class="text-sm">visibility</mat-icon>
-            View
-          </button>
-
-          <button
-            class="bg-gray-100 rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
-            [routerLink]="['/title', item.id]"
-          >
-            <mat-icon class="text-sm">edit</mat-icon>
-            Edit
-          </button>
+        <div class="pt-3 border-t border-gray-200 mt-2">
+          <ng-container
+            *ngTemplateOutlet="actionButtons; context: { $implicit: item }"
+          ></ng-container>
         </div>
       </div>
     }

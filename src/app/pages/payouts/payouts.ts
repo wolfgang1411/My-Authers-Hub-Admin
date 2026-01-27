@@ -94,6 +94,7 @@ export class Payouts implements OnInit {
   }
 
   displayedColumns: string[] = [
+    'transactionId',
     'usertype',
     'user',
     'emailId',
@@ -153,6 +154,7 @@ export class Payouts implements OnInit {
 
         return {
           ...payout,
+          transactionId: `#WP1500${payout.id}`,
           orderid: '#' + payout.id,
           usertype: `<b>${usertypeTranslated}</b>`,
           user: `${firstName} ${payout.user?.lastName || ''}`,

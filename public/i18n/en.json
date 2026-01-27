@@ -966,5 +966,6 @@
   "nodatafound":"No Data found",
   "trychangingfiltersorsearch":"Try changing filters or search.",
   "publisherName": "Publisher Name",
-  "missingDetails":"Missing Details"
+  "missingDetails":"Missing Details",
+  "transactionId":"Transaction ID"
 }

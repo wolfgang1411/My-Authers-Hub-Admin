@@ -177,37 +177,10 @@
         </div>
 
         <!-- Actions -->
-        <div class="flex flex-wrap gap-2 pt-3 border-t">
-          <button
-            class="bg-primary text-white rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
-            [routerLink]="['/authorDetails', author.id]"
-          >
-            <mat-icon class="text-sm">visibility</mat-icon>
-            View
-          </button>
-          @if (loggedInUser()?.accessLevel !== "AUTHER") {
-            <button
-              class="bg-gray-100 rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
-              [routerLink]="['/author', author.id]"
-            >
-              <mat-icon class="text-sm">edit</mat-icon>
-              Edit
-            </button>
-
-            <button
-              class="bg-gray-100 rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
-              (click)="toggleExpand(author.id)"
-            >
-              <mat-icon class="text-sm">
-                {{
-                  expandedAuthorId() === author.id
-                    ? "expand_less"
-                    : "expand_more"
-                }}
-              </mat-icon>
-              Titles
-            </button>
-          }
+        <div class="flex flex-wrap gap-2 pt-2 justify-end">
+          <ng-container
+            *ngTemplateOutlet="actionButtons; context: { $implicit: author }"
+          ></ng-container>
         </div>
       </div>
     }

@@ -20,6 +20,7 @@ export class EarningTable {
   isSortable = input<((column: string) => boolean) | undefined>();
   sortChange = output<{ active: string; direction: 'asc' | 'desc' | '' }>();
   displayedColumns: string[] = [
+    'transactionId',
     'title',
     'publisher/author',
     'amount',
@@ -32,7 +33,7 @@ export class EarningTable {
 
   constructor(
     private translateService: TranslateService,
-    public userService: UserService
+    public userService: UserService,
   ) {
     effect(async () => {
       const user = this.userService.loggedInUser$();
@@ -41,6 +42,7 @@ export class EarningTable {
       const showType = this.showTypeColumn();
 
       const baseColumns = [
+        'transactionId',
         'title',
         'publisher/author',
         'amount',
@@ -61,6 +63,7 @@ export class EarningTable {
 
         return {
           ...earning,
+          transactionId: `#RO1500${earning.id}`,
           type: earning.salesType
             ? salesTypeMap[earning.salesType] || earning.salesType
             : '-',
@@ -73,14 +76,14 @@ export class EarningTable {
             'en-IN',
             '₹',
             'INR',
-            '1.0-2'
+            '1.0-2',
           ),
           platform:
             earning.platformName ||
             this.translateService.instant(
               typeof earning.platform === 'string'
                 ? earning.platform
-                : (earning.platform as any)?.name || earning.platform || ''
+                : (earning.platform as any)?.name || earning.platform || '',
             ),
           quantity: earning.quantity || 0,
           addedAt: (() => {

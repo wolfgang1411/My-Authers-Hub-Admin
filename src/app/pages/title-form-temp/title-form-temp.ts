@@ -147,7 +147,7 @@ export class TitleFormTemp implements OnDestroy {
     private staticValuesService: StaticValuesService,
     private cdr: ChangeDetectorRef,
     private loaderService: LoaderService,
-    userService: UserService
+    userService: UserService,
   ) {
     this.loggedInUser = userService.loggedInUser$;
     const breakpointObserver = inject(BreakpointObserver);
@@ -166,7 +166,8 @@ export class TitleFormTemp implements OnDestroy {
       });
 
     // Read incompleted query param (read from snapshot immediately, then subscribe to changes)
-    this.isIncompletedTitle = this.route.snapshot.queryParams['incompleted'] === 'true';
+    this.isIncompletedTitle =
+      this.route.snapshot.queryParams['incompleted'] === 'true';
     this.route.queryParams
       .pipe(takeUntil(this.destroy$))
       .subscribe((params) => {
@@ -229,10 +230,10 @@ export class TitleFormTemp implements OnDestroy {
         const idsMatch =
           currentAuthorIds.length === currentAuthorIdsFromSignal.length &&
           currentAuthorIds.every((id) =>
-            currentAuthorIdsFromSignal.includes(id)
+            currentAuthorIdsFromSignal.includes(id),
           ) &&
           currentAuthorIdsFromSignal.every((id) =>
-            currentAuthorIds.includes(id)
+            currentAuthorIds.includes(id),
           );
 
         // Only update if authors have actually changed
@@ -648,7 +649,7 @@ export class TitleFormTemp implements OnDestroy {
     hasFiles: new FormControl<boolean | null>(null, Validators.required),
     publishingType: new FormControl<PublishingType | null>(
       null,
-      Validators.required
+      Validators.required,
     ),
     titleDetails: this.createTitleDetailsGroup(),
     printing: this.createPrintingGroupTemp(),
@@ -677,7 +678,7 @@ export class TitleFormTemp implements OnDestroy {
     const { items: publishersItem } = await this.publisherService.getPublishers(
       {
         status: PublisherStatus.Active,
-      }
+      },
     );
     this.publishers.set(publishersItem);
 
@@ -758,7 +759,7 @@ export class TitleFormTemp implements OnDestroy {
         // Reset distribution options when publishing type changes
         this.tempForm.setControl(
           'distribution',
-          this.createDistributionOptions()
+          this.createDistributionOptions(),
         );
         // Re-fetch points for the new distribution set (no-op for ONLY_EBOOK/MAH)
         this.fetchAndUpdatePublishingPoints();
@@ -768,14 +769,14 @@ export class TitleFormTemp implements OnDestroy {
     // Then call it with current value to ensure validators are set correctly
     manageISBNRequired(this.tempForm.controls.publishingType.value);
     this.updatePricingValidatorsForPublishingType(
-      this.tempForm.controls.publishingType.value
+      this.tempForm.controls.publishingType.value,
     );
     // Initialize MANUSCRIPT media based on current publishing type
     // Note: This is called after addDefaultMediaArray completes to ensure proper initialization
     await this.manageManuscriptMedia(
-      this.tempForm.controls.publishingType.value
+      this.tempForm.controls.publishingType.value,
     );
-    
+
     // Update manuscript validators if coming from incomplete titles
     if (this.isIncompletedTitle) {
       this.updateManuscriptValidatorsForIncomplete();
@@ -795,7 +796,7 @@ export class TitleFormTemp implements OnDestroy {
         const hardBoundController =
           this.tempForm.controls.distribution.controls.find(
             ({ controls: { type } }) =>
-              type.value === DistributionType.Hardbound_National
+              type.value === DistributionType.Hardbound_National,
           );
         if (isHardBound) {
           if (!hardBoundController) {
@@ -811,15 +812,15 @@ export class TitleFormTemp implements OnDestroy {
                 name: new FormControl('Hard Bound National', {
                   nonNullable: true,
                 }),
-              })
+              }),
             );
             this.fetchAndUpdatePublishingPoints();
           }
         } else if (hardBoundController) {
           this.tempForm.controls.distribution.removeAt(
             this.tempForm.controls.distribution.controls.indexOf(
-              hardBoundController
-            )
+              hardBoundController,
+            ),
           );
         }
       });
@@ -859,11 +860,11 @@ export class TitleFormTemp implements OnDestroy {
           if (distributionType === DistributionType.MAH) {
             const mahControl =
               this.tempForm.controls.distribution.controls.find(
-                ({ controls: { type } }) => type.value === DistributionType.MAH
+                ({ controls: { type } }) => type.value === DistributionType.MAH,
               );
             if (mahControl) {
               mahControl.controls.availablePoints.patchValue(
-                Number.MAX_SAFE_INTEGER
+                Number.MAX_SAFE_INTEGER,
               );
             }
             return;
@@ -871,12 +872,12 @@ export class TitleFormTemp implements OnDestroy {
 
           const distributionController =
             this.tempForm.controls.distribution.controls.find(
-              ({ controls: { type } }) => type.value === distributionType
+              ({ controls: { type } }) => type.value === distributionType,
             );
 
           if (distributionController && typeof availablePoints === 'number') {
             distributionController.controls.availablePoints.patchValue(
-              availablePoints
+              availablePoints,
             );
           }
         });
@@ -885,7 +886,7 @@ export class TitleFormTemp implements OnDestroy {
       console.error('Error fetching publishing points:', error);
       this.errorMessage.set(
         this.translateService.instant('errorfetchingpublishingpoints') ||
-          'Failed to fetch publishing points. Please try again.'
+          'Failed to fetch publishing points. Please try again.',
       );
       // Show user-friendly error
       Swal.fire({
@@ -925,7 +926,7 @@ export class TitleFormTemp implements OnDestroy {
       normalizedAuthorIds: normalizedAuthorIdsForLog,
       totalRoyalties: royalties.length,
       royaltiesWithIds: royalties.controls.filter(
-        (c) => (c.controls.id.value ?? c.value.id) != null
+        (c) => (c.controls.id.value ?? c.value.id) != null,
       ).length,
       publisherRoyalties: royalties.controls
         .filter((c) => {
@@ -1006,7 +1007,7 @@ export class TitleFormTemp implements OnDestroy {
         acc[aid].push(royalty);
         return acc;
       },
-      {} as Record<string, typeof allAuthorRoyaltiesBeforeRemoval>
+      {} as Record<string, typeof allAuthorRoyaltiesBeforeRemoval>,
     );
 
     const authorsToRemove = Object.keys(authorRoyaltiesByAuthorId)
@@ -1043,20 +1044,20 @@ export class TitleFormTemp implements OnDestroy {
           authorsToRemove.length > 0
             ? `Will remove ${authorsToRemove.reduce(
                 (sum, a) => sum + a.count,
-                0
+                0,
               )} royalties for ${
                 authorsToRemove.length
               } author(s) not in current list`
             : `All ${allAuthorRoyaltiesBeforeRemoval.length} author royalties are valid (will keep all)`,
         allAuthorRoyaltiesByAuthorId: Object.keys(
-          authorRoyaltiesByAuthorId
+          authorRoyaltiesByAuthorId,
         ).map((aid) => ({
           authorId: aid,
           count: authorRoyaltiesByAuthorId[aid].length,
           platforms: authorRoyaltiesByAuthorId[aid].map((r) => r.platform),
           willBeRemoved: !normalizedAuthorIds.includes(Number(aid)),
         })),
-      }
+      },
     );
 
     let removedCount = 0;
@@ -1163,12 +1164,15 @@ export class TitleFormTemp implements OnDestroy {
       .filter((r) => r.normalizedAid != null);
 
     const authorRoyaltiesByAuthorIdAfter =
-      allAuthorRoyaltiesAfterRemoval.reduce((acc, royalty) => {
-        const aid = String(royalty.normalizedAid);
-        if (!acc[aid]) acc[aid] = [];
-        acc[aid].push(royalty);
-        return acc;
-      }, {} as Record<string, typeof allAuthorRoyaltiesAfterRemoval>);
+      allAuthorRoyaltiesAfterRemoval.reduce(
+        (acc, royalty) => {
+          const aid = String(royalty.normalizedAid);
+          if (!acc[aid]) acc[aid] = [];
+          acc[aid].push(royalty);
+          return acc;
+        },
+        {} as Record<string, typeof allAuthorRoyaltiesAfterRemoval>,
+      );
 
     console.log(
       `[mapRoyaltiesArray] STEP 1: Removed ${removedCount} unrelated royalties`,
@@ -1185,14 +1189,14 @@ export class TitleFormTemp implements OnDestroy {
             ? `Removed ${removedCount} old author royalties (authors not in current list: ${normalizedAuthorIdsStr})`
             : `All royalties are valid (current authors: ${normalizedAuthorIdsStr})`,
         authorRoyaltiesAfterRemoval: Object.keys(
-          authorRoyaltiesByAuthorIdAfter
+          authorRoyaltiesByAuthorIdAfter,
         ).map((aid) => ({
           authorId: aid,
           count: authorRoyaltiesByAuthorIdAfter[aid].length,
           platforms: authorRoyaltiesByAuthorIdAfter[aid].map((r) => r.platform),
           isCurrentAuthor: normalizedAuthorIds.includes(Number(aid)),
         })),
-      }
+      },
     );
 
     // Calculate default author percentage: 100% if 1 author, equally divided if more than 1
@@ -1243,7 +1247,7 @@ export class TitleFormTemp implements OnDestroy {
           publisherId,
           totalControls: royalties.length,
           allControlsWithIds,
-        }
+        },
       );
 
       // CRITICAL: Check ID from form control directly (most reliable)
@@ -1289,7 +1293,7 @@ export class TitleFormTemp implements OnDestroy {
               controlPlatform,
               platform,
               percentage: ctrl.controls.percentage.value,
-            }
+            },
           );
         }
 
@@ -1393,7 +1397,7 @@ export class TitleFormTemp implements OnDestroy {
                 ctrlPlatform,
                 platform,
                 percentage: ctrl.controls.percentage.value,
-              }
+              },
             );
           }
 
@@ -1408,7 +1412,7 @@ export class TitleFormTemp implements OnDestroy {
             {
               id: existingPrefilledControl.value.id,
               percentage: existingPrefilledControl.controls.percentage.value,
-            }
+            },
           );
         } else {
           // No prefilled control exists, create new one
@@ -1431,7 +1435,7 @@ export class TitleFormTemp implements OnDestroy {
             {
               percentage: defaultPublisherPercentage,
               authorCount,
-            }
+            },
           );
         }
       } else {
@@ -1468,7 +1472,7 @@ export class TitleFormTemp implements OnDestroy {
             hasValidPercentage,
             percentageToSet,
             defaultPublisherPercentage,
-          }
+          },
         );
 
         const publisherName =
@@ -1498,7 +1502,7 @@ export class TitleFormTemp implements OnDestroy {
               platform,
               percentage: percentageToSet, // Preserve existing or use default
             },
-            { emitEvent: false }
+            { emitEvent: false },
           ); // Prevent triggering other effects
         }
         // If no update needed, do nothing - preserve all existing values including percentage
@@ -1632,7 +1636,7 @@ export class TitleFormTemp implements OnDestroy {
               finalValue,
               publisherPercentage,
               controlValue: publisherControl.value,
-            }
+            },
           );
         } else {
           console.warn(
@@ -1651,7 +1655,7 @@ export class TitleFormTemp implements OnDestroy {
                   id: c.value.id,
                   percentage: c.controls.percentage.value,
                 })),
-            }
+            },
           );
         }
 
@@ -1710,7 +1714,7 @@ export class TitleFormTemp implements OnDestroy {
                     id: prefilledControl.value.id,
                     percentageValue,
                     publisherPercentage,
-                  }
+                  },
                 );
               }
             }
@@ -1741,7 +1745,7 @@ export class TitleFormTemp implements OnDestroy {
             remainingPercentage,
             authorCount,
             authorPercentageForPlatform,
-          }
+          },
         );
 
         // Look up author control - use form control values for reliable lookup
@@ -1785,7 +1789,7 @@ export class TitleFormTemp implements OnDestroy {
               authorId,
               authorPercentageForPlatform,
               publisherPercentage,
-            }
+            },
           );
         } else {
           // ✅ CRITICAL: Preserve existing values from API (if id exists)
@@ -1818,7 +1822,7 @@ export class TitleFormTemp implements OnDestroy {
                   platform,
                   percentage: existingPercentage, // CRITICAL: Preserve existing value from API
                 },
-                { emitEvent: false }
+                { emitEvent: false },
               ); // Prevent triggering other effects
             }
             // If no update needed, do nothing - preserve all existing values including percentage
@@ -1833,7 +1837,7 @@ export class TitleFormTemp implements OnDestroy {
                 existingPercentage,
                 authorPercentageForPlatform,
                 publisherPercentage,
-              }
+              },
             );
             control.patchValue(
               {
@@ -1843,7 +1847,7 @@ export class TitleFormTemp implements OnDestroy {
                 platform,
                 percentage: authorPercentageForPlatform, // Remaining after publisher's share
               },
-              { emitEvent: false }
+              { emitEvent: false },
             );
           }
         }
@@ -1855,7 +1859,7 @@ export class TitleFormTemp implements OnDestroy {
     data?: Partial<UpdateRoyalty> & {
       platform?: string | PlatForm | { id?: number; name?: string };
       titleId?: number;
-    }
+    },
   ) {
     // Ensure platform is always a string (platform name)
     let platformValue: string | null = null;
@@ -2007,13 +2011,14 @@ export class TitleFormTemp implements OnDestroy {
 
     // Get IDs of linked authors and publisher
     const linkedAuthorIds =
-      title.authors?.map(({ author }) => author.id).filter((id) => id != null) ||
-      [];
+      title.authors
+        ?.map(({ author }) => author.id)
+        .filter((id) => id != null) || [];
     const linkedPublisherId = title.publisher?.id;
 
     // Check which authors are missing from the current list
     const missingAuthorIds = linkedAuthorIds.filter(
-      (id) => !currentAuthors.find((a) => a.id === id)
+      (id) => !currentAuthors.find((a) => a.id === id),
     );
 
     // Check if publisher is missing from the current list
@@ -2025,10 +2030,10 @@ export class TitleFormTemp implements OnDestroy {
     if (missingAuthorIds.length > 0) {
       try {
         const authorPromises = missingAuthorIds.map((id) =>
-          this.authorService.getAuthorrById(id).catch(() => null)
+          this.authorService.getAuthorrById(id).catch(() => null),
         );
         const fetchedAuthors = (await Promise.all(authorPromises)).filter(
-          (a): a is Author => a != null && a.status === AuthorStatus.Active
+          (a): a is Author => a != null && a.status === AuthorStatus.Active,
         );
 
         if (fetchedAuthors.length > 0) {
@@ -2049,9 +2054,8 @@ export class TitleFormTemp implements OnDestroy {
     // Fetch missing publisher
     if (isPublisherMissing && linkedPublisherId) {
       try {
-        const fetchedPublisher = await this.publisherService.getPublisherById(
-          linkedPublisherId
-        );
+        const fetchedPublisher =
+          await this.publisherService.getPublisherById(linkedPublisherId);
         if (
           fetchedPublisher &&
           fetchedPublisher.status === PublisherStatus.Active
@@ -2186,7 +2190,7 @@ export class TitleFormTemp implements OnDestroy {
                 pId === publisherId.value &&
                 controlPlatformName === platformName)
             );
-          }
+          },
         );
 
         if (controlExist) {
@@ -2203,7 +2207,7 @@ export class TitleFormTemp implements OnDestroy {
               publisherId: pId,
               authorId: aId,
               titleId: this.titleId,
-            })
+            }),
           );
         }
       });
@@ -2219,27 +2223,28 @@ export class TitleFormTemp implements OnDestroy {
     data.authors?.forEach(({ author, display_name, allowAuthorCopy }) => {
       // Construct the expected display name format: "FirstName LastName(username)"
       // Use fullName if available, otherwise construct from firstName + lastName
-      const fullName = author.user?.fullName 
+      const fullName = author.user?.fullName
         ? author.user.fullName.trim()
         : author.user
-        ? `${author.user.firstName || ''} ${author.user.lastName || ''}`.trim()
-        : '';
-      
-      const expectedDisplayName = fullName && author.username
-        ? `${fullName} (${author.username})`
-        : '';
-      
+          ? `${author.user.firstName || ''} ${author.user.lastName || ''}`.trim()
+          : '';
+
+      const expectedDisplayName =
+        fullName && author.username ? `${fullName} (${author.username})` : '';
+
       // Normalize both strings: remove all special characters (spaces, brackets, etc.) and convert to lowercase
       const normalizeForComparison = (str: string): string => {
         return (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
       };
-      
+
       const normalizedExpected = normalizeForComparison(expectedDisplayName);
       const normalizedDisplayName = normalizeForComparison(display_name);
-      
+
       // Check if display_name matches the expected format (case-insensitive, no special chars)
-      const keepSame = normalizedExpected === normalizedDisplayName && normalizedExpected !== '';
-      
+      const keepSame =
+        normalizedExpected === normalizedDisplayName &&
+        normalizedExpected !== '';
+
       this.tempForm.controls.titleDetails.controls.authorIds.push(
         new FormGroup<AuthorFormGroup>({
           id: new FormControl<number | null>(author.id),
@@ -2247,19 +2252,19 @@ export class TitleFormTemp implements OnDestroy {
           keepSame: new FormControl<boolean>(keepSame),
           displayName: new FormControl<string>(display_name),
           allowAuthorCopy: new FormControl<boolean | null>(!!allowAuthorCopy),
-        })
+        }),
       );
     });
 
     this.updatePricingArray(data.pricing);
 
     const interior = data.media?.find(
-      ({ type }) => type === TitleMediaType.INTERIOR
+      ({ type }) => type === TitleMediaType.INTERIOR,
     );
 
     if (interior) {
       this.tempForm.controls.printing.controls.totalPages.patchValue(
-        interior.noOfPages || 0
+        interior.noOfPages || 0,
       );
       // Auto-calculate black and white pages and MSP after form state is updated
       queueMicrotask(() => {
@@ -2273,7 +2278,7 @@ export class TitleFormTemp implements OnDestroy {
 
     if (
       data.distribution?.find(
-        ({ type }) => type === DistributionType.Hardbound_National
+        ({ type }) => type === DistributionType.Hardbound_National,
       )
     ) {
       this.tempForm.controls.printing.controls.bookBindingsId.disable();
@@ -2296,7 +2301,7 @@ export class TitleFormTemp implements OnDestroy {
           name: new FormControl(DistributionType.Hardbound_National, {
             nonNullable: true,
           }),
-        })
+        }),
       );
       this.ensureMahFirstPosition();
     } else {
@@ -2306,13 +2311,13 @@ export class TitleFormTemp implements OnDestroy {
 
     // Check if National or Hardbound_National exists in saved distributions
     const hasNationalDistribution = data.distribution?.some(
-      ({ type }) => type === DistributionType.National
+      ({ type }) => type === DistributionType.National,
     );
     const hasHardboundDistribution = data.distribution?.some(
-      ({ type }) => type === DistributionType.Hardbound_National
+      ({ type }) => type === DistributionType.Hardbound_National,
     );
     const hasMahDistribution = data.distribution?.some(
-      ({ type }) => type === DistributionType.MAH
+      ({ type }) => type === DistributionType.MAH,
     );
 
     // Remove opposite control if one is found
@@ -2321,12 +2326,12 @@ export class TitleFormTemp implements OnDestroy {
       const hardboundControl =
         this.tempForm.controls.distribution.controls.find(
           ({ controls }) =>
-            controls.type.value === DistributionType.Hardbound_National
+            controls.type.value === DistributionType.Hardbound_National,
         );
       if (hardboundControl) {
         const hardboundIndex =
           this.tempForm.controls.distribution.controls.indexOf(
-            hardboundControl
+            hardboundControl,
           );
         if (hardboundIndex >= 0) {
           this.tempForm.controls.distribution.removeAt(hardboundIndex);
@@ -2335,7 +2340,7 @@ export class TitleFormTemp implements OnDestroy {
     } else if (hasHardboundDistribution) {
       // If Hardbound_National is saved, remove National control if it exists
       const nationalControl = this.tempForm.controls.distribution.controls.find(
-        ({ controls }) => controls.type.value === DistributionType.National
+        ({ controls }) => controls.type.value === DistributionType.National,
       );
       if (nationalControl) {
         const nationalIndex =
@@ -2348,7 +2353,7 @@ export class TitleFormTemp implements OnDestroy {
 
     // Ensure MAH exists and is selected (even if not returned from backend yet)
     const mahControl = this.tempForm.controls.distribution.controls.find(
-      ({ controls }) => controls.type.value === DistributionType.MAH
+      ({ controls }) => controls.type.value === DistributionType.MAH,
     );
     if (mahControl) {
       mahControl.controls.isSelected.patchValue(true);
@@ -2363,14 +2368,14 @@ export class TitleFormTemp implements OnDestroy {
             nonNullable: true,
           }),
           name: new FormControl(DistributionType.MAH, { nonNullable: true }),
-        })
+        }),
       );
     }
     this.ensureMahFirstPosition();
 
     data.distribution?.forEach(({ id, type }) => {
       const disTypeControl = this.tempForm.controls.distribution.controls.find(
-        ({ controls }) => controls.type.value === type
+        ({ controls }) => controls.type.value === type,
       );
 
       if (disTypeControl) {
@@ -2385,7 +2390,7 @@ export class TitleFormTemp implements OnDestroy {
             type: new FormControl(type, { nonNullable: true }),
             availablePoints: new FormControl(0, { nonNullable: true }),
             name: new FormControl(type, { nonNullable: true }),
-          })
+          }),
         );
         this.fetchAndUpdatePublishingPoints();
       }
@@ -2472,7 +2477,7 @@ export class TitleFormTemp implements OnDestroy {
       // Find existing control by platform name
       // ensurePricingArrayHasAllPlatforms should have already created all necessary controls
       const pricingControl = this.tempForm.controls['pricing'].controls?.find(
-        ({ controls }) => controls.platform.value === platform
+        ({ controls }) => controls.platform.value === platform,
       );
 
       if (pricingControl) {
@@ -2488,13 +2493,13 @@ export class TitleFormTemp implements OnDestroy {
             salesPrice,
             isSameAsMrp,
           },
-          { emitEvent: false }
+          { emitEvent: false },
         );
       } else {
         // This should not happen if ensurePricingArrayHasAllPlatforms worked correctly
         // Log warning for debugging
         console.warn(
-          `Platform "${platform}" control not found after ensurePricingArrayHasAllPlatforms. Platform may not exist in available platforms.`
+          `Platform "${platform}" control not found after ensurePricingArrayHasAllPlatforms. Platform may not exist in available platforms.`,
         );
       }
     });
@@ -2577,7 +2582,7 @@ export class TitleFormTemp implements OnDestroy {
       if (platformMsp > 0 && salesPrice < platformMsp) {
         return {
           invalid: `Sales price cannot be lower than MSP (${platformMsp.toFixed(
-            2
+            2,
           )})`,
         };
       }
@@ -2594,7 +2599,7 @@ export class TitleFormTemp implements OnDestroy {
    * Log form validation errors for debugging
    */
   private logFormValidationErrors(
-    formGroup: FormGroup | FormArray | AbstractControl
+    formGroup: FormGroup | FormArray | AbstractControl,
   ): void {
     if (formGroup instanceof FormGroup || formGroup instanceof FormArray) {
       Object.keys(formGroup.controls).forEach((key) => {
@@ -2632,7 +2637,7 @@ export class TitleFormTemp implements OnDestroy {
       // Ebook-only: MAH is mandatory and the only allowed option
       if (publishingType === PublishingType.ONLY_EBOOK) {
         const hasMah = distributions.some(
-          ({ type, isSelected }) => type === DistributionType.MAH && isSelected
+          ({ type, isSelected }) => type === DistributionType.MAH && isSelected,
         );
 
         if (!hasMah) {
@@ -2646,16 +2651,16 @@ export class TitleFormTemp implements OnDestroy {
 
       const national = distributions.find(
         ({ type, isSelected }) =>
-          type === DistributionType.National && isSelected
+          type === DistributionType.National && isSelected,
       );
       const hardboundNational = distributions.find(
         ({ type, isSelected }) =>
-          type === DistributionType.Hardbound_National && isSelected
+          type === DistributionType.Hardbound_National && isSelected,
       );
 
       // MAH must always be selected (all publishing types)
       const hasMahSelected = distributions.some(
-        ({ type, isSelected }) => type === DistributionType.MAH && isSelected
+        ({ type, isSelected }) => type === DistributionType.MAH && isSelected,
       );
       if (!hasMahSelected) {
         return {
@@ -2668,7 +2673,7 @@ export class TitleFormTemp implements OnDestroy {
           ?.find(
             ({ id }) =>
               id ===
-              this.tempForm.controls?.printing?.controls?.bookBindingsId?.value
+              this.tempForm.controls?.printing?.controls?.bookBindingsId?.value,
           )
           ?.name?.toLowerCase()
           ?.includes('hardbound') ?? false;
@@ -2710,7 +2715,7 @@ export class TitleFormTemp implements OnDestroy {
     const allTypes = Object.values(DistributionType) as DistributionType[];
 
     const baseTypes = allTypes.filter(
-      (type) => type !== DistributionType.Hardbound_National
+      (type) => type !== DistributionType.Hardbound_National,
     );
 
     // ALWAYS include MAH; for ONLY_EBOOK show only MAH
@@ -2718,12 +2723,12 @@ export class TitleFormTemp implements OnDestroy {
       publishingType === PublishingType.ONLY_EBOOK
         ? [DistributionType.MAH]
         : Array.from(
-            new Set<DistributionType>([DistributionType.MAH, ...baseTypes])
+            new Set<DistributionType>([DistributionType.MAH, ...baseTypes]),
           );
 
     // Ensure MAH is always first in the list
     const orderedTypes = filteredTypes.sort((a, b) =>
-      a === DistributionType.MAH ? -1 : b === DistributionType.MAH ? 1 : 0
+      a === DistributionType.MAH ? -1 : b === DistributionType.MAH ? 1 : 0,
     );
 
     return new FormArray<FormGroup<TitleDistributionGroup>>(
@@ -2740,11 +2745,11 @@ export class TitleFormTemp implements OnDestroy {
             }),
             availablePoints: new FormControl(
               type === DistributionType.MAH ? Number.MAX_SAFE_INTEGER : 0,
-              { nonNullable: true }
+              { nonNullable: true },
             ),
-          })
+          }),
       ),
-      { validators: [this.distributionValidator()] }
+      { validators: [this.distributionValidator()] },
     );
   }
 
@@ -2753,7 +2758,7 @@ export class TitleFormTemp implements OnDestroy {
     if (!controls) return;
 
     const mahIndex = controls.controls.findIndex(
-      ({ controls: { type } }) => type.value === DistributionType.MAH
+      ({ controls: { type } }) => type.value === DistributionType.MAH,
     );
 
     if (mahIndex > 0) {
@@ -2788,8 +2793,8 @@ export class TitleFormTemp implements OnDestroy {
               this.mrpValidator() as ValidatorFn,
             ]),
             isSameAsMrp: new FormControl<boolean>(true), // Default to true
-          }) as PricingGroup
-      )
+          }) as PricingGroup,
+      ),
     );
   }
 
@@ -2813,8 +2818,8 @@ export class TitleFormTemp implements OnDestroy {
         .map((control) => control.controls.platform.value)
         .filter(
           (platform): platform is string =>
-            platform !== null && platform !== undefined
-        )
+            platform !== null && platform !== undefined,
+        ),
     );
 
     // Add missing platforms only
@@ -2834,13 +2839,13 @@ export class TitleFormTemp implements OnDestroy {
             null,
             shouldSetValidators
               ? [Validators.required, this.salesPriceValidator() as ValidatorFn]
-              : []
+              : [],
           ),
           mrp: new FormControl<number | null | undefined>(
             null,
             shouldSetValidators
               ? [Validators.required, this.mrpValidator() as ValidatorFn]
-              : []
+              : [],
           ),
           isSameAsMrp: new FormControl<boolean>(true), // Default to true
         }) as PricingGroup;
@@ -2854,7 +2859,7 @@ export class TitleFormTemp implements OnDestroy {
     // Update validators based on current publishing type
     // This will handle cases where pricing already exists for superadmin-only platforms
     this.updatePricingValidatorsForPublishingType(
-      this.tempForm.controls.publishingType.value
+      this.tempForm.controls.publishingType.value,
     );
   }
 
@@ -2863,7 +2868,7 @@ export class TitleFormTemp implements OnDestroy {
    * For ebook-only titles, remove required validators from non-ebook platforms
    */
   private updatePricingValidatorsForPublishingType(
-    publishingType: PublishingType | null | undefined
+    publishingType: PublishingType | null | undefined,
   ): void {
     const pricingArray = this.tempForm.controls.pricing;
     if (!pricingArray || pricingArray.length === 0) {
@@ -3037,7 +3042,7 @@ export class TitleFormTemp implements OnDestroy {
         {
           validators: [Validators.required, Validators.min(1)],
           nonNullable: true,
-        }
+        },
       ),
       colorPages: new FormControl<number>(0, {
         validators: [Validators.required],
@@ -3053,7 +3058,7 @@ export class TitleFormTemp implements OnDestroy {
       insideCover: new FormControl<boolean>(false, { nonNullable: true }),
       laminationTypeId: new FormControl<number | null>(
         null,
-        Validators.required
+        Validators.required,
       ),
       paperType: new FormControl<string>('WHITE', {
         validators: [Validators.required],
@@ -3068,12 +3073,12 @@ export class TitleFormTemp implements OnDestroy {
   }
 
   async manageManuscriptMedia(
-    publishingType: PublishingType | null | undefined
+    publishingType: PublishingType | null | undefined,
   ) {
     // Find all MANUSCRIPT controls to handle duplicates
     const manuscriptControls =
       this.tempForm.controls.documentMedia.controls.filter(
-        ({ controls: { mediaType } }) => mediaType.value === 'MANUSCRIPT'
+        ({ controls: { mediaType } }) => mediaType.value === 'MANUSCRIPT',
       );
 
     const isEbookType =
@@ -3086,7 +3091,7 @@ export class TitleFormTemp implements OnDestroy {
         // Keep the first one, remove the rest
         for (let i = manuscriptControls.length - 1; i > 0; i--) {
           const index = this.tempForm.controls.documentMedia.controls.indexOf(
-            manuscriptControls[i]
+            manuscriptControls[i],
           );
           if (index >= 0) {
             this.tempForm.controls.documentMedia.removeAt(index);
@@ -3097,7 +3102,7 @@ export class TitleFormTemp implements OnDestroy {
       // Add MANUSCRIPT if it doesn't exist
       if (manuscriptControls.length === 0) {
         const existingManuscript = this.titleDetails()?.media?.find(
-          ({ type }) => type === 'MANUSCRIPT'
+          ({ type }) => type === 'MANUSCRIPT',
         );
         // Make manuscript optional if coming from incomplete titles
         const isManuscriptRequired = !this.isIncompletedTitle;
@@ -3105,8 +3110,8 @@ export class TitleFormTemp implements OnDestroy {
           await this.createMedia(
             TitleMediaType.MANUSCRIPT,
             isManuscriptRequired,
-            existingManuscript
-          )
+            existingManuscript,
+          ),
         );
       }
     } else {
@@ -3115,7 +3120,7 @@ export class TitleFormTemp implements OnDestroy {
         // Remove from end to avoid index shifting issues
         for (let i = manuscriptControls.length - 1; i >= 0; i--) {
           const index = this.tempForm.controls.documentMedia.controls.findIndex(
-            ({ controls }) => controls.mediaType.value === 'MANUSCRIPT'
+            ({ controls }) => controls.mediaType.value === 'MANUSCRIPT',
           );
           if (index >= 0) {
             this.tempForm.controls.documentMedia.removeAt(index);
@@ -3129,9 +3134,10 @@ export class TitleFormTemp implements OnDestroy {
    * Update manuscript validators to make them optional when coming from incomplete titles
    */
   private updateManuscriptValidatorsForIncomplete(): void {
-    const manuscriptControls = this.tempForm.controls.documentMedia.controls.filter(
-      ({ controls: { mediaType } }) => mediaType.value === 'MANUSCRIPT'
-    );
+    const manuscriptControls =
+      this.tempForm.controls.documentMedia.controls.filter(
+        ({ controls: { mediaType } }) => mediaType.value === 'MANUSCRIPT',
+      );
 
     if (manuscriptControls.length > 0 && this.isIncompletedTitle) {
       const manuscriptControl = manuscriptControls[0];
@@ -3156,21 +3162,21 @@ export class TitleFormTemp implements OnDestroy {
       .subscribe(async (insideCover) => {
         const insideCoverControl =
           this.tempForm.controls.documentMedia.controls.find(
-            ({ controls: { mediaType } }) => mediaType.value === 'INSIDE_COVER'
+            ({ controls: { mediaType } }) => mediaType.value === 'INSIDE_COVER',
           );
         if (insideCover && !insideCoverControl) {
           this.tempForm.controls.documentMedia.push(
-            await this.createMedia(TitleMediaType.INSIDE_COVER, true)
+            await this.createMedia(TitleMediaType.INSIDE_COVER, true),
           );
         } else {
           const insideCoverMediaIndex =
             this.tempForm.controls.documentMedia.controls.findIndex(
-              ({ controls }) => controls.mediaType.value === 'INSIDE_COVER'
+              ({ controls }) => controls.mediaType.value === 'INSIDE_COVER',
             );
 
           if (insideCoverMediaIndex >= 0) {
             this.tempForm.controls.documentMedia.removeAt(
-              insideCoverMediaIndex
+              insideCoverMediaIndex,
             );
           }
         }
@@ -3183,31 +3189,31 @@ export class TitleFormTemp implements OnDestroy {
 
     combineLatest([
       printingControls.totalPages.valueChanges.pipe(
-        startWith(printingControls.totalPages.value)
+        startWith(printingControls.totalPages.value),
       ),
       printingControls.colorPages.valueChanges.pipe(
-        startWith(printingControls.colorPages.value)
+        startWith(printingControls.colorPages.value),
       ),
       printingControls.bwPages.valueChanges.pipe(
-        startWith(printingControls.bwPages.value)
+        startWith(printingControls.bwPages.value),
       ),
       printingControls.bookBindingsId.valueChanges.pipe(
-        startWith(printingControls.bookBindingsId.value)
+        startWith(printingControls.bookBindingsId.value),
       ),
       printingControls.laminationTypeId.valueChanges.pipe(
-        startWith(printingControls.laminationTypeId.value)
+        startWith(printingControls.laminationTypeId.value),
       ),
       printingControls.paperQuailtyId.valueChanges.pipe(
-        startWith(printingControls.paperQuailtyId.value)
+        startWith(printingControls.paperQuailtyId.value),
       ),
       printingControls.sizeCategoryId.valueChanges.pipe(
-        startWith(printingControls.sizeCategoryId.value)
+        startWith(printingControls.sizeCategoryId.value),
       ),
       printingControls.insideCover.valueChanges.pipe(
-        startWith(printingControls.insideCover.value)
+        startWith(printingControls.insideCover.value),
       ),
       printingControls.isColorPagesRandom.valueChanges.pipe(
-        startWith(printingControls.isColorPagesRandom.value)
+        startWith(printingControls.isColorPagesRandom.value),
       ),
       // Note: customPrintCost is excluded from this subscription to prevent circular updates
       // It's already included in the API payload when calculatePrintingCost is called
@@ -3229,22 +3235,22 @@ export class TitleFormTemp implements OnDestroy {
       await this.createMedia(
         TitleMediaType.FRONT_COVER,
         true,
-        medias?.find(({ type }) => type === 'FRONT_COVER')
-      )
+        medias?.find(({ type }) => type === 'FRONT_COVER'),
+      ),
     );
     mediaArrayControl.push(
       await this.createMedia(
         TitleMediaType.BACK_COVER,
         false,
-        medias?.find(({ type }) => type === 'BACK_COVER')
-      )
+        medias?.find(({ type }) => type === 'BACK_COVER'),
+      ),
     );
     mediaArrayControl.push(
       await this.createMedia(
         TitleMediaType.INTERIOR,
         true,
-        medias?.find(({ type }) => type === 'INTERIOR')
-      )
+        medias?.find(({ type }) => type === 'INTERIOR'),
+      ),
     );
 
     if (
@@ -3254,8 +3260,8 @@ export class TitleFormTemp implements OnDestroy {
         await this.createMedia(
           TitleMediaType.FULL_COVER,
           true,
-          medias?.find(({ type }) => type === 'FULL_COVER')
-        )
+          medias?.find(({ type }) => type === 'FULL_COVER'),
+        ),
       );
     }
 
@@ -3267,8 +3273,8 @@ export class TitleFormTemp implements OnDestroy {
         await this.createMedia(
           TitleMediaType.INSIDE_COVER,
           true,
-          medias?.find(({ type }) => type === 'INSIDE_COVER')
-        )
+          medias?.find(({ type }) => type === 'INSIDE_COVER'),
+        ),
       );
     }
   }
@@ -3276,7 +3282,7 @@ export class TitleFormTemp implements OnDestroy {
   async createMedia(
     mediaType: TitleMediaType,
     required = true,
-    media?: TitleMedia
+    media?: TitleMedia,
   ): Promise<FormGroup<TitleMediaGroup>> {
     let maxSize: number | null = null;
 
@@ -3319,7 +3325,7 @@ export class TitleFormTemp implements OnDestroy {
       }),
       type: new FormControl(mediaType, { nonNullable: true }),
       file: new FormControl(null, {
-        validators: media?.id ? null : (required ? [Validators.required] : null),
+        validators: media?.id ? null : required ? [Validators.required] : null,
       }),
       mediaType: new FormControl<TitleMediaType>(mediaType, {
         nonNullable: true,
@@ -3363,7 +3369,7 @@ export class TitleFormTemp implements OnDestroy {
 
     if (maxAllowedSize && fileSizeInMB > maxAllowedSize) {
       const errorText = `Maximum allowed size is (${maxAllowedSize} MB) <br> Uploaded file is (${fileSizeInMB.toFixed(
-        2
+        2,
       )} MB)`;
       Swal.fire({
         icon: 'error',
@@ -3479,12 +3485,12 @@ export class TitleFormTemp implements OnDestroy {
         : undefined,
       isbnEbook: this.tempForm.controls.titleDetails.controls
         .isEbookIsbnAutoGenerated.value
-        ? (this.tempForm.controls.titleDetails.controls.isbnEbook
-            .value as string) ?? undefined
-        : cleanIsbn(
+        ? ((this.tempForm.controls.titleDetails.controls.isbnEbook
+            .value as string) ?? undefined)
+        : (cleanIsbn(
             this.tempForm.controls.titleDetails.controls.isbnEbook
-              .value as string
-          ) ?? undefined,
+              .value as string,
+          ) ?? undefined),
       isEbookIsbnAutoGenerated:
         this.tempForm.controls.titleDetails.controls.isEbookIsbnAutoGenerated
           .value,
@@ -3564,7 +3570,7 @@ export class TitleFormTemp implements OnDestroy {
         // Create update ticket for approved titles when user is publisher
         await this.titleService.createTitleUpdateTicket(
           this.titleId,
-          finalbasicData
+          finalbasicData,
         );
 
         // Show success message
@@ -3584,7 +3590,7 @@ export class TitleFormTemp implements OnDestroy {
             this.prefillFormData(response);
             this.mapRoyaltiesArray(
               response.publisher,
-              response.authors?.map(({ author }) => author) || []
+              response.authors?.map(({ author }) => author) || [],
             );
           }
         } catch (reloadError) {
@@ -3653,7 +3659,7 @@ export class TitleFormTemp implements OnDestroy {
       console.error('Error creating title:', error);
       this.errorMessage.set(
         this.translateService.instant('errorcreatingtitle') ||
-          'Failed to create title. Please try again.'
+          'Failed to create title. Please try again.',
       );
     } finally {
       this.isLoading.set(false);
@@ -3665,7 +3671,7 @@ export class TitleFormTemp implements OnDestroy {
    */
   private async uploadMediaWithProgress(
     mediaToUpload: { file: File; type: TitleMediaType }[],
-    isUpdateTicket: boolean
+    isUpdateTicket: boolean,
   ): Promise<any[]> {
     const totalFiles = mediaToUpload.length;
     const results: any[] = [];
@@ -3675,25 +3681,25 @@ export class TitleFormTemp implements OnDestroy {
       (async () => {
         // Set initial message
         this.loaderService.setLoadingMessage(
-          `Uploading 0 out of ${totalFiles} files`
+          `Uploading 0 out of ${totalFiles} files`,
         );
 
         for (let i = 0; i < mediaToUpload.length; i++) {
           const current = i + 1;
           this.loaderService.setLoadingMessage(
-            `Uploading ${current} out of ${totalFiles} files`
+            `Uploading ${current} out of ${totalFiles} files`,
           );
 
           let result;
           if (isUpdateTicket) {
             result = await this.titleService.uploadMediaForUpdateTicket(
               this.titleId!,
-              mediaToUpload[i]
+              mediaToUpload[i],
             );
           } else {
             result = await this.titleService.uploadMedia(
               this.titleId!,
-              mediaToUpload[i]
+              mediaToUpload[i],
             );
           }
           results.push(result);
@@ -3702,11 +3708,15 @@ export class TitleFormTemp implements OnDestroy {
         this.loaderService.setLoadingMessage(null);
         return results;
       })(),
-      'media-upload-progress'
+      'media-upload-progress',
     );
   }
 
   async onMediaUpload() {
+    console.log(
+      this.tempForm.controls.documentMedia.value,
+      'documnttt valueee',
+    );
     if (!this.tempForm.controls.documentMedia.valid) {
       return;
     }
@@ -3761,17 +3771,17 @@ export class TitleFormTemp implements OnDestroy {
         // Upload media via update ticket API with progress tracking
         const mediaResponse = await this.uploadMediaWithProgress(
           mediaToUpload,
-          true
+          true,
         );
 
         if (mediaResponse && Array.isArray(mediaResponse)) {
           const interior = mediaResponse.find(
-            (item: any) => item?.type === TitleMediaType.INTERIOR
+            (item: any) => item?.type === TitleMediaType.INTERIOR,
           ) as any;
 
           if (interior?.noOfPages && typeof interior.noOfPages === 'number') {
             this.tempForm.controls.printing.controls.totalPages.patchValue(
-              interior.noOfPages
+              interior.noOfPages,
             );
             // Auto-calculate black and white pages and MSP after form state is updated
             queueMicrotask(() => {
@@ -3788,7 +3798,7 @@ export class TitleFormTemp implements OnDestroy {
           mediaResponse.forEach((uploadedMedia: any) => {
             const mediaControl =
               this.tempForm.controls.documentMedia.controls.find(
-                (control) => control.controls.type.value === uploadedMedia.type
+                (control) => control.controls.type.value === uploadedMedia.type,
               );
 
             if (mediaControl) {
@@ -3796,7 +3806,7 @@ export class TitleFormTemp implements OnDestroy {
               // Update validators: if id exists, file is not required
               if (hasId) {
                 mediaControl.controls.file.removeValidators(
-                  Validators.required
+                  Validators.required,
                 );
               }
 
@@ -3849,17 +3859,17 @@ export class TitleFormTemp implements OnDestroy {
       // Normal upload flow with progress tracking
       const mediaResponse = await this.uploadMediaWithProgress(
         mediaToUpload,
-        false
+        false,
       );
 
       if (mediaResponse && Array.isArray(mediaResponse)) {
         const interior = mediaResponse.find(
-          ({ type }) => type === TitleMediaType.INTERIOR
+          ({ type }) => type === TitleMediaType.INTERIOR,
         );
 
         if (interior?.noOfPages && typeof interior.noOfPages === 'number') {
           this.tempForm.controls.printing.controls.totalPages.patchValue(
-            interior.noOfPages
+            interior.noOfPages,
           );
           // Auto-calculate black and white pages and MSP after form state is updated
           queueMicrotask(() => {
@@ -3876,7 +3886,7 @@ export class TitleFormTemp implements OnDestroy {
         mediaResponse.forEach((uploadedMedia: any) => {
           const mediaControl =
             this.tempForm.controls.documentMedia.controls.find(
-              (control) => control.controls.type.value === uploadedMedia.type
+              (control) => control.controls.type.value === uploadedMedia.type,
             );
 
           if (mediaControl) {
@@ -3932,7 +3942,7 @@ export class TitleFormTemp implements OnDestroy {
       this.loaderService.setLoadingMessage(null);
       this.errorMessage.set(
         this.translateService.instant('erroruploadingmedia') ||
-          'Failed to upload media files. Please try again.'
+          'Failed to upload media files. Please try again.',
       );
     }
   }
@@ -4017,16 +4027,16 @@ export class TitleFormTemp implements OnDestroy {
             return platform?.isEbookPlatform ?? false;
           })
         : isOnlyPrint
-        ? pricingControls.controls.filter((control) => {
-            const platformName = control.controls.platform.value as
-              | string
-              | null;
-            const platform = platformName
-              ? this.platformService.getPlatformByName(platformName)
-              : null;
-            return !(platform?.isEbookPlatform ?? false);
-          })
-        : pricingControls.controls; // PRINT_EBOOK: include all platforms
+          ? pricingControls.controls.filter((control) => {
+              const platformName = control.controls.platform.value as
+                | string
+                | null;
+              const platform = platformName
+                ? this.platformService.getPlatformByName(platformName)
+                : null;
+              return !(platform?.isEbookPlatform ?? false);
+            })
+          : pricingControls.controls; // PRINT_EBOOK: include all platforms
 
       // Collect validation errors instead of silently filtering
       const validationErrors: string[] = [];
@@ -4038,7 +4048,7 @@ export class TitleFormTemp implements OnDestroy {
 
         if (!platformName) {
           validationErrors.push(
-            'Platform name is missing for one or more pricing entries.'
+            'Platform name is missing for one or more pricing entries.',
           );
           continue;
         }
@@ -4086,7 +4096,7 @@ export class TitleFormTemp implements OnDestroy {
           Number(salesPrice.value) <= 0
         ) {
           validationErrors.push(
-            `Platform ${platformName}: Please provide valid MRP and Sales Price (both must be greater than 0).`
+            `Platform ${platformName}: Please provide valid MRP and Sales Price (both must be greater than 0).`,
           );
           continue;
         }
@@ -4100,8 +4110,8 @@ export class TitleFormTemp implements OnDestroy {
         if (platformMsp > 0 && salesPriceValue < platformMsp) {
           validationErrors.push(
             `Platform ${platformName}: Sales price (${salesPriceValue}) cannot be lower than MSP (${platformMsp.toFixed(
-              2
-            )}).`
+              2,
+            )}).`,
           );
           continue;
         }
@@ -4110,8 +4120,8 @@ export class TitleFormTemp implements OnDestroy {
         if (platformMsp > 0 && mrpValue < platformMsp) {
           validationErrors.push(
             `Platform ${platformName}: MRP (${mrpValue}) cannot be lower than MSP (${platformMsp.toFixed(
-              2
-            )}).`
+              2,
+            )}).`,
           );
           continue;
         }
@@ -4119,7 +4129,7 @@ export class TitleFormTemp implements OnDestroy {
         // Check if sales price is higher than MRP
         if (salesPriceValue > mrpValue) {
           validationErrors.push(
-            `Platform ${platformName}: Sales price (${salesPriceValue}) cannot be higher than MRP (${mrpValue}).`
+            `Platform ${platformName}: Sales price (${salesPriceValue}) cannot be higher than MRP (${mrpValue}).`,
           );
           continue;
         }
@@ -4141,7 +4151,7 @@ export class TitleFormTemp implements OnDestroy {
           title: this.translateService.instant('error') || 'Validation Error',
           html: `<div style="text-align: left;">${errorMessage.replace(
             /\n/g,
-            '<br>'
+            '<br>',
           )}</div>`,
           width: '600px',
         });
@@ -4177,7 +4187,7 @@ export class TitleFormTemp implements OnDestroy {
             errorMessage =
               this.translateService.instant('invalidebookpricingdata') ||
               `Please provide valid pricing data (MRP and Sales Price) for at least one ebook platform. Missing data for: ${missingPlatforms.join(
-                ', '
+                ', ',
               )}`;
           } else {
             errorMessage =
@@ -4189,7 +4199,7 @@ export class TitleFormTemp implements OnDestroy {
             errorMessage =
               this.translateService.instant('invalidprintpricingdata') ||
               `Please provide valid pricing data (MRP and Sales Price) for at least one print platform. Missing data for: ${missingPlatforms.join(
-                ', '
+                ', ',
               )}`;
           } else {
             errorMessage =
@@ -4201,7 +4211,7 @@ export class TitleFormTemp implements OnDestroy {
             errorMessage =
               this.translateService.instant('invalidpricingdata') ||
               `Please provide valid pricing data (MRP and Sales Price) for all platforms. Missing data for: ${missingPlatforms.join(
-                ', '
+                ', ',
               )}`;
           } else {
             errorMessage =
@@ -4333,14 +4343,16 @@ export class TitleFormTemp implements OnDestroy {
           return platform?.isEbookPlatform ?? false;
         })
       : isOnlyPrint
-      ? pricingControls.controls.filter((control) => {
-          const platformName = control.controls.platform.value as string | null;
-          const platform = platformName
-            ? this.platformService.getPlatformByName(platformName)
-            : null;
-          return !(platform?.isEbookPlatform ?? false);
-        })
-      : pricingControls.controls;
+        ? pricingControls.controls.filter((control) => {
+            const platformName = control.controls.platform.value as
+              | string
+              | null;
+            const platform = platformName
+              ? this.platformService.getPlatformByName(platformName)
+              : null;
+            return !(platform?.isEbookPlatform ?? false);
+          })
+        : pricingControls.controls;
 
     const isPublisher = this.loggedInUser()?.accessLevel === 'PUBLISHER';
 
@@ -4423,16 +4435,16 @@ export class TitleFormTemp implements OnDestroy {
             return platform?.isEbookPlatform ?? false;
           })
         : isOnlyPrint
-        ? pricingControls.controls.filter((control) => {
-            const platformName = control.controls.platform.value as
-              | string
-              | null;
-            const platform = platformName
-              ? this.platformService.getPlatformByName(platformName)
-              : null;
-            return !(platform?.isEbookPlatform ?? false);
-          })
-        : pricingControls.controls; // PRINT_EBOOK: include all platforms
+          ? pricingControls.controls.filter((control) => {
+              const platformName = control.controls.platform.value as
+                | string
+                | null;
+              const platform = platformName
+                ? this.platformService.getPlatformByName(platformName)
+                : null;
+              return !(platform?.isEbookPlatform ?? false);
+            })
+          : pricingControls.controls; // PRINT_EBOOK: include all platforms
 
       // Collect validation errors instead of silently filtering
       const validationErrors: string[] = [];
@@ -4444,7 +4456,7 @@ export class TitleFormTemp implements OnDestroy {
 
         if (!platformName) {
           validationErrors.push(
-            'Platform name is missing for one or more pricing entries.'
+            'Platform name is missing for one or more pricing entries.',
           );
           continue;
         }
@@ -4492,7 +4504,7 @@ export class TitleFormTemp implements OnDestroy {
           Number(salesPrice.value) <= 0
         ) {
           validationErrors.push(
-            `Platform ${platformName}: Please provide valid MRP and Sales Price (both must be greater than 0).`
+            `Platform ${platformName}: Please provide valid MRP and Sales Price (both must be greater than 0).`,
           );
           continue;
         }
@@ -4506,8 +4518,8 @@ export class TitleFormTemp implements OnDestroy {
         if (platformMsp > 0 && salesPriceValue < platformMsp) {
           validationErrors.push(
             `Platform ${platformName}: Sales price (${salesPriceValue}) cannot be lower than MSP (${platformMsp.toFixed(
-              2
-            )}).`
+              2,
+            )}).`,
           );
           continue;
         }
@@ -4516,8 +4528,8 @@ export class TitleFormTemp implements OnDestroy {
         if (platformMsp > 0 && mrpValue < platformMsp) {
           validationErrors.push(
             `Platform ${platformName}: MRP (${mrpValue}) cannot be lower than MSP (${platformMsp.toFixed(
-              2
-            )}).`
+              2,
+            )}).`,
           );
           continue;
         }
@@ -4525,7 +4537,7 @@ export class TitleFormTemp implements OnDestroy {
         // Check if sales price is higher than MRP
         if (salesPriceValue > mrpValue) {
           validationErrors.push(
-            `Platform ${platformName}: Sales price (${salesPriceValue}) cannot be higher than MRP (${mrpValue}).`
+            `Platform ${platformName}: Sales price (${salesPriceValue}) cannot be higher than MRP (${mrpValue}).`,
           );
           continue;
         }
@@ -4547,7 +4559,7 @@ export class TitleFormTemp implements OnDestroy {
           title: this.translateService.instant('error') || 'Validation Error',
           html: `<div style="text-align: left;">${errorMessage.replace(
             /\n/g,
-            '<br>'
+            '<br>',
           )}</div>`,
           width: '600px',
         });
@@ -4583,7 +4595,7 @@ export class TitleFormTemp implements OnDestroy {
             errorMessage =
               this.translateService.instant('invalidebookpricingdata') ||
               `Please provide valid pricing data (MRP and Sales Price) for at least one ebook platform. Missing data for: ${missingPlatforms.join(
-                ', '
+                ', ',
               )}`;
           } else {
             errorMessage =
@@ -4595,7 +4607,7 @@ export class TitleFormTemp implements OnDestroy {
             errorMessage =
               this.translateService.instant('invalidprintpricingdata') ||
               `Please provide valid pricing data (MRP and Sales Price) for at least one print platform. Missing data for: ${missingPlatforms.join(
-                ', '
+                ', ',
               )}`;
           } else {
             errorMessage =
@@ -4607,7 +4619,7 @@ export class TitleFormTemp implements OnDestroy {
             errorMessage =
               this.translateService.instant('invalidpricingdata') ||
               `Please provide valid pricing data (MRP and Sales Price) for all platforms. Missing data for: ${missingPlatforms.join(
-                ', '
+                ', ',
               )}`;
           } else {
             errorMessage =
@@ -4639,16 +4651,16 @@ export class TitleFormTemp implements OnDestroy {
             return platform?.isEbookPlatform ?? false;
           })
         : isOnlyPrint
-        ? royaltiesControl.controls.filter((control) => {
-            const platformName = control.controls.platform.value as
-              | string
-              | null;
-            const platform = platformName
-              ? this.platformService.getPlatformByName(platformName)
-              : null;
-            return !(platform?.isEbookPlatform ?? false);
-          })
-        : royaltiesControl.controls;
+          ? royaltiesControl.controls.filter((control) => {
+              const platformName = control.controls.platform.value as
+                | string
+                | null;
+              const platform = platformName
+                ? this.platformService.getPlatformByName(platformName)
+                : null;
+              return !(platform?.isEbookPlatform ?? false);
+            })
+          : royaltiesControl.controls;
 
       // Map and filter royalties, then deduplicate by (authorId/publisherId, platform)
       const royaltiesMap = new Map<string, UpdateRoyalty>();
@@ -4732,7 +4744,7 @@ export class TitleFormTemp implements OnDestroy {
             // Both have ID or both don't - keep the last one (current)
             royaltiesMap.set(key, royalty);
           }
-        }
+        },
       );
 
       const royalties: UpdateRoyalty[] = Array.from(royaltiesMap.values());
@@ -4764,7 +4776,7 @@ export class TitleFormTemp implements OnDestroy {
             errorMessage =
               this.translateService.instant('invalidebookroyaltiesdata') ||
               `Please provide valid royalties data (percentage between 0-100%) for at least one ebook platform. Missing data for: ${missingPlatforms.join(
-                ', '
+                ', ',
               )}`;
           } else {
             errorMessage =
@@ -4776,7 +4788,7 @@ export class TitleFormTemp implements OnDestroy {
             errorMessage =
               this.translateService.instant('invalidprintroyaltiesdata') ||
               `Please provide valid royalties data (percentage between 0-100%) for at least one print platform. Missing data for: ${missingPlatforms.join(
-                ', '
+                ', ',
               )}`;
           } else {
             errorMessage =
@@ -4788,7 +4800,7 @@ export class TitleFormTemp implements OnDestroy {
             errorMessage =
               this.translateService.instant('invalidroyaltiesdata') ||
               `Please provide valid royalties data (percentage between 0-100%) for all platforms. Missing data for: ${missingPlatforms.join(
-                ', '
+                ', ',
               )}`;
           } else {
             errorMessage =
@@ -4937,7 +4949,7 @@ export class TitleFormTemp implements OnDestroy {
     }
 
     const insideCoverMedia = this.tempForm.controls.documentMedia.controls.find(
-      ({ controls: { type } }) => type.value === TitleMediaType.INSIDE_COVER
+      ({ controls: { type } }) => type.value === TitleMediaType.INSIDE_COVER,
     );
 
     // Check if inside cover is enabled
@@ -5094,7 +5106,7 @@ export class TitleFormTemp implements OnDestroy {
                   allowAuthorCopy: !!allowAuthorCopy,
                 });
               }
-            }
+            },
           );
         }
 
@@ -5106,7 +5118,7 @@ export class TitleFormTemp implements OnDestroy {
         // Create printing update ticket
         await this.titleService.createTitlePrintingUpdateTicket(
           this.titleId,
-          updateTicketData
+          updateTicketData,
         );
 
         // Preserve current pricing values before reloading
@@ -5151,7 +5163,7 @@ export class TitleFormTemp implements OnDestroy {
               response.media.forEach((mediaItem) => {
                 const mediaControl =
                   this.tempForm.controls.documentMedia.controls.find(
-                    ({ controls: { type } }) => type.value === mediaItem.type
+                    ({ controls: { type } }) => type.value === mediaItem.type,
                   );
 
                 if (mediaControl) {
@@ -5175,26 +5187,26 @@ export class TitleFormTemp implements OnDestroy {
               let insideCoverMediaControl =
                 this.tempForm.controls.documentMedia.controls.find(
                   ({ controls: { type } }) =>
-                    type.value === TitleMediaType.INSIDE_COVER
+                    type.value === TitleMediaType.INSIDE_COVER,
                 );
 
               // If inside cover media control doesn't exist, create it
               if (!insideCoverMediaControl) {
                 const insideCoverMediaFromResponse = response.media?.find(
-                  ({ type }) => type === TitleMediaType.INSIDE_COVER
+                  ({ type }) => type === TitleMediaType.INSIDE_COVER,
                 );
                 insideCoverMediaControl = await this.createMedia(
                   TitleMediaType.INSIDE_COVER,
                   true,
-                  insideCoverMediaFromResponse
+                  insideCoverMediaFromResponse,
                 );
                 this.tempForm.controls.documentMedia.push(
-                  insideCoverMediaControl
+                  insideCoverMediaControl,
                 );
               } else {
                 // Update existing control with response data if available
                 const insideCoverMediaFromResponse = response.media?.find(
-                  ({ type }) => type === TitleMediaType.INSIDE_COVER
+                  ({ type }) => type === TitleMediaType.INSIDE_COVER,
                 );
                 if (insideCoverMediaFromResponse) {
                   insideCoverMediaControl.patchValue({
@@ -5245,7 +5257,7 @@ export class TitleFormTemp implements OnDestroy {
                 const pricingControl =
                   this.tempForm.controls.pricing.controls.find(
                     (control) =>
-                      control.controls.platform.value === pricingValue.platform
+                      control.controls.platform.value === pricingValue.platform,
                   );
                 if (
                   pricingControl &&
@@ -5292,7 +5304,7 @@ export class TitleFormTemp implements OnDestroy {
                 allowAuthorCopy: !!allowAuthorCopy,
               });
             }
-          }
+          },
         );
       }
 
@@ -5316,9 +5328,8 @@ export class TitleFormTemp implements OnDestroy {
         }),
       };
 
-      const response = await this.titleService.createOrUpdatePrinting(
-        createPrinting
-      );
+      const response =
+        await this.titleService.createOrUpdatePrinting(createPrinting);
 
       if (response?.id) {
         printing.controls.id.patchValue(response.id);
@@ -5346,7 +5357,7 @@ export class TitleFormTemp implements OnDestroy {
       console.error('Error saving printing draft:', error);
       this.errorMessage.set(
         this.translateService.instant('errorsavingprinting') ||
-          'Failed to save printing details. Please try again.'
+          'Failed to save printing details. Please try again.',
       );
     } finally {
       this.isLoading.set(false);
@@ -5381,7 +5392,7 @@ export class TitleFormTemp implements OnDestroy {
             percentage.value !== null &&
             percentage.value !== undefined &&
             !isNaN(Number(percentage.value)) &&
-            platform.value
+            platform.value,
         )
         .map(
           ({
@@ -5416,7 +5427,7 @@ export class TitleFormTemp implements OnDestroy {
               name: name || '',
               publisherId: publisherId ?? undefined,
             } as UpdateRoyalty;
-          }
+          },
         )
         .filter((royalty): royalty is UpdateRoyalty => royalty !== null);
 
@@ -5472,7 +5483,7 @@ export class TitleFormTemp implements OnDestroy {
       console.error('Error saving royalties:', error);
       this.errorMessage.set(
         this.translateService.instant('errorsavingroyalties') ||
-          'Failed to save royalties. Please try again.'
+          'Failed to save royalties. Please try again.',
       );
     } finally {
       this.isLoading.set(false);
@@ -5638,7 +5649,7 @@ export class TitleFormTemp implements OnDestroy {
       case 'documents':
         // Check if any media file is selected
         return this.tempForm.controls.documentMedia.controls.some(
-          (control) => control.controls.file.value !== null
+          (control) => control.controls.file.value !== null,
         );
       case 'printing':
         return this.tempForm.controls.printing.dirty;
@@ -5668,13 +5679,13 @@ export class TitleFormTemp implements OnDestroy {
       const publisherId =
         Number(
           this.tempForm.controls.titleDetails.controls.publisher.controls.id
-            .value
+            .value,
         ) || undefined;
       const res = await this.publisherService.buyPublishingPoints(
         type,
         1,
         `title/${this.titleId}?step=distribution`,
-        publisherId
+        publisherId,
       );
       if (res.status === 'pending' && res.url) {
         window.open(res.url, '_blank');
@@ -5718,7 +5729,7 @@ export class TitleFormTemp implements OnDestroy {
       this.tempForm.controls.distribution.value
         ?.filter(
           ({ isSelected, type }) =>
-            isSelected && type && !existingTypes.includes(type)
+            isSelected && type && !existingTypes.includes(type),
         )
         .map(({ type }) => type as DistributionType)
         .filter((type): type is DistributionType => !!type) ?? [];
@@ -5759,7 +5770,7 @@ export class TitleFormTemp implements OnDestroy {
         // Create distribution update ticket
         await this.titleService.createTitleDistributionUpdateTicket(
           this.titleId,
-          distributionsToCreate
+          distributionsToCreate,
         );
 
         // Show success message
@@ -5790,7 +5801,7 @@ export class TitleFormTemp implements OnDestroy {
       if (distributionsToCreate.length > 0) {
         await this.titleService.createTitleDistribution(
           this.titleId,
-          distributionsToCreate
+          distributionsToCreate,
         );
       }
 
@@ -5807,7 +5818,7 @@ export class TitleFormTemp implements OnDestroy {
       console.error('Error submitting distribution:', error);
       this.errorMessage.set(
         this.translateService.instant('errorsubmittingdistribution') ||
-          'Failed to submit distribution. Please try again.'
+          'Failed to submit distribution. Please try again.',
       );
     } finally {
       this.isLoading.set(false);

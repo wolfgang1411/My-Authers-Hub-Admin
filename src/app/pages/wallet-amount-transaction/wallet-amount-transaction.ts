@@ -46,6 +46,7 @@ export class WalletAmountTransaction implements OnInit {
   });
 
   displayedColumns = [
+    'transactionId',
     'addedBy',
     'recipient',
     'email',
@@ -97,6 +98,7 @@ export class WalletAmountTransaction implements OnInit {
 
       return {
         walletId: tx.wallet.id,
+        transactionId: `#OP1500${tx.id}`, // Updated line
         addedBy: this.getAddedByName(tx), // ✅ FIXED
         recipient: user.publisher?.name || user.fullName,
         email: user.email,

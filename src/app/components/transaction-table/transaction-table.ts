@@ -19,6 +19,7 @@ export class TransactionTable {
   sortChange = output<{ active: string; direction: 'asc' | 'desc' | '' }>();
 
   displayedColumns: string[] = [
+    'transactionId',
     'orderid',
     'email',
     'status',
@@ -34,6 +35,7 @@ export class TransactionTable {
       this.dataSource.data =
         txs?.map((transaction) => ({
           ...transaction,
+          transactionId: `#TN1500${transaction.id}`,
           id: transaction.id,
           email: transaction.user?.email ?? '—',
           orderid: '#' + transaction.id,
