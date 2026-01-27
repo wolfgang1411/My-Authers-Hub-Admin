@@ -50,7 +50,6 @@ export class WalletAmountTransaction implements OnInit {
     'recipient',
     'email',
     'method',
-    'type',
     'amount',
     'status',
   ];
