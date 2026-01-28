@@ -210,6 +210,7 @@ export interface TitleFilter {
   authorIds?: number | number[];
   publishedAfter?: string;
   itemsPerPage?: number;
+  authorCopyAllowedIds?: number | number[];
   publishingType?: PublishingType | PublishingType[];
   printingOnly?: boolean;
   page?: number;

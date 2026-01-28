@@ -68,6 +68,9 @@ export class TitleBrowserDialog implements OnInit {
 
   ngOnInit(): void {
     this.user.set(this.userService.loggedInUser$());
+    if (this.user()?.accessLevel === 'AUTHER' && this.user()?.auther?.id) {
+      this.titleFilter.update((f) => ({ ...f, authorCopyAllowedIds: this.user()?.auther?.id }));
+    }
     this.searchTitles();
 
     this.titleSearchStr

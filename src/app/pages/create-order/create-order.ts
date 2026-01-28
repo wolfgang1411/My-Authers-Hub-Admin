@@ -199,10 +199,11 @@ export class CreateOrder implements OnInit {
 
     // For authors
     if (this.isAuthor()) {
-      const authorTitle = title.authors?.find((at) => at.author.id === user.id);
+      const authorTitle = title.authors?.find((at) => at.author.id === user.auther?.id);
 
       if (authorTitle?.allowAuthorCopy && printing) {
         // Use custom print cost or print cost
+        console.log(printing.customPrintCost, printing.printCost, 'printing');
         return printing.customPrintCost || printing.printCost || 0;
       } else {
         // If isAuthorCopy is not allowed, show price from platform MAH_PRINT
