@@ -66,16 +66,16 @@
           </button>
 
           <button
-          mat-flat-button
-          color="accent"
-          class="w-full !bg-primary"
-          (click)="navigateToEditPublisher()"
-        >
-          <mat-icon>edit</mat-icon>
-          <span class="ml-2">Edit Publisher Details</span>
-        </button>
+            mat-flat-button
+            color="accent"
+            class="w-full !bg-primary"
+            (click)="navigateToEditPublisher()"
+          >
+            <mat-icon>edit</mat-icon>
+            <span class="ml-2">Edit Publisher Details</span>
+          </button>
         }
-      
+
         @if (loggedInUser()?.auther?.id) {
           <button
             mat-flat-button
@@ -87,14 +87,24 @@
             <span class="ml-2">Edit Author Details</span>
           </button>
           <button
-          mat-flat-button
-          color="accent"
-          class="w-full !bg-primary"
-          [routerLink]="['/authorDetails', loggedInUser()?.auther?.id]"
-        >
-          <mat-icon>visibility</mat-icon>
-          <span class="ml-2">My Author Details</span>
-        </button>
+            mat-flat-button
+            color="accent"
+            class="w-full !bg-primary"
+            [routerLink]="['/authorDetails', loggedInUser()?.auther?.id]"
+          >
+            <mat-icon>visibility</mat-icon>
+            <span class="ml-2">My Author Details</span>
+          </button>
+          <button
+            matButton
+            matButton="filled"
+            class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+            (click)="inviteAuthor()"
+          >
+            <mat-icon class="material-icons">person_add</mat-icon>
+            {{ "inviteauthor" | translate }}
+          </button>
+
           <button
             mat-flat-button
             color="accent"
@@ -104,18 +114,22 @@
             <mat-icon>mail</mat-icon>
             <span class="ml-2">{{ "invites" | translate }}</span>
           </button>
-        
-        
         }
         <button
-        mat-flat-button
-        color="accent"
-        class="w-full !bg-accent"
-        (click)="navigateToUpdateTickets( loggedInUser()?.accessLevel === 'PUBLISHER' ? 'publisher' : 'author')"
-      >
-        <mat-icon>visibility</mat-icon>
-        <span class="ml-2">View My Tickets</span>
-      </button>
+          mat-flat-button
+          color="accent"
+          class="w-full !bg-accent"
+          (click)="
+            navigateToUpdateTickets(
+              loggedInUser()?.accessLevel === 'PUBLISHER'
+                ? 'publisher'
+                : 'author'
+            )
+          "
+        >
+          <mat-icon>visibility</mat-icon>
+          <span class="ml-2">View My Tickets</span>
+        </button>
         <!-- <button
           mat-flat-button
           color="warn"
