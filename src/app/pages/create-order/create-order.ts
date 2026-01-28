@@ -155,8 +155,11 @@ export class CreateOrder implements OnInit {
 
       // Get addresses from user object (addresses are now linked to user, not author/publisher)
       const userAddresses: Address[] = user.address || [];
+      const authorAddresses: Address[] = user.auther?.address || [];
+      const publisherAddresses: Address[] = user.publisher?.address || [];
+      const addresses = [...userAddresses, ...authorAddresses, ...publisherAddresses];
 
-      this.addresses.set(userAddresses);
+      this.addresses.set(addresses);
 
       // Set default selected address if available
       if (userAddresses.length > 0 && !this.selectedDeliveryAddressId()) {
