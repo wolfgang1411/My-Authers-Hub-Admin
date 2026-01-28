@@ -47,6 +47,8 @@ import {
   CountryISO,
   NgxMaterialIntlTelInputComponent,
 } from 'ngx-material-intl-tel-input';
+import { MatDialog } from '@angular/material/dialog';
+import { InviteDialog } from 'src/app/components/invite-dialog/invite-dialog';
 
 @Component({
   selector: 'app-edit-profile',
@@ -73,7 +75,8 @@ export class EditProfile {
     private renderrer: Renderer2,
     private publisherService: PublisherService,
     private autherService: AuthorsService,
-    private router: Router
+    private router: Router,
+    private dialog: MatDialog,
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
     effect(() => {
@@ -155,7 +158,7 @@ export class EditProfile {
     const user = this.loggedInUser();
     if (!user?.publisher?.id) return;
     const response = await this.publisherService.getPublisherById(
-      user.publisher?.id as number
+      user.publisher?.id as number,
     );
     this.publisher.set(response);
   }
@@ -164,9 +167,34 @@ export class EditProfile {
     const user = this.loggedInUser();
     if (!user?.auther?.id) return;
     const response = await this.autherService.getAuthorrById(
-      user.auther?.id as number
+      user.auther?.id as number,
     );
     this.author.set(response);
+  }
+
+  inviteAuthor(): void {
+    const dialogRef = this.dialog.open(InviteDialog, {
+      data: {
+        onSave: async (email: string) => {
+          const response = await this.autherService.sendInviteLink(email);
+          if (response) {
+            dialogRef.close();
+            Swal.fire({
+              title: 'success',
+              html: response.message,
+              icon: 'success',
+              heightAuto: false,
+            });
+          }
+        },
+        onClose: () => dialogRef.close(),
+        heading: 'Please enter Email Address',
+        cancelButtonLabel: 'Cancel',
+        saveButtonLabel: 'Send Invite',
+        placeholder: 'abc@gmail.com',
+        validators: [Validators.required, Validators.email],
+      },
+    });
   }
 
   async settingData(userData?: User | null) {
@@ -174,29 +202,25 @@ export class EditProfile {
     this.userBankDetails.set(
       userData?.publisher?.bankDetails?.[0] ??
         userData?.auther?.bankDetails?.[0] ??
-        null
+        null,
     );
     this.userAddress.set(
       userData?.publisher?.address[0] ||
         userData?.auther?.address[0] ||
         userData?.address?.[0] ||
-        null
+        null,
     );
     this.completeAddress.set(
       `${this.userAddress()?.address ?? ''} ${this.userAddress()?.city ?? ''} ${
         this.userAddress()?.state ?? ''
       } ${this.userAddress()?.country ?? ''} - ${
         this.userAddress()?.pincode ?? ''
-      }`
+      }`,
     );
 
     // Initialize notification preferences from user data
-    this.notifications.email.set(
-      userData?.isSendEmailNotifications ?? true
-    );
-    this.notifications.notifications.set(
-      userData?.isSendNotifications ?? true
-    );
+    this.notifications.email.set(userData?.isSendEmailNotifications ?? true);
+    this.notifications.notifications.set(userData?.isSendNotifications ?? true);
 
     const Finaladdress = this.userAddress();
     const FinalBankDetails = this.userBankDetails();
@@ -302,7 +326,7 @@ export class EditProfile {
     };
     const response = await this.authService.changePassword(
       payload.oldPassword as string,
-      payload.newPassword as string
+      payload.newPassword as string,
     );
     if (!response) return;
     Swal.fire({
@@ -317,7 +341,7 @@ export class EditProfile {
     const oldInput = document.getElementById('oldPassword') as HTMLInputElement;
     const newInput = document.getElementById('newPassword') as HTMLInputElement;
     const confirmInput = document.getElementById(
-      'confirmPassword'
+      'confirmPassword',
     ) as HTMLInputElement;
     console.log(oldInput, 'typeeee edjcshiush');
     if (oldInput.type === 'password') {
@@ -367,7 +391,7 @@ export class EditProfile {
 
   toggleSignal(
     signalRef: { (): boolean; set: (v: boolean) => void },
-    value?: boolean
+    value?: boolean,
   ) {
     if (typeof value === 'boolean') signalRef.set(value);
     else signalRef.set(!signalRef());
@@ -378,7 +402,7 @@ export class EditProfile {
     this.renderrer.setAttribute(
       inputElem,
       'accept',
-      'image/png, image/gif, image/jpeg'
+      'image/png, image/gif, image/jpeg',
     );
     inputElem.click();
     inputElem.onchange = (event) => {
