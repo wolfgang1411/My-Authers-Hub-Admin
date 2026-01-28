@@ -30,5 +30,6 @@ export interface TransactionFilter {
   itemsPerPage?: number;
   searchStr?: string;
   orderBy?: string;
+  status?: TransactionStatus;
   orderByVal?: 'asc' | 'desc';
 }

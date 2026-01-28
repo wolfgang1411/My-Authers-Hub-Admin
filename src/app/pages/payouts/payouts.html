@@ -54,6 +54,89 @@
       Search
     </button>
   </div>
+
+  <div class="flex gap-2 py-6">
+    <button
+      class="btn rounded-md !text-primary"
+      matButton="filled"
+      [ngClass]="{
+        '!bg-primary !text-white': lastSelectedStatus === 'ALL',
+        '!bg-primary-superlight': lastSelectedStatus !== 'ALL',
+      }"
+      (click)="selectStatus('ALL')"
+    >
+      <mat-icon>format_list_bulleted</mat-icon>
+      All
+    </button>
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white':
+          lastSelectedStatus === PayoutAmountStatus.PENDING,
+        '!bg-primary-superlight':
+          lastSelectedStatus !== PayoutAmountStatus.PENDING,
+      }"
+      (click)="selectStatus(PayoutAmountStatus.PENDING)"
+    >
+      <mat-icon>hourglass_top</mat-icon>
+
+      PENDING
+    </button>
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white':
+          lastSelectedStatus === PayoutAmountStatus.APPROVED,
+        '!bg-primary-superlight':
+          lastSelectedStatus !== PayoutAmountStatus.APPROVED,
+      }"
+      (click)="selectStatus(PayoutAmountStatus.APPROVED)"
+    >
+      <mat-icon>check_circle</mat-icon>
+
+      APPROVED
+    </button>
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white':
+          lastSelectedStatus === PayoutAmountStatus.REJECTED,
+        '!bg-primary-superlight':
+          lastSelectedStatus !== PayoutAmountStatus.REJECTED,
+      }"
+      (click)="selectStatus(PayoutAmountStatus.REJECTED)"
+    >
+      <mat-icon>cancel</mat-icon>
+
+      REJECTED
+    </button>
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white':
+          lastSelectedStatus === PayoutAmountStatus.PAID,
+        '!bg-primary-superlight':
+          lastSelectedStatus !== PayoutAmountStatus.PAID,
+      }"
+      (click)="selectStatus(PayoutAmountStatus.PAID)"
+    >
+      <mat-icon>paid</mat-icon>
+
+      PAID
+    </button>
+  </div>
   <div
     class="bg-white rounded-2xl border border-[var(--primary-superlight)] shadow-md overflow-hidden"
   >

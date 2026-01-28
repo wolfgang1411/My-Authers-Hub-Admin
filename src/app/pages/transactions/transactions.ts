@@ -1,6 +1,10 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { TransactionService } from '../../services/transaction';
-import { Transaction, TransactionFilter } from '../../interfaces';
+import {
+  Transaction,
+  TransactionFilter,
+  TransactionStatus,
+} from '../../interfaces';
 import { TransactionTable } from '../../components/transaction-table/transaction-table';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { debounceTime, Subject } from 'rxjs';
@@ -11,6 +15,7 @@ import { exportToExcel } from '../../common/utils/excel';
 import Swal from 'sweetalert2';
 import { format } from 'date-fns';
 import { Logger } from '../../services/logger';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-transactions',
@@ -22,7 +27,9 @@ export class Transactions implements OnInit {
   constructor(
     private transactionService: TransactionService,
     private translateService: TranslateService,
-    private logger: Logger
+    private logger: Logger,
+    private router: Router,
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
@@ -33,7 +40,7 @@ export class Transactions implements OnInit {
       this.loadTransactions();
     });
   }
-  
+
   private getFilterKey(): string {
     const currentFilter = this.filter();
     return JSON.stringify({
@@ -55,14 +62,15 @@ export class Transactions implements OnInit {
   page = signal(1);
   itemsPerPage = signal(30);
   lastPage = signal(1);
-  
+  lastSelectedStatus: TransactionStatus | 'ALL' = 'ALL';
+  transactionStatus = TransactionStatus;
   filter = signal<TransactionFilter>({
     page: 1,
     itemsPerPage: 30,
     orderBy: 'id',
     orderByVal: 'desc',
   });
-  
+
   // Cache to store fetched pages
   private pageCache = new Map<number, Transaction[]>();
   private cachedFilterKey = '';
@@ -72,7 +80,7 @@ export class Transactions implements OnInit {
       const currentFilter = this.filter();
       const currentPage = currentFilter.page || 1;
       const filterKey = this.getFilterKey();
-      
+
       // Clear cache if filter changed
       if (this.cachedFilterKey !== filterKey) {
         this.clearCache();
@@ -86,9 +94,12 @@ export class Transactions implements OnInit {
       }
 
       // Fetch from API
-      const { items, totalCount, itemsPerPage: returnedItemsPerPage } =
-        await this.transactionService.fetchTransactions(currentFilter);
-      
+      const {
+        items,
+        totalCount,
+        itemsPerPage: returnedItemsPerPage,
+      } = await this.transactionService.fetchTransactions(currentFilter);
+
       // Cache the fetched page
       this.pageCache.set(currentPage, items);
       this.transactions.set(items);
@@ -162,6 +173,40 @@ export class Transactions implements OnInit {
 
     return pages;
   }
+  selectStatus(
+    status: TransactionStatus | 'ALL',
+    updateQueryParams: boolean = true,
+    triggerFetch: boolean = true,
+  ) {
+    this.lastSelectedStatus = status;
+    this.filter.update((f) => {
+      const updatedFilter = {
+        ...f,
+        page: 1,
+      };
+      if (status === 'ALL') {
+        delete (updatedFilter as TransactionFilter).status;
+      } else {
+        updatedFilter.status = status as TransactionStatus;
+      }
+
+      return updatedFilter;
+    });
+
+    this.clearCache();
+    // Update query params to persist the selected status
+    if (updateQueryParams) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { status: status === 'ALL' ? 'ALL' : status },
+        queryParamsHandling: 'merge', // Preserve other query params if any
+      });
+    }
+
+    if (triggerFetch) {
+      this.loadTransactions();
+    }
+  }
 
   // Map display columns to API sort fields
   getApiFieldName = (column: string): string | null => {
@@ -218,11 +263,16 @@ export class Transactions implements OnInit {
 
       const exportData = transactions.map((transaction) => ({
         orderid: '#' + transaction.id,
-        email: transaction.booking?.userDetails?.email || transaction.user?.email || '-',
-        title: transaction.booking?.titleDetails?.name || transaction.title || '-',
+        email:
+          transaction.booking?.userDetails?.email ||
+          transaction.user?.email ||
+          '-',
+        title:
+          transaction.booking?.titleDetails?.name || transaction.title || '-',
         status: transaction.status || '-',
         amount: transaction.amount || 0,
-        txnid: transaction.merchantTxnId || transaction.paymentGatewayTxnId || 'N/A',
+        txnid:
+          transaction.merchantTxnId || transaction.paymentGatewayTxnId || 'N/A',
       }));
 
       const headers: Record<string, string> = {
@@ -237,7 +287,7 @@ export class Transactions implements OnInit {
       const currentPage = this.filter().page || 1;
       const fileName = `transactions-page-${currentPage}-${format(
         new Date(),
-        'dd-MM-yyyy'
+        'dd-MM-yyyy',
       )}`;
 
       exportToExcel(exportData, fileName, headers, 'Transactions');
@@ -262,4 +312,3 @@ export class Transactions implements OnInit {
     }
   }
 }
-
