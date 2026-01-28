@@ -968,5 +968,6 @@
   "publisherName": "Publisher Name",
   "missingDetails":"Missing Details",
   "transactionId": "Transaction ID",
-  "pincodenotfound": "Pincode not found"
+  "pincodenotfound": "Pincode not found",
+  "selectaddress": "Select Address"
 }

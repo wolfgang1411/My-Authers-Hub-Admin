@@ -11,9 +11,9 @@ import {
   MatDialogContent,
   MatDialogTitle,
   MatDialogActions,
+  MatDialogModule,
 } from '@angular/material/dialog';
 import { AddressService } from '../../services/address-service';
-import { Address, AddressLinkType, Countries, States, Cities } from '../../interfaces';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
@@ -22,120 +22,70 @@ import {
   FormGroup,
   Validators,
   ReactiveFormsModule,
+  FormControl,
+  ValidationErrors,
+  AbstractControl,
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { Country, State, City } from 'country-state-city';
 import { UserService } from '../../services/user';
-import { User } from '../../interfaces';
-import Swal from 'sweetalert2';
 import { TranslateService } from '@ngx-translate/core';
 import { Logger } from '../../services/logger';
+import { AddAddress, AddressDetailsForm } from '../add-address/add-address';
+import { Address } from 'cluster';
+import { AddressLinkType } from 'src/app/interfaces';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-add-address-dialog',
   standalone: true,
   imports: [
     SharedModule,
-    MatDialogContent,
-    MatDialogTitle,
-    MatDialogActions,
     MatButton,
     MatIcon,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    AddAddress,
+    MatDialogModule
   ],
   templateUrl: './add-address-dialog.html',
   styleUrl: './add-address-dialog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AddAddressDialog implements OnInit {
+export class AddAddressDialog {
   dialogRef = inject(MatDialogRef<AddAddressDialog>);
   addressService = inject(AddressService);
   userService = inject(UserService);
   translateService = inject(TranslateService);
   logger = inject(Logger);
-  fb = inject(FormBuilder);
 
-  addressForm: FormGroup;
-  countries: Countries[] = [];
-  states: States[] = [];
-  cities: Cities[] = [];
-  isLoading = signal(false);
 
-  constructor() {
-    this.addressForm = this.fb.group({
-      address: ['', Validators.required],
-      city: ['', Validators.required],
-      state: ['', Validators.required],
-      country: ['', Validators.required],
-      pincode: ['', [Validators.required]],
-    });
-  }
+  isLoading = signal(false)
 
-  ngOnInit(): void {
-    this.loadCountries();
-    this.addressForm.get('country')?.valueChanges.subscribe((countryCode) => {
-      if (countryCode) {
-        this.loadStates(countryCode);
-      }
-    });
-    this.addressForm.get('state')?.valueChanges.subscribe((stateCode) => {
-      if (stateCode) {
-        const countryCode = this.addressForm.get('country')?.value;
-        if (countryCode) {
-          this.loadCities(countryCode, stateCode);
-        }
-      }
-    });
-  }
 
-  loadCountries() {
-    const countries = Country.getAllCountries();
-    this.countries = countries.map((c) => ({
-      name: c.name,
-      isoCode: c.isoCode,
-    }));
-  }
+  addressForm = new FormGroup<AddressDetailsForm>({
+    id: new FormControl<number | null>(null),
+    address: new FormControl<string | null>(null, Validators.required),
+    city: new FormControl<string | null>({
+      value: null,
+      disabled: true
+    }, Validators.required),
+    state: new FormControl<string | null>({
+      value: null,
+      disabled: true
+    }, Validators.required),
+    country: new FormControl<string | null>(null, Validators.required),
+    pincode: new FormControl<string | null>(null, [Validators.required]),
+    signupCode: new FormControl<string | null>(null),
+  });;
 
-  loadStates(countryCode: string) {
-    const states = State.getStatesOfCountry(countryCode);
-    this.states = states.map((s) => ({
-      name: s.name,
-      isoCode: s.isoCode,
-    }));
-    this.cities = [];
-    this.addressForm.patchValue({ state: '', city: '' });
-  }
 
-  loadCities(countryCode: string, stateCode: string) {
-    const cities = City.getCitiesOfState(countryCode, stateCode);
-    this.cities = cities.map((c) => ({ name: c.name }));
-    this.addressForm.patchValue({ city: '' });
-  }
-
-  async validatePincode() {
-    const pincode = this.addressForm.get('pincode')?.value;
-    const stateCode = this.addressForm.get('state')?.value;
-    if (pincode && stateCode) {
-      try {
-        const result = await this.addressService.validatePincode(
-          pincode,
-          stateCode
-        );
-        if (!result.valid) {
-          this.addressForm.get('pincode')?.setErrors({ invalidPincode: true });
-        }
-      } catch (error) {
-        this.logger.logError(error);
-      }
-    }
-  }
 
   async saveAddress() {
+
     if (this.addressForm.invalid) {
       this.addressForm.markAllAsTouched();
       return;
@@ -144,16 +94,18 @@ export class AddAddressDialog implements OnInit {
     try {
       this.isLoading.set(true);
       const user = this.userService.loggedInUser$();
-      const formValue = this.addressForm.value;
+      // const formValue = this.addressForm.value;
+
+      const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl, signupCode: signupCodeControl } = this.addressForm.controls;
+
 
       // Link address to user instead of author/publisher to allow multiple addresses
-      const addressData: Address = {
-        id: 0,
-        address: formValue.address,
-        city: formValue.city,
-        state: formValue.state,
-        country: formValue.country,
-        pincode: formValue.pincode,
+      const addressData: any = {
+        address: addressControl.value || '',
+        city: cityControl.value || '',
+        state: stateControl.value,
+        country: countryControl.value,
+        pincode: pincodeControl.value,
         type: AddressLinkType.USER, // General address dialog links to user
         // Don't send autherId or publisherId - link to user instead
       };

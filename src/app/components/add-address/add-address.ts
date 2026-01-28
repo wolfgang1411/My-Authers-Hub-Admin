@@ -19,6 +19,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 })
 export class AddAddress implements OnInit, OnDestroy{
 
+
+  gridCss = input<string>('grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-4')
+
   addressService = inject(AddressService)
 
   addressForm = input.required<FormGroup<AddressDetailsForm>>()
