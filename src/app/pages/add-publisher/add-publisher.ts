@@ -76,6 +76,9 @@ import { LoaderService } from '../../services/loader';
 import { City, Country, State } from 'country-state-city';
 import { NgxMaterialIntlTelInputComponent } from 'ngx-material-intl-tel-input';
 import { MobileSection } from 'src/app/components/mobile-section/mobile-section';
+import { AddAddress, AddressDetailsForm } from 'src/app/components/add-address/add-address';
+
+
 
 @Component({
   selector: 'app-add-publisher',
@@ -97,6 +100,7 @@ import { MobileSection } from 'src/app/components/mobile-section/mobile-section'
     MatProgressSpinnerModule,
     NgxMaterialIntlTelInputComponent,
     MobileSection,
+    AddAddress
   ],
   templateUrl: './add-publisher.html',
   styleUrl: './add-publisher.css',
@@ -173,11 +177,11 @@ export class AddPublisher {
   };
   loggedInUser!: Signal<User | null>;
   selectedTypes = signal<string[]>([]);
-  countries!: Countries[];
-  states!: States[];
-  cities!: Cities[];
+  // countries!: Countries[];
+  // states!: States[];
+  // cities!: Cities[];
   isPrefilling: boolean = false;
-  verifyingPin = signal(false);
+  // verifyingPin = signal(false);
   mediaToDeleteId: number | null = null;
   PublisherStatus = PublisherStatus; // Expose PublisherStatus enum to template
   currentTabIndex = signal<number>(0);
@@ -254,54 +258,54 @@ export class AddPublisher {
     this.publisherBankDetails.controls.signupCode.patchValue(
       this.signupCode || null,
     );
-    this.countries = Country.getAllCountries().map((c) => ({
-      name: c.name,
-      isoCode: c.isoCode,
-    }));
+    // this.countries = Country.getAllCountries().map((c) => ({
+    //   name: c.name,
+    //   isoCode: c.isoCode,
+    // }));
 
-    this.publisherAddressDetails
-      .get('country')
-      ?.valueChanges.subscribe((countryIso) => {
-        this.publisherAddressDetails.controls.pincode.updateValueAndValidity();
-        if (countryIso) {
-          this.states = State.getStatesOfCountry(countryIso).map((s) => ({
-            name: s.name,
-            isoCode: s.isoCode,
-          }));
-          this.publisherAddressDetails.patchValue({ state: '', city: '' });
-          this.cities = [];
-        }
-      });
-    this.publisherAddressDetails
-      .get('state')
-      ?.valueChanges.subscribe((stateIso) => {
-        const countryIso = this.publisherAddressDetails.get('country')?.value;
-        if (countryIso && stateIso) {
-          this.cities = City.getCitiesOfState(countryIso, stateIso).map(
-            (c) => ({
-              name: c.name,
-            }),
-          );
-          this.publisherAddressDetails.patchValue({ city: '' });
-        }
-      });
-    this.publisherAddressDetails
-      .get('pincode')
-      ?.valueChanges.pipe(debounceTime(400))
-      .subscribe((pin) => {
-        const countryIso = this.publisherAddressDetails.get('country')?.value;
-        if (countryIso === 'IN' && pin?.length === 6) {
-          // this.lookupByPincode(pin);
-        }
-      });
+    // this.publisherAddressDetails
+    //   .get('country')
+    //   ?.valueChanges.subscribe((countryIso) => {
+    //     this.publisherAddressDetails.controls.pincode.updateValueAndValidity();
+    //     if (countryIso) {
+    //       this.states = State.getStatesOfCountry(countryIso).map((s) => ({
+    //         name: s.name,
+    //         isoCode: s.isoCode,
+    //       }));
+    //       this.publisherAddressDetails.patchValue({ state: '', city: '' });
+    //       this.cities = [];
+    //     }
+    //   });
+    // this.publisherAddressDetails
+    //   .get('state')
+    //   ?.valueChanges.subscribe((stateIso) => {
+    //     const countryIso = this.publisherAddressDetails.get('country')?.value;
+    //     if (countryIso && stateIso) {
+    //       this.cities = City.getCitiesOfState(countryIso, stateIso).map(
+    //         (c) => ({
+    //           name: c.name,
+    //         }),
+    //       );
+    //       this.publisherAddressDetails.patchValue({ city: '' });
+    //     }
+    //   });
+    // this.publisherAddressDetails
+    //   .get('pincode')
+    //   ?.valueChanges.pipe(debounceTime(400))
+    //   .subscribe((pin) => {
+    //     const countryIso = this.publisherAddressDetails.get('country')?.value;
+    //     if (countryIso === 'IN' && pin?.length === 6) {
+    //       // this.lookupByPincode(pin);
+    //     }
+    //   });
 
-    const defaultCountryIso = 'IN';
-    if (
-      !this.publisherId &&
-      !this.publisherAddressDetails.get('country')?.value
-    ) {
-      this.publisherAddressDetails.patchValue({ country: defaultCountryIso });
-    }
+    // const defaultCountryIso = 'IN';
+    // if (
+    //   !this.publisherId &&
+    //   !this.publisherAddressDetails.get('country')?.value
+    // ) {
+    //   this.publisherAddressDetails.patchValue({ country: defaultCountryIso });
+    // }
     this.publisherBankDetails.controls.name.valueChanges.subscribe((v) => {
       this.selectedBankPrefix.set(
         this.bankOptions().find(({ name }) => name === v)?.bankCode || null,
@@ -425,43 +429,43 @@ export class AddPublisher {
   // }
   private _formBuilder = inject(FormBuilder);
 
-  validatePincode(): AsyncValidatorFn {
-    return async (control) => {
-      const pin = control.value;
-      const country = this.publisherAddressDetails.controls?.country?.value;
-      const state = this.publisherAddressDetails.controls?.state?.value;
-      const isIndia = ['IN', 'INDIA', 'india', 'India', 'in'].includes(
-        country || '',
-      );
+  // validatePincode(): AsyncValidatorFn {
+  //   return async (control) => {
+  //     const pin = control.value;
+  //     const country = this.publisherAddressDetails.controls?.country?.value;
+  //     const state = this.publisherAddressDetails.controls?.state?.value;
+  //     const isIndia = ['IN', 'INDIA', 'india', 'India', 'in'].includes(
+  //       country || '',
+  //     );
 
-      // Skip async validation if field is empty
-      if (!pin || !isIndia) {
-        this.verifyingPin.set(false);
-        return null;
-      }
+  //     // Skip async validation if field is empty
+  //     if (!pin || !isIndia) {
+  //       this.verifyingPin.set(false);
+  //       return null;
+  //     }
 
-      // Optional: basic length check (India)
-      if (pin?.length !== 6 || !state || !state.length) {
-        this.verifyingPin.set(false);
-        return { invalidPincode: true };
-      }
+  //     // Optional: basic length check (India)
+  //     if (pin?.length !== 6 || !state || !state.length) {
+  //       this.verifyingPin.set(false);
+  //       return { invalidPincode: true };
+  //     }
 
-      try {
-        this.verifyingPin.set(true);
-        const { valid } = await this.addressService.validatePincode(pin, state);
-        // Expecting: { valid: boolean } or similar
-        if (valid) {
-          this.verifyingPin.set(false);
-          return null; // Valid pincode
-        }
-        this.verifyingPin.set(false);
-        return { invalidPincode: true }; // Invalid from API
-      } catch (err) {
-        this.verifyingPin.set(false);
-        return { invalidPincode: true }; // API error = invalid
-      }
-    };
-  }
+  //     try {
+  //       this.verifyingPin.set(true);
+  //       const { valid } = await this.addressService.validatePincode(pin, state);
+  //       // Expecting: { valid: boolean } or similar
+  //       if (valid) {
+  //         this.verifyingPin.set(false);
+  //         return null; // Valid pincode
+  //       }
+  //       this.verifyingPin.set(false);
+  //       return { invalidPincode: true }; // Invalid from API
+  //     } catch (err) {
+  //       this.verifyingPin.set(false);
+  //       return { invalidPincode: true }; // API error = invalid
+  //     }
+  //   };
+  // }
 
   panCardValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
@@ -574,15 +578,25 @@ export class AddPublisher {
     },
   );
 
-  publisherAddressDetails = this._formBuilder.group({
-    id: <number | null>null,
-    address: ['', Validators.required],
-    city: ['', Validators.required],
-    state: ['', Validators.required],
-    country: ['', Validators.required],
-    pincode: ['', [Validators.required], [this.validatePincode()]],
-    signupCode: <string | null>null,
+
+
+
+  publisherAddressDetails = new FormGroup<AddressDetailsForm>({
+    id: new FormControl<number | null>(null),
+    address: new FormControl<string | null>(null, Validators.required),
+    city: new FormControl<string | null>({
+      value: null,
+      disabled: true
+    }, Validators.required),
+    state: new FormControl<string | null>({
+      value: null,
+      disabled: true
+    }, Validators.required),
+    country: new FormControl<string | null>(null, Validators.required),
+    pincode: new FormControl<string | null>(null, [Validators.required]),
+    signupCode: new FormControl<string | null>(null),
   });
+
   publisherSocialMediaGroup = new FormGroup({
     socialMedia: new FormArray<FormGroup<SocialMediaGroupType>>([
       this.createSocialGroup(),
@@ -661,49 +675,59 @@ export class AddPublisher {
     });
 
     // Prefill address if it exists
-    const addr = publisherDetails.address?.[0];
-    if (addr) {
-      const countryIso =
-        this.countries.find(
-          (c) =>
-            addr.country?.toLowerCase() === c.name.toLowerCase() ||
-            addr.country?.toLowerCase() === c.isoCode.toLowerCase(),
-        )?.isoCode || '';
+    // const addr = publisherDetails.address?.[0];
+    // if (addr) {
+    //   const countryIso =
+    //     this.countries.find(
+    //       (c) =>
+    //         addr.country?.toLowerCase() === c.name.toLowerCase() ||
+    //         addr.country?.toLowerCase() === c.isoCode.toLowerCase(),
+    //     )?.isoCode || '';
 
-      this.publisherAddressDetails.patchValue({
-        id: addr.id,
-        address: addr.address,
-        country: countryIso,
-      });
-      console.log({ addr }, 'addresss');
-      this.states = State.getStatesOfCountry(countryIso).map((s) => ({
-        name: s.name,
-        isoCode: s.isoCode,
-      }));
-      console.log(this.states, 'states');
-      const stateIso =
-        this.states.find(
-          (s) => s.isoCode.toLowerCase() === addr.state?.toLowerCase(),
-        )?.isoCode || '';
-      console.log({ stateIso }, 'stateIso');
-      this.publisherAddressDetails.patchValue({
-        state: stateIso,
-      });
+    //   // this.publisherAddressDetails.patchValue({
+    //   //   id: addr.id,
+    //   //   address: addr.address,
+    //   //   country: countryIso,
+    //   // });
+    //   console.log({ addr }, 'addresss');
+    //   this.states = State.getStatesOfCountry(countryIso).map((s) => ({
+    //     name: s.name,
+    //     isoCode: s.isoCode,
+    //   }));
+    //   console.log(this.states, 'states');
+    //   const stateIso =
+    //     this.states.find(
+    //       (s) => s.isoCode.toLowerCase() === addr.state?.toLowerCase(),
+    //     )?.isoCode || '';
+    //   console.log({ stateIso }, 'stateIso');
+    //   // this.publisherAddressDetails.patchValue({
+    //   //   state: stateIso,
+    //   // });
 
-      this.cities = City.getCitiesOfState(countryIso, stateIso).map((c) => ({
-        name: c.name,
-      }));
+    //   this.cities = City.getCitiesOfState(countryIso, stateIso).map((c) => ({
+    //     name: c.name,
+    //   }));
 
-      const cityName =
-        this.cities.find(
-          (c) => c.name.toLowerCase() === addr.city?.toLowerCase(),
-        )?.name || '';
+    //   const cityName =
+    //     this.cities.find(
+    //       (c) => c.name.toLowerCase() === addr.city?.toLowerCase(),
+    //     )?.name || '';
 
-      this.publisherAddressDetails.patchValue({
-        city: cityName,
-        pincode: addr.pincode,
-      });
-    }
+    //   this.publisherAddressDetails.patchValue({
+    //     city: cityName,
+    //     pincode: addr.pincode,
+    //   });
+    // }
+
+    this.publisherAddressDetails.patchValue({
+      id: publisherDetails.address?.[0]?.id,
+      address: publisherDetails.address?.[0]?.address,
+      country: publisherDetails.address?.[0]?.country,
+      pincode: publisherDetails.address?.[0]?.pincode,
+      city: publisherDetails.address?.[0]?.city,
+      state: publisherDetails.address?.[0]?.state,
+      signupCode: this.signupCode,
+    });
 
     this.selectedBankPrefix.set(
       this.bankOptions().find(
@@ -777,8 +801,15 @@ export class AddPublisher {
     this.publisherId = response.id;
 
     if (response && response.id) {
+      const { id: addressId, address: addressControl, country: countryControl, pincode: pincodeControl, city: cityControl, state: stateControl, signupCode: signupCodeControl } = this.publisherAddressDetails.controls;
       const publisherAddressData = {
-        ...this.publisherAddressDetails.value,
+        id: addressId.value,
+        address: addressControl.value,
+        country: countryControl.value,
+        pincode: pincodeControl.value,
+        city: cityControl.value,
+        state: stateControl.value,
+        signupCode: signupCodeControl.value,
         publisherId: response.id,
       };
 
@@ -1077,28 +1108,28 @@ export class AddPublisher {
     );
   }
 
-  // Check if address has changed (for ticket comparison)
+  // Check if address has changed(for ticket comparison)
   private hasAddressChanges(existingAddress?: Address): boolean {
     if (!existingAddress) {
       // If no existing address, check if form has values
-      const formValue = this.publisherAddressDetails.value;
+      const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.publisherAddressDetails.controls;
       return !!(
-        formValue.address ||
-        formValue.city ||
-        formValue.state ||
-        formValue.country ||
-        formValue.pincode
+        addressControl.value ||
+        cityControl.value ||
+        stateControl.value ||
+        countryControl.value ||
+        pincodeControl.value
       );
     }
 
-    const formAddress = this.publisherAddressDetails.value;
+    const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.publisherAddressDetails.controls;
 
     return (
-      this.compareValues(formAddress.address, existingAddress.address) ||
-      this.compareValues(formAddress.city, existingAddress.city) ||
-      this.compareValues(formAddress.state, existingAddress.state) ||
-      this.compareValues(formAddress.country, existingAddress.country) ||
-      this.compareValues(formAddress.pincode, existingAddress.pincode)
+      this.compareValues(addressControl.value, existingAddress.address) ||
+      this.compareValues(cityControl.value, existingAddress.city) ||
+      this.compareValues(stateControl.value, existingAddress.state) ||
+      this.compareValues(countryControl.value, existingAddress.country) ||
+      this.compareValues(pincodeControl.value, existingAddress.pincode)
     );
   }
 
@@ -1184,8 +1215,17 @@ export class AddPublisher {
     ) {
       delete bankDetailsValue.gstNumber;
     }
+
+    const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.publisherAddressDetails.controls;
+    const addressData = {
+      address: addressControl.value,
+      city: cityControl.value,
+      state: stateControl.value,
+      country: countryControl.value,
+      pincode: pincodeControl.value,
+    };
     const rawValue = {
-      ...this.publisherAddressDetails.value,
+      ...addressData,
       ...bankDetailsValue,
       accountHolderName: this.publisherBankDetails.value.accountHolderName,
       bankName: this.publisherBankDetails.value.name,
@@ -2075,8 +2115,16 @@ export class AddPublisher {
       const wasNewAddress = !existingAddress;
 
       // In invite flow, always use CREATE (remove id) but still prefill form
+      const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.publisherAddressDetails.controls;
+      const addressData = {
+        address: addressControl.value,
+        city: cityControl.value,
+        state: stateControl.value,
+        country: countryControl.value,
+        pincode: pincodeControl.value,
+      };
       const addressPayload: any = {
-        ...this.publisherAddressDetails.value,
+        ...addressData,
         publisherId: this.publisherId,
         type: AddressLinkType.PUBLISHER, // Link address to publisher
       };
@@ -2112,14 +2160,15 @@ export class AddPublisher {
       const hasAddressChange = this.hasAddressChanges(existingAddress);
 
       if (hasAddressChange) {
+        const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.publisherAddressDetails.controls;
         const payload: any = {
           type: UpdateTicketType.ADDRESS,
           targetPublisherId: this.publisherId,
-          address: this.publisherAddressDetails.value.address,
-          city: this.publisherAddressDetails.value.city,
-          state: this.publisherAddressDetails.value.state,
-          country: this.publisherAddressDetails.value.country,
-          pincode: this.publisherAddressDetails.value.pincode,
+          address: addressControl.value,
+          city: cityControl.value,
+          state: stateControl.value,
+          country: countryControl.value,
+          pincode: pincodeControl.value,
         };
 
         await this.userService.raisingTicket(payload);
