@@ -7,7 +7,7 @@
   </div>
 
   <!-- Filter buttons -->
-  <div class="flex w-full gap-4">
+  <div class="flex flex-wrap w-full gap-3">
     <button
       class="btn rounded-md !text-primary"
       type="button"
@@ -51,19 +51,85 @@
       <p>{{ "noTitlesFound" | translate }}</p>
     </div>
   } @else {
-    <app-list-table
-      class="pt-6"
-      [dataSource]="dataSource"
-      [displayedColumns]="displayedColumns"
-      [actionTemplate]="actionButtons"
-      [isSortable]="isSortable"
-      (sortChange)="onSortChange($event)"
-    >
-    </app-list-table>
+    <div class="hidden lg:block pt-6">
+      <app-list-table
+        class="pt-6"
+        [dataSource]="dataSource"
+        [displayedColumns]="displayedColumns"
+        [actionTemplate]="actionButtons"
+        [isSortable]="isSortable"
+        (sortChange)="onSortChange($event)"
+      >
+      </app-list-table>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 lg:hidden">
+      @for (item of dataSource.data; track item.id) {
+        <div
+          class="bg-white rounded-xl border border-[var(--primary-superlight)] shadow-sm p-4 flex flex-col gap-4"
+        >
+          <!-- Header -->
+          <div class="flex justify-between items-start gap-3">
+            <div>
+              <h3 class="text-sm font-semibold text-[var(--primary)]">
+                {{ item.name }}
+              </h3>
+              <p class="text-xs text-[var(--text-secondary)] mt-1">
+                ISBN: {{ item.isbn || "-" }}
+              </p>
+            </div>
+
+            <span
+              class="px-2 py-1 text-xs rounded-full font-medium"
+              [ngClass]="{
+                'bg-yellow-100 text-yellow-700': item.status === 'PENDING',
+                'bg-red-100 text-red-700': item.status === 'REJECTED',
+                'bg-gray-200 text-gray-700': item.status === 'DRAFT',
+              }"
+            >
+              {{ item.status }}
+            </span>
+          </div>
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <p class="text-[var(--text-secondary)]">Publisher:</p>
+              <p class="font-medium">{{ item.publisherName }}</p>
+            </div>
+
+            <div>
+              <p class="text-[var(--text-secondary)]">Publishing Type:</p>
+              <p class="font-medium">
+                {{ item.publishingType }}
+              </p>
+            </div>
+
+            <div>
+              <p class="text-[var(--text-secondary)]">Missing Details:</p>
+              <p class="font-medium">
+                {{ item.missingDetails }}
+              </p>
+            </div>
+
+            <div>
+              <p class="text-[var(--text-secondary)]">Missing Media:</p>
+              <p class="font-medium">{{ item.missingMedia }}</p>
+            </div>
+          </div>
+          <div
+            class="pt-3 border-t border-[var(--primary-superlight)] flex justify-end"
+          >
+            <ng-container
+              *ngTemplateOutlet="actionButtons; context: { $implicit: item }"
+            ></ng-container>
+          </div>
+        </div>
+      }
+    </div>
 
     <!-- Pagination -->
-    <div class="flex items-center justify-between gap-4 mt-4">
-      <div class="flex items-center gap-2">
+    <div
+      class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4"
+    >
+      <div class="flex flex-wrap items-center gap-2">
         <span class="text-sm text-[var(--text-secondary)]">
           {{ "page" | translate }} {{ filter().page || 1 }}
           {{ "of" | translate }} {{ lastPage() }}
