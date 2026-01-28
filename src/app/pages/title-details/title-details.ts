@@ -104,7 +104,7 @@ export class TitleDetails {
       });
   }
   draftTitles = computed(() =>
-    this.titles().filter((t) => t.status === 'DRAFT')
+    this.titles().filter((t) => t.status === 'DRAFT'),
   );
 
   loadDraftTitleDetails() {
@@ -141,7 +141,7 @@ export class TitleDetails {
       const media = details.media || [];
       const availableMediaTypes = media.map((m: any) => m.type);
       const hasAllRequiredMedia = requiredMediaTypes.every((type) =>
-        availableMediaTypes.includes(type)
+        availableMediaTypes.includes(type),
       );
       const uploadDocuments = hasAllRequiredMedia;
       let printDetails = false;
@@ -171,12 +171,13 @@ export class TitleDetails {
   });
 
   getFrontCoverUrl(title: Title): string | null {
+    console.log('Getting front cover for title:', title);
     const media = title?.media || [];
     const frontCover = media.find((m: any) => m.type === 'FRONT_COVER');
     return frontCover ? frontCover.url : null;
   }
   pendingTitles = computed(() =>
-    this.titles().filter((t) => t.status === 'PENDING')
+    this.titles().filter((t) => t.status === 'PENDING'),
   );
   deleteTitle(titleId: number) {}
 }

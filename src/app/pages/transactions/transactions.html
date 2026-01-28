@@ -37,17 +37,102 @@
     </div>
   </div>
   <div class="flex gap-2">
-    <button class="!bg-primary" matButton="filled">
-      {{ "all" | translate }}
+    <button
+      class="btn rounded-md !text-primary"
+      matButton="filled"
+      [ngClass]="{
+        '!bg-primary !text-white': lastSelectedStatus === 'ALL',
+        '!bg-primary-superlight': lastSelectedStatus !== 'ALL',
+      }"
+      (click)="selectStatus('ALL')"
+    >
+      <mat-icon>format_list_bulleted</mat-icon>
+      All
     </button>
-    <button class="!bg-primary" matButton="filled">
-      {{ "active" | translate }}
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white':
+          lastSelectedStatus === transactionStatus.PENDING,
+        '!bg-primary-superlight':
+          lastSelectedStatus !== transactionStatus.PENDING,
+      }"
+      (click)="selectStatus(transactionStatus.PENDING)"
+    >
+      <mat-icon>hourglass_top</mat-icon>
+
+      PENDING
     </button>
-    <button class="!bg-primary" matButton="filled">
-      {{ "inactive" | translate }}
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white':
+          lastSelectedStatus === transactionStatus.SUCCESS,
+        '!bg-primary-superlight':
+          lastSelectedStatus !== transactionStatus.SUCCESS,
+      }"
+      (click)="selectStatus(transactionStatus.SUCCESS)"
+    >
+      <mat-icon>check_circle</mat-icon>
+
+      SUCCESS
     </button>
-    <button class="!bg-primary" matButton="filled">
-      {{ "dormant" | translate }}
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white':
+          lastSelectedStatus === transactionStatus.FAILED,
+        '!bg-primary-superlight':
+          lastSelectedStatus !== transactionStatus.FAILED,
+      }"
+      (click)="selectStatus(transactionStatus.FAILED)"
+    >
+      <mat-icon>error</mat-icon>
+
+      FAILED
+    </button>
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white':
+          lastSelectedStatus === transactionStatus.REFUNDED,
+        '!bg-primary-superlight':
+          lastSelectedStatus !== transactionStatus.REFUNDED,
+      }"
+      (click)="selectStatus(transactionStatus.REFUNDED)"
+    >
+      <mat-icon>currency_exchange</mat-icon>
+
+      REFUNDED
+    </button>
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white':
+          lastSelectedStatus === transactionStatus.CANCELLED,
+        '!bg-primary-superlight':
+          lastSelectedStatus !== transactionStatus.CANCELLED,
+      }"
+      (click)="selectStatus(transactionStatus.CANCELLED)"
+    >
+      <mat-icon>cancel</mat-icon>
+
+      CANCELLED
     </button>
   </div>
   <app-transaction-table
@@ -59,8 +144,8 @@
   <div class="flex items-center justify-between gap-4 mt-4">
     <div class="flex items-center gap-2">
       <span class="text-sm text-[var(--text-secondary)]">
-        {{ "page" | translate }} {{ filter().page || 1 }}
-        {{ "of" | translate }} {{ lastPage() }}
+        {{ "page" | translate }} {{ filter().page || 1 }} {{ "of" | translate }}
+        {{ lastPage() }}
       </span>
       <span class="text-sm text-[var(--text-secondary)]">|</span>
       <span class="text-sm text-[var(--text-secondary)]"
@@ -79,50 +164,51 @@
       </select>
     </div>
     @if (lastPage() > 1) {
-    <div class="flex items-center gap-2">
-      <button
-        class="btn rounded-md !text-primary"
-        matButton="filled"
-        matButton
-        type="button"
-        [disabled]="(filter().page || 1) === 1"
-        (click)="previousPage()"
-      >
-        <mat-icon>chevron_left</mat-icon>
-        {{ "previous" | translate }}
-      </button>
-      <div class="flex items-center gap-1">
-        @for (pageNum of getPageNumbers(); track pageNum) { @if (pageNum === -1)
-        {
-        <span class="px-2 text-[var(--text-secondary)]">...</span>
-        } @else {
+      <div class="flex items-center gap-2">
         <button
-          class="btn rounded-md !text-primary min-w-[40px]"
+          class="btn rounded-md !text-primary"
           matButton="filled"
           matButton
           type="button"
-          [ngClass]="{
-            '!bg-primary !text-white': (filter().page || 1) === pageNum,
-            '!bg-primary-superlight': (filter().page || 1) !== pageNum
-          }"
-          (click)="goToPage(pageNum)"
+          [disabled]="(filter().page || 1) === 1"
+          (click)="previousPage()"
         >
-          {{ pageNum }}
+          <mat-icon>chevron_left</mat-icon>
+          {{ "previous" | translate }}
         </button>
-        } }
+        <div class="flex items-center gap-1">
+          @for (pageNum of getPageNumbers(); track pageNum) {
+            @if (pageNum === -1) {
+              <span class="px-2 text-[var(--text-secondary)]">...</span>
+            } @else {
+              <button
+                class="btn rounded-md !text-primary min-w-[40px]"
+                matButton="filled"
+                matButton
+                type="button"
+                [ngClass]="{
+                  '!bg-primary !text-white': (filter().page || 1) === pageNum,
+                  '!bg-primary-superlight': (filter().page || 1) !== pageNum,
+                }"
+                (click)="goToPage(pageNum)"
+              >
+                {{ pageNum }}
+              </button>
+            }
+          }
+        </div>
+        <button
+          class="btn rounded-md !text-primary"
+          matButton="filled"
+          matButton
+          type="button"
+          [disabled]="(filter().page || 1) === lastPage()"
+          (click)="nextPage()"
+        >
+          {{ "next" | translate }}
+          <mat-icon>chevron_right</mat-icon>
+        </button>
       </div>
-      <button
-        class="btn rounded-md !text-primary"
-        matButton="filled"
-        matButton
-        type="button"
-        [disabled]="(filter().page || 1) === lastPage()"
-        (click)="nextPage()"
-      >
-        {{ "next" | translate }}
-        <mat-icon>chevron_right</mat-icon>
-      </button>
-    </div>
     }
   </div>
 </div>

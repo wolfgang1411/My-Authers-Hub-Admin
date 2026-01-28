@@ -41,6 +41,71 @@
     </button>
   </div>
 
+  <div class="flex gap-2 py-6">
+    <button
+      class="btn rounded-md !text-primary"
+      matButton="filled"
+      [ngClass]="{
+        '!bg-primary !text-white': lastSelectedStatus === 'ALL',
+        '!bg-primary-superlight': lastSelectedStatus !== 'ALL',
+      }"
+      (click)="selectStatus('ALL')"
+    >
+      <mat-icon>format_list_bulleted</mat-icon>
+      All
+    </button>
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white':
+          lastSelectedStatus === WalletAmountTNStatus.PENDING,
+        '!bg-primary-superlight':
+          lastSelectedStatus !== WalletAmountTNStatus.PENDING,
+      }"
+      (click)="selectStatus(WalletAmountTNStatus.PENDING)"
+    >
+      <mat-icon>hourglass_top</mat-icon>
+
+      PENDING
+    </button>
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white':
+          lastSelectedStatus === WalletAmountTNStatus.COMPLETED,
+        '!bg-primary-superlight':
+          lastSelectedStatus !== WalletAmountTNStatus.COMPLETED,
+      }"
+      (click)="selectStatus(WalletAmountTNStatus.COMPLETED)"
+    >
+      <mat-icon>check_circle</mat-icon>
+
+      COMPLETED
+    </button>
+    <button
+      class="btn rounded-md bg-primary-superlight !text-primary"
+      type="button"
+      matButton="filled"
+      matButton
+      [ngClass]="{
+        '!bg-primary !text-white':
+          lastSelectedStatus === WalletAmountTNStatus.FAILED,
+        '!bg-primary-superlight':
+          lastSelectedStatus !== WalletAmountTNStatus.FAILED,
+      }"
+      (click)="selectStatus(WalletAmountTNStatus.FAILED)"
+    >
+      <mat-icon>error</mat-icon>
+
+      FAILED
+    </button>
+  </div>
   <!-- DESKTOP TABLE -->
   <div
     class="hidden md:block bg-white rounded-2xl border shadow-md overflow-hidden"

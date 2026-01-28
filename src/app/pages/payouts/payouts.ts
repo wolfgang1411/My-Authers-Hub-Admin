@@ -3,14 +3,14 @@ import { PayoutsService } from '../../services/payouts';
 import { Payout, PayoutFilter, PayoutStatus } from '../../interfaces/Payout';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { ListTable } from '../../components/list-table/list-table';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
 import { debounceTime, Subject } from 'rxjs';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatButtonModule, MatIconButton } from '@angular/material/button';
 import Swal from 'sweetalert2';
 import { UserService } from '../../services/user';
-import { User } from '../../interfaces';
+import { PayoutAmountStatus, User } from '../../interfaces';
 import { MatDialog } from '@angular/material/dialog';
 import { InviteDialog } from '../../components/invite-dialog/invite-dialog';
 import { exportToExcel } from '../../common/utils/excel';
@@ -38,6 +38,8 @@ export class Payouts implements OnInit {
     private matDialog: MatDialog,
     private translateService: TranslateService,
     private logger: Logger,
+    private router: Router,
+    private route: ActivatedRoute,
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -104,7 +106,8 @@ export class Payouts implements OnInit {
     'actions',
   ];
   dataSource = new MatTableDataSource<any>([]);
-
+  lastSelectedStatus: PayoutStatus | 'ALL' = 'ALL';
+  PayoutAmountStatus = PayoutAmountStatus;
   setDataSource() {
     this.dataSource.data =
       this.payouts()?.map((payout) => {
@@ -166,6 +169,41 @@ export class Payouts implements OnInit {
           payoutStatus: payout.status, // Original status for logic checks
         };
       }) || [];
+  }
+
+  selectStatus(
+    status: PayoutStatus | 'ALL',
+    updateQueryParams: boolean = true,
+    triggerFetch: boolean = true,
+  ) {
+    this.lastSelectedStatus = status;
+    this.filter.update((f) => {
+      const updatedFilter = {
+        ...f,
+        page: 1,
+      };
+      if (status === 'ALL') {
+        delete (updatedFilter as PayoutFilter).status;
+      } else {
+        updatedFilter.status = status as PayoutStatus;
+      }
+
+      return updatedFilter;
+    });
+    this.clearCache();
+
+    // Update query params to persist the selected status
+    if (updateQueryParams) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { status: status === 'ALL' ? 'ALL' : status },
+        queryParamsHandling: 'merge', // Preserve other query params if any
+      });
+    }
+
+    if (triggerFetch) {
+      this.fetchPayouts();
+    }
   }
   async fetchPayouts() {
     try {

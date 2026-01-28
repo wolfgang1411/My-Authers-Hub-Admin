@@ -135,7 +135,7 @@ export enum AuthorStatus {
   Pending = 'Pending',
   Rejected = 'Rejected',
   Deactivated = 'Deactivated',
-  Dormant = 'Dormant'
+  Dormant = 'Dormant',
 }
 
 export enum TitleMediaType {
@@ -266,7 +266,17 @@ export enum TransactionStatus {
   REFUNDED = 'REFUNDED',
   CANCELLED = 'CANCELLED',
 }
-
+export enum WalletAmountTNStatus {
+  PENDING = 'PENDING',
+  FAILED = 'FAILED',
+  COMPLETED = 'COMPLETED',
+}
+export enum PayoutAmountStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  PAID = 'PAID',
+}
 export enum InvoiceStatus {
   PAID = 'PAID',
   REFUNDED = 'REFUNDED',

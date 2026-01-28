@@ -2,7 +2,7 @@ import { Component, OnInit, Signal, signal } from '@angular/core';
 import { MatButtonModule, MatIconButton } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableDataSource } from '@angular/material/table';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, Subject } from 'rxjs';
 import { ListTable } from 'src/app/components/list-table/list-table';
@@ -10,7 +10,9 @@ import { User } from 'src/app/interfaces';
 import {
   WalletamountTransaction,
   WalletAmountTransactionFilter,
+  WalletAmountTransactionStatus,
 } from 'src/app/interfaces/WalletTransaction';
+import { WalletAmountTNStatus } from 'src/app/interfaces/StaticValue';
 import { SharedModule } from 'src/app/modules/shared/shared-module';
 import { WalletTransaction } from 'src/app/services/wallet-transaction';
 
@@ -31,6 +33,8 @@ export class WalletAmountTransaction implements OnInit {
   constructor(
     private walletTransactionService: WalletTransaction,
     private translate: TranslateService,
+    private router: Router,
+    private route: ActivatedRoute,
   ) {}
 
   searchStr = new Subject<string>();
@@ -44,6 +48,8 @@ export class WalletAmountTransaction implements OnInit {
     orderBy: 'id',
     orderByVal: 'desc',
   });
+  lastSelectedStatus: WalletAmountTransactionStatus | 'ALL' = 'ALL';
+  WalletAmountTNStatus = WalletAmountTNStatus;
 
   displayedColumns = [
     'transactionId',
@@ -95,7 +101,6 @@ export class WalletAmountTransaction implements OnInit {
   setDataSource() {
     this.dataSource.data = this.transactions().map((tx) => {
       const user = tx.wallet.user;
-
       return {
         walletId: tx.wallet.id,
         transactionId: `#OP1500${tx.id}`, // Updated line
@@ -194,6 +199,40 @@ export class WalletAmountTransaction implements OnInit {
     return this.getApiFieldName(column) !== null;
   };
 
+  selectStatus(
+    status: WalletAmountTransactionStatus | 'ALL',
+    updateQueryParams: boolean = true,
+    triggerFetch: boolean = true,
+  ) {
+    this.lastSelectedStatus = status;
+    this.filter.update((f) => {
+      const updatedFilter = {
+        ...f,
+        page: 1,
+      };
+      if (status === 'ALL') {
+        delete (updatedFilter as WalletAmountTransactionFilter).status;
+      } else {
+        updatedFilter.status = status as WalletAmountTransactionStatus;
+      }
+
+      return updatedFilter;
+    });
+    this.clearCache();
+
+    // Update query params to persist the selected status
+    if (updateQueryParams) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { status: status === 'ALL' ? 'ALL' : status },
+        queryParamsHandling: 'merge', // Preserve other query params if any
+      });
+    }
+
+    if (triggerFetch) {
+      this.fetchTransactions();
+    }
+  }
   getApiFieldName(column: string): string | null {
     const map: Record<string, string> = {
       addedBy: 'addedBy',
