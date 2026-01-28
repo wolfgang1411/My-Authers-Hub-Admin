@@ -136,7 +136,8 @@
   </div>
 </ng-template>
 <ng-template #addressTpl>
-  <form [formGroup]="authorAddressDetails">
+  <app-add-address [addressForm]="authorAddressDetails"></app-add-address>
+  <!-- <form [formGroup]="authorAddressDetails">
     <div
       class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-3 sm:my-4"
     >
@@ -202,7 +203,7 @@
         }
       </mat-form-field>
     </div>
-  </form>
+  </form> -->
 </ng-template>
 <ng-template #bankDetailsTpl>
   <form [formGroup]="authorBankDetails">

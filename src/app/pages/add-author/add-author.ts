@@ -72,6 +72,7 @@ import {
   NgxMaterialIntlTelInputComponent,
 } from 'ngx-material-intl-tel-input';
 import { MobileSection } from 'src/app/components/mobile-section/mobile-section';
+import { AddAddress, AddressDetailsForm } from 'src/app/components/add-address/add-address';
 
 @Component({
   selector: 'app-add-author',
@@ -92,6 +93,7 @@ import { MobileSection } from 'src/app/components/mobile-section/mobile-section'
     ReactiveFormsModule,
     NgxMaterialIntlTelInputComponent,
     MobileSection,
+    AddAddress
   ],
   templateUrl: './add-author.html',
   styleUrls: ['./add-author.css'],
@@ -215,43 +217,43 @@ export class AddAuthor implements OnInit {
     };
   }
 
-  validatePincode(): AsyncValidatorFn {
-    return async (control) => {
-      const pin = control.value;
-      const country = this.authorAddressDetails?.controls?.country?.value;
-      const state = this.authorAddressDetails?.controls?.state?.value;
-      const isIndia = ['IN', 'INDIA', 'india', 'India', 'in'].includes(
-        country || '',
-      );
+  // validatePincode(): AsyncValidatorFn {
+  //   return async (control) => {
+  //     const pin = control.value;
+  //     const country = this.authorAddressDetails?.controls?.country?.value;
+  //     const state = this.authorAddressDetails?.controls?.state?.value;
+  //     const isIndia = ['IN', 'INDIA', 'india', 'India', 'in'].includes(
+  //       country || '',
+  //     );
 
-      // Skip async validation if field is empty
-      if (!pin || !isIndia) {
-        this.verifyingPin.set(false);
-        return null;
-      }
+  //     // Skip async validation if field is empty
+  //     if (!pin || !isIndia) {
+  //       this.verifyingPin.set(false);
+  //       return null;
+  //     }
 
-      // Optional: basic length check (India)
-      if (pin?.length !== 6 || !state || !state.length) {
-        this.verifyingPin.set(false);
-        return { invalidPincode: true };
-      }
+  //     // Optional: basic length check (India)
+  //     if (pin?.length !== 6 || !state || !state.length) {
+  //       this.verifyingPin.set(false);
+  //       return { invalidPincode: true };
+  //     }
 
-      try {
-        this.verifyingPin.set(true);
-        const { valid } = await this.addressService.validatePincode(pin, state);
-        // Expecting: { valid: boolean } or similar
-        if (valid) {
-          this.verifyingPin.set(false);
-          return null; // Valid pincode
-        }
-        this.verifyingPin.set(false);
-        return { invalidPincode: true }; // Invalid from API
-      } catch (err) {
-        this.verifyingPin.set(false);
-        return { invalidPincode: true }; // API error = invalid
-      }
-    };
-  }
+  //     try {
+  //       this.verifyingPin.set(true);
+  //       const { valid } = await this.addressService.validatePincode(pin, state);
+  //       // Expecting: { valid: boolean } or similar
+  //       if (valid) {
+  //         this.verifyingPin.set(false);
+  //         return null; // Valid pincode
+  //       }
+  //       this.verifyingPin.set(false);
+  //       return { invalidPincode: true }; // Invalid from API
+  //     } catch (err) {
+  //       this.verifyingPin.set(false);
+  //       return { invalidPincode: true }; // API error = invalid
+  //     }
+  //   };
+  // }
 
   verifyIFSC() {
     const ifsc = this.authorBankDetails
@@ -377,53 +379,53 @@ export class AddAuthor implements OnInit {
       name: c.name,
       isoCode: c.isoCode,
     }));
-    this.authorAddressDetails
-      .get('country')
-      ?.valueChanges.subscribe((countryIso) => {
-        const isIndia = ['IN', 'INDIA', 'india', 'India', 'in'].includes(
-          countryIso || '',
-        );
+    // this.authorAddressDetails
+    //   .get('country')
+    //   ?.valueChanges.subscribe((countryIso) => {
+    //     const isIndia = ['IN', 'INDIA', 'india', 'India', 'in'].includes(
+    //       countryIso || '',
+    //     );
 
-        if (!isIndia) {
-          this.authorAddressDetails.controls.pincode.updateValueAndValidity();
-        }
+    //     if (!isIndia) {
+    //       this.authorAddressDetails.controls.pincode.updateValueAndValidity();
+    //     }
 
-        if (countryIso) {
-          this.states = State.getStatesOfCountry(countryIso).map((s) => ({
-            name: s.name,
-            isoCode: s.isoCode,
-          }));
-          this.authorAddressDetails.patchValue({ state: '', city: '' });
-          this.cities = [];
-        }
-      });
-    this.authorAddressDetails
-      .get('state')
-      ?.valueChanges.subscribe((stateIso) => {
-        const countryIso = this.authorAddressDetails.get('country')?.value;
-        if (countryIso && stateIso) {
-          this.cities = City.getCitiesOfState(countryIso, stateIso).map(
-            (c) => ({
-              name: c.name,
-            }),
-          );
-          this.authorAddressDetails.patchValue({ city: '' });
-        }
-      });
-    this.authorAddressDetails
-      .get('pincode')
-      ?.valueChanges.pipe(debounceTime(400))
-      .subscribe((pin) => {
-        const countryIso = this.authorAddressDetails.get('country')?.value;
-        if (countryIso === 'IN' && pin?.length === 6) {
-          // this.lookupByPincode(pin);
-        }
-      });
+    //     if (countryIso) {
+    //       this.states = State.getStatesOfCountry(countryIso).map((s) => ({
+    //         name: s.name,
+    //         isoCode: s.isoCode,
+    //       }));
+    //       this.authorAddressDetails.patchValue({ state: '', city: '' });
+    //       this.cities = [];
+    //     }
+    //   });
+    // this.authorAddressDetails
+    //   .get('state')
+    //   ?.valueChanges.subscribe((stateIso) => {
+    //     const countryIso = this.authorAddressDetails.get('country')?.value;
+    //     if (countryIso && stateIso) {
+    //       this.cities = City.getCitiesOfState(countryIso, stateIso).map(
+    //         (c) => ({
+    //           name: c.name,
+    //         }),
+    //       );
+    //       this.authorAddressDetails.patchValue({ city: '' });
+    //     }
+    //   });
+    // this.authorAddressDetails
+    //   .get('pincode')
+    //   ?.valueChanges.pipe(debounceTime(400))
+    //   .subscribe((pin) => {
+    //     const countryIso = this.authorAddressDetails.get('country')?.value;
+    //     if (countryIso === 'IN' && pin?.length === 6) {
+    //       // this.lookupByPincode(pin);
+    //     }
+    //   });
 
-    const defaultCountryIso = 'IN';
-    if (!this.authorId && !this.authorAddressDetails.get('country')?.value) {
-      this.authorAddressDetails.patchValue({ country: defaultCountryIso });
-    }
+    // const defaultCountryIso = 'IN';
+    // if (!this.authorId && !this.authorAddressDetails.get('country')?.value) {
+    //   this.authorAddressDetails.patchValue({ country: defaultCountryIso });
+    // }
 
     this.bankOptions.set(this.bankDetailService.fetchBankOptions());
 
@@ -581,15 +583,21 @@ export class AddAuthor implements OnInit {
       validators: [this.accountMatchValidator()],
     },
   );
-  authorAddressDetails = this._formBuilder.group({
-    id: <number | null>null,
-    address: ['', Validators.required],
-    city: ['', Validators.required],
-    state: ['', Validators.required],
-    country: ['', Validators.required],
-    pincode: ['', [Validators.required], [this.validatePincode()]],
-    signupCode: <string | null>null,
-  });
+  authorAddressDetails = new FormGroup<AddressDetailsForm>({
+    id: new FormControl<number | null>(null),
+    address: new FormControl<string | null>(null, Validators.required),
+    city: new FormControl<string | null>({
+      value: null,
+      disabled: true
+    }, Validators.required),
+    state: new FormControl<string | null>({
+      value: null,
+      disabled: true
+    }, Validators.required),
+    country: new FormControl<string | null>(null, Validators.required),
+    pincode: new FormControl<string | null>(null, [Validators.required]),
+    signupCode: new FormControl<string | null>(null),
+  });;
   authorSocialMediaGroup = new FormGroup({
     socialMedia: new FormArray<FormGroup<SocialMediaGroupType>>([
       this.createSocialGroup(),
@@ -643,46 +651,56 @@ export class AddAuthor implements OnInit {
     if (authorDetails.address?.length > 0) {
       const addr = authorDetails.address[0];
 
-      const countryIso =
-        this.countries.find(
-          (c) =>
-            addr.country?.toLowerCase() === c.name.toLowerCase() ||
-            addr.country?.toLowerCase() === c.isoCode.toLowerCase(),
-        )?.isoCode || '';
-
       this.authorAddressDetails.patchValue({
         id: addr.id,
         address: addr.address,
-        country: countryIso,
-      });
-      console.log({ addr }, 'addresss');
-      this.states = State.getStatesOfCountry(countryIso).map((s) => ({
-        name: s.name,
-        isoCode: s.isoCode,
-      }));
-      console.log(this.states, 'states');
-      const stateIso =
-        this.states.find(
-          (s) => s.isoCode.toLowerCase() === addr.state?.toLowerCase(),
-        )?.isoCode || '';
-      console.log({ stateIso }, 'stateIso');
-      this.authorAddressDetails.patchValue({
-        state: stateIso,
-      });
-
-      this.cities = City.getCitiesOfState(countryIso, stateIso).map((c) => ({
-        name: c.name,
-      }));
-
-      const cityName =
-        this.cities.find(
-          (c) => c.name.toLowerCase() === addr.city?.toLowerCase(),
-        )?.name || '';
-
-      this.authorAddressDetails.patchValue({
-        city: cityName,
+        country: addr.country,
         pincode: addr.pincode,
+        city: addr.city,
+        state: addr.state,
+        signupCode: this.signupCode,
       });
+
+      // const countryIso =
+      //   this.countries.find(
+      //     (c) =>
+      //       addr.country?.toLowerCase() === c.name.toLowerCase() ||
+      //       addr.country?.toLowerCase() === c.isoCode.toLowerCase(),
+      //   )?.isoCode || '';
+
+      // this.authorAddressDetails.patchValue({
+      //   id: addr.id,
+      //   address: addr.address,
+      //   country: countryIso,
+      // });
+      // console.log({ addr }, 'addresss');
+      // this.states = State.getStatesOfCountry(countryIso).map((s) => ({
+      //   name: s.name,
+      //   isoCode: s.isoCode,
+      // }));
+      // console.log(this.states, 'states');
+      // const stateIso =
+      //   this.states.find(
+      //     (s) => s.isoCode.toLowerCase() === addr.state?.toLowerCase(),
+      //   )?.isoCode || '';
+      // console.log({ stateIso }, 'stateIso');
+      // this.authorAddressDetails.patchValue({
+      //   state: stateIso,
+      // });
+
+      // this.cities = City.getCitiesOfState(countryIso, stateIso).map((c) => ({
+      //   name: c.name,
+      // }));
+
+      // const cityName =
+      //   this.cities.find(
+      //     (c) => c.name.toLowerCase() === addr.city?.toLowerCase(),
+      //   )?.name || '';
+
+      // this.authorAddressDetails.patchValue({
+      //   city: cityName,
+      //   pincode: addr.pincode,
+      // });
     }
 
     // Prefill bank details if it exists
@@ -771,8 +789,15 @@ export class AddAuthor implements OnInit {
     if (response && finalAuthorId) {
       // Step 2: Create/Update Address
       // In invite flow, always use CREATE (remove id) but still prefill form
+      const { id: addressId, address: addressControl, country: countryControl, pincode: pincodeControl, city: cityControl, state: stateControl, signupCode: signupCodeControl } = this.authorAddressDetails.controls;
       const addressPayload: any = {
-        ...this.authorAddressDetails.value,
+        id: addressId.value,
+        address: addressControl.value,
+        country: countryControl.value,
+        pincode: pincodeControl.value,
+        city: cityControl.value,
+        state: stateControl.value,
+        signupCode: signupCodeControl.value,
         autherId: finalAuthorId,
         type: AddressLinkType.AUTHOR, // Link address to author
       };
@@ -887,15 +912,16 @@ export class AddAuthor implements OnInit {
    * Check if address has changes
    */
   private hasAddressChanges(existingAddress: Address | undefined): boolean {
-    if (!existingAddress) return false;
+    console.log('existingAddress', existingAddress);
+    if (!existingAddress) return true;
 
-    const formValue = this.authorAddressDetails.value;
+    const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.authorAddressDetails.controls;
     return (
-      this.compareValues(formValue.address, existingAddress.address) ||
-      this.compareValues(formValue.city, existingAddress.city) ||
-      this.compareValues(formValue.state, existingAddress.state) ||
-      this.compareValues(formValue.country, existingAddress.country) ||
-      this.compareValues(formValue.pincode, existingAddress.pincode)
+      this.compareValues(addressControl.value, existingAddress.address) ||
+      this.compareValues(cityControl.value, existingAddress.city) ||
+      this.compareValues(stateControl.value, existingAddress.state) ||
+      this.compareValues(countryControl.value, existingAddress.country) ||
+      this.compareValues(pincodeControl.value, existingAddress.pincode)
     );
   }
 
@@ -1165,8 +1191,18 @@ export class AddAuthor implements OnInit {
       delete bankDetailsValue.panCardNo;
     }
 
+
+    const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.authorAddressDetails.controls;
+    const addressData = {
+      address: addressControl.value,
+      city: cityControl.value,
+      state: stateControl.value,
+      country: countryControl.value,
+      pincode: pincodeControl.value,
+    };
+
     const rawValue = {
-      ...this.authorAddressDetails.value,
+      ...addressData,
       ...bankDetailsValue,
       authorName: this.authorFormGroup.value.name,
       authorEmail: this.authorFormGroup.value.email,
@@ -1307,8 +1343,16 @@ export class AddAuthor implements OnInit {
 
         // Update address if changed
         if (hasAddressChange && existingAddress) {
+          const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.authorAddressDetails.controls;
+          const addressData = {
+            address: addressControl.value,
+            city: cityControl.value,
+            state: stateControl.value,
+            country: countryControl.value,
+            pincode: pincodeControl.value,
+          };
           await this.addressService.createOrUpdateAddress({
-            ...this.authorAddressDetails.value,
+            ...addressData,
             id: existingAddress.id,
             autherId: this.authorId,
             type: AddressLinkType.AUTHOR, // Link address to author
@@ -2178,8 +2222,17 @@ export class AddAuthor implements OnInit {
       // Create or update address directly
       const wasNewAddress = !existingAddress;
 
+      const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.authorAddressDetails.controls;
+      const addressData = {
+        address: addressControl.value,
+        city: cityControl.value,
+        state: stateControl.value,
+        country: countryControl.value,
+        pincode: pincodeControl.value,
+      };
+
       await this.addressService.createOrUpdateAddress({
-        ...this.authorAddressDetails.value,
+        ...addressData,
         id: existingAddress?.id,
         autherId: this.authorId,
         type: AddressLinkType.AUTHOR, // Link address to author
@@ -2216,14 +2269,15 @@ export class AddAuthor implements OnInit {
       const hasAddressChange = this.hasAddressChanges(existingAddress);
 
       if (hasAddressChange) {
+        const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.authorAddressDetails.controls;
         const payload: any = {
           type: UpdateTicketType.ADDRESS,
           targetAuthorId: this.authorId,
-          address: this.authorAddressDetails.value.address,
-          city: this.authorAddressDetails.value.city,
-          state: this.authorAddressDetails.value.state,
-          country: this.authorAddressDetails.value.country,
-          pincode: this.authorAddressDetails.value.pincode,
+          address: addressControl.value,
+          city: cityControl.value,
+          state: stateControl.value,
+          country: countryControl.value,
+          pincode: pincodeControl.value,
         };
 
         await this.userService.raisingTicket(payload);
