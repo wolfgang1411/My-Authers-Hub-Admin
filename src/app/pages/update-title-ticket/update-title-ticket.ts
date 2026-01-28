@@ -32,6 +32,7 @@ import {
   UpdateTicketFilter,
 } from '../../interfaces/Titles';
 import { ViewTicketDialog } from '../../components/view-ticket-dialog/view-ticket-dialog';
+import { Back } from 'src/app/components/back/back';
 
 @Component({
   selector: 'app-update-title-ticket',
@@ -43,6 +44,7 @@ import { ViewTicketDialog } from '../../components/view-ticket-dialog/view-ticke
     MatIconButton,
     MatDialogModule,
     ListTable,
+    Back,
   ],
   templateUrl: './update-title-ticket.html',
   styleUrl: './update-title-ticket.css',
@@ -54,7 +56,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
 
   loggedInUser!: Signal<User | null>;
   isSuperAdmin = computed(
-    () => this.loggedInUser()?.accessLevel === 'SUPERADMIN'
+    () => this.loggedInUser()?.accessLevel === 'SUPERADMIN',
   );
 
   selectedTabIndex = signal(0);
@@ -163,7 +165,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
     private userService: UserService,
     private router: Router,
     private dialog: MatDialog,
-    private platformService: PlatformService
+    private platformService: PlatformService,
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -239,6 +241,24 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
         return this.distributionUpdateFilter;
       default:
         return this.filter;
+    }
+  }
+  getActiveMobileData() {
+    switch (this.selectedTabIndex()) {
+      case 0:
+        return this.titleUpdateDataSource.data;
+      case 1:
+        return this.printingUpdateDataSource.data;
+      case 2:
+        return this.pricingUpdateDataSource.data;
+      case 3:
+        return this.royaltyUpdateDataSource.data;
+      case 4:
+        return this.mediaUpdateDataSource.data;
+      case 5:
+        return this.distributionUpdateDataSource.data;
+      default:
+        return [];
     }
   }
 
@@ -333,7 +353,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
       this.isLoading.set(true);
       this.errorMessage.set(null);
       const response = await this.titleService.getTitleUpdateTickets(
-        this.titleUpdateFilter
+        this.titleUpdateFilter,
       );
 
       if (response.totalCount !== undefined) {
@@ -355,7 +375,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
       console.error('Error fetching title update tickets:', error);
       this.errorMessage.set(
         this.translateService.instant('errorfetchingtickets') ||
-          'Failed to fetch title update tickets.'
+          'Failed to fetch title update tickets.',
       );
     } finally {
       this.isLoading.set(false);
@@ -367,7 +387,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
       this.isLoading.set(true);
       this.errorMessage.set(null);
       const response = await this.titleService.getTitlePrintingUpdateTickets(
-        this.printingUpdateFilter
+        this.printingUpdateFilter,
       );
 
       if (response.totalCount !== undefined) {
@@ -389,7 +409,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
       console.error('Error fetching printing update tickets:', error);
       this.errorMessage.set(
         this.translateService.instant('errorfetchingtickets') ||
-          'Failed to fetch printing update tickets.'
+          'Failed to fetch printing update tickets.',
       );
     } finally {
       this.isLoading.set(false);
@@ -401,7 +421,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
       this.isLoading.set(true);
       this.errorMessage.set(null);
       const response = await this.titleService.getPricingUpdateTickets(
-        this.pricingUpdateFilter
+        this.pricingUpdateFilter,
       );
 
       if (response.totalCount !== undefined) {
@@ -423,7 +443,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
       console.error('Error fetching pricing update tickets:', error);
       this.errorMessage.set(
         this.translateService.instant('errorfetchingtickets') ||
-          'Failed to fetch pricing update tickets.'
+          'Failed to fetch pricing update tickets.',
       );
     } finally {
       this.isLoading.set(false);
@@ -435,7 +455,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
       this.isLoading.set(true);
       this.errorMessage.set(null);
       const response = await this.titleService.getRoyaltyUpdateTickets(
-        this.royaltyUpdateFilter
+        this.royaltyUpdateFilter,
       );
 
       if (response.totalCount !== undefined) {
@@ -457,7 +477,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
       console.error('Error fetching royalty update tickets:', error);
       this.errorMessage.set(
         this.translateService.instant('errorfetchingtickets') ||
-          'Failed to fetch royalty update tickets.'
+          'Failed to fetch royalty update tickets.',
       );
     } finally {
       this.isLoading.set(false);
@@ -469,7 +489,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
       this.isLoading.set(true);
       this.errorMessage.set(null);
       const response = await this.titleService.getTitleMediaUpdateTickets(
-        this.mediaUpdateFilter
+        this.mediaUpdateFilter,
       );
 
       if (response.totalCount !== undefined) {
@@ -491,7 +511,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
       console.error('Error fetching media update tickets:', error);
       this.errorMessage.set(
         this.translateService.instant('errorfetchingtickets') ||
-          'Failed to fetch media update tickets.'
+          'Failed to fetch media update tickets.',
       );
     } finally {
       this.isLoading.set(false);
@@ -504,7 +524,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
       this.errorMessage.set(null);
       const response =
         await this.titleService.getTitleDistributionUpdateTickets(
-          this.distributionUpdateFilter
+          this.distributionUpdateFilter,
         );
 
       if (response.totalCount !== undefined) {
@@ -526,7 +546,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
       console.error('Error fetching distribution update tickets:', error);
       this.errorMessage.set(
         this.translateService.instant('errorfetchingtickets') ||
-          'Failed to fetch distribution update tickets.'
+          'Failed to fetch distribution update tickets.',
       );
     } finally {
       this.isLoading.set(false);
@@ -890,7 +910,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
   }
 
   async onApprovePrintingUpdateTicket(
-    ticket: TitlePrintingUpdateTicket
+    ticket: TitlePrintingUpdateTicket,
   ): Promise<void> {
     const { value } = await Swal.fire({
       icon: 'warning',
@@ -933,7 +953,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
   }
 
   async onRejectPrintingUpdateTicket(
-    ticket: TitlePrintingUpdateTicket
+    ticket: TitlePrintingUpdateTicket,
   ): Promise<void> {
     const { value } = await Swal.fire({
       icon: 'warning',
@@ -976,7 +996,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
   }
 
   async onApprovePricingUpdateTicket(
-    ticket: PricingUpdateTicket
+    ticket: PricingUpdateTicket,
   ): Promise<void> {
     const { value } = await Swal.fire({
       icon: 'warning',
@@ -1019,7 +1039,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
   }
 
   async onRejectPricingUpdateTicket(
-    ticket: PricingUpdateTicket
+    ticket: PricingUpdateTicket,
   ): Promise<void> {
     const { value } = await Swal.fire({
       icon: 'warning',
@@ -1062,7 +1082,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
   }
 
   async onApproveRoyaltyUpdateTicket(
-    ticket: RoyaltyUpdateTicket
+    ticket: RoyaltyUpdateTicket,
   ): Promise<void> {
     const { value } = await Swal.fire({
       icon: 'warning',
@@ -1105,7 +1125,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
   }
 
   async onRejectRoyaltyUpdateTicket(
-    ticket: RoyaltyUpdateTicket
+    ticket: RoyaltyUpdateTicket,
   ): Promise<void> {
     const { value } = await Swal.fire({
       icon: 'warning',
@@ -1148,7 +1168,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
   }
 
   async onApproveMediaUpdateTicket(
-    ticket: TitleMediaUpdateTicket
+    ticket: TitleMediaUpdateTicket,
   ): Promise<void> {
     const { value } = await Swal.fire({
       icon: 'warning',
@@ -1191,7 +1211,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
   }
 
   async onRejectMediaUpdateTicket(
-    ticket: TitleMediaUpdateTicket
+    ticket: TitleMediaUpdateTicket,
   ): Promise<void> {
     const { value } = await Swal.fire({
       icon: 'warning',
@@ -1234,7 +1254,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
   }
 
   async onApproveDistributionUpdateTicket(
-    ticket: TitleDistributionUpdateTicket
+    ticket: TitleDistributionUpdateTicket,
   ): Promise<void> {
     const { value } = await Swal.fire({
       icon: 'warning',
@@ -1277,7 +1297,7 @@ export class UpdateTitleTicket implements OnInit, OnDestroy {
   }
 
   async onRejectDistributionUpdateTicket(
-    ticket: TitleDistributionUpdateTicket
+    ticket: TitleDistributionUpdateTicket,
   ): Promise<void> {
     const { value } = await Swal.fire({
       icon: 'warning',

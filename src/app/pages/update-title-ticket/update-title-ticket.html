@@ -1,7 +1,10 @@
 <div class="flex flex-col flex-grow gap-4">
-  <h3 class="heading">
-    {{ "updatetickets" | translate }}
-  </h3>
+  <div class="flex justify-between">
+    <h3 class="heading">
+      {{ "updatetickets" | translate }}
+    </h3>
+    <app-back></app-back>
+  </div>
 
   <div class="flex md:flex-row flex-col justify-between w-full gap-4">
     <div
@@ -25,341 +28,466 @@
       </button>
     </div>
   </div>
-
-  <mat-tab-group
-    [selectedIndex]="selectedTabIndex()"
-    (selectedIndexChange)="onTabChange($event)"
-    (selectedIndexChange)="onTabChange($event)"
-    class="w-full"
-  >
-    <!-- Title Details Tab -->
-    <mat-tab label="{{ 'details' | translate }}">
-      <div class="pt-6">
-        <app-list-table
-          [dataSource]="titleUpdateDataSource"
-          [displayedColumns]="titleUpdateColumns"
-          [actionTemplate]="titleUpdateActions"
-        >
-        </app-list-table>
-        @if(hasMoreTickets(0)) {
-        <div class="flex justify-center mt-4">
-          <button
-            class="btn !bg-primary text-white"
-            (click)="loadMoreTickets()"
-            [disabled]="isLoading()"
+  <div class="hidden lg:block">
+    <mat-tab-group
+      [selectedIndex]="selectedTabIndex()"
+      (selectedIndexChange)="onTabChange($event)"
+      (selectedIndexChange)="onTabChange($event)"
+      class="w-full"
+    >
+      <!-- Title Details Tab -->
+      <mat-tab label="{{ 'details' | translate }}">
+        <div class="pt-6">
+          <app-list-table
+            [dataSource]="titleUpdateDataSource"
+            [displayedColumns]="titleUpdateColumns"
+            [actionTemplate]="titleUpdateActions"
           >
-            {{ "loadmore" | translate }}
-          </button>
+          </app-list-table>
+          @if (hasMoreTickets(0)) {
+            <div class="flex justify-center mt-4">
+              <button
+                class="btn !bg-primary text-white"
+                (click)="loadMoreTickets()"
+                [disabled]="isLoading()"
+              >
+                {{ "loadmore" | translate }}
+              </button>
+            </div>
+          }
+          <ng-template #titleUpdateActions let-element>
+            <div
+              class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap"
+            >
+              <button
+                class="!bg-primary"
+                mat-icon-button
+                (click)="onViewTicket(element)"
+                [title]="'view' | translate"
+              >
+                <mat-icon class="!text-white">visibility</mat-icon>
+              </button>
+              @if (isSuperAdmin() && element.status === "PENDING") {
+                <button
+                  (click)="onApproveTitleUpdateTicket(element.ticket)"
+                  [title]="'approve' | translate"
+                  class="!bg-green-700"
+                  mat-icon-button
+                >
+                  <mat-icon class="!text-white">thumb_up</mat-icon>
+                </button>
+                <button
+                  (click)="onRejectTitleUpdateTicket(element.ticket)"
+                  [title]="'reject' | translate"
+                  class="!bg-accent"
+                  mat-icon-button
+                >
+                  <mat-icon class="!text-white">thumb_down</mat-icon>
+                </button>
+              }
+            </div>
+          </ng-template>
         </div>
-        }
-        <ng-template #titleUpdateActions let-element>
-          <div
-            class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap"
-          >
-            <button
-              class="!bg-primary"
-              mat-icon-button
-              (click)="onViewTicket(element)"
-              [title]="'view' | translate"
-            >
-              <mat-icon class="!text-white">visibility</mat-icon>
-            </button>
-            @if(isSuperAdmin() && element.status === 'PENDING') {
-            <button
-              (click)="onApproveTitleUpdateTicket(element.ticket)"
-              [title]="'approve' | translate"
-              class="!bg-green-700"
-              mat-icon-button
-            >
-              <mat-icon class="!text-white">thumb_up</mat-icon>
-            </button>
-            <button
-              (click)="onRejectTitleUpdateTicket(element.ticket)"
-              [title]="'reject' | translate"
-              class="!bg-accent"
-              mat-icon-button
-            >
-              <mat-icon class="!text-white">thumb_down</mat-icon>
-            </button>
-            }
-          </div>
-        </ng-template>
-      </div>
-    </mat-tab>
+      </mat-tab>
 
-    <!-- Printing Tab -->
-    <mat-tab label="{{ 'print' | translate }}">
-      <div class="pt-6">
-        <app-list-table
-          [dataSource]="printingUpdateDataSource"
-          [displayedColumns]="printingUpdateColumns"
-          [actionTemplate]="printingUpdateActions"
-        >
-        </app-list-table>
-        @if(hasMoreTickets(1)) {
-        <div class="flex justify-center mt-4">
-          <button
-            class="btn !bg-primary text-white"
-            (click)="loadMoreTickets()"
-            [disabled]="isLoading()"
+      <!-- Printing Tab -->
+      <mat-tab label="{{ 'print' | translate }}">
+        <div class="pt-6">
+          <app-list-table
+            [dataSource]="printingUpdateDataSource"
+            [displayedColumns]="printingUpdateColumns"
+            [actionTemplate]="printingUpdateActions"
           >
-            {{ "loadmore" | translate }}
-          </button>
+          </app-list-table>
+          @if (hasMoreTickets(1)) {
+            <div class="flex justify-center mt-4">
+              <button
+                class="btn !bg-primary text-white"
+                (click)="loadMoreTickets()"
+                [disabled]="isLoading()"
+              >
+                {{ "loadmore" | translate }}
+              </button>
+            </div>
+          }
+          <ng-template #printingUpdateActions let-element>
+            <div
+              class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap"
+            >
+              <button
+                class="!bg-primary"
+                mat-icon-button
+                (click)="onViewTicket(element)"
+                [title]="'view' | translate"
+              >
+                <mat-icon class="!text-white">visibility</mat-icon>
+              </button>
+              @if (isSuperAdmin() && element.status === "PENDING") {
+                <button
+                  (click)="onApprovePrintingUpdateTicket(element.ticket)"
+                  [title]="'approve' | translate"
+                  class="!bg-green-700"
+                  mat-icon-button
+                >
+                  <mat-icon class="!text-white">thumb_up</mat-icon>
+                </button>
+                <button
+                  (click)="onRejectPrintingUpdateTicket(element.ticket)"
+                  [title]="'reject' | translate"
+                  class="!bg-accent"
+                  mat-icon-button
+                >
+                  <mat-icon class="!text-white">thumb_down</mat-icon>
+                </button>
+              }
+            </div>
+          </ng-template>
         </div>
-        }
-        <ng-template #printingUpdateActions let-element>
-          <div
-            class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap"
-          >
-            <button
-              class="!bg-primary"
-              mat-icon-button
-              (click)="onViewTicket(element)"
-              [title]="'view' | translate"
-            >
-              <mat-icon class="!text-white">visibility</mat-icon>
-            </button>
-            @if(isSuperAdmin() && element.status === 'PENDING') {
-            <button
-              (click)="onApprovePrintingUpdateTicket(element.ticket)"
-              [title]="'approve' | translate"
-              class="!bg-green-700"
-              mat-icon-button
-            >
-              <mat-icon class="!text-white">thumb_up</mat-icon>
-            </button>
-            <button
-              (click)="onRejectPrintingUpdateTicket(element.ticket)"
-              [title]="'reject' | translate"
-              class="!bg-accent"
-              mat-icon-button
-            >
-              <mat-icon class="!text-white">thumb_down</mat-icon>
-            </button>
-            }
-          </div>
-        </ng-template>
-      </div>
-    </mat-tab>
+      </mat-tab>
 
-    <!-- Pricing Tab -->
-    <mat-tab label="{{ 'pricing' | translate }}">
-      <div class="pt-6">
-        <app-list-table
-          [dataSource]="pricingUpdateDataSource"
-          [displayedColumns]="pricingUpdateColumns"
-          [actionTemplate]="pricingUpdateActions"
-        >
-        </app-list-table>
-        @if(hasMoreTickets(2)) {
-        <div class="flex justify-center mt-4">
-          <button
-            class="btn !bg-primary text-white"
-            (click)="loadMoreTickets()"
-            [disabled]="isLoading()"
+      <!-- Pricing Tab -->
+      <mat-tab label="{{ 'pricing' | translate }}">
+        <div class="pt-6">
+          <app-list-table
+            [dataSource]="pricingUpdateDataSource"
+            [displayedColumns]="pricingUpdateColumns"
+            [actionTemplate]="pricingUpdateActions"
           >
-            {{ "loadmore" | translate }}
-          </button>
+          </app-list-table>
+          @if (hasMoreTickets(2)) {
+            <div class="flex justify-center mt-4">
+              <button
+                class="btn !bg-primary text-white"
+                (click)="loadMoreTickets()"
+                [disabled]="isLoading()"
+              >
+                {{ "loadmore" | translate }}
+              </button>
+            </div>
+          }
+          <ng-template #pricingUpdateActions let-element>
+            <div
+              class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap"
+            >
+              <button
+                class="!bg-primary"
+                mat-icon-button
+                (click)="onViewTicket(element)"
+                [title]="'view' | translate"
+              >
+                <mat-icon class="!text-white">visibility</mat-icon>
+              </button>
+              @if (isSuperAdmin() && element.status === "PENDING") {
+                <button
+                  (click)="onApprovePricingUpdateTicket(element.ticket)"
+                  [title]="'approve' | translate"
+                  class="!bg-green-700"
+                  mat-icon-button
+                >
+                  <mat-icon class="!text-white">thumb_up</mat-icon>
+                </button>
+                <button
+                  (click)="onRejectPricingUpdateTicket(element.ticket)"
+                  [title]="'reject' | translate"
+                  class="!bg-accent"
+                  mat-icon-button
+                >
+                  <mat-icon class="!text-white">thumb_down</mat-icon>
+                </button>
+              }
+            </div>
+          </ng-template>
         </div>
-        }
-        <ng-template #pricingUpdateActions let-element>
-          <div
-            class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap"
-          >
-            <button
-              class="!bg-primary"
-              mat-icon-button
-              (click)="onViewTicket(element)"
-              [title]="'view' | translate"
-            >
-              <mat-icon class="!text-white">visibility</mat-icon>
-            </button>
-            @if(isSuperAdmin() && element.status === 'PENDING') {
-            <button
-              (click)="onApprovePricingUpdateTicket(element.ticket)"
-              [title]="'approve' | translate"
-              class="!bg-green-700"
-              mat-icon-button
-            >
-              <mat-icon class="!text-white">thumb_up</mat-icon>
-            </button>
-            <button
-              (click)="onRejectPricingUpdateTicket(element.ticket)"
-              [title]="'reject' | translate"
-              class="!bg-accent"
-              mat-icon-button
-            >
-              <mat-icon class="!text-white">thumb_down</mat-icon>
-            </button>
-            }
-          </div>
-        </ng-template>
-      </div>
-    </mat-tab>
+      </mat-tab>
 
-    <!-- Royalty Tab -->
-    <mat-tab label="{{ 'royalty' | translate }}">
-      <div class="pt-6">
-        <app-list-table
-          [dataSource]="royaltyUpdateDataSource"
-          [displayedColumns]="royaltyUpdateColumns"
-          [actionTemplate]="royaltyUpdateActions"
-        >
-        </app-list-table>
-        @if(hasMoreTickets(3)) {
-        <div class="flex justify-center mt-4">
-          <button
-            class="btn !bg-primary text-white"
-            (click)="loadMoreTickets()"
-            [disabled]="isLoading()"
+      <!-- Royalty Tab -->
+      <mat-tab label="{{ 'royalty' | translate }}">
+        <div class="pt-6">
+          <app-list-table
+            [dataSource]="royaltyUpdateDataSource"
+            [displayedColumns]="royaltyUpdateColumns"
+            [actionTemplate]="royaltyUpdateActions"
           >
-            {{ "loadmore" | translate }}
-          </button>
+          </app-list-table>
+          @if (hasMoreTickets(3)) {
+            <div class="flex justify-center mt-4">
+              <button
+                class="btn !bg-primary text-white"
+                (click)="loadMoreTickets()"
+                [disabled]="isLoading()"
+              >
+                {{ "loadmore" | translate }}
+              </button>
+            </div>
+          }
+          <ng-template #royaltyUpdateActions let-element>
+            <div
+              class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap"
+            >
+              <button
+                class="!bg-primary"
+                mat-icon-button
+                (click)="onViewTicket(element)"
+                [title]="'view' | translate"
+              >
+                <mat-icon class="!text-white">visibility</mat-icon>
+              </button>
+              @if (isSuperAdmin() && element.status === "PENDING") {
+                <button
+                  (click)="onApproveRoyaltyUpdateTicket(element.ticket)"
+                  [title]="'approve' | translate"
+                  class="!bg-green-700"
+                  mat-icon-button
+                >
+                  <mat-icon class="!text-white">thumb_up</mat-icon>
+                </button>
+                <button
+                  (click)="onRejectRoyaltyUpdateTicket(element.ticket)"
+                  [title]="'reject' | translate"
+                  class="!bg-accent"
+                  mat-icon-button
+                >
+                  <mat-icon class="!text-white">thumb_down</mat-icon>
+                </button>
+              }
+            </div>
+          </ng-template>
         </div>
-        }
-        <ng-template #royaltyUpdateActions let-element>
-          <div
-            class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap"
-          >
-            <button
-              class="!bg-primary"
-              mat-icon-button
-              (click)="onViewTicket(element)"
-              [title]="'view' | translate"
-            >
-              <mat-icon class="!text-white">visibility</mat-icon>
-            </button>
-            @if(isSuperAdmin() && element.status === 'PENDING') {
-            <button
-              (click)="onApproveRoyaltyUpdateTicket(element.ticket)"
-              [title]="'approve' | translate"
-              class="!bg-green-700"
-              mat-icon-button
-            >
-              <mat-icon class="!text-white">thumb_up</mat-icon>
-            </button>
-            <button
-              (click)="onRejectRoyaltyUpdateTicket(element.ticket)"
-              [title]="'reject' | translate"
-              class="!bg-accent"
-              mat-icon-button
-            >
-              <mat-icon class="!text-white">thumb_down</mat-icon>
-            </button>
-            }
-          </div>
-        </ng-template>
-      </div>
-    </mat-tab>
+      </mat-tab>
 
-    <!-- Media/Documents Tab -->
-    <mat-tab label="{{ 'documents' | translate }}">
-      <div class="pt-6">
-        <app-list-table
-          [dataSource]="mediaUpdateDataSource"
-          [displayedColumns]="mediaUpdateColumns"
-          [actionTemplate]="mediaUpdateActions"
-        >
-        </app-list-table>
-        @if(hasMoreTickets(4)) {
-        <div class="flex justify-center mt-4">
-          <button
-            class="btn !bg-primary text-white"
-            (click)="loadMoreTickets()"
-            [disabled]="isLoading()"
+      <!-- Media/Documents Tab -->
+      <mat-tab label="{{ 'documents' | translate }}">
+        <div class="pt-6">
+          <app-list-table
+            [dataSource]="mediaUpdateDataSource"
+            [displayedColumns]="mediaUpdateColumns"
+            [actionTemplate]="mediaUpdateActions"
           >
-            {{ "loadmore" | translate }}
-          </button>
+          </app-list-table>
+          @if (hasMoreTickets(4)) {
+            <div class="flex justify-center mt-4">
+              <button
+                class="btn !bg-primary text-white"
+                (click)="loadMoreTickets()"
+                [disabled]="isLoading()"
+              >
+                {{ "loadmore" | translate }}
+              </button>
+            </div>
+          }
+          <ng-template #mediaUpdateActions let-element>
+            <div
+              class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap"
+            >
+              <button
+                class="!bg-primary"
+                mat-icon-button
+                (click)="onViewTicket(element)"
+                [title]="'view' | translate"
+              >
+                <mat-icon class="!text-white">visibility</mat-icon>
+              </button>
+              @if (isSuperAdmin() && element.status === "PENDING") {
+                <button
+                  (click)="onApproveMediaUpdateTicket(element.ticket)"
+                  [title]="'approve' | translate"
+                  class="!bg-green-700"
+                  mat-icon-button
+                >
+                  <mat-icon class="!text-white">thumb_up</mat-icon>
+                </button>
+                <button
+                  (click)="onRejectMediaUpdateTicket(element.ticket)"
+                  [title]="'reject' | translate"
+                  class="!bg-accent"
+                  mat-icon-button
+                >
+                  <mat-icon class="!text-white">thumb_down</mat-icon>
+                </button>
+              }
+            </div>
+          </ng-template>
         </div>
-        }
-        <ng-template #mediaUpdateActions let-element>
-          <div
-            class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap"
-          >
-            <button
-              class="!bg-primary"
-              mat-icon-button
-              (click)="onViewTicket(element)"
-              [title]="'view' | translate"
-            >
-              <mat-icon class="!text-white">visibility</mat-icon>
-            </button>
-            @if(isSuperAdmin() && element.status === 'PENDING') {
-            <button
-              (click)="onApproveMediaUpdateTicket(element.ticket)"
-              [title]="'approve' | translate"
-              class="!bg-green-700"
-              mat-icon-button
-            >
-              <mat-icon class="!text-white">thumb_up</mat-icon>
-            </button>
-            <button
-              (click)="onRejectMediaUpdateTicket(element.ticket)"
-              [title]="'reject' | translate"
-              class="!bg-accent"
-              mat-icon-button
-            >
-              <mat-icon class="!text-white">thumb_down</mat-icon>
-            </button>
-            }
-          </div>
-        </ng-template>
-      </div>
-    </mat-tab>
+      </mat-tab>
 
-    <!-- Distribution Tab -->
-    <mat-tab label="{{ 'distribution' | translate }}">
-      <div class="pt-6">
-        <app-list-table
-          [dataSource]="distributionUpdateDataSource"
-          [displayedColumns]="distributionUpdateColumns"
-          [actionTemplate]="distributionUpdateActions"
-        >
-        </app-list-table>
-        @if(hasMoreTickets(5)) {
-        <div class="flex justify-center mt-4">
-          <button
-            class="btn !bg-primary text-white"
-            (click)="loadMoreTickets()"
-            [disabled]="isLoading()"
+      <!-- Distribution Tab -->
+      <mat-tab label="{{ 'distribution' | translate }}">
+        <div class="pt-6">
+          <app-list-table
+            [dataSource]="distributionUpdateDataSource"
+            [displayedColumns]="distributionUpdateColumns"
+            [actionTemplate]="distributionUpdateActions"
           >
-            {{ "loadmore" | translate }}
-          </button>
+          </app-list-table>
+          @if (hasMoreTickets(5)) {
+            <div class="flex justify-center mt-4">
+              <button
+                class="btn !bg-primary text-white"
+                (click)="loadMoreTickets()"
+                [disabled]="isLoading()"
+              >
+                {{ "loadmore" | translate }}
+              </button>
+            </div>
+          }
+          <ng-template #distributionUpdateActions let-element>
+            <div
+              class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap"
+            >
+              <button
+                class="!bg-primary"
+                mat-icon-button
+                (click)="onViewTicket(element)"
+                [title]="'view' | translate"
+              >
+                <mat-icon class="!text-white">visibility</mat-icon>
+              </button>
+              @if (isSuperAdmin() && element.status === "PENDING") {
+                <button
+                  (click)="onApproveDistributionUpdateTicket(element.ticket)"
+                  [title]="'approve' | translate"
+                  class="!bg-green-700"
+                  mat-icon-button
+                >
+                  <mat-icon class="!text-white">thumb_up</mat-icon>
+                </button>
+                <button
+                  (click)="onRejectDistributionUpdateTicket(element.ticket)"
+                  [title]="'reject' | translate"
+                  class="!bg-accent"
+                  mat-icon-button
+                >
+                  <mat-icon class="!text-white">thumb_down</mat-icon>
+                </button>
+              }
+            </div>
+          </ng-template>
         </div>
-        }
-        <ng-template #distributionUpdateActions let-element>
-          <div
-            class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap"
-          >
-            <button
-              class="!bg-primary"
-              mat-icon-button
-              (click)="onViewTicket(element)"
-              [title]="'view' | translate"
-            >
-              <mat-icon class="!text-white">visibility</mat-icon>
-            </button>
-            @if(isSuperAdmin() && element.status === 'PENDING') {
-            <button
-              (click)="onApproveDistributionUpdateTicket(element.ticket)"
-              [title]="'approve' | translate"
-              class="!bg-green-700"
-              mat-icon-button
-            >
-              <mat-icon class="!text-white">thumb_up</mat-icon>
-            </button>
-            <button
-              (click)="onRejectDistributionUpdateTicket(element.ticket)"
-              [title]="'reject' | translate"
-              class="!bg-accent"
-              mat-icon-button
-            >
-              <mat-icon class="!text-white">thumb_down</mat-icon>
-            </button>
-            }
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+  <div class="lg:hidden overflow-x-auto">
+    <div class="grid grid-cols-2 sm:flex gap-2 pb-2 min-w-max">
+      @for (
+        tab of [
+          "details",
+          "print",
+          "pricing",
+          "royalty",
+          "documents",
+          "distribution",
+        ];
+        track $index
+      ) {
+        <button
+          class="btn whitespace-nowrap"
+          matButton="filled"
+          [ngClass]="{
+            '!bg-primary !text-white': selectedTabIndex() === $index,
+            '!bg-primary-superlight !text-primary':
+              selectedTabIndex() !== $index,
+          }"
+          (click)="onTabChange($index)"
+        >
+          {{ tab | translate }}
+        </button>
+      }
+    </div>
+  </div>
+  <!-- Mobile cards -->
+  <div class="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+    @for (item of getActiveMobileData(); track item.id) {
+      <div class="bg-white rounded-xl border p-4 shadow-sm flex flex-col gap-3">
+        <!-- Header -->
+        <div class="flex justify-between items-start">
+          <div>
+            <h4 class="font-semibold text-sm">{{ item.title }}</h4>
+            <p class="text-xs text-gray-500">
+              {{ item.publisher }}
+            </p>
           </div>
-        </ng-template>
+
+          <span
+            class="px-2 py-1 text-xs rounded-full"
+            [ngClass]="{
+              'bg-yellow-100 text-yellow-700': item.status === 'PENDING',
+              'bg-green-100 text-green-700': item.status === 'APPROVED',
+              'bg-red-100 text-red-700': item.status === 'REJECTED',
+            }"
+          >
+            {{ item.status }}
+          </span>
+        </div>
+
+        <!-- Body -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <p class="text-gray-400">Requested By</p>
+            <p>{{ item.requestedBy }}</p>
+          </div>
+
+          <div>
+            <p class="text-gray-400">Created</p>
+            <p>{{ item.createdAt }}</p>
+          </div>
+
+          <!-- Conditional fields per tab -->
+          @if (item.changes !== undefined) {
+            <div>
+              <p class="text-gray-400">Changes</p>
+              <p>{{ item.changes }}</p>
+            </div>
+          }
+
+          @if (item.platforms) {
+            <div class="col-span-2">
+              <p class="text-gray-400">Platforms</p>
+              <p>{{ item.platforms }}</p>
+            </div>
+          }
+
+          @if (item.mediaType) {
+            <div>
+              <p class="text-gray-400">Media</p>
+              <p>{{ item.mediaType }}</p>
+            </div>
+          }
+
+          @if (item.royaltiesCount) {
+            <div>
+              <p class="text-gray-400">Royalties</p>
+              <p>{{ item.royaltiesCount }}</p>
+            </div>
+          }
+
+          @if (item.distributions) {
+            <div class="col-span-2">
+              <p class="text-gray-400">Distributions</p>
+              <p>{{ item.distributions }}</p>
+            </div>
+          }
+        </div>
+
+        <!-- Actions (REUSE TEMPLATE) -->
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <ng-container
+            *ngTemplateOutlet="
+              selectedTabIndex() === 0
+                ? titleUpdateActions
+                : selectedTabIndex() === 1
+                  ? printingUpdateActions
+                  : selectedTabIndex() === 2
+                    ? pricingUpdateActions
+                    : selectedTabIndex() === 3
+                      ? royaltyUpdateActions
+                      : selectedTabIndex() === 4
+                        ? mediaUpdateActions
+                        : distributionUpdateActions;
+              context: { $implicit: item }
+            "
+          ></ng-container>
+        </div>
       </div>
-    </mat-tab>
-  </mat-tab-group>
+    }
+  </div>
 </div>
