@@ -28,3 +28,4 @@ export * from './SEO';
 export * from './Blog';
 export * from './Comment';
 export * from './Cart';
+export * from "./PostalCode"

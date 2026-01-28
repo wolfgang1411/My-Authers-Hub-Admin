@@ -1,0 +1,38 @@
+<form [formGroup]="addressForm()" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-4">
+    <mat-form-field>
+        <mat-label>{{ "country" | translate }}</mat-label>
+        <mat-select formControlName="country" required>
+          <mat-option value="">
+            {{ "selectcountry" | translate }}
+          </mat-option>
+          @for (item of countries(); track item.name) {
+            <mat-option [value]="item.name">{{ item.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ "pincode" | translate }}</mat-label>
+        <input matInput formControlName="pincode" required />
+        @if (isPincodeLoading()) {
+          <span matSuffix style="padding-right: 8px">
+            <mat-spinner
+              diameter="16"
+              mode="indeterminate"
+              style="display: inline-block"
+            ></mat-spinner>
+          </span>
+        }
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ "city" | translate }}</mat-label>
+        <input matInput formControlName="city" required />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ "state" | translate }}</mat-label>
+        <input matInput formControlName="state" required />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ "address" | translate }}</mat-label>
+        <input matInput formControlName="address" required />
+      </mat-form-field>
+</form>

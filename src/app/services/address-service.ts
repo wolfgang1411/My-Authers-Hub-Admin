@@ -1,15 +1,16 @@
 import { Injectable } from '@angular/core';
 import { Server } from './server';
-import { Address } from '../interfaces';
+import { Address, PostalCode } from '../interfaces';
 import { Logger } from './logger';
 import { getDetails } from 'indian-pincode-validator';
 import { State } from 'country-state-city';
+import { LoaderService } from './loader';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AddressService {
-  constructor(private server: Server, private logger: Logger) {}
+  constructor(private server: Server, private logger: Logger, private loader: LoaderService) { }
 
   async createOrUpdateAddress(address: Address) {
     try {
@@ -72,4 +73,16 @@ export class AddressService {
   //     };
   //   }
   // }
+
+
+  async fetchPincodeDetails(pincode: string, showError = true) {
+    try {
+      return await this.server.get<PostalCode>(`postal-codes/search/${pincode}`)
+    } catch (error) {
+      if (showError) {
+        this.logger.logError(error)
+      }
+      throw error
+    }
+  }
 }
