@@ -967,5 +967,6 @@
   "trychangingfiltersorsearch":"Try changing filters or search.",
   "publisherName": "Publisher Name",
   "missingDetails":"Missing Details",
-  "transactionId":"Transaction ID"
+  "transactionId": "Transaction ID",
+  "pincodenotfound": "Pincode not found"
 }

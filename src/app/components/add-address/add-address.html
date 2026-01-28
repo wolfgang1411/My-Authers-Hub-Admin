@@ -22,6 +22,16 @@
             ></mat-spinner>
           </span>
         }
+        @if (!!addressForm().controls.pincode.errors) {
+          <mat-error>
+            @if (addressForm().controls.pincode.errors?.['invalidPincode']) {
+              {{ "invalidpincode" | translate }}
+            }
+            @if (addressForm().controls.pincode.errors?.['pincodeNotFound']) {
+              {{ "pincodenotfound" | translate }}
+            }
+          </mat-error>
+        }
       </mat-form-field>
       <mat-form-field>
         <mat-label>{{ "city" | translate }}</mat-label>

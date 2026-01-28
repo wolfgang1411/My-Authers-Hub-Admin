@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -9,6 +9,7 @@ import { Address } from 'src/app/interfaces';
 import { AddressService } from 'src/app/services/address-service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Subject, takeUntil } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-add-address',
@@ -31,15 +32,26 @@ export class AddAddress implements OnInit, OnDestroy{
 
 
   ngOnInit(): void {
-
+    this.addressForm().controls.pincode.addValidators([this.validatePincode(), Validators.required])
     this.addCountryListner()
     this.addPincodeListner()
     this.prefillAddressDetails()
    
   }
 
+  validatePincode() {
+    return (form: AbstractControl): ValidationErrors | null => {
+      const pincode = form.value
+      const country = this.addressForm().controls.country.value
+      const isIndia = country === this.defaultCountry();
+      if (isIndia && pincode?.length !== 6) return { invalidPincode: true }
+      return null
+    }
+  }
+
   addCountryListner() {
     this.addressForm().controls.country.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((country) => {
+      this.addressForm().controls.pincode.updateValueAndValidity()
       const isIndia = country === this.defaultCountry();
       this.addressForm().controls.pincode.setValue(null)
       this.addressForm().controls.city.setValue(null)
@@ -64,12 +76,13 @@ export class AddAddress implements OnInit, OnDestroy{
     try {
       if(pincode.length !== 6) return;
       this.isPincodeLoading.set(true)
-      const postalCode = await  this.addressService.fetchPincodeDetails(pincode)
+      const postalCode = await this.addressService.fetchPincodeDetails(pincode, false)
       this.addressForm().patchValue({
         city: postalCode.city,
         state: postalCode.state,
       })
     } catch (error) {
+      this.addressForm().controls.pincode.setErrors({ pincodeNotFound: true })
       console.log(error);
     } finally {
       this.isPincodeLoading.set(false)
