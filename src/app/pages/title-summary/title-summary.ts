@@ -30,6 +30,7 @@ import { saveAs } from 'file-saver';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MobileSection } from 'src/app/components/mobile-section/mobile-section';
+import { PlatformService } from 'src/app/services/platform';
 
 @Component({
   selector: 'app-title-summary',
@@ -66,7 +67,8 @@ export class TitleSummary {
     private translateService: TranslateService,
     private matDialog: MatDialog,
     private royaltyService: RoyaltyService,
-    private breakpointObserver: BreakpointObserver
+    private breakpointObserver: BreakpointObserver,
+    private platformService: PlatformService
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
     this.breakpointObserver
@@ -76,8 +78,9 @@ export class TitleSummary {
         this.isMobile.set(result.matches);
       });
   }
-  ngOnInit() {
+  async ngOnInit() {
     // Read tab index from query params
+    await this.platformService.fetchPlatforms();
     this.route.queryParams.subscribe((params) => {
       const tabParam = params['tab'];
       if (tabParam !== undefined && tabParam !== null) {
@@ -119,6 +122,7 @@ export class TitleSummary {
     const royalties = title.royalties ?? [];
     const printing = title.printing?.[0];
     const printingPrice = printing ? Number(printing.printCost) || 0 : 0;
+    const customPrintCost = printing ? Number(printing.customPrintCost) || 0 : 0;
 
     // Group royalties by platform
     const royaltiesByPlatform = new Map<string, any[]>();
@@ -142,8 +146,9 @@ export class TitleSummary {
         const percentages = platformRoyalties.map((r: any) =>
           String(r.percentage || 0)
         );
+        const platformId = this.platformService.platforms().find(({ name }) => name === p.platform)?.id;
         return {
-          platform: p.platform,
+          platformId: platformId!,
           price: p.mrp || p.salesPrice || 0,
           division: percentages,
         };
@@ -151,7 +156,7 @@ export class TitleSummary {
       .filter(
         (
           item
-        ): item is { platform: string; price: number; division: string[] } =>
+        ): item is { platformId: number; price: number; division: string[] } =>
           item !== null
       );
 
@@ -163,17 +168,18 @@ export class TitleSummary {
     try {
       const response = await this.royaltyService.calculateRoyalties({
         items,
-        printingPrice,
+        printingPrice: customPrintCost || printingPrice,
       });
 
       // Cache the results
       const cache = new Map<string, number>();
       response.divisionValue.forEach((item) => {
-        const platformRoyalties = royaltiesByPlatform.get(item.platform) || [];
+        const platformName = this.platformService.platforms().find(({ id }) => id === item.platformId)?.name;
+        const platformRoyalties = royaltiesByPlatform.get(platformName!) || [];
         platformRoyalties.forEach((r: any) => {
           const percentage = String(r.percentage || 0);
           const amount = item.divisionValue[percentage] || 0;
-          const key = `${item.platform}_${
+          const key = `${platformName}_${
             r.authorId || r.publisherId
           }_${percentage}`;
           cache.set(key, amount);

@@ -111,10 +111,10 @@
   <div class="result">
     <h3 class="heading-sm">Latest calculation</h3>
     <div class="result-grid">
-      @for (item of resultDivision(); track item.platform) {
+      @for (item of resultDivision(); track item.platformId) {
       <div class="result-card">
         <div class="result-header">
-          <span class="platform-name">{{ item.platform }}</span>
+          <span class="platform-name">{{ item.platformId }}</span>
         </div>
         <table>
           <thead>
@@ -124,7 +124,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (entry of divisionRows(item.platform, item.divisionValue);
+            @for (entry of divisionRows(item.platformId, item.divisionValue);
             track entry.id) {
             <tr>
               <td>{{ entry.percentage }}%</td>

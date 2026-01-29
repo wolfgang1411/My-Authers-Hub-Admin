@@ -49,7 +49,7 @@ export interface EarningFilter {
 export interface CreateSale {
   type: SalesType;
   titleId: number;
-  platform: PlatForm;
+  platformId: number;
   platformName?: string;
   amount?: number;
   quantity: number;
@@ -63,7 +63,7 @@ export interface CreateSaleForm {
     id: FormControl<number | undefined>;
     availableOptions: FormControl<number[] | null | undefined>;
   }>;
-  platform: FormControl<PlatForm | undefined | null>;
+  platformId: FormControl<number | undefined | null>;
   platformOptions: FormArray<FormControl<Platform>>;
   platformName: FormControl<string | undefined | null>;
   amount: FormControl<number | undefined | null>;

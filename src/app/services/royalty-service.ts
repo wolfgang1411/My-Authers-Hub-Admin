@@ -6,7 +6,7 @@ import { CreateRoyalty, Royalty, RoyaltyFilter } from '../interfaces/Royalty';
 import { Logger } from './logger';
 
 export interface CalculateRoyaltyItem {
-  platform: string;
+  platformId: number;
   price: number;
   division: string[]; // Array of percentages as strings like ["10", "90"]
 }
@@ -18,7 +18,7 @@ export interface CalculateRoyaltiesRequest {
 
 export interface CalculateRoyaltiesResponse {
   divisionValue: Array<{
-    platform: string;
+    platformId: number;
     divisionValue: Record<string, number>; // Object like {"10": 20, "90": 180}
   }>;
 }

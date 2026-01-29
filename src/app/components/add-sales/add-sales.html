@@ -118,7 +118,7 @@
                   >store</mat-icon
                 >
                 <mat-select
-                  [formControl]="saleGroup.controls.platform"
+                  [formControl]="saleGroup.controls.platformId"
                   placeholder="Select Platform"
                 >
                   <mat-option [value]="null" disabled
@@ -130,7 +130,7 @@
                         .controls;
                       track platformControl.value.id
                     ) {
-                      <mat-option [value]="platformControl.value.name">{{
+                      <mat-option [value]="platformControl.value.id">{{
                         platformControl.value.name | translate
                       }}</mat-option>
                     }
@@ -141,8 +141,8 @@
                   }
                 </mat-select>
                 @if (
-                  saleGroup.controls.platform.hasError("required") &&
-                  saleGroup.controls.platform.touched
+                  saleGroup.controls.platformId.hasError("required") &&
+                  saleGroup.controls.platformId.touched
                 ) {
                   <mat-error>Required</mat-error>
                 }
@@ -150,9 +150,9 @@
 
               <!-- Platform Name Field (Only for Other Platforms) -->
               @if (
-                saleGroup.controls.platform.value &&
+                saleGroup.controls.platformId.value &&
                 platformIsOtherPlatformMap().get(
-                  saleGroup.controls.platform.value
+                  saleGroup.controls.platformId.value
                 )
               ) {
                 <mat-form-field

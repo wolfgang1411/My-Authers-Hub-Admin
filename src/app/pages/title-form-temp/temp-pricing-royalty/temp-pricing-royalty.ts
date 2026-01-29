@@ -1370,7 +1370,7 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
 
     // Prepare API request - one item per platform with all percentages
     const apiItems: Array<{
-      platform: string;
+      platformId: number;
       price: number;
       division: string[];
     }> = [];
@@ -1378,8 +1378,9 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
     // CRITICAL: Only include platforms that have BOTH pricing (price > 0) AND royalties (percentages > 0)
     platformMap.forEach((platformData, platform) => {
       if (platformData.price > 0 && platformData.percentages.size > 0) {
+        const platformId = this.platformService.platforms().find((p) => p.name === platform)?.id;
         apiItems.push({
-          platform,
+          platformId: platformId!,
           price: platformData.price,
           division: Array.from(platformData.percentages).sort(),
         });
@@ -1427,7 +1428,8 @@ export class TempPricingRoyalty implements OnInit, OnDestroy {
       // Create a map: platform -> divisionValue (percentage -> amount)
       const platformDivisionMap = new Map<string, Record<string, number>>();
       response.divisionValue.forEach((item) => {
-        platformDivisionMap.set(item.platform, item.divisionValue);
+        const platformName = this.platformService.platforms().find((p) => p.id === item.platformId)?.name;
+        platformDivisionMap.set(platformName!, item.divisionValue);
       });
 
       // Map API response back to our structure

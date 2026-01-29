@@ -192,16 +192,16 @@ export class RoyaltyCalculatorSettings implements OnInit {
   }
 
   protected divisionRows(
-    platform: string,
+    platformId: number,
     divisionValue: Record<string, number>
   ) {
     const requestItem = this.lastCalculatedItems().find(
-      (item) => item.platform === platform
+      (item) => item.platformId === platformId
     );
     const divisions = requestItem?.division ?? Object.keys(divisionValue);
 
     return divisions.map((percentage, index) => ({
-      id: `${platform}-${percentage}-${index}`,
+      id: `${platformId}-${percentage}-${index}`,
       percentage,
       amount: divisionValue[percentage] ?? 0,
     }));
@@ -230,9 +230,10 @@ export class RoyaltyCalculatorSettings implements OnInit {
 
     const items = this.royaltyItems.controls
       .map((control) => {
+        const platformId = this.platformService.platforms().find((p) => p.name === control.get('platform')?.value)?.id;
         const value = control.getRawValue();
         return {
-          platform: value.platform,
+          platformId: platformId!,
           price: Number(value.price),
           division: this.parseDivision(value.division),
         };

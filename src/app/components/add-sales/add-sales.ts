@@ -233,14 +233,14 @@ export class AddSales implements OnInit, OnDestroy {
   // This ensures reactivity when platforms are loaded or when platform selection changes
   platformIsOtherPlatformMap = computed(() => {
     const allPlatforms = this.platforms();
-    const map = new Map<string, boolean>();
+    const map = new Map<number, boolean>();
 
     if (!allPlatforms || allPlatforms.length === 0) {
       return map;
     }
 
     allPlatforms.forEach((platform) => {
-      map.set(platform.name, platform.isOtherPlatform ?? false);
+      map.set(platform.id, platform.isOtherPlatform ?? false);
     });
 
     return map;
@@ -535,12 +535,10 @@ export class AddSales implements OnInit, OnDestroy {
           data?.availableTitles,
         ),
       }),
-
-      platform: new FormControl(data?.platform, {
+      platformId: new FormControl(data?.platformId, {
         validators: [Validators.required],
         nonNullable: true,
       }),
-
       platformOptions: new FormArray<FormControl<Platform>>([]),
 
       platformName: new FormControl<string | undefined | null>(null, {
@@ -591,7 +589,7 @@ export class AddSales implements OnInit, OnDestroy {
 
     // Subscribe to title changes and update platformOptions
     group.get('title.id')?.valueChanges.subscribe(async (titleId) => {
-      group.patchValue({ platform: null, amount: null, platformName: null });
+      group.patchValue({ platformId: null, amount: null, platformName: null });
 
       // Enable/disable platform control based on title selection
       const platformControl = group.get('platform');
@@ -869,7 +867,7 @@ export class AddSales implements OnInit, OnDestroy {
             controls: {
               amount,
               delivery,
-              platform,
+              platformId,
               quantity,
               soldAt,
               title,
@@ -881,13 +879,13 @@ export class AddSales implements OnInit, OnDestroy {
             quantity: Number(quantity.value) || 1,
             titleId: Number(title.value.id),
             soldAt: format(soldAt.value || new Date(), 'yyyy-MM-dd'),
-            platform: platform.value as PlatForm,
+            platformId: platformId.value!,
             type: type.value as SalesType,
           };
 
           // Include amount for INVENTORY sales or inventory platforms
           const platformRecord = this.platforms().find(
-            (p) => p.name === platform.value,
+            (p) => p.id === platformId.value,
           );
           const isInventoryPlatform =
             platformRecord?.isInventoryPlatform ?? false;
