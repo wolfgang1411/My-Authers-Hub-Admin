@@ -3763,6 +3763,7 @@ export class TitleFormTemp implements OnDestroy {
         }));
 
       if (mediaToUpload.length === 0) {
+        this.goToNextStep();
         return;
       }
 
