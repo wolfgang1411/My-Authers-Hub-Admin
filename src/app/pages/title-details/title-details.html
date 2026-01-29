@@ -21,244 +21,355 @@
 
   <!-- ====================== Draft Titles ====================== -->
   @if (draftTitles().length > 0) {
-  <h1 class="text-xl mb-4 font-medium text-[var(--text-heading)]">
-    Draft Titles
-  </h1>
-  @for (title of draftTitles(); track title.id) {
-  <div
-    class="bg-white rounded-2xl shadow-sm border border-[var(--primary-superlight)] flex flex-col md:flex-row p-6 hover:shadow-lg transition-all mb-6"
-  >
-    <!-- Cover Section -->
-    <div
-      class="w-[120px] h-[160px] rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-[var(--primary-light)] bg-[var(--light-purple-bg)] flex items-center justify-center"
-    >
-      @if (getFrontCoverUrl(title)) {
-      <img
-        [src]="getFrontCoverUrl(title)"
-        alt="{{ title.name }} Cover"
-        class="object-cover w-full h-full rounded-lg transition-transform duration-300 hover:scale-105"
-      />
-      } @else {
+    <h1 class="text-xl mb-4 font-medium text-[var(--text-heading)]">
+      Draft Titles
+    </h1>
+    @for (title of draftTitles(); track title.id) {
       <div
-        class="flex flex-col items-center justify-center text-[var(--text-placeholder)] font-medium text-sm text-center px-2"
+        class="bg-white rounded-2xl shadow-sm border border-[var(--primary-superlight)] flex flex-col md:flex-row p-6 hover:shadow-lg transition-all mb-6"
       >
-        <mat-icon class="text-[var(--primary-light)] !text-4xl mb-1">
-          image_not_supported
-        </mat-icon>
-        COVER
-      </div>
-      }
-    </div>
-
-    <!-- Info Section -->
-    <div class="flex-1 ml-6">
-      <div class="flex justify-between items-start">
-        <div>
-          <h2 class="text-lg font-medium text-[var(--text-heading)]">
-            {{ title?.name }}
-          </h2>
-          <p class="text-[var(--text-secondary)] text-sm">
-            {{ title?.category?.name }} | {{ title?.language | uppercase }} |
-            {{ title?.publishingType }}
-          </p>
-
-          <!-- ✅ ISBN Section -->
-          <div class="mt-1 text-xs text-[var(--text-secondary)]">
-            <p>
-              <span class="font-medium">ISBN (Print):</span>
-              {{
-                title.isbnPrint
-                  ? (title.isbnPrint | isbnFormat)
-                  : "Not Assigned"
-              }}
-            </p>
-            <p>
-              <span class="font-medium">ISBN (eBook):</span>
-              {{ title.isbnEbook ? title.isbnEbook : "Not Assigned" }}
-            </p>
+        <!-- Cover Section -->
+        <div
+          class="w-[120px] h-[160px] rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-[var(--primary-light)] bg-[var(--light-purple-bg)] flex items-center justify-center"
+        >
+          <div class="flex justify-center md:justify-start">
+            <div
+              class="w-[100px] h-[140px] sm:w-[120px] sm:h-[160px] rounded-lg shadow-sm overflow-hidden border border-[var(--primary-light)] bg-[var(--light-purple-bg)] flex items-center justify-center"
+            >
+              @if (getFrontCoverUrl(title)) {
+                <img
+                  [src]="getFrontCoverUrl(title)"
+                  alt="{{ title.name }} Cover"
+                  class="object-cover w-full h-full rounded-lg transition-transform duration-300 hover:scale-105"
+                />
+              } @else {
+                <div
+                  class="flex flex-col items-center justify-center text-[var(--text-placeholder)] font-medium text-sm text-center px-2"
+                >
+                  <mat-icon class="text-[var(--primary-light)] !text-4xl mb-1">
+                    image_not_supported
+                  </mat-icon>
+                  COVER
+                </div>
+              }
+            </div>
           </div>
         </div>
 
-        <!-- Delete Button -->
-        <button
-          mat-icon-button
-          matTooltip="Delete Title"
-          (click)="deleteTitle(title.id)"
-          class="!bg-[var(--accent)] hover:!bg-[var(--primary)] transition-colors duration-300 rounded-full shadow-sm"
-        >
-          <mat-icon class="!text-white text-lg">delete_outline</mat-icon>
-        </button>
-      </div>
-      <div class="mt-6">
-        <mat-horizontal-stepper
-          [selectedIndex]="getCurrentStepIndex(titleStepProgress()[title.id])"
-          class="!w-full !bg-transparent custom-stepper"
-        >
-          @for (step of stepKeys; track $index) {
-          <mat-step
-            [editable]="false"
-            [hidden]="
-              step === 'printDetails' && title.publishingType === 'ONLY_EBOOK'
-            "
-          >
-            <ng-template matStepLabel>
-              <div
-                class="flex flex-col items-center text-xs font-medium relative group"
+        <!-- Info Section -->
+        <div class="flex-1 flex flex-col gap-3 md:ml-6 mt-4 md:mt-0">
+          <div class="flex justify-between items-start gap-3">
+            <div class="flex-1">
+              <h2
+                class="text-base sm:text-lg font-medium text-[var(--text-heading)]"
               >
-                @if ($index !== 0) {
-                <div
-                  class="absolute top-4 left-[-50%] w-[50%] h-[2px] trans$indext$indexon-all duration-300 ease-in-out"
-                  [ngClass]="{
-              'bg-[var(--green-2)]': titleStepProgress()[title.id]?.[stepKeys[$index - 1]],
-              'bg-[var(--primary-superlight)]': !titleStepProgress()[title.id]?.[stepKeys[$index - 1]]
-            }"
-                ></div>
-                }
+                {{ title?.name }}
+              </h2>
+              <p class="text-[var(--text-secondary)] text-xs sm:text-sm">
+                {{ title?.category?.name }} |
+                {{ title?.language | uppercase }} |
+                {{ title?.publishingType }}
+              </p>
 
-                <div
-                  class="flex items-center justify-center w-10 h-10 rounded-full mb-1 transition-all duration-300 ease-in-out font-medium shadow-sm"
-                  [ngClass]="
-  (titleStepProgress()[title.id]?.[stepKeys[$index]] 
-    ? 'bg-[var(--green-2)] text-white border-2 border-[var(--green-2)]' 
-    : getCurrentStepIndex(titleStepProgress()[title.id]) === $index 
-      ? 'bg-[var(--primary)] text-white border-2 border-[var(--primary)]' 
-      : 'bg-[var(--primary-superlight)] text-[var(--primary)] border-2 border-[var(--primary-light)]'
-  )
-"
-                >
-                  {{ $index + 1 }}
-                </div>
-
-                <span
-                  class="mt-1 transition-all duration-200"
-                  [ngClass]="{
-              'text-[var(--green-2)] font-medium':
-                titleStepProgress()[title.id]?.[stepKeys[$index]],
-              'text-[var(--primary)] font-medium':
-                !titleStepProgress()[title.id]?.[stepKeys[$index]] &&
-                getCurrentStepIndex(titleStepProgress()[title.id]) === $index,
-              'text-[var(--text-secondary)]':
-                !titleStepProgress()[title.id]?.[stepKeys[$index]] &&
-                getCurrentStepIndex(titleStepProgress()[title.id]) !== $index
-            }"
-                >
-                  {{ step | translate }}
-                </span>
+              <!-- ✅ ISBN Section -->
+              <div
+                class="mt-1 text-xs text-[var(--text-secondary)] space-y-0.5"
+              >
+                <p>
+                  <span class="font-medium">ISBN (Print):</span>
+                  {{
+                    title.isbnPrint
+                      ? (title.isbnPrint | isbnFormat)
+                      : "Not Assigned"
+                  }}
+                </p>
+                <p>
+                  <span class="font-medium">ISBN (eBook):</span>
+                  {{ title.isbnEbook ? title.isbnEbook : "Not Assigned" }}
+                </p>
               </div>
-            </ng-template>
-          </mat-step>
-          }
-        </mat-horizontal-stepper>
+            </div>
+
+            <!-- Delete Button -->
+            <button
+              mat-icon-button
+              matTooltip="Delete Title"
+              (click)="deleteTitle(title.id)"
+              class="!bg-[var(--accent)] hover:!bg-[var(--primary)] transition-colors duration-300 rounded-full shadow-sm shrink-0"
+            >
+              <mat-icon class="!text-white text-lg">delete_outline</mat-icon>
+            </button>
+          </div>
+          <div class="mt-6 hidden lg:block">
+            <mat-horizontal-stepper
+              [selectedIndex]="
+                getCurrentStepIndex(titleStepProgress()[title.id])
+              "
+              class="!w-full !bg-transparent custom-stepper"
+            >
+              @for (step of stepKeys; track $index) {
+                <mat-step
+                  [editable]="false"
+                  [hidden]="
+                    step === 'printDetails' &&
+                    title.publishingType === 'ONLY_EBOOK'
+                  "
+                >
+                  <ng-template matStepLabel>
+                    <div
+                      class="flex flex-col items-center text-xs font-medium relative group"
+                    >
+                      @if ($index !== 0) {
+                        <div
+                          class="absolute top-4 left-[-50%] w-[50%] h-[2px] trans$indext$indexon-all duration-300 ease-in-out"
+                          [ngClass]="{
+                            'bg-[var(--green-2)]':
+                              titleStepProgress()[title.id]?.[
+                                stepKeys[$index - 1]
+                              ],
+                            'bg-[var(--primary-superlight)]':
+                              !titleStepProgress()[title.id]?.[
+                                stepKeys[$index - 1]
+                              ],
+                          }"
+                        ></div>
+                      }
+
+                      <div
+                        class="flex items-center justify-center w-10 h-10 rounded-full mb-1 transition-all duration-300 ease-in-out font-medium shadow-sm"
+                        [ngClass]="
+                          titleStepProgress()[title.id]?.[stepKeys[$index]]
+                            ? 'bg-[var(--green-2)] text-white border-2 border-[var(--green-2)]'
+                            : getCurrentStepIndex(
+                                  titleStepProgress()[title.id]
+                                ) === $index
+                              ? 'bg-[var(--primary)] text-white border-2 border-[var(--primary)]'
+                              : 'bg-[var(--primary-superlight)] text-[var(--primary)] border-2 border-[var(--primary-light)]'
+                        "
+                      >
+                        {{ $index + 1 }}
+                      </div>
+
+                      <span
+                        class="mt-1 transition-all duration-200"
+                        [ngClass]="{
+                          'text-[var(--green-2)] font-medium':
+                            titleStepProgress()[title.id]?.[stepKeys[$index]],
+                          'text-[var(--primary)] font-medium':
+                            !titleStepProgress()[title.id]?.[
+                              stepKeys[$index]
+                            ] &&
+                            getCurrentStepIndex(
+                              titleStepProgress()[title.id]
+                            ) === $index,
+                          'text-[var(--text-secondary)]':
+                            !titleStepProgress()[title.id]?.[
+                              stepKeys[$index]
+                            ] &&
+                            getCurrentStepIndex(
+                              titleStepProgress()[title.id]
+                            ) !== $index,
+                        }"
+                      >
+                        {{ step | translate }}
+                      </span>
+                    </div>
+                  </ng-template>
+                </mat-step>
+              }
+            </mat-horizontal-stepper>
+          </div>
+          <div class="block lg:hidden">
+            <mat-vertical-stepper
+              [selectedIndex]="
+                getCurrentStepIndex(titleStepProgress()[title.id])
+              "
+              class="!bg-transparent"
+            >
+              @for (step of stepKeys; track $index) {
+                <mat-step
+                  [editable]="false"
+                  [hidden]="
+                    step === 'printDetails' &&
+                    title.publishingType === 'ONLY_EBOOK'
+                  "
+                >
+                  <ng-template matStepLabel>
+                    <div class="flex items-start gap-4 relative">
+                      @if ($index !== 0) {
+                        <div
+                          class="absolute left-[18px] top-[-20px] h-5 w-[2px] transition-all duration-300 ease-in-out"
+                          [ngClass]="{
+                            'bg-[var(--green-2)]':
+                              titleStepProgress()[title.id]?.[
+                                stepKeys[$index - 1]
+                              ],
+                            'bg-[var(--primary-superlight)]':
+                              !titleStepProgress()[title.id]?.[
+                                stepKeys[$index - 1]
+                              ],
+                          }"
+                        ></div>
+                      }
+
+                      <div
+                        class="flex items-center justify-center w-9 h-9 rounded-full transition-all duration-300 ease-in-out font-medium shadow-sm shrink-0"
+                        [ngClass]="
+                          titleStepProgress()[title.id]?.[stepKeys[$index]]
+                            ? 'bg-[var(--green-2)] text-white border-2 border-[var(--green-2)]'
+                            : getCurrentStepIndex(
+                                  titleStepProgress()[title.id]
+                                ) === $index
+                              ? 'bg-[var(--primary)] text-white border-2 border-[var(--primary)]'
+                              : 'bg-[var(--primary-superlight)] text-[var(--primary)] border-2 border-[var(--primary-light)]'
+                        "
+                      >
+                        {{ $index + 1 }}
+                      </div>
+                      <div class="flex flex-col">
+                        <span
+                          class="text-sm transition-all duration-200"
+                          [ngClass]="{
+                            'text-[var(--green-2)] font-medium':
+                              titleStepProgress()[title.id]?.[stepKeys[$index]],
+                            'text-[var(--primary)] font-medium':
+                              !titleStepProgress()[title.id]?.[
+                                stepKeys[$index]
+                              ] &&
+                              getCurrentStepIndex(
+                                titleStepProgress()[title.id]
+                              ) === $index,
+                            'text-[var(--text-secondary)]':
+                              !titleStepProgress()[title.id]?.[
+                                stepKeys[$index]
+                              ] &&
+                              getCurrentStepIndex(
+                                titleStepProgress()[title.id]
+                              ) !== $index,
+                          }"
+                        >
+                          {{ step | translate }}
+                        </span>
+                      </div>
+                    </div>
+                  </ng-template>
+                </mat-step>
+              }
+            </mat-vertical-stepper>
+          </div>
+
+          <!-- Continue Button -->
+          <div class="mt-6">
+            <button
+              mat-flat-button
+              class="!bg-primary !text-white !px-8 !py-2 !rounded-lg shadow-lg hover:!bg-[var(--purple)] transition-all"
+              [routerLink]="['/title', title.id]"
+              [queryParams]="{
+                step: getNextStepRoute(title, titleStepProgress()[title.id]),
+              }"
+            >
+              Continue Publishing →
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  } @else {
+    <div class="flex flex-col items-center justify-center py-14 text-center">
+      <!-- Cute Illustration box -->
+      <div class="w-60 opacity-90 mb-6">
+        <img
+          src="images/illustration3.png"
+          alt="No Titles"
+          class="mx-auto drop-shadow-sm"
+        />
       </div>
 
-      <!-- Continue Button -->
-      <div class="mt-6">
-        <button
-          mat-flat-button
-          class="!bg-primary !text-white !px-8 !py-2 !rounded-lg shadow-lg hover:!bg-[var(--purple)] transition-all"
-          [routerLink]="['/title', title.id]"
-          [queryParams]="{
-            step: getNextStepRoute(title, titleStepProgress()[title.id])
-          }"
-        >
-          Continue Publishing →
-        </button>
-      </div>
+      <h2 class="text-2xl font-semibold text-[var(--text-heading)] mb-2">
+        {{
+          titles().length
+            ? "There is no Titles in draft"
+            : "No Titles Added Yet"
+        }}
+      </h2>
+
+      <p class="text-[var(--text-secondary)] text-sm max-w-lg leading-6 mb-6">
+        Start building your publishing journey by adding your book title. Drafts
+        will appear here once saved.
+      </p>
+
+      <!-- CTA Button -->
+      <button
+        mat-flat-button
+        class="!bg-primary text-white font-medium px-6 py-3 rounded-lg shadow-md hover:shadow-lg hover:!bg-[var(--purple)] transition-all flex items-center gap-2"
+        [routerLink]="['/title', 0]"
+      >
+        <mat-icon>add_circle_outline</mat-icon>
+        Add Your Title
+      </button>
     </div>
-  </div>
-  } } @else {
-
-  <div class="flex flex-col items-center justify-center py-14 text-center">
-    <!-- Cute Illustration box -->
-    <div class="w-60 opacity-90 mb-6">
-      <img
-        src="images/illustration3.png"
-        alt="No Titles"
-        class="mx-auto drop-shadow-sm"
-      />
-    </div>
-
-    <h2 class="text-2xl font-semibold text-[var(--text-heading)] mb-2">
-      {{
-        titles().length ? "There is no Titles in draft" : "No Titles Added Yet"
-      }}
-    </h2>
-
-    <p class="text-[var(--text-secondary)] text-sm max-w-lg leading-6 mb-6">
-      Start building your publishing journey by adding your book title. Drafts
-      will appear here once saved.
-    </p>
-
-    <!-- CTA Button -->
-    <button
-      mat-flat-button
-      class="!bg-primary text-white font-medium px-6 py-3 rounded-lg shadow-md hover:shadow-lg hover:!bg-[var(--purple)] transition-all flex items-center gap-2"
-      [routerLink]="['/title', 0]"
-    >
-      <mat-icon>add_circle_outline</mat-icon>
-      Add Your Title
-    </button>
-  </div>
   }
 
   <!-- ====================== Published Titles Grid ====================== -->
   @if (pendingTitles() && pendingTitles().length > 0) {
-  <h1 class="text-xl mt-8 mb-4 font-medium text-[var(--text-heading)]">
-    Pending for Approval
-  </h1>
-  <div
-    class="grid gap-6 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 transition-all"
-  >
-    @for (title of pendingTitles(); track title.id) {
+    <h1 class="text-xl mt-8 mb-4 font-medium text-[var(--text-heading)]">
+      Pending for Approval
+    </h1>
     <div
-      class="bg-white rounded-2xl shadow-sm border border-[var(--primary-superlight)] p-5 hover:shadow-lg transition-all flex flex-col"
+      class="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 transition-all"
     >
-      <div class="flex items-center gap-4">
+      @for (title of pendingTitles(); track title.id) {
         <div
-          class="w-[100px] h-[140px] bg-[var(--light-purple-bg)] rounded-md flex items-center justify-center text-[var(--text-placeholder)] font-medium border border-[var(--primary-light)]"
+          class="bg-white rounded-2xl shadow-sm border border-[var(--primary-superlight)] p-5 hover:shadow-lg transition-all flex flex-col"
         >
-          COVER
-        </div>
-        <div>
-          <h3 class="text-[var(--text-heading)] font-medium text-base">
-            {{ title.name }}
-          </h3>
-          <p class="text-[var(--text-secondary)] text-sm mb-2">
-            {{ title.category.name }} | {{ title.language | uppercase }} |
-            {{ title.publishingType }}
-          </p>
-          <p class="text-[var(--text-secondary)] text-sm mb-2">
-            Status: {{ title.status }}
-          </p>
-          <!-- ✅ ISBN Section -->
-          <div class="text-xs text-[var(--text-secondary)] mb-2">
-            <p>
-              <span class="font-medium">ISBN (Print):</span>
-              {{ title.isbnPrint || "Not Assigned" }}
-            </p>
-            <p>
-              <span class="font-medium">ISBN (eBook):</span>
-              {{ title.isbnEbook || "Not Assigned" }}
-            </p>
-          </div>
+          <div class="flex flex-col sm:flex-row gap-4">
+            <div
+              class="w-full sm:w-[100px] sm:h-[140px] h-[160px] bg-[var(--light-purple-bg)] rounded-md flex items-center justify-center text-[var(--text-placeholder)] font-medium border border-[var(--primary-light)] shrink-0"
+            >
+              COVER
+            </div>
+            <div>
+              <h3 class="text-[var(--text-heading)] font-medium text-base">
+                {{ title.name }}
+              </h3>
+              <p class="text-[var(--text-secondary)] text-sm mb-2">
+                {{ title.category.name }} | {{ title.language | uppercase }} |
+                {{ title.publishingType }}
+              </p>
+              <p class="text-[var(--text-secondary)] text-sm mb-2">
+                Status: {{ title.status }}
+              </p>
+              <!-- ✅ ISBN Section -->
+              <div
+                class="text-xs text-[var(--text-secondary)] mb-2 space-y-0.5"
+              >
+                <p>
+                  <span class="font-medium">ISBN (Print):</span>
+                  {{ title.isbnPrint || "Not Assigned" }}
+                </p>
+                <p>
+                  <span class="font-medium">ISBN (eBook):</span>
+                  {{ title.isbnEbook || "Not Assigned" }}
+                </p>
+              </div>
 
-          <mat-progress-bar
-            mode="determinate"
-            [value]="title.totalSales / 100"
-            class="!h-2 !rounded-full"
-          ></mat-progress-bar>
+              <mat-progress-bar
+                mode="determinate"
+                [value]="title.totalSales / 100"
+                class="!h-2 !rounded-full"
+              ></mat-progress-bar>
+            </div>
+          </div>
+          <button
+            mat-stroked-button
+            class="mt-4 w-full sm:w-auto self-start sm:self-end !border-[var(--primary-light)] !bg-primary !text-white hover:!bg-[var(--primary-superlight)] hover:!text-[var(--primary)] rounded-lg transition-all"
+            [routerLink]="['/titleSummary', title.id]"
+            routerLinkActive="router-link-active"
+          >
+            View Details
+          </button>
         </div>
-      </div>
-      <button
-        mat-stroked-button
-        class="!border-[var(--primary-light)] hover:!text-[var(--primary)] mt-4 rounded-lg !bg-primary !text-white hover:!bg-[var(--primary-superlight)] transition-all"
-        [routerLink]="['/titleSummary', title.id]"
-        routerLinkActive="router-link-active"
-      >
-        View Details
-      </button>
+      }
     </div>
-    }
-  </div>
   }
 </div>

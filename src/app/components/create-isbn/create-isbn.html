@@ -4,10 +4,10 @@
   <mat-dialog-content>
     <form
       [ngClass]="{
-      'ng-submitted': isSubmitted(),
-    }"
+        'ng-submitted': isSubmitted(),
+      }"
       [formGroup]="createIsbnForm"
-      class="grid grid-cols-2 gap-4"
+      class="grid grid-cols-1 sm:grid-cols-2 gap-4"
     >
       <!-- <mat-form-field>
         <mat-label>{{ "isbnnumber" | translate }}</mat-label>
@@ -46,13 +46,13 @@
             ></ngx-mat-select-search>
           </mat-option>
           @if (isSearchingPublishers()) {
-          <mat-option disabled>
-            <mat-spinner diameter="20"></mat-spinner>
-            <span class="ml-2">Searching...</span>
-          </mat-option>
+            <mat-option disabled>
+              <mat-spinner diameter="20"></mat-spinner>
+              <span class="ml-2">Searching...</span>
+            </mat-option>
           }
           @for (option of filteredPublisherOptions(); track option.value) {
-          <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -71,13 +71,13 @@
             ></ngx-mat-select-search>
           </mat-option>
           @if (isSearchingAuthors()) {
-          <mat-option disabled>
-            <mat-spinner diameter="20"></mat-spinner>
-            <span class="ml-2">Searching...</span>
-          </mat-option>
+            <mat-option disabled>
+              <mat-spinner diameter="20"></mat-spinner>
+              <span class="ml-2">Searching...</span>
+            </mat-option>
           }
           @for (option of filteredAuthorOptions(); track option.value) {
-          <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -101,9 +101,9 @@
         <mat-label>{{ "language" | translate }}</mat-label>
         <mat-select formControlName="language" required>
           @for (language of languages(); track language) {
-          <mat-option [value]="language">
-            {{ language | translate }}
-          </mat-option>
+            <mat-option [value]="language">
+              {{ language | translate }}
+            </mat-option>
           }
         </mat-select>
       </mat-form-field>

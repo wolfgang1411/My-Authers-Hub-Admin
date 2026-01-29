@@ -4,9 +4,9 @@
   </h3>
 
   <!-- Search + Apply ISBN -->
-  <div class="flex justify-between w-full gap-4">
+  <div class="flex flex-col lg:flex-row justify-between w-full gap-4">
     <div
-      class="flex h-[38px] items-center justify-center md:min-w-[480px] min-w-full gap-2"
+      class="flex w-full lg:max-w-[520px] h-[38px] items-center justify-center md:min-w-[480px] min-w-full gap-2"
     >
       <input
         class="input-field outline-none w-full"
@@ -16,7 +16,7 @@
       />
 
       <button
-        class="btn h-[38px] flex items-center self-end justify-center gap-2"
+        class="btn h-[38px] flex items-center shrink-0 justify-center gap-2"
         (click)="searchStr.next(input.value)"
       >
         <svg-icon
@@ -27,7 +27,7 @@
       </button>
     </div>
 
-    <div class="flex gap-4 items-center justify-center">
+    <div class="flex gap-4 items-center">
       <button
         class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
         matButton="filled"
@@ -41,7 +41,7 @@
   </div>
 
   <!-- Status filter buttons -->
-  <div class="flex w-full gap-4 mt-4">
+  <div class="grid grid-cols-2 sm:flex sm:w-full gap-4 mt-4">
     <button
       class="btn rounded-md !text-primary"
       type="button"
@@ -50,7 +50,7 @@
       [ngClass]="{
         '!bg-primary !text-white':
           lastSelectedStatus === isbnStatusEnum.PENDING,
-        '!bg-primary-superlight': lastSelectedStatus !== isbnStatusEnum.PENDING
+        '!bg-primary-superlight': lastSelectedStatus !== isbnStatusEnum.PENDING,
       }"
       (click)="selectStatus(isbnStatusEnum.PENDING)"
     >
@@ -65,7 +65,7 @@
       [ngClass]="{
         '!bg-primary !text-white':
           lastSelectedStatus === isbnStatusEnum.APPLIED,
-        '!bg-primary-superlight': lastSelectedStatus !== isbnStatusEnum.APPLIED
+        '!bg-primary-superlight': lastSelectedStatus !== isbnStatusEnum.APPLIED,
       }"
       (click)="selectStatus(isbnStatusEnum.APPLIED)"
     >
@@ -81,7 +81,8 @@
       [ngClass]="{
         '!bg-primary !text-white':
           lastSelectedStatus === isbnStatusEnum.APPROVED,
-        '!bg-primary-superlight': lastSelectedStatus !== isbnStatusEnum.APPROVED
+        '!bg-primary-superlight':
+          lastSelectedStatus !== isbnStatusEnum.APPROVED,
       }"
       (click)="selectStatus(isbnStatusEnum.APPROVED)"
     >
@@ -97,7 +98,8 @@
       [ngClass]="{
         '!bg-primary !text-white':
           lastSelectedStatus === isbnStatusEnum.REJECTED,
-        '!bg-primary-superlight': lastSelectedStatus !== isbnStatusEnum.REJECTED
+        '!bg-primary-superlight':
+          lastSelectedStatus !== isbnStatusEnum.REJECTED,
       }"
       (click)="selectStatus(isbnStatusEnum.REJECTED)"
     >
@@ -112,7 +114,7 @@
       type="button"
       [ngClass]="{
         '!bg-primary !text-white': lastSelectedStatus === 'ALL',
-        '!bg-primary-superlight': lastSelectedStatus !== 'ALL'
+        '!bg-primary-superlight': lastSelectedStatus !== 'ALL',
       }"
       (click)="selectStatus('ALL')"
     >
@@ -122,15 +124,103 @@
   </div>
 
   <!-- Table -->
-  <app-list-table
-    [dataSource]="dataSource"
-    [displayedColumns]="displayedColumns"
-    [actionTemplate]="actionButtons"
-    [editIsbnTemplate]="isbnnumber"
-    [isSortable]="isSortable"
-    (sortChange)="onSortChange($event)"
-  >
-  </app-list-table>
+  <div class="hidden lg:block">
+    <app-list-table
+      [dataSource]="dataSource"
+      [displayedColumns]="displayedColumns"
+      [actionTemplate]="actionButtons"
+      [editIsbnTemplate]="isbnnumber"
+      [isSortable]="isSortable"
+      (sortChange)="onSortChange($event)"
+    >
+    </app-list-table>
+  </div>
+  <div class="lg:hidden grid grid-cols-1 gap-4 mt-6">
+    @for (row of dataSource.data; track row.id) {
+      <div
+        class="bg-white rounded-xl border border-[var(--primary-superlight)] shadow-sm p-4 flex flex-col gap-3"
+      >
+        <!-- Header -->
+        <div class="flex justify-between items-start">
+          <div>
+            <h3 class="font-medium text-[var(--primary)]">
+              {{ row.titlename }}
+            </h3>
+            <p class="text-xs text-[var(--text-secondary)]">
+              {{ row.authorname }}
+            </p>
+            <p class="text-xs text-[var(--text-secondary)]">
+              {{ row.publishername || "—" }}
+            </p>
+          </div>
+
+          <span
+            class="text-xs px-2 py-1 rounded-full font-medium"
+            [ngClass]="{
+              'bg-yellow-100 text-yellow-700': row.status === 'PENDING',
+              'bg-blue-100 text-blue-700': row.status === 'APPLIED',
+              'bg-green-100 text-green-700': row.status === 'APPROVED',
+              'bg-red-100 text-red-700': row.status === 'REJECTED',
+            }"
+          >
+            {{ row.status }}
+          </span>
+        </div>
+
+        <!-- Details -->
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <p class="text-[var(--text-secondary)]">Verso</p>
+            <p class="font-medium">{{ row.verso }}</p>
+          </div>
+
+          <div>
+            <p class="text-[var(--text-secondary)]">Language</p>
+            <p class="font-medium">{{ row.language }}</p>
+          </div>
+
+          <div class="col-span-2">
+            <p class="text-[var(--text-secondary)]">ISBN</p>
+
+            <!-- 🔥 INLINE ISBN LOGIC (APPLIED + SUPERADMIN) -->
+            @if (
+              row.status === "APPLIED" &&
+              loggedInUser$()?.accessLevel === "SUPERADMIN"
+            ) {
+              <div class="flex items-center gap-2 mt-1">
+                <input
+                  matInput
+                  [formControl]="getIsbnControl(row)"
+                  class="border border-primary rounded-md px-2 py-1 w-full"
+                  maxlength="17"
+                  placeholder="Enter ISBN"
+                  (blur)="onInlineIsbnBlur(row)"
+                />
+                <button
+                  mat-icon-button
+                  class="!bg-green-600"
+                  (click)="saveInlineISBN(row)"
+                >
+                  <mat-icon class="!text-white">check</mat-icon>
+                </button>
+              </div>
+            } @else {
+              <p class="font-medium mt-1">
+                {{ row.isbnnumber || "N/A" }}
+              </p>
+            }
+          </div>
+        </div>
+
+        <!-- Actions (REUSED TEMPLATE LOGIC) -->
+        <div class="flex flex-wrap gap-2 pt-3 border-t">
+          <ng-container
+            *ngTemplateOutlet="actionButtons; context: { $implicit: row }"
+          ></ng-container>
+        </div>
+      </div>
+    }
+  </div>
 
   <!-- Pagination -->
   <div class="flex items-center justify-between gap-4 mt-4">
@@ -156,134 +246,149 @@
       </select>
     </div>
     @if (lastPage() > 1) {
-    <div class="flex items-center gap-2">
-      <button
-        class="btn rounded-md !text-primary"
-        matButton="filled"
-        matButton
-        type="button"
-        [disabled]="(filter.page || 1) === 1"
-        (click)="previousPage()"
-      >
-        <mat-icon>chevron_left</mat-icon>
-        {{ "previous" | translate }}
-      </button>
-      <div class="flex items-center gap-1">
-        @for (pageNum of getPageNumbers(); track pageNum) { @if (pageNum === -1)
-        {
-        <span class="px-2 text-[var(--text-secondary)]">...</span>
-        } @else {
+      <div class="flex items-center gap-2">
         <button
-          class="btn rounded-md !text-primary min-w-[40px]"
+          class="btn rounded-md !text-primary"
           matButton="filled"
           matButton
           type="button"
-          [ngClass]="{
-            '!bg-primary !text-white': (filter.page || 1) === pageNum,
-            '!bg-primary-superlight': (filter.page || 1) !== pageNum
-          }"
-          (click)="goToPage(pageNum)"
+          [disabled]="(filter.page || 1) === 1"
+          (click)="previousPage()"
         >
-          {{ pageNum }}
+          <mat-icon>chevron_left</mat-icon>
+          {{ "previous" | translate }}
         </button>
-        } }
+        <div class="flex items-center gap-1">
+          @for (pageNum of getPageNumbers(); track pageNum) {
+            @if (pageNum === -1) {
+              <span class="px-2 text-[var(--text-secondary)]">...</span>
+            } @else {
+              <button
+                class="btn rounded-md !text-primary min-w-[40px]"
+                matButton="filled"
+                matButton
+                type="button"
+                [ngClass]="{
+                  '!bg-primary !text-white': (filter.page || 1) === pageNum,
+                  '!bg-primary-superlight': (filter.page || 1) !== pageNum,
+                }"
+                (click)="goToPage(pageNum)"
+              >
+                {{ pageNum }}
+              </button>
+            }
+          }
+        </div>
+        <button
+          class="btn rounded-md !text-primary"
+          matButton="filled"
+          matButton
+          type="button"
+          [disabled]="(filter.page || 1) === lastPage()"
+          (click)="nextPage()"
+        >
+          {{ "next" | translate }}
+          <mat-icon>chevron_right</mat-icon>
+        </button>
       </div>
-      <button
-        class="btn rounded-md !text-primary"
-        matButton="filled"
-        matButton
-        type="button"
-        [disabled]="(filter.page || 1) === lastPage()"
-        (click)="nextPage()"
-      >
-        {{ "next" | translate }}
-        <mat-icon>chevron_right</mat-icon>
-      </button>
-    </div>
     }
   </div>
 
   <!-- Inline ISBN column template (only for APPLIED) -->
   <ng-template #isbnnumber let-element>
-    @if (element.status === 'APPLIED' && loggedInUser$()?.accessLevel === 'SUPERADMIN') {
-    <div class="flex items-center gap-2">
-      <input
-        matInput
-        [formControl]="getIsbnControl(element)"
-        class="border border-primary rounded-md px-2 py-1 w-40"
-        maxlength="17"
-        placeholder="Enter ISBN"
-        (blur)="onInlineIsbnBlur(element)"
-      />
+    @if (
+      element.status === "APPLIED" &&
+      loggedInUser$()?.accessLevel === "SUPERADMIN"
+    ) {
+      <div class="flex items-center gap-2">
+        <input
+          matInput
+          [formControl]="getIsbnControl(element)"
+          class="border border-primary rounded-md px-2 py-1 w-40"
+          maxlength="17"
+          placeholder="Enter ISBN"
+          (blur)="onInlineIsbnBlur(element)"
+        />
 
-      <button
-        matIconButton
-        type="button"
-        class="!bg-green-600 text-white rounded-full p-2"
-        (click)="saveInlineISBN(element)"
-      >
-        <mat-icon class="text-sm !text-white">check</mat-icon>
-      </button>
-    </div>
+        <button
+          matIconButton
+          type="button"
+          class="!bg-green-600 text-white rounded-full p-2"
+          (click)="saveInlineISBN(element)"
+        >
+          <mat-icon class="text-sm !text-white">check</mat-icon>
+        </button>
+      </div>
     } @else {
-    <span>{{ (element.isbnNumber | isbnFormat) || "N/A" }}</span>
+      <span>{{ (element.isbnNumber | isbnFormat) || "N/A" }}</span>
     }
   </ng-template>
 
   <!-- Action buttons column -->
   <ng-template #actionButtons let-element>
     <div class="flex gap-2 text-sm items-center lg:flex-wrap">
-      @if (element.image && element.status !== 'REJECTED' && element.status ===
-      'APPROVED' ) {
-      <button
-        class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
-        matButton="filled"
-        matButton
-        (click)="downloadBarCode(element.isbnnumber)"
-      >
-        <mat-icon class="material-icons">download</mat-icon>
-        {{ "barcode" | translate }}
-      </button>
-      } @if (element.bunko && element.status !== 'REJECTED' && element.status
-      !== 'APPLIED') {
-      <button
-        class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
-        matButton="filled"
-        matButton
-        (click)="downloadBunko(element)"
-      >
-        <mat-icon class="material-icons">download</mat-icon>
-        {{ "bunko" | translate }}
-      </button>
-      } @if (element.status === 'PENDING') {
-      <button
-        class="!bg-primary flex items-center gap-2 !text-white rounded-full p-2"
-        matIconButton
-        (click)="createIsbn(element)"
-      >
-        <mat-icon class="material-icons">edit</mat-icon>
-      </button>
-      @if (loggedInUser$()?.accessLevel === 'SUPERADMIN') {
-      <button
-        title="Apply"
-        class="!bg-green-600 flex items-center gap-2 !text-white rounded-full p-2"
-        matIconButton
-        (click)="onISBNStatusChange(element.id, 'APPLIED')"
-      >
-        <mat-icon class="material-icons text-white">check</mat-icon>
-      </button>
+      @if (
+        element.image &&
+        element.status !== "REJECTED" &&
+        element.status === "APPROVED"
+      ) {
+        <button
+          class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
+          matButton="filled"
+          matButton
+          (click)="downloadBarCode(element.isbnnumber)"
+        >
+          <mat-icon class="material-icons">download</mat-icon>
+          {{ "barcode" | translate }}
+        </button>
       }
-      } @if ( element.status !== 'APPROVED' && element.status !== 'REJECTED' &&
-      loggedInUser$()?.accessLevel === 'SUPERADMIN' ) {
-
-      <button
-        title="Reject"
-        class="!bg-red-500 flex items-center gap-2 !text-white rounded-full p-2"
-        matIconButton
-        (click)="onISBNStatusChange(element.id, 'REJECTED')"
-      >
-        <mat-icon class="material-icons">cancel</mat-icon>
-      </button>
+      @if (
+        element.bunko &&
+        element.status !== "REJECTED" &&
+        element.status !== "APPLIED"
+      ) {
+        <button
+          class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
+          matButton="filled"
+          matButton
+          (click)="downloadBunko(element)"
+        >
+          <mat-icon class="material-icons">download</mat-icon>
+          {{ "bunko" | translate }}
+        </button>
+      }
+      @if (element.status === "PENDING") {
+        <button
+          class="!bg-primary flex items-center gap-2 !text-white rounded-full p-2"
+          matIconButton
+          (click)="createIsbn(element)"
+        >
+          <mat-icon class="material-icons">edit</mat-icon>
+        </button>
+        @if (loggedInUser$()?.accessLevel === "SUPERADMIN") {
+          <button
+            title="Apply"
+            class="!bg-green-600 flex items-center gap-2 !text-white rounded-full p-2"
+            matIconButton
+            (click)="onISBNStatusChange(element.id, 'APPLIED')"
+          >
+            <mat-icon class="material-icons text-white">check</mat-icon>
+          </button>
+        }
+      }
+      @if (
+        element.status !== "APPROVED" &&
+        element.status !== "REJECTED" &&
+        loggedInUser$()?.accessLevel === "SUPERADMIN"
+      ) {
+        <button
+          title="Reject"
+          class="!bg-red-500 flex items-center gap-2 !text-white rounded-full p-2"
+          matIconButton
+          (click)="onISBNStatusChange(element.id, 'REJECTED')"
+        >
+          <mat-icon class="material-icons">cancel</mat-icon>
+        </button>
       }
     </div>
   </ng-template>
