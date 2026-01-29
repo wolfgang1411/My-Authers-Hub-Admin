@@ -31,6 +31,7 @@ import {
   TitleDetailsFormGroup,
   TitleMediaGroup,
   TitleMediaType,
+  User,
 } from '../../../interfaces';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
@@ -44,6 +45,7 @@ import {
   takeUntil,
 } from 'rxjs';
 import { getFileToBase64, selectFile } from '../../../common/utils/file';
+import { UserService } from 'src/app/services/user';
 @Component({
   selector: 'app-temp-title-printing',
   imports: [
@@ -61,8 +63,14 @@ import { getFileToBase64, selectFile } from '../../../common/utils/file';
 export class TempTitlePrinting implements OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
-  constructor(private printingService: PrintingService) {}
+  constructor(
+    private printingService: PrintingService,
+    userService: UserService,
+  ) {
+    this.loggedInUser = userService.loggedInUser$;
+  }
 
+  loggedInUser!: Signal<User | null>;
   bindingType = signal<BookBindings[]>([]);
   laminationTypes = signal<LaminationType[]>([]);
   paperQuality = signal<PaperQuailty[]>([]);
@@ -78,7 +86,7 @@ export class TempTitlePrinting implements OnDestroy {
   allowAuthorCopyPrice = input<boolean>(false);
   titleDetailsGroup = input<FormGroup<TitleDetailsFormGroup> | null>(null);
   authors = input<Author[]>([]);
-  
+
   // Output event to trigger calculation in parent
   calculateCost = output<void>();
 
@@ -110,26 +118,26 @@ export class TempTitlePrinting implements OnDestroy {
     this.printingGroup()
       .controls.sizeCategoryId.valueChanges.pipe(
         startWith(this.printingGroup().controls.sizeCategoryId.value),
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$),
       )
       .subscribe(async (sizeId) => {
         await this.loadOptionsBySize(sizeId);
       });
 
     const defaultBindingType = this.bindingType().find(
-      ({ name }) => name === 'Paperback'
+      ({ name }) => name === 'Paperback',
     )?.id;
 
     const defaultLaminationType = this.laminationTypes().find(
-      ({ name }) => name == 'Matte'
+      ({ name }) => name == 'Matte',
     )?.id;
 
     const defaultPaperQuanlity = this.paperQuality().find(
-      ({ name }) => name == '80 GSM'
+      ({ name }) => name == '80 GSM',
     )?.id;
 
     const defaultSizeCategory = this.sizeCategory().find(
-      ({ size }) => size == '5.5*8.5'
+      ({ size }) => size == '5.5*8.5',
     )?.id;
 
     if (
@@ -144,7 +152,7 @@ export class TempTitlePrinting implements OnDestroy {
       defaultLaminationType
     ) {
       this.printingGroup().controls.laminationTypeId.setValue(
-        defaultLaminationType
+        defaultLaminationType,
       );
     }
 
@@ -153,7 +161,7 @@ export class TempTitlePrinting implements OnDestroy {
       defaultPaperQuanlity
     ) {
       this.printingGroup().controls.paperQuailtyId.setValue(
-        defaultPaperQuanlity
+        defaultPaperQuanlity,
       );
     }
 
@@ -162,7 +170,7 @@ export class TempTitlePrinting implements OnDestroy {
       defaultSizeCategory
     ) {
       this.printingGroup().controls.sizeCategoryId.setValue(
-        defaultSizeCategory
+        defaultSizeCategory,
       );
     }
 
@@ -184,7 +192,8 @@ export class TempTitlePrinting implements OnDestroy {
       .valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe((controls) => {
         const insideCover = this.documentMedia().controls.find(
-          ({ controls: { type } }) => type.value === TitleMediaType.INSIDE_COVER
+          ({ controls: { type } }) =>
+            type.value === TitleMediaType.INSIDE_COVER,
         );
 
         this.insideCoverMedia.set(insideCover || null);
@@ -202,10 +211,7 @@ export class TempTitlePrinting implements OnDestroy {
 
     // Watch for changes in printingPrice to re-validate customPrintCost if needed
     printingPriceControl.valueChanges
-      .pipe(
-        debounceTime(300),
-        takeUntil(this.destroy$)
-      )
+      .pipe(debounceTime(300), takeUntil(this.destroy$))
       .subscribe(() => {
         // Only re-validate if customPrintCost is already touched
         if (customPrintCostControl.touched) {
@@ -239,7 +245,7 @@ export class TempTitlePrinting implements OnDestroy {
         delete errors['minPrintCost'];
         customPrintCostControl.setErrors(
           Object.keys(errors).length > 0 ? errors : null,
-          { emitEvent: false }
+          { emitEvent: false },
         );
       }
       // Trigger calculation without customPrintCost
@@ -285,20 +291,26 @@ export class TempTitlePrinting implements OnDestroy {
         delete errors['minPrintCost'];
         customPrintCostControl.setErrors(
           Object.keys(errors).length > 0 ? errors : null,
-          { emitEvent: false }
+          { emitEvent: false },
         );
       }
       return true;
     }
 
     // Validate that customPrintCost is not lower than actual print cost
-    if (Number(customPrintCost) < Number(actualPrintCost)) {
-      customPrintCostControl.setErrors({
-        minPrintCost: {
-          actualPrintCost,
-          customPrintCost,
+    if (
+      Number(customPrintCost) < Number(actualPrintCost) &&
+      this.loggedInUser()?.accessLevel !== 'SUPERADMIN'
+    ) {
+      customPrintCostControl.setErrors(
+        {
+          minPrintCost: {
+            actualPrintCost,
+            customPrintCost,
+          },
         },
-      }, { emitEvent: false });
+        { emitEvent: false },
+      );
       return false;
     } else {
       // Clear error if validation passes
@@ -307,7 +319,7 @@ export class TempTitlePrinting implements OnDestroy {
         delete errors['minPrintCost'];
         customPrintCostControl.setErrors(
           Object.keys(errors).length > 0 ? errors : null,
-          { emitEvent: false }
+          { emitEvent: false },
         );
       }
       return true;
@@ -343,7 +355,7 @@ export class TempTitlePrinting implements OnDestroy {
     this.calculateBwPages(
       colorPagesControl,
       totalPagesControl,
-      blackAndWhitePagesControl
+      blackAndWhitePagesControl,
     );
 
     // Listen to changes in colorPages and totalPages
@@ -354,13 +366,13 @@ export class TempTitlePrinting implements OnDestroy {
     ])
       .pipe(
         debounceTime(100), // Reduced debounce for better responsiveness
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$),
       )
       .subscribe(([colorPages, totalPages]) => {
         this.calculateBwPages(
           colorPagesControl,
           totalPagesControl,
-          blackAndWhitePagesControl
+          blackAndWhitePagesControl,
         );
       });
   }
@@ -371,7 +383,7 @@ export class TempTitlePrinting implements OnDestroy {
   private calculateBwPages(
     colorPagesControl: FormControl,
     totalPagesControl: FormControl,
-    bwPagesControl: FormControl
+    bwPagesControl: FormControl,
   ): void {
     const totalPages = Number(totalPagesControl.value || 0);
     const colorPages = Number(colorPagesControl.value || 0);
@@ -386,7 +398,7 @@ export class TempTitlePrinting implements OnDestroy {
   async onInsideCoverUpload(event: Event) {
     const mediaGroup = this.insideCoverMedia();
     const file = (await selectFile(
-      mediaGroup?.controls?.allowedFormat?.value?.[0] || 'image/*'
+      mediaGroup?.controls?.allowedFormat?.value?.[0] || 'image/*',
     )) as File;
 
     if (!mediaGroup || !file) return;
@@ -406,7 +418,7 @@ export class TempTitlePrinting implements OnDestroy {
       return this.laminationTypes(); // allow all
     }
     return this.laminationTypes().filter(
-      (t) => t.name.toLowerCase() !== 'velvet'
+      (t) => t.name.toLowerCase() !== 'velvet',
     );
   }
   getLaminationControl(printGroup: AbstractControl): FormControl {

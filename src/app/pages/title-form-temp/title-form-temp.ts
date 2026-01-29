@@ -5033,8 +5033,9 @@ export class TitleFormTemp implements OnDestroy {
       // Build printing data
       // Only include insideCover if it's being changed (not already true in database)
       const canUseCustomPrintCost =
-        this.loggedInUser()?.accessLevel === 'PUBLISHER' &&
-        this.loggedInUser()?.publisher?.allowCustomPrintingPrice;
+        this.loggedInUser()?.accessLevel === 'SUPERADMIN' ||
+        (this.loggedInUser()?.accessLevel === 'PUBLISHER' &&
+          this.loggedInUser()?.publisher?.allowCustomPrintingPrice);
 
       // Get customPrintCost value - only include if user has permission and value is set
       let customPrintCostValue: number | undefined = undefined;
