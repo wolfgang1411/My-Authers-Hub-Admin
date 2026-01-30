@@ -23,24 +23,26 @@
   </app-list-table>
 
   <ng-template #actionButtons let-element>
-    <div class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap">
+    <div
+      class="flex gap-2 text-blue-600 text-sm items-center lg:flex-wrap justify-end"
+    >
       @if (!element.sent) {
-      <button
-        (click)="onAddEditNotification(element)"
-        class="!bg-primary"
-        mat-icon-button
-        [title]="'edit' | translate"
-      >
-        <mat-icon class="!text-white">edit</mat-icon>
-      </button>
-      <button
-        class="!bg-red-500"
-        mat-icon-button
-        [title]="'delete' | translate"
-        (click)="onDeleteNotification(element)"
-      >
-        <mat-icon class="!text-white">delete</mat-icon>
-      </button>
+        <button
+          (click)="onAddEditNotification(element)"
+          class="!bg-primary"
+          mat-icon-button
+          [title]="'edit' | translate"
+        >
+          <mat-icon class="!text-white">edit</mat-icon>
+        </button>
+        <button
+          class="!bg-red-500"
+          mat-icon-button
+          [title]="'delete' | translate"
+          (click)="onDeleteNotification(element)"
+        >
+          <mat-icon class="!text-white">delete</mat-icon>
+        </button>
       }
     </div>
   </ng-template>

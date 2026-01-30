@@ -231,7 +231,9 @@
     @if (title()?.royalties) {
       <app-royalty-table [royalties]="title()?.royalties"> </app-royalty-table>
       <ng-template #actionButtons let-element>
-        <div class="flex gap-2 text-sm items-center lg:flex-wrap"></div>
+        <div
+          class="flex gap-2 text-sm items-center lg:flex-wrap justify-end"
+        ></div>
       </ng-template>
       <ng-template #royaltyCellTemplate let-element let-column="column">
         @switch (column) {

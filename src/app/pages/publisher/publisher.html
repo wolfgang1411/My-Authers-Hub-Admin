@@ -207,7 +207,7 @@
     @if (lastPage() > 1) {
       <div class="flex items-center gap-2">
         <button
-          class="btn rounded-md !text-primary"
+          class="!text-primary"
           matButton="filled"
           [disabled]="(filter().page || 1) === 1"
           (click)="previousPage()"
@@ -217,7 +217,7 @@
         </button>
 
         <button
-          class="btn rounded-md !text-primary"
+          class=""
           matButton="filled"
           [disabled]="(filter().page || 1) === lastPage()"
           (click)="nextPage()"
@@ -329,7 +329,7 @@
 
   <ng-template #actionButtons let-element>
     <div
-      class="flex gap-2 text-blue-600 text-sm items-center justify-end lg:flex-wrap"
+      class="flex gap-2 text-blue-600 text-sm items-center justify-end lg:flex-wrap justify-end"
     >
       <button
         class="!bg-primary"

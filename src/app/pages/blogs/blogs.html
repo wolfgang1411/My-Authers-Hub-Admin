@@ -255,7 +255,9 @@
 </div>
 
 <ng-template #actionButtons let-element>
-  <div class="flex gap-2 text-sm items-center justify-end lg:flex-wrap">
+  <div
+    class="flex gap-2 text-sm items-center justify-end lg:flex-wrap justify-end"
+  >
     <button
       (click)="onViewBlog(element)"
       class="!text-primary"
