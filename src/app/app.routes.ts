@@ -182,6 +182,13 @@ export const routes: Routes = [
     },
   },
   {
+    path: 'title-medias',
+    loadComponent: () =>
+      import('./pages/add-missing-title-media/add-missing-title-media').then(
+        (c) => c.AddMissingTitleMedia,
+      ),
+  },
+  {
     path: 'titleDetails',
     loadComponent: () =>
       import('./pages/title-details/title-details').then((c) => c.TitleDetails),

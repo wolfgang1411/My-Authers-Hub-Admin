@@ -221,6 +221,7 @@ export interface TitleFilter {
   publishedBefore?: string;
   categoryId?: number | number[];
   genreId?: number | number[];
+  showMissingMediaTitleOnly?: boolean;
   bestSellingMAH?: boolean;
   searchStr?: string;
 }
