@@ -16,166 +16,193 @@
   <mat-dialog-content>
     <form [formGroup]="addRoyaltyForm" class="gap-4 flex flex-col">
       <ng-container formArrayName="royalties">
-        @if (royaltiesArray.length > 0) { @for (item of royaltiesArray.controls;
-        let i = $index; track i) {
-        <div
-          [formGroupName]="i"
-          class="border p-3 rounded-md grid grid-cols-[repeat(4,_1fr)_auto] gap-2"
-        >
-          <mat-form-field class="flex-1">
-            <mat-label>{{ "selecttitle" | translate }}</mat-label>
-            <mat-select
-              formControlName="titleId"
-              (selectionChange)="getAuthorPublisherList($event.value)"
-              required
+        @if (royaltiesArray.length > 0) {
+          @for (item of royaltiesArray.controls; let i = $index; track i) {
+            <div
+              [formGroupName]="i"
+              class="border p-3 rounded-md grid grid-cols-[repeat(4,_1fr)_auto] gap-2"
             >
-              <mat-option>
-                <ngx-mat-select-search
-                  [formControl]="titleSearchControls.get(i)!"
-                  [placeholderLabel]="'Type to search titles...'"
-                  [noEntriesFoundLabel]="'No titles found'"
-                ></ngx-mat-select-search>
-              </mat-option>
-              <mat-option [value]="null" disabled>{{
-                "selecttitle" | translate
-              }}</mat-option>
-              @if (filteredTitleOptions.get(i)) {
-                @for (option of filteredTitleOptions.get(i)!(); track option.value) {
-                <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                }
-              }
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>{{ "selectauthor" | translate }}</mat-label>
-            <mat-select
-              formControlName="authorId"
-              [required]="!item.get('publisherId')?.value"
-            >
-              <mat-option>
-                <ngx-mat-select-search
-                  [formControl]="authorSearchControls.get(i)!"
-                  [placeholderLabel]="'Type to search authors...'"
-                  [noEntriesFoundLabel]="'No authors found'"
-                ></ngx-mat-select-search>
-              </mat-option>
-              @if (isSearchingAuthors.get(i)?.()) {
-              <mat-option disabled>
-                <mat-spinner diameter="20"></mat-spinner>
-                <span class="ml-2">Searching...</span>
-              </mat-option>
-              }
-              <mat-option [value]="null" disabled>
-                {{ "selectauthor" | translate }}
-              </mat-option>
-              @if (filteredAuthorOptions.get(i)) {
-                @for (option of filteredAuthorOptions.get(i)!(); track option.value) {
-                <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                }
-              }
-            </mat-select>
-          </mat-form-field>
+              <mat-form-field class="flex-1">
+                <mat-label>{{ "selecttitle" | translate }}</mat-label>
+                <mat-select
+                  formControlName="titleId"
+                  (selectionChange)="getAuthorPublisherList($event.value)"
+                  required
+                >
+                  <mat-option>
+                    <ngx-mat-select-search
+                      [formControl]="titleSearchControls.get(i)!"
+                      [placeholderLabel]="'Type to search titles...'"
+                      [noEntriesFoundLabel]="'No titles found'"
+                    ></ngx-mat-select-search>
+                  </mat-option>
+                  <mat-option [value]="null" disabled>{{
+                    "selecttitle" | translate
+                  }}</mat-option>
+                  @if (filteredTitleOptions.get(i)) {
+                    @for (
+                      option of filteredTitleOptions.get(i)!();
+                      track option.value
+                    ) {
+                      <mat-option [value]="option.value">{{
+                        option.label
+                      }}</mat-option>
+                    }
+                  }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>{{ "selectauthor" | translate }}</mat-label>
+                <mat-select
+                  formControlName="authorId"
+                  [required]="!item.get('publisherId')?.value"
+                >
+                  <mat-option>
+                    <ngx-mat-select-search
+                      [formControl]="authorSearchControls.get(i)!"
+                      [placeholderLabel]="'Type to search authors...'"
+                      [noEntriesFoundLabel]="'No authors found'"
+                    ></ngx-mat-select-search>
+                  </mat-option>
+                  @if (isSearchingAuthors.get(i)?.()) {
+                    <mat-option disabled>
+                      <mat-spinner diameter="20"></mat-spinner>
+                      <span class="ml-2">Searching...</span>
+                    </mat-option>
+                  }
+                  <mat-option [value]="null" disabled>
+                    {{ "selectauthor" | translate }}
+                  </mat-option>
+                  @if (filteredAuthorOptions.get(i)) {
+                    @for (
+                      option of filteredAuthorOptions.get(i)!();
+                      track option.value
+                    ) {
+                      <mat-option [value]="option.value">{{
+                        option.label
+                      }}</mat-option>
+                    }
+                  }
+                </mat-select>
+              </mat-form-field>
 
-          <mat-form-field class="flex-1">
-            <mat-label>
-              {{ "selectpublisher" | translate }}
-            </mat-label>
-            <mat-select
-              formControlName="publisherId"
-              [required]="!item.get('authorId')?.value"
-            >
-              <mat-option>
-                <ngx-mat-select-search
-                  [formControl]="publisherSearchControls.get(i)!"
-                  [placeholderLabel]="'Type to search publishers...'"
-                  [noEntriesFoundLabel]="'No publishers found'"
-                ></ngx-mat-select-search>
-              </mat-option>
-              @if (isSearchingPublishers.get(i)?.()) {
-              <mat-option disabled>
-                <mat-spinner diameter="20"></mat-spinner>
-                <span class="ml-2">Searching...</span>
-              </mat-option>
-              }
-              <mat-option [value]="null" disabled>{{
-                "selectpublisher" | translate
-              }}</mat-option>
-              @if (filteredPublisherOptions.get(i)) {
-                @for (option of filteredPublisherOptions.get(i)!(); track option.value) {
-                <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                }
-              }
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field class="flex-1">
-            <mat-label>
-              {{ "print_mah" | translate }}
-            </mat-label>
-            <input
-              matInput
-              type="number"
-              required
-              formControlName="print_mah"
-            />
-          </mat-form-field>
-          <mat-form-field class="flex-1">
-            <mat-label>
-              {{ "print_third_party" | translate }}
-            </mat-label>
-            <input
-              matInput
-              type="number"
-              required
-              formControlName="print_third_party"
-            />
-          </mat-form-field>
-          <mat-form-field class="flex-1">
-            <mat-label>
-              {{ "prime" | translate }}
-            </mat-label>
-            <input matInput type="number" required formControlName="prime" />
-          </mat-form-field>
-          <mat-form-field class="flex-1">
-            <mat-label>
-              {{ "ebook_mah" | translate }}
-            </mat-label>
-            <input
-              matInput
-              type="number"
-              required
-              formControlName="ebook_mah"
-            />
-          </mat-form-field>
-          <mat-form-field class="flex-1">
-            <mat-label>
-              {{ "ebook_third_party" | translate }}
-            </mat-label>
-            <input
-              matInput
-              type="number"
-              required
-              formControlName="ebook_third_party"
-            />
-          </mat-form-field>
-          <button
-            mat-icon-button
-            color="warn"
-            class="!bg-accent mt-2 rounded-full items-center p-1.5 flex justify-center"
-            (click)="removeRoyalty(i)"
-          >
-            <mat-icon class="!fill-red">delete</mat-icon>
-          </button>
-        </div>
-        @if(item.errors?.['authorOrPublisherRequired'] && (item.dirty ||
-        item.touched)) {
-        <mat-error class>
-          {{ "Any one out of Author or Publisher must be selected." }}
-        </mat-error>
-        } @if(item.errors?.['onlyOneAllowed'] &&(item.dirty || item.touched)){
-        <mat-error
-          >{{ "Either Author or Publisher can be selected." }}
-        </mat-error>
-        } } }
+              <mat-form-field class="flex-1">
+                <mat-label>
+                  {{ "selectpublisher" | translate }}
+                </mat-label>
+                <mat-select
+                  formControlName="publisherId"
+                  [required]="!item.get('authorId')?.value"
+                >
+                  <mat-option>
+                    <ngx-mat-select-search
+                      [formControl]="publisherSearchControls.get(i)!"
+                      [placeholderLabel]="'Type to search publishers...'"
+                      [noEntriesFoundLabel]="'No publishers found'"
+                    ></ngx-mat-select-search>
+                  </mat-option>
+                  @if (isSearchingPublishers.get(i)?.()) {
+                    <mat-option disabled>
+                      <mat-spinner diameter="20"></mat-spinner>
+                      <span class="ml-2">Searching...</span>
+                    </mat-option>
+                  }
+                  <mat-option [value]="null" disabled>{{
+                    "selectpublisher" | translate
+                  }}</mat-option>
+                  @if (filteredPublisherOptions.get(i)) {
+                    @for (
+                      option of filteredPublisherOptions.get(i)!();
+                      track option.value
+                    ) {
+                      <mat-option [value]="option.value">{{
+                        option.label
+                      }}</mat-option>
+                    }
+                  }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field class="flex-1">
+                <mat-label>
+                  {{ "print_mah" | translate }}
+                </mat-label>
+                <input
+                  matInput
+                  type="number"
+                  required
+                  formControlName="print_mah"
+                />
+              </mat-form-field>
+              <mat-form-field class="flex-1">
+                <mat-label>
+                  {{ "print_third_party" | translate }}
+                </mat-label>
+                <input
+                  matInput
+                  type="number"
+                  required
+                  formControlName="print_third_party"
+                />
+              </mat-form-field>
+              <mat-form-field class="flex-1">
+                <mat-label>
+                  {{ "prime" | translate }}
+                </mat-label>
+                <input
+                  matInput
+                  type="number"
+                  required
+                  formControlName="prime"
+                />
+              </mat-form-field>
+              <mat-form-field class="flex-1">
+                <mat-label>
+                  {{ "ebook_mah" | translate }}
+                </mat-label>
+                <input
+                  matInput
+                  type="number"
+                  required
+                  formControlName="ebook_mah"
+                />
+              </mat-form-field>
+              <mat-form-field class="flex-1">
+                <mat-label>
+                  {{ "ebook_third_party" | translate }}
+                </mat-label>
+                <input
+                  matInput
+                  type="number"
+                  required
+                  formControlName="ebook_third_party"
+                />
+              </mat-form-field>
+              <button
+                mat-icon-button
+                color="warn"
+                class="!bg-accent mt-2 rounded-full items-center p-1.5 flex justify-center"
+                (click)="removeRoyalty(i)"
+              >
+                <mat-icon class="!fill-red">delete</mat-icon>
+              </button>
+            </div>
+            @if (
+              item.errors?.["authorOrPublisherRequired"] &&
+              (item.dirty || item.touched)
+            ) {
+              <mat-error class>
+                {{ "Any one out of Author or Publisher must be selected." }}
+              </mat-error>
+            }
+            @if (
+              item.errors?.["onlyOneAllowed"] && (item.dirty || item.touched)
+            ) {
+              <mat-error
+                >{{ "Either Author or Publisher can be selected." }}
+              </mat-error>
+            }
+          }
+        }
       </ng-container>
     </form>
   </mat-dialog-content>

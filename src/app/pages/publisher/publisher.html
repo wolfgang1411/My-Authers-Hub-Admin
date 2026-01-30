@@ -15,7 +15,7 @@
       ) {
         <button
           matButton="filled"
-          class="!bg-primary text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
+          class="!bg-primary !text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
           [routerLink]="['/publisher', 0]"
         >
           <mat-icon class="!text-sm">add</mat-icon>
@@ -24,7 +24,7 @@
 
         <button
           matButton="filled"
-          class="!bg-primary text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
+          class="!bg-primary !text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
           (click)="invitePublisher()"
         >
           <mat-icon class="!text-sm">person_add</mat-icon>
@@ -34,7 +34,7 @@
 
       <button
         matButton="filled"
-        class="!bg-primary text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
+        class="!bg-primary !text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
         [routerLink]="['/invites']"
       >
         <mat-icon class="!text-sm">mail</mat-icon>
@@ -43,7 +43,7 @@
 
       <button
         matButton="filled"
-        class="!bg-primary text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
+        class="!bg-primary !text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
         [routerLink]="['/update-tickets']"
         [queryParams]="{ tab: 'publisher' }"
       >
@@ -53,7 +53,7 @@
 
       <button
         matButton="filled"
-        class="!bg-primary text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
+        class="!bg-primary !text-white rounded-md px-3 py-2 text-sm flex items-center gap-1"
         (click)="onExportToExcel()"
       >
         <mat-icon class="!text-sm">download</mat-icon>

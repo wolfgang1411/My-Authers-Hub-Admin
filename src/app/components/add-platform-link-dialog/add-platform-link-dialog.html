@@ -29,64 +29,68 @@
 
       <!-- Platform Selection/Input -->
       <div class="flex flex-col gap-1">
-        @if (selectionMode() === 'existing') {
-        <label class="text-xs font-medium text-[var(--text-heading)]">
-          {{ "selectplatform" | translate }}
-        </label>
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-select
-            [formControl]="form.controls.platformName"
-            [placeholder]="'selectplatform' | translate"
-          >
-            @if (availablePlatforms().length === 0) {
-              <mat-option disabled>{{ "noplatformsavailable" | translate }}</mat-option>
-            }
-            @for (platform of availablePlatforms(); track platform.id) {
-              @if (platform.name && platform.name.trim() !== '') {
-                <mat-option
-                  [value]="platform.name"
-                  (click)="onPlatformSelect(platform)"
-                >
-                  <div class="flex items-center justify-between w-full">
-                    <span>{{ platform.name }}</span>
-                    <span
-                      class="text-[10px] text-[var(--text-secondary)] px-1.5 py-0.5 bg-[var(--light-purple-bg)] rounded border border-[var(--primary-superlight)] ml-2"
-                    >
-                      {{ getPlatformType(platform) }}
-                    </span>
-                  </div>
-                </mat-option>
+        @if (selectionMode() === "existing") {
+          <label class="text-xs font-medium text-[var(--text-heading)]">
+            {{ "selectplatform" | translate }}
+          </label>
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-select
+              [formControl]="form.controls.platformName"
+              [placeholder]="'selectplatform' | translate"
+            >
+              @if (availablePlatforms().length === 0) {
+                <mat-option disabled>{{
+                  "noplatformsavailable" | translate
+                }}</mat-option>
               }
+              @for (platform of availablePlatforms(); track platform.id) {
+                @if (platform.name && platform.name.trim() !== "") {
+                  <mat-option
+                    [value]="platform.name"
+                    (click)="onPlatformSelect(platform)"
+                  >
+                    <div class="flex items-center justify-between w-full">
+                      <span>{{ platform.name }}</span>
+                      <span
+                        class="text-[10px] text-[var(--text-secondary)] px-1.5 py-0.5 bg-[var(--light-purple-bg)] rounded border border-[var(--primary-superlight)] ml-2"
+                      >
+                        {{ getPlatformType(platform) }}
+                      </span>
+                    </div>
+                  </mat-option>
+                }
+              }
+            </mat-select>
+            @if (
+              form.controls.platformName.hasError("required") &&
+              form.controls.platformName.touched
+            ) {
+              <mat-error>{{ "platformrequired" | translate }}</mat-error>
             }
-          </mat-select>
-          @if (
-          form.controls.platformName.hasError('required') &&
-          form.controls.platformName.touched) {
-          <mat-error>{{ "platformrequired" | translate }}</mat-error>
-          }
-        </mat-form-field>
+          </mat-form-field>
         } @else {
-        <label class="text-xs font-medium text-[var(--text-heading)]">
-          {{ "platformname" | translate }}
-        </label>
-        <mat-form-field appearance="outline" class="w-full">
-          <input
-            matInput
-            type="text"
-            [formControl]="form.controls.platformName"
-            [placeholder]="'enterplatformname' | translate"
-          />
-          @if (
-          form.controls.platformName.hasError('required') &&
-          form.controls.platformName.touched) {
-          <mat-error>{{ "platformnamerequired" | translate }}</mat-error>
-          }
-        </mat-form-field>
+          <label class="text-xs font-medium text-[var(--text-heading)]">
+            {{ "platformname" | translate }}
+          </label>
+          <mat-form-field appearance="outline" class="w-full">
+            <input
+              matInput
+              type="text"
+              [formControl]="form.controls.platformName"
+              [placeholder]="'enterplatformname' | translate"
+            />
+            @if (
+              form.controls.platformName.hasError("required") &&
+              form.controls.platformName.touched
+            ) {
+              <mat-error>{{ "platformnamerequired" | translate }}</mat-error>
+            }
+          </mat-form-field>
         }
       </div>
 
       <!-- Platform Type Selection - Only show when creating new platform -->
-      @if (selectionMode() === 'new') {
+      @if (selectionMode() === "new") {
         <div class="flex flex-col gap-1">
           <label class="text-xs font-medium text-[var(--text-heading)]">
             {{ "platformtype" | translate }}
@@ -139,4 +143,3 @@
     </button>
   </mat-dialog-actions>
 </div>
-

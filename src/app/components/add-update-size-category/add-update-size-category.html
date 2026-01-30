@@ -9,31 +9,39 @@
         <mat-label>{{ "name" | translate }}</mat-label>
         <input matInput formControlName="name" />
         @if (form.controls.name.invalid && form.controls.name.touched) {
-        <mat-error>{{ "nameisrequired" | translate }}</mat-error>
+          <mat-error>{{ "nameisrequired" | translate }}</mat-error>
         }
       </mat-form-field>
 
       <mat-form-field class="w-full">
         <mat-label>{{ "packetprice" | translate }}</mat-label>
         <input matInput type="number" formControlName="packetPrice" />
-        @if (form.controls.packetPrice.invalid && form.controls.packetPrice.touched) {
-        <mat-error>{{ "packetpriceisrequired" | translate }}</mat-error>
+        @if (
+          form.controls.packetPrice.invalid && form.controls.packetPrice.touched
+        ) {
+          <mat-error>{{ "packetpriceisrequired" | translate }}</mat-error>
         }
       </mat-form-field>
 
       <mat-form-field class="w-full">
         <mat-label>{{ "weightmultiplayer" | translate }}</mat-label>
         <input matInput type="number" formControlName="weightMultiplayer" />
-        @if (form.controls.weightMultiplayer.invalid && form.controls.weightMultiplayer.touched) {
-        <mat-error>{{ "weightmultiplayerisrequired" | translate }}</mat-error>
+        @if (
+          form.controls.weightMultiplayer.invalid &&
+          form.controls.weightMultiplayer.touched
+        ) {
+          <mat-error>{{ "weightmultiplayerisrequired" | translate }}</mat-error>
         }
       </mat-form-field>
 
       <mat-form-field class="w-full">
         <mat-label>{{ "insidecoverprice" | translate }}</mat-label>
         <input matInput type="number" formControlName="insideCoverPrice" />
-        @if (form.controls.insideCoverPrice.invalid && form.controls.insideCoverPrice.touched) {
-        <mat-error>{{ "insidecoverpriceisrequired" | translate }}</mat-error>
+        @if (
+          form.controls.insideCoverPrice.invalid &&
+          form.controls.insideCoverPrice.touched
+        ) {
+          <mat-error>{{ "insidecoverpriceisrequired" | translate }}</mat-error>
         }
       </mat-form-field>
     </form>
@@ -58,4 +66,3 @@
     </button>
   </mat-dialog-actions>
 </div>
-

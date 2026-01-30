@@ -55,22 +55,22 @@
         {{ "addresses" | translate }}
       </h3>
       <div class="mt-3 space-y-3">
-        @if (user()?.address?.length) { @for (addr of user()?.address; track addr.id)
-        {
-        <div class="border p-3 rounded-md">
-          <div class="text-sm font-semibold">{{ addr.address }}</div>
-          <div class="text-sm text-[var(--text-secondary)]">
-            {{ addr.city }}, {{ addr.state }}, {{ addr.country }} -
-            {{ addr.pincode }}
-          </div>
-        </div>
-        } } @else {
-        <p class="text-sm text-[var(--text-secondary)]">
-          {{ "noaddressesfound" | translate }}
-        </p>
+        @if (user()?.address?.length) {
+          @for (addr of user()?.address; track addr.id) {
+            <div class="border p-3 rounded-md">
+              <div class="text-sm font-semibold">{{ addr.address }}</div>
+              <div class="text-sm text-[var(--text-secondary)]">
+                {{ addr.city }}, {{ addr.state }}, {{ addr.country }} -
+                {{ addr.pincode }}
+              </div>
+            </div>
+          }
+        } @else {
+          <p class="text-sm text-[var(--text-secondary)]">
+            {{ "noaddressesfound" | translate }}
+          </p>
         }
       </div>
     </div>
   </div>
 </div>
-

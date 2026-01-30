@@ -10,7 +10,7 @@
         <button
           matButton
           matButton="filled"
-          class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+          class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
           [routerLink]="['/author', 0]"
           routerLinkActive="router-link-active"
         >
@@ -20,7 +20,7 @@
         <button
           matButton
           matButton="filled"
-          class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+          class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
           (click)="inviteAuthor()"
         >
           <mat-icon class="material-icons">person_add</mat-icon>
@@ -31,7 +31,7 @@
       <button
         matButton
         matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
         [routerLink]="['/invites']"
         routerLinkActive="router-link-active"
       >
@@ -41,7 +41,7 @@
       <button
         matButton
         matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
         [routerLink]="['/update-tickets']"
         [queryParams]="{ tab: 'author' }"
         routerLinkActive="router-link-active"
@@ -53,7 +53,7 @@
         <button
           matButton
           matButton="filled"
-          class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+          class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
           (click)="onExportToExcel()"
         >
           <mat-icon class="material-icons">download</mat-icon>
@@ -100,7 +100,7 @@
 
       <!-- <button
         matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
       >
         <mat-icon class="material-icons">filter_list</mat-icon>
 

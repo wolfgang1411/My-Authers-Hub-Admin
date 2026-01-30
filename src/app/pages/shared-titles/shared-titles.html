@@ -7,7 +7,7 @@
       <button
         matButton
         matButton="filled"
-        class="!bg-primary flex items-center gap-2 text-white rounded-md p-2"
+        class="!bg-primary flex items-center gap-2 !text-white rounded-md p-2"
         (click)="onClickCreate()"
       >
         <mat-icon class="material-icons">share</mat-icon>
@@ -45,31 +45,31 @@
   </ng-template>
 
   @if (totalCount() > 0) {
-  <div class="flex justify-center items-center gap-2 mt-4">
-    <button
-      mat-icon-button
-      [disabled]="page() === 1 || isLoading()"
-      (click)="onPageChange(page() - 1)"
-      class="!bg-primary cursor-pointer hover:!bg-primary/60"
-    >
-      <mat-icon class="!text-white">chevron_left</mat-icon>
-    </button>
-    <span class="text-sm text-[var(--text-primary)]">
-      Page {{ page() }} of {{ totalPages }} ({{ totalCount() }} total)
-    </span>
-    <button
-      mat-icon-button
-      [disabled]="page() === totalPages || isLoading()"
-      (click)="onPageChange(page() + 1)"
-      class="!bg-primary cursor-pointer hover:!bg-primary/60"
-    >
-      <mat-icon class="!text-white">chevron_right</mat-icon>
-    </button>
-  </div>
+    <div class="flex justify-center items-center gap-2 mt-4">
+      <button
+        mat-icon-button
+        [disabled]="page() === 1 || isLoading()"
+        (click)="onPageChange(page() - 1)"
+        class="!bg-primary cursor-pointer hover:!bg-primary/60"
+      >
+        <mat-icon class="!text-white">chevron_left</mat-icon>
+      </button>
+      <span class="text-sm text-[var(--text-primary)]">
+        Page {{ page() }} of {{ totalPages }} ({{ totalCount() }} total)
+      </span>
+      <button
+        mat-icon-button
+        [disabled]="page() === totalPages || isLoading()"
+        (click)="onPageChange(page() + 1)"
+        class="!bg-primary cursor-pointer hover:!bg-primary/60"
+      >
+        <mat-icon class="!text-white">chevron_right</mat-icon>
+      </button>
+    </div>
   } @else if (!isLoading()) {
-  <div class="flex flex-col items-center justify-center py-12">
-    <mat-icon class="text-[var(--primary)] text-4xl mb-2">share</mat-icon>
-    <p class="text-[var(--text-primary)] text-sm">No shared titles found.</p>
-  </div>
+    <div class="flex flex-col items-center justify-center py-12">
+      <mat-icon class="text-[var(--primary)] text-4xl mb-2">share</mat-icon>
+      <p class="text-[var(--text-primary)] text-sm">No shared titles found.</p>
+    </div>
   }
 </div>

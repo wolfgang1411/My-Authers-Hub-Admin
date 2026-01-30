@@ -534,7 +534,6 @@ export class Payouts implements OnInit {
             case 'APPROVED':
               return 'Approved';
             case 'REJECTED':
-            case 'REJECTED':
               return payout.isRefunded ? 'Rejected & Refunded' : 'Rejected';
           }
           return 'Pending';

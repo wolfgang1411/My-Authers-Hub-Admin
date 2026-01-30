@@ -27,13 +27,13 @@
           [ngClass]="{
             'border-red-500 focus:ring-red-500': skuInvalid,
             'border-[var(--primary-superlight)] focus:ring-[var(--primary)]':
-              !skuInvalid
+              !skuInvalid,
           }"
         />
         @if (skuInvalid) {
-        <p class="text-xs text-red-500 mt-1">
-          {{ "skunumberrequired" | translate }}
-        </p>
+          <p class="text-xs text-red-500 mt-1">
+            {{ "skunumberrequired" | translate }}
+          </p>
         }
       </div>
       <div class="flex items-center justify-between mb-2">
@@ -42,7 +42,9 @@
         </h3>
         <button
           type="button"
-          (click)="onAddPlatform(); $event.preventDefault(); $event.stopPropagation()"
+          (click)="
+            onAddPlatform(); $event.preventDefault(); $event.stopPropagation()
+          "
           mat-button
           class="!px-3 !py-1 !text-xs !rounded-lg !bg-primary !text-white hover:!opacity-90 transition-all !min-w-0"
         >
@@ -51,62 +53,70 @@
         </button>
       </div>
       @if (form.controls.platformIdentifier.controls.length > 0) {
-      <div
-        class="border border-[var(--primary-superlight)] rounded-lg overflow-hidden mb-2"
-      >
-        <div class="flex-1 overflow-y-auto p-2 min-h-0">
-          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
-            @for (platformIdentifier of
-            form.controls.platformIdentifier.controls; track
-            platformIdentifier.controls.platformName.value) {
-            <div
-              class="flex flex-col gap-1 p-2 border border-[var(--primary-superlight)] rounded bg-white hover:bg-[var(--light-purple-bg)] transition-colors"
-            >
-              <div class="flex items-center justify-between mb-0.5">
-                <span class="text-xs font-medium text-[var(--text-heading)]">
-                  {{
-                    platformIdentifier.controls.platformName.value | translate
-                  }}
-                </span>
-                <span
-                  class="text-[10px] text-[var(--text-secondary)] px-1.5 py-0.5 bg-[var(--light-purple-bg)] rounded border border-[var(--primary-superlight)]"
+        <div
+          class="border border-[var(--primary-superlight)] rounded-lg overflow-hidden mb-2"
+        >
+          <div class="flex-1 overflow-y-auto p-2 min-h-0">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+              @for (
+                platformIdentifier of form.controls.platformIdentifier.controls;
+                track platformIdentifier.controls.platformName.value
+              ) {
+                <div
+                  class="flex flex-col gap-1 p-2 border border-[var(--primary-superlight)] rounded bg-white hover:bg-[var(--light-purple-bg)] transition-colors"
                 >
-                  {{ platformIdentifier.controls.type.value }}
-                </span>
-              </div>
-              <mat-form-field
-                appearance="outline"
-                class="w-full !mb-0"
-                [subscriptSizing]="'dynamic'"
-              >
-                <input
-                  matInput
-                  type="url"
-                  [formControl]="platformIdentifier.controls.distributionLink"
-                  [placeholder]="'enterdistributionlink' | translate"
-                  class="!text-sm"
-                />
-              </mat-form-field>
+                  <div class="flex items-center justify-between mb-0.5">
+                    <span
+                      class="text-xs font-medium text-[var(--text-heading)]"
+                    >
+                      {{
+                        platformIdentifier.controls.platformName.value
+                          | translate
+                      }}
+                    </span>
+                    <span
+                      class="text-[10px] text-[var(--text-secondary)] px-1.5 py-0.5 bg-[var(--light-purple-bg)] rounded border border-[var(--primary-superlight)]"
+                    >
+                      {{ platformIdentifier.controls.type.value }}
+                    </span>
+                  </div>
+                  <mat-form-field
+                    appearance="outline"
+                    class="w-full !mb-0"
+                    [subscriptSizing]="'dynamic'"
+                  >
+                    <input
+                      matInput
+                      type="url"
+                      [formControl]="
+                        platformIdentifier.controls.distributionLink
+                      "
+                      [placeholder]="'enterdistributionlink' | translate"
+                      class="!text-sm"
+                    />
+                  </mat-form-field>
+                </div>
+              }
             </div>
-            }
           </div>
         </div>
-      </div>
       } @else {
-      <div class="flex flex-col items-center justify-center py-8 border border-[var(--primary-superlight)] rounded-lg bg-[var(--light-purple-bg)]">
-        <p class="text-sm text-[var(--text-secondary)] mb-4">
-          {{ "noplatformsadded" | translate }}
-        </p>
-        <button
-          type="button"
-          (click)="onAddPlatform()"
-          mat-button
-          class="!px-4 !py-1.5 !text-sm !rounded-lg !bg-primary !text-white hover:!opacity-90 transition-all"
+        <div
+          class="flex flex-col items-center justify-center py-8 border border-[var(--primary-superlight)] rounded-lg bg-[var(--light-purple-bg)]"
         >
-          <mat-icon class="!text-base mr-1">add</mat-icon>
-          {{ "addplatformlink" | translate }}
-        </button>
-      </div>
+          <p class="text-sm text-[var(--text-secondary)] mb-4">
+            {{ "noplatformsadded" | translate }}
+          </p>
+          <button
+            type="button"
+            (click)="onAddPlatform()"
+            mat-button
+            class="!px-4 !py-1.5 !text-sm !rounded-lg !bg-primary !text-white hover:!opacity-90 transition-all"
+          >
+            <mat-icon class="!text-base mr-1">add</mat-icon>
+            {{ "addplatformlink" | translate }}
+          </button>
+        </div>
       }
     </div>
   </mat-dialog-content>

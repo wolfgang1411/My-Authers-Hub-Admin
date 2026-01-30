@@ -2,18 +2,27 @@
   (ngSubmit)="onSubmit()"
   [formGroup]="form"
   class="flex flex-col w-full"
-  style="height: auto;"
+  style="height: auto"
 >
-  <h1 mat-dialog-title class="text-base font-semibold text-[var(--text-heading)] px-4 pt-4 pb-2 m-0 flex-shrink-0">
+  <h1
+    mat-dialog-title
+    class="text-base font-semibold text-[var(--text-heading)] px-4 pt-4 pb-2 m-0 flex-shrink-0"
+  >
     Edit Platform Identifier
   </h1>
 
-  <mat-dialog-content class="!p-0 !m-0 !overflow-visible flex-1 flex flex-col min-h-0">
+  <mat-dialog-content
+    class="!p-0 !m-0 !overflow-visible flex-1 flex flex-col min-h-0"
+  >
     <div class="flex flex-col gap-4 px-4 flex-1 min-h-0">
       <!-- Platform Name Display -->
-      <div class="flex items-center gap-2 p-3 bg-[var(--light-purple-bg)] rounded-lg border border-[var(--primary-superlight)]">
+      <div
+        class="flex items-center gap-2 p-3 bg-[var(--light-purple-bg)] rounded-lg border border-[var(--primary-superlight)]"
+      >
         <mat-icon class="text-[var(--primary)]">storefront</mat-icon>
-        <span class="font-medium text-[var(--text-heading)]">{{ data.platformName }}</span>
+        <span class="font-medium text-[var(--text-heading)]">{{
+          data.platformName
+        }}</span>
       </div>
 
       <!-- Distribution Link Field -->
@@ -31,7 +40,9 @@
     </div>
   </mat-dialog-content>
 
-  <mat-dialog-actions class="!justify-end !px-4 !py-3 !mt-0 gap-2 border-t border-[var(--primary-superlight)] flex-shrink-0">
+  <mat-dialog-actions
+    class="!justify-end !px-4 !py-3 !mt-0 gap-2 border-t border-[var(--primary-superlight)] flex-shrink-0"
+  >
     <button
       (click)="data.onClose()"
       mat-button
@@ -49,4 +60,3 @@
     </button>
   </mat-dialog-actions>
 </form>
-

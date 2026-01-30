@@ -107,7 +107,7 @@
           @if (hasMoreTickets(0)) {
             <div class="flex justify-center mt-4">
               <button
-                class="btn !bg-primary text-white"
+                class="btn !bg-primary !text-white"
                 (click)="loadMoreTickets()"
                 [disabled]="isLoading()"
               >
@@ -130,7 +130,7 @@
           @if (hasMoreTickets(1)) {
             <div class="flex justify-center mt-4">
               <button
-                class="btn !bg-primary text-white"
+                class="btn !bg-primary !text-white"
                 (click)="loadMoreTickets()"
                 [disabled]="isLoading()"
               >
@@ -153,7 +153,7 @@
           @if (hasMoreTickets(2)) {
             <div class="flex justify-center mt-4">
               <button
-                class="btn !bg-primary text-white"
+                class="btn !bg-primary !text-white"
                 (click)="loadMoreTickets()"
                 [disabled]="isLoading()"
               >
@@ -177,7 +177,7 @@
             @if (hasMoreTickets(3)) {
               <div class="flex justify-center mt-4">
                 <button
-                  class="btn !bg-primary text-white"
+                  class="btn !bg-primary !text-white"
                   (click)="loadMoreTickets()"
                   [disabled]="isLoading()"
                 >
@@ -307,7 +307,7 @@
       @if (hasMoreTickets(selectedTabIndex())) {
         <div class="flex justify-center mt-4">
           <button
-            class="btn !bg-primary text-white"
+            class="btn !bg-primary !text-white"
             (click)="loadMoreTickets()"
             [disabled]="isLoading()"
           >

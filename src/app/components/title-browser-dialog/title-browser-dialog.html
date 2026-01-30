@@ -12,7 +12,7 @@
     </button>
   </div>
 
-  <div class="p-4 flex-1 overflow-y-auto" style="max-height: 70vh;">
+  <div class="p-4 flex-1 overflow-y-auto" style="max-height: 70vh">
     <div class="mb-4">
       <input
         class="input-field outline-none w-full"
@@ -23,43 +23,48 @@
     </div>
 
     @if (titles().length === 0) {
-    <div class="text-center py-12">
-      <mat-icon class="!text-6xl !text-[var(--text-secondary)] !w-16 !h-16">
-        book
-      </mat-icon>
-      <p class="text-lg text-[var(--text-secondary)] mt-4">
-        {{ "notitlesfound" | translate }}
-      </p>
-    </div>
+      <div class="text-center py-12">
+        <mat-icon class="!text-6xl !text-[var(--text-secondary)] !w-16 !h-16">
+          book
+        </mat-icon>
+        <p class="text-lg text-[var(--text-secondary)] mt-4">
+          {{ "notitlesfound" | translate }}
+        </p>
+      </div>
     } @else {
-    <div class="grid grid-cols-1 gap-3">
-      @for (title of titles(); track title.id) {
-      <div class="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
-        <div class="flex justify-between items-start gap-4">
-          <div class="flex-1">
-            <h5 class="font-semibold text-base mb-1">{{ title.name }}</h5>
-            <p class="text-sm text-[var(--text-secondary)] mb-3 line-clamp-2">
-              {{ title.subTitle }}
-            </p>
-            <div class="flex items-center justify-between">
-              <span class="text-lg font-semibold text-primary">
-                ₹{{ data.getTitlePrice(title).toFixed(2) }}
-              </span>
-              <button
-                class="!bg-primary !text-white rounded-md px-4 py-2 hover:opacity-90 transition-opacity"
-                matButton="filled"
-                (click)="onAddToCart(title)"
-              >
-                <mat-icon class="!text-base mr-1">add_shopping_cart</mat-icon>
-                {{ "addtitles" | translate }}
-              </button>
+      <div class="grid grid-cols-1 gap-3">
+        @for (title of titles(); track title.id) {
+          <div
+            class="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div class="flex justify-between items-start gap-4">
+              <div class="flex-1">
+                <h5 class="font-semibold text-base mb-1">{{ title.name }}</h5>
+                <p
+                  class="text-sm text-[var(--text-secondary)] mb-3 line-clamp-2"
+                >
+                  {{ title.subTitle }}
+                </p>
+                <div class="flex items-center justify-between">
+                  <span class="text-lg font-semibold text-primary">
+                    ₹{{ data.getTitlePrice(title).toFixed(2) }}
+                  </span>
+                  <button
+                    class="!bg-primary !text-white rounded-md px-4 py-2 hover:opacity-90 transition-opacity"
+                    matButton="filled"
+                    (click)="onAddToCart(title)"
+                  >
+                    <mat-icon class="!text-base mr-1"
+                      >add_shopping_cart</mat-icon
+                    >
+                    {{ "addtitles" | translate }}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        }
       </div>
-      }
-    </div>
     }
   </div>
 </div>
-

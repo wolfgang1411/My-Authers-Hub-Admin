@@ -306,7 +306,7 @@
                 }
                 <button
                   matButton="filled"
-                  class="px-4 py-2 !bg-primary text-white rounded-lg shadow hover:bg-primary/90 transition"
+                  class="px-4 py-2 !bg-primary !text-white rounded-lg shadow hover:bg-primary/90 transition"
                   type="button"
                   (click)="fileInputs.get($index)?.nativeElement?.click()"
                 >
@@ -409,7 +409,7 @@
         <button
           (click)="onMediaUpload()"
           matButton="filled"
-          class="px-6 py-2 !bg-primary text-white rounded-lg shadow w-full sm:w-auto"
+          class="px-6 py-2 !bg-primary !text-white rounded-lg shadow w-full sm:w-auto"
         >
           {{ getActionButtonText("documents") }}
           <mat-icon>{{ getActionButtonIcon("documents") }}</mat-icon>
