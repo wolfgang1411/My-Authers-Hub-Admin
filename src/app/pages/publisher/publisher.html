@@ -207,7 +207,7 @@
     @if (lastPage() > 1) {
       <div class="flex items-center gap-2">
         <button
-          class="!text-primary"
+          class="disabled:!text-primary"
           matButton="filled"
           [disabled]="(filter().page || 1) === 1"
           (click)="previousPage()"

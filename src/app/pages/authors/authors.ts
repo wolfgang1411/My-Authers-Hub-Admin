@@ -184,6 +184,7 @@ export class Authors {
       numberoftitles: author.noOfTitles,
       bookssold: author.booksSold,
       wallet: Math.round(author?.user?.wallet?.totalAmount || 0) || 0,
+      status: !author.user.isEmailVerified ? 'Unverified' : author.status,
       actions: '',
     }));
     this.dataSource.data = mapped;
