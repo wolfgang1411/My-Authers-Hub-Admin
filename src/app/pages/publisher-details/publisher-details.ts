@@ -13,7 +13,7 @@ import { Subject } from 'rxjs';
 import { PublisherService } from '../publisher/publisher-service';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { Back } from '../../components/back/back';
-import { Title, TitleFilter } from '../../interfaces/Titles';
+import { Title, TitleDistribution, TitleFilter } from '../../interfaces/Titles';
 import { EarningFilter } from '../../interfaces';
 import { Author, AuthorFilter } from '../../interfaces/Authors';
 import {
@@ -48,6 +48,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { WalletService } from 'src/app/services/wallet';
 import { AddWalletAmount } from 'src/app/components/add-wallet-amount/add-wallet-amount';
 import Swal from 'sweetalert2';
+import { InviteDialog } from 'src/app/components/invite-dialog/invite-dialog';
+import { Validators } from '@angular/forms';
 @Component({
   selector: 'app-publisher-details',
   imports: [
@@ -1256,6 +1258,57 @@ export class PublisherDetails implements OnInit, OnDestroy {
             })
             .catch((error) => {
               console.log(error);
+            });
+        },
+      },
+    });
+  }
+
+  onClickPublishingPointCostChange(publishingPoint: PublishingPoints) {
+    const exisitValue = this.publisherDetails()?.publishingPointValue.find(
+      ({ distributionType }) =>
+        distributionType === publishingPoint.distributionType,
+    );
+
+    const dialog = this.matDialog.open(InviteDialog, {
+      data: {
+        heading: this.translateService.instant('Update Publishing Point Cost'),
+        label: this.translateService.instant(publishingPoint.distributionType),
+        type: 'number',
+        defaultValue: exisitValue?.amount,
+        validators: [Validators.required, Validators.min(1)],
+        showErrors: true,
+        onClose: () => dialog.close(),
+        onSave: (value: number) => {
+          this.publisherService
+            .createUpdatePublishingPointCost({
+              id: Number(exisitValue?.id) || undefined,
+              amount: Number(value),
+              distributionType: publishingPoint.distributionType,
+            })
+            .then((res) => {
+              this.publisherDetails.update((publisherDetails) => {
+                if (publisherDetails) {
+                  if (exisitValue) {
+                    publisherDetails.publishingPointValue =
+                      publisherDetails.publishingPointValue.map((ppv) => ({
+                        ...ppv,
+                        amount:
+                          exisitValue?.id == ppv.id
+                            ? Number(value)
+                            : ppv.amount,
+                      }));
+                  } else {
+                    publisherDetails.publishingPointValue = [
+                      ...publisherDetails.publishingPointValue,
+                      res,
+                    ];
+                  }
+                }
+
+                return publisherDetails;
+              });
+              dialog.close();
             });
         },
       },

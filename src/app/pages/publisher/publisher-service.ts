@@ -7,9 +7,10 @@ import {
   PublisherMediaType,
   Publishers,
   PublisherStatus,
-  PublishingPointCost,
   PublishingPoints,
   SharedPublisherProfile,
+  PublishingPointCost,
+  UpdatePublisingPointCost,
 } from '../../interfaces';
 import { Pagination, PublishingType } from '../../interfaces';
 import { Invite } from '../../interfaces/Invite';
@@ -27,7 +28,7 @@ export class PublisherService {
     private server: Server,
     private logger: Logger,
     private loader: LoaderService,
-    private s3Upload: S3Service
+    private s3Upload: S3Service,
   ) {}
 
   async getPublishers(filter?: PublisherFilter, showLoader = true) {
@@ -39,7 +40,7 @@ export class PublisherService {
       return await this.loader.loadPromise(
         this.server.get<Pagination<Publishers>>('publishers', filter),
         'fetch-publisher',
-        !showLoader
+        !showLoader,
       );
     } catch (error) {
       const errorToLog =
@@ -75,7 +76,7 @@ export class PublisherService {
   async findPublisherByInvite(signupCode: string): Promise<Publishers | null> {
     try {
       return await this.loader.loadPromise(
-        this.server.get<Publishers>(`publishers/by-invite/${signupCode}`)
+        this.server.get<Publishers>(`publishers/by-invite/${signupCode}`),
       );
     } catch (error) {
       const errorToLog =
@@ -94,20 +95,25 @@ export class PublisherService {
     }
   }
 
-  async createPublisher(publisherData: Publishers, signupCode?: string): Promise<Publishers> {
+  async createPublisher(
+    publisherData: Publishers,
+    signupCode?: string,
+  ): Promise<Publishers> {
     try {
       // If signupCode exists, always use POST (create new) - don't use PATCH even if id exists
       // If no signupCode, use PATCH if id exists, POST if no id
       const shouldUsePatch = !signupCode && publisherData.id;
-      const url = shouldUsePatch ? `publishers/${publisherData.id}` : 'publishers';
+      const url = shouldUsePatch
+        ? `publishers/${publisherData.id}`
+        : 'publishers';
       const method = shouldUsePatch ? 'patch' : 'post';
 
       // If signupCode exists, remove id from payload to force POST
-      const payload = signupCode ? { ...publisherData, id: undefined } : { ...publisherData };
+      const payload = signupCode
+        ? { ...publisherData, id: undefined }
+        : { ...publisherData };
 
-      return await this.loader.loadPromise(
-        this.server[method](url, payload)
-      );
+      return await this.loader.loadPromise(this.server[method](url, payload));
     } catch (error) {
       const errorToLog =
         error instanceof HttpErrorResponse && error.status !== 500
@@ -119,13 +125,13 @@ export class PublisherService {
   }
   async updatePublisherStatus(
     { status }: { status: PublisherStatus; delinkTitle?: boolean },
-    publisherId: number
+    publisherId: number,
   ) {
     try {
       return await this.loader.loadPromise(
         this.server.patch(`publishers/${publisherId}/status`, {
           status: status,
-        })
+        }),
       );
     } catch (error) {
       const errorToLog =
@@ -139,7 +145,7 @@ export class PublisherService {
   async sendInviteLink(invite: Invite) {
     try {
       return await this.loader.loadPromise(
-        this.server.post('publishers/invite', invite)
+        this.server.post('publishers/invite', invite),
       );
     } catch (error) {
       const errorToLog =
@@ -154,7 +160,7 @@ export class PublisherService {
     distributionData: Distribution[],
     publisherId: number,
     allowCustomPrintingPrice?: boolean,
-    allowAuthorCopyPrice?: boolean
+    allowAuthorCopyPrice?: boolean,
   ) {
     try {
       return await this.loader.loadPromise(
@@ -162,7 +168,7 @@ export class PublisherService {
           data: distributionData,
           allowCustomPrintingPrice: allowCustomPrintingPrice || false,
           allowAuthorCopyPrice: allowAuthorCopyPrice || false,
-        })
+        }),
       );
     } catch (error) {
       const errorToLog =
@@ -177,7 +183,10 @@ export class PublisherService {
   async resendEmailVerification(publisherId: number) {
     try {
       return await this.loader.loadPromise(
-        this.server.post(`publishers/${publisherId}/resend-email-verification`, {})
+        this.server.post(
+          `publishers/${publisherId}/resend-email-verification`,
+          {},
+        ),
       );
     } catch (error) {
       this.logger.logError(error);
@@ -188,7 +197,7 @@ export class PublisherService {
   async rejectPublisher(publisherId: number) {
     try {
       return await this.loader.loadPromise(
-        this.server.post(`publishers/${publisherId}/reject`, {})
+        this.server.post(`publishers/${publisherId}/reject`, {}),
       );
     } catch (error) {
       const errorToLog =
@@ -204,7 +213,7 @@ export class PublisherService {
     distributionType: DistributionType,
     points: number,
     returnUrl: string,
-    publisherId?: number
+    publisherId?: number,
   ) {
     try {
       return this.loader.loadPromise(
@@ -217,7 +226,7 @@ export class PublisherService {
           points,
           publisherId,
           returnUrl,
-        })
+        }),
       );
     } catch (error) {
       const errorToLog =
@@ -234,7 +243,7 @@ export class PublisherService {
       return await this.loader.loadPromise(
         this.server.get<Pagination<PublishingPoints>>('publishing-points', {
           publisherIds: [publisherId],
-        })
+        }),
       );
     } catch (error) {
       const errorToLog =
@@ -252,8 +261,8 @@ export class PublisherService {
           'publisher-point-cost',
           {
             publisherIds: [publisherId],
-          }
-        )
+          },
+        ),
       );
     } catch (error) {
       const errorToLog =
@@ -267,7 +276,7 @@ export class PublisherService {
   uploadPublisherImage(
     file: File,
     publisherId: number,
-    signupCode?: string
+    signupCode?: string,
   ): Promise<{ id: number; url: string }> {
     return new Promise(async (resolve, reject) => {
       try {
@@ -294,7 +303,11 @@ export class PublisherService {
   }
   async updateMyImage(file: File, publisherId: number, signupCode?: string) {
     try {
-      const media = await this.uploadPublisherImage(file, publisherId, signupCode);
+      const media = await this.uploadPublisherImage(
+        file,
+        publisherId,
+        signupCode,
+      );
       return media;
     } catch (error) {
       this.logger.logError(error);
@@ -304,7 +317,7 @@ export class PublisherService {
   async removeImage(mediaId: number) {
     try {
       return await this.loader.loadPromise(
-        this.server.delete(`publisher-media/medias/${mediaId}`)
+        this.server.delete(`publisher-media/medias/${mediaId}`),
       );
     } catch (error) {
       this.logger.logError(error);
@@ -315,7 +328,27 @@ export class PublisherService {
   async getSharedProfile(id: number): Promise<SharedPublisherProfile> {
     try {
       // Public endpoint - call directly without loader
-      return await this.server.get<SharedPublisherProfile>(`publishers/${id}/shared`);
+      return await this.server.get<SharedPublisherProfile>(
+        `publishers/${id}/shared`,
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
+  async createUpdatePublishingPointCost(data: UpdatePublisingPointCost) {
+    try {
+      data = { ...data };
+      const method = data.id ? 'patch' : 'post';
+      const url = data.id
+        ? `publisher-point-cost/${data.id}`
+        : 'publisher-point-cost';
+      delete data.id;
+
+      return await this.loader.loadPromise<PublishingPointCost>(
+        this.server[method](url, data),
+      );
     } catch (error) {
       this.logger.logError(error);
       throw error;

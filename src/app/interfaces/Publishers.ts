@@ -33,9 +33,10 @@ export interface Publishers {
   allowAuthorCopyPrice?: boolean;
   type: PublisherType;
   addedBy: User;
-  parentPublishers?: Publishers[]
+  parentPublishers?: Publishers[];
+  publishingPointValue: PublishingPointCost[];
   isApprovedByPublisher: boolean;
-  lifeTimeEarnings: number
+  lifeTimeEarnings: number;
 }
 
 export interface CreatePublisher {
@@ -78,6 +79,15 @@ export interface PublishingPoints {
   updatedAt: string;
 }
 
+export interface CreatePublishingPointCost {
+  publisherId: number;
+  distributionType: DistributionType;
+  amount: number;
+}
+
+export interface UpdatePublisingPointCost extends Partial<CreatePublishingPointCost> {
+  id?: number | null;
+}
 export interface PublishingPointCost {
   id: number;
   publisherId: number;

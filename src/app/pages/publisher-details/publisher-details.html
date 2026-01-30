@@ -783,7 +783,18 @@
               </div>
 
               <!-- Buy Button -->
-              <div class="mt-4 flex justify-end">
+              <div class="mt-4 flex justify-end gap-4">
+                @if (loggedInUser()?.accessLevel === "SUPERADMIN") {
+                  <button
+                    mat-raised-button
+                    color="primary"
+                    class="!text-xs !py-1.5 !px-4"
+                    (click)="onClickPublishingPointCostChange(point)"
+                  >
+                    {{ "updaterate" | translate }}
+                  </button>
+                }
+
                 <app-buy-assign-points-button
                   [returnUrl]="returnUrl()"
                   [distributionType]="point.distributionType"

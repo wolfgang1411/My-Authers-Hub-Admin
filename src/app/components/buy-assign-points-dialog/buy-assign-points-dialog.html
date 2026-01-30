@@ -5,13 +5,13 @@
 
   <mat-dialog-content>
     @if (isSuperAdmin && data.publisherName) {
-    <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-      <p class="text-sm text-yellow-800">
-        <strong>{{ "warning" | translate }}:</strong>
-        {{ "pointswillbeassignedto" | translate }}
-        <strong>{{ data.publisherName }}</strong>
-      </p>
-    </div>
+      <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <p class="text-sm text-yellow-800">
+          <strong>{{ "warning" | translate }}:</strong>
+          {{ "pointswillbeassignedto" | translate }}
+          <strong>{{ data.publisherName }}</strong>
+        </p>
+      </div>
     }
 
     <p class="mb-4">
@@ -32,13 +32,14 @@
         min="1"
         required
       />
-      @if (pointsControl.hasError('required') && pointsControl.touched) {
-      <mat-error>{{ "pointsrequired" | translate }}</mat-error>
-      } @else if (pointsControl.hasError('min') && pointsControl.touched) {
-      <mat-error>{{ "pointsmustbeatleast1" | translate }}</mat-error>
-      } @else if (pointsControl.hasError('positiveInteger') &&
-      pointsControl.touched) {
-      <mat-error>{{ "pointsmustbeapositiveinteger" | translate }}</mat-error>
+      @if (pointsControl.hasError("required") && pointsControl.touched) {
+        <mat-error>{{ "pointsrequired" | translate }}</mat-error>
+      } @else if (pointsControl.hasError("min") && pointsControl.touched) {
+        <mat-error>{{ "pointsmustbeatleast1" | translate }}</mat-error>
+      } @else if (
+        pointsControl.hasError("positiveInteger") && pointsControl.touched
+      ) {
+        <mat-error>{{ "pointsmustbeapositiveinteger" | translate }}</mat-error>
       }
     </mat-form-field>
   </mat-dialog-content>
@@ -55,7 +56,7 @@
     <button
       mat-button
       matButton="filled"
-      class="!bg-primary"
+      class="!bg-primary !text-white"
       (click)="onSubmit()"
       [disabled]="!pointsControl.valid"
     >
