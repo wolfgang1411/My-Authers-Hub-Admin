@@ -778,9 +778,7 @@ export class TitleFormTemp implements OnDestroy {
     );
 
     // Update manuscript validators if coming from incomplete titles
-    if (this.isIncompletedTitle) {
-      this.updateManuscriptValidatorsForIncomplete();
-    }
+    this.updateManuscriptValidatorsForIncomplete();
 
     this.tempForm.controls.printing.controls.bookBindingsId.valueChanges
       .pipe(takeUntil(this.destroy$))
@@ -3146,7 +3144,10 @@ export class TitleFormTemp implements OnDestroy {
         ({ controls: { mediaType } }) => mediaType.value === 'MANUSCRIPT',
       );
 
-    if (manuscriptControls.length > 0 && this.isIncompletedTitle) {
+    if (
+      manuscriptControls.length > 0 &&
+      this.loggedInUser()?.accessLevel === 'SUPERADMIN'
+    ) {
       const manuscriptControl = manuscriptControls[0];
       const fileControl = manuscriptControl.controls.file;
       const urlControl = manuscriptControl.controls.url;
