@@ -38,7 +38,13 @@ import {
   User,
 } from '../../../interfaces';
 import { MatRadioModule } from '@angular/material/radio';
-import { debounceTime, Subject, takeUntil, distinctUntilChanged, startWith } from 'rxjs';
+import {
+  debounceTime,
+  Subject,
+  takeUntil,
+  distinctUntilChanged,
+  startWith,
+} from 'rxjs';
 import { IsbnService } from '../../../services/isbn-service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -52,7 +58,6 @@ import { IsbnFormatPipe } from 'src/app/pipes/isbn-format-pipe';
 import { AuthorsService } from '../../authors/authors-service';
 import { PublisherService } from '../../publisher/publisher-service';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
-import { ReplaySubject } from 'rxjs';
 
 @Component({
   selector: 'app-temp-book-details',
@@ -98,7 +103,7 @@ export class TempBookDetails implements OnDestroy {
     private languageService: LanguageService,
     private isbnFormatPipe: IsbnFormatPipe,
     private authorService: AuthorsService,
-    private publisherService: PublisherService
+    private publisherService: PublisherService,
   ) {
     this.languages = this.languageService.languages$;
 
@@ -109,7 +114,7 @@ export class TempBookDetails implements OnDestroy {
 
       if (publishers && publishers.length && loggedInUserPublisher) {
         this.titleDetailsGroup().controls.publisher.controls.id.patchValue(
-          loggedInUserPublisher.id
+          loggedInUserPublisher.id,
         );
         this.onPublisherChange(loggedInUserPublisher.id);
         this.initialized.set(true); // mark as done
@@ -136,7 +141,7 @@ export class TempBookDetails implements OnDestroy {
         authors.map((author) => ({
           label: `${author.user?.firstName} ${author.user?.lastName} (${author.username}) (${author.id})`,
           value: author.id,
-        }))
+        })),
       );
 
       // Check each author form control and ensure selected authors are in options
@@ -152,7 +157,7 @@ export class TempBookDetails implements OnDestroy {
                 if (author) {
                   const currentOptions = this.authorOptions();
                   const exists = currentOptions.find(
-                    (opt) => opt.value === author.id
+                    (opt) => opt.value === author.id,
                   );
                   if (!exists) {
                     this.authorOptions.set([
@@ -180,7 +185,7 @@ export class TempBookDetails implements OnDestroy {
         publishers.map((publisher) => ({
           label: publisher.name,
           value: publisher.id,
-        }))
+        })),
       );
 
       // After publishers are loaded, ensure selected publisher is in options
@@ -188,7 +193,7 @@ export class TempBookDetails implements OnDestroy {
         this.titleDetailsGroup().controls.publisher.controls.id.value;
       if (selectedPublisherId && publishers.length > 0) {
         const selectedPublisher = publishers.find(
-          (p) => p.id === selectedPublisherId
+          (p) => p.id === selectedPublisherId,
         );
         if (!selectedPublisher) {
           // Publisher not in list, try to fetch it
@@ -198,7 +203,7 @@ export class TempBookDetails implements OnDestroy {
               if (publisher) {
                 const currentOptions = this.publisherOptions();
                 const exists = currentOptions.find(
-                  (opt) => opt.value === publisher.id
+                  (opt) => opt.value === publisher.id,
                 );
                 if (!exists) {
                   this.publisherOptions.set([
@@ -227,7 +232,7 @@ export class TempBookDetails implements OnDestroy {
       if (searchValue && searchValue.trim().length > 0) {
         const filterValue = searchValue.toLowerCase();
         filtered = authorOpts.filter((opt) =>
-          opt.label.toLowerCase().includes(filterValue)
+          opt.label.toLowerCase().includes(filterValue),
         );
       } else {
         filtered = [...authorOpts];
@@ -254,7 +259,7 @@ export class TempBookDetails implements OnDestroy {
       if (searchValue && searchValue.trim().length > 0) {
         const filterValue = searchValue.toLowerCase();
         filtered = publisherOpts.filter((opt) =>
-          opt.label.toLowerCase().includes(filterValue)
+          opt.label.toLowerCase().includes(filterValue),
         );
       } else {
         filtered = [...publisherOpts];
@@ -263,7 +268,7 @@ export class TempBookDetails implements OnDestroy {
       // Ensure selected publisher is always in the filtered list
       if (selectedPublisherId != null) {
         const selectedOpt = publisherOpts.find(
-          (opt) => opt.value === selectedPublisherId
+          (opt) => opt.value === selectedPublisherId,
         );
         if (
           selectedOpt &&
@@ -403,7 +408,7 @@ export class TempBookDetails implements OnDestroy {
     const categoryId = this.titleDetailsGroup().controls.category.value;
     if (categoryId) {
       const { items: subCategory } = await this.titleService.getSubcategory(
-        Number(categoryId)
+        Number(categoryId),
       );
       this.subCategory.set(subCategory);
     }
@@ -439,12 +444,14 @@ export class TempBookDetails implements OnDestroy {
     this.titleDetailsGroup()
       .controls.publisher.controls.id.valueChanges.pipe(
         takeUntil(this.destroy$),
-        distinctUntilChanged()
+        distinctUntilChanged(),
       )
       .subscribe((publisherId) => {
         if (publisherId != null) {
           // Only update if keepSame is true or not set (defaults to true)
-          const keepSame = this.titleDetailsGroup().controls.publisher.controls.keepSame.value ?? true;
+          const keepSame =
+            this.titleDetailsGroup().controls.publisher.controls.keepSame
+              .value ?? true;
           if (keepSame) {
             this.onPublisherChange(publisherId);
           }
@@ -457,14 +464,14 @@ export class TempBookDetails implements OnDestroy {
         startWith(''),
         debounceTime(300),
         distinctUntilChanged(),
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$),
       )
       .subscribe((search) => {
         const options = this.authorOptions();
         if (search && search.trim().length > 0) {
           const filterValue = search.toLowerCase();
           const filtered = options.filter((opt) =>
-            opt.label.toLowerCase().includes(filterValue)
+            opt.label.toLowerCase().includes(filterValue),
           );
           this.filteredAuthorOptions.set(filtered);
           // Trigger API search if needed
@@ -480,14 +487,14 @@ export class TempBookDetails implements OnDestroy {
         startWith(''),
         debounceTime(300),
         distinctUntilChanged(),
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$),
       )
       .subscribe((search) => {
         const options = this.publisherOptions();
         if (search && search.trim().length > 0) {
           const filterValue = search.toLowerCase();
           const filtered = options.filter((opt) =>
-            opt.label.toLowerCase().includes(filterValue)
+            opt.label.toLowerCase().includes(filterValue),
           );
           this.filteredPublisherOptions.set(filtered);
           // Trigger API search if needed
@@ -512,7 +519,6 @@ export class TempBookDetails implements OnDestroy {
     }
   }
 
-
   onAuthorSelected(authorId: number | null | undefined, index: number) {
     // Guard against null/undefined authorId to prevent API calls with null
     if (authorId == null || authorId === undefined) {
@@ -520,7 +526,7 @@ export class TempBookDetails implements OnDestroy {
     }
 
     const authorCtrl = this.titleDetailsGroup().controls.authorIds.at(
-      index
+      index,
     ) as FormGroup<AuthorFormGroup>;
     if (!authorCtrl) return;
 
@@ -551,21 +557,21 @@ export class TempBookDetails implements OnDestroy {
 
       // Get currently selected authors from the full list
       let selectedAuthors = this.authorsList().filter((a) =>
-        currentAuthorIds.includes(a.id)
+        currentAuthorIds.includes(a.id),
       );
 
       // For any selected author IDs not in authorsList, fetch them
       const missingAuthorIds = currentAuthorIds.filter(
-        (id) => !selectedAuthors.find((a) => a.id === id)
+        (id) => !selectedAuthors.find((a) => a.id === id),
       );
       if (missingAuthorIds.length > 0) {
         const fetchedAuthors = await Promise.all(
           missingAuthorIds.map((id) =>
-            this.authorService.getAuthorrById(id).catch(() => null)
-          )
+            this.authorService.getAuthorrById(id).catch(() => null),
+          ),
         );
         const validFetchedAuthors = fetchedAuthors.filter(
-          (a): a is Author => a != null
+          (a): a is Author => a != null,
         );
         selectedAuthors = [...selectedAuthors, ...validFetchedAuthors];
       }
@@ -591,7 +597,7 @@ export class TempBookDetails implements OnDestroy {
         combined.map((author) => ({
           label: `${author.user?.firstName} ${author.user?.lastName} (${author.username}) (${author.id})`,
           value: author.id,
-        }))
+        })),
       );
     } catch (error) {
       console.error('Error searching authors:', error);
@@ -601,21 +607,21 @@ export class TempBookDetails implements OnDestroy {
         .filter((id): id is number => id != null && !isNaN(Number(id)));
 
       let selectedAuthors = this.authorsList().filter((a) =>
-        currentAuthorIds.includes(a.id)
+        currentAuthorIds.includes(a.id),
       );
 
       // Try to fetch missing authors
       const missingAuthorIds = currentAuthorIds.filter(
-        (id) => !selectedAuthors.find((a) => a.id === id)
+        (id) => !selectedAuthors.find((a) => a.id === id),
       );
       if (missingAuthorIds.length > 0) {
         const fetchedAuthors = await Promise.all(
           missingAuthorIds.map((id) =>
-            this.authorService.getAuthorrById(id).catch(() => null)
-          )
+            this.authorService.getAuthorrById(id).catch(() => null),
+          ),
         );
         const validFetchedAuthors = fetchedAuthors.filter(
-          (a): a is Author => a != null
+          (a): a is Author => a != null,
         );
         selectedAuthors = [...selectedAuthors, ...validFetchedAuthors];
       }
@@ -633,7 +639,7 @@ export class TempBookDetails implements OnDestroy {
         combined.map((author) => ({
           label: `${author.user?.firstName} ${author.user?.lastName} (${author.username}) (${author.id})`,
           value: author.id,
-        }))
+        })),
       );
     } finally {
       this.isSearchingAuthors.set(false);
@@ -656,9 +662,8 @@ export class TempBookDetails implements OnDestroy {
       // If publisher not in list, fetch it
       if (currentPublisherId && !selectedPublisher) {
         try {
-          selectedPublisher = await this.publisherService.getPublisherById(
-            currentPublisherId
-          );
+          selectedPublisher =
+            await this.publisherService.getPublisherById(currentPublisherId);
         } catch (error) {
           console.error('Error fetching publisher:', error);
         }
@@ -685,7 +690,7 @@ export class TempBookDetails implements OnDestroy {
         combined.map((publisher) => ({
           label: publisher.name,
           value: publisher.id,
-        }))
+        })),
       );
     } catch (error) {
       console.error('Error searching publishers:', error);
@@ -700,9 +705,8 @@ export class TempBookDetails implements OnDestroy {
       // Try to fetch if not in list
       if (currentPublisherId && !selectedPublisher) {
         try {
-          selectedPublisher = await this.publisherService.getPublisherById(
-            currentPublisherId
-          );
+          selectedPublisher =
+            await this.publisherService.getPublisherById(currentPublisherId);
         } catch (error) {
           console.error('Error fetching publisher:', error);
         }
@@ -721,7 +725,7 @@ export class TempBookDetails implements OnDestroy {
         combined.map((publisher) => ({
           label: publisher.name,
           value: publisher.id,
-        }))
+        })),
       );
     } finally {
       this.isSearchingPublishers.set(false);
@@ -742,9 +746,8 @@ export class TempBookDetails implements OnDestroy {
 
   async getSubcategory(categoryId: number) {
     if (categoryId) {
-      const { items: subCategory } = await this.titleService.getSubcategory(
-        categoryId
-      );
+      const { items: subCategory } =
+        await this.titleService.getSubcategory(categoryId);
       this.subCategory.set(subCategory);
     }
   }
@@ -759,7 +762,7 @@ export class TempBookDetails implements OnDestroy {
           (authorGroup) =>
             authorGroup.controls.name.value ||
             authorGroup.controls.displayName.value ||
-            ''
+            '',
         )
         .filter((name) => name.trim() !== '')
         .join('; ');
@@ -828,7 +831,7 @@ export class TempBookDetails implements OnDestroy {
             if (keepSame) {
               pubGroup.controls.displayName.setValue(fetchedPublisher.name);
               this.titleDetailsGroup().controls.publisherDisplay.setValue(
-                fetchedPublisher.name
+                fetchedPublisher.name,
               );
             }
           }
@@ -836,14 +839,14 @@ export class TempBookDetails implements OnDestroy {
         .catch(() => {
           // If fetch fails, try to get name from the option label
           const option = this.publisherOptions().find(
-            (opt) => opt.value === publisherId
+            (opt) => opt.value === publisherId,
           );
           if (option) {
             const keepSame = pubGroup.controls.keepSame.value ?? true; // Default to true if not set
             if (keepSame) {
               pubGroup.controls.displayName.setValue(option.label);
               this.titleDetailsGroup().controls.publisherDisplay.setValue(
-                option.label
+                option.label,
               );
             }
           }
@@ -855,7 +858,7 @@ export class TempBookDetails implements OnDestroy {
     if (keepSame && selected) {
       pubGroup.controls.displayName.setValue(selected.name);
       this.titleDetailsGroup().controls.publisherDisplay.setValue(
-        selected.name
+        selected.name,
       );
     }
   }
@@ -864,7 +867,7 @@ export class TempBookDetails implements OnDestroy {
     const checked = (event.target as HTMLInputElement).checked;
     const pubGroup = this.titleDetailsGroup().controls.publisher;
     const publisherId = pubGroup.controls.id.value;
-    
+
     if (!publisherId) return;
 
     // Try to find publisher in publishers list first
@@ -878,19 +881,19 @@ export class TempBookDetails implements OnDestroy {
           if (checked && fetchedPublisher) {
             pubGroup.controls.displayName.setValue(fetchedPublisher.name);
             this.titleDetailsGroup().controls.publisherDisplay.setValue(
-              fetchedPublisher.name
+              fetchedPublisher.name,
             );
           }
         })
         .catch(() => {
           // If fetch fails, try to get name from the option label
           const option = this.publisherOptions().find(
-            (opt) => opt.value === publisherId
+            (opt) => opt.value === publisherId,
           );
           if (checked && option) {
             pubGroup.controls.displayName.setValue(option.label);
             this.titleDetailsGroup().controls.publisherDisplay.setValue(
-              option.label
+              option.label,
             );
           }
         });
@@ -900,7 +903,7 @@ export class TempBookDetails implements OnDestroy {
     if (checked && selected) {
       pubGroup.controls.displayName.setValue(selected.name);
       this.titleDetailsGroup().controls.publisherDisplay.setValue(
-        selected.name
+        selected.name,
       );
     }
   }
@@ -908,10 +911,10 @@ export class TempBookDetails implements OnDestroy {
   onAuthorKeepSameChange(index: number, event: Event) {
     const checked = (event.target as HTMLInputElement).checked;
     const authorCtrl = this.titleDetailsGroup().controls.authorIds.at(
-      index
+      index,
     ) as FormGroup<AuthorFormGroup>;
     const authorId = authorCtrl.controls.id.value;
-    
+
     if (!authorId) return;
 
     // Try to find author in authorsList first
@@ -924,14 +927,15 @@ export class TempBookDetails implements OnDestroy {
         .then((fetchedAuthor) => {
           if (checked && fetchedAuthor) {
             // Use fullName if available, otherwise construct from firstName + lastName
-            const fullName = fetchedAuthor.user?.fullName 
+            const fullName = fetchedAuthor.user?.fullName
               ? fetchedAuthor.user.fullName.trim()
               : fetchedAuthor.user
-              ? `${fetchedAuthor.user.firstName || ''} ${fetchedAuthor.user.lastName || ''}`.trim()
-              : '';
-            const displayName = fullName && fetchedAuthor.username
-              ? `${fullName} (${fetchedAuthor.username})`
-              : '';
+                ? `${fetchedAuthor.user.firstName || ''} ${fetchedAuthor.user.lastName || ''}`.trim()
+                : '';
+            const displayName =
+              fullName && fetchedAuthor.username
+                ? `${fullName} (${fetchedAuthor.username})`
+                : '';
             if (displayName) {
               authorCtrl.controls.displayName.setValue(displayName);
             }
@@ -940,12 +944,12 @@ export class TempBookDetails implements OnDestroy {
         .catch(() => {
           // If fetch fails, try to construct display name from the option label
           const option = this.authorOptions().find(
-            (opt) => opt.value === authorId
+            (opt) => opt.value === authorId,
           );
           if (checked && option) {
             // Extract name from label format: "FirstName LastName (username) (id)"
             const match = option.label.match(
-              /^(.+?)\s*\(([^)]+)\)\s*\((\d+)\)$/
+              /^(.+?)\s*\(([^)]+)\)\s*\((\d+)\)$/,
             );
             if (match) {
               // match[1] is "FirstName LastName", match[2] is "username"
@@ -960,14 +964,15 @@ export class TempBookDetails implements OnDestroy {
 
     if (checked && selected) {
       // Use fullName if available, otherwise construct from firstName + lastName
-      const fullName = selected.user?.fullName 
+      const fullName = selected.user?.fullName
         ? selected.user.fullName.trim()
         : selected.user
-        ? `${selected.user.firstName || ''} ${selected.user.lastName || ''}`.trim()
-        : '';
-      const displayName = fullName && selected.username
-        ? `${fullName} (${selected.username})`
-        : '';
+          ? `${selected.user.firstName || ''} ${selected.user.lastName || ''}`.trim()
+          : '';
+      const displayName =
+        fullName && selected.username
+          ? `${fullName} (${selected.username})`
+          : '';
       if (displayName) {
         authorCtrl.controls.displayName.setValue(displayName);
       }
@@ -981,13 +986,13 @@ export class TempBookDetails implements OnDestroy {
     }
 
     const authorCtrl = this.titleDetailsGroup().controls.authorIds.at(
-      index
+      index,
     ) as FormGroup<AuthorFormGroup>;
     if (!authorCtrl) return;
 
     // Get current keepSame value - preserve it, don't reset it
     const currentKeepSame = authorCtrl.controls.keepSame.value;
-    
+
     // Get current display name to check if it already matches
     const currentDisplayName = authorCtrl.controls.displayName.value || '';
 
@@ -1005,33 +1010,41 @@ export class TempBookDetails implements OnDestroy {
           .then((fetchedAuthor) => {
             if (fetchedAuthor) {
               // Construct expected display name
-              const fullName = fetchedAuthor.user?.fullName 
+              const fullName = fetchedAuthor.user?.fullName
                 ? fetchedAuthor.user.fullName.trim()
                 : fetchedAuthor.user
-                ? `${fetchedAuthor.user.firstName || ''} ${fetchedAuthor.user.lastName || ''}`.trim()
-                : '';
-              
-              const expectedDisplayName = fullName && fetchedAuthor.username
-                ? `${fullName} (${fetchedAuthor.username})`
-                : '';
-              
+                  ? `${fetchedAuthor.user.firstName || ''} ${fetchedAuthor.user.lastName || ''}`.trim()
+                  : '';
+
+              const expectedDisplayName =
+                fullName && fetchedAuthor.username
+                  ? `${fullName} (${fetchedAuthor.username})`
+                  : '';
+
               // Normalize for comparison: remove all special characters and convert to lowercase
               const normalizeForComparison = (str: string): string => {
                 return (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
               };
-              
-              const normalizedExpected = normalizeForComparison(expectedDisplayName);
-              const normalizedCurrent = normalizeForComparison(currentDisplayName);
-              
+
+              const normalizedExpected =
+                normalizeForComparison(expectedDisplayName);
+              const normalizedCurrent =
+                normalizeForComparison(currentDisplayName);
+
               // When selecting a new author, always set display name to expected format
               // and set keepSame to true since we're setting it to match
-              if (normalizedExpected !== normalizedCurrent || !currentDisplayName) {
+              if (
+                normalizedExpected !== normalizedCurrent ||
+                !currentDisplayName
+              ) {
                 authorCtrl.controls.displayName.setValue(expectedDisplayName);
                 // After setting to expected format, keepSame should be true
                 authorCtrl.controls.keepSame.setValue(true);
               } else {
                 // If display name already matches, update keepSame based on comparison
-                const shouldKeepSame = normalizedExpected === normalizedCurrent && normalizedExpected !== '';
+                const shouldKeepSame =
+                  normalizedExpected === normalizedCurrent &&
+                  normalizedExpected !== '';
                 if (currentKeepSame !== shouldKeepSame) {
                   authorCtrl.controls.keepSame.setValue(shouldKeepSame);
                 }
@@ -1041,35 +1054,42 @@ export class TempBookDetails implements OnDestroy {
           .catch(() => {
             // If fetch fails, try to construct display name from the option label
             const option = this.authorOptions().find(
-              (opt) => opt.value === authorId
+              (opt) => opt.value === authorId,
             );
             if (option) {
               // Extract name from label format: "FirstName LastName (username) (id)"
               const match = option.label.match(
-                /^(.+?)\s*\(([^)]+)\)\s*\((\d+)\)$/
+                /^(.+?)\s*\(([^)]+)\)\s*\((\d+)\)$/,
               );
               if (match) {
                 // match[1] is "FirstName LastName", match[2] is "username", match[3] is "id"
                 // Display name format should be: "FirstName LastName (username)" - with space before parenthesis
                 const expectedDisplayName = `${match[1]} (${match[2]})`;
-                
+
                 // Normalize for comparison: remove all special characters and convert to lowercase
                 const normalizeForComparison = (str: string): string => {
                   return (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
                 };
-                
-                const normalizedExpected = normalizeForComparison(expectedDisplayName);
-                const normalizedCurrent = normalizeForComparison(currentDisplayName);
-                
+
+                const normalizedExpected =
+                  normalizeForComparison(expectedDisplayName);
+                const normalizedCurrent =
+                  normalizeForComparison(currentDisplayName);
+
                 // When selecting a new author, always set display name to expected format
                 // and set keepSame to true since we're setting it to match
-                if (normalizedExpected !== normalizedCurrent || !currentDisplayName) {
+                if (
+                  normalizedExpected !== normalizedCurrent ||
+                  !currentDisplayName
+                ) {
                   authorCtrl.controls.displayName.setValue(expectedDisplayName);
                   // After setting to expected format, keepSame should be true
                   authorCtrl.controls.keepSame.setValue(true);
                 } else {
                   // If display name already matches, update keepSame based on comparison
-                  const shouldKeepSame = normalizedExpected === normalizedCurrent && normalizedExpected !== '';
+                  const shouldKeepSame =
+                    normalizedExpected === normalizedCurrent &&
+                    normalizedExpected !== '';
                   if (currentKeepSame !== shouldKeepSame) {
                     authorCtrl.controls.keepSame.setValue(shouldKeepSame);
                   }
@@ -1082,24 +1102,23 @@ export class TempBookDetails implements OnDestroy {
     }
 
     // Construct expected display name
-    const fullName = selected.user?.fullName 
+    const fullName = selected.user?.fullName
       ? selected.user.fullName.trim()
       : selected.user
-      ? `${selected.user.firstName || ''} ${selected.user.lastName || ''}`.trim()
-      : '';
-    
-    const expectedDisplayName = fullName && selected.username
-      ? `${fullName} (${selected.username})`
-      : '';
-    
+        ? `${selected.user.firstName || ''} ${selected.user.lastName || ''}`.trim()
+        : '';
+
+    const expectedDisplayName =
+      fullName && selected.username ? `${fullName} (${selected.username})` : '';
+
     // Normalize for comparison: remove all special characters and convert to lowercase
     const normalizeForComparison = (str: string): string => {
       return (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
     };
-    
+
     const normalizedExpected = normalizeForComparison(expectedDisplayName);
     const normalizedCurrent = normalizeForComparison(currentDisplayName);
-    
+
     // When selecting a new author, always set display name to expected format
     // and set keepSame to true since we're setting it to match
     if (selected) {
@@ -1109,7 +1128,8 @@ export class TempBookDetails implements OnDestroy {
         authorCtrl.controls.keepSame.setValue(true);
       } else {
         // If display name already matches, update keepSame based on comparison
-        const shouldKeepSame = normalizedExpected === normalizedCurrent && normalizedExpected !== '';
+        const shouldKeepSame =
+          normalizedExpected === normalizedCurrent && normalizedExpected !== '';
         if (currentKeepSame !== shouldKeepSame) {
           authorCtrl.controls.keepSame.setValue(shouldKeepSame);
         }
@@ -1127,7 +1147,7 @@ export class TempBookDetails implements OnDestroy {
   getPublisherDisplayName(publisherId: number | null | undefined): string {
     if (!publisherId) return '';
     const publisher = this.publishers().find(
-      (p: Publishers) => p.id === publisherId
+      (p: Publishers) => p.id === publisherId,
     );
     return publisher?.name || '';
   }
@@ -1140,7 +1160,7 @@ export class TempBookDetails implements OnDestroy {
         keepSame: new FormControl<boolean>(true),
         displayName: new FormControl<string | null>(null),
         allowAuthorCopy: new FormControl<boolean | null | undefined>(false),
-      }) as FormGroup<AuthorFormGroup>
+      }) as FormGroup<AuthorFormGroup>,
     );
   }
 
