@@ -103,7 +103,7 @@ export class WalletAmountTransaction implements OnInit {
       const user = tx.wallet.user;
       return {
         walletId: tx.wallet.id,
-        transactionId: `#OP1500${tx.id}`, // Updated line
+        transactionId: `#OP${tx.id}`, // Updated line
         addedBy: this.getAddedByName(tx), // ✅ FIXED
         recipient: user.publisher?.name || user.fullName,
         email: user.email,

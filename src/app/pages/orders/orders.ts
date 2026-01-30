@@ -55,7 +55,7 @@ export class Orders implements OnInit {
     private translateService: TranslateService,
     private logger: Logger,
     private staticValuesService: StaticValuesService,
-    private userService: UserService
+    private userService: UserService,
   ) {}
 
   isSuperAdmin = computed(() => {
@@ -74,7 +74,7 @@ export class Orders implements OnInit {
     searchStr: '',
     orderBy: 'id',
     orderByVal: 'desc',
-    status: undefined,
+    status: OrderStatus.COMPLETED,
     deliveryStatus: undefined,
   });
 
@@ -129,7 +129,7 @@ export class Orders implements OnInit {
   deliveryStatusMenuOptions = computed(() => {
     const enums = this.staticValuesService.staticValues()?.DeliveryStatus || {};
     return Object.keys(enums).map(
-      (key) => enums[key as keyof typeof enums] as DeliveryStatus
+      (key) => enums[key as keyof typeof enums] as DeliveryStatus,
     );
   });
 
@@ -197,7 +197,7 @@ export class Orders implements OnInit {
       // Optimistic UI update without refetch
       const updater = (list?: Order[]) =>
         (list || []).map((o) =>
-          o.id === orderId ? { ...o, deliveryStatus: status } : o
+          o.id === orderId ? { ...o, deliveryStatus: status } : o,
         );
 
       this.orders.update((o) => updater(o));
@@ -242,7 +242,7 @@ export class Orders implements OnInit {
         const user = booking?.user || booking?.userDetails || order.user;
         return {
           ...order,
-          orderid: `#${order.id}`,
+          orderid: `#OR${order.id}`,
           serial: index + 1,
           name:
             user?.fullName ||
@@ -402,7 +402,7 @@ export class Orders implements OnInit {
       }
 
       const exportColumns = this.displayedColumns().filter(
-        (col: string) => col !== 'actions'
+        (col: string) => col !== 'actions',
       );
 
       const exportData = orders.map((order) => {
@@ -453,7 +453,7 @@ export class Orders implements OnInit {
       const currentPage = this.filter().page || 1;
       const fileName = `orders-page-${currentPage}-${format(
         new Date(),
-        'dd-MM-yyyy'
+        'dd-MM-yyyy',
       )}`;
 
       exportToExcel(exportData, fileName, headers, 'Orders');

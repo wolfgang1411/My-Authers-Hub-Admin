@@ -35,7 +35,7 @@ export class TransactionTable {
       this.dataSource.data =
         txs?.map((transaction) => ({
           ...transaction,
-          transactionId: `#TN1500${transaction.id}`,
+          transactionId: `#TX${transaction.id}`,
           id: transaction.id,
           email: transaction.user?.email ?? '—',
           orderid: '#' + transaction.id,

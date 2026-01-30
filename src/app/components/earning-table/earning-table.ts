@@ -42,7 +42,6 @@ export class EarningTable {
       const showType = this.showTypeColumn();
 
       const baseColumns = [
-        'transactionId',
         'title',
         'publisher/author',
         'amount',
@@ -52,7 +51,9 @@ export class EarningTable {
         'holduntil',
       ];
 
-      this.displayedColumns = showType ? ['type', ...baseColumns] : baseColumns;
+      this.displayedColumns = showType
+        ? ['transactionId', 'type', ...baseColumns]
+        : ['transactionId', ...baseColumns];
 
       const mappedData = earnings?.map((earning) => {
         const salesTypeMap: Record<SalesType, string> = {
@@ -63,7 +64,7 @@ export class EarningTable {
 
         return {
           ...earning,
-          transactionId: `#RO1500${earning.id}`,
+          transactionId: `#RO${earning.id}`,
           type: earning.salesType
             ? salesTypeMap[earning.salesType] || earning.salesType
             : '-',

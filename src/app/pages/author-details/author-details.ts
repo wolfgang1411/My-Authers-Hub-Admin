@@ -283,6 +283,7 @@ export class AuthorDetails {
     'royaltyearned',
   ];
   displayedRoyaltyColumns = signal([
+    'transactionId',
     'title',
     'publisher/author',
     'amount',
@@ -468,6 +469,7 @@ export class AuthorDetails {
       this.rawRoyalties.set(items);
       const mappedData = items?.map((earning) => ({
         ...earning,
+        transactionId: '#RO' + earning.id,
         title: earning.royalty.title.name,
         'publisher/author':
           earning.royalty.publisher?.name ||

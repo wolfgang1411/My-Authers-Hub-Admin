@@ -220,6 +220,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
     'wallet',
   ];
   displayedRoyaltyColumns = signal([
+    'transactionId',
     'title',
     'publisher/author',
     'amount',
@@ -760,6 +761,7 @@ export class PublisherDetails implements OnInit, OnDestroy {
 
       const mappedData = items?.map((earning) => ({
         ...earning,
+        transactionId: '#RO' + earning.id,
         title: earning.royalty.title.name,
         'publisher/author':
           earning.royalty.publisher?.name ||

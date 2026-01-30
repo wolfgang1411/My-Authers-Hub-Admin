@@ -90,7 +90,7 @@
         <div class="flex justify-between items-start gap-3">
           <div>
             <h4 class="text-sm font-semibold text-[var(--primary)]">
-              #{{ order.orderNumber || order.id }}
+              {{ order.orderid }}
             </h4>
             <p class="text-xs text-[var(--text-secondary)]">
               {{ order.customerName || "-" }}
@@ -265,7 +265,7 @@
       >
         <mat-icon class="!text-white">visibility</mat-icon>
       </button>
-      @if (isSuperAdmin()) {
+      @if (isSuperAdmin() && element.status === "COMPLETED") {
         <button
           class="!px-3 !py-1 !min-w-[140px] !border !border-[var(--primary)]"
           mat-stroked-button
