@@ -6,7 +6,14 @@ import {
   OnDestroy,
   OnInit,
 } from '@angular/core';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormControl,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -60,7 +67,7 @@ export class AddWalletAmount implements OnInit, OnDestroy {
   });
 
   amount = new FormControl(null, {
-    validators: [Validators.required, Validators.min(1)],
+    validators: [Validators.required],
   });
   method = new FormControl<'GATEWAY' | 'WALLET'>('GATEWAY', {
     validators: [Validators.required],
@@ -68,32 +75,41 @@ export class AddWalletAmount implements OnInit, OnDestroy {
   sendMails = new FormControl(true);
   validators = Validators;
 
+  nonZeroValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = Number(control.value);
+
+      if (isNaN(value)) {
+        return null; // let other validators (like pattern/required) handle this
+      }
+
+      return value === 0 ? { nonZero: true } : null;
+    };
+  }
+
   ngOnInit(): void {
     this.method.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe((method) => {
+        const validators = [Validators.required];
         const availableAmount = this.availableWalletAmount();
 
+        validators.push(
+          this.accessLevel() === 'SUPERADMIN'
+            ? this.nonZeroValidator()
+            : Validators.min(1),
+        );
+
         if (method === 'WALLET') {
-          this.amount.setValidators([
-            Validators.required,
-            Validators.max(availableAmount),
-            Validators.min(1),
-          ]);
-        } else {
-          this.amount.setValidators([Validators.required, Validators.min(1)]);
+          validators.push(Validators.max(availableAmount));
         }
 
+        this.amount.setValidators(validators);
         this.amount.updateValueAndValidity();
       });
   }
 
   onSubmit() {
-    console.log({
-      amount: this.amount.valid,
-      method: this.method.valid,
-    });
-
     if (!this.amount.valid || (!this.method.valid && this.method.enabled))
       return;
 
