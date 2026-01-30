@@ -24,7 +24,7 @@ export class AuthService {
     private server: Server,
     private logger: Logger,
     private loader: LoaderService,
-    private router: Router
+    private router: Router,
   ) {
     // Initialize auth state synchronously from storage to avoid guard delays
     this.initializeAuthFromStorage();
@@ -97,7 +97,7 @@ export class AuthService {
           password: md5(data.password),
           grant_type: 'password',
           client_id: 'web',
-        })
+        }),
       );
       return response;
     } catch (error) {
@@ -111,7 +111,7 @@ export class AuthService {
       const response = await this.loader.loadPromise(
         this.server.post<AuthResponse>('auth/google', {
           token,
-        })
+        }),
       );
       return response;
     } catch (error) {
@@ -165,7 +165,7 @@ export class AuthService {
               refresh_token: refreshToken,
               grant_type: 'refresh_token',
               client_id: 'web',
-            })
+            }),
           );
           this.setAuthToken(response);
         } catch (error) {
@@ -185,7 +185,7 @@ export class AuthService {
           newPassword: md5(newPassword),
           confirmPassword: md5(newPassword),
           requestType: 'UPDATE',
-        })
+        }),
       );
     } catch (error) {
       this.logger.logError(error);
@@ -220,7 +220,7 @@ export class AuthService {
         this.server.post(`auth/change-password/user/${userId}`, {
           password: md5(password),
         }),
-        'update-password'
+        'update-password',
       );
     } catch (error) {
       this.logger.logError(error);
@@ -228,17 +228,19 @@ export class AuthService {
     }
   }
 
-  async requestPasswordReset(email: string) {
+  async requestPasswordReset(email: string, showError = true) {
     try {
       return await this.loader.loadPromise(
         this.server.post<{ id: string }>('auth/password-forgot', {
           username: email,
           isAdmin: true,
         }),
-        'request-password-reset'
+        'request-password-reset',
       );
     } catch (error) {
-      this.logger.logError(error);
+      if (showError) {
+        this.logger.logError(error);
+      }
       throw error;
     }
   }
@@ -253,7 +255,7 @@ export class AuthService {
     try {
       return await this.loader.loadPromise(
         this.server.post('auth/password-update', payload),
-        'update-password'
+        'update-password',
       );
     } catch (error) {
       this.logger.logError(error);

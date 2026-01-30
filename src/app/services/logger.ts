@@ -41,7 +41,7 @@ export class Logger {
    * Parses various error formats and returns a structured error info
    * Handles: NestJS errors, Angular HttpErrorResponse, Validation errors, Prisma errors, Network errors
    */
-  private parseError(error: any): { message: string; title?: string } {
+  parseError(error: any): { message: string; title?: string } {
     // Angular HttpErrorResponse (from backend NestJS)
     if (error instanceof HttpErrorResponse) {
       return this.parseHttpErrorResponse(error);

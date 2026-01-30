@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import {
   FormControl,
   FormGroup,
@@ -9,6 +9,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { SharedModule } from 'src/app/modules/shared/shared-module';
+import { Logger } from 'src/app/services/logger';
 
 @Component({
   selector: 'app-forgot-password',
@@ -23,6 +24,7 @@ import { SharedModule } from 'src/app/modules/shared/shared-module';
 })
 export class ForgotPassword {
   loading = signal(false);
+  logger = inject(Logger);
   successMessage = signal<string | null>(null);
   errorMessage = signal<string | null>(null);
 
@@ -30,7 +32,10 @@ export class ForgotPassword {
     email: new FormControl('', [Validators.required, Validators.email]),
   });
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(
+    private auth: AuthService,
+    private router: Router,
+  ) {}
 
   async onSubmit() {
     if (this.forgotForm.invalid) {
@@ -41,7 +46,7 @@ export class ForgotPassword {
     this.errorMessage.set(null);
     try {
       const email = this.forgotForm.value.email;
-      const res = await this.auth.requestPasswordReset(email as string);
+      const res = await this.auth.requestPasswordReset(email as string, false);
       // res expected { logId: string }
       this.successMessage.set('OTP has been sent to your email.');
       // navigate to verify with query params
@@ -49,9 +54,7 @@ export class ForgotPassword {
         queryParams: { otpId: res.id, email },
       });
     } catch (err: any) {
-      this.errorMessage.set(
-        err?.error_description || 'Something went wrong. Try again.'
-      );
+      this.errorMessage.set(this.logger.parseError(err).message);
     } finally {
       this.loading.set(false);
     }

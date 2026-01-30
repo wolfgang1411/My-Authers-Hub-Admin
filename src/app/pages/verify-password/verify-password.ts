@@ -1,4 +1,10 @@
-import { Component, signal, ViewChild } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  inject,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -14,6 +20,22 @@ import { NgOtpInputComponent, NgOtpInputModule } from 'ng-otp-input';
 import { SharedModule } from 'src/app/modules/shared/shared-module';
 import md5 from 'md5';
 import { MatIconModule } from '@angular/material/icon';
+import { Logger } from 'src/app/services/logger';
+import {
+  interval,
+  map,
+  Subject,
+  switchMap,
+  takeUntil,
+  takeWhile,
+  timeout,
+  timer,
+} from 'rxjs';
+import {
+  takeUntilDestroyed,
+  toObservable,
+  toSignal,
+} from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-verify-password',
@@ -28,7 +50,9 @@ import { MatIconModule } from '@angular/material/icon';
   styleUrl: './verify-password.css',
 })
 export class VerifyPassword {
+  private destroyRef = inject(DestroyRef);
   loading = signal(false);
+  logger = inject(Logger);
   errorMessage = signal<string | null>(null);
   successMessage = signal<string | null>(null);
 
@@ -36,6 +60,24 @@ export class VerifyPassword {
   email: string | null = null;
   showNewPassword = false;
   showConfirmPassword = false;
+
+  private reset$ = new Subject<void>();
+  countdown$ = toSignal(
+    this.reset$.pipe(
+      switchMap(() =>
+        timer(0, 1000).pipe(
+          map((i) => 30 - i),
+          takeWhile((sec) => sec >= 0),
+        ),
+      ),
+      takeUntilDestroyed(this.destroyRef),
+    ),
+    { initialValue: 30 },
+  );
+
+  isDisabled$ = toSignal(
+    toObservable(this.countdown$).pipe(map((sec) => (sec || 0) > 0)),
+  );
 
   otpValue = signal('');
   otpConfig = {
@@ -45,7 +87,7 @@ export class VerifyPassword {
   @ViewChild(NgOtpInputComponent) otpInput!: NgOtpInputComponent;
 
   passwordMatchValidator: ValidatorFn = (
-    control: AbstractControl
+    control: AbstractControl,
   ): ValidationErrors | null => {
     const password = control.get('newPassword')?.value;
     const confirm = control.get('confirmPassword')?.value;
@@ -63,14 +105,16 @@ export class VerifyPassword {
       ]),
       confirmPassword: new FormControl('', Validators.required),
     },
-    { validators: this.passwordMatchValidator }
+    { validators: this.passwordMatchValidator },
   );
 
   constructor(
     private route: ActivatedRoute,
     private auth: AuthService,
-    private router: Router
-  ) {}
+    private router: Router,
+  ) {
+    this.reset$.next();
+  }
 
   ngOnInit() {
     this.route.queryParamMap.subscribe((qp) => {
@@ -118,7 +162,7 @@ export class VerifyPassword {
       });
 
       this.successMessage.set(
-        'Password updated successfully. Redirecting to login...'
+        'Password updated successfully. Redirecting to login...',
       );
 
       this.router.navigate(['/login'], {
@@ -126,7 +170,8 @@ export class VerifyPassword {
       });
     } catch (err: any) {
       this.errorMessage.set(
-        err?.message || 'Failed to update password. Please try again.'
+        this.logger.parseError(err).message ||
+          'Failed to update password. Please try again.',
       );
     } finally {
       this.loading.set(false);
@@ -150,10 +195,13 @@ export class VerifyPassword {
     try {
       const res = await this.auth.requestPasswordReset(this.email);
       this.otpId = res?.id || this.otpId;
+      this.reset$.next();
 
       this.successMessage.set('OTP resent successfully.');
     } catch (err: any) {
-      this.errorMessage.set(err?.message || 'Could not resend OTP.');
+      this.errorMessage.set(
+        this.logger.parseError(err).message || 'Could not resend OTP.',
+      );
     } finally {
       this.loading.set(false);
     }
