@@ -32,7 +32,7 @@ interface TicketDetailsDialogData {
 export class TicketDetailsDialog {
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: TicketDetailsDialogData,
-    private dialogRef: MatDialogRef<TicketDetailsDialog>
+    private dialogRef: MatDialogRef<TicketDetailsDialog>,
   ) {
     this.processChanges();
   }
@@ -40,7 +40,7 @@ export class TicketDetailsDialog {
   changes = signal<FieldChange[]>([]);
   isApproving = signal(false);
   isRejecting = signal(false);
-  
+
   // Computed values for display
   ticketType = computed(() => this.data?.ticket?.type || 'N/A');
   ticketStatus = computed(() => this.data?.ticket?.status || 'N/A');
@@ -92,9 +92,9 @@ export class TicketDetailsDialog {
   private processAddressChanges(
     ticketData: any,
     currentData: any,
-    changes: FieldChange[]
+    changes: FieldChange[],
   ): void {
-    if (ticketData.address) {
+    if (ticketData.address && currentData?.address !== ticketData?.address) {
       changes.push({
         field: 'address',
         label: 'Address',
@@ -102,7 +102,7 @@ export class TicketDetailsDialog {
         after: ticketData.address,
       });
     }
-    if (ticketData.city) {
+    if (ticketData.city && currentData?.city !== ticketData?.city) {
       changes.push({
         field: 'city',
         label: 'City',
@@ -110,7 +110,7 @@ export class TicketDetailsDialog {
         after: ticketData.city,
       });
     }
-    if (ticketData.state) {
+    if (ticketData.state && currentData?.state !== ticketData?.state) {
       changes.push({
         field: 'state',
         label: 'State',
@@ -118,7 +118,7 @@ export class TicketDetailsDialog {
         after: ticketData.state,
       });
     }
-    if (ticketData.country) {
+    if (ticketData.country && currentData?.country !== ticketData?.country) {
       changes.push({
         field: 'country',
         label: 'Country',
@@ -126,7 +126,7 @@ export class TicketDetailsDialog {
         after: ticketData.country,
       });
     }
-    if (ticketData.pincode) {
+    if (ticketData.pincode && currentData?.pincode !== ticketData?.pincode) {
       changes.push({
         field: 'pincode',
         label: 'Pincode',
@@ -139,9 +139,9 @@ export class TicketDetailsDialog {
   private processBankChanges(
     ticketData: any,
     currentData: any,
-    changes: FieldChange[]
+    changes: FieldChange[],
   ): void {
-    if (ticketData.bankName) {
+    if (ticketData.bankName && currentData.bankName !== ticketData.bankName) {
       changes.push({
         field: 'bankName',
         label: 'Bank Name',
@@ -149,7 +149,10 @@ export class TicketDetailsDialog {
         after: ticketData.bankName,
       });
     }
-    if (ticketData.accountHolderName) {
+    if (
+      ticketData.accountHolderName &&
+      currentData.accountHolderName !== ticketData.accountHolderName
+    ) {
       changes.push({
         field: 'accountHolderName',
         label: 'Account Holder Name',
@@ -157,7 +160,10 @@ export class TicketDetailsDialog {
         after: ticketData.accountHolderName,
       });
     }
-    if (ticketData.accountNo) {
+    if (
+      ticketData.accountNo &&
+      currentData.accountNo !== ticketData.accountNo
+    ) {
       changes.push({
         field: 'accountNo',
         label: 'Account Number',
@@ -165,7 +171,7 @@ export class TicketDetailsDialog {
         after: ticketData.accountNo,
       });
     }
-    if (ticketData.ifsc) {
+    if (ticketData.ifsc && currentData.ifsc !== ticketData.ifsc) {
       changes.push({
         field: 'ifsc',
         label: 'IFSC Code',
@@ -173,7 +179,10 @@ export class TicketDetailsDialog {
         after: ticketData.ifsc,
       });
     }
-    if (ticketData.panCardNo) {
+    if (
+      ticketData.panCardNo &&
+      currentData.panCardNo !== ticketData.panCardNo
+    ) {
       changes.push({
         field: 'panCardNo',
         label: 'PAN Card Number',
@@ -181,7 +190,10 @@ export class TicketDetailsDialog {
         after: ticketData.panCardNo,
       });
     }
-    if (ticketData.accountType) {
+    if (
+      ticketData.accountType &&
+      currentData.accountType !== ticketData.accountType
+    ) {
       changes.push({
         field: 'accountType',
         label: 'Account Type',
@@ -189,7 +201,10 @@ export class TicketDetailsDialog {
         after: ticketData.accountType,
       });
     }
-    if (ticketData.gstNumber) {
+    if (
+      ticketData.gstNumber &&
+      currentData.gstNumber !== ticketData.gstNumber
+    ) {
       changes.push({
         field: 'gstNumber',
         label: 'GST Number',
@@ -202,10 +217,13 @@ export class TicketDetailsDialog {
   private processAuthorChanges(
     ticketData: any,
     currentData: any,
-    changes: FieldChange[]
+    changes: FieldChange[],
   ): void {
     // Backend stores with 'author' prefix
-    if (ticketData.authorName) {
+    if (
+      ticketData.authorName &&
+      currentData.authorName !== ticketData.authorName
+    ) {
       changes.push({
         field: 'authorName',
         label: 'Name',
@@ -213,7 +231,10 @@ export class TicketDetailsDialog {
         after: ticketData.authorName,
       });
     }
-    if (ticketData.authorEmail) {
+    if (
+      ticketData.authorEmail &&
+      currentData.authorEmail !== ticketData.authorEmail
+    ) {
       changes.push({
         field: 'authorEmail',
         label: 'Email',
@@ -221,7 +242,10 @@ export class TicketDetailsDialog {
         after: ticketData.authorEmail,
       });
     }
-    if (ticketData.authorContactNumber) {
+    if (
+      ticketData.authorContactNumber &&
+      currentData.authorContactNumber !== ticketData.authorContactNumber
+    ) {
       changes.push({
         field: 'authorContactNumber',
         label: 'Phone Number',
@@ -229,7 +253,10 @@ export class TicketDetailsDialog {
         after: ticketData.authorContactNumber,
       });
     }
-    if (ticketData.authorAbout) {
+    if (
+      ticketData.authorAbout &&
+      currentData.authorAbout !== ticketData.authorAbout
+    ) {
       changes.push({
         field: 'authorAbout',
         label: 'About',
@@ -237,7 +264,10 @@ export class TicketDetailsDialog {
         after: ticketData.authorAbout,
       });
     }
-    if (ticketData.authorUsername) {
+    if (
+      ticketData.authorUsername &&
+      currentData.authorUsername !== ticketData.authorUsername
+    ) {
       changes.push({
         field: 'authorUsername',
         label: 'Username',
@@ -250,10 +280,13 @@ export class TicketDetailsDialog {
   private processPublisherChanges(
     ticketData: any,
     currentData: any,
-    changes: FieldChange[]
+    changes: FieldChange[],
   ): void {
     // Backend stores with 'publisher' prefix
-    if (ticketData.publisherName) {
+    if (
+      ticketData.publisherName &&
+      currentData.publisherName !== ticketData.publisherName
+    ) {
       changes.push({
         field: 'publisherName',
         label: 'Publisher Name',
@@ -261,7 +294,10 @@ export class TicketDetailsDialog {
         after: ticketData.publisherName,
       });
     }
-    if (ticketData.publisherEmail) {
+    if (
+      ticketData.publisherEmail &&
+      currentData.publisherEmail !== ticketData.publisherEmail
+    ) {
       changes.push({
         field: 'publisherEmail',
         label: 'Email',
@@ -269,7 +305,10 @@ export class TicketDetailsDialog {
         after: ticketData.publisherEmail,
       });
     }
-    if (ticketData.publisherDesignation) {
+    if (
+      ticketData.publisherDesignation &&
+      currentData.publisherDesignation !== ticketData.publisherDesignation
+    ) {
       changes.push({
         field: 'publisherDesignation',
         label: 'Designation',
@@ -277,7 +316,10 @@ export class TicketDetailsDialog {
         after: ticketData.publisherDesignation,
       });
     }
-    if (ticketData.publisherPocName) {
+    if (
+      ticketData.publisherPocName &&
+      currentData.publisherPocName !== ticketData.publisherPocName
+    ) {
       changes.push({
         field: 'publisherPocName',
         label: 'POC Name',
@@ -285,7 +327,10 @@ export class TicketDetailsDialog {
         after: ticketData.publisherPocName,
       });
     }
-    if (ticketData.publisherPocEmail) {
+    if (
+      ticketData.publisherPocEmail &&
+      currentData.publisherPocEmail !== ticketData.publisherPocEmail
+    ) {
       changes.push({
         field: 'publisherPocEmail',
         label: 'POC Email',
@@ -293,7 +338,10 @@ export class TicketDetailsDialog {
         after: ticketData.publisherPocEmail,
       });
     }
-    if (ticketData.publisherPocPhoneNumber) {
+    if (
+      ticketData.publisherPocPhoneNumber &&
+      currentData.publisherPocPhoneNumber !== ticketData.publisherPocPhoneNumber
+    ) {
       changes.push({
         field: 'publisherPocPhoneNumber',
         label: 'POC Phone',
