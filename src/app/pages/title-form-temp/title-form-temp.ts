@@ -2550,7 +2550,10 @@ export class TitleFormTemp implements OnDestroy {
       const platformMsp = this.getMspForPlatform(platform?.id);
       const mrp = Number(control.value);
 
-      return platformMsp !== null && platformMsp > 0 && mrp < platformMsp
+      return this.loggedInUser()?.accessLevel !== 'SUPERADMIN' &&
+        platformMsp !== null &&
+        platformMsp > 0 &&
+        mrp < platformMsp
         ? {
             invalid: `MRP cannot be lower than MSP (${platformMsp.toFixed(2)})`,
           }
@@ -2579,7 +2582,11 @@ export class TitleFormTemp implements OnDestroy {
       const mrp = control.parent.get('mrp')?.value;
       const salesPrice = control.value;
 
-      if (platformMsp > 0 && salesPrice < platformMsp) {
+      if (
+        platformMsp > 0 &&
+        salesPrice < platformMsp &&
+        this.loggedInUser()?.accessLevel !== 'SUPERADMIN'
+      ) {
         return {
           invalid: `Sales price cannot be lower than MSP (${platformMsp.toFixed(
             2,
@@ -4145,7 +4152,10 @@ export class TitleFormTemp implements OnDestroy {
       }
 
       // If there are validation errors, show them and return early
-      if (validationErrors.length > 0) {
+      if (
+        validationErrors.length > 0 &&
+        this.loggedInUser()?.accessLevel !== 'SUPERADMIN'
+      ) {
         const errorMessage = validationErrors.join('\n');
         Swal.fire({
           icon: 'error',
@@ -4159,7 +4169,7 @@ export class TitleFormTemp implements OnDestroy {
         return;
       }
 
-      if (!data.length) {
+      if (!data.length && this.loggedInUser()?.accessLevel !== 'SUPERADMIN') {
         // Check which platforms are missing data for better error message
         const missingPlatforms: string[] = [];
         controlsToCheck.forEach((control) => {
@@ -4516,7 +4526,11 @@ export class TitleFormTemp implements OnDestroy {
         const mrpValue = Number(mrp.value);
 
         // Check if sales price is lower than MSP
-        if (platformMsp > 0 && salesPriceValue < platformMsp) {
+        if (
+          platformMsp > 0 &&
+          salesPriceValue < platformMsp &&
+          this.loggedInUser()?.accessLevel !== 'SUPERADMIN'
+        ) {
           validationErrors.push(
             `Platform ${platformName}: Sales price (${salesPriceValue}) cannot be lower than MSP (${platformMsp.toFixed(
               2,
@@ -4526,7 +4540,11 @@ export class TitleFormTemp implements OnDestroy {
         }
 
         // Check if MRP is lower than MSP
-        if (platformMsp > 0 && mrpValue < platformMsp) {
+        if (
+          platformMsp > 0 &&
+          mrpValue < platformMsp &&
+          this.loggedInUser()?.accessLevel !== 'SUPERADMIN'
+        ) {
           validationErrors.push(
             `Platform ${platformName}: MRP (${mrpValue}) cannot be lower than MSP (${platformMsp.toFixed(
               2,
@@ -4553,7 +4571,10 @@ export class TitleFormTemp implements OnDestroy {
       }
 
       // If there are validation errors, show them and return early
-      if (validationErrors.length > 0) {
+      if (
+        validationErrors.length > 0 &&
+        this.loggedInUser()?.accessLevel !== 'SUPERADMIN'
+      ) {
         const errorMessage = validationErrors.join('\n');
         Swal.fire({
           icon: 'error',
@@ -4567,7 +4588,10 @@ export class TitleFormTemp implements OnDestroy {
         return;
       }
 
-      if (!pricingData.length) {
+      if (
+        !pricingData.length &&
+        this.loggedInUser()?.accessLevel !== 'SUPERADMIN'
+      ) {
         // Check which platforms are missing data for better error message
         const missingPlatforms: string[] = [];
         controlsToCheck.forEach((control) => {
