@@ -187,6 +187,7 @@ export const routes: Routes = [
       import('./pages/add-missing-title-media/add-missing-title-media').then(
         (c) => c.AddMissingTitleMedia,
       ),
+    canActivate: [privateRouteGuard, profileCompletionGuard],
   },
   {
     path: 'titleDetails',
