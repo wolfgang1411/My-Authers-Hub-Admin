@@ -144,6 +144,7 @@ export class Royalties {
   }): number {
     if (sale.platformName.includes('amazon')) return 1;
     if (sale.platformName.includes('flipkart')) return 2;
+    if (sale.platformName.includes('Old Dashboard')) return 50;
     if (!sale.isEbookPlatform) return 3;
     return 4; // ebook platforms
   }
@@ -160,7 +161,10 @@ export class Royalties {
           const platform = platforms.find(({ id }) => id === sale.platformId);
           return {
             ...sale,
-            platformName: platform?.name?.toLowerCase() ?? '',
+            platformName:
+              sale.platform === 'Old Dashboard'
+                ? 'Old Dashboard'
+                : (platform?.name?.toLowerCase() ?? ''),
             isEbookPlatform: !!platform?.isEbookPlatform,
           };
         })
