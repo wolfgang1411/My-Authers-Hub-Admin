@@ -118,6 +118,42 @@
       {{ "all" | translate }}
     </button>
   </div>
+
+  <div class="flex flex-wrap gap-4">
+    @for (sbp of salesByPlatform(); track $index) {
+      <mat-card
+        class="rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition"
+      >
+        <mat-card-content class="flex flex-col gap-4">
+          <!-- Header -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-primary">storefront</mat-icon>
+              <h3 class="text-lg font-semibold text-gray-800">
+                {{ sbp.platform | translate }}
+              </h3>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="flex justify-between gap-2 text-sm text-gray-600">
+            <span>Total Sales</span>
+            <span class="font-medium text-gray-900">
+              {{ sbp.totalSale }}
+            </span>
+          </div>
+
+          <div class="flex justify-between gap-2 text-sm text-gray-600">
+            <span>Total Amount</span>
+            <span class="font-semibold text-green-600">
+              {{ sbp.totalAmount | currency }}
+            </span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+  </div>
+
   <div class="hidden lg:block">
     <app-earning-table
       [earnings]="earningList()"

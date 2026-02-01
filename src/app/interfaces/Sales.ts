@@ -1,9 +1,5 @@
 import { FormArray, FormControl, FormGroup } from '@angular/forms';
-import {
-  EarningsStatus,
-  PlatForm,
-  SalesType,
-} from './StaticValue';
+import { EarningsStatus, PlatForm, SalesType } from './StaticValue';
 import { Platform } from './Platform';
 
 export interface SalesFilter {
@@ -44,6 +40,20 @@ export interface EarningFilter {
   salesType?: SalesType | SalesType[];
   orderBy?: string;
   orderByVal?: 'asc' | 'desc';
+}
+
+export interface SalesByPlatformFilter {
+  isEbookPlatform?: boolean;
+  isInventoryPlatform?: boolean;
+  isOtherPlatform?: boolean;
+  isSuperAdminPricingOnly?: boolean;
+}
+
+export interface SalesByPlatform {
+  platformId: number;
+  platform: string;
+  totalAmount: number;
+  totalSale: number;
 }
 
 export interface CreateSale {
