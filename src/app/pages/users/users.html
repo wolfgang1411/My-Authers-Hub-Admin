@@ -3,7 +3,7 @@
     {{ "users" | translate }}
   </h3>
 
-  <div class="flex justify-between w-full gap-4">
+  <div class="flex flex-col lg:flex-row justify-between w-full gap-4">
     <div
       class="flex h-[38px] items-center justify-center md:min-w-[480px] min-w-full gap-2"
     >
@@ -27,7 +27,7 @@
   </div>
 
   <div class="flex flex-col gap-2">
-    <div class="flex gap-2 flex-wrap items-center">
+    <div class="flex gap-2 flex-wrap lg:flex-wrap overflow-x-auto pb-2">
       @for (tab of statusTabs(); track tab.label) {
         <button
           class="!bg-primary"
@@ -51,16 +51,67 @@
       }
     </div>
   </div>
+  <div class="hidden lg:block pt-6">
+    <app-list-table
+      class="pt-6"
+      [dataSource]="dataSource"
+      [displayedColumns]="displayedColumns"
+      [actionTemplate]="actionButtons"
+      [isSortable]="isSortable"
+      (sortChange)="onSortChange($event)"
+    >
+    </app-list-table>
+  </div>
 
-  <app-list-table
-    class="pt-6"
-    [dataSource]="dataSource"
-    [displayedColumns]="displayedColumns"
-    [actionTemplate]="actionButtons"
-    [isSortable]="isSortable"
-    (sortChange)="onSortChange($event)"
-  >
-  </app-list-table>
+  <div class="lg:hidden grid grid-cols-1 gap-4 mt-6">
+    @for (user of dataSource.data; track user.id) {
+      <div
+        class="bg-white rounded-xl border border-[var(--primary-superlight)] shadow-sm p-4 flex flex-col gap-3"
+      >
+        <div class="flex justify-between items-start">
+          <div>
+            <h3 class="font-medium text-[var(--primary)]">
+              {{ user.name }}
+            </h3>
+            <p class="text-xs text-[var(--text-secondary)]">
+              {{ user.email }}
+            </p>
+            <p class="text-xs text-[var(--text-secondary)]">
+              {{ user.phone }}
+            </p>
+          </div>
+          <span
+            class="text-xs px-2 py-1 rounded-full font-medium"
+            [ngClass]="{
+              'bg-green-100 text-green-700': user.status === 'ACTIVE',
+              'bg-red-100 text-red-700': user.status === 'DEACTIVE',
+            }"
+          >
+            {{ user.status }}
+          </span>
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <p class="text-[var(--text-secondary)]">Access</p>
+            <p class="font-medium">{{ user.accessLevel }}</p>
+          </div>
+
+          <div>
+            <p class="text-[var(--text-secondary)]">Created</p>
+            <p class="font-medium">{{ user.createdAt || "—" }}</p>
+          </div>
+        </div>
+        <div
+          class="flex justify-end pt-3 border-t border-[var(--primary-superlight)]"
+        >
+          <ng-container
+            [ngTemplateOutlet]="actionButtons"
+            [ngTemplateOutletContext]="{ $implicit: user }"
+          ></ng-container>
+        </div>
+      </div>
+    }
+  </div>
 
   <div class="flex items-center justify-between gap-4 mt-4">
     <div class="flex items-center gap-2">

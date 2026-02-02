@@ -969,5 +969,6 @@
   "missingDetails":"Missing Details",
   "transactionId": "Transaction ID",
   "pincodenotfound": "Pincode not found",
-  "selectaddress": "Select Address"
+  "selectaddress": "Select Address",
+  "users":"Users"
 }

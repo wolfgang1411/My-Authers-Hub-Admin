@@ -15,7 +15,7 @@
     }
   </div>
 
-  <div class="flex justify-between w-full gap-4">
+  <div class="flex sm:flex-row flex-col justify-between w-full gap-4">
     <div
       class="flex h-[38px] items-center justify-center md:min-w-[480px] min-w-full gap-2"
     >
@@ -146,39 +146,12 @@
 
         <!-- Actions -->
         <div
-          class="flex justify-end gap-2 pt-3 border-t border-[var(--primary-superlight)]"
+          class="flex justify-end pt-3 border-t border-[var(--primary-superlight)]"
         >
-          <button
-            [routerLink]="['/orders', order.id]"
-            class="px-3 py-1.5 rounded-md bg-[var(--primary)] text-white text-xs"
-          >
-            View
-          </button>
-
-          @if (isSuperAdmin()) {
-            <button
-              class="px-3 py-1.5 rounded-md border border-[var(--primary)] text-[var(--primary)] text-xs"
-              [disabled]="
-                order.deliverystatus === 'RETURNED' ||
-                order.deliverystatus === 'CANCELLED'
-              "
-              [matMenuTriggerFor]="mobileDeliveryMenu"
-            >
-              Change Status
-            </button>
-
-            <mat-menu #mobileDeliveryMenu="matMenu">
-              @for (opt of deliveryStatusMenuOptions(); track opt) {
-                <button
-                  mat-menu-item
-                  [disabled]="opt === order.deliverystatus"
-                  (click)="changeDeliveryStatus(order.id, opt)"
-                >
-                  {{ opt.toLowerCase() | translate }}
-                </button>
-              }
-            </mat-menu>
-          }
+          <ng-container
+            [ngTemplateOutlet]="actionButtons"
+            [ngTemplateOutletContext]="{ $implicit: order }"
+          ></ng-container>
         </div>
       </div>
     }

@@ -69,9 +69,10 @@
         <div class="flex justify-end pt-2 border-t">
           <button
             [routerLink]="['/transactions', tx.id]"
-            class="bg-primary text-white rounded-lg px-4 py-1.5 text-sm"
+            class="!bg-primary text-white rounded-lg px-4 py-1.5 text-sm"
+            mat-icon-button
           >
-            View
+            <mat-icon class="!text-white">visibility</mat-icon>
           </button>
         </div>
       </div>

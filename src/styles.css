@@ -649,6 +649,47 @@ mat-label {
     var(--mat-sys-surface-variant)
   ) !important;
 }
+
+/* Make expansion header responsive */
+.mat-expansion-panel-header {
+  display: block !important;
+  height: auto !important;
+  padding: 12px 16px !important;
+}
+
+/* Remove fixed grid layout */
+.mat-expansion-panel-header-description {
+  flex-grow: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Mobile layout */
+@media (max-width: 640px) {
+  .mat-expansion-panel-header-title,
+  .mat-expansion-panel-header-description {
+    width: 100% !important;
+    display: block !important;
+  }
+}
+.mat-expansion-panel-header-title,
+.mat-expansion-panel-header-description {
+  flex: unset !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+/* Prevent text overflow */
+.mat-expansion-panel-header * {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* Mobile-specific safety */
+@media (max-width: 640px) {
+  .mat-expansion-panel-header {
+    padding: 12px !important;
+  }
+}
 @media (max-width: 700px) {
   .mobile-fix {
     overflow-x: hidden;

@@ -114,6 +114,7 @@
       <div
         class="bg-white rounded-xl border border-[var(--primary-superlight)] shadow-sm p-4 flex flex-col gap-3"
       >
+        <!-- Header -->
         <div class="flex justify-between items-start gap-3">
           <div>
             <p class="text-xs text-gray-400">Title</p>
@@ -134,49 +135,41 @@
           </span>
         </div>
 
+        <!-- Meta -->
         <div class="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <p class="text-gray-400">Author</p>
-            <p class="font-medium text-gray-700">
-              {{ blog.author?.name || "-" }}
-            </p>
-          </div>
+          @if (isSuperAdmin()) {
+            <div>
+              <p class="text-gray-400">Author</p>
+              <p class="font-medium text-gray-700">
+                {{ blog.author || "—" }}
+              </p>
+            </div>
+          }
 
           <div>
             <p class="text-gray-400">Created On</p>
             <p class="font-medium text-gray-700">
-              {{ blog.createdAt | date: "shortDate" }}
+              {{ blog.createdAt || "—" }}
             </p>
           </div>
         </div>
+
+        <!-- About -->
         <div>
           <p class="text-gray-400 text-sm mb-1">About</p>
           <div
             class="text-sm text-gray-700 line-clamp-3"
-            [innerHTML]="blog.about || '-'"
+            [innerHTML]="blog.about || '—'"
           ></div>
         </div>
-        <div class="flex justify-end gap-2 pt-2 border-t">
-          <button
-            (click)="onViewBlog(blog)"
-            class="bg-primary text-white rounded-lg px-4 py-1.5 text-sm"
-          >
-            View
-          </button>
 
-          <button
-            (click)="onEditBlog(blog)"
-            class="bg-primary-superlight text-primary rounded-lg px-4 py-1.5 text-sm"
+        <!-- Actions -->
+        <div class="pt-2 border-t flex justify-end">
+          <ng-container
+            [ngTemplateOutlet]="actionButtons"
+            [ngTemplateOutletContext]="{ $implicit: blog }"
           >
-            Edit
-          </button>
-
-          <button
-            (click)="onDeleteBlog(blog)"
-            class="bg-red-100 text-red-700 rounded-lg px-4 py-1.5 text-sm"
-          >
-            Delete
-          </button>
+          </ng-container>
         </div>
       </div>
     }

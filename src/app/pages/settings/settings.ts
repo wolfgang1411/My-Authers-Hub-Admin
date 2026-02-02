@@ -45,7 +45,7 @@ export class Settings implements OnInit {
     private userService: UserService,
     private router: Router,
     private settingService: SettingsService,
-    private printService: PrintingService
+    private printService: PrintingService,
   ) {
     this.user = this.userService.loggedInUser$;
 
@@ -62,6 +62,9 @@ export class Settings implements OnInit {
   }
 
   user!: Signal<User | null>;
+  activeSection = signal<'printing' | 'royalty' | 'store' | 'title'>(
+    'printing',
+  );
 
   isSuperAdmin = computed(() => {
     return this.user()?.accessLevel === 'SUPERADMIN';

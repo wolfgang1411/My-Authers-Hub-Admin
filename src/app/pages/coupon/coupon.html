@@ -45,7 +45,7 @@
           <div>
             <p class="text-xs text-gray-400">Coupon Code</p>
             <p class="text-base font-semibold text-primary">
-              {{ coupon.code }}
+              {{ coupon.coupon }}
             </p>
           </div>
 
@@ -65,50 +65,32 @@
           <div>
             <p class="text-gray-400">Discount</p>
             <p class="font-medium">
-              {{
-                coupon.discountType === "PERCENT"
-                  ? coupon.discount + "%"
-                  : (coupon.discount | currency: "INR")
-              }}
+              {{ coupon.discountvalue }}
             </p>
           </div>
 
           <div>
-            <p class="text-gray-400">Min Order</p>
+            <p class="text-gray-400">Validity</p>
             <p class="font-medium">
-              {{ coupon.minOrderAmount | currency: "INR" }}
+              {{ coupon["startdate/enddate"] || "—" }}
             </p>
           </div>
 
           <div>
-            <p class="text-gray-400">Usage Limit</p>
+            <p class="text-gray-400">Used Count</p>
             <p class="font-medium">
-              {{ coupon.usageLimit || "—" }}
-            </p>
-          </div>
-
-          <div>
-            <p class="text-gray-400">Expires On</p>
-            <p class="font-medium">
-              {{ coupon.expiryDate | date: "shortDate" }}
+              {{ coupon.usedcount }}
             </p>
           </div>
         </div>
 
         <!-- Actions -->
         <div class="flex justify-end gap-2 pt-2 border-t">
-          <button
-            (click)="onAddUpdateCoupon(coupon)"
-            class="bg-primary text-white rounded-lg px-4 py-1.5 text-sm"
+          <ng-container
+            [ngTemplateOutlet]="actionButtons"
+            [ngTemplateOutletContext]="{ $implicit: coupon }"
           >
-            Edit
-          </button>
-          <button
-            (click)="onDeleteCoupon(coupon)"
-            class="bg-red-100 text-red-700 rounded-lg px-4 py-1.5 text-sm"
-          >
-            Delete
-          </button>
+          </ng-container>
         </div>
       </div>
     }

@@ -80,6 +80,10 @@ export class PrintingSettingsManager implements OnInit {
     return this.sizeCategories().find((c) => c.id === id) || null;
   });
 
+  toggleCategory(id: number) {
+    this.selectedCategoryId.set(this.selectedCategoryId() === id ? null : id);
+  }
+
   isSuperAdmin = computed(() => {
     return this.userService.loggedInUser$()?.accessLevel === 'SUPERADMIN';
   });
@@ -89,7 +93,7 @@ export class PrintingSettingsManager implements OnInit {
     private printingService: PrintingService,
     private userService: UserService,
     private dialog: MatDialog,
-    private translateService: TranslateService
+    private translateService: TranslateService,
   ) {
     // Check access level
     effect(() => {
@@ -118,7 +122,7 @@ export class PrintingSettingsManager implements OnInit {
         icon: 'error',
         title: await firstValueFrom(this.translateService.get('error')),
         text: await firstValueFrom(
-          this.translateService.get('errorloadingdata')
+          this.translateService.get('errorloadingdata'),
         ),
       });
     } finally {
@@ -153,7 +157,7 @@ export class PrintingSettingsManager implements OnInit {
               icon: 'success',
               title: await firstValueFrom(this.translateService.get('success')),
               text: await firstValueFrom(
-                this.translateService.get('updatedsuccessfully')
+                this.translateService.get('updatedsuccessfully'),
               ),
             });
           } catch (error) {
@@ -162,7 +166,7 @@ export class PrintingSettingsManager implements OnInit {
               icon: 'error',
               title: await firstValueFrom(this.translateService.get('error')),
               text: await firstValueFrom(
-                this.translateService.get('errorupdating')
+                this.translateService.get('errorupdating'),
               ),
             });
           }
@@ -177,9 +181,8 @@ export class PrintingSettingsManager implements OnInit {
         onClose: () => dialogRef.close(),
         onSubmit: async (data: CreateSizeCategory) => {
           try {
-            const newCategory = await this.settingsService.createSizeCategory(
-              data
-            );
+            const newCategory =
+              await this.settingsService.createSizeCategory(data);
             this.sizeCategories.update((categories) => [
               ...categories,
               newCategory,
@@ -189,7 +192,7 @@ export class PrintingSettingsManager implements OnInit {
               icon: 'success',
               title: await firstValueFrom(this.translateService.get('success')),
               text: await firstValueFrom(
-                this.translateService.get('categorycreated')
+                this.translateService.get('categorycreated'),
               ),
             });
           } catch (error) {
@@ -198,7 +201,7 @@ export class PrintingSettingsManager implements OnInit {
               icon: 'error',
               title: await firstValueFrom(this.translateService.get('error')),
               text: await firstValueFrom(
-                this.translateService.get('errorcreatingcategory')
+                this.translateService.get('errorcreatingcategory'),
               ),
             });
           }
@@ -216,17 +219,17 @@ export class PrintingSettingsManager implements OnInit {
           try {
             const updated = await this.settingsService.updateSizeCategory(
               category.id,
-              data
+              data,
             );
             this.sizeCategories.update((categories) =>
-              categories.map((c) => (c.id === category.id ? updated : c))
+              categories.map((c) => (c.id === category.id ? updated : c)),
             );
             dialogRef.close();
             await Swal.fire({
               icon: 'success',
               title: await firstValueFrom(this.translateService.get('success')),
               text: await firstValueFrom(
-                this.translateService.get('categoryupdated')
+                this.translateService.get('categoryupdated'),
               ),
             });
           } catch (error) {
@@ -235,7 +238,7 @@ export class PrintingSettingsManager implements OnInit {
               icon: 'error',
               title: await firstValueFrom(this.translateService.get('error')),
               text: await firstValueFrom(
-                this.translateService.get('errorupdatingcategory')
+                this.translateService.get('errorupdatingcategory'),
               ),
             });
           }
@@ -251,10 +254,10 @@ export class PrintingSettingsManager implements OnInit {
       text: await firstValueFrom(this.translateService.get('areyousuredelete')),
       showCancelButton: true,
       confirmButtonText: await firstValueFrom(
-        this.translateService.get('delete')
+        this.translateService.get('delete'),
       ),
       cancelButtonText: await firstValueFrom(
-        this.translateService.get('cancel')
+        this.translateService.get('cancel'),
       ),
     });
 
@@ -262,13 +265,13 @@ export class PrintingSettingsManager implements OnInit {
       try {
         await this.settingsService.deleteSizeCategory(category.id);
         this.sizeCategories.update((categories) =>
-          categories.filter((c) => c.id !== category.id)
+          categories.filter((c) => c.id !== category.id),
         );
         await Swal.fire({
           icon: 'success',
           title: await firstValueFrom(this.translateService.get('success')),
           text: await firstValueFrom(
-            this.translateService.get('categorydeleted')
+            this.translateService.get('categorydeleted'),
           ),
         });
       } catch (error) {
@@ -277,7 +280,7 @@ export class PrintingSettingsManager implements OnInit {
           icon: 'error',
           title: await firstValueFrom(this.translateService.get('error')),
           text: await firstValueFrom(
-            this.translateService.get('errordeletingcategory')
+            this.translateService.get('errordeletingcategory'),
           ),
         });
       }
@@ -286,7 +289,7 @@ export class PrintingSettingsManager implements OnInit {
 
   onCategoryUpdated(category: SizeCategory) {
     this.sizeCategories.update((categories) =>
-      categories.map((c) => (c.id === category.id ? category : c))
+      categories.map((c) => (c.id === category.id ? category : c)),
     );
   }
 

@@ -86,14 +86,10 @@ export class Transactions implements OnInit {
         this.clearCache();
         this.cachedFilterKey = filterKey;
       }
-
-      // Check if page is already cached
       if (this.pageCache.has(currentPage)) {
         this.transactions.set(this.pageCache.get(currentPage)!);
         return;
       }
-
-      // Fetch from API
       const {
         items,
         totalCount,

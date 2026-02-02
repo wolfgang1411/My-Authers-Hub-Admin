@@ -1,31 +1,113 @@
 <div>
   <div class="flex flex-col gap-4">
-    <mat-tab-group dynamicHeight>
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <span class="text-text-heading font-medium">
-            {{ "printingcalculator" | translate }}
-          </span>
-        </ng-template>
-        <section
-          id="printingcalculator"
-          class="mt-10 bg-white p-6 rounded-xl shadow mat-elevation-z4"
-        >
-          <h2 class="heading mb-4">{{ "printingcalculator" | translate }}</h2>
-          <app-printing-calculator
-            [bindingTypes]="bindingTypes()"
-            [laminationTypes]="laminationTypes()"
-            [sizeTypes]="sizeTypes()"
-            [paperQualityTypes]="paperQualityTypes()"
-            [marginPercent]="marginPercent()"
-            (onPaperQualityTypesUpdate)="onPaperQualityTypesUpdae($event)"
-            (onBindingTypesUpdate)="onBindingTypesUpdate($event)"
-            (onLaminationTypesUpdate)="onLaminationTypesUpdate($event)"
-            (onSizeTypesUpdate)="onSizeTypesUpdate($event)"
-            (onMarginPercentUpdate)="onMarginPercentUpdate($event)"
-          ></app-printing-calculator>
-        </section>
+    <div class="hidden lg:block">
+      <mat-tab-group dynamicHeight>
+        <mat-tab label="{{ 'printingcalculator' | translate }}">
+          <ng-container *ngTemplateOutlet="printingSection"></ng-container>
+        </mat-tab>
+        <mat-tab [label]="'royaltycalculator' | translate">
+          <app-royalty-calculator-settings></app-royalty-calculator-settings>
+        </mat-tab>
         @if (isSuperAdmin()) {
+          <mat-tab [label]="'storesettings' | translate">
+            <app-title-config></app-title-config>
+          </mat-tab>
+          <mat-tab [label]="'titlesettings' | translate">
+            <app-title-setting></app-title-setting>
+          </mat-tab>
+        }
+      </mat-tab-group>
+    </div>
+    <div
+      class="lg:hidden grid grid-cols-2 sm:grid-cols-3 md:flex gap-2 overflow-x-auto pb-2"
+    >
+      <button
+        class="px-4 py-2 rounded-full text-sm whitespace-nowrap shrink-0"
+        [ngClass]="
+          activeSection() === 'printing'
+            ? 'bg-primary text-white'
+            : 'bg-primary-superlight text-primary'
+        "
+        (click)="activeSection.set('printing')"
+      >
+        {{ "printingcalculator" | translate }}
+      </button>
+
+      <button
+        class="px-4 py-2 rounded-full text-sm whitespace-nowrap shrink-0"
+        [ngClass]="
+          activeSection() === 'royalty'
+            ? 'bg-primary text-white'
+            : 'bg-primary-superlight text-primary'
+        "
+        (click)="activeSection.set('royalty')"
+      >
+        {{ "royaltycalculator" | translate }}
+      </button>
+
+      @if (isSuperAdmin()) {
+        <button
+          class="px-4 py-2 rounded-full text-sm whitespace-nowrap shrink-0"
+          [ngClass]="
+            activeSection() === 'store'
+              ? 'bg-primary text-white'
+              : 'bg-primary-superlight text-primary'
+          "
+          (click)="activeSection.set('store')"
+        >
+          {{ "storesettings" | translate }}
+        </button>
+
+        <button
+          class="px-4 py-2 rounded-full text-sm whitespace-nowrap shrink-0"
+          [ngClass]="
+            activeSection() === 'title'
+              ? 'bg-primary text-white'
+              : 'bg-primary-superlight text-primary'
+          "
+          (click)="activeSection.set('title')"
+        >
+          {{ "titlesettings" | translate }}
+        </button>
+      }
+    </div>
+    <div class="lg:hidden mt-6 space-y-6">
+      @if (activeSection() === "printing") {
+        <ng-container *ngTemplateOutlet="printingSection"></ng-container>
+      }
+
+      @if (activeSection() === "royalty") {
+        <app-royalty-calculator-settings></app-royalty-calculator-settings>
+      }
+
+      @if (activeSection() === "store" && isSuperAdmin()) {
+        <app-title-config></app-title-config>
+      }
+
+      @if (activeSection() === "title" && isSuperAdmin()) {
+        <app-title-setting></app-title-setting>
+      }
+    </div>
+    <ng-template #printingSection>
+      <section
+        id="printingcalculator"
+        class="mt-10 bg-white p-6 rounded-xl shadow mat-elevation-z4"
+      >
+        <h2 class="heading mb-4">{{ "printingcalculator" | translate }}</h2>
+        <app-printing-calculator
+          [bindingTypes]="bindingTypes()"
+          [laminationTypes]="laminationTypes()"
+          [sizeTypes]="sizeTypes()"
+          [paperQualityTypes]="paperQualityTypes()"
+          [marginPercent]="marginPercent()"
+          (onPaperQualityTypesUpdate)="onPaperQualityTypesUpdae($event)"
+          (onBindingTypesUpdate)="onBindingTypesUpdate($event)"
+          (onLaminationTypesUpdate)="onLaminationTypesUpdate($event)"
+          (onSizeTypesUpdate)="onSizeTypesUpdate($event)"
+          (onMarginPercentUpdate)="onMarginPercentUpdate($event)"
+        ></app-printing-calculator>
+      </section>
+      @if (isSuperAdmin()) {
         <section
           id="printingsettings"
           class="mt-10 bg-white p-6 rounded-xl shadow mat-elevation-z4"
@@ -35,19 +117,7 @@
           </h2>
           <app-printing-settings-manager></app-printing-settings-manager>
         </section>
-        }
-      </mat-tab>
-      <mat-tab [label]="'royaltycalculator' | translate">
-        <app-royalty-calculator-settings></app-royalty-calculator-settings>
-      </mat-tab>
-      @if (isSuperAdmin()) {
-      <mat-tab [label]="'storesettings' | translate">
-        <app-title-config></app-title-config>
-      </mat-tab>
-      <mat-tab [label]="'titlesettings' | translate">
-        <app-title-setting></app-title-setting>
-      </mat-tab>
       }
-    </mat-tab-group>
+    </ng-template>
   </div>
 </div>

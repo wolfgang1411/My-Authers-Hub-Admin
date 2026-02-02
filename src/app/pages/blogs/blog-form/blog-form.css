@@ -1,7 +1,11 @@
 /* CKEditor Styling to match Material Design */
 .ckeditor-wrapper {
   width: 100%;
+  max-width: 100%;
   margin-bottom: 1rem;
+
+  /* Prevent overflow on small screens */
+  overflow-x: auto;
 }
 
 .ckeditor-wrapper ::ng-deep .ck-editor {
@@ -34,6 +38,7 @@
   border-bottom: none;
   border-radius: 4px 4px 0 0;
   background: #fafafa;
+  flex-wrap: wrap;
 }
 
 .ckeditor-wrapper ::ng-deep .ck-toolbar__separator {

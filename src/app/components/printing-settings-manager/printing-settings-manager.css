@@ -33,3 +33,10 @@ mat-tab-group {
 ::ng-deep .mat-expansion-panel-body {
   padding: 1.5rem 1.75rem !important;
 }
+.mat-mdc-tab-labels {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.mat-mdc-tab-labels::-webkit-scrollbar {
+  display: none;
+}

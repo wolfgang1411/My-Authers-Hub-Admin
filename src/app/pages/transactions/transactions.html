@@ -3,7 +3,7 @@
     {{ "transactions" | translate }}
   </h3>
 
-  <div class="flex justify-between w-full gap-4">
+  <div class="flex flex-col md:flex-row justify-between w-full gap-4">
     <div
       class="flex h-[38px] items-center justify-center md:min-w-[480px] min-w-full gap-2"
     >
@@ -36,7 +36,9 @@
       </button>
     </div>
   </div>
-  <div class="flex gap-2">
+  <div
+    class="md:flex grid grid-cols-2 sm:grid sm:grid-cols-3 md:flex-row gap-2"
+  >
     <button
       class="btn rounded-md !text-primary"
       matButton="filled"
