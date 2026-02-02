@@ -29,7 +29,18 @@ mat-tab-group {
   justify-content: flex-end;
   overflow: visible;
 }
+::ng-deep .mat-expansion-panel-header-title,
+::ng-deep .mat-expansion-panel-header-description {
+  display: flex !important;
+}
 
+/* Mobile / tablet */
+@media (max-width: 768px) {
+  ::ng-deep .mat-expansion-panel-header-title,
+  ::ng-deep .mat-expansion-panel-header-description {
+    display: none !important;
+  }
+}
 ::ng-deep .mat-expansion-panel-body {
   padding: 1rem !important;
 }

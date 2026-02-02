@@ -15,101 +15,107 @@
   <!-- Accordion -->
   <mat-accordion class="flex flex-col gap-4">
     @for (titleConfigItem of titleConfigsData(); track $index) {
-    <mat-expansion-panel
-      class="overflow-hidden rounded-lg border border-[#ceb8ef] bg-white shadow-sm hover:shadow-md transition-all duration-300"
-    >
-      <!-- Panel Header -->
-      <mat-expansion-panel-header
-        class="!bg-[var(--light-purple-bg)] rounded-t-lg py-3 px-4"
+      <mat-expansion-panel
+        class="overflow-hidden rounded-lg border border-[#ceb8ef] bg-white shadow-sm hover:shadow-md transition-all duration-300"
       >
-        <mat-panel-title class="flex items-center justify-between w-full">
-          <span class="text-base font-medium text-[var(--text-heading)]">
-            {{ titleConfigItem.type | translate }}
-          </span>
-
-          <div class="flex gap-2">
-            <button
-              (click)="onClickAddNewItem($event, titleConfigItem.type)"
-              type="button"
-              class="rounded-lg px-3 py-1.5 font-normal text-sm border-none cursor-pointer bg-[var(--primary)] text-white hover:bg-[var(--purple)] transition-colors flex items-center gap-1.5"
-            >
-              <mat-icon class="!text-white text-base">add</mat-icon>
-              {{ "additem" | translate }}
-            </button>
-
-            <button
-              (click)="onClickUpdateList($event, titleConfigItem.type)"
-              type="button"
-              class="rounded-lg px-3 py-1.5 font-normal text-sm border-none cursor-pointer bg-[var(--green-2)] text-white hover:opacity-90 transition-colors flex items-center gap-1.5"
-            >
-              <mat-icon class="!text-white text-base">update</mat-icon>
-              {{ "reorderitems" | translate }}
-            </button>
-          </div>
-        </mat-panel-title>
-      </mat-expansion-panel-header>
-
-      <!-- Panel Content -->
-      @if (titleConfigItem.data.length) {
-      <div
-        class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 p-4"
-      >
-        @for (titleConfig of titleConfigItem.data; track $index) {
-        <div
-          class="relative bg-white border border-[#ceb8ef] rounded-lg shadow-sm hover:shadow-md transition-all duration-300 p-3 flex flex-col items-start"
+        <!-- Panel Header -->
+        <mat-expansion-panel-header
+          class="!bg-[var(--light-purple-bg)] rounded-t-lg py-3 px-4"
         >
-          <!-- Thumbnail -->
-          <img
-            class="w-28 h-24 object-cover rounded-md mb-2"
-            [src]="titleConfig.title.media?.[0]?.url"
-            alt="{{ titleConfig.title.name }}"
-          />
+          <mat-panel-title class="!flex items-center justify-between w-full">
+            <span class="text-base font-medium text-[var(--text-heading)]">
+              {{ titleConfigItem.type | translate }}
+            </span>
 
-          <!-- Title Info -->
-          <div class="w-full space-y-0.5">
-            <h3 class="text-sm font-medium text-[var(--text-heading)] truncate">
-              {{ titleConfig.title.name }}
-            </h3>
-            <p class="text-xs text-gray-700">
-              <label class="font-medium">{{ "sold" | translate }} : </label>
-              <span class="text-[var(--primary)] font-medium"
-                >{{ titleConfig.title.copiesSold }}
-                {{ "copies" | translate }}</span
+            <div class="flex gap-2">
+              <button
+                (click)="onClickAddNewItem($event, titleConfigItem.type)"
+                type="button"
+                class="rounded-lg px-3 py-1.5 font-normal text-sm border-none cursor-pointer bg-[var(--primary)] text-white hover:bg-[var(--purple)] transition-colors flex items-center gap-1.5"
               >
-            </p>
-            <p class="text-xs text-gray-700">
-              <label class="font-medium">{{ "msp" | translate }} : </label>
-              <span class="text-[var(--primary)] font-medium">{{
+                <mat-icon class="!text-white text-base">add</mat-icon>
+                {{ "additem" | translate }}
+              </button>
+
+              <button
+                (click)="onClickUpdateList($event, titleConfigItem.type)"
+                type="button"
+                class="rounded-lg px-3 py-1.5 font-normal text-sm border-none cursor-pointer bg-[var(--green-2)] text-white hover:opacity-90 transition-colors flex items-center gap-1.5"
+              >
+                <mat-icon class="!text-white text-base">update</mat-icon>
+                {{ "reorderitems" | translate }}
+              </button>
+            </div>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <!-- Panel Content -->
+        @if (titleConfigItem.data.length) {
+          <div
+            class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 p-4"
+          >
+            @for (titleConfig of titleConfigItem.data; track $index) {
+              <div
+                class="relative bg-white border border-[#ceb8ef] rounded-lg shadow-sm hover:shadow-md transition-all duration-300 p-3 flex flex-col items-start"
+              >
+                <!-- Thumbnail -->
+                <img
+                  class="w-28 h-24 object-cover rounded-md mb-2"
+                  [src]="titleConfig.title.media?.[0]?.url"
+                  alt="{{ titleConfig.title.name }}"
+                />
+
+                <!-- Title Info -->
+                <div class="w-full space-y-0.5">
+                  <h3
+                    class="text-sm font-medium text-[var(--text-heading)] truncate"
+                  >
+                    {{ titleConfig.title.name }}
+                  </h3>
+                  <p class="text-xs text-gray-700">
+                    <label class="font-medium"
+                      >{{ "sold" | translate }} :
+                    </label>
+                    <span class="text-[var(--primary)] font-medium"
+                      >{{ titleConfig.title.copiesSold }}
+                      {{ "copies" | translate }}</span
+                    >
+                  </p>
+                  <p class="text-xs text-gray-700">
+                    <label class="font-medium"
+                      >{{ "msp" | translate }} :
+                    </label>
+                    <span class="text-[var(--primary)] font-medium">{{
                       titleConfig.title.pricing?.[0]?.msp | currency
-              }}</span>
+                    }}</span>
+                  </p>
+                </div>
+
+                <!-- Delete Button -->
+                <button
+                  type="button"
+                  class="absolute top-1 right-1 bg-[rgba(220,38,38,0.1)] hover:bg-[rgba(220,38,38,0.15)] text-[#b91c1c] transition-colors duration-300 rounded-full shadow-sm flex items-center justify-center w-7 h-7 cursor-pointer border-none"
+                  aria-label="Delete title"
+                  (click)="onClickDeleteConfigItem(titleConfig)"
+                >
+                  <mat-icon class="!text-[#b91c1c] !text-base">delete</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+        } @else {
+          <div
+            class="p-6 flex flex-col items-center justify-center text-center bg-[var(--light-purple-bg)] border-t border-[#ceb8ef]"
+          >
+            <mat-icon class="text-[var(--primary)] text-4xl mb-1"
+              >library_books</mat-icon
+            >
+            <p class="text-[var(--text-primary)] font-medium text-xs">
+              {{ "notitlesfound" | translate }}
             </p>
           </div>
-
-          <!-- Delete Button -->
-          <button
-            type="button"
-            class="absolute top-1 right-1 bg-[rgba(220,38,38,0.1)] hover:bg-[rgba(220,38,38,0.15)] text-[#b91c1c] transition-colors duration-300 rounded-full shadow-sm flex items-center justify-center w-7 h-7 cursor-pointer border-none"
-            aria-label="Delete title"
-            (click)="onClickDeleteConfigItem(titleConfig)"
-          >
-            <mat-icon class="!text-[#b91c1c] !text-base">delete</mat-icon>
-          </button>
-        </div>
         }
-      </div>
-      } @else {
-      <div
-        class="p-6 flex flex-col items-center justify-center text-center bg-[var(--light-purple-bg)] border-t border-[#ceb8ef]"
-      >
-        <mat-icon class="text-[var(--primary)] text-4xl mb-1"
-          >library_books</mat-icon
-        >
-        <p class="text-[var(--text-primary)] font-medium text-xs">
-          {{ "notitlesfound" | translate }}
-        </p>
-      </div>
-      }
-    </mat-expansion-panel>
+      </mat-expansion-panel>
     }
   </mat-accordion>
 </section>

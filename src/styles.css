@@ -657,10 +657,7 @@ mat-label {
 }
 
 /* Disable title/description layout */
-.mat-expansion-panel-header-title,
-.mat-expansion-panel-header-description {
-  @apply !hidden md:!flex;
-}
+/*  */
 
 .mat-expansion-panel-body {
   max-width: 100% !important;
@@ -700,7 +697,7 @@ mat-label {
   /* Completely disable Material title/description layout on mobile */
   .mat-expansion-panel-header-title,
   .mat-expansion-panel-header-description {
-    display: none !important;
+    /* display: none !important; */
     flex: unset !important;
     width: 100% !important;
     margin: 0 !important;
