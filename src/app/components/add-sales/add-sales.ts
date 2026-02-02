@@ -890,11 +890,8 @@ export class AddSales implements OnInit, OnDestroy {
           const isInventoryPlatform =
             platformRecord?.isInventoryPlatform ?? false;
 
-          if (
-            (type.value === 'INVENTORY' || isInventoryPlatform) &&
-            amount.value
-          ) {
-            saleData.amount = Number(amount.value);
+          if (type.value === 'INVENTORY' || isInventoryPlatform) {
+            saleData.amount = Number(amount.value || 0) || 0;
           }
 
           // Include platformName for other platforms
