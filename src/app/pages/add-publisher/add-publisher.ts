@@ -76,9 +76,10 @@ import { LoaderService } from '../../services/loader';
 import { City, Country, State } from 'country-state-city';
 import { NgxMaterialIntlTelInputComponent } from 'ngx-material-intl-tel-input';
 import { MobileSection } from 'src/app/components/mobile-section/mobile-section';
-import { AddAddress, AddressDetailsForm } from 'src/app/components/add-address/add-address';
-
-
+import {
+  AddAddress,
+  AddressDetailsForm,
+} from 'src/app/components/add-address/add-address';
 
 @Component({
   selector: 'app-add-publisher',
@@ -100,7 +101,7 @@ import { AddAddress, AddressDetailsForm } from 'src/app/components/add-address/a
     MatProgressSpinnerModule,
     NgxMaterialIntlTelInputComponent,
     MobileSection,
-    AddAddress
+    AddAddress,
   ],
   templateUrl: './add-publisher.html',
   styleUrl: './add-publisher.css',
@@ -578,20 +579,23 @@ export class AddPublisher {
     },
   );
 
-
-
-
   publisherAddressDetails = new FormGroup<AddressDetailsForm>({
     id: new FormControl<number | null>(null),
     address: new FormControl<string | null>(null, Validators.required),
-    city: new FormControl<string | null>({
-      value: null,
-      disabled: true
-    }, Validators.required),
-    state: new FormControl<string | null>({
-      value: null,
-      disabled: true
-    }, Validators.required),
+    city: new FormControl<string | null>(
+      {
+        value: null,
+        disabled: true,
+      },
+      Validators.required,
+    ),
+    state: new FormControl<string | null>(
+      {
+        value: null,
+        disabled: true,
+      },
+      Validators.required,
+    ),
     country: new FormControl<string | null>(null, Validators.required),
     pincode: new FormControl<string | null>(null, [Validators.required]),
     signupCode: new FormControl<string | null>(null),
@@ -801,7 +805,15 @@ export class AddPublisher {
     this.publisherId = response.id;
 
     if (response && response.id) {
-      const { id: addressId, address: addressControl, country: countryControl, pincode: pincodeControl, city: cityControl, state: stateControl, signupCode: signupCodeControl } = this.publisherAddressDetails.controls;
+      const {
+        id: addressId,
+        address: addressControl,
+        country: countryControl,
+        pincode: pincodeControl,
+        city: cityControl,
+        state: stateControl,
+        signupCode: signupCodeControl,
+      } = this.publisherAddressDetails.controls;
       const publisherAddressData = {
         id: addressId.value,
         address: addressControl.value,
@@ -817,6 +829,7 @@ export class AddPublisher {
       const addressPayload: any = {
         ...publisherAddressData,
         type: AddressLinkType.PUBLISHER, // Link address to publisher
+        signupCode: this.signupCode,
       };
       if (this.signupCode) {
         addressPayload.id = undefined;
@@ -838,6 +851,7 @@ export class AddPublisher {
       const publisherBankData: any = {
         ...bankDetailsValue,
         publisherId: response.id,
+        signupCode: this.signupCode,
       };
       if (this.signupCode) {
         publisherBankData.id = undefined;
@@ -1112,7 +1126,13 @@ export class AddPublisher {
   private hasAddressChanges(existingAddress?: Address): boolean {
     if (!existingAddress) {
       // If no existing address, check if form has values
-      const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.publisherAddressDetails.controls;
+      const {
+        address: addressControl,
+        city: cityControl,
+        state: stateControl,
+        country: countryControl,
+        pincode: pincodeControl,
+      } = this.publisherAddressDetails.controls;
       return !!(
         addressControl.value ||
         cityControl.value ||
@@ -1122,7 +1142,13 @@ export class AddPublisher {
       );
     }
 
-    const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.publisherAddressDetails.controls;
+    const {
+      address: addressControl,
+      city: cityControl,
+      state: stateControl,
+      country: countryControl,
+      pincode: pincodeControl,
+    } = this.publisherAddressDetails.controls;
 
     return (
       this.compareValues(addressControl.value, existingAddress.address) ||
@@ -1216,7 +1242,13 @@ export class AddPublisher {
       delete bankDetailsValue.gstNumber;
     }
 
-    const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.publisherAddressDetails.controls;
+    const {
+      address: addressControl,
+      city: cityControl,
+      state: stateControl,
+      country: countryControl,
+      pincode: pincodeControl,
+    } = this.publisherAddressDetails.controls;
     const addressData = {
       address: addressControl.value,
       city: cityControl.value,
@@ -2115,7 +2147,13 @@ export class AddPublisher {
       const wasNewAddress = !existingAddress;
 
       // In invite flow, always use CREATE (remove id) but still prefill form
-      const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.publisherAddressDetails.controls;
+      const {
+        address: addressControl,
+        city: cityControl,
+        state: stateControl,
+        country: countryControl,
+        pincode: pincodeControl,
+      } = this.publisherAddressDetails.controls;
       const addressData = {
         address: addressControl.value,
         city: cityControl.value,
@@ -2127,6 +2165,7 @@ export class AddPublisher {
         ...addressData,
         publisherId: this.publisherId,
         type: AddressLinkType.PUBLISHER, // Link address to publisher
+        signupCode: this.signupCode,
       };
       // Remove id if signupCode is present (force CREATE)
       if (this.signupCode) {
@@ -2160,7 +2199,13 @@ export class AddPublisher {
       const hasAddressChange = this.hasAddressChanges(existingAddress);
 
       if (hasAddressChange) {
-        const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.publisherAddressDetails.controls;
+        const {
+          address: addressControl,
+          city: cityControl,
+          state: stateControl,
+          country: countryControl,
+          pincode: pincodeControl,
+        } = this.publisherAddressDetails.controls;
         const payload: any = {
           type: UpdateTicketType.ADDRESS,
           targetPublisherId: this.publisherId,
@@ -2265,6 +2310,7 @@ export class AddPublisher {
       const bankPayload: any = {
         ...bankDetailsValue,
         publisherId: this.publisherId,
+        signupCode: this.signupCode,
       };
       // Remove id if signupCode is present (force CREATE)
       if (this.signupCode) {
