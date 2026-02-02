@@ -15,7 +15,6 @@ export interface AddWalletAmount {
   method: 'GATEWAY' | 'WALLET' | 'SUPERADMIN';
   comment?: string;
   sendMail: boolean;
-  returnUrl: string;
 }
 
 export interface AddWalletAmountResponse {

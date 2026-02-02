@@ -345,13 +345,17 @@
           )
         ) {
           <div>
-            <button
+            <app-add-wallet-amount-button
+              [authorId]="authorId"
+              (onPaymentFinish)="onWalletAmountTransactionFinish($event)"
+            ></app-add-wallet-amount-button>
+            <!-- <button
               (click)="onClickAddWalletAmount()"
               color="primary"
               mat-raised-button
             >
               {{ "addwalletamount" | translate }}
-            </button>
+            </button> -->
           </div>
         }
       </div>

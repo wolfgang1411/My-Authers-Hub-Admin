@@ -218,9 +218,11 @@ export class PublisherService {
     try {
       return this.loader.loadPromise(
         this.server.post<{
-          url?: string;
+          amount: number;
+          currency: string;
+          orderId: string;
           status: 'pending' | 'success';
-          id: number;
+          tnx: number;
         }>('publishing-points/buy', {
           distributionType,
           points,
@@ -234,6 +236,21 @@ export class PublisherService {
           ? error.error
           : error;
       this.logger.logError(errorToLog);
+      throw error;
+    }
+  }
+
+  async verfiyPublishingPointsPurchase(
+    response: RazorpayPaymentResponse & {
+      status: 'completed' | 'failed' | 'cancelled';
+    },
+  ) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.post('razarpay/points/response', response),
+      );
+    } catch (error) {
+      this.logger.logError(error);
       throw error;
     }
   }

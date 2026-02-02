@@ -14,12 +14,28 @@ export class WalletService {
 
   async addWalletAmount(data: AddWalletAmount) {
     try {
-      return await this.loaderService.loadPromise(
-        this.serverService.post<AddWalletAmountResponse>(
-          'wallet/amount/add',
-          data,
-        ),
-      );
+      return await this.loaderService.loadPromise<{
+        amount: number;
+        currency: string;
+        orderId: string;
+        status: 'pending' | 'success';
+        tnx: number;
+      }>(this.serverService.post('wallet/amount/add', data));
+    } catch (error) {
+      this.loggerService.logError(error);
+      throw error;
+    }
+  }
+
+  async verifyWalletAmountTransaction(
+    response: RazorpayPaymentResponse & {
+      status: 'completed' | 'failed' | 'cancelled';
+    },
+  ) {
+    try {
+      return await this.loaderService.loadPromise<{
+        status: 'completed' | 'failed' | 'cancelled';
+      }>(this.serverService.post('razarpay/wallet/response', response));
     } catch (error) {
       this.loggerService.logError(error);
       throw error;

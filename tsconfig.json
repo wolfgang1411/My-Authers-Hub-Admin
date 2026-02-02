@@ -18,7 +18,8 @@
     "lib": ["ES2022", "DOM"],
     "baseUrl": ".",
     "resolvePackageJsonExports": true,
-    "resolvePackageJsonImports": true
+    "resolvePackageJsonImports": true,
+    "typeRoots": ["src/types", "node_modules/@types"]
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

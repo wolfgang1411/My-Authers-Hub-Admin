@@ -5701,31 +5701,6 @@ export class TitleFormTemp implements OnDestroy {
     }
   }
 
-  async onClickPurchasePoint(type: DistributionType) {
-    try {
-      const publisherId =
-        Number(
-          this.tempForm.controls.titleDetails.controls.publisher.controls.id
-            .value,
-        ) || undefined;
-      const res = await this.publisherService.buyPublishingPoints(
-        type,
-        1,
-        `title/${this.titleId}?step=distribution`,
-        publisherId,
-      );
-      if (res.status === 'pending' && res.url) {
-        window.open(res.url, '_blank');
-      }
-
-      if (res.status === 'success') {
-        this.fetchAndUpdatePublishingPoints();
-      }
-    } catch (error) {
-      // Error handled silently
-    }
-  }
-
   async onDistributionSubmit() {
     if (!this.tempForm.controls.distribution.valid) {
       Swal.fire({

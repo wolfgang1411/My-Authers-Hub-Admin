@@ -50,6 +50,10 @@ import { AddWalletAmount } from 'src/app/components/add-wallet-amount/add-wallet
 import Swal from 'sweetalert2';
 import { InviteDialog } from 'src/app/components/invite-dialog/invite-dialog';
 import { Validators } from '@angular/forms';
+import {
+  AddWalletAmountButton,
+  AddWalletAmountButtonResposne,
+} from 'src/app/components/add-wallet-amount-button/add-wallet-amount-button';
 @Component({
   selector: 'app-publisher-details',
   imports: [
@@ -66,6 +70,7 @@ import { Validators } from '@angular/forms';
     SafeUrlPipe,
     BuyAssignPointsButton,
     MobileSection,
+    AddWalletAmountButton,
   ],
   templateUrl: './publisher-details.html',
   styleUrl: './publisher-details.css',
@@ -1193,75 +1198,35 @@ export class PublisherDetails implements OnInit, OnDestroy {
     return 'link';
   }
 
-  onClickAddWalletAmount() {
-    const dialog = this.matDialog.open(AddWalletAmount, {
-      data: {
-        onClose: () => dialog.close(),
-        onSubmit: (data: {
-          amount: number;
-          method?: 'GATEWAY' | 'WALLET';
-          sendMails: boolean;
-        }) => {
-          const returnUrl = `publisherDetails/${this.publisherId}?tab=4`;
-          this.walletService
-            .addWalletAmount({
-              amount: data.amount,
-              method: data.method || 'SUPERADMIN',
-              sendMail: data.sendMails,
-              returnUrl,
-              publisherId: Number(this.publisherId),
-            })
-            .then((response) => {
-              if (response.status === 'pending' && response.url) {
-                dialog.close();
-                window.open(response.url, '_blank');
-                return;
-              }
+  onWalletAmountTransactionFinish(data: AddWalletAmountButtonResposne) {
+    const { status, amount } = data;
+    if (status === 'completed') {
+      const publisherDetails = this.publisherDetails();
+      if (publisherDetails) {
+        const finalAmount =
+          (publisherDetails.user.wallet?.totalAmount || 0) + amount;
 
-              if (response.status === 'success') {
-                Swal.fire({
-                  icon: 'success',
-                  html: response.message,
-                });
-                dialog.close();
-                const publisherDetails = this.publisherDetails();
-                if (publisherDetails) {
-                  const finalAmount =
-                    (publisherDetails.user.wallet?.totalAmount || 0) +
-                    data.amount;
+        this.publisherDetails.update(() => {
+          if (publisherDetails.user && publisherDetails.user.wallet) {
+            publisherDetails['user']['wallet']['totalAmount'] = finalAmount;
+          }
 
-                  this.publisherDetails.update(() => {
-                    if (publisherDetails.user && publisherDetails.user.wallet) {
-                      publisherDetails['user']['wallet']['totalAmount'] =
-                        finalAmount;
-                    }
+          return publisherDetails;
+        });
+      }
 
-                    return publisherDetails;
-                  });
-                }
-
-                const loggedInUser = this.loggedInUser();
-                if (
-                  loggedInUser &&
-                  loggedInUser.accessLevel == 'PUBLISHER' &&
-                  loggedInUser.wallet &&
-                  data.method === 'WALLET'
-                ) {
-                  const updatedAmount =
-                    loggedInUser['wallet']['totalAmount'] - data.amount;
-                  loggedInUser['wallet']['totalAmount'] = updatedAmount;
-                  this.userService.setLoggedInUser(loggedInUser);
-                }
-
-                return;
-              }
-            })
-            .catch((error) => {
-              console.log(error);
-            });
-        },
-      },
-    });
+      const loggedInUser = this.loggedInUser();
+      if (
+        loggedInUser &&
+        loggedInUser.accessLevel == 'PUBLISHER' &&
+        loggedInUser.wallet &&
+        data.method === 'WALLET'
+      ) {
+        const updatedAmount = loggedInUser['wallet']['totalAmount'] - amount;
+        loggedInUser['wallet']['totalAmount'] = updatedAmount;
+        this.userService.setLoggedInUser(loggedInUser);
+      }
+    }
   }
 
   onClickPublishingPointCostChange(publishingPoint: PublishingPoints) {

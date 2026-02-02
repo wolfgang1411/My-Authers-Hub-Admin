@@ -8,6 +8,7 @@ import { PublisherService } from '../../pages/publisher/publisher-service';
 import { UserService } from '../../services/user';
 import { TranslateService } from '@ngx-translate/core';
 import Swal from 'sweetalert2';
+import { RazorpayService } from 'src/app/services/razorpay';
 
 @Component({
   selector: 'app-buy-assign-points-button',
@@ -23,6 +24,7 @@ export class BuyAssignPointsButton {
   buttonClass = input<string>('');
   onSuccess = output<void>();
 
+  private readonly razorpayService = inject(RazorpayService);
   private readonly dialog = inject(MatDialog);
   private readonly publisherService = inject(PublisherService);
   private readonly userService = inject(UserService);
@@ -30,10 +32,10 @@ export class BuyAssignPointsButton {
 
   loggedInUser = computed(() => this.userService.loggedInUser$());
   isSuperAdmin = computed(
-    () => this.loggedInUser()?.accessLevel === 'SUPERADMIN'
+    () => this.loggedInUser()?.accessLevel === 'SUPERADMIN',
   );
   buttonText = computed(() =>
-    this.isSuperAdmin() ? 'Assign Point' : 'Buy Point'
+    this.isSuperAdmin() ? 'Assign Point' : 'Buy Point',
   );
 
   async onClick(): Promise<void> {
@@ -68,20 +70,32 @@ export class BuyAssignPointsButton {
         this.distributionType(),
         points,
         returnUrl,
-        publisherId
+        publisherId,
       );
 
-      if (res.status === 'pending' && res.url) {
-        window.open(res.url, '_blank');
-        Swal.fire({
-          icon: 'info',
-          title:
-            this.translateService.instant('redirectingtopayment') ||
-            'Redirecting to Payment',
-          text:
-            this.translateService.instant('youwillberedirectedtopaymentpage') ||
-            'You will be redirected to the payment page.',
-        });
+      if (res.status === 'pending') {
+        await this.razorpayService.pay(
+          {
+            amount: res.amount,
+            currency: res.currency,
+            order_id: res.orderId,
+          },
+          {
+            handler: async (response: RazorpayPaymentResponse) => {
+              await this.publisherService.verfiyPublishingPointsPurchase({
+                ...response,
+                status: 'completed',
+              });
+              this.onSuccess.emit();
+            },
+            ondismiss: async () => {
+              await this.publisherService.verfiyPublishingPointsPurchase({
+                razorpay_order_id: res.orderId,
+                status: 'failed',
+              });
+            },
+          },
+        );
       }
 
       if (res.status === 'success') {

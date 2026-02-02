@@ -33,6 +33,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { AddWalletAmount } from 'src/app/components/add-wallet-amount/add-wallet-amount';
 import { WalletService } from 'src/app/services/wallet';
 import Swal from 'sweetalert2';
+import {
+  AddWalletAmountButton,
+  AddWalletAmountButtonResposne,
+} from 'src/app/components/add-wallet-amount-button/add-wallet-amount-button';
 
 @Component({
   selector: 'app-author-details',
@@ -49,6 +53,7 @@ import Swal from 'sweetalert2';
     MatTooltipModule,
     SafeUrlPipe,
     MobileSection,
+    AddWalletAmountButton,
   ],
   templateUrl: './author-details.html',
   styleUrl: './author-details.css',
@@ -135,74 +140,34 @@ export class AuthorDetails {
     'authors',
   ];
 
-  onClickAddWalletAmount() {
-    const dialog = this.matDialog.open(AddWalletAmount, {
-      data: {
-        onClose: () => dialog.close(),
-        onSubmit: (data: {
-          amount: number;
-          method?: 'GATEWAY' | 'WALLET';
-          sendMails: boolean;
-        }) => {
-          const returnUrl = `authorDetails/${this.authorId}`;
-          this.walletService
-            .addWalletAmount({
-              amount: data.amount,
-              method: data.method || 'SUPERADMIN',
-              sendMail: data.sendMails,
-              returnUrl,
-              authorId: Number(this.authorId),
-            })
-            .then((response) => {
-              if (response.status === 'pending' && response.url) {
-                dialog.close();
-                window.open(response.url, '_blank');
-                return;
-              }
+  onWalletAmountTransactionFinish(data: AddWalletAmountButtonResposne) {
+    const { amount, status } = data;
+    if (status === 'completed') {
+      const authorDetails = this.authorDetails();
+      if (authorDetails) {
+        const finalAmount =
+          (authorDetails.user.wallet?.totalAmount || 0) + amount;
+        this.authorDetails.update(() => {
+          if (authorDetails.user && authorDetails.user.wallet) {
+            authorDetails['user']['wallet']['totalAmount'] = finalAmount;
+          }
+          return authorDetails;
+        });
+      }
 
-              if (response.status === 'success') {
-                Swal.fire({
-                  icon: 'success',
-                  html: response.message,
-                });
-                dialog.close();
-                const authorDetails = this.authorDetails();
-                if (authorDetails) {
-                  const finalAmount =
-                    (authorDetails.user.wallet?.totalAmount || 0) + data.amount;
-
-                  this.authorDetails.update(() => {
-                    if (authorDetails.user && authorDetails.user.wallet) {
-                      authorDetails['user']['wallet']['totalAmount'] =
-                        finalAmount;
-                    }
-
-                    return authorDetails;
-                  });
-                }
-
-                const loggedInUser = this.loggedInUser();
-                if (
-                  loggedInUser &&
-                  loggedInUser.accessLevel == 'PUBLISHER' &&
-                  loggedInUser.wallet &&
-                  data.method === 'WALLET'
-                ) {
-                  const updatedAmount =
-                    loggedInUser['wallet']['totalAmount'] - data.amount;
-                  loggedInUser['wallet']['totalAmount'] = updatedAmount;
-                  this.userService.setLoggedInUser(loggedInUser);
-                }
-
-                return;
-              }
-            })
-            .catch((error) => {
-              console.log(error);
-            });
-        },
-      },
-    });
+      const loggedInUser = this.loggedInUser();
+      if (
+        loggedInUser &&
+        loggedInUser.accessLevel == 'PUBLISHER' &&
+        loggedInUser.wallet &&
+        data.method === 'WALLET'
+      ) {
+        const updatedAmount =
+          loggedInUser['wallet']['totalAmount'] - data.amount;
+        loggedInUser['wallet']['totalAmount'] = updatedAmount;
+        this.userService.setLoggedInUser(loggedInUser);
+      }
+    }
   }
 
   // Sorting functions for books
