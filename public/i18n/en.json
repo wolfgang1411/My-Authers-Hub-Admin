@@ -970,9 +970,7 @@
   "transactionId": "Transaction ID",
   "pincodenotfound": "Pincode not found",
   "selectaddress": "Select Address",
-<<<<<<< HEAD
-  "users":"Users"
-=======
+  "users":"Users",
   "missingmedias": "Missing Medias",
   "availablemedia": "Available Media",
   "missingmedia": "Missing Media",
@@ -982,5 +980,4 @@
   "BACK_COVER": "Back Cover",
   "INSIDE_COVER": "Inside Cover",
   "MANUSCRIPT": "Manuscript"
->>>>>>> 912f19884408b0871bb8cdee5416d3c277373226
 }
