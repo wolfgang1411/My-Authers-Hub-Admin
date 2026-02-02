@@ -11,13 +11,13 @@ export class TransactionService {
   constructor(
     private serverService: Server,
     private loggerService: Logger,
-    private loaderService: LoaderService
+    private loaderService: LoaderService,
   ) {}
 
   async fetchTransactions(filter: TransactionFilter) {
     try {
       return await this.loaderService.loadPromise(
-        this.serverService.get<Pagination<Transaction>>('transactions', filter)
+        this.serverService.get<Pagination<Transaction>>('transactions', filter),
       );
     } catch (error) {
       this.loggerService.logError(error);
@@ -28,7 +28,7 @@ export class TransactionService {
   async fetchTransaction(id: string) {
     try {
       return await this.loaderService.loadPromise(
-        this.serverService.get<Transaction>(`transactions/${id}`)
+        this.serverService.get<Transaction>(`transactions/${id}`),
       );
     } catch (error) {
       this.loggerService.logError(error);
@@ -39,10 +39,31 @@ export class TransactionService {
   async createTransaction(orderId: number) {
     try {
       return await this.loaderService.loadPromise(
-        this.serverService.post<{ url: string }>('transactions', {
+        this.serverService.post<{
+          amount: number;
+          currency: string;
+          orderId: string;
+          status: 'pending' | 'success';
+          tnx: number;
+        }>('transactions', {
           orderId,
         }),
-        'createTransaction'
+        'createTransaction',
+      );
+    } catch (error) {
+      this.loggerService.logError(error);
+      throw error;
+    }
+  }
+
+  async verfiyTransactionPayment(
+    response: RazorpayPaymentResponse & {
+      status: 'completed' | 'failed' | 'cancelled';
+    },
+  ) {
+    try {
+      return await this.loaderService.loadPromise(
+        this.serverService.post('razarpay/response', response),
       );
     } catch (error) {
       this.loggerService.logError(error);
