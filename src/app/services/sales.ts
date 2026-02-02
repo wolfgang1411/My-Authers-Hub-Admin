@@ -6,6 +6,8 @@ import {
   CreateSale,
   EarningFilter,
   Pagination,
+  SalesByPlatform,
+  SalesByPlatformFilter,
   SalesFilter,
 } from '../interfaces';
 import { Earnings } from '../interfaces/Earnings';
@@ -17,14 +19,14 @@ export class SalesService {
   constructor(
     private server: Server,
     private loader: LoaderService,
-    private logger: Logger
+    private logger: Logger,
   ) {}
 
   async fetchEarnings(filter: EarningFilter) {
     try {
       return await this.loader.loadPromise(
         this.server.get<Pagination<Earnings>>('earnings', filter),
-        'fetching-earnings'
+        'fetching-earnings',
       );
     } catch (error) {
       this.logger.logError(error);
@@ -37,8 +39,8 @@ export class SalesService {
       return await this.loader.loadPromise(
         this.server.get<{ copiesSold: number; totalAmount: number }>(
           'sales/count/total',
-          filter
-        )
+          filter,
+        ),
       );
     } catch (error) {
       this.logger.logError(error);
@@ -49,7 +51,7 @@ export class SalesService {
   async createSalesMulti(data: CreateSale[]) {
     try {
       return await this.loader.loadPromise(
-        this.server.post('sales/new', { data })
+        this.server.post('sales/new', { data }),
       );
     } catch (error) {
       this.logger.logError(error);
@@ -60,10 +62,21 @@ export class SalesService {
   async getEarningsCount(filter: EarningFilter) {
     try {
       return await this.loader.loadPromise(
-        this.server.get<{ count: number }>('earnings/count', filter)
+        this.server.get<{ count: number }>('earnings/count', filter),
       );
     } catch (error) {
       console.error('Error fetching publishers:', error);
+      throw error;
+    }
+  }
+
+  async fetchSalesByPlatform(filter: SalesByPlatformFilter) {
+    try {
+      return await this.loader.loadPromise<SalesByPlatform[]>(
+        this.server.get('sales/platform/total', filter),
+      );
+    } catch (error) {
+      this.logger.logError(error);
       throw error;
     }
   }

@@ -599,13 +599,17 @@
           publisherId.toString() !== loggedInUser()?.publisher?.id?.toString()
         ) {
           <div>
-            <button
+            <app-add-wallet-amount-button
+              [publisherId]="publisherId"
+              (onPaymentFinish)="onWalletAmountTransactionFinish($event)"
+            ></app-add-wallet-amount-button>
+            <!-- <button
               (click)="onClickAddWalletAmount()"
               color="primary"
               mat-raised-button
             >
               {{ "addwalletamount" | translate }}
-            </button>
+            </button> -->
           </div>
         }
       </div>

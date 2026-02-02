@@ -1,4 +1,4 @@
-import { Component, Renderer2, signal } from '@angular/core';
+import { Component, Renderer2, resource, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { AngularSvgIconModule } from 'angular-svg-icon';
@@ -14,6 +14,8 @@ import { MatInputModule } from '@angular/material/input';
 import {
   CreateSale,
   EarningFilter,
+  SalesByPlatform,
+  SalesByPlatformFilter,
   SalesCsvData,
   Title,
 } from '../../interfaces';
@@ -31,6 +33,8 @@ import { UserService } from '../../services/user';
 import { TranslateService } from '@ngx-translate/core';
 import { exportToExcel } from '../../common/utils/excel';
 import { SalesType } from '../../interfaces';
+import { MatCardModule } from '@angular/material/card';
+import { PlatformService } from 'src/app/services/platform';
 
 @Component({
   selector: 'app-royalties',
@@ -47,6 +51,7 @@ import { SalesType } from '../../interfaces';
     ReactiveFormsModule,
     MatInputModule,
     EarningTable,
+    MatCardModule,
   ],
   templateUrl: './royalties.html',
   styleUrl: './royalties.css',
@@ -63,10 +68,16 @@ export class Royalties {
     private translateService: TranslateService,
     private route: ActivatedRoute,
     private router: Router,
+    private platformService: PlatformService,
   ) {}
 
   lastPage = signal(1);
 
+  salesByPlatformFilter = signal<SalesByPlatformFilter>({
+    isEbookPlatform: true,
+    isInventoryPlatform: true,
+    isOtherPlatform: false,
+  });
   filter = signal<EarningFilter>({
     page: 1,
     itemsPerPage: 30,
@@ -90,6 +101,9 @@ export class Royalties {
   private cachedFilterKey = '';
   lastSelectedSaleType: SalesType | null = null;
   salesTypes = SalesType;
+
+  salesByPlatform = signal<SalesByPlatform[]>([]);
+
   ngOnInit(): void {
     this.route.queryParams.subscribe((params) => {
       const saleTypeParam = params['saleType'];
@@ -121,6 +135,43 @@ export class Royalties {
 
       this.updateRoyaltyList();
     });
+    this.fetchAndUpdateSalesByPlatform();
+  }
+
+  private getPlatformPriority(sale: {
+    platformName: string;
+    isEbookPlatform: boolean;
+  }): number {
+    if (sale.platformName.includes('amazon')) return 1;
+    if (sale.platformName.includes('flipkart')) return 2;
+    if (sale.platformName.includes('Old Dashboard')) return 50;
+    if (!sale.isEbookPlatform) return 3;
+    return 4; // ebook platforms
+  }
+
+  async fetchAndUpdateSalesByPlatform() {
+    const platforms = this.platformService.platforms();
+    console.log({ platforms });
+    const sales = await this.salesService.fetchSalesByPlatform(
+      this.salesByPlatformFilter(),
+    );
+    this.salesByPlatform.set(
+      sales
+        .map((sale) => {
+          const platform = platforms.find(({ id }) => id === sale.platformId);
+          return {
+            ...sale,
+            platformName:
+              sale.platform === 'Old Dashboard'
+                ? 'Old Dashboard'
+                : (platform?.name?.toLowerCase() ?? ''),
+            isEbookPlatform: !!platform?.isEbookPlatform,
+          };
+        })
+        .sort(
+          (a, b) => this.getPlatformPriority(a) - this.getPlatformPriority(b),
+        ),
+    );
   }
 
   private cleanFilter(filter: EarningFilter): EarningFilter {

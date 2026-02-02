@@ -35,7 +35,6 @@ export class TempTitleDistribution {
   isHardBoundAllowed = input<boolean>(false);
   publishingType = input<PublishingType | null>(null);
 
-  onClickPurchasePoint = output<DistributionType>();
   onPointsPurchased = output<void>();
 
   animateBuyButton = signal<DistributionType | null>(null);
@@ -86,7 +85,7 @@ export class TempTitleDistribution {
 
       // Deselect and disable the other type if selected
       const otherGroup = this.distributionControl().controls.find(
-        (g) => g.controls.type.value === otherType
+        (g) => g.controls.type.value === otherType,
       );
       if (otherGroup) {
         if (otherGroup.controls.isSelected.value) {
@@ -140,10 +139,10 @@ export class TempTitleDistribution {
     // Get the distribution controls once to avoid repeated lookups
     const controls = this.distributionControl().controls;
     const nationalGroup = controls.find(
-      (g) => g.controls.type.value === DistributionType.National
+      (g) => g.controls.type.value === DistributionType.National,
     );
     const hardboundGroup = controls.find(
-      (g) => g.controls.type.value === DistributionType.Hardbound_National
+      (g) => g.controls.type.value === DistributionType.Hardbound_National,
     );
 
     // Check if groups exist, are selected, or already created (has id)
@@ -196,9 +195,5 @@ export class TempTitleDistribution {
       default:
         return '';
     }
-  }
-
-  onClickBuy(type: DistributionType) {
-    this.onClickPurchasePoint.emit(type);
   }
 }

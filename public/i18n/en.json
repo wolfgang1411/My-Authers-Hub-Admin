@@ -963,12 +963,24 @@
   "fieldisrequired": "Field is required",
   "minvalueis": "Min allowed value is ({{min}})",
   "maxvalueis": "Max allowed value is ({{max}})",
-  "nodatafound":"No Data found",
-  "trychangingfiltersorsearch":"Try changing filters or search.",
+  "nodatafound": "No Data found",
+  "trychangingfiltersorsearch": "Try changing filters or search.",
   "publisherName": "Publisher Name",
-  "missingDetails":"Missing Details",
+  "missingDetails": "Missing Details",
   "transactionId": "Transaction ID",
   "pincodenotfound": "Pincode not found",
   "selectaddress": "Select Address",
+<<<<<<< HEAD
   "users":"Users"
+=======
+  "missingmedias": "Missing Medias",
+  "availablemedia": "Available Media",
+  "missingmedia": "Missing Media",
+  "FULL_COVER": "Full Cover",
+  "INTERIOR": "Interior",
+  "FRONT_COVER": "Front Cover",
+  "BACK_COVER": "Back Cover",
+  "INSIDE_COVER": "Inside Cover",
+  "MANUSCRIPT": "Manuscript"
+>>>>>>> 912f19884408b0871bb8cdee5416d3c277373226
 }

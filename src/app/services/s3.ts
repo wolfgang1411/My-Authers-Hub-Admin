@@ -10,7 +10,7 @@ export class S3Service {
   constructor(
     private server: Server,
     private logger: Logger,
-    private loader: LoaderService
+    private loader: LoaderService,
   ) {}
 
   uploadMedia(file: File): Promise<{
@@ -42,9 +42,9 @@ export class S3Service {
           {
             filename,
             mime,
-          }
+          },
         ),
-        'get-s3-url'
+        'get-s3-url',
       );
     } catch (error) {
       this.logger.logError(error);

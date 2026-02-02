@@ -21,7 +21,7 @@ import {
   Platform,
 } from '../../interfaces';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { TranslateService } from '@ngx-translate/core';
@@ -39,6 +39,7 @@ import { PlatForm } from '../../interfaces';
 import { MatDialog } from '@angular/material/dialog';
 import { TitleBrowserDialog } from '../../components/title-browser-dialog/title-browser-dialog';
 import { AddAddressDialog } from '../../components/add-address-dialog/add-address-dialog';
+import { RazorpayService } from 'src/app/services/razorpay';
 
 @Component({
   selector: 'app-create-order',
@@ -63,14 +64,12 @@ export class CreateOrder implements OnInit {
     private cartService: CartService,
     private orderService: OrderService,
     private transactionService: TransactionService,
-    private titleService: TitleService,
-    private addressService: AddressService,
     private translateService: TranslateService,
-    private logger: Logger,
     private userService: UserService,
     private platformService: PlatformService,
-    private staticValuesService: StaticValuesService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private razorpayService: RazorpayService,
+    private router: Router,
   ) {}
 
   cartItems = signal<CartItem[]>([]);
@@ -157,7 +156,11 @@ export class CreateOrder implements OnInit {
       const userAddresses: Address[] = user.address || [];
       const authorAddresses: Address[] = user.auther?.address || [];
       const publisherAddresses: Address[] = user.publisher?.address || [];
-      const addresses = [...userAddresses, ...authorAddresses, ...publisherAddresses];
+      const addresses = [
+        ...userAddresses,
+        ...authorAddresses,
+        ...publisherAddresses,
+      ];
 
       this.addresses.set(addresses);
 
@@ -202,7 +205,9 @@ export class CreateOrder implements OnInit {
 
     // For authors
     if (this.isAuthor()) {
-      const authorTitle = title.authors?.find((at) => at.author.id === user.auther?.id);
+      const authorTitle = title.authors?.find(
+        (at) => at.author.id === user.auther?.id,
+      );
 
       if (authorTitle?.allowAuthorCopy && printing) {
         // Use custom print cost or print cost
@@ -211,7 +216,7 @@ export class CreateOrder implements OnInit {
       } else {
         // If isAuthorCopy is not allowed, show price from platform MAH_PRINT
         const mahPrintPricing = title.pricing?.find(
-          (p) => p.platform === PlatForm.MAH_PRINT
+          (p) => p.platform === PlatForm.MAH_PRINT,
         );
         return mahPrintPricing?.salesPrice || 0;
       }
@@ -224,7 +229,7 @@ export class CreateOrder implements OnInit {
 
     // Fallback to MAH_PRINT pricing
     const mahPrintPricing = title.pricing?.find(
-      (p) => p.platform === PlatForm.MAH_PRINT
+      (p) => p.platform === PlatForm.MAH_PRINT,
     );
     return mahPrintPricing?.salesPrice || 0;
   }
@@ -390,32 +395,47 @@ export class CreateOrder implements OnInit {
       const transactionResponse =
         await this.transactionService.createTransaction(order.id);
 
-      // Clear cart
-      for (const item of this.cartItems()) {
-        await this.cartService.removeCartItems([
-          {
-            cartItemId: item.id,
-            quantity: item.quantity,
+      this.razorpayService.pay(
+        {
+          amount: transactionResponse.amount,
+          currency: transactionResponse.currency,
+          order_id: transactionResponse.orderId,
+        },
+        {
+          handler: async (response: RazorpayPaymentResponse) => {
+            await this.transactionService.verfiyTransactionPayment({
+              ...response,
+              status: 'completed',
+            });
+            this.router.navigate(['/orders']);
+            this.clearCartItems();
           },
-        ]);
-      }
+          ondismiss: async () => {
+            await this.transactionService.verfiyTransactionPayment({
+              razorpay_order_id: transactionResponse.orderId,
+              status: 'completed',
+            });
+          },
+        },
+      );
 
-      // Redirect to payment URL
-      if (transactionResponse?.url) {
-        window.location.href = transactionResponse.url;
-      } else {
-        // Fallback if URL is not available
-        Swal.fire({
-          icon: 'error',
-          title: this.translateService.instant('error') || 'Error',
-          text: 'Payment URL not available',
-        });
-      }
+      // Clear cart
     } catch (error) {
       // Error already handled by service logger, just log here
       console.error('Failed to place order:', error);
     } finally {
       this.isLoading.set(false);
+    }
+  }
+
+  async clearCartItems() {
+    for (const item of this.cartItems()) {
+      await this.cartService.removeCartItems([
+        {
+          cartItemId: item.id,
+          quantity: item.quantity,
+        },
+      ]);
     }
   }
 

@@ -1,9 +1,9 @@
+import { UserService } from './../../services/user';
 import { Component, OnInit, Signal, signal } from '@angular/core';
 import { MatButtonModule, MatIconButton } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, Subject } from 'rxjs';
 import { ListTable } from 'src/app/components/list-table/list-table';
 import { User } from 'src/app/interfaces';
@@ -32,10 +32,12 @@ import { WalletTransaction } from 'src/app/services/wallet-transaction';
 export class WalletAmountTransaction implements OnInit {
   constructor(
     private walletTransactionService: WalletTransaction,
-    private translate: TranslateService,
     private router: Router,
     private route: ActivatedRoute,
-  ) {}
+    userService: UserService,
+  ) {
+    this.loggedInUser = userService.loggedInUser$;
+  }
 
   searchStr = new Subject<string>();
   transactions = signal<WalletamountTransaction[]>([]);
@@ -101,13 +103,18 @@ export class WalletAmountTransaction implements OnInit {
   setDataSource() {
     this.dataSource.data = this.transactions().map((tx) => {
       const user = tx.wallet.user;
+      const loggedInUser = this.loggedInUser();
+      const isAddedBySuperAdmin =
+        loggedInUser &&
+        loggedInUser.accessLevel === 'SUPERADMIN' &&
+        loggedInUser.id === tx.addedBy.id;
       return {
         walletId: tx.wallet.id,
         transactionId: `#OP${tx.id}`, // Updated line
         addedBy: this.getAddedByName(tx), // ✅ FIXED
         recipient: user.publisher?.name || user.fullName,
         email: user.email,
-        method: tx.addedMethod,
+        method: isAddedBySuperAdmin ? 'SUPERADMIN' : tx.addedMethod,
         type: tx.type,
         amount: `${tx.amount} INR`,
         status: tx.status,
