@@ -1,6 +1,8 @@
 <div class="size-manager">
   <div class="flex justify-between items-center mb-4">
-    <h3 class="text-lg font-semibold">{{ "managesizes" | translate }}</h3>
+    <h3 class="text-base sm:text-lg font-semibold">
+      {{ "managesizes" | translate }}
+    </h3>
     <button mat-raised-button color="primary" (click)="startAdding()">
       <mat-icon>add</mat-icon>
       {{ "addsize" | translate }}
@@ -8,113 +10,130 @@
   </div>
 
   @if (isAdding()) {
-  <mat-card class="mb-4">
-    <mat-card-header>
-      <mat-card-title>{{ "addsize" | translate }}</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <form [formGroup]="form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <mat-form-field>
-          <mat-label>{{ "width" | translate }}</mat-label>
-          <input matInput type="number" formControlName="width" />
-          @if (form.controls.width.invalid && form.controls.width.touched) {
-          <mat-error>{{ "widthisrequired" | translate }}</mat-error>
-          }
-        </mat-form-field>
+    <mat-card class="mb-4">
+      <mat-card-header>
+        <mat-card-title>{{ "addsize" | translate }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <mat-form-field>
+            <mat-label>{{ "width" | translate }}</mat-label>
+            <input matInput type="number" formControlName="width" />
+            @if (form.controls.width.invalid && form.controls.width.touched) {
+              <mat-error>{{ "widthisrequired" | translate }}</mat-error>
+            }
+          </mat-form-field>
 
-        <mat-form-field>
-          <mat-label>{{ "length" | translate }}</mat-label>
-          <input matInput type="number" formControlName="length" />
-          @if (form.controls.length.invalid && form.controls.length.touched) {
-          <mat-error>{{ "lengthisrequired" | translate }}</mat-error>
-          }
-        </mat-form-field>
-      </form>
-      @if (form.controls.width.value && form.controls.length.value) {
-      <div class="mt-2 text-sm text-gray-600">
-        {{ "size" | translate }}: <span class="font-semibold">{{ form.controls.size.value }}</span>
-      </div>
-      }
-    </mat-card-content>
-    <mat-card-actions>
-      <button mat-button (click)="cancelAdding()">{{ "cancel" | translate }}</button>
-      <button mat-raised-button color="primary" (click)="save()">{{ "save" | translate }}</button>
-    </mat-card-actions>
-  </mat-card>
+          <mat-form-field>
+            <mat-label>{{ "length" | translate }}</mat-label>
+            <input matInput type="number" formControlName="length" />
+            @if (form.controls.length.invalid && form.controls.length.touched) {
+              <mat-error>{{ "lengthisrequired" | translate }}</mat-error>
+            }
+          </mat-form-field>
+        </form>
+        @if (form.controls.width.value && form.controls.length.value) {
+          <div class="mt-2 text-sm text-gray-600">
+            {{ "size" | translate }}:
+            <span class="font-semibold">{{ form.controls.size.value }}</span>
+          </div>
+        }
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button (click)="cancelAdding()">
+          {{ "cancel" | translate }}
+        </button>
+        <button mat-raised-button color="primary" (click)="save()">
+          {{ "save" | translate }}
+        </button>
+      </mat-card-actions>
+    </mat-card>
   }
 
   @if (sizes().length === 0) {
-  <mat-card>
-    <mat-card-content class="text-center py-8">
-      <p class="text-gray-500">{{ "nosizes" | translate }}</p>
-    </mat-card-content>
-  </mat-card>
+    <mat-card>
+      <mat-card-content class="text-center py-8">
+        <p class="text-gray-500">{{ "nosizes" | translate }}</p>
+      </mat-card-content>
+    </mat-card>
   } @else {
-  <div class="overflow-x-auto">
-    <table mat-table [dataSource]="sizes()" class="w-full">
-      <ng-container matColumnDef="size">
-        <th mat-header-cell *matHeaderCellDef>{{ "size" | translate }}</th>
-        <td mat-cell *matCellDef="let element">
-          @if (isEditing(element.id)) {
-          <span class="font-semibold">{{ form.controls.size.value || element.size }}</span>
-          } @else {
-          {{ element.size }}
-          }
-        </td>
-      </ng-container>
+    <div class="overflow-x-auto">
+      <table mat-table [dataSource]="sizes()" class="w-full">
+        <ng-container matColumnDef="size">
+          <th mat-header-cell *matHeaderCellDef>{{ "size" | translate }}</th>
+          <td mat-cell *matCellDef="let element">
+            @if (isEditing(element.id)) {
+              <span class="font-semibold">{{
+                form.controls.size.value || element.size
+              }}</span>
+            } @else {
+              {{ element.size }}
+            }
+          </td>
+        </ng-container>
 
-      <ng-container matColumnDef="width">
-        <th mat-header-cell *matHeaderCellDef>{{ "width" | translate }}</th>
-        <td mat-cell *matCellDef="let element">
-          @if (isEditing(element.id)) {
-          <mat-form-field class="w-full">
-            <input matInput type="number" [formControl]="form.controls.width" />
-          </mat-form-field>
-          } @else {
-          {{ element.width }}
-          }
-        </td>
-      </ng-container>
+        <ng-container matColumnDef="width">
+          <th mat-header-cell *matHeaderCellDef>{{ "width" | translate }}</th>
+          <td mat-cell *matCellDef="let element">
+            @if (isEditing(element.id)) {
+              <mat-form-field class="w-full">
+                <input
+                  matInput
+                  type="number"
+                  [formControl]="form.controls.width"
+                />
+              </mat-form-field>
+            } @else {
+              {{ element.width }}
+            }
+          </td>
+        </ng-container>
 
-      <ng-container matColumnDef="length">
-        <th mat-header-cell *matHeaderCellDef>{{ "length" | translate }}</th>
-        <td mat-cell *matCellDef="let element">
-          @if (isEditing(element.id)) {
-          <mat-form-field class="w-full">
-            <input matInput type="number" [formControl]="form.controls.length" />
-          </mat-form-field>
-          } @else {
-          {{ element.length }}
-          }
-        </td>
-      </ng-container>
+        <ng-container matColumnDef="length">
+          <th mat-header-cell *matHeaderCellDef>{{ "length" | translate }}</th>
+          <td mat-cell *matCellDef="let element">
+            @if (isEditing(element.id)) {
+              <mat-form-field class="w-full">
+                <input
+                  matInput
+                  type="number"
+                  [formControl]="form.controls.length"
+                />
+              </mat-form-field>
+            } @else {
+              {{ element.length }}
+            }
+          </td>
+        </ng-container>
 
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>{{ "actions" | translate }}</th>
-        <td mat-cell *matCellDef="let element">
-          @if (isEditing(element.id)) {
-          <button mat-icon-button color="primary" (click)="update(element)">
-            <mat-icon>check</mat-icon>
-          </button>
-          <button mat-icon-button (click)="cancelEditing()">
-            <mat-icon>close</mat-icon>
-          </button>
-          } @else {
-          <button mat-icon-button color="primary" (click)="startEditing(element)">
-            <mat-icon>edit</mat-icon>
-          </button>
-          <button mat-icon-button color="warn" (click)="delete(element)">
-            <mat-icon>delete</mat-icon>
-          </button>
-          }
-        </td>
-      </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>{{ "actions" | translate }}</th>
+          <td mat-cell *matCellDef="let element">
+            @if (isEditing(element.id)) {
+              <button mat-icon-button color="primary" (click)="update(element)">
+                <mat-icon>check</mat-icon>
+              </button>
+              <button mat-icon-button (click)="cancelEditing()">
+                <mat-icon>close</mat-icon>
+              </button>
+            } @else {
+              <button
+                mat-icon-button
+                color="primary"
+                (click)="startEditing(element)"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="delete(element)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            }
+          </td>
+        </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-    </table>
-  </div>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
   }
 </div>
-
-

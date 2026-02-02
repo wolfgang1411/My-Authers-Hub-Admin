@@ -1,8 +1,8 @@
-<div class="printing-settings-manager p-6">
+<div class="printing-settings-manager p-2 lg:p-4">
   <div
-    class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6"
+    class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6"
   >
-    <h1 class="text-2xl font-medium text-text-heading">
+    <h1 class="text-xl sm:text-2xl font-medium text-text-heading">
       {{ "printingsettings" | translate }}
     </h1>
     @if (isSuperAdmin()) {
@@ -40,43 +40,34 @@
         </mat-card-content>
       </mat-card>
     } @else {
-      <div class="w-full flex justify-center">
-        <div
-          class="w-full max-w-[100%] sm:max-w-[640px] md:max-w-[900px] lg:max-w-[1200px]"
-        >
-          <mat-accordion class="w-full">
+      <div class="lg:w-full lg:flex justify-center">
+        <div class="lg:w-full px-2 lg:px-4">
+          <mat-accordion class="lg:w-full max-w-6xl mx-auto">
             @for (category of sizeCategories(); track category.id) {
               <mat-expansion-panel
                 [expanded]="selectedCategoryId() === category.id"
-                (opened)="toggleCategory(category.id)"
+                class="mb-4"
               >
                 <mat-expansion-panel-header>
-                  <!-- IMPORTANT: wrap EVERYTHING in ONE container -->
-                  <div class="w-full flex flex-col gap-3 py-1">
-                    <!-- ===== TITLE ===== -->
-                    <div class="flex justify-between items-start gap-2">
-                      <span
-                        class="font-medium text-base sm:text-lg text-gray-900"
-                      >
-                        {{ category.name }}
-                      </span>
+                  <div class="sm:flex flex-col gap-3 md:hidden">
+                    <div
+                      class="text-base sm:text-lg font-semibold text-gray-900"
+                    >
+                      {{ category.name }}
                     </div>
 
-                    <!-- ===== META INFO ===== -->
                     <div
-                      class="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-6 text-sm text-gray-600"
+                      class="flex flex-col sm:flex-row sm:flex-wrap gap-2 text-sm"
                     >
-                      <!-- Sizes -->
-                      <div class="flex items-center gap-1">
-                        <span>{{ "sizes" | translate }}:</span>
+                      <div class="text-gray-600">
+                        {{ "sizes" | translate }}:
                         <span class="font-medium text-gray-800">
                           {{ category.sizes?.length || 0 }}
                         </span>
                       </div>
 
-                      <!-- Prices -->
                       <div class="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                        <div class="flex items-center gap-1.5">
+                        <div>
                           <span class="text-xs text-gray-500">
                             {{ "packetprice" | translate }}:
                           </span>
@@ -85,7 +76,7 @@
                           </span>
                         </div>
 
-                        <div class="flex items-center gap-1.5">
+                        <div>
                           <span class="text-xs text-gray-500">
                             {{ "insidecoverprice" | translate }}:
                           </span>
@@ -96,7 +87,6 @@
                       </div>
                     </div>
 
-                    <!-- ===== ACTIONS ===== -->
                     @if (isSuperAdmin()) {
                       <div
                         class="flex gap-2 pt-2"
@@ -104,112 +94,257 @@
                       >
                         <button
                           mat-icon-button
-                          class="rounded-full !bg-primary flex items-center justify-center"
+                          class="rounded-full !bg-primary"
                           (click)="updateCategory(category)"
-                          [matTooltip]="'editcategory' | translate"
                         >
                           <mat-icon class="!text-white">edit</mat-icon>
                         </button>
 
                         <button
                           mat-icon-button
-                          class="rounded-full !bg-red-colour flex items-center justify-center"
+                          class="rounded-full !bg-red-colour"
                           (click)="deleteCategory(category)"
-                          [matTooltip]="'deletecategory' | translate"
                         >
                           <mat-icon class="!text-white">delete</mat-icon>
                         </button>
                       </div>
                     }
                   </div>
+                  <mat-panel-title class="hidden md:block">
+                    <span class="font-medium text-lg">{{ category.name }}</span>
+                  </mat-panel-title>
+                  <mat-panel-description class="hidden md:flex">
+                    <div
+                      class="flex items-center gap-6 text-sm w-full justify-between"
+                    >
+                      <div class="flex items-center gap-2">
+                        <span class="text-gray-600"
+                          >{{ "sizes" | translate }}:
+                          <span class="font-medium text-gray-800">{{
+                            category.sizes?.length || 0
+                          }}</span></span
+                        >
+                      </div>
+                      <div class="flex items-center gap-4 border-l pl-4">
+                        <div class="flex items-center gap-1.5">
+                          <span class="text-gray-500 text-xs"
+                            >{{ "packetprice" | translate }}:</span
+                          >
+                          <span class="font-medium text-primary">{{
+                            category.packetPrice | currency: "INR"
+                          }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                          <span class="text-gray-500 text-xs"
+                            >{{ "insidecoverprice" | translate }}:</span
+                          >
+                          <span class="font-medium text-primary">{{
+                            category.insideCoverPrice | currency: "INR"
+                          }}</span>
+                        </div>
+                      </div>
+                      @if (isSuperAdmin()) {
+                        <div class="flex items-center gap-1 border-l pl-4">
+                          <button
+                            mat-icon-button
+                            color="primary"
+                            (click)="
+                              updateCategory(category); $event.stopPropagation()
+                            "
+                            [matTooltip]="'editcategory' | translate"
+                            class="rounded-full !bg-primary items-center p-1.5 flex justify-center"
+                          >
+                            <mat-icon class="!text-white">edit</mat-icon>
+                          </button>
+                          <button
+                            mat-icon-button
+                            color="warn"
+                            (click)="
+                              deleteCategory(category); $event.stopPropagation()
+                            "
+                            [matTooltip]="'deletecategory' | translate"
+                            class="rounded-full !bg-red-colour items-center p-1.5 flex justify-center"
+                          >
+                            <mat-icon class="!text-white">delete</mat-icon>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  </mat-panel-description>
                 </mat-expansion-panel-header>
-
-                <div class="p-4">
-                  <mat-tab-group
-                    class="w-full"
-                    mat-stretch-tabs="false"
-                    mat-align-tabs="start"
-                  >
-                    <!-- Category Details Tab -->
-                    <mat-tab [label]="'categorydetails' | translate">
-                      <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label class="text-sm font-medium text-gray-700">{{
-                            "name" | translate
-                          }}</label>
-                          <p class="text-gray-900">{{ category.name }}</p>
+                <div class="p-2 lg:p-4 max-w-full overflow-x-hidden">
+                  <div class="hidden md:block lg:p-4">
+                    <mat-tab-group
+                      mat-align-tabs="start"
+                      mat-stretch-tabs="false"
+                      class="w-full max-w-full"
+                    >
+                      <mat-tab [label]="'categorydetails' | translate">
+                        <div
+                          class="p-2 lg:p-4 grid grid-cols-1 md:grid-cols-2 gap-4"
+                        >
+                          <div>
+                            <label class="text-sm font-medium text-gray-700">{{
+                              "name" | translate
+                            }}</label>
+                            <p class="text-gray-900">{{ category.name }}</p>
+                          </div>
+                          <div>
+                            <label class="text-sm font-medium text-gray-700">{{
+                              "packetprice" | translate
+                            }}</label>
+                            <p class="text-gray-900">
+                              {{ category.packetPrice | currency: "INR" }}
+                            </p>
+                          </div>
+                          <div>
+                            <label class="text-sm font-medium text-gray-700">{{
+                              "weightmultiplayer" | translate
+                            }}</label>
+                            <p class="text-gray-900">
+                              {{ category.weightMultiplayer }}
+                            </p>
+                          </div>
+                          <div>
+                            <label class="text-sm font-medium text-gray-700">{{
+                              "insidecoverprice" | translate
+                            }}</label>
+                            <p class="text-gray-900">
+                              {{ category.insideCoverPrice | currency: "INR" }}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <label class="text-sm font-medium text-gray-700">{{
-                            "packetprice" | translate
-                          }}</label>
-                          <p class="text-gray-900">
-                            {{ category.packetPrice | currency: "INR" }}
-                          </p>
+                      </mat-tab>
+                      <mat-tab [label]="'sizes' | translate">
+                        <div class="max-w-full overflow-x-auto">
+                          <app-size-manager
+                            [sizeCategoryId]="category.id"
+                            [sizes]="category.sizes || []"
+                            (onUpdate)="onEntityUpdated(category.id)"
+                          ></app-size-manager>
                         </div>
-                        <div>
-                          <label class="text-sm font-medium text-gray-700">{{
-                            "weightmultiplayer" | translate
-                          }}</label>
-                          <p class="text-gray-900">
-                            {{ category.weightMultiplayer }}
-                          </p>
+                      </mat-tab>
+                      <mat-tab [label]="'bindingtypes' | translate">
+                        <div class="max-w-full overflow-x-auto">
+                          <app-binding-type-manager
+                            [sizeCategoryId]="category.id"
+                            [bindingTypes]="category.bindingTypes || []"
+                            (onUpdate)="onEntityUpdated(category.id)"
+                          ></app-binding-type-manager>
                         </div>
-                        <div>
-                          <label class="text-sm font-medium text-gray-700">{{
-                            "insidecoverprice" | translate
-                          }}</label>
-                          <p class="text-gray-900">
-                            {{ category.insideCoverPrice | currency: "INR" }}
-                          </p>
+                      </mat-tab>
+                      <mat-tab [label]="'laminationtypes' | translate">
+                        <div class="max-w-full overflow-x-auto">
+                          <app-lamination-type-manager
+                            [sizeCategoryId]="category.id"
+                            [laminationTypes]="category.laminationTypes || []"
+                            (onUpdate)="onEntityUpdated(category.id)"
+                          ></app-lamination-type-manager>
                         </div>
-                      </div>
-                    </mat-tab>
+                      </mat-tab>
+                      <mat-tab [label]="'paperqualities' | translate">
+                        <div class="max-w-full overflow-x-auto">
+                          <app-paper-quality-manager
+                            [sizeCategoryId]="category.id"
+                            [paperQualities]="category.paperQualities || []"
+                            (onUpdate)="onEntityUpdated(category.id)"
+                          ></app-paper-quality-manager>
+                        </div>
+                      </mat-tab>
+                    </mat-tab-group>
+                  </div>
+                </div>
+                <!-- ================= MOBILE (< md) ================= -->
+                <div class="md:hidden space-y-4">
+                  <section class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-sm mb-3">
+                      {{ "categorydetails" | translate }}
+                    </h3>
 
-                    <!-- Sizes Tab -->
-                    <mat-tab [label]="'sizes' | translate">
-                      <div class="p-2 sm:p-4 max-w-full overflow-x-auto">
-                        <app-size-manager
-                          [sizeCategoryId]="category.id"
-                          [sizes]="category.sizes || []"
-                          (onUpdate)="onEntityUpdated(category.id)"
-                        ></app-size-manager>
+                    <div class="grid grid-cols-1 gap-3 text-sm">
+                      <div>
+                        <label class="text-gray-500">{{
+                          "name" | translate
+                        }}</label>
+                        <p class="font-medium">{{ category.name }}</p>
                       </div>
-                    </mat-tab>
 
-                    <!-- Binding Types Tab -->
-                    <mat-tab [label]="'bindingtypes' | translate">
-                      <div class="p-2 sm:p-4 max-w-full overflow-x-auto">
-                        <app-binding-type-manager
-                          [sizeCategoryId]="category.id"
-                          [bindingTypes]="category.bindingTypes || []"
-                          (onUpdate)="onEntityUpdated(category.id)"
-                        ></app-binding-type-manager>
+                      <div>
+                        <label class="text-gray-500">{{
+                          "packetprice" | translate
+                        }}</label>
+                        <p class="font-medium">
+                          {{ category.packetPrice | currency: "INR" }}
+                        </p>
                       </div>
-                    </mat-tab>
 
-                    <!-- Lamination Types Tab -->
-                    <mat-tab [label]="'laminationtypes' | translate">
-                      <div class="p-2 sm:p-4 max-w-full overflow-x-auto">
-                        <app-lamination-type-manager
-                          [sizeCategoryId]="category.id"
-                          [laminationTypes]="category.laminationTypes || []"
-                          (onUpdate)="onEntityUpdated(category.id)"
-                        ></app-lamination-type-manager>
+                      <div>
+                        <label class="text-gray-500">{{
+                          "weightmultiplayer" | translate
+                        }}</label>
+                        <p class="font-medium">
+                          {{ category.weightMultiplayer }}
+                        </p>
                       </div>
-                    </mat-tab>
 
-                    <!-- Paper Qualities Tab -->
-                    <mat-tab [label]="'paperqualities' | translate">
-                      <div class="p-2 sm:p-4 max-w-full overflow-x-auto">
-                        <app-paper-quality-manager
-                          [sizeCategoryId]="category.id"
-                          [paperQualities]="category.paperQualities || []"
-                          (onUpdate)="onEntityUpdated(category.id)"
-                        ></app-paper-quality-manager>
+                      <div>
+                        <label class="text-gray-500">{{
+                          "insidecoverprice" | translate
+                        }}</label>
+                        <p class="font-medium">
+                          {{ category.insideCoverPrice | currency: "INR" }}
+                        </p>
                       </div>
-                    </mat-tab>
-                  </mat-tab-group>
+                    </div>
+                  </section>
+
+                  <!-- Sizes -->
+                  <section class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-sm mb-3">
+                      {{ "sizes" | translate }}
+                    </h3>
+                    <app-size-manager
+                      [sizeCategoryId]="category.id"
+                      [sizes]="category.sizes || []"
+                      (onUpdate)="onEntityUpdated(category.id)"
+                    />
+                  </section>
+
+                  <!-- Binding -->
+                  <section class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-sm mb-3">
+                      {{ "bindingtypes" | translate }}
+                    </h3>
+                    <app-binding-type-manager
+                      [sizeCategoryId]="category.id"
+                      [bindingTypes]="category.bindingTypes || []"
+                      (onUpdate)="onEntityUpdated(category.id)"
+                    />
+                  </section>
+
+                  <!-- Lamination -->
+                  <section class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-sm mb-3">
+                      {{ "laminationtypes" | translate }}
+                    </h3>
+                    <app-lamination-type-manager
+                      [sizeCategoryId]="category.id"
+                      [laminationTypes]="category.laminationTypes || []"
+                      (onUpdate)="onEntityUpdated(category.id)"
+                    />
+                  </section>
+
+                  <!-- Paper -->
+                  <section class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-sm mb-3">
+                      {{ "paperqualities" | translate }}
+                    </h3>
+                    <app-paper-quality-manager
+                      [sizeCategoryId]="category.id"
+                      [paperQualities]="category.paperQualities || []"
+                      (onUpdate)="onEntityUpdated(category.id)"
+                    />
+                  </section>
                 </div>
               </mat-expansion-panel>
             }

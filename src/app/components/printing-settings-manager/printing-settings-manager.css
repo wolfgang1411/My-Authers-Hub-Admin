@@ -31,7 +31,7 @@ mat-tab-group {
 }
 
 ::ng-deep .mat-expansion-panel-body {
-  padding: 1.5rem 1.75rem !important;
+  padding: 1rem !important;
 }
 .mat-mdc-tab-labels {
   overflow-x: auto;
@@ -39,4 +39,31 @@ mat-tab-group {
 }
 .mat-mdc-tab-labels::-webkit-scrollbar {
   display: none;
+}
+/* ============================
+   RESPONSIVE MATERIAL TABS
+   ============================ */
+
+.mat-mdc-tab-group {
+  max-width: 100% !important;
+}
+
+.mat-mdc-tab-body-wrapper {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+}
+
+.mat-mdc-tab-body-content {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+}
+
+/* Scrollable tab labels */
+.mat-mdc-tab-labels {
+  overflow-x: auto !important;
+  flex-wrap: nowrap !important;
+}
+
+.mat-mdc-tab {
+  min-width: max-content !important;
 }
