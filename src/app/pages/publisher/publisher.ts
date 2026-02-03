@@ -418,7 +418,12 @@ export class Publisher implements OnInit {
       data: {
         baseDistributionPoints,
         currentDistributionPoints,
-
+        showCustomPrintAllowOption:
+          loggedInUser.accessLevel === 'SUPERADMIN' ||
+          loggedInUser?.publisher?.allowCustomPrintingPrice,
+        showAllowAuthorCopyOption:
+          loggedInUser.accessLevel === 'SUPERADMIN' ||
+          loggedInUser?.publisher?.allowAuthorCopyPrice,
         onSubmit: async (
           distributionData: Distribution[],
           allowCustomPrintingPrice?: boolean,

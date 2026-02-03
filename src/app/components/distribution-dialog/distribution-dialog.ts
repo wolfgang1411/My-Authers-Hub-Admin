@@ -55,19 +55,19 @@ export class DistributionDialog {
       distributions: this.fb.array(
         Object.values(DistributionType)
           .filter(
-            (type) => type !== DistributionType.MAH // 👈 FILTER HERE
+            (type) => type !== DistributionType.MAH, // 👈 FILTER HERE
           )
           .map((type) => {
             const existingAmount =
               this.data.currentDistributionPoints?.find(
-                (p) => p.distributionType === type
+                (p) => p.distributionType === type,
               )?.amount ?? null;
 
             return this.createDistribution(
               type as DistributionType,
-              existingAmount
+              existingAmount,
             );
-          })
+          }),
       ),
       allowCustomPrintingPrice: this.fb.control<boolean>(false),
       allowAuthorCopyPrice: this.fb.control<boolean>(false),
@@ -87,7 +87,7 @@ export class DistributionDialog {
       }
 
       const base = this.data.baseDistributionPoints.find(
-        (p) => p.distributionType === type
+        (p) => p.distributionType === type,
       );
 
       if (base && value < base.amount) {
@@ -119,7 +119,7 @@ export class DistributionDialog {
   }
 
   private positiveNumberValidator(
-    control: AbstractControl
+    control: AbstractControl,
   ): ValidationErrors | null {
     const value = control.value;
     if (value === null || value === undefined || value === '') {
@@ -142,18 +142,25 @@ export class DistributionDialog {
   }
 
   getBaseAmount(distributionType: DistributionType): number | null {
-    if (!this.data.baseDistributionPoints || this.data.baseDistributionPoints.length === 0) {
+    if (
+      !this.data.baseDistributionPoints ||
+      this.data.baseDistributionPoints.length === 0
+    ) {
       return null;
     }
     const base = this.data.baseDistributionPoints.find(
-      (p) => p.distributionType === distributionType
+      (p) => p.distributionType === distributionType,
     );
     return base ? base.amount : null;
   }
 
   getMinFromBaseError(control: AbstractControl): number | null {
     const errors = control.errors;
-    if (errors && errors['minFromBase'] && typeof errors['minFromBase'] === 'object') {
+    if (
+      errors &&
+      errors['minFromBase'] &&
+      typeof errors['minFromBase'] === 'object'
+    ) {
       const minFromBase = errors['minFromBase'] as { requiredMin?: number };
       return minFromBase.requiredMin ?? null;
     }
@@ -167,10 +174,10 @@ export class DistributionDialog {
           ({ controls: { amount, distributionType } }) => ({
             amount: Number(amount.value),
             distributionType: distributionType.value,
-          })
+          }),
         ),
         this.form.value.allowCustomPrintingPrice || false,
-        this.form.value.allowAuthorCopyPrice || false
+        this.form.value.allowAuthorCopyPrice || false,
       );
     } else {
       // Mark all fields as touched to show validation errors
@@ -186,8 +193,10 @@ interface Inputs {
   onSubmit: (
     payload: Distribution[],
     allowCustomPrintingPrice?: boolean,
-    allowAuthorCopyPrice?: boolean
+    allowAuthorCopyPrice?: boolean,
   ) => void;
   baseDistributionPoints?: PublishingPointCost[] | null; // min validation
   currentDistributionPoints?: PublishingPointCost[] | null;
+  showCustomPrintAllowOption?: boolean;
+  showAllowAuthorCopyOption?: boolean;
 }
