@@ -1,26 +1,85 @@
-<div class="flex flex-col flex-grow gap-4 m-4">
-  <div class="flex justify-between items-center">
+<div class="flex flex-col flex-grow gap-4 sm:m-4 m-2">
+  <div
+    class="flex sm:flex-row sm:justify-between sm:items-center flex-col gap-2"
+  >
     <h3 class="heading rounded-md">
       {{ "notifications" | translate }}
     </h3>
 
     <button
       (click)="onAddEditNotification()"
-      class="!bg-primary"
+      class="!bg-primary w-max"
       matButton="filled"
     >
       <mat-icon>add</mat-icon>
       {{ "addnewnotification" | translate }}
     </button>
   </div>
+  <div class="hidden lg:block pt-6">
+    <app-list-table
+      class="pt-6"
+      [dataSource]="dataSource"
+      [displayedColumns]="displayedColumns"
+      [actionTemplate]="actionButtons"
+    >
+    </app-list-table>
+  </div>
+  <div class="lg:hidden space-y-4 pt-4">
+    @if (dataSource.data.length) {
+      @for (item of dataSource.data; track item.id) {
+        <div class="notification-card">
+          <!-- Header -->
+          <div class="flex justify-between items-start gap-2">
+            <h4 class="font-semibold text-sm text-gray-800">
+              {{ item.title }}
+            </h4>
 
-  <app-list-table
-    class="pt-6"
-    [dataSource]="dataSource"
-    [displayedColumns]="displayedColumns"
-    [actionTemplate]="actionButtons"
-  >
-  </app-list-table>
+            @if (!item.sent) {
+              <div class="flex gap-1">
+                <button
+                  mat-icon-button
+                  class="!bg-primary"
+                  (click)="onAddEditNotification(item)"
+                >
+                  <mat-icon class="!text-white">edit</mat-icon>
+                </button>
+
+                <button
+                  mat-icon-button
+                  class="!bg-red-500"
+                  (click)="onDeleteNotification(item)"
+                >
+                  <mat-icon class="!text-white">delete</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+
+          <!-- Body -->
+          <div class="text-sm text-gray-600 mt-2 line-clamp-3">
+            {{ item.message }}
+          </div>
+
+          <!-- Meta -->
+          <div class="grid grid-cols-2 gap-2 text-xs text-gray-500 mt-3">
+            <div>
+              <span class="font-medium">{{ "sendat" | translate }}:</span>
+              <div>{{ item.sendat || "-" }}</div>
+            </div>
+
+            <div>
+              <span class="font-medium">{{ "to" | translate }}:</span>
+              <div>{{ item.to }}</div>
+            </div>
+          </div>
+        </div>
+      }
+    } @else {
+      <p class="text-center text-sm text-gray-500 italic">
+        No notifications found.
+      </p>
+    }
+  </div>
 
   <ng-template #actionButtons let-element>
     <div

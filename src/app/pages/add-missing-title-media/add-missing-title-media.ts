@@ -10,10 +10,11 @@ import { MatIcon } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { downloadFile, selectFile, urlToFile } from 'src/app/common/utils/file';
 import Swal from 'sweetalert2';
+import { Back } from 'src/app/components/back/back';
 
 @Component({
   selector: 'app-add-missing-title-media',
-  imports: [SharedModule, ListTable, MatIcon, MatButtonModule],
+  imports: [SharedModule, ListTable, MatIcon, MatButtonModule, Back],
   templateUrl: './add-missing-title-media.html',
   styleUrl: './add-missing-title-media.css',
 })

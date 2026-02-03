@@ -1,0 +1,4 @@
+::ng-deep .mat-expansion-panel-header-title,
+::ng-deep .mat-expansion-panel-header-description {
+  display: flex !important;
+}

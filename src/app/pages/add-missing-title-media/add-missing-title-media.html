@@ -1,7 +1,10 @@
 <div class="flex flex-col flex-grow gap-4">
-  <h3 class="heading">
-    {{ "missingmedias" | translate }}
-  </h3>
+  <div class="flex justify-between items-center">
+    <h3 class="heading">
+      {{ "missingmedias" | translate }}
+    </h3>
+    <app-back></app-back>
+  </div>
 
   <div class="flex flex-col sm:flex-row justify-between w-full gap-4">
     <div
@@ -36,6 +39,82 @@
       (sortChange)="onSortChange($event)"
     >
     </app-list-table>
+  </div>
+  <!-- Mobile Cards -->
+  <div class="lg:hidden space-y-4 pt-4">
+    @if (dataSource.data.length) {
+      @for (element of dataSource.data; track element.id) {
+        <div
+          class="rounded-xl border border-primary-superlight bg-white p-4 shadow-sm"
+        >
+          <!-- Title + Publisher -->
+          <div class="mb-2">
+            <h4 class="text-sm font-semibold text-text-heading leading-snug">
+              {{ element.name }}
+            </h4>
+            <p class="text-xs text-text-secondary">
+              {{ element.publisher }}
+            </p>
+          </div>
+
+          <!-- Available Media -->
+          <div class="mt-3">
+            <p
+              class="text-xs font-semibold uppercase tracking-wide text-text-secondary"
+            >
+              {{ "availablemedia" | translate }}
+            </p>
+
+            @if (element.availablemedia?.length) {
+              <div class="mt-2 flex flex-wrap gap-2">
+                @for (item of element.availablemedia; track $index) {
+                  <button
+                    mat-icon-button
+                    class="!bg-primary !text-white"
+                    (click)="downloadMedia(element.id, item.type)"
+                    [title]="item.type | translate"
+                  >
+                    <mat-icon>{{ getIconByMedia(item.type) }}</mat-icon>
+                  </button>
+                }
+              </div>
+            } @else {
+              <p class="mt-1 text-xs text-text-secondary italic">—</p>
+            }
+          </div>
+
+          <!-- Missing Media -->
+          <div class="mt-4">
+            <p
+              class="text-xs font-semibold uppercase tracking-wide text-text-secondary"
+            >
+              {{ "missingmedia" | translate }}
+            </p>
+
+            @if (element.missingmedia?.length) {
+              <div class="mt-2 flex flex-wrap gap-2">
+                @for (media of element.missingmedia; track $index) {
+                  <button
+                    mat-icon-button
+                    class="!bg-primary !text-white"
+                    (click)="uploadMedia(element.id, media)"
+                    [title]="media | translate"
+                  >
+                    <mat-icon>{{ getIconByMedia(media) }}</mat-icon>
+                  </button>
+                }
+              </div>
+            } @else {
+              <p class="mt-1 text-xs text-text-secondary italic">—</p>
+            }
+          </div>
+        </div>
+      }
+    } @else {
+      <p class="text-center text-sm text-text-secondary italic">
+        No records found
+      </p>
+    }
   </div>
 
   <div class="flex items-center justify-between gap-4 mt-4">
