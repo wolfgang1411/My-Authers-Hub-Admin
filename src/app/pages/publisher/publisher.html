@@ -341,6 +341,7 @@
       @if (
         loggedInUser()?.accessLevel === "SUPERADMIN" ||
         (loggedInUser()?.accessLevel === "PUBLISHER" &&
+          !element.isApprovedByPublisher &&
           (element.status === PublisherStatus.Pending ||
             element.status === PublisherStatus.Dormant))
       ) {
@@ -355,33 +356,25 @@
       }
       @if (
         element.user?.isEmailVerified === false &&
-        loggedInUser()?.accessLevel === "SUPERADMIN"
+        ["SUPERADMIN", "PUBLISHER"].includes(loggedInUser()?.accessLevel || "")
       ) {
         <button
           class="!bg-yellow-500"
           mat-icon-button
           [appTippyTooltip]="'emailverificationpending' | translate"
-          (click)="resendEmailVerification(element.id)"
+          (click)="
+            loggedInUser()?.accessLevel === 'PUBLISHER'
+              ? undefined
+              : resendEmailVerification(element.id)
+          "
         >
           <mat-icon class="!text-white">help</mat-icon>
         </button>
       }
-      @if (
-        element.user?.isEmailVerified === false &&
-        loggedInUser()?.accessLevel === "PUBLISHER"
-      ) {
-        <button
-          class="!bg-yellow-500"
-          mat-icon-button
-          [disabled]="true"
-          [appTippyTooltip]="'emailverificationpending' | translate"
-        >
-          <mat-icon class="!text-white">help</mat-icon>
-        </button>
-      }
+
       @if (
         element.status === PublisherStatus.Active &&
-        element.user?.isEmailVerified !== false
+        element.user?.isEmailVerified
       ) {
         <button
           class="!bg-primary"
@@ -403,7 +396,7 @@
       @if (
         element.status === PublisherStatus.Active &&
         loggedInUser()?.accessLevel === "PUBLISHER" &&
-        element.user?.isEmailVerified !== false
+        element.user?.isEmailVerified
       ) {
         <button
           class="!bg-primary"
@@ -414,59 +407,33 @@
           <mat-icon class="!text-white">support_agent</mat-icon>
         </button>
       }
+
       @if (
         element.status === PublisherStatus.Pending &&
-        (loggedInUser()?.accessLevel === "SUPERADMIN" ||
+        ((loggedInUser()?.accessLevel === "SUPERADMIN" &&
+          element.isApprovedByPublisher) ||
           (loggedInUser()?.accessLevel === "PUBLISHER" &&
-            element.isApprovedByPublisher !== true))
+            !element.isApprovedByPublisher))
       ) {
-        @if (
-          loggedInUser()?.accessLevel === "SUPERADMIN" &&
-          element.status === PublisherStatus.Pending &&
-          element.isApprovedByPublisher === true
-        ) {
-          <!-- SUPERADMIN can approve Pending publishers (approved by publisher) regardless of email verification -->
-          <!-- Also show for Dormant publishers with isApprovedByPublisher=true (edge case) -->
-          <button
-            class="!bg-green-2 active:bg-green-2/60"
-            mat-icon-button
-            (click)="openDistributionDialog(element.id)"
-            [appTippyTooltip]="'approve' | translate"
-          >
-            <mat-icon class="!text-white">check</mat-icon>
-          </button>
-        }
-        @if (
-          loggedInUser()?.accessLevel === "PUBLISHER" &&
-          (element.user?.isEmailVerified !== false ||
-            element.status === PublisherStatus.Dormant)
-        ) {
-          <!-- PUBLISHER can approve Dormant publishers (email verification happens after approval) -->
-          <button
-            class="!bg-green-2 active:bg-green-2/60"
-            mat-icon-button
-            (click)="openDistributionDialog(element.id)"
-            [appTippyTooltip]="'approve' | translate"
-          >
-            <mat-icon class="!text-white">check</mat-icon>
-          </button>
-        }
-        @if (
-          loggedInUser()?.accessLevel === "PUBLISHER" &&
-          element.isApprovedByPublisher !== true &&
-          (element.status === PublisherStatus.Pending ||
-            element.status === PublisherStatus.Dormant)
-        ) {
-          <button
-            class="!bg-red-colour active:bg-red-colour/60"
-            mat-icon-button
-            [appTippyTooltip]="'reject' | translate"
-            (click)="rejectPublisher(element.id)"
-          >
-            <mat-icon class="!text-white">cancel</mat-icon>
-          </button>
-        }
+        <button
+          class="!bg-green-2 active:bg-green-2/60"
+          mat-icon-button
+          (click)="openDistributionDialog(element.id)"
+          [appTippyTooltip]="'approve' | translate"
+        >
+          <mat-icon class="!text-white">check</mat-icon>
+        </button>
+
+        <button
+          class="!bg-red-colour active:bg-red-colour/60"
+          mat-icon-button
+          [appTippyTooltip]="'reject' | translate"
+          (click)="rejectPublisher(element.id)"
+        >
+          <mat-icon class="!text-white">cancel</mat-icon>
+        </button>
       }
+
       @if (loggedInUser()?.accessLevel === "SUPERADMIN") {
         @if (
           element.status === PublisherStatus.Active &&
@@ -481,17 +448,7 @@
             <mat-icon class="!text-white">lock</mat-icon>
           </button>
         }
-        @if (element.status === PublisherStatus.Pending) {
-          <!-- SUPERADMIN can reject Pending publishers regardless of email verification -->
-          <button
-            class="!bg-red-colour active:bg-red-colour/60"
-            mat-icon-button
-            [appTippyTooltip]="'reject' | translate"
-            (click)="rejectPublisher(element.id)"
-          >
-            <mat-icon class="!text-white">cancel</mat-icon>
-          </button>
-        }
+
         @if (element.status === PublisherStatus.Deactivated) {
           <button
             (click)="updateStatus(element.id, 'Active')"
