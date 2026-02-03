@@ -72,7 +72,10 @@ import {
   NgxMaterialIntlTelInputComponent,
 } from 'ngx-material-intl-tel-input';
 import { MobileSection } from 'src/app/components/mobile-section/mobile-section';
-import { AddAddress, AddressDetailsForm } from 'src/app/components/add-address/add-address';
+import {
+  AddAddress,
+  AddressDetailsForm,
+} from 'src/app/components/add-address/add-address';
 
 @Component({
   selector: 'app-add-author',
@@ -93,7 +96,7 @@ import { AddAddress, AddressDetailsForm } from 'src/app/components/add-address/a
     ReactiveFormsModule,
     NgxMaterialIntlTelInputComponent,
     MobileSection,
-    AddAddress
+    AddAddress,
   ],
   templateUrl: './add-author.html',
   styleUrls: ['./add-author.css'],
@@ -586,18 +589,24 @@ export class AddAuthor implements OnInit {
   authorAddressDetails = new FormGroup<AddressDetailsForm>({
     id: new FormControl<number | null>(null),
     address: new FormControl<string | null>(null, Validators.required),
-    city: new FormControl<string | null>({
-      value: null,
-      disabled: true
-    }, Validators.required),
-    state: new FormControl<string | null>({
-      value: null,
-      disabled: true
-    }, Validators.required),
+    city: new FormControl<string | null>(
+      {
+        value: null,
+        disabled: true,
+      },
+      Validators.required,
+    ),
+    state: new FormControl<string | null>(
+      {
+        value: null,
+        disabled: true,
+      },
+      Validators.required,
+    ),
     country: new FormControl<string | null>(null, Validators.required),
     pincode: new FormControl<string | null>(null, [Validators.required]),
     signupCode: new FormControl<string | null>(null),
-  });;
+  });
   authorSocialMediaGroup = new FormGroup({
     socialMedia: new FormArray<FormGroup<SocialMediaGroupType>>([
       this.createSocialGroup(),
@@ -789,7 +798,15 @@ export class AddAuthor implements OnInit {
     if (response && finalAuthorId) {
       // Step 2: Create/Update Address
       // In invite flow, always use CREATE (remove id) but still prefill form
-      const { id: addressId, address: addressControl, country: countryControl, pincode: pincodeControl, city: cityControl, state: stateControl, signupCode: signupCodeControl } = this.authorAddressDetails.controls;
+      const {
+        id: addressId,
+        address: addressControl,
+        country: countryControl,
+        pincode: pincodeControl,
+        city: cityControl,
+        state: stateControl,
+        signupCode: signupCodeControl,
+      } = this.authorAddressDetails.controls;
       const addressPayload: any = {
         id: addressId.value,
         address: addressControl.value,
@@ -826,6 +843,7 @@ export class AddAuthor implements OnInit {
       const bankPayload: any = {
         ...bankDetailsValue,
         autherId: finalAuthorId,
+        signupCode: this.signupCode,
       };
       if (this.signupCode) {
         bankPayload.id = undefined; // Force CREATE
@@ -915,7 +933,13 @@ export class AddAuthor implements OnInit {
     console.log('existingAddress', existingAddress);
     if (!existingAddress) return true;
 
-    const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.authorAddressDetails.controls;
+    const {
+      address: addressControl,
+      city: cityControl,
+      state: stateControl,
+      country: countryControl,
+      pincode: pincodeControl,
+    } = this.authorAddressDetails.controls;
     return (
       this.compareValues(addressControl.value, existingAddress.address) ||
       this.compareValues(cityControl.value, existingAddress.city) ||
@@ -1191,8 +1215,13 @@ export class AddAuthor implements OnInit {
       delete bankDetailsValue.panCardNo;
     }
 
-
-    const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.authorAddressDetails.controls;
+    const {
+      address: addressControl,
+      city: cityControl,
+      state: stateControl,
+      country: countryControl,
+      pincode: pincodeControl,
+    } = this.authorAddressDetails.controls;
     const addressData = {
       address: addressControl.value,
       city: cityControl.value,
@@ -1343,13 +1372,20 @@ export class AddAuthor implements OnInit {
 
         // Update address if changed
         if (hasAddressChange && existingAddress) {
-          const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.authorAddressDetails.controls;
+          const {
+            address: addressControl,
+            city: cityControl,
+            state: stateControl,
+            country: countryControl,
+            pincode: pincodeControl,
+          } = this.authorAddressDetails.controls;
           const addressData = {
             address: addressControl.value,
             city: cityControl.value,
             state: stateControl.value,
             country: countryControl.value,
             pincode: pincodeControl.value,
+            signupCode: this.signupCode,
           };
           await this.addressService.createOrUpdateAddress({
             ...addressData,
@@ -1373,6 +1409,7 @@ export class AddAuthor implements OnInit {
             ...bankDetailsValue,
             id: existingBank.id,
             autherId: this.authorId,
+            signupCode: this.signupCode,
           } as createBankDetails);
         }
       } catch (error) {
@@ -2222,13 +2259,20 @@ export class AddAuthor implements OnInit {
       // Create or update address directly
       const wasNewAddress = !existingAddress;
 
-      const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.authorAddressDetails.controls;
+      const {
+        address: addressControl,
+        city: cityControl,
+        state: stateControl,
+        country: countryControl,
+        pincode: pincodeControl,
+      } = this.authorAddressDetails.controls;
       const addressData = {
         address: addressControl.value,
         city: cityControl.value,
         state: stateControl.value,
         country: countryControl.value,
         pincode: pincodeControl.value,
+        signupCode: this.signupCode,
       };
 
       await this.addressService.createOrUpdateAddress({
@@ -2269,7 +2313,13 @@ export class AddAuthor implements OnInit {
       const hasAddressChange = this.hasAddressChanges(existingAddress);
 
       if (hasAddressChange) {
-        const { address: addressControl, city: cityControl, state: stateControl, country: countryControl, pincode: pincodeControl } = this.authorAddressDetails.controls;
+        const {
+          address: addressControl,
+          city: cityControl,
+          state: stateControl,
+          country: countryControl,
+          pincode: pincodeControl,
+        } = this.authorAddressDetails.controls;
         const payload: any = {
           type: UpdateTicketType.ADDRESS,
           targetAuthorId: this.authorId,
@@ -2357,6 +2407,7 @@ export class AddAuthor implements OnInit {
       const bankPayload: any = {
         ...bankDetailsValue,
         autherId: this.authorId,
+        signupCode: this.signupCode,
       };
       if (this.signupCode) {
         bankPayload.id = undefined; // Force CREATE
