@@ -148,11 +148,7 @@ export class PublisherService {
         this.server.post('publishers/invite', invite),
       );
     } catch (error) {
-      const errorToLog =
-        error instanceof HttpErrorResponse && error.status !== 500
-          ? error.error
-          : error;
-      this.logger.logError(errorToLog);
+      this.logger.logError(error);
       throw error;
     }
   }
