@@ -9,6 +9,7 @@ export interface CartItem {
   quantity: number;
   price: number;
   total: number;
+  deliveryCharge: number;
   couponCode?: string;
   titleDetails?: {
     id: number;
@@ -40,4 +41,3 @@ export interface Cart {
   createdAt: string;
   updatedAt: string;
 }
-

@@ -97,9 +97,10 @@ export class CreateOrder implements OnInit {
   });
 
   deliveryCharges = computed(() => {
-    // Delivery charges would be calculated based on weight/items
-    // For now, return 0 or fetch from API
-    return 0;
+    return this.cartItems().reduce(
+      (a, { deliveryCharge }) => a + deliveryCharge,
+      0,
+    );
   });
 
   totalAmount = computed(() => {
@@ -199,6 +200,9 @@ export class CreateOrder implements OnInit {
 
   getTitlePrice(title: Title): number {
     const user = this.user();
+
+    console.log({ user });
+
     if (!user) return 0;
 
     const printing = title.printing?.[0];
