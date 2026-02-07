@@ -789,7 +789,10 @@ export class AddSales implements OnInit, OnDestroy {
         label:
           title.name +
           (title.publisher ? `(${title.publisher.name})` : '') +
-          (title.skuNumber ? `(${title.skuNumber})` : ''),
+          (title.skuNumber ? `(${title.skuNumber})` : '') +
+          (title.printing?.[0]?.bindingType?.name
+            ? `(${title.printing?.[0]?.bindingType?.name})`
+            : ''),
         value: title.id,
       }));
 
