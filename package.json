@@ -12,7 +12,7 @@
     "serve:static": "npx serve dist/my-authors-hub/browser",
     "test": "ng test",
     "watch": "ng build --watch --configuration development",
-    "deploy": "ssh ubuntu@72.61.241.224 \"cd /home/ubuntu/my-authors-hub/admin && ./deploy.sh\""
+    "deploy": "ssh ubuntu@72.61.241.224 \"cd /home/ubuntu/my-authors-hub/admin && ./deploy.sh\" && exit"
   },
   "dependencies": {
     "@angular/animations": "^20.3.11",

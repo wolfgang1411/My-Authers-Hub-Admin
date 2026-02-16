@@ -15,6 +15,8 @@ git pull origin main
 echo "📦 Installing dependencies..."
 npm ci
 
+rm -rf dist .angular
+
 echo "🏗️ Building Angular app..."
 npm run build:prod
 
