@@ -51,7 +51,7 @@ export class OrderDetails implements OnInit {
     private transactionService: TransactionService,
     private staticValuesService: StaticValuesService,
     private translateService: TranslateService,
-    private userService: UserService
+    private userService: UserService,
   ) {
     this.route.params.subscribe(({ id }) => {
       this.orderId = Number(id);
@@ -67,7 +67,7 @@ export class OrderDetails implements OnInit {
   deliveryStatusOptions = computed<DeliveryStatus[]>(() => {
     const enums = this.staticValuesService.staticValues()?.DeliveryStatus || {};
     return Object.keys(enums).map(
-      (key) => enums[key as keyof typeof enums] as DeliveryStatus
+      (key) => enums[key as keyof typeof enums] as DeliveryStatus,
     );
   });
 
@@ -146,24 +146,36 @@ export class OrderDetails implements OnInit {
     }
   }
 
-  getInvoice() {
+  async getInvoice() {
     const transactions = this.order()?.transactions;
     const successTransaction = transactions?.filter(
-      (tx) => tx.status === TransactionStatus.SUCCESS
+      (tx) => tx.status === TransactionStatus.SUCCESS,
     );
 
     if (successTransaction && successTransaction.length) {
       const transaction = successTransaction[0];
-      
+
+      if (!transaction.invoice || !transaction.invoice.length) {
+        const inv = await this.transactionService.getInvoice(transaction.id);
+        if (inv) {
+          transaction.invoice = [inv];
+          this.order.set({ ...this.order()!, transactions: [transaction] }); // Trigger change detection
+        }
+      }
+
       // Check if invoice is an array with pdfUrl
       let invoiceUrl: string | null = null;
-      
-      if (Array.isArray(transaction.invoice) && transaction.invoice.length > 0) {
+
+      if (
+        Array.isArray(transaction.invoice) &&
+        transaction.invoice.length > 0
+      ) {
         // Get the first invoice with pdfUrl (handle both pdfUrl and pdfurl)
         const invoice = transaction.invoice.find(
-          (inv) => (inv as any).pdfUrl || (inv as any).pdfurl
+          (inv) => (inv as any).pdfUrl || (inv as any).pdfurl,
         );
-        invoiceUrl = (invoice as any)?.pdfUrl || (invoice as any)?.pdfurl || null;
+        invoiceUrl =
+          (invoice as any)?.pdfUrl || (invoice as any)?.pdfurl || null;
       } else if (typeof transaction.invoice === 'string') {
         // Fallback to string invoice (legacy)
         invoiceUrl = transaction.invoice;
@@ -181,14 +193,18 @@ export class OrderDetails implements OnInit {
         Swal.fire({
           icon: 'warning',
           title: this.translateService.instant('error') || 'Error',
-          text: this.translateService.instant('invoicenotavailable') || 'Invoice not available',
+          text:
+            this.translateService.instant('invoicenotavailable') ||
+            'Invoice not available',
         });
       }
     } else {
       Swal.fire({
         icon: 'warning',
         title: this.translateService.instant('error') || 'Error',
-        text: this.translateService.instant('invoicenotavailable') || 'Invoice not available',
+        text:
+          this.translateService.instant('invoicenotavailable') ||
+          'Invoice not available',
       });
     }
   }
