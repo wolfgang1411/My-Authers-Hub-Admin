@@ -118,15 +118,13 @@ export class Sidebar implements OnInit {
         return false;
       }
       // Orders is always visible - no conditions
-      if (
-        (accessLevel === 'AUTHER' || accessLevel === 'PUBLISHER') &&
-        item.name === 'Settings'
-      ) {
+      if (accessLevel === 'AUTHER' && item.name === 'Settings') {
         return false;
       }
       if (accessLevel === 'AUTHER' && item.name === 'ISBN') {
         return false;
       }
+
       // Show Blogs only for AUTHER, PUBLISHER, and SUPERADMIN
       if (item.name === 'Blogs') {
         return (
