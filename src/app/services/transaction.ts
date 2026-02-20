@@ -2,7 +2,12 @@ import { Injectable } from '@angular/core';
 import { Logger } from './logger';
 import { LoaderService } from './loader';
 import { Server } from './server';
-import { Pagination, Transaction, TransactionFilter } from '../interfaces';
+import {
+  Invoice,
+  Pagination,
+  Transaction,
+  TransactionFilter,
+} from '../interfaces';
 
 @Injectable({
   providedIn: 'root',
@@ -49,6 +54,17 @@ export class TransactionService {
           orderId,
         }),
         'createTransaction',
+      );
+    } catch (error) {
+      this.loggerService.logError(error);
+      throw error;
+    }
+  }
+
+  async getInvoice(id: number) {
+    try {
+      return await this.loaderService.loadPromise<Invoice>(
+        this.serverService.get(`transactions/${id}/invoice`),
       );
     } catch (error) {
       this.loggerService.logError(error);
