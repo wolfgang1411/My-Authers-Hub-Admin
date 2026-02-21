@@ -54,6 +54,7 @@ import {
   AddWalletAmountButton,
   AddWalletAmountButtonResposne,
 } from 'src/app/components/add-wallet-amount-button/add-wallet-amount-button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 @Component({
   selector: 'app-publisher-details',
   imports: [
@@ -71,6 +72,7 @@ import {
     BuyAssignPointsButton,
     MobileSection,
     AddWalletAmountButton,
+    MatCheckboxModule,
   ],
   templateUrl: './publisher-details.html',
   styleUrl: './publisher-details.css',
@@ -239,6 +241,34 @@ export class PublisherDetails implements OnInit, OnDestroy {
   subPublisherData = new MatTableDataSource<any>([]);
   royaltyData = new MatTableDataSource<Royalty>();
   private authorSearchTimeout?: any;
+
+  async onCustomPrintingPriceChange(checked: boolean) {
+    await this.publisherService.createPublisher({
+      id: this.publisherId,
+      allowCustomPrintingPrice: checked,
+    } as any);
+
+    this.publisherDetails.update((p) => {
+      return {
+        ...p,
+        allowCustomPrintingPrice: checked,
+      } as Publishers;
+    });
+  }
+
+  async onAuthorCopyPriceChange(checked: boolean) {
+    await this.publisherService.createPublisher({
+      id: this.publisherId,
+      allowAuthorCopyPrice: checked,
+    } as any);
+
+    this.publisherDetails.update((p) => {
+      return {
+        ...p,
+        allowAuthorCopyPrice: checked,
+      } as Publishers;
+    });
+  }
 
   // Sorting functions for books
   booksGetApiFieldName = (column: string): string | null => {

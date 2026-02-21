@@ -736,6 +736,40 @@
       id="publishing-points"
       class="mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded-xl shadow"
     >
+      @if (
+        loggedInUser()?.accessLevel === "SUPERADMIN" ||
+        loggedInUser()?.publisher?.allowCustomPrintingPrice ||
+        loggedInUser()?.publisher?.allowAuthorCopyPrice
+      ) {
+        <div class="flex gap-4 bg-primary-superlight mb-4 rounded-md p-2">
+          @if (
+            loggedInUser()?.accessLevel === "SUPERADMIN" ||
+            loggedInUser()?.publisher?.allowCustomPrintingPrice
+          ) {
+            <label>
+              <mat-checkbox
+                [checked]="publisherDetails()?.allowCustomPrintingPrice"
+                (change)="onCustomPrintingPriceChange($event.checked)"
+              ></mat-checkbox>
+              {{ "allowCustomPrintingPrice" | translate }}
+            </label>
+          }
+
+          @if (
+            loggedInUser()?.accessLevel === "SUPERADMIN" ||
+            loggedInUser()?.publisher?.allowAuthorCopyPrice
+          ) {
+            <label>
+              <mat-checkbox
+                [checked]="publisherDetails()?.allowAuthorCopyPrice"
+                (change)="onAuthorCopyPriceChange($event.checked)"
+              ></mat-checkbox>
+              {{ "allowAuthorCopyorder" | translate }}
+            </label>
+          }
+        </div>
+      }
+
       @if (publishingpoints().length) {
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
           @for (point of publishingpoints(); track $index) {
