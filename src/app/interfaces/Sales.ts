@@ -28,6 +28,7 @@ export interface EarningFilter {
   itemsPerPage?: number;
   page?: number;
   paidBefore?: string;
+  createdBefore?: string;
   paidAfter?: string;
   titleIds?: number[];
   authorIds?: number[] | number;
@@ -35,6 +36,7 @@ export interface EarningFilter {
   showPublisherAuthorEarnings?: boolean;
   status?: EarningsStatus | EarningsStatus[];
   platforms?: PlatForm | PlatForm[];
+  platformIds?: number | number[];
   channals?: string | string[];
   searchStr?: string;
   salesType?: SalesType | SalesType[];

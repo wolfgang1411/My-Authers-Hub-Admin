@@ -122,7 +122,13 @@
   <div class="flex flex-wrap gap-4">
     @for (sbp of salesByPlatform(); track $index) {
       <mat-card
-        class="rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition"
+        class="cursor-pointer rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition"
+        (click)="onSelectPlatform(sbp.platformId)"
+        [ngClass]="{
+          '!border-2 !border-primary':
+            filter().platformIds === sbp.platformId ||
+            (filter().createdBefore && sbp.platformId === 0),
+        }"
       >
         <mat-card-content class="flex flex-col gap-4">
           <!-- Header -->

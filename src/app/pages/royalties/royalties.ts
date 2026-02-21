@@ -606,4 +606,32 @@ export class Royalties {
       });
     }
   }
+
+  onSelectPlatform(platformId?: number) {
+    if (
+      platformId === this.filter().platformIds ||
+      (this.filter().createdBefore && platformId === 0)
+    ) {
+      platformId = undefined; // toggle off if same platform is clicked
+    }
+
+    this.filter.update((f) => {
+      const updated = { ...f, page: 1 };
+      if (typeof platformId === 'number') {
+        if (platformId === 0) {
+          updated.createdBefore = '2026-01-20'; // Set to current date to show all platforms
+          delete updated.platformIds;
+        } else {
+          delete updated.createdBefore;
+          updated.platformIds = platformId;
+        }
+      } else {
+        delete updated.createdBefore;
+        delete updated.platformIds;
+      }
+
+      return updated;
+    });
+    this.updateRoyaltyList(true);
+  }
 }
