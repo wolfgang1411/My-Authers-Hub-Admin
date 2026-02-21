@@ -1,4 +1,11 @@
-import { Component, effect, inject, OnDestroy, Signal, signal } from '@angular/core';
+import {
+  Component,
+  effect,
+  inject,
+  OnDestroy,
+  Signal,
+  signal,
+} from '@angular/core';
 import {
   MAT_DIALOG_DATA,
   MatDialogActions,
@@ -58,26 +65,23 @@ import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
 })
 export class CreateIsbn implements OnDestroy {
   private readonly destroy$ = new Subject<void>();
-  
+
   constructor(
     private titleService: TitleService,
     private isbnService: IsbnService,
     private languageService: LanguageService,
-    private authorService: AuthorsService,
-    private publisherService: PublisherService
+    private publisherService: PublisherService,
   ) {
     this.languages = this.languageService.languages$;
     effect(async () => {
       const { items: titles } = await this.titleService.getTitles();
       this.titleList.set(titles);
       this.updatePublisherOptions();
-      this.updateAuthorOptions();
     });
-    
+
     // Setup search controls
     this.publisherSearchControl = new FormControl('');
-    this.authorSearchControl = new FormControl('');
-    
+
     // Setup search subscriptions
     this.setupSearchSubscriptions();
   }
@@ -86,26 +90,19 @@ export class CreateIsbn implements OnDestroy {
   isSubmitted = signal(false);
   data = inject<Inputs>(MAT_DIALOG_DATA);
   titleList = signal<Title[] | null>(null);
-  
+
   // Search controls
   publisherSearchControl = new FormControl('');
-  authorSearchControl = new FormControl('');
-  
+
   // Filtered options
   filteredPublisherOptions = signal<{ label: string; value: number }[]>([]);
-  filteredAuthorOptions = signal<{ label: string; value: number }[]>([]);
-  
-  isSearchingAuthors = signal(false);
+
   isSearchingPublishers = signal(false);
-  
+
   private setupSearchSubscriptions() {
     // Publisher search
     this.publisherSearchControl.valueChanges
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        takeUntil(this.destroy$)
-      )
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe((searchTerm) => {
         if (searchTerm && searchTerm.trim().length > 0) {
           this.searchPublishers(searchTerm.trim());
@@ -113,23 +110,8 @@ export class CreateIsbn implements OnDestroy {
           this.updatePublisherOptions();
         }
       });
-    
-    // Author search
-    this.authorSearchControl.valueChanges
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        takeUntil(this.destroy$)
-      )
-      .subscribe((searchTerm) => {
-        if (searchTerm && searchTerm.trim().length > 0) {
-          this.searchAuthors(searchTerm.trim());
-        } else {
-          this.updateAuthorOptions();
-        }
-      });
   }
-  
+
   private updatePublisherOptions() {
     const publishers = this.data.publishersList || [];
     const searchValue = (this.publisherSearchControl.value || '').toLowerCase();
@@ -138,29 +120,17 @@ export class CreateIsbn implements OnDestroy {
       .map((publisher) => ({ label: publisher.name, value: publisher.id }));
     this.filteredPublisherOptions.set(filtered);
   }
-  
-  private updateAuthorOptions() {
-    const authors = this.data.authorsList || [];
-    const searchValue = (this.authorSearchControl.value || '').toLowerCase();
-    const filtered = authors
-      .filter((author) => {
-        const fullName = author.user?.fullName || 
-          `${author.user?.firstName || ''} ${author.user?.lastName || ''}`;
-        return fullName.toLowerCase().includes(searchValue);
-      })
-      .map((author) => ({
-        label: author.user?.fullName || `${author.user?.firstName || ''} ${author.user?.lastName || ''}`,
-        value: author.id,
-      }));
-    this.filteredAuthorOptions.set(filtered);
-  }
-  
+
   private async searchPublishers(searchTerm: string) {
     this.isSearchingPublishers.set(true);
     try {
-      const { items } = await this.publisherService.getPublishers({ searchStr: searchTerm });
-      const filtered = items
-        .map((publisher) => ({ label: publisher.name, value: publisher.id }));
+      const { items } = await this.publisherService.getPublishers({
+        searchStr: searchTerm,
+      });
+      const filtered = items.map((publisher) => ({
+        label: publisher.name,
+        value: publisher.id,
+      }));
       this.filteredPublisherOptions.set(filtered);
     } catch (error) {
       console.error('Error searching publishers:', error);
@@ -169,25 +139,7 @@ export class CreateIsbn implements OnDestroy {
       this.isSearchingPublishers.set(false);
     }
   }
-  
-  private async searchAuthors(searchTerm: string) {
-    this.isSearchingAuthors.set(true);
-    try {
-      const { items } = await this.authorService.getAuthors({ searchStr: searchTerm });
-      const filtered = items
-        .map((author) => ({
-          label: author.user?.fullName || `${author.user?.firstName || ''} ${author.user?.lastName || ''}`,
-          value: author.id,
-        }));
-      this.filteredAuthorOptions.set(filtered);
-    } catch (error) {
-      console.error('Error searching authors:', error);
-      this.updateAuthorOptions();
-    } finally {
-      this.isSearchingAuthors.set(false);
-    }
-  }
-  
+
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
@@ -212,9 +164,9 @@ export class CreateIsbn implements OnDestroy {
       return timer(500).pipe(
         switchMap(() => this.isbnService.verifyIsbn(isbn, titleName)),
         map(({ verified }) =>
-          verified ? null : { invalid: 'Invalid ISBN Number' }
+          verified ? null : { invalid: 'Invalid ISBN Number' },
         ),
-        catchError(() => of({ invalid: 'Invalid ISBN Number' }))
+        catchError(() => of({ invalid: 'Invalid ISBN Number' })),
       );
     };
   }
@@ -223,7 +175,9 @@ export class CreateIsbn implements OnDestroy {
     isbnNumber: new FormControl<string | null>(null),
     type: new FormControl<ISBNType | null>(null, [Validators.required]),
     titleName: new FormControl('', { validators: [Validators.required] }),
-    authorIds: new FormControl([]),
+    authorName: new FormControl('', {
+      validators: [Validators.required],
+    }),
     publisherId: new FormControl(),
     noOfPages: new FormControl<number | null>(null, [Validators.required]),
     language: new FormControl(''),
@@ -236,7 +190,7 @@ export class CreateIsbn implements OnDestroy {
     if (this.data.isbn) {
       this.createIsbnForm.patchValue({
         ...this.data.isbn,
-        authorIds: this.data.isbn.authors.map(({ id }) => id) as any,
+        // authorIds: this.data.isbn.authors.map(({ id }) => id) as any,
       });
     }
   }
@@ -244,7 +198,7 @@ export class CreateIsbn implements OnDestroy {
     this.isSubmitted.set(true);
     if (this.createIsbnForm.valid) {
       const {
-        authorIds,
+        authorName,
         edition,
         language,
         mrp,
@@ -254,7 +208,7 @@ export class CreateIsbn implements OnDestroy {
         type,
       } = this.createIsbnForm.controls;
       this.data.onSubmit({
-        authorIds: authorIds.value || [],
+        authorName: authorName.value as string,
         publisherId: publisherId.value as number,
         edition: edition.value?.toString() as string,
         language: language.value as string,

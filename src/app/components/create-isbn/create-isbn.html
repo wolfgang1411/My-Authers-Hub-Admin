@@ -61,8 +61,9 @@
         <!-- <mat-icon matPrefix class="!text-gray-400 !text-lg"
           >person</mat-icon
         > -->
-        <mat-label>{{ "selectauthor" | translate }}</mat-label>
-        <mat-select formControlName="authorIds" required [multiple]="true">
+        <mat-label>{{ "author" | translate }}</mat-label>
+        <input matInput type="text" formControlName="authorName" />
+        <!-- <mat-select formControlName="authorIds" required [multiple]="true">
           <mat-option>
             <ngx-mat-select-search
               [formControl]="authorSearchControl"
@@ -79,7 +80,7 @@
           @for (option of filteredAuthorOptions(); track option.value) {
             <mat-option [value]="option.value">{{ option.label }}</mat-option>
           }
-        </mat-select>
+        </mat-select> -->
       </mat-form-field>
 
       <mat-form-field appearance="fill">

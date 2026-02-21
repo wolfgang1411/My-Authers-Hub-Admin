@@ -72,7 +72,7 @@ export class ISBNList implements OnInit {
     private userService: UserService,
     private router: Router,
     private route: ActivatedRoute,
-    private isbnFormatPipe: IsbnFormatPipe
+    private isbnFormatPipe: IsbnFormatPipe,
   ) {
     this.loggedInUser$ = this.userService.loggedInUser$;
   }
@@ -104,7 +104,7 @@ export class ISBNList implements OnInit {
 
   isbnStatuses = computed(() => {
     return Object.keys(
-      this.staticValService.staticValues()?.ISBNStatus || {}
+      this.staticValService.staticValues()?.ISBNStatus || {},
     ).filter((v) => v !== 'DELETED');
   });
 
@@ -268,7 +268,7 @@ export class ISBNList implements OnInit {
           this.isbnList.update((list) => {
             if (isbn) {
               list = list.map((item) =>
-                item.id === response.id ? response : item
+                item.id === response.id ? response : item,
               );
             } else {
               list.unshift(response);
@@ -326,7 +326,7 @@ export class ISBNList implements OnInit {
 
     // Update local list
     this.isbnList.update((list) =>
-      list.map((item) => (item.id === response.id ? response : item))
+      list.map((item) => (item.id === response.id ? response : item)),
     );
 
     this.updateISBNList();
@@ -364,7 +364,7 @@ export class ISBNList implements OnInit {
     const response = await this.isbnService.createOrUpdateIsbn(payload);
 
     this.isbnList.update((list) =>
-      list.map((item) => (item.id === response.id ? response : item))
+      list.map((item) => (item.id === response.id ? response : item)),
     );
 
     this.updateISBNList();
@@ -388,7 +388,7 @@ export class ISBNList implements OnInit {
           this.isbnList.update((list) => {
             if (isbn) {
               list = list.map((item) =>
-                item.id === response.id ? response : item
+                item.id === response.id ? response : item,
               );
             } else {
               list.unshift(response);
@@ -422,7 +422,7 @@ export class ISBNList implements OnInit {
     this.isbnService.getAllISBN(filter).then((response) => {
       this.isbnList.set(response.items);
       this.lastPage.set(
-        Math.ceil(response.totalCount / this.filter.itemsPerPage)
+        Math.ceil(response.totalCount / this.filter.itemsPerPage),
       );
       this.updateISBNList();
     });
@@ -499,9 +499,10 @@ export class ISBNList implements OnInit {
       id: isbn.id,
       isbntype: isbn.type,
       titlename: isbn.titleName,
-      authorname: isbn.authors
-        .map(({ user: { fullName } }) => fullName)
-        .join(', '),
+      authorname:
+        isbn.authorName ||
+        isbn.authors.map(({ user: { fullName } }) => fullName).join(', ') ||
+        'N/A',
       publishername: isbn.publisher?.name,
       verso: isbn.edition,
       language: isbn.language,

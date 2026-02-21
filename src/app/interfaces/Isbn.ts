@@ -19,6 +19,7 @@ export interface ISBN {
   publisher: Publishers;
   edition: string;
   authors: Author[];
+  authorName: string;
   titleName: string;
 }
 
@@ -27,7 +28,7 @@ export interface createIsbn {
   isbnNumber?: string;
   type: ISBNType;
   titleName: string;
-  authorIds: number[];
+  authorName: string;
   publisherId: number;
   noOfPages: number;
   language: string;
