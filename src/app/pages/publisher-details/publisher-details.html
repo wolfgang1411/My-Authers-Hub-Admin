@@ -838,7 +838,7 @@
                   [distributionType]="point.distributionType"
                   [publisherId]="publisherId"
                   [publisherName]="publisherDetails()?.name"
-                  (onSuccess)="onPointsPurchased()"
+                  (onSuccess)="onPointsPurchased($event)"
                 ></app-buy-assign-points-button>
               </div>
             </div>
@@ -877,7 +877,7 @@
                     [distributionType]="type"
                     [publisherId]="publisherId"
                     [publisherName]="publisherDetails()?.name"
-                    (onSuccess)="onPointsPurchased()"
+                    (onSuccess)="onPointsPurchased($event)"
                   ></app-buy-assign-points-button>
                 </div>
               </div>

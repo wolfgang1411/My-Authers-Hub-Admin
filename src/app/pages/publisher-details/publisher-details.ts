@@ -509,7 +509,32 @@ export class PublisherDetails implements OnInit, OnDestroy {
       console.error('Error fetching publisher details:', error);
     }
   }
-  async onPointsPurchased() {
+  async onPointsPurchased(data: { walletAmount?: number }) {
+    const { walletAmount } = data;
+    console.log({ data });
+
+    if (
+      this.loggedInUser()?.id === this.publisherDetails()?.user.id &&
+      walletAmount
+    ) {
+      this.publisherDetails.update((pd) => {
+        const temp = pd as Publishers;
+        const wallet = temp.user.wallet;
+        const d = {
+          ...temp,
+        } as Publishers;
+
+        if (wallet && wallet.totalAmount !== undefined) {
+          const totalAmount = wallet.totalAmount;
+          wallet.totalAmount = totalAmount - walletAmount;
+          d.user.wallet = wallet;
+        }
+
+        console.log({ d });
+
+        return d;
+      });
+    }
     await this.fetchPublishingPoints();
   }
 

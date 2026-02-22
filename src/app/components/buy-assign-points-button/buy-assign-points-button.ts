@@ -2,7 +2,7 @@ import { Component, computed, inject, input, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { SharedModule } from '../../modules/shared/shared-module';
-import { DistributionType } from '../../interfaces';
+import { DistributionType, Wallet } from '../../interfaces';
 import { BuyAssignPointsDialog } from '../buy-assign-points-dialog/buy-assign-points-dialog';
 import { PublisherService } from '../../pages/publisher/publisher-service';
 import { UserService } from '../../services/user';
@@ -23,7 +23,7 @@ export class BuyAssignPointsButton {
   publisherName = input<string | undefined>(undefined);
   returnUrl = input<string | undefined>(undefined);
   buttonClass = input<string>('');
-  onSuccess = output<void>();
+  onSuccess = output<{ walletAmount?: number }>();
 
   private readonly loggerService = inject(Logger);
   private readonly razorpayService = inject(RazorpayService);
@@ -89,7 +89,7 @@ export class BuyAssignPointsButton {
                 ...response,
                 status: 'completed',
               });
-              this.onSuccess.emit();
+              this.onSuccess.emit({});
             },
             ondismiss: async () => {
               await this.publisherService.verfiyPublishingPointsPurchase({
@@ -114,7 +114,22 @@ export class BuyAssignPointsButton {
           text: successMessage,
         });
 
-        this.onSuccess.emit();
+        const loggedInUser = this.loggedInUser();
+        console.log({ mode, loggedInUser });
+
+        if (mode === 'WALLET' && loggedInUser) {
+          const wallet = loggedInUser.wallet || ({} as Wallet);
+          this.userService.setLoggedInUser({
+            ...loggedInUser,
+            wallet: {
+              ...wallet,
+              totalAmount: wallet.totalAmount - res.amount,
+            },
+          });
+        }
+        this.onSuccess.emit({
+          walletAmount: mode === 'WALLET' ? res.amount : undefined,
+        });
       }
     } catch (error) {
       this.loggerService.logError(error);
