@@ -12,6 +12,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DistributionType } from '../../interfaces';
+import { MatSelectModule } from '@angular/material/select';
 
 @Component({
   selector: 'app-buy-assign-points-dialog',
@@ -24,6 +25,7 @@ import { DistributionType } from '../../interfaces';
     MatInputModule,
     ReactiveFormsModule,
     MatDialogTitle,
+    MatSelectModule,
   ],
   templateUrl: './buy-assign-points-dialog.html',
   styleUrl: './buy-assign-points-dialog.css',
@@ -37,6 +39,11 @@ export class BuyAssignPointsDialog {
     Validators.min(1),
     this.positiveIntegerValidator,
   ]);
+  mode = new FormControl(this.isSuperAdmin ? 'SUPERADMIN' : 'GATEWAY', [
+    Validators.required,
+  ]);
+
+  availableModes = ['GATEWAY', 'WALLET'];
 
   get isSuperAdmin(): boolean {
     return this.data.isSuperAdmin;
@@ -55,7 +62,7 @@ export class BuyAssignPointsDialog {
   }
 
   private positiveIntegerValidator(
-    control: FormControl<number | null>
+    control: FormControl<number | null>,
   ): { [key: string]: boolean } | null {
     const value = control.value as any;
     if (value === null || value === undefined || value === '') {
@@ -74,7 +81,10 @@ export class BuyAssignPointsDialog {
 
   onSubmit(): void {
     if (this.pointsControl.valid && this.pointsControl.value !== null) {
-      this.dialogRef.close(this.pointsControl.value);
+      this.dialogRef.close({
+        points: this.pointsControl.value,
+        mode: this.mode.value,
+      });
     }
   }
 }

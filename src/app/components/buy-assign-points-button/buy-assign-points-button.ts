@@ -9,6 +9,7 @@ import { UserService } from '../../services/user';
 import { TranslateService } from '@ngx-translate/core';
 import Swal from 'sweetalert2';
 import { RazorpayService } from 'src/app/services/razorpay';
+import { Logger } from 'src/app/services/logger';
 
 @Component({
   selector: 'app-buy-assign-points-button',
@@ -24,6 +25,7 @@ export class BuyAssignPointsButton {
   buttonClass = input<string>('');
   onSuccess = output<void>();
 
+  private readonly loggerService = inject(Logger);
   private readonly razorpayService = inject(RazorpayService);
   private readonly dialog = inject(MatDialog);
   private readonly publisherService = inject(PublisherService);
@@ -51,17 +53,17 @@ export class BuyAssignPointsButton {
         },
       });
 
-      const points = await dialogRef.afterClosed().toPromise();
+      const { points, mode } = await dialogRef.afterClosed().toPromise();
 
       if (points && typeof points === 'number' && points > 0) {
-        await this.handleBuyOrAssign(points);
+        await this.handleBuyOrAssign(points, mode);
       }
     } catch (error) {
       console.error('Error opening dialog:', error);
     }
   }
 
-  private async handleBuyOrAssign(points: number): Promise<void> {
+  private async handleBuyOrAssign(points: number, mode: string): Promise<void> {
     try {
       const returnUrl = this.returnUrl() || window.location.href;
       const publisherId = this.publisherId();
@@ -69,6 +71,7 @@ export class BuyAssignPointsButton {
       const res = await this.publisherService.buyPublishingPoints(
         this.distributionType(),
         points,
+        mode,
         returnUrl,
         publisherId,
       );
@@ -114,16 +117,8 @@ export class BuyAssignPointsButton {
         this.onSuccess.emit();
       }
     } catch (error) {
-      console.error('Error buying/assigning points:', error);
-      const errorMessage =
-        this.translateService.instant('errorbuyingpoints') ||
-        'Failed to buy/assign points. Please try again.';
-
-      Swal.fire({
-        icon: 'error',
-        title: this.translateService.instant('error'),
-        text: errorMessage,
-      });
+      this.loggerService.logError(error);
+      console.log(error);
     }
   }
 }

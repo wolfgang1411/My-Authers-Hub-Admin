@@ -208,6 +208,7 @@ export class PublisherService {
   buyPublishingPoints(
     distributionType: DistributionType,
     points: number,
+    mode: string,
     returnUrl: string,
     publisherId?: number,
   ) {
@@ -224,6 +225,7 @@ export class PublisherService {
           points,
           publisherId,
           returnUrl,
+          mode,
         }),
       );
     } catch (error) {
