@@ -1,0 +1,101 @@
+<h2 mat-dialog-title>{{ "export_earnings_filters" | translate }}</h2>
+<mat-dialog-content class="mat-typography">
+  <form [formGroup]="filterForm" class="flex flex-col gap-4 mt-2">
+    <!-- Search -->
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Dates -->
+      <mat-form-field appearance="fill">
+        <mat-label>{{ "paidAfter" | translate }}</mat-label>
+        <input
+          matInput
+          [matDatepicker]="pickerPaidAfter"
+          formControlName="paidAfter"
+        />
+        <mat-hint>MM/DD/YYYY</mat-hint>
+        <mat-datepicker-toggle
+          matIconSuffix
+          [for]="pickerPaidAfter"
+        ></mat-datepicker-toggle>
+        <mat-datepicker #pickerPaidAfter></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>{{ "paidBefore" | translate }}</mat-label>
+        <input
+          matInput
+          [matDatepicker]="pickerPaidBefore"
+          formControlName="paidBefore"
+        />
+        <mat-hint>MM/DD/YYYY</mat-hint>
+        <mat-datepicker-toggle
+          matIconSuffix
+          [for]="pickerPaidBefore"
+        ></mat-datepicker-toggle>
+        <mat-datepicker #pickerPaidBefore></mat-datepicker>
+      </mat-form-field>
+
+      <!-- Sales Types -->
+      <mat-form-field appearance="fill">
+        <mat-label>{{ "sales_type" | translate }}</mat-label>
+        <mat-select formControlName="salesType" multiple>
+          @for (type of salesTypes(); track type) {
+            <mat-option [value]="type">{{ type | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Statuses -->
+      <mat-form-field appearance="fill">
+        <mat-label>{{ "status" | translate }}</mat-label>
+        <mat-select formControlName="status" multiple>
+          @for (status of earningsStatuses(); track status) {
+            <mat-option [value]="status">{{ status | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Platforms -->
+      <mat-form-field appearance="fill">
+        <mat-label>{{ "platforms" | translate }}</mat-label>
+        <mat-select formControlName="platforms" multiple>
+          @for (platform of data.platforms; track platform.id) {
+            <mat-option [value]="platform.name">{{
+              platform.name | translate
+            }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Titles -->
+      <mat-form-field appearance="fill">
+        <mat-label>{{ "titles" | translate }}</mat-label>
+        <mat-select formControlName="titleIds" multiple>
+          <mat-option>
+            <ngx-mat-select-search
+              (ngModelChange)="onTitleSearchStrChange($event)"
+              [ngModel]="titleSearchStr()"
+              [ngModelOptions]="{ standalone: true }"
+              [placeholderLabel]="'search_title' | translate"
+              [noEntriesFoundLabel]="'no_matching_title_found' | translate"
+            ></ngx-mat-select-search>
+          </mat-option>
+          @for (title of data.titles; track title.id) {
+            <mat-option [value]="title.id">{{ title.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end" class="gap-2">
+  <button mat-button mat-dialog-close>{{ "cancel" | translate }}</button>
+  <button
+    mat-raised-button
+    color="primary"
+    class="!bg-primary !text-white"
+    (click)="onExport()"
+  >
+    {{ "export" | translate }}
+  </button>
+</mat-dialog-actions>

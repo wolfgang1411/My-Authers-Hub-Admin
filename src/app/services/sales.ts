@@ -80,4 +80,37 @@ export class SalesService {
       throw error;
     }
   }
+
+  async exportEarnings(filter: EarningFilter) {
+    try {
+      const response = await this.loader.loadPromise(
+        this.server.getDocument('earnings/export', filter),
+        'exporting-earnings',
+      );
+      
+      const blob = response.body;
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = 'earnings.csv';
+      if (contentDisposition) {
+        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+        const matches = filenameRegex.exec(contentDisposition);
+        if (matches != null && matches[1]) {
+          filename = matches[1].replace(/['"]/g, '');
+        }
+      }
+
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
 }

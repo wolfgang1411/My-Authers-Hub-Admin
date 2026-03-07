@@ -27,6 +27,7 @@ export class PlatformService {
   private loaderService = inject(LoaderService);
 
   platforms = signal<Platform[]>([]);
+  platforms$ = this.platforms.asReadonly();
 
   /**
    * Fetch all active platforms from the API
@@ -37,16 +38,16 @@ export class PlatformService {
       const queryParams: PlatformFilter & { includeInventory?: boolean } = {
         ...filter,
       };
-      
+
       // If explicitly requesting inventory platforms, also include regular platforms
       if (filter?.isInventoryPlatform) {
         queryParams.includeInventory = true;
       }
-      
+
       // Use a specific loader key to make the network call visible
       const platforms = await this.loaderService.loadPromise(
         this.serverService.get<Platform[]>('platforms', queryParams),
-        'fetch-platforms'
+        'fetch-platforms',
       );
       this.platforms.set(this.sortPlatforms(platforms));
       return platforms;
@@ -63,7 +64,7 @@ export class PlatformService {
           status: PlatformStatus.ACTIVE,
           ...payload,
         }),
-        'create-platform'
+        'create-platform',
       );
       this.upsertPlatform(response);
       return response;
@@ -75,12 +76,12 @@ export class PlatformService {
 
   async updatePlatform(
     id: number,
-    payload: PlatformPayload
+    payload: PlatformPayload,
   ): Promise<Platform> {
     try {
       const response = await this.loaderService.loadPromise(
         this.serverService.patch<Platform>(`platforms/${id}`, payload),
-        'update-platform'
+        'update-platform',
       );
       this.upsertPlatform(response);
       return response;
@@ -130,7 +131,7 @@ export class PlatformService {
       this.sortPlatforms([
         ...items.filter((p) => p.id !== platform.id),
         platform,
-      ])
+      ]),
     );
   }
 

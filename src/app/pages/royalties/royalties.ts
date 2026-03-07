@@ -1,4 +1,4 @@
-import { Component, Renderer2, resource, signal } from '@angular/core';
+import { Component, Renderer2, resource, Signal, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { AngularSvgIconModule } from 'angular-svg-icon';
@@ -14,6 +14,7 @@ import { MatInputModule } from '@angular/material/input';
 import {
   CreateSale,
   EarningFilter,
+  Platform,
   SalesByPlatform,
   SalesByPlatformFilter,
   SalesCsvData,
@@ -31,10 +32,10 @@ import { Earnings } from '../../interfaces/Earnings';
 import { EarningTable } from '../../components/earning-table/earning-table';
 import { UserService } from '../../services/user';
 import { TranslateService } from '@ngx-translate/core';
-import { exportToExcel } from '../../common/utils/excel';
 import { SalesType } from '../../interfaces';
 import { MatCardModule } from '@angular/material/card';
 import { PlatformService } from 'src/app/services/platform';
+import { ExportEarningsDialog } from '../../components/export-earnings-dialog/export-earnings-dialog';
 
 @Component({
   selector: 'app-royalties',
@@ -69,7 +70,9 @@ export class Royalties {
     private route: ActivatedRoute,
     private router: Router,
     private platformService: PlatformService,
-  ) {}
+  ) {
+    this.dialogPlatforms = this.platformService.platforms$;
+  }
 
   lastPage = signal(1);
 
@@ -503,108 +506,58 @@ export class Royalties {
     input.click();
   }
 
+  dialogPlatforms!: Signal<Platform[]>;
+  dialogTitles = signal<Title[]>([]);
+
+  async fetchAndUpdateInitialDialogTitle(searchStr?: string) {
+    const { items } = await this.titleService.getTitles({
+      searchStr,
+    });
+    this.dialogTitles.set(items);
+  }
+
   async onExportToExcel(): Promise<void> {
-    try {
-      const earnings = this.earningList();
-      if (!earnings || earnings.length === 0) {
-        Swal.fire({
-          icon: 'warning',
-          title: this.translateService.instant('warning') || 'Warning',
-          text:
-            this.translateService.instant('nodatatoexport') ||
-            'No data to export',
-        });
-        return;
-      }
-
-      const user = this.userService.loggedInUser$();
-      const isAuthor = user?.accessLevel === 'AUTHER';
-      const showType = this.lastSelectedSaleType === null;
-
-      // Map earnings data similar to earning-table component
-      const exportData = earnings.map((earning) => {
-        const salesTypeMap: Record<SalesType, string> = {
-          [SalesType.SALE]: 'Sale',
-          [SalesType.LIVE_SALE]: 'Live Sale',
-          [SalesType.INVENTORY]: 'Inventory',
-        };
-
-        const dataRow: any = {
-          title: earning.royalty.title.name || '-',
-          'publisher/author':
-            earning.royalty.publisher?.name ||
-            earning.royalty.author?.user.firstName ||
-            '-',
-          amount: earning.amount,
-          platform:
-            earning.platformName ||
-            this.translateService.instant(
-              typeof earning.platform === 'string'
-                ? earning.platform
-                : (earning.platform as any)?.name || earning.platform || '',
-            ),
-          quantity: earning.quantity || 0,
-          addedAt: earning.paidAt
-            ? format(new Date(earning.paidAt), 'dd-MM-yyyy')
-            : '-',
-          holduntil: earning.holdUntil
-            ? format(new Date(earning.holdUntil), 'dd-MM-yyyy')
-            : '-',
-        };
-
-        if (showType) {
-          dataRow.type = earning.salesType
-            ? salesTypeMap[earning.salesType] || earning.salesType
-            : '-';
-        }
-
-        return dataRow;
-      });
-
-      // Define headers with translations
-      const headers: Record<string, string> = {
-        title: this.translateService.instant('title') || 'Title',
-        'publisher/author':
-          this.translateService.instant('publisher/author') ||
-          'Publisher/Author',
-        amount: this.translateService.instant('amount') || 'Amount',
-        platform: this.translateService.instant('platform') || 'Platform',
-        quantity: this.translateService.instant('quantity') || 'Quantity',
-        addedAt: this.translateService.instant('addedAt') || 'Added At',
-        holduntil: this.translateService.instant('holduntil') || 'Hold Until',
-      };
-
-      if (showType) {
-        headers['type'] = this.translateService.instant('salesType') || 'Type';
-      }
-
-      // Generate filename with current page
-      const currentPage = this.filter().page || 1;
-      const fileName = `royalties-page-${currentPage}-${format(
-        new Date(),
-        'dd-MM-yyyy',
-      )}`;
-
-      exportToExcel(exportData, fileName, headers, 'Royalties');
-
-      Swal.fire({
-        icon: 'success',
-        title: this.translateService.instant('success') || 'Success',
-        text:
-          this.translateService.instant('exportsuccessful') ||
-          'Data exported successfully',
-      });
-    } catch (error) {
-      console.error('Error exporting to Excel:', error);
-      this.logger.logError(error);
-      Swal.fire({
-        icon: 'error',
-        title: this.translateService.instant('error') || 'Error',
-        text:
-          this.translateService.instant('errorexporting') ||
-          'Failed to export data. Please try again.',
-      });
+    if (!this.dialogTitles().length) {
+      await this.fetchAndUpdateInitialDialogTitle();
     }
+
+    if (!this.dialogPlatforms()?.length) {
+      this.platformService.fetchPlatforms();
+    }
+
+    const dialogRef = this.dialog.open(ExportEarningsDialog, {
+      width: '600px',
+      data: {
+        filter: this.filter(),
+        titles: this.dialogTitles(),
+        platforms: this.dialogPlatforms(),
+      },
+    });
+
+    dialogRef.afterClosed().subscribe(async (filters) => {
+      if (filters) {
+        try {
+          await this.salesService.exportEarnings(filters);
+          Swal.fire({
+            icon: 'success',
+            title: this.translateService.instant('success') || 'Success',
+            text:
+              this.translateService.instant('exportsuccessful') ||
+              'Data exported successfully',
+          });
+        } catch (error) {
+          console.error('Error exporting earnings:', error);
+          this.logger.logError(error);
+          Swal.fire({
+            icon: 'error',
+            title: this.translateService.instant('error') || 'Error',
+            text:
+              this.translateService.instant('errorexporting') ||
+              'Failed to export data. Please try again.',
+          });
+        }
+      }
+    });
   }
 
   onSelectPlatform(platformId?: number) {
