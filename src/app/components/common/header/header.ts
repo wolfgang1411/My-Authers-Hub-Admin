@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   computed,
   EventEmitter,
@@ -27,13 +28,14 @@ import { SafeUrlPipe } from 'src/app/pipes/safe-url-pipe';
     Notification,
     SafeUrlPipe,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './header.html',
   styleUrl: './header.css',
 })
 export class Header implements OnInit {
   constructor(
     private layoutService: LayoutService,
-    public userService: UserService
+    public userService: UserService,
   ) {}
   pageTitle: string = '';
   pageIcon: string = 'dashboard';
@@ -57,6 +59,15 @@ export class Header implements OnInit {
       (this.userService.loggedInUser$()?.firstName || 'Guest') +
       ' ' +
       (this.userService.loggedInUser$()?.lastName || '')
+    );
+  });
+
+  walletAmount = computed(() => {
+    const loggedInUser = this.userService.loggedInUser$();
+    if (!loggedInUser || loggedInUser.accessLevel === 'SUPERADMIN') return null;
+    return (
+      (loggedInUser.wallet?.totalAmount || 0) -
+      (loggedInUser.wallet?.holdAmount || 0)
     );
   });
 

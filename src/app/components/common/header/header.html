@@ -16,6 +16,12 @@
     </div>
   </div>
   <div class="flex items-center gap-4 mr-4">
+    @if (walletAmount() !== null) {
+      <button mat-stroked-button color="primary" routerLink="/wallet" class="!rounded-full">
+        <mat-icon class="mr-2">account_balance_wallet</mat-icon>
+        <span class="font-bold tracking-wide">{{ walletAmount() | currency }}</span>
+      </button>
+    }
     <div
       class="flex items-center gap-3 cursor-pointer"
       [routerLink]="['/profile']"
@@ -24,16 +30,17 @@
       <div
         class="w-[40px] h-[40px] sm:w-[50px] sm:h-[50px] rounded-full bg-gray-300 flex items-center justify-center overflow-hidden"
       >
-        @if (userService.loggedInUser$()?.url !==null) {
-        <img
-          [src]="userService.loggedInUser$()?.url ?? '' | safeUrl"
-          class="w-full h-full object-cover"
-        />
-        } @if (!userService.loggedInUser$()?.url ) {
-        <img
-          src="images/user-solid-full.svg"
-          class="w-[20px] h-[20px] opacity-60 object-contain"
-        />
+        @if (userService.loggedInUser$()?.url !== null) {
+          <img
+            [src]="userService.loggedInUser$()?.url ?? '' | safeUrl"
+            class="w-full h-full object-cover"
+          />
+        }
+        @if (!userService.loggedInUser$()?.url) {
+          <img
+            src="images/user-solid-full.svg"
+            class="w-[20px] h-[20px] opacity-60 object-contain"
+          />
         }
       </div>
       <div class="hidden mobile:flex flex-col">
@@ -42,6 +49,7 @@
       </div>
     </div>
     @if (!!userService.loggedInUser$()) {
-    <app-notification></app-notification> }
+      <app-notification></app-notification>
+    }
   </div>
 </header>
