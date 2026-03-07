@@ -41,17 +41,22 @@ export class TransactionService {
     }
   }
 
-  async createTransaction(orderId: number) {
+  async createTransaction(
+    orderId: number,
+    paymentMethod: 'WALLET' | 'GATEWAY' = 'GATEWAY',
+  ) {
     try {
       return await this.loaderService.loadPromise(
         this.serverService.post<{
           amount: number;
           currency: string;
           orderId: string;
-          status: 'pending' | 'success';
-          tnx: number;
+          status: 'pending' | 'success' | 'completed';
+          tnx?: number;
+          txnId?: string;
         }>('transactions', {
           orderId,
+          paymentMethod,
         }),
         'createTransaction',
       );

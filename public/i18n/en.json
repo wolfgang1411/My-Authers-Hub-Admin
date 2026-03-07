@@ -970,7 +970,7 @@
   "transactionId": "Transaction ID",
   "pincodenotfound": "Pincode not found",
   "selectaddress": "Select Address",
-  "users":"Users",
+  "users": "Users",
   "missingmedias": "Missing Medias",
   "availablemedia": "Available Media",
   "missingmedia": "Missing Media",
@@ -979,5 +979,7 @@
   "FRONT_COVER": "Front Cover",
   "BACK_COVER": "Back Cover",
   "INSIDE_COVER": "Inside Cover",
-  "MANUSCRIPT": "Manuscript"
+  "MANUSCRIPT": "Manuscript",
+  "paymentmethod": "Payment Method",
+  "onlinepayment": "Online Payment"
 }

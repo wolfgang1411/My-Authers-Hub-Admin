@@ -4,6 +4,7 @@ import {
   OnInit,
   signal,
   computed,
+  Signal,
 } from '@angular/core';
 import { CartService } from '../../services/cart';
 import { OrderService } from '../../services/order';
@@ -78,8 +79,15 @@ export class CreateOrder implements OnInit {
   selectedBillingAddressId = signal<number | null>(null);
   billingSameAsDelivery = signal(true);
   addresses = signal<Address[]>([]);
-  user = signal<User | null>(null);
+  user!: Signal<User | null>;
   mahPrintPlatformId = signal<number | null>(null);
+  paymentMethod = signal<'GATEWAY' | 'WALLET'>('GATEWAY');
+
+  availableWalletBalance = computed(() => {
+    const userWallet = this.user()?.wallet;
+    if (!userWallet) return 0;
+    return (userWallet.totalAmount || 0) - (userWallet.holdAmount || 0);
+  });
 
   // Title browsing - removed signals as dialog handles its own state
 
@@ -116,7 +124,7 @@ export class CreateOrder implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
-    this.user.set(this.userService.loggedInUser$());
+    this.user = this.userService.loggedInUser$;
     await this.loadMAHPrintPlatform();
     this.loadCartItems();
     this.loadAddresses();
@@ -397,7 +405,35 @@ export class CreateOrder implements OnInit {
 
       // Create transaction and get payment URL
       const transactionResponse =
-        await this.transactionService.createTransaction(order.id);
+        await this.transactionService.createTransaction(
+          order.id,
+          this.paymentMethod(),
+        );
+
+      if (
+        this.paymentMethod() === 'WALLET' &&
+        transactionResponse.status === 'completed'
+      ) {
+        const loggedInUser = this.user();
+        if (loggedInUser && loggedInUser.wallet) {
+          this.userService.setLoggedInUser({
+            ...loggedInUser,
+            wallet: {
+              ...loggedInUser.wallet,
+              totalAmount:
+                loggedInUser.wallet.totalAmount - transactionResponse.amount,
+            },
+          });
+        }
+        Swal.fire({
+          icon: 'success',
+          title: this.translateService.instant('success') || 'Success',
+          text: 'Order placed successfully using wallet balance.',
+        });
+        this.router.navigate(['/orders']);
+        this.clearCartItems();
+        return;
+      }
 
       this.razorpayService.pay(
         {

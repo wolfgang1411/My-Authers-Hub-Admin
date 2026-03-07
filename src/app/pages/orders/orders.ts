@@ -100,6 +100,7 @@ export class Orders implements OnInit {
         'name',
         'email',
         'amount',
+        'paymentmethod',
         'deliverystatus',
         'actions',
       ];
@@ -110,6 +111,7 @@ export class Orders implements OnInit {
         'totalamount',
         'delivery',
         'status',
+        'paymentmethod',
         'numberoftitles',
         'actions',
       ];
@@ -252,6 +254,9 @@ export class Orders implements OnInit {
           status: order.status,
           deliverystatus: order.deliveryStatus,
           amount: `${order.totalAmount} INR`,
+          paymentmethod: this.translateService.instant(
+            order.transactions?.[0]?.paymentMethod || 'GATEWAY',
+          ),
         };
       });
     } else {
@@ -267,6 +272,9 @@ export class Orders implements OnInit {
           delivery: `₹${order.delivery?.toFixed(2) || '0.00'}`,
           status: order.status,
           numberoftitles: numberOfTitles,
+          paymentmethod: this.translateService.instant(
+            order.transactions?.[0]?.paymentMethod || 'GATEWAY',
+          ),
         };
       });
     }
