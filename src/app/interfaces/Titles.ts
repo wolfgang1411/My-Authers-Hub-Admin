@@ -270,6 +270,7 @@ export interface BookBindings {
   name: string;
   price: number;
   description: string;
+  costMultiplayer: number;
   TitlePrinting: TitlePrinting[];
 }
 
@@ -351,13 +352,17 @@ export interface TitlePrintingCostResponse {
 export interface CreateBindingType {
   name: string;
   price: number;
+  costMultiplayer: number;
 }
 export interface UpdateBindingType extends CreateBindingType {
   id?: number | null;
 }
 
-export interface CreateLaminationType {}
-export interface UpdateLaminationType extends CreateBindingType {
+export interface CreateLaminationType {
+  name: string;
+  price: number;
+}
+export interface UpdateLaminationType extends CreateLaminationType {
   id?: number | null;
 }
 

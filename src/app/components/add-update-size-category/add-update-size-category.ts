@@ -15,7 +15,11 @@ import {
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { SizeCategory, CreateSizeCategory, UpdateSizeCategory } from '../../interfaces';
+import {
+  SizeCategory,
+  CreateSizeCategory,
+  UpdateSizeCategory,
+} from '../../interfaces';
 import { SharedModule } from '../../modules/shared/shared-module';
 
 @Component({
@@ -39,9 +43,18 @@ export class AddUpdateSizeCategory implements OnInit {
 
   form = new FormGroup({
     name: new FormControl<string>('', [Validators.required]),
-    packetPrice: new FormControl<number | null>(null, [Validators.required, Validators.min(0)]),
-    weightMultiplayer: new FormControl<number | null>(null, [Validators.required, Validators.min(0)]),
-    insideCoverPrice: new FormControl<number | null>(null, [Validators.required, Validators.min(0)]),
+    packetPrice: new FormControl<number | null>(null, [
+      Validators.required,
+      Validators.min(0),
+    ]),
+    weightMultiplayer: new FormControl<number | null>(null, [
+      Validators.required,
+      Validators.min(0),
+    ]),
+    insideCoverPrice: new FormControl<number | null>(null, [
+      Validators.required,
+      Validators.min(0),
+    ]),
   });
 
   ngOnInit(): void {
@@ -58,7 +71,7 @@ export class AddUpdateSizeCategory implements OnInit {
         weightMultiplayer: data?.weightMultiplayer || null,
         insideCoverPrice: data?.insideCoverPrice || null,
       },
-      { emitEvent: false }
+      { emitEvent: false },
     );
   }
 
@@ -71,11 +84,11 @@ export class AddUpdateSizeCategory implements OnInit {
         weightMultiplayer: formValue.weightMultiplayer!,
         insideCoverPrice: formValue.insideCoverPrice!,
       };
-      
+
       if (this.data.defaultValue?.id) {
         (categoryData as UpdateSizeCategory).id = this.data.defaultValue.id;
       }
-      
+
       this.data.onSubmit(categoryData);
     }
   }
@@ -90,4 +103,3 @@ interface Inputs {
   onClose: () => void;
   onSubmit: (data: CreateSizeCategory | UpdateSizeCategory) => void;
 }
-

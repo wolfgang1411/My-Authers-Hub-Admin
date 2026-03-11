@@ -6,7 +6,12 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
+import {
+  ReactiveFormsModule,
+  FormGroup,
+  FormControl,
+  Validators,
+} from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -42,18 +47,22 @@ export class BindingTypeManager {
   bindingTypes = input.required<BookBindings[]>();
   onUpdate = output<void>();
 
-  displayedColumns: string[] = ['name', 'price', 'actions'];
+  displayedColumns: string[] = ['name', 'price', 'costMultiplayer', 'actions'];
   isAdding = signal<boolean>(false);
   editingId = signal<number | null>(null);
 
   form = new FormGroup({
     name: new FormControl<string>('', [Validators.required]),
-    price: new FormControl<number | null>(null, [Validators.required, Validators.min(0)]),
+    price: new FormControl<number | null>(null, [
+      Validators.required,
+      Validators.min(0),
+    ]),
+    costMultiplayer: new FormControl(1),
   });
 
   constructor(
     private settingsService: SettingsService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
   ) {}
 
   startAdding() {
@@ -77,6 +86,7 @@ export class BindingTypeManager {
       name: formValue.name!,
       price: formValue.price!,
       sizeCategoryId: this.sizeCategoryId(),
+      costMultiplayer: formValue.costMultiplayer!,
     };
 
     try {
@@ -87,14 +97,18 @@ export class BindingTypeManager {
       await Swal.fire({
         icon: 'success',
         title: await firstValueFrom(this.translateService.get('success')),
-        text: await firstValueFrom(this.translateService.get('bindingtypecreated')),
+        text: await firstValueFrom(
+          this.translateService.get('bindingtypecreated'),
+        ),
       });
     } catch (error) {
       console.error('Error creating binding type:', error);
       await Swal.fire({
         icon: 'error',
         title: await firstValueFrom(this.translateService.get('error')),
-        text: await firstValueFrom(this.translateService.get('errorcreatingbindingtype')),
+        text: await firstValueFrom(
+          this.translateService.get('errorcreatingbindingtype'),
+        ),
       });
     }
   }
@@ -104,6 +118,7 @@ export class BindingTypeManager {
     this.form.patchValue({
       name: bindingType.name,
       price: bindingType.price,
+      costMultiplayer: bindingType.costMultiplayer,
     });
   }
 
@@ -124,6 +139,7 @@ export class BindingTypeManager {
       name: formValue.name!,
       price: formValue.price!,
       sizeCategoryId: this.sizeCategoryId(),
+      costMultiplayer: formValue.costMultiplayer!,
     };
 
     try {
@@ -134,14 +150,18 @@ export class BindingTypeManager {
       await Swal.fire({
         icon: 'success',
         title: await firstValueFrom(this.translateService.get('success')),
-        text: await firstValueFrom(this.translateService.get('bindingtypeupdated')),
+        text: await firstValueFrom(
+          this.translateService.get('bindingtypeupdated'),
+        ),
       });
     } catch (error) {
       console.error('Error updating binding type:', error);
       await Swal.fire({
         icon: 'error',
         title: await firstValueFrom(this.translateService.get('error')),
-        text: await firstValueFrom(this.translateService.get('errorupdatingbindingtype')),
+        text: await firstValueFrom(
+          this.translateService.get('errorupdatingbindingtype'),
+        ),
       });
     }
   }
@@ -149,11 +169,17 @@ export class BindingTypeManager {
   async delete(bindingType: BookBindings) {
     const { isConfirmed } = await Swal.fire({
       icon: 'warning',
-      title: await firstValueFrom(this.translateService.get('deletebindingtype')),
+      title: await firstValueFrom(
+        this.translateService.get('deletebindingtype'),
+      ),
       text: await firstValueFrom(this.translateService.get('areyousuredelete')),
       showCancelButton: true,
-      confirmButtonText: await firstValueFrom(this.translateService.get('delete')),
-      cancelButtonText: await firstValueFrom(this.translateService.get('cancel')),
+      confirmButtonText: await firstValueFrom(
+        this.translateService.get('delete'),
+      ),
+      cancelButtonText: await firstValueFrom(
+        this.translateService.get('cancel'),
+      ),
     });
 
     if (isConfirmed) {
@@ -162,20 +188,25 @@ export class BindingTypeManager {
           id: bindingType.id,
           name: bindingType.name,
           price: bindingType.price,
+          costMultiplayer: bindingType.costMultiplayer,
         });
         // Note: API might need a delete endpoint
         this.onUpdate.emit();
         await Swal.fire({
           icon: 'success',
           title: await firstValueFrom(this.translateService.get('success')),
-          text: await firstValueFrom(this.translateService.get('bindingtypedeleted')),
+          text: await firstValueFrom(
+            this.translateService.get('bindingtypedeleted'),
+          ),
         });
       } catch (error) {
         console.error('Error deleting binding type:', error);
         await Swal.fire({
           icon: 'error',
           title: await firstValueFrom(this.translateService.get('error')),
-          text: await firstValueFrom(this.translateService.get('errordeletingbindingtype')),
+          text: await firstValueFrom(
+            this.translateService.get('errordeletingbindingtype'),
+          ),
         });
       }
     }
@@ -185,5 +216,3 @@ export class BindingTypeManager {
     return this.editingId() === id;
   }
 }
-
-

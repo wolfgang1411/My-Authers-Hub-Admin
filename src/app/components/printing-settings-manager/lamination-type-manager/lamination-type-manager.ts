@@ -6,7 +6,12 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
+import {
+  ReactiveFormsModule,
+  FormGroup,
+  FormControl,
+  Validators,
+} from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -48,12 +53,15 @@ export class LaminationTypeManager {
 
   form = new FormGroup({
     name: new FormControl<string>('', [Validators.required]),
-    price: new FormControl<number | null>(null, [Validators.required, Validators.min(0)]),
+    price: new FormControl<number | null>(null, [
+      Validators.required,
+      Validators.min(0),
+    ]),
   });
 
   constructor(
     private settingsService: SettingsService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
   ) {}
 
   startAdding() {
@@ -87,14 +95,18 @@ export class LaminationTypeManager {
       await Swal.fire({
         icon: 'success',
         title: await firstValueFrom(this.translateService.get('success')),
-        text: await firstValueFrom(this.translateService.get('laminationtypecreated')),
+        text: await firstValueFrom(
+          this.translateService.get('laminationtypecreated'),
+        ),
       });
     } catch (error) {
       console.error('Error creating lamination type:', error);
       await Swal.fire({
         icon: 'error',
         title: await firstValueFrom(this.translateService.get('error')),
-        text: await firstValueFrom(this.translateService.get('errorcreatinglaminationtype')),
+        text: await firstValueFrom(
+          this.translateService.get('errorcreatinglaminationtype'),
+        ),
       });
     }
   }
@@ -134,14 +146,18 @@ export class LaminationTypeManager {
       await Swal.fire({
         icon: 'success',
         title: await firstValueFrom(this.translateService.get('success')),
-        text: await firstValueFrom(this.translateService.get('laminationtypeupdated')),
+        text: await firstValueFrom(
+          this.translateService.get('laminationtypeupdated'),
+        ),
       });
     } catch (error) {
       console.error('Error updating lamination type:', error);
       await Swal.fire({
         icon: 'error',
         title: await firstValueFrom(this.translateService.get('error')),
-        text: await firstValueFrom(this.translateService.get('errorupdatinglaminationtype')),
+        text: await firstValueFrom(
+          this.translateService.get('errorupdatinglaminationtype'),
+        ),
       });
     }
   }
@@ -149,11 +165,17 @@ export class LaminationTypeManager {
   async delete(laminationType: LaminationType) {
     const { isConfirmed } = await Swal.fire({
       icon: 'warning',
-      title: await firstValueFrom(this.translateService.get('deletelaminationtype')),
+      title: await firstValueFrom(
+        this.translateService.get('deletelaminationtype'),
+      ),
       text: await firstValueFrom(this.translateService.get('areyousuredelete')),
       showCancelButton: true,
-      confirmButtonText: await firstValueFrom(this.translateService.get('delete')),
-      cancelButtonText: await firstValueFrom(this.translateService.get('cancel')),
+      confirmButtonText: await firstValueFrom(
+        this.translateService.get('delete'),
+      ),
+      cancelButtonText: await firstValueFrom(
+        this.translateService.get('cancel'),
+      ),
     });
 
     if (isConfirmed) {
@@ -167,14 +189,18 @@ export class LaminationTypeManager {
         await Swal.fire({
           icon: 'success',
           title: await firstValueFrom(this.translateService.get('success')),
-          text: await firstValueFrom(this.translateService.get('laminationtypedeleted')),
+          text: await firstValueFrom(
+            this.translateService.get('laminationtypedeleted'),
+          ),
         });
       } catch (error) {
         console.error('Error deleting lamination type:', error);
         await Swal.fire({
           icon: 'error',
           title: await firstValueFrom(this.translateService.get('error')),
-          text: await firstValueFrom(this.translateService.get('errordeletelaminationtype')),
+          text: await firstValueFrom(
+            this.translateService.get('errordeletelaminationtype'),
+          ),
         });
       }
     }
@@ -184,5 +210,3 @@ export class LaminationTypeManager {
     return this.editingId() === id;
   }
 }
-
-

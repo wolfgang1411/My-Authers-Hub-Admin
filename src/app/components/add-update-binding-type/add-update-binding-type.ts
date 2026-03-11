@@ -54,7 +54,7 @@ export class AddUpdateBindingType {
 
     this.form.controls.id.valueChanges.subscribe((v) => {
       this.updateValue(
-        this.data.bindingTypes.filter(({ id }) => id === Number(v))[0]
+        this.data.bindingTypes.filter(({ id }) => id === Number(v))[0],
       );
     });
   }
@@ -66,7 +66,7 @@ export class AddUpdateBindingType {
         name: data?.name,
         price: data?.price,
       },
-      { emitEvent: false }
+      { emitEvent: false },
     );
   }
 
@@ -76,6 +76,7 @@ export class AddUpdateBindingType {
         id: this.form.value.id,
         name: this.form.value.name as string,
         price: this.form.value.price as number,
+        costMultiplayer: 1,
       });
     }
   }
