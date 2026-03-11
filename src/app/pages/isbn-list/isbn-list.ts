@@ -74,6 +74,14 @@ export class ISBNList implements OnInit {
     private route: ActivatedRoute,
     private isbnFormatPipe: IsbnFormatPipe,
   ) {
+    const sub = route.queryParams.subscribe(({ status }) => {
+      if (status) {
+        this.filter.status = status;
+        this.lastSelectedStatus = status;
+        this.fetchIsbnList();
+      }
+      sub.unsubscribe();
+    });
     this.loggedInUser$ = this.userService.loggedInUser$;
   }
 

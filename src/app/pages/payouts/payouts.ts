@@ -41,6 +41,21 @@ export class Payouts implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
   ) {
+    const sub = this.route.queryParams.subscribe(({ status }) => {
+      if (status) {
+        this.lastSelectedStatus = status;
+        this.filter.update((f) => {
+          if (status) {
+            f['status'] = status;
+          }
+          return {
+            ...f,
+          };
+        });
+      }
+      sub.unsubscribe();
+    });
+
     this.loggedInUser = this.userService.loggedInUser$;
   }
 

@@ -55,7 +55,7 @@ export class Dashboard {
     public userService: UserService,
     private router: Router,
     private payoutService: PayoutsService,
-    private isbnService: IsbnService
+    private isbnService: IsbnService,
   ) {}
 
   date = new FormControl(formatDate(new Date(), 'yyyy-MM-dd'));
@@ -124,12 +124,15 @@ export class Dashboard {
         value: totalSales.totalAmount || 0,
         isCurreny: true,
       },
-      !isSuperAdmin ?
-      {
-        title: 'Total Earnings',
-          value: user?.publisher?.lifeTimeEarnings || user?.auther?.lifeTimeEarnings,
-        isCurreny: true,
-        } : null,
+      !isSuperAdmin
+        ? {
+            title: 'Total Earnings',
+            value:
+              user?.publisher?.lifeTimeEarnings ||
+              user?.auther?.lifeTimeEarnings,
+            isCurreny: true,
+          }
+        : null,
     ].filter(Boolean); // 🔥 removes null
 
     this.stats.set(stats as any);
@@ -178,9 +181,9 @@ export class Dashboard {
     });
   }
 
-  goToIsbnApplied() {
+  goToIsbnPending() {
     this.router.navigate(['/isbn'], {
-      queryParams: { status: 'APPLIED' },
+      queryParams: { status: 'PENDING' },
     });
   }
 }
