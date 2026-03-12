@@ -141,39 +141,23 @@ export class Royalties {
     this.fetchAndUpdateSalesByPlatform();
   }
 
-  private getPlatformPriority(sale: {
-    platformName: string;
-    isEbookPlatform: boolean;
-  }): number {
-    if (sale.platformName.includes('amazon')) return 1;
-    if (sale.platformName.includes('flipkart')) return 2;
-    if (sale.platformName.includes('Old Dashboard')) return 50;
-    if (!sale.isEbookPlatform) return 3;
-    return 4; // ebook platforms
-  }
-
   async fetchAndUpdateSalesByPlatform() {
     const platforms = this.platformService.platforms();
-    console.log({ platforms });
     const sales = await this.salesService.fetchSalesByPlatform(
       this.salesByPlatformFilter(),
     );
     this.salesByPlatform.set(
-      sales
-        .map((sale) => {
-          const platform = platforms.find(({ id }) => id === sale.platformId);
-          return {
-            ...sale,
-            platformName:
-              sale.platform === 'Old Dashboard'
-                ? 'Old Dashboard'
-                : (platform?.name?.toLowerCase() ?? ''),
-            isEbookPlatform: !!platform?.isEbookPlatform,
-          };
-        })
-        .sort(
-          (a, b) => this.getPlatformPriority(a) - this.getPlatformPriority(b),
-        ),
+      sales.map((sale) => {
+        const platform = platforms.find(({ id }) => id === sale.platformId);
+        return {
+          ...sale,
+          platformName:
+            sale.platform === 'Old Dashboard'
+              ? 'Old Dashboard'
+              : (platform?.name?.toLowerCase() ?? ''),
+          isEbookPlatform: !!platform?.isEbookPlatform,
+        };
+      }),
     );
   }
 

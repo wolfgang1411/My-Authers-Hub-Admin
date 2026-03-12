@@ -127,6 +127,7 @@ export interface ApproveTitleGroup {
 export interface TitlePricing {
   id: number;
   platform: PlatForm;
+  platformId: number;
   salesPrice: number;
   mrp: number;
   msp: number;

@@ -8,7 +8,12 @@ import {
   NgClass,
   UpperCasePipe,
 } from '@angular/common';
-import { CreatePlatformIdentifier, PlatForm, Title } from '../../interfaces';
+import {
+  CreatePlatformIdentifier,
+  Platform,
+  PlatForm,
+  Title,
+} from '../../interfaces';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -68,7 +73,7 @@ export class TitleSummary {
     private matDialog: MatDialog,
     private royaltyService: RoyaltyService,
     private breakpointObserver: BreakpointObserver,
-    private platformService: PlatformService
+    private platformService: PlatformService,
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
     this.breakpointObserver
@@ -122,7 +127,9 @@ export class TitleSummary {
     const royalties = title.royalties ?? [];
     const printing = title.printing?.[0];
     const printingPrice = printing ? Number(printing.printCost) || 0 : 0;
-    const customPrintCost = printing ? Number(printing.customPrintCost) || 0 : 0;
+    const customPrintCost = printing
+      ? Number(printing.customPrintCost) || 0
+      : 0;
 
     // Group royalties by platform
     const royaltiesByPlatform = new Map<string, any[]>();
@@ -144,9 +151,11 @@ export class TitleSummary {
         if (platformRoyalties.length === 0) return null;
 
         const percentages = platformRoyalties.map((r: any) =>
-          String(r.percentage || 0)
+          String(r.percentage || 0),
         );
-        const platformId = this.platformService.platforms().find(({ name }) => name === p.platform)?.id;
+        const platformId = this.platformService
+          .platforms()
+          .find(({ name }) => name === p.platform)?.id;
         return {
           platformId: platformId!,
           price: p.mrp || p.salesPrice || 0,
@@ -155,9 +164,9 @@ export class TitleSummary {
       })
       .filter(
         (
-          item
+          item,
         ): item is { platformId: number; price: number; division: string[] } =>
-          item !== null
+          item !== null,
       );
 
     if (items.length === 0) {
@@ -174,7 +183,9 @@ export class TitleSummary {
       // Cache the results
       const cache = new Map<string, number>();
       response.divisionValue.forEach((item) => {
-        const platformName = this.platformService.platforms().find(({ id }) => id === item.platformId)?.name;
+        const platformName = this.platformService
+          .platforms()
+          .find(({ id }) => id === item.platformId)?.name;
         const platformRoyalties = royaltiesByPlatform.get(platformName!) || [];
         platformRoyalties.forEach((r: any) => {
           const percentage = String(r.percentage || 0);
@@ -226,8 +237,8 @@ export class TitleSummary {
       printing.customPrintCost !== undefined
         ? Number(printing.customPrintCost)
         : printing.printCost !== null && printing.printCost !== undefined
-        ? Number(printing.printCost)
-        : null;
+          ? Number(printing.printCost)
+          : null;
 
     if (rawPrice === null || isNaN(rawPrice)) {
       return null;
@@ -243,7 +254,7 @@ export class TitleSummary {
   }
   platforms = computed(() => {
     return Object.keys(
-      this.staticValueService.staticValues()?.PlatForm || {}
+      this.staticValueService.staticValues()?.PlatForm || {},
     ) as PlatForm[];
   });
 
@@ -251,38 +262,29 @@ export class TitleSummary {
     const pricing = this.titleDetails()?.pricing ?? [];
     const royalties = this.titleDetails()?.royalties ?? [];
 
-    // Get unique platforms from pricing data (platform is a string)
-    const platformsFromPricing = new Set(
-      pricing.map((p: any) => p.platform).filter(Boolean)
-    );
+    const platforms = [
+      ...(pricing.map((p) =>
+        this.platformService.platforms().find((pl) => pl.id === p.platformId),
+      ) as Platform[]),
+      ...(royalties.map((r) =>
+        this.platformService.platforms().find((pl) => pl.id === r.platformId),
+      ) as Platform[]),
+    ].filter((v) => !!v);
 
-    // Get unique platforms from royalties data (platform is an object with name property)
-    const platformsFromRoyalties = new Set(
-      royalties
-        .map((r: any) => {
-          // Handle both cases: platform as string or platform as object with name
-          if (typeof r.platform === 'string') {
-            return r.platform;
-          } else if (
-            r.platform &&
-            typeof r.platform === 'object' &&
-            r.platform.name
-          ) {
-            return r.platform.name;
-          }
-          return null;
-        })
-        .filter((p: any) => p !== null && p !== undefined)
-    );
+    const platformNames = platforms
+      .sort((a, b) => a.index - b.index)
+      .map(({ name }) => name);
 
-    // Combine both sets and convert to array
-    const allPlatformsWithData = new Set([
-      ...Array.from(platformsFromPricing),
-      ...Array.from(platformsFromRoyalties),
-    ]);
-
-    return Array.from(allPlatformsWithData) as PlatForm[];
+    return platformNames as PlatForm[];
   });
+
+  getPlatformIndex(platformName: string) {
+    return (
+      this.platformService.platforms().find(({ name }) => name === platformName)
+        ?.index ?? 1000
+    );
+  }
+
   getRoyaltyByPlatform(platform: PlatForm) {
     const royalties = this.titleDetails()?.royalties ?? [];
     return royalties.filter((r: any) => {
@@ -310,14 +312,14 @@ export class TitleSummary {
 
   getAuthorRoyaltyOnly(platform: PlatForm): number {
     const author = this.getAuthorRoyalties(platform)?.find(
-      (a) => a.authorId === this.loggedInUser()?.auther?.id
+      (a) => a.authorId === this.loggedInUser()?.auther?.id,
     );
     return author?.percentage ?? 0;
   }
 
   getAuthorName(authorId: number): string {
     const author = this.titleDetails()?.authors?.find(
-      (a: any) => a.author?.id === authorId
+      (a: any) => a.author?.id === authorId,
     );
     if (!author) return 'Unknown Author';
     return `${author.author.user.firstName} ${author.author.user.lastName}`;
@@ -348,7 +350,7 @@ export class TitleSummary {
     percentage: number,
     isPublisher: boolean = false,
     authorId?: number | null,
-    publisherId?: number | null
+    publisherId?: number | null,
   ): number {
     // Get from cache if available
     const cache = this.royaltyAmountsCache();
@@ -439,7 +441,7 @@ export class TitleSummary {
                 | 'EBOOK'
                 | 'PRINT'),
             distributionLink: tpi.distributionLink || undefined,
-          })
+          }),
         ),
         distribution: title.distribution ?? [],
         isEditMode: true,
@@ -455,7 +457,7 @@ export class TitleSummary {
               {
                 skuNumber: data.skuNumber,
                 platformIdentifier: data.platformIdentifier,
-              }
+              },
             );
 
             this.titleDetails.set(response as Title);
@@ -524,7 +526,7 @@ export class TitleSummary {
 
               await this.titleService.createUpdateTitlePlatformIdentifier(
                 title.id,
-                platformPayload
+                platformPayload,
               );
             }
 

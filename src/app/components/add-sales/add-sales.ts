@@ -165,7 +165,10 @@ export class AddSales implements OnInit, OnDestroy {
         );
       }
 
-      map.set(title.id, filteredPlatforms);
+      map.set(
+        title.id,
+        filteredPlatforms.sort((a, b) => a.index - b.index),
+      );
     });
 
     return map;
@@ -253,14 +256,7 @@ export class AddSales implements OnInit, OnDestroy {
       const fetchedPlatforms = await this.platformService.fetchPlatforms({
         isInventoryPlatform: true,
       });
-      this.platforms.set(
-        fetchedPlatforms.sort((a, b) => {
-          if (a.name === 'AMAZON') return -10;
-          if (a.name === 'FLIPKART') return -9;
-          if (!a.isEbookPlatform) return -2;
-          return 1;
-        }),
-      );
+      this.platforms.set(fetchedPlatforms);
       console.log(
         'Platforms fetched successfully:',
         fetchedPlatforms.length,
@@ -385,6 +381,8 @@ export class AddSales implements OnInit, OnDestroy {
       FormControl<Platform>
     >;
 
+    const tempPlatformOptions: FormControl<Platform>[] = [];
+
     const saleType = group.controls.type.value;
 
     // Clear existing options
@@ -424,28 +422,17 @@ export class AddSales implements OnInit, OnDestroy {
         ({ isInventoryPlatform }) =>
           !isInventoryPlatform || saleType === SalesType.INVENTORY,
       )
-      .sort((a, b) => {
-        if (a.name === 'AMAZON' && b.name !== 'AMAZON') return -1;
-        if (b.name === 'AMAZON' && a.name !== 'AMAZON') return 1;
 
-        if (a.name === 'FLIPKART' && b.name !== 'FLIPKART') return -1;
-        if (b.name === 'FLIPKART' && a.name !== 'FLIPKART') return 1;
-
-        if (a.name === 'AMAZON_PRIME' && b.name !== 'AMAZON_PRIME') return -1;
-        if (b.name === 'AMAZON_PRIME' && a.name !== 'AMAZON_PRIME') return 1;
-
-        if (a.name === 'MAH_PRINT' && b.name !== 'MAH_PRINT') return -1;
-        if (b.name === 'MAH_PRINT' && a.name !== 'MAH_PRINT') return 1;
-
-        if (a.isEbookPlatform && !b.isEbookPlatform) return -1;
-        if (!a.isEbookPlatform && b.isEbookPlatform) return 1;
-
-        return 0;
-      })
       .forEach((p) => {
-        platformOptionsArray.push(
+        tempPlatformOptions.push(
           new FormControl<Platform>(p, { nonNullable: true }),
         );
+      });
+
+    tempPlatformOptions
+      .sort((a, b) => a.value.index - b.value.index)
+      .forEach((v) => {
+        platformOptionsArray.push(v);
       });
   }
 

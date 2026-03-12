@@ -4,6 +4,7 @@ import { Earnings } from './Earnings';
 
 export interface Royalty {
   platform: PlatForm;
+  platformId: number;
   id: number;
   percentage: number;
   authorId?: number;

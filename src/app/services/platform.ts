@@ -49,7 +49,7 @@ export class PlatformService {
         this.serverService.get<Platform[]>('platforms', queryParams),
         'fetch-platforms',
       );
-      this.platforms.set(this.sortPlatforms(platforms));
+      this.platforms.set(platforms);
       return platforms;
     } catch (error) {
       this.loggerService.logError(error);
@@ -127,15 +127,9 @@ export class PlatformService {
   }
 
   private upsertPlatform(platform: Platform) {
-    this.platforms.update((items) =>
-      this.sortPlatforms([
-        ...items.filter((p) => p.id !== platform.id),
-        platform,
-      ]),
-    );
-  }
-
-  private sortPlatforms(platforms: Platform[]) {
-    return [...platforms].sort((a, b) => a.name.localeCompare(b.name));
+    this.platforms.update((items) => [
+      ...items.filter((p) => p.id !== platform.id),
+      platform,
+    ]);
   }
 }

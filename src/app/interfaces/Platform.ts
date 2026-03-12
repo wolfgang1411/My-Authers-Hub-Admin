@@ -17,6 +17,7 @@ export interface Platform {
   isInventoryPlatform?: boolean;
   isOtherPlatform?: boolean;
   updatedAt: string;
+  index: number;
 }
 
 export interface PlatformFilter {
