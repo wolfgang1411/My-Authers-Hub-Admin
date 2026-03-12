@@ -1,6 +1,6 @@
 <div class="platform-dialog">
   <h2 mat-dialog-title class="dialog-title">
-    {{ platformForm.value.id ? 'Update Platform' : 'Add Platform' }}
+    {{ platformForm.value.id ? "Update Platform" : "Add Platform" }}
   </h2>
 
   <mat-dialog-content>
@@ -8,29 +8,63 @@
       <div class="form-grid">
         <mat-form-field class="full-width">
           <mat-label>Name</mat-label>
-          <input matInput type="text" formControlName="name" placeholder="Platform name" />
-          @if (platformForm.get('name')?.hasError('required') && platformForm.get('name')?.touched) {
+          <input
+            matInput
+            type="text"
+            formControlName="name"
+            placeholder="Platform name"
+          />
+          @if (
+            platformForm.get("name")?.hasError("required") &&
+            platformForm.get("name")?.touched
+          ) {
             <mat-error>Name is required</mat-error>
           }
         </mat-form-field>
 
         <mat-form-field class="full-width">
           <mat-label>Margin %</mat-label>
-          <input matInput type="number" min="0" max="100" formControlName="marginPercent" placeholder="30" />
-          @if (platformForm.get('marginPercent')?.hasError('required') && platformForm.get('marginPercent')?.touched) {
+          <input
+            matInput
+            type="number"
+            min="0"
+            max="100"
+            formControlName="marginPercent"
+            placeholder="30"
+          />
+          @if (
+            platformForm.get("marginPercent")?.hasError("required") &&
+            platformForm.get("marginPercent")?.touched
+          ) {
             <mat-error>Margin % is required</mat-error>
           }
-          @if (platformForm.get('marginPercent')?.hasError('min') && platformForm.get('marginPercent')?.touched) {
+          @if (
+            platformForm.get("marginPercent")?.hasError("min") &&
+            platformForm.get("marginPercent")?.touched
+          ) {
             <mat-error>Margin % must be at least 0</mat-error>
           }
-          @if (platformForm.get('marginPercent')?.hasError('max') && platformForm.get('marginPercent')?.touched) {
+          @if (
+            platformForm.get("marginPercent")?.hasError("max") &&
+            platformForm.get("marginPercent")?.touched
+          ) {
             <mat-error>Margin % must be at most 100</mat-error>
           }
         </mat-form-field>
 
         <mat-form-field class="full-width">
           <mat-label>Extra Flat Margin</mat-label>
-          <input matInput type="number" formControlName="extraFlatMargin" placeholder="0" />
+          <input
+            matInput
+            type="number"
+            formControlName="extraFlatMargin"
+            placeholder="0"
+          />
+        </mat-form-field>
+
+        <mat-form-field class="full-width">
+          <mat-label>Index</mat-label>
+          <input matInput type="number" formControlName="index" />
         </mat-form-field>
       </div>
 
@@ -38,20 +72,24 @@
         Mark as eBook platform
       </mat-checkbox>
 
-      <mat-checkbox formControlName="isSuperAdminPricingOnly" class="checkbox-field">
+      <mat-checkbox
+        formControlName="isSuperAdminPricingOnly"
+        class="checkbox-field"
+      >
         Superadmin pricing only (pricing must be entered by superadmin)
       </mat-checkbox>
 
-      <mat-checkbox formControlName="isInventoryPlatform" class="checkbox-field">
+      <mat-checkbox
+        formControlName="isInventoryPlatform"
+        class="checkbox-field"
+      >
         Mark as inventory platform
       </mat-checkbox>
     </form>
   </mat-dialog-content>
 
   <mat-dialog-actions class="dialog-actions">
-    <button mat-button (click)="onCancel()" class="cancel-btn">
-      Cancel
-    </button>
+    <button mat-button (click)="onCancel()" class="cancel-btn">Cancel</button>
     <button
       mat-raised-button
       color="primary"
@@ -59,8 +97,15 @@
       [disabled]="platformForm.invalid || isSaving"
       class="save-btn"
     >
-      {{ platformForm.value.id ? (isSaving ? 'Saving...' : 'Update') : (isSaving ? 'Saving...' : 'Add') }}
+      {{
+        platformForm.value.id
+          ? isSaving
+            ? "Saving..."
+            : "Update"
+          : isSaving
+            ? "Saving..."
+            : "Add"
+      }}
     </button>
   </mat-dialog-actions>
 </div>
-

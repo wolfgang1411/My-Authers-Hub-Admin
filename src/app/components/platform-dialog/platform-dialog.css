@@ -21,7 +21,7 @@ mat-dialog-content {
 
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 1rem;
 }
 
@@ -84,4 +84,3 @@ mat-dialog-content {
 ::ng-deep .mdc-text-field--focused .mdc-notched-outline__trailing {
   border-color: var(--primary, #3d1a5d) !important;
 }
-

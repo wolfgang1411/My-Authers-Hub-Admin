@@ -59,6 +59,7 @@ export class PlatformDialog implements OnInit {
       Validators.min(0),
       Validators.max(100),
     ]),
+    index: this.fb.control<number | null>(100),
     extraFlatMargin: this.fb.control<number | null>(0),
     isEbookPlatform: this.fb.control(false),
     isSuperAdminPricingOnly: this.fb.control(false),
@@ -73,8 +74,10 @@ export class PlatformDialog implements OnInit {
         marginPercent: this.dialogData.marginPercent,
         extraFlatMargin: this.dialogData.extraFlatMargin ?? 0,
         isEbookPlatform: this.dialogData.isEbookPlatform,
-        isSuperAdminPricingOnly: this.dialogData.isSuperAdminPricingOnly ?? false,
+        isSuperAdminPricingOnly:
+          this.dialogData.isSuperAdminPricingOnly ?? false,
         isInventoryPlatform: this.dialogData.isInventoryPlatform ?? false,
+        index: this.dialogData.index,
       });
     }
   }
@@ -96,6 +99,7 @@ export class PlatformDialog implements OnInit {
       isEbookPlatform: value.isEbookPlatform ?? false,
       isSuperAdminPricingOnly: value.isSuperAdminPricingOnly ?? false,
       isInventoryPlatform: value.isInventoryPlatform ?? false,
+      index: value.index ?? 100,
     };
 
     if (!payload.name) {

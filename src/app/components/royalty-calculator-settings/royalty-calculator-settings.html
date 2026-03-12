@@ -172,6 +172,7 @@
             <th>Extra flat margin</th>
             <th>Ebook</th>
             <th>Only Inventory</th>
+            <th>Index</th>
             <th></th>
           </tr>
         </thead>
@@ -184,6 +185,7 @@
                 <td>{{ platform.extraFlatMargin || 0 }}</td>
                 <td>{{ platform.isEbookPlatform ? "Yes" : "No" }}</td>
                 <td>{{ platform.isInventoryPlatform ? "Yes" : "No" }}</td>
+                <td>{{ platform.index }}</td>
                 <td>
                   <button
                     type="button"

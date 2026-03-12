@@ -16,6 +16,7 @@ export interface PlatformPayload {
   isSuperAdminPricingOnly?: boolean;
   isInventoryPlatform?: boolean;
   status?: PlatformStatus;
+  index?: number;
 }
 
 @Injectable({
