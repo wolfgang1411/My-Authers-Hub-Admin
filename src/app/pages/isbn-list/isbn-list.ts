@@ -1,4 +1,11 @@
-import { Component, computed, OnInit, Signal, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  OnDestroy,
+  OnInit,
+  Signal,
+  signal,
+} from '@angular/core';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { ListTable } from '../../components/list-table/list-table';
 import { AngularSvgIconModule } from 'angular-svg-icon';
@@ -61,7 +68,7 @@ import { IsbnFormatPipe } from 'src/app/pipes/isbn-format-pipe';
   templateUrl: './isbn-list.html',
   styleUrl: './isbn-list.css',
 })
-export class ISBNList implements OnInit {
+export class ISBNList implements OnInit, OnDestroy {
   constructor(
     private isbnService: IsbnService,
     private logger: Logger,
@@ -80,7 +87,6 @@ export class ISBNList implements OnInit {
         this.lastSelectedStatus = status;
         this.fetchIsbnList();
       }
-      sub.unsubscribe();
     });
     this.loggedInUser$ = this.userService.loggedInUser$;
   }
@@ -99,6 +105,7 @@ export class ISBNList implements OnInit {
     'actions',
   ];
 
+  destroy$ = new Subject<void>();
   displayedColumns = [...this.displayedColumnsBase];
 
   filter: ISBNFilter = {
@@ -573,5 +580,10 @@ export class ISBNList implements OnInit {
     this.filter.page = 1;
 
     this.fetchIsbnList();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

@@ -1,11 +1,11 @@
-import { Component, OnInit, Signal, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, Signal, signal } from '@angular/core';
 import { PayoutsService } from '../../services/payouts';
 import { Payout, PayoutFilter, PayoutStatus } from '../../interfaces/Payout';
 import { SharedModule } from '../../modules/shared/shared-module';
 import { ListTable } from '../../components/list-table/list-table';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
-import { debounceTime, Subject } from 'rxjs';
+import { debounceTime, Subject, takeUntil } from 'rxjs';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatButtonModule, MatIconButton } from '@angular/material/button';
 import Swal from 'sweetalert2';
@@ -31,7 +31,7 @@ import { Logger } from '../../services/logger';
   templateUrl: './payouts.html',
   styleUrl: './payouts.css',
 })
-export class Payouts implements OnInit {
+export class Payouts implements OnInit, OnDestroy {
   constructor(
     private payoutService: PayoutsService,
     public userService: UserService,
@@ -41,20 +41,21 @@ export class Payouts implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
   ) {
-    const sub = this.route.queryParams.subscribe(({ status }) => {
-      if (status) {
-        this.lastSelectedStatus = status;
-        this.filter.update((f) => {
-          if (status) {
-            f['status'] = status;
-          }
-          return {
-            ...f,
-          };
-        });
-      }
-      sub.unsubscribe();
-    });
+    this.route.queryParams
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(({ status }) => {
+        if (status) {
+          this.lastSelectedStatus = status;
+          this.filter.update((f) => {
+            if (status) {
+              f['status'] = status;
+            }
+            return {
+              ...f,
+            };
+          });
+        }
+      });
 
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -87,6 +88,7 @@ export class Payouts implements OnInit {
     orderByVal: 'desc',
   });
 
+  destroy$ = new Subject<void>();
   payouts = signal<Payout[] | null>(null);
 
   searchStr = new Subject<string>();
@@ -620,5 +622,10 @@ export class Payouts implements OnInit {
           'Failed to export data. Please try again.',
       });
     }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
