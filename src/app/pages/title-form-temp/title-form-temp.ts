@@ -1946,12 +1946,17 @@ export class TitleFormTemp implements OnDestroy {
       return;
     }
 
+    const size = await this.printingService.getSizeById(Number(sizeCategoryId));
+    if (!size.sizeCategory?.id) {
+      return;
+    }
+
     try {
       const payload: TitlePrintingCostPayload = {
         colorPages: Number(colorPages),
         bwPages: Number(bwPages) || 0,
         paperQuailtyId: Number(paperQuailtyId),
-        sizeCategoryId: Number(sizeCategoryId),
+        sizeCategoryId: size.sizeCategory?.id,
         totalPages: Number(totalPages),
         laminationTypeId: Number(laminationTypeId),
         isColorPagesRandom: !!isColorPagesRandom,
@@ -1976,6 +1981,7 @@ export class TitleFormTemp implements OnDestroy {
         this.tempForm.controls.printing.controls.printingPrice;
       const customPrintCostControl =
         this.tempForm.controls.printing.controls.customPrintCost;
+
       const response = await this.printingService.getPrintingPrice(payload);
 
       if (response?.printPerItem && typeof response.printPerItem === 'number') {
@@ -3071,6 +3077,7 @@ export class TitleFormTemp implements OnDestroy {
       }),
       paperQuailtyId: new FormControl<number | null>(null, Validators.required),
       sizeCategoryId: new FormControl<number | null>(null, Validators.required),
+      realSizeCategoryId: new FormControl<number | null>(null),
       msp: new FormControl<number | null>(null),
       printingPrice: new FormControl<number | null>(null),
       customPrintCost: new FormControl<number | null>(null),

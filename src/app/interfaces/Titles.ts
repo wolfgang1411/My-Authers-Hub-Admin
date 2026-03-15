@@ -530,6 +530,7 @@ export interface PrintingFormGroup {
   paperType: FormControl<string>;
   paperQuailtyId: FormControl<number | null>;
   sizeCategoryId: FormControl<number | null>;
+  realSizeCategoryId:FormControl<number | null>;
   printingPrice: FormControl<number | null>;
   msp: FormControl<number | null>;
   customPrintCost: FormControl<number | null>;
