@@ -102,7 +102,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
       { value: null, disabled: true },
       {
         validators: [Validators.required],
-      }
+      },
     ),
     quantity: new FormControl<number>(1, [Validators.required]),
     colorPages: new FormControl<number>(0, {
@@ -112,13 +112,13 @@ export class PrintingCalculator implements OnInit, OnDestroy {
       { value: null, disabled: true },
       {
         validators: [Validators.required],
-      }
+      },
     ),
     paperQuailtyId: new FormControl<number | null>(
       { value: null, disabled: true },
       {
         validators: [Validators.required],
-      }
+      },
     ),
     sizeCategoryId: new FormControl<number | null>(null, {
       validators: [Validators.required],
@@ -166,7 +166,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
     private matDialog: MatDialog,
     private translateServie: TranslateService,
     private userService: UserService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
   ) {
     // Watch for input changes and update all* signals (for updateRate dialogs)
     effect(() => {
@@ -417,10 +417,21 @@ export class PrintingCalculator implements OnInit, OnDestroy {
         });
       }
 
+      const size = await this.printingService.getSizeById(
+        Number(this.form.controls.sizeCategoryId.value),
+      );
+      if (!size.sizeCategory?.id) {
+        return;
+      }
+
       if (this.form.valid) {
-        const formValue = { ...this.form.value, quantity: 1 };
+        const formValue = {
+          ...this.form.value,
+          quantity: 1,
+          sizeCategoryId: size.sizeCategory?.id,
+        };
         const res = await this.settingService.fetchPrintingCost(
-          formValue as any
+          formValue as any,
         );
         this.calculation.set(res);
       }
@@ -502,7 +513,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
           data: {
             sizeTypes: this.sizeTypes(),
             defaultValue: this.sizeTypes().filter(
-              ({ id }) => id == this.form.controls.sizeCategoryId.value
+              ({ id }) => id == this.form.controls.sizeCategoryId.value,
             )[0],
             onClose: () => sizeDialog.close(),
             onSubmit: async (data: UpdateSizeType) => {
@@ -510,7 +521,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
                 if (
                   !(await this.showModuleUpdateOrCreateWarning(
                     moduleType,
-                    !data.id
+                    !data.id,
                   ))
                 ) {
                   return;
@@ -527,7 +538,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
                 Swal.fire({
                   icon: 'error',
                   title: await firstValueFrom(
-                    this.translateServie.get('error')
+                    this.translateServie.get('error'),
                   ),
                   text: 'An error occurred while updating size type',
                 });
@@ -541,7 +552,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
           data: {
             laminationTypes: this.allLaminationTypes(),
             defaultValue: this.allLaminationTypes().filter(
-              ({ id }) => id == this.form.controls.laminationTypeId.value
+              ({ id }) => id == this.form.controls.laminationTypeId.value,
             )[0],
             onClose: () => laminationDialog.close(),
             onSubmit: async (data: UpdateLaminationType) => {
@@ -549,7 +560,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
                 if (
                   !(await this.showModuleUpdateOrCreateWarning(
                     moduleType,
-                    !data.id
+                    !data.id,
                   ))
                 ) {
                   return;
@@ -566,7 +577,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
                 Swal.fire({
                   icon: 'error',
                   title: await firstValueFrom(
-                    this.translateServie.get('error')
+                    this.translateServie.get('error'),
                   ),
                   text: 'An error occurred while updating lamination type',
                 });
@@ -580,7 +591,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
           data: {
             bindingTypes: this.allBindingTypes(),
             defaultValue: this.allBindingTypes().filter(
-              ({ id }) => id == this.form.controls.bindingTypeId.value
+              ({ id }) => id == this.form.controls.bindingTypeId.value,
             )[0],
             onClose: () => bindingDialog.close(),
             onSubmit: async (data: UpdateBindingType) => {
@@ -588,7 +599,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
                 if (
                   !(await this.showModuleUpdateOrCreateWarning(
                     moduleType,
-                    !data.id
+                    !data.id,
                   ))
                 ) {
                   return;
@@ -605,7 +616,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
                 Swal.fire({
                   icon: 'error',
                   title: await firstValueFrom(
-                    this.translateServie.get('error')
+                    this.translateServie.get('error'),
                   ),
                   text: 'An error occurred while updating binding type',
                 });
@@ -619,7 +630,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
           data: {
             paperQualityTypes: this.allPaperQualityTypes(),
             defaultValue: this.allPaperQualityTypes().filter(
-              ({ id }) => id == this.form.controls.paperQuailtyId.value
+              ({ id }) => id == this.form.controls.paperQuailtyId.value,
             )[0],
             onClose: () => qualityDialog.close(),
             onSubmit: async (data: UpdatePaperQualityType) => {
@@ -627,7 +638,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
                 if (
                   !(await this.showModuleUpdateOrCreateWarning(
                     moduleType,
-                    !data.id
+                    !data.id,
                   ))
                 ) {
                   return;
@@ -644,7 +655,7 @@ export class PrintingCalculator implements OnInit, OnDestroy {
                 Swal.fire({
                   icon: 'error',
                   title: await firstValueFrom(
-                    this.translateServie.get('error')
+                    this.translateServie.get('error'),
                   ),
                   text: 'An error occurred while updating paper quality type',
                 });
