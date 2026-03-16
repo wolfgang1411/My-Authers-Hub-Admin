@@ -110,32 +110,67 @@ export class Dashboard {
       totalAuthors = await this.authorService.getAuthorsCount({});
     }
 
-    const stats = [
+    const temp: { title: string; value: any; isCurreny?: boolean }[] = [
       { title: 'Total titles', value: totalTitles.count || 0 },
+    ];
 
-      // 👇 conditionally include
-      !isAuthor
-        ? { title: 'Total Authors', value: totalAuthors.count || 0 }
-        : null,
+    if (!isAuthor) {
+      temp.push({ title: 'Total Authors', value: totalAuthors.count || 0 });
+    }
 
-      { title: 'Total Copies sold', value: totalSales.copiesSold || 0 },
-      {
-        title: 'Total Royalty',
+    temp.push({
+      title: 'Total Copies sold',
+      value: totalSales.copiesSold || 0,
+    });
+
+    if (isSuperAdmin) {
+      temp.push({
+        title: 'Total Sales',
         value: totalSales.totalAmount || 0,
         isCurreny: true,
-      },
-      !isSuperAdmin
-        ? {
-            title: 'Total Earnings',
-            value:
-              user?.publisher?.lifeTimeEarnings ||
-              user?.auther?.lifeTimeEarnings,
-            isCurreny: true,
-          }
-        : null,
-    ].filter(Boolean); // 🔥 removes null
+      });
+    }
 
-    this.stats.set(stats as any);
+    // temp.push({
+    //   title: 'Total Royalty',
+    //   value: totalSales.totalAmount || 0,
+    //   isCurreny: true,
+    // });
+
+    if (!isSuperAdmin) {
+      temp.push({
+        title: 'Total Earnings',
+        value:
+          user?.publisher?.lifeTimeEarnings || user?.auther?.lifeTimeEarnings,
+        isCurreny: true,
+      });
+    }
+    // const stats = [
+    //   { title: 'Total titles', value: totalTitles.count || 0 },
+
+    //   // 👇 conditionally include
+    //   !isAuthor
+    //     ? { title: 'Total Authors', value: totalAuthors.count || 0 }
+    //     : null,
+
+    //   { title: 'Total Copies sold', value: totalSales.copiesSold || 0 },
+    //   {
+    //     title: 'Total Royalty',
+    //     value: totalSales.totalAmount || 0,
+    //     isCurreny: true,
+    //   },
+    //   !isSuperAdmin
+    //     ? {
+    //         title: 'Total Earnings',
+    //         value:
+    //           user?.publisher?.lifeTimeEarnings ||
+    //           user?.auther?.lifeTimeEarnings,
+    //         isCurreny: true,
+    //       }
+    //     : null,
+    // ].filter(Boolean); // 🔥 removes null
+
+    this.stats.set(temp as any);
   }
 
   gridClass = computed(() => {
@@ -144,6 +179,7 @@ export class Dashboard {
     return {
       'grid grid-cols-1 gap-5 mb-8': true,
       'sm:grid-cols-2': true,
+      'lg:grid-cols-3': count === 3,
       'lg:grid-cols-4': count === 4,
       'lg:grid-cols-5': count >= 5,
     };
