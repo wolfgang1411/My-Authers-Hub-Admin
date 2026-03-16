@@ -851,7 +851,10 @@
                     <!-- MOBILE ROYALTY CARDS -->
                     <div class="block md:hidden space-y-4 m-4">
                       <!-- Publisher card -->
-                      @if (getPublisherRoyalty(platform)) {
+                      @if (
+                        getPublisherRoyalty(platform) &&
+                        loggedInUser()?.accessLevel !== "AUTHER"
+                      ) {
                         <div
                           class="bg-white rounded-xl p-4 border border-[var(--primary-superlight)] shadow-sm"
                         >
