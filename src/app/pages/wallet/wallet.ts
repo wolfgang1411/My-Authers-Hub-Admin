@@ -72,7 +72,12 @@ export class Wallet {
       .reduce((sum, e) => sum + (e.amount ?? 0), 0);
   });
 
-  totalPaidFormatted = computed(() => this.totalPaid().toFixed(2));
+  lifeTimeEarning = computed(() => {
+    return (
+      this.loggedInUser()?.auther?.lifeTimeEarnings ||
+      this.loggedInUser()?.publisher?.lifeTimeEarnings
+    );
+  });
   totalPendingFormatted = computed(() => this.totalPending().toFixed(2));
 
   ngOnInit() {

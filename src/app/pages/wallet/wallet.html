@@ -33,21 +33,21 @@
         </div>
       </div>
       <div class="text-2xl font-medium text-[var(--text-heading)]">
-        ₹{{ loggedInUser()?.wallet?.totalAmount ?? 0 | number : "1.0-2" }}
+        ₹{{ loggedInUser()?.wallet?.totalAmount ?? 0 | number: "1.0-2" }}
       </div>
       <p class="text-sm text-[var(--text-primary)] mt-1">
         Withdrawable Amount :
         <span class="font-medium text-[var(--primary)]">
           ₹{{
             (loggedInUser()?.wallet?.totalAmount ?? 0) -
-              (loggedInUser()?.wallet?.holdAmount ?? 0) | number : "1.0-2"
+              (loggedInUser()?.wallet?.holdAmount ?? 0) | number: "1.0-2"
           }}
         </span>
       </p>
       <p class="text-sm text-[var(--text-primary)] mt-1">
         Amount on Hold :
         <span class="font-medium text-[var(--primary)]">
-          {{ loggedInUser()?.wallet?.holdAmount ?? 0 | number : "1.0-2" }}</span
+          {{ loggedInUser()?.wallet?.holdAmount ?? 0 | number: "1.0-2" }}</span
         >
       </p>
     </div>
@@ -96,7 +96,7 @@
         </div>
       </div>
       <div class="text-2xl font-medium text-[var(--text-heading)]">
-        ₹{{ totalPaidFormatted() | number : "1.0-2" }}
+        ₹{{ lifeTimeEarning() | number: "1.0-2" }}
       </div>
       <!-- <button
         class="mt-4 bg-[var(--green-2)] hover:bg-[var(--green-2)] text-white py-2 px-4 rounded-lg font-medium text-sm shadow-md active:bg-green-2/80"
@@ -117,74 +117,74 @@
       </p>
 
       @if (earningList().length) {
-      <div
-        class="flex flex-col gap-3 sm:gap-4 max-h-[220px] sm:max-h-[240px] overflow-y-auto"
-      >
-        @for (e of earningList(); track e.id) {
         <div
-          class="p-4 rounded-xl flex justify-between items-center border border-[var(--primary-superlight)] hover:bg-[var(--light-purple-bg)] transition-all shadow-sm"
+          class="flex flex-col gap-3 sm:gap-4 max-h-[220px] sm:max-h-[240px] overflow-y-auto"
         >
-          <div>
-            <div class="font-medium text-[var(--text-heading)]">
-              {{ e.royalty.title.name || "Untitled" }}
-            </div>
-            <div class="text-sm text-[var(--text-primary)] mt-1">
-              Platform:
-              <span class="text-[var(--primary)] font-medium">
-                {{ e.platformName || e.platform.name }}
-              </span>
-              •
-              <span
-                class="capitalize"
-                [class.text-[var(--green-2)]]="e.status === 'PAID'"
-                [class.text-[var(--accent)]]="e.status === 'PENDING'"
-              >
-                {{
-                  e.status === "PAID"
-                    ? "ADDED TO WALLET"
-                    : e.status === "PENDING"
-                    ? "ON HOLD"
-                    : e.status
-                }}
-              </span>
-            </div>
-          </div>
-          <div class="text-right">
+          @for (e of earningList(); track e.id) {
             <div
-              class="font-medium"
-              [ngClass]="{
-                'text-[var(--green-2)]': e.status === 'PAID',
-                'text-[var(--text-primary)]': e.status !== 'PAID'
-              }"
+              class="p-4 rounded-xl flex justify-between items-center border border-[var(--primary-superlight)] hover:bg-[var(--light-purple-bg)] transition-all shadow-sm"
             >
-              ₹{{ e.amount | number : "1.2-2" }}
+              <div>
+                <div class="font-medium text-[var(--text-heading)]">
+                  {{ e.royalty.title.name || "Untitled" }}
+                </div>
+                <div class="text-sm text-[var(--text-primary)] mt-1">
+                  Platform:
+                  <span class="text-[var(--primary)] font-medium">
+                    {{ e.platformName || e.platform.name }}
+                  </span>
+                  •
+                  <span
+                    class="capitalize"
+                    [class.text-[var(--green-2)]]="e.status === 'PAID'"
+                    [class.text-[var(--accent)]]="e.status === 'PENDING'"
+                  >
+                    {{
+                      e.status === "PAID"
+                        ? "ADDED TO WALLET"
+                        : e.status === "PENDING"
+                          ? "ON HOLD"
+                          : e.status
+                    }}
+                  </span>
+                </div>
+              </div>
+              <div class="text-right">
+                <div
+                  class="font-medium"
+                  [ngClass]="{
+                    'text-[var(--green-2)]': e.status === 'PAID',
+                    'text-[var(--text-primary)]': e.status !== 'PAID',
+                  }"
+                >
+                  ₹{{ e.amount | number: "1.2-2" }}
+                </div>
+                <div class="text-xs text-[var(--text-primary)] mt-1">
+                  @if (e.holdUntil) {
+                    Hold until:
+                    <span class="text-[var(--primary)] font-medium">
+                      {{ e.holdUntil | date: "yyyy-MM-dd" }}
+                    </span>
+                  } @else {
+                    <span>Paid on:</span>
+                    <span class="text-[var(--primary)] font-medium">
+                      {{ e.paidAt | date: "yyyy-MM-dd" }}
+                    </span>
+                  }
+                </div>
+              </div>
             </div>
-            <div class="text-xs text-[var(--text-primary)] mt-1">
-              @if (e.holdUntil) { Hold until:
-              <span class="text-[var(--primary)] font-medium">
-                {{ e.holdUntil | date : "yyyy-MM-dd" }}
-              </span>
-              } @else {
-              <span>Paid on:</span>
-              <span class="text-[var(--primary)] font-medium">
-                {{ e.paidAt | date : "yyyy-MM-dd" }}
-              </span>
-              }
-            </div>
-          </div>
+          }
         </div>
-        }
-      </div>
       } @else {
-      <div
-        class="text-center p-6 border border-[var(--primary-superlight)] rounded-xl text-[var(--text-primary)] flex flex-col items-center justify-center gap-2"
-      >
-        <div class="rounded-full p-2 flex items-center bg-primary-superlight">
-          <mat-icon class="text-primary">info</mat-icon>
+        <div
+          class="text-center p-6 border border-[var(--primary-superlight)] rounded-xl text-[var(--text-primary)] flex flex-col items-center justify-center gap-2"
+        >
+          <div class="rounded-full p-2 flex items-center bg-primary-superlight">
+            <mat-icon class="text-primary">info</mat-icon>
+          </div>
+          <span>No recent earnings available.</span>
         </div>
-        <span>No recent earnings available.</span>
-      </div>
-
       }
     </div>
 
