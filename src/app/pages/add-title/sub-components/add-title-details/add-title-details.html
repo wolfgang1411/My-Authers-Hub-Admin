@@ -21,7 +21,9 @@
             />
           </mat-form-field>
           <div class="text-sm">
-            @if (isbnVerified() === true) {
+            @if (isVerifying()) {
+              <span class="text-gray-500">Verifying...</span>
+            } @else if (isbnVerified() === true) {
               <span class="text-green-600">✔ ISBN Verified</span>
             } @else if (isbnVerified() === false) {
               <span class="text-red-600">✘ Invalid ISBN</span>
@@ -63,7 +65,9 @@
             </button>
           </mat-form-field>
           <div class="text-sm">
-            @if (isbnEbookVerified() === true) {
+            @if (isVerifying()) {
+              <span class="text-gray-500">Verifying...</span>
+            } @else if (isbnEbookVerified() === true) {
               <span class="text-green-600">✔ ISBN Verified</span>
             } @else if (isbnEbookVerified() === false) {
               <span class="text-red-600">✘ Invalid ISBN</span>

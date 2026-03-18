@@ -18,6 +18,7 @@ import {
   FormControl,
   AbstractControl,
   FormArray,
+  Validators,
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -318,13 +319,18 @@ export class AddTitlePrinting implements OnInit, OnDestroy {
       return;
     }
 
+    if (!group.controls.totalPages.value) {
+      return;
+    }
+
     try {
       this.isLoading.set(true);
       const payload = {
         ...group.getRawValue(),
         titleId: this.titleId(),
         bindingTypeId: group.controls.bookBindingsId.value,
-        sizeCategoryId: this.sizeCateogry(),
+        sizeCategoryId:
+          this.sizeCateogry() || group.controls.realSizeCategoryId.value,
       };
 
       const response = await this.printingService.getPrintingPrice(
@@ -500,6 +506,12 @@ export class AddTitlePrinting implements OnInit, OnDestroy {
           });
           // Clear file after upload
           insideCoverControl.controls.file.setValue(null);
+          insideCoverControl.controls.file.removeValidators(
+            Validators.required,
+          );
+          insideCoverControl.controls.file.updateValueAndValidity();
+          insideCoverControl.controls.url.removeValidators(Validators.required);
+          insideCoverControl.controls.url.updateValueAndValidity();
         }
       }
 
@@ -547,7 +559,10 @@ export class AddTitlePrinting implements OnInit, OnDestroy {
           text: 'Printing update request has been sent for approval.',
         });
       } else {
-        await this.titleService.createOrUpdatePrinting(payload);
+        const result = await this.titleService.createOrUpdatePrinting(payload);
+        if (result && result.id) {
+          group.controls.id.setValue(result.id, { emitEvent: false });
+        }
       }
 
       this.saveComplete.emit();
