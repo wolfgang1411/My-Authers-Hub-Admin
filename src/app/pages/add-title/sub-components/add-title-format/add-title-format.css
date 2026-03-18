@@ -1,0 +1,5 @@
+/* Specific CSS for nested elements inside components where tailwind utility classes cannot reach directly */
+:host ::ng-deep svg-icon svg {
+  width: 100%;
+  height: 100%;
+}

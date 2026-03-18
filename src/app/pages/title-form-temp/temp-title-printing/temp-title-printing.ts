@@ -441,6 +441,8 @@ export class TempTitlePrinting implements OnDestroy {
 
   /**
    * Load binding types, lamination types, and paper qualities based on selected size
+   * NOTE: sizeId refers to the ID of a Size, not a SizeCategory.
+   * The 'sizeCategoryId' form control actually stores a Size ID.
    */
   private async loadOptionsBySize(sizeId: number | null): Promise<void> {
     if (!sizeId) {
@@ -475,32 +477,71 @@ export class TempTitlePrinting implements OnDestroy {
       this.laminationTypes.set(laminations);
       this.paperQuality.set(qualities);
 
-      // Reset selections if current selection is not in filtered list
+      // Reset selections ONLY if they are not in the filtered list AND not in the master list
+      // This "safety net" prevents clearing valid pre-filled data during initialization/edit mode
+      // We use loose equality (==) to handle string/number ID mismatches
       const currentBindingId =
         this.printingGroup().controls.bookBindingsId.value;
       if (
         currentBindingId &&
-        !bindings.find((b) => b.id === currentBindingId)
+        !bindings.find((b) => b.id == currentBindingId)
       ) {
-        this.printingGroup().controls.bookBindingsId.setValue(null);
+        if (!this.allBindingTypes().find((b) => b.id == currentBindingId)) {
+          this.printingGroup().controls.bookBindingsId.setValue(null);
+        }
       }
 
       const currentLaminationId =
         this.printingGroup().controls.laminationTypeId.value;
       if (
         currentLaminationId &&
-        !laminations.find((l) => l.id === currentLaminationId)
+        !laminations.find((l) => l.id == currentLaminationId)
       ) {
-        this.printingGroup().controls.laminationTypeId.setValue(null);
+        if (
+          !this.allLaminationTypes().find((l) => l.id == currentLaminationId)
+        ) {
+          this.printingGroup().controls.laminationTypeId.setValue(null);
+        }
       }
 
       const currentPaperQualityId =
         this.printingGroup().controls.paperQuailtyId.value;
       if (
         currentPaperQualityId &&
-        !qualities.find((q) => q.id === currentPaperQualityId)
+        !qualities.find((q) => q.id == currentPaperQualityId)
       ) {
-        this.printingGroup().controls.paperQuailtyId.setValue(null);
+        if (!this.allPaperQualities().find((q) => q.id == currentPaperQualityId)) {
+          this.printingGroup().controls.paperQuailtyId.setValue(null);
+        }
+      }
+
+      // Auto-fill defaults if value is null (e.g., after a reset or if never set)
+      // This ensures the form is populated with valid options for the selected size
+      if (
+        !this.printingGroup().controls.bookBindingsId.value &&
+        bindings.length > 0
+      ) {
+        const defaultId =
+          bindings.find((b) => b.name == 'Paperback')?.id || bindings[0].id;
+        this.printingGroup().controls.bookBindingsId.setValue(defaultId);
+      }
+
+      if (
+        !this.printingGroup().controls.laminationTypeId.value &&
+        laminations.length > 0
+      ) {
+        const defaultId =
+          laminations.find((l) => l.name == 'Matte')?.id || laminations[0].id;
+        this.printingGroup().controls.laminationTypeId.setValue(defaultId);
+      }
+
+      if (
+        !this.printingGroup().controls.paperQuailtyId.value &&
+        qualities.length > 0
+      ) {
+        const defaultId =
+          qualities.find((q) => q.name == '80 GSM')?.id || qualities[0].id;
+        this.printingGroup().controls.paperQuailtyId.setValue(defaultId);
       }
     } catch (error) {
       console.error('Error loading options by size:', error);

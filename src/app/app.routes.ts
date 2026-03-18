@@ -6,6 +6,7 @@ import { superadminGuard } from './guards/superadmin-guard';
 import { AddAuthor } from './pages/add-author/add-author';
 import { TitleFormTemp } from './pages/title-form-temp/title-form-temp';
 import { AddPublisher } from './pages/add-publisher/add-publisher';
+import { AddTitle } from './pages/add-title/add-title';
 
 export const routes: Routes = [
   {
@@ -109,7 +110,7 @@ export const routes: Routes = [
   },
   {
     path: 'title/:titleId',
-    component: TitleFormTemp,
+    component: AddTitle,
     canActivate: [privateRouteGuard, profileCompletionGuard],
     data: {
       seo: {

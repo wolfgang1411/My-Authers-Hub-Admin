@@ -1,3 +1,41 @@
+.generate-btn {
+  @apply !bg-primary !text-white !p-0 !px-3 rounded-md flex items-center gap-1 h-8 text-xs font-medium transition-all;
+  min-width: 80px;
+}
+
+.generate-btn.active {
+  @apply !bg-red-500 !text-white;
+}
+
+.generate-btn mat-icon {
+  @apply !text-base !w-4 !h-4 flex items-center justify-center;
+}
+
+.ckeditor-wrapper {
+  @apply min-h-[300px];
+}
+
+::ng-deep .ck-editor__editable {
+  min-height: 250px !important;
+}
+
+::ng-deep .mat-mdc-form-field-suffix {
+  @apply flex items-center;
+}
+
+mat-error {
+  @apply text-xs mt-1;
+}
+
+.author-chip-list {
+  @apply w-full;
+}
+
+.publisher-section,
+.author-section {
+  @apply bg-gray-50/50;
+}
+
 /* Styles for temp-book-details component */
 
 /* CKEditor Styling to match Material Design */
@@ -10,8 +48,8 @@
 }
 
 .ckeditor-wrapper ::ng-deep .ck-editor__editable {
-  min-height: 200px;
-  max-height: 400px;
+  min-height: 400px;
+  max-height: 600px;
   overflow-y: auto;
   border: 1px solid rgba(0, 0, 0, 0.38);
   border-radius: 4px;

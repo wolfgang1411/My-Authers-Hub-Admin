@@ -2143,6 +2143,8 @@ export class TitleFormTemp implements OnDestroy {
         paperQuailtyId:
           data.printing?.[0]?.paperQuailty.id ||
           this.tempForm.value.printing?.paperQuailtyId,
+        // NOTE: sizeCategoryId actually stores the ID of a Size record,
+        // which has a reference to a SizeCategory.
         sizeCategoryId:
           data.printing?.[0]?.size.id ||
           this.tempForm.value.printing?.sizeCategoryId,

@@ -1,0 +1,51 @@
+<div class="space-y-6 animate-in fade-in duration-500">
+  <div class="header-section">
+    <h2 class="text-2xl font-bold text-gray-800">Distribution Channels</h2>
+    <p class="text-sm text-gray-500">Select where your title will be available for purchase</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    @for (ctrl of distributionArray().controls; track ctrl.controls.type.value; let i = $index) {
+      <div 
+        class="distribution-card" 
+        [class.active]="ctrl.controls.isSelected.value"
+        (click)="toggleDistribution(i)"
+      >
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-4">
+            <div class="icon-container" [class.active]="ctrl.controls.isSelected.value">
+              @if (ctrl.controls.type.value === DistributionType.Global) {
+                <mat-icon>public</mat-icon>
+              } @else {
+                <mat-icon>storefront</mat-icon>
+              }
+            </div>
+            <div>
+              <h3 class="font-bold text-gray-800">{{ ctrl.controls.name.value }}</h3>
+              <p class="text-xs text-gray-400 uppercase tracking-tighter">{{ ctrl.controls.type.value }}</p>
+            </div>
+          </div>
+          <mat-checkbox 
+            [formControl]="ctrl.controls.isSelected" 
+            color="primary"
+            (click)="$event.stopPropagation()"
+          ></mat-checkbox>
+        </div>
+        
+        <div class="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+          <span class="text-xs text-gray-400">Availability Status</span>
+          <span class="status-pill" [class.active]="ctrl.controls.isSelected.value">
+            {{ ctrl.controls.isSelected.value ? 'Enabled' : 'Disabled' }}
+          </span>
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (distributionArray().length === 0) {
+    <div class="p-12 text-center bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+      <mat-icon class="text-gray-300 text-5xl mb-4">cloud_off</mat-icon>
+      <p class="text-gray-500 font-medium">No distribution channels available for this title type.</p>
+    </div>
+  }
+</div>

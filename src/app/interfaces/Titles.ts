@@ -248,6 +248,7 @@ export interface TitlePrinting {
   paperQuailty: PaperQuailty;
   paperQuailtyId: number;
   size: SizeCategory;
+  sizeCategory?: { id: number };
   printCost: number;
   customPrintCost: number;
   customDeliveryCharges: number;
@@ -271,8 +272,10 @@ export interface BookBindings {
   name: string;
   price: number;
   description: string;
+  sizeCategoryId: number;
   costMultiplayer: number;
   TitlePrinting: TitlePrinting[];
+  isDefault: boolean;
 }
 
 export interface LaminationType {
@@ -281,6 +284,8 @@ export interface LaminationType {
   price: number;
   description: string;
   TitlePrinting: TitlePrinting[];
+  sizeCategoryId: number;
+  isDefault: boolean;
 }
 
 // export enum PaperType {
@@ -295,6 +300,8 @@ export interface PaperQuailty {
   blackAndWhitePrice: number;
   note: string;
   TitlePrinting: TitlePrinting[];
+  sizeCategoryId: number;
+  isDefault: boolean;
 }
 export interface TitlePrintingPayload {}
 
@@ -397,6 +404,7 @@ export interface Size {
   length: number;
   sizeCategoryId?: number | null;
   status?: string;
+  isDefault: boolean;
   sizeCategory?: SizeCategory;
 }
 
@@ -530,7 +538,7 @@ export interface PrintingFormGroup {
   paperType: FormControl<string>;
   paperQuailtyId: FormControl<number | null>;
   sizeCategoryId: FormControl<number | null>;
-  realSizeCategoryId:FormControl<number | null>;
+  realSizeCategoryId: FormControl<number | null>;
   printingPrice: FormControl<number | null>;
   msp: FormControl<number | null>;
   customPrintCost: FormControl<number | null>;
