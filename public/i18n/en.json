@@ -988,5 +988,6 @@
   "MANUSCRIPT": "Manuscript",
   "paymentmethod": "Payment Method",
   "onlinepayment": "Online Payment",
-  "packingcostmultiplayer": "Packing cost multiplayer"
+  "packingcostmultiplayer": "Packing cost multiplayer",
+  "publishbookdetils": "Title Details"
 }

@@ -16,6 +16,7 @@ import {
   ReactiveFormsModule,
   Validators,
   FormControl,
+  AbstractControl,
 } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MatIconModule } from '@angular/material/icon';
@@ -172,6 +173,14 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.setupPricingSyncing();
+
+    // Listen to controls changes (like when prefilled) to attach listeners
+    this.pricingControls()
+      .valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.setupPricingSyncing();
+      });
+
     // Subscribe to royalty changes so the publisher percentage updates reactively in the UI
     this.authorRoyalties()
       .valueChanges.pipe(takeUntil(this.destroy$))
@@ -219,12 +228,17 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
       : 'N/A';
   }
 
+  private attachedPricingControls = new Set<AbstractControl>();
+
   private setupPricingSyncing() {
     // When isSameAsMrp changes, update sales price or enable/disable
-    this.pricingControls().controls.forEach((control: any) => {
+    this.pricingControls().controls.forEach((control) => {
+      if (this.attachedPricingControls.has(control)) return;
+      this.attachedPricingControls.add(control);
+
       control.controls.isSameAsMrp.valueChanges
         .pipe(takeUntil(this.destroy$))
-        .subscribe((isSame: boolean) => {
+        .subscribe((isSame: any) => {
           if (isSame) {
             control.controls.salesPrice.setValue(control.controls.mrp.value);
             control.controls.salesPrice.disable({ emitEvent: false });
@@ -236,6 +250,8 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
       control.controls.mrp.valueChanges
         .pipe(takeUntil(this.destroy$))
         .subscribe((mrp: number) => {
+          console.log({ mrp });
+
           if (control.controls.isSameAsMrp.value) {
             control.controls.salesPrice.setValue(mrp, { emitEvent: false });
           }
