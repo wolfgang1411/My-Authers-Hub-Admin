@@ -84,6 +84,8 @@ export class AddTitlePrinting implements OnInit, OnDestroy {
   authors = input.required<any[]>();
   titleDetailsGroup = input<FormGroup<TitleDetailsFormGroup> | null>(null);
   titleId = input<number | null>(null);
+  titleStatus = input<TitleStatus | null>(null);
+  accessLevel = input<string>('');
 
   // Outputs
   saveComplete = output<void>();
@@ -137,6 +139,14 @@ export class AddTitlePrinting implements OnInit, OnDestroy {
     return (
       user?.accessLevel === 'SUPERADMIN' ||
       user?.publisher?.allowAuthorCopyPrice
+    );
+  });
+
+  isRaisingTicket = computed(() => {
+    return (
+      (this.titleId() || 0) > 0 &&
+      this.titleStatus() === TitleStatus.APPROVED &&
+      this.accessLevel() === 'PUBLISHER'
     );
   });
 
@@ -379,7 +389,7 @@ export class AddTitlePrinting implements OnInit, OnDestroy {
     if (!media) return;
 
     try {
-      const file = (await selectFile('image/*,application/pdf')) as File;
+      const file = (await selectFile('image/*')) as File;
       if (file) {
         media.patchValue({
           file,
@@ -543,12 +553,7 @@ export class AddTitlePrinting implements OnInit, OnDestroy {
       };
 
       // 3. Save or Create Ticket
-      const isApproved =
-        this.titleDetailsGroup()?.controls.status.value ===
-        TitleStatus.APPROVED;
-      const isPublisher = this.loggedInUser()?.accessLevel === 'PUBLISHER';
-
-      if (isApproved && isPublisher) {
+      if (this.isRaisingTicket()) {
         await this.titleService.createTitlePrintingUpdateTicket(
           titleId,
           payload,
@@ -568,11 +573,6 @@ export class AddTitlePrinting implements OnInit, OnDestroy {
       this.saveComplete.emit();
     } catch (error) {
       console.error('Error saving printing details:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Save Failed',
-        text: 'An error occurred while saving printing details.',
-      });
     } finally {
       this.isLoading.set(false);
     }

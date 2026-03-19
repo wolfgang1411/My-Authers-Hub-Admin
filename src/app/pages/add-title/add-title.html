@@ -39,6 +39,8 @@
       [publishingType]="addTitleForm.controls.publishingType.value"
       [titleId]="titleId()"
       [title]="title()"
+      [titleStatus]="title()?.status || null"
+      [accessLevel]="loggedInUser()?.accessLevel || ''"
       (saveComplete)="onDetailsSaveComplete($event)"
     ></app-add-title-details>
     <div class="flex justify-between mt-6">
@@ -67,6 +69,8 @@
       [mediaArray]="documentMediaArray()"
       [publishingType]="addTitleForm.controls.publishingType.value"
       [titleId]="titleId()"
+      [titleStatus]="title()?.status || null"
+      [accessLevel]="loggedInUser()?.accessLevel || ''"
       (uploadComplete)="goToNextStep()"
     ></app-add-title-media>
     <div class="flex justify-between mt-6">
@@ -100,6 +104,8 @@
         [authors]="detailsGroup.controls.authorIds.getRawValue()"
         [titleDetailsGroup]="detailsGroup"
         [titleId]="titleId()"
+        [titleStatus]="title()?.status || null"
+        [accessLevel]="loggedInUser()?.accessLevel || ''"
         (saveComplete)="goToNextStep()"
       ></app-add-title-printing>
       <div class="flex justify-between mt-6">
@@ -158,12 +164,32 @@
   </mat-step>
 
   <!-- Distribution (Step 5) -->
-  <mat-step [stepControl]="distributionGroupControls" label="Distribution">
+  <mat-step
+    [stepControl]="distributionGroupControls"
+    label="Distribution"
+    [completed]="
+      pricingGroupControls.valid &&
+      authorRoyaltiesController.valid &&
+      distributionGroupControls.valid
+    "
+  >
     <app-add-title-distribution
       #distributionComp
       [distributionArray]="distributionGroupControls"
       [addTitleForm]="$any(addTitleForm)"
       [titleId]="titleId()"
+      [publisherId]="detailsGroup.controls.publisher.value.id || undefined"
+      [publisherName]="
+        detailsGroup.controls.publisher.value.displayName ||
+        detailsGroup.controls.publisher.value.name ||
+        undefined
+      "
+      [returnUrl]="'/admin/titles/' + titleId()"
+      [isHardBoundAllowed]="isHardBoundAllowed()"
+      [publishingType]="$any(addTitleForm.controls.publishingType.value)"
+      [titleStatus]="title()?.status || null"
+      [accessLevel]="loggedInUser()?.accessLevel || ''"
+      (onPointsPurchased)="fetchAndUpdatePublishingPoints()"
       (submitComplete)="onSubmitComplete()"
     ></app-add-title-distribution>
     <div class="flex justify-between mt-6">

@@ -47,15 +47,14 @@ import { debounceTime, takeUntil } from 'rxjs/operators';
 export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
   // Inputs from parent component
   pricingControls = input.required<FormArray<PricingGroup>>();
-  authorRoyalties =
-    input.required<
-      FormArray<
-        FormGroup<{
-          authorId: FormControl<number | null>;
-          percentage: FormControl<number | null>;
-        }>
-      >
-    >();
+  authorRoyalties = input.required<
+    FormArray<
+      FormGroup<{
+        authorId: FormControl<number | null>;
+        percentage: FormControl<number | null>;
+      }>
+    >
+  >();
 
   // Pricing context inputs
   msp = input.required<number>();
@@ -98,10 +97,11 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
   });
 
   isRaisingTicket = computed(() => {
-    const status = this.titleStatus();
-    if (!status) return false;
-    if (this.accessLevel() === 'SUPERADMIN') return false;
-    return status === 'APPROVED' || status === 'VERIFIED';
+    return (
+      (this.titleId() || 0) > 0 &&
+      this.titleStatus() === 'APPROVED' &&
+      this.accessLevel() === 'PUBLISHER'
+    );
   });
 
   // platformName -> { percentageString: calculatedAmount }
@@ -265,7 +265,10 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
           apiItems.push({
             platformId,
             price: p.salesPrice,
-            division: Array.from(percentages).map(Number).sort((a,b)=>a-b).map(String),
+            division: Array.from(percentages)
+              .map(Number)
+              .sort((a, b) => a - b)
+              .map(String),
           });
         }
       }
@@ -292,12 +295,17 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
           if (this.publisher() && !this.isEbookPlatform(platformName)) {
             const actualPrintCost = this.printingPrice() || 0;
             const chargedPrintCost = this.customPrintCost();
-            if (chargedPrintCost !== null && chargedPrintCost > actualPrintCost) {
+            if (
+              chargedPrintCost !== null &&
+              chargedPrintCost > actualPrintCost
+            ) {
               const pubPercentStr = this.publisherPercentage().toString();
               if (newValues[platformName][pubPercentStr] !== undefined) {
-                 newValues[platformName][pubPercentStr] += (chargedPrintCost - actualPrintCost);
+                newValues[platformName][pubPercentStr] +=
+                  chargedPrintCost - actualPrintCost;
               } else {
-                 newValues[platformName][pubPercentStr] = (chargedPrintCost - actualPrintCost);
+                newValues[platformName][pubPercentStr] =
+                  chargedPrintCost - actualPrintCost;
               }
             }
           }
@@ -388,7 +396,9 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
       Swal.fire({
         icon: 'error',
         title: this.translateService.instant('error') || 'Error',
-        text: this.translateService.instant('pleaseresolveallformerrors') || 'Please resolve all form errors.',
+        text:
+          this.translateService.instant('pleaseresolveallformerrors') ||
+          'Please resolve all form errors.',
       });
       return;
     }
@@ -400,8 +410,9 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
     this.pricingControls().controls.forEach((ctrl) => {
       const val = ctrl.getRawValue();
       if (val.platform && val.salesPrice > 0) {
-        const platformId = this.platformService
-          .getPlatformByName(val.platform)?.id;
+        const platformId = this.platformService.getPlatformByName(
+          val.platform,
+        )?.id;
         if (platformId) {
           pricingData.push({
             id: val.id ?? undefined,
@@ -417,7 +428,9 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
       Swal.fire({
         icon: 'warning',
         title: this.translateService.instant('warning') || 'Warning',
-        text: this.translateService.instant('invalidpricingdata') || 'Please provide valid pricing data for available platforms.',
+        text:
+          this.translateService.instant('invalidpricingdata') ||
+          'Please provide valid pricing data for available platforms.',
       });
       return;
     }
@@ -473,19 +486,24 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
       Swal.fire({
         icon: 'warning',
         title: this.translateService.instant('warning') || 'Warning',
-        text: this.translateService.instant('invalidroyaltiesdata') || 'Please provide valid royalties.',
+        text:
+          this.translateService.instant('invalidroyaltiesdata') ||
+          'Please provide valid royalties.',
       });
       return;
     }
 
     try {
       if (this.isRaisingTicket()) {
-        const hasChanges = this.pricingControls().dirty || this.authorRoyalties().dirty;
+        const hasChanges =
+          this.pricingControls().dirty || this.authorRoyalties().dirty;
         if (!hasChanges) {
           await Swal.fire({
             icon: 'error',
             title: this.translateService.instant('error') || 'Error',
-            text: this.translateService.instant('nochangesdetected') || 'No changes detected. Please make changes before raising a ticket.',
+            text:
+              this.translateService.instant('nochangesdetected') ||
+              'No changes detected. Please make changes before raising a ticket.',
             heightAuto: false,
           });
           return;
@@ -505,7 +523,9 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
         await Swal.fire({
           icon: 'success',
           title: this.translateService.instant('success') || 'Success',
-          text: this.translateService.instant('updateticketrequestsent') || 'Request has been sent to superadmin for approval.',
+          text:
+            this.translateService.instant('updateticketrequestsent') ||
+            'Request has been sent to superadmin for approval.',
         });
 
         this.router.navigate(['/titles']);
@@ -525,17 +545,6 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
       this.pricingSaved.emit();
     } catch (error: any) {
       console.error('Error saving pricing and royalties:', error);
-      let errorMessage = 'Failed to save pricing and royalties. Please try again.';
-      if (error?.error?.message) {
-        errorMessage = error.error.message;
-      } else if (error?.message) {
-        errorMessage = error.message;
-      }
-      Swal.fire({
-        icon: 'error',
-        title: this.translateService.instant('error') || 'Error',
-        text: errorMessage,
-      });
     }
   }
 }

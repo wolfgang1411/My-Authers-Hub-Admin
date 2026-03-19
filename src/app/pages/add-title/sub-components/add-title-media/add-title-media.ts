@@ -33,6 +33,7 @@ import {
   TitleMediaGroup,
   TitleMediaType,
   PublishingType,
+  TitleStatus,
 } from '../../../../interfaces';
 import { getFileToBase64 } from '../../../../common/utils/file';
 import { LoaderService } from '../../../../services/loader';
@@ -57,6 +58,8 @@ export class AddTitleMedia implements OnInit {
   mediaArray = input.required<FormArray<FormGroup<TitleMediaGroup>>>();
   publishingType = input.required<PublishingType | null>();
   titleId = input.required<number>();
+  titleStatus = input<TitleStatus | null>(null);
+  accessLevel = input<string>('');
 
   uploadComplete = output<void>();
 
@@ -76,6 +79,14 @@ export class AddTitleMedia implements OnInit {
   controls = computed(
     () => this.mediaArray().controls as FormGroup<TitleMediaGroup>[],
   );
+
+  isRaisingTicket = computed(() => {
+    return (
+      (this.titleId() || 0) > 0 &&
+      this.titleStatus() === TitleStatus.APPROVED &&
+      this.accessLevel() === 'PUBLISHER'
+    );
+  });
 
   getDocumentLabel(mediaType?: TitleMediaType): string {
     switch (mediaType) {
@@ -230,7 +241,19 @@ export class AddTitleMedia implements OnInit {
         return;
       }
 
-      const results = await this.uploadMediaWithProgress(mediaToUpload);
+      const isRaisingTicket = this.isRaisingTicket();
+      const results = await this.uploadMediaWithProgress(
+        mediaToUpload,
+        isRaisingTicket,
+      );
+
+      if (isRaisingTicket) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Request Sent',
+          text: 'Media update request has been sent for approval.',
+        });
+      }
 
       if (results && results.length > 0) {
         // Update form with uploaded data
@@ -261,11 +284,6 @@ export class AddTitleMedia implements OnInit {
       this.uploadComplete.emit();
     } catch (error) {
       console.error('Error uploading media:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Upload Failed',
-        text: 'Failed to upload media files. Please try again.',
-      });
     } finally {
       this.isLoading.set(false);
     }
@@ -273,6 +291,7 @@ export class AddTitleMedia implements OnInit {
 
   private async uploadMediaWithProgress(
     mediaToUpload: { file: File; type: TitleMediaType }[],
+    isUpdateTicket: boolean = false,
   ): Promise<any[]> {
     const totalFiles = mediaToUpload.length;
     const results: any[] = [];
@@ -287,10 +306,18 @@ export class AddTitleMedia implements OnInit {
         `Uploading ${current} out of ${totalFiles} files`,
       );
 
-      const result = await this.titleService.uploadMedia(
-        this.titleId(),
-        mediaToUpload[i],
-      );
+      let result;
+      if (isUpdateTicket) {
+        result = await this.titleService.uploadMediaForUpdateTicket(
+          this.titleId(),
+          mediaToUpload[i],
+        );
+      } else {
+        result = await this.titleService.uploadMedia(
+          this.titleId(),
+          mediaToUpload[i],
+        );
+      }
       results.push(result);
     }
 

@@ -218,7 +218,11 @@
     <!-- Publisher Section -->
     <div class="border rounded-lg p-4 space-y-4" formGroupName="publisher">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
-        <mat-form-field class="w-full" subscriptSizing="dynamic">
+        <mat-form-field
+          class="w-full"
+          subscriptSizing="dynamic"
+          [class.ng-invalid]="detailsGroup().controls.publisher.invalid"
+        >
           <mat-label>Select Publisher</mat-label>
           <mat-select
             formControlName="id"
@@ -271,7 +275,7 @@
             <mat-form-field class="w-full" subscriptSizing="dynamic">
               <mat-label>Author</mat-label>
               <mat-select
-                formControlName="id"
+                [formControl]="item.controls.id"
                 (selectionChange)="onAuthorSelected($event.value, $index)"
               >
                 <mat-option>
@@ -294,7 +298,7 @@
               <mat-label>{{ "displaynameforauthor" | translate }}</mat-label>
               <input
                 matInput
-                formControlName="displayName"
+                [formControl]="item.controls.displayName"
                 [readonly]="item.controls.keepSame.value"
               />
             </mat-form-field>
@@ -310,7 +314,7 @@
           <div class="flex items-center gap-2">
             <input
               type="checkbox"
-              formControlName="keepSame"
+              [formControl]="item.controls.keepSame"
               class="w-4 h-4 cursor-pointer"
               (change)="onAuthorKeepSameChange($index, $event)"
             />

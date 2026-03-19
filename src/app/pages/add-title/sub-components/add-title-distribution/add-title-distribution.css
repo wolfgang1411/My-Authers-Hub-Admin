@@ -1,32 +1,28 @@
-.distribution-card {
-  @apply p-6 bg-white border border-gray-100 rounded-[1.5rem] shadow-sm cursor-pointer transition-all duration-300 hover:shadow-xl hover:border-primary/20 flex flex-col justify-between;
+::ng-deep .mat-icon.text-white {
+  color: white !important;
 }
 
-.distribution-card.active {
-  @apply border-primary bg-primary/5 ring-4 ring-primary/5 shadow-lg shadow-primary/10;
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-5px);
+  }
+  40% {
+    transform: translateX(5px);
+  }
+  60% {
+    transform: translateX(-5px);
+  }
+  80% {
+    transform: translateX(5px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
-.icon-container {
-  @apply p-3 bg-gray-50 rounded-2xl text-gray-400 transition-all duration-300;
-}
-
-.icon-container.active {
-  @apply bg-primary text-white shadow-lg shadow-primary/30;
-}
-
-.status-pill {
-  @apply px-3 py-1 bg-gray-100 text-gray-400 text-[10px] font-black uppercase rounded-full transition-all duration-300;
-}
-
-.status-pill.active {
-  @apply bg-primary text-white;
-}
-
-.animate-in {
-  animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+.shake {
+  animation: shake 0.4s ease-in-out;
 }
