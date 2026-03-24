@@ -86,6 +86,7 @@ export class AddTitlePrinting implements OnInit, OnDestroy {
   titleId = input<number | null>(null);
   titleStatus = input<TitleStatus | null>(null);
   accessLevel = input<string>('');
+  isRaisingTicket = input.required<boolean>();
 
   // Outputs
   saveComplete = output<void>();
@@ -139,14 +140,6 @@ export class AddTitlePrinting implements OnInit, OnDestroy {
     return (
       user?.accessLevel === 'SUPERADMIN' ||
       user?.publisher?.allowAuthorCopyPrice
-    );
-  });
-
-  isRaisingTicket = computed(() => {
-    return (
-      (this.titleId() || 0) > 0 &&
-      this.titleStatus() === TitleStatus.APPROVED &&
-      this.accessLevel() === 'PUBLISHER'
     );
   });
 
@@ -426,12 +419,7 @@ export class AddTitlePrinting implements OnInit, OnDestroy {
       return;
     }
 
-    const isValid = this.validateCustomPrintCost();
-    // console.log({ isValid });
-
-    // if (isValid) {
-    //   this.triggerCalculation();
-    // }
+    this.validateCustomPrintCost();
   }
 
   private validateCustomPrintCost(): boolean {
@@ -543,7 +531,7 @@ export class AddTitlePrinting implements OnInit, OnDestroy {
         paperQuailtyId: formVal.paperQuailtyId!,
         sizeId: formVal.sizeCategoryId!, // Wait, is it sizeId or sizeCategoryId?
         sizeCategoryId: formVal.realSizeCategoryId || formVal.sizeCategoryId!,
-        customPrintCost: formVal.customPrintCost || undefined,
+        customPrintCost: group.controls.customPrintCost.value || undefined,
         insideCover: !!formVal.insideCover,
         isColorPagesRandom: !!formVal.isColorPagesRandom,
         authorCopyPermissions: this.authorControls()?.map((ctrl: any) => ({

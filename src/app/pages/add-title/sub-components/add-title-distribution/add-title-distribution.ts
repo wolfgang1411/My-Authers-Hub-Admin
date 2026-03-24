@@ -54,7 +54,7 @@ export class AddTitleDistribution {
 
   submitComplete = output<void>();
   onPointsPurchased = output<void>();
-  
+
   isLoading = signal(false);
   animateBuyButton = signal<DistributionType | null>(null);
 
@@ -162,8 +162,10 @@ export class AddTitleDistribution {
       (g) => g.controls.type.value === DistributionType.Hardbound_National,
     );
 
-    const nationalIsSelected = nationalGroup?.controls.isSelected.value === true;
-    const hardboundIsSelected = hardboundGroup?.controls.isSelected.value === true;
+    const nationalIsSelected =
+      nationalGroup?.controls.isSelected.value === true;
+    const hardboundIsSelected =
+      hardboundGroup?.controls.isSelected.value === true;
 
     const nationalHasId =
       typeof nationalGroup?.controls.id.value === 'number' &&
@@ -186,15 +188,7 @@ export class AddTitleDistribution {
     return false;
   }
 
-  isRaisingTicket(): boolean {
-    const tId = this.titleId();
-    const status = this.titleStatus();
-    return (
-      (tId || 0) > 0 && 
-      status === TitleStatus.APPROVED && 
-      this.accessLevel() === 'PUBLISHER'
-    );
-  }
+  isRaisingTicket = input.required<boolean>();
 
   async onSubmit() {
     const form = this.distributionArray();
@@ -227,7 +221,9 @@ export class AddTitleDistribution {
     const distributionsToCreate = form.controls
       .filter(
         ({ controls: { isSelected, type } }) =>
-          isSelected.value && type.value && !existingTypes.includes(type.value as DistributionType),
+          isSelected.value &&
+          type.value &&
+          !existingTypes.includes(type.value as DistributionType),
       )
       .map(({ controls: { type } }) => type.value as DistributionType)
       .filter((type): type is DistributionType => !!type);

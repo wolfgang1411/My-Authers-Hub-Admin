@@ -80,13 +80,7 @@ export class AddTitleMedia implements OnInit {
     () => this.mediaArray().controls as FormGroup<TitleMediaGroup>[],
   );
 
-  isRaisingTicket = computed(() => {
-    return (
-      (this.titleId() || 0) > 0 &&
-      this.titleStatus() === TitleStatus.APPROVED &&
-      this.accessLevel() === 'PUBLISHER'
-    );
-  });
+  isRaisingTicket = input.required<boolean>();
 
   getDocumentLabel(mediaType?: TitleMediaType): string {
     switch (mediaType) {

@@ -1,6 +1,7 @@
 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
   <h3 class="heading">
     {{ "uploadtitle" | translate }}
+    {{ addTitleForm.controls.printingFormat.value }}
   </h3>
   <button mat-flat-button color="primary" (click)="goBack()">
     <mat-icon>arrow_back</mat-icon>
@@ -13,6 +14,7 @@
   [orientation]="(stepperOrientation | async)!"
   [linear]="true"
   [animationDuration]="'500'"
+  (selectionChange)="onStepChange($event)"
   #stepperForm
 >
   <!-- Format Selection (Step 0 - Only for new titles) -->
@@ -37,10 +39,12 @@
       #detailsComp
       [detailsGroup]="detailsGroup"
       [publishingType]="addTitleForm.controls.publishingType.value"
+      [printingFormat]="addTitleForm.controls.printingFormat.value"
       [titleId]="titleId()"
       [title]="title()"
       [titleStatus]="title()?.status || null"
       [accessLevel]="loggedInUser()?.accessLevel || ''"
+      [isRaisingTicket]="isRaisingTicket()"
       (saveComplete)="onDetailsSaveComplete($event)"
     ></app-add-title-details>
     <div class="flex justify-between mt-6">
@@ -53,7 +57,7 @@
         (click)="detailsComp.onSaveTitleDetails()"
         [disabled]="detailsComp.isLoading()"
       >
-        {{ (titleId() ? "save" : "continue") | translate }}
+        {{ nextText() }}
       </button>
     </div>
   </mat-step>
@@ -71,6 +75,7 @@
       [titleId]="titleId()"
       [titleStatus]="title()?.status || null"
       [accessLevel]="loggedInUser()?.accessLevel || ''"
+      [isRaisingTicket]="isRaisingTicket()"
       (uploadComplete)="goToNextStep()"
     ></app-add-title-media>
     <div class="flex justify-between mt-6">
@@ -83,7 +88,7 @@
         (click)="mediaComp.onMediaUpload()"
         [disabled]="mediaComp.isLoading()"
       >
-        {{ "next" | translate }}
+        {{ nextText() }}
       </button>
     </div>
   </mat-step>
@@ -107,6 +112,7 @@
         [titleStatus]="title()?.status || null"
         [accessLevel]="loggedInUser()?.accessLevel || ''"
         (saveComplete)="goToNextStep()"
+        [isRaisingTicket]="isRaisingTicket()"
       ></app-add-title-printing>
       <div class="flex justify-between mt-6">
         <button mat-stroked-button color="primary" (click)="goBack()">
@@ -118,92 +124,100 @@
           (click)="printingComp.onSavePrintingDetails()"
           [disabled]="printingComp.isLoading() || printingGroup().invalid"
         >
-          {{ "next" | translate }}
+          {{ nextText() }}
         </button>
       </div>
     </mat-step>
   }
 
   <!-- Pricing & Royalty (Step 4) -->
-  <mat-step
-    [stepControl]="pricingGroupControls"
-    label="Pricing & Royalty"
-    [completed]="authorRoyaltiesController.valid && pricingGroupControls.valid"
-  >
-    <app-add-title-pricing-royalty
-      #pricingComp
-      [pricingControls]="pricingGroupControls"
-      [authorRoyalties]="authorRoyaltiesController"
-      [msp]="$any(printingGroup().controls.msp.value || 0)"
-      [printingPrice]="$any(printingGroup().controls.printingPrice.value || 0)"
-      [customPrintCost]="$any(printingGroup().controls.customPrintCost.value)"
-      [authors]="$any(detailsGroup.controls.authorIds.getRawValue())"
-      [publisher]="$any(detailsGroup.controls.publisher.getRawValue())"
-      [publishingType]="$any(addTitleForm.controls.publishingType.value)"
-      [accessLevel]="$any(loggedInUser()?.accessLevel || '')"
-      [titleId]="titleId()"
-      [titleStatus]="title()?.status || null"
-      (pricingSaved)="goToNextStep()"
-    ></app-add-title-pricing-royalty>
-    <div class="flex justify-between mt-6">
-      <button mat-stroked-button color="primary" (click)="goBack()">
-        Back
-      </button>
-      <button
-        mat-flat-button
-        color="primary"
-        (click)="pricingComp.onSavePricingDetails()"
-        [disabled]="
-          addTitleForm.controls.pricing.invalid ||
-          authorRoyaltiesController.invalid
-        "
-      >
-        {{ "next" | translate }}
-      </button>
-    </div>
-  </mat-step>
-
-  <!-- Distribution (Step 5) -->
-  <mat-step
-    [stepControl]="distributionGroupControls"
-    label="Distribution"
-    [completed]="
-      pricingGroupControls.valid &&
-      authorRoyaltiesController.valid &&
-      distributionGroupControls.valid
-    "
-  >
-    <app-add-title-distribution
-      #distributionComp
-      [distributionArray]="distributionGroupControls"
-      [addTitleForm]="$any(addTitleForm)"
-      [titleId]="titleId()"
-      [publisherId]="detailsGroup.controls.publisher.value.id || undefined"
-      [publisherName]="
-        detailsGroup.controls.publisher.value.displayName ||
-        detailsGroup.controls.publisher.value.name ||
-        undefined
+  @if (addTitleForm.controls.printingFormat.value !== "printOnly") {
+    <mat-step
+      [stepControl]="pricingGroupControls"
+      label="Pricing & Royalty"
+      [completed]="
+        authorRoyaltiesController.valid && pricingGroupControls.valid
       "
-      [returnUrl]="'/admin/titles/' + titleId()"
-      [isHardBoundAllowed]="isHardBoundAllowed()"
-      [publishingType]="$any(addTitleForm.controls.publishingType.value)"
-      [titleStatus]="title()?.status || null"
-      [accessLevel]="loggedInUser()?.accessLevel || ''"
-      (onPointsPurchased)="fetchAndUpdatePublishingPoints()"
-      (submitComplete)="onSubmitComplete()"
-    ></app-add-title-distribution>
-    <div class="flex justify-between mt-6">
-      <button mat-stroked-button color="primary" (click)="goBack()">
-        Back
-      </button>
-      <button
-        mat-flat-button
-        color="primary"
-        (click)="distributionComp.onSubmit()"
-        [disabled]="distributionComp.isLoading() || addTitleForm.invalid"
-      >
-        {{ "submit" | translate }}
-      </button>
-    </div>
-  </mat-step>
+    >
+      <app-add-title-pricing-royalty
+        #pricingComp
+        [pricingControls]="pricingGroupControls"
+        [authorRoyalties]="authorRoyaltiesController"
+        [msp]="$any(printingGroup().controls.msp.value || 0)"
+        [printingPrice]="
+          $any(printingGroup().controls.printingPrice.value || 0)
+        "
+        [customPrintCost]="$any(printingGroup().controls.customPrintCost.value)"
+        [authors]="$any(detailsGroup.controls.authorIds.getRawValue())"
+        [publisher]="$any(detailsGroup.controls.publisher.getRawValue())"
+        [publishingType]="$any(addTitleForm.controls.publishingType.value)"
+        [accessLevel]="$any(loggedInUser()?.accessLevel || '')"
+        [titleId]="titleId()"
+        [titleStatus]="title()?.status || null"
+        (pricingSaved)="goToNextStep()"
+        [isRaisingTicket]="isRaisingTicket()"
+      ></app-add-title-pricing-royalty>
+      <div class="flex justify-between mt-6">
+        <button mat-stroked-button color="primary" (click)="goBack()">
+          Back
+        </button>
+        <button
+          mat-flat-button
+          color="primary"
+          (click)="pricingComp.onSavePricingDetails()"
+          [disabled]="
+            addTitleForm.controls.pricing.invalid ||
+            authorRoyaltiesController.invalid
+          "
+        >
+          {{ nextText() }}
+        </button>
+      </div>
+    </mat-step>
+
+    <!-- Distribution (Step 5) -->
+    <mat-step
+      [stepControl]="distributionGroupControls"
+      label="Distribution"
+      [completed]="
+        pricingGroupControls.valid &&
+        authorRoyaltiesController.valid &&
+        distributionGroupControls.valid
+      "
+    >
+      <app-add-title-distribution
+        #distributionComp
+        [distributionArray]="distributionGroupControls"
+        [addTitleForm]="$any(addTitleForm)"
+        [titleId]="titleId()"
+        [publisherId]="detailsGroup.controls.publisher.value.id || undefined"
+        [publisherName]="
+          detailsGroup.controls.publisher.value.displayName ||
+          detailsGroup.controls.publisher.value.name ||
+          undefined
+        "
+        [returnUrl]="'/admin/titles/' + titleId()"
+        [isHardBoundAllowed]="isHardBoundAllowed()"
+        [publishingType]="$any(addTitleForm.controls.publishingType.value)"
+        [titleStatus]="title()?.status || null"
+        [accessLevel]="loggedInUser()?.accessLevel || ''"
+        (onPointsPurchased)="fetchAndUpdatePublishingPoints()"
+        (submitComplete)="onSubmitComplete()"
+        [isRaisingTicket]="isRaisingTicket()"
+      ></app-add-title-distribution>
+      <div class="flex justify-between mt-6">
+        <button mat-stroked-button color="primary" (click)="goBack()">
+          Back
+        </button>
+        <button
+          mat-flat-button
+          color="primary"
+          (click)="distributionComp.onSubmit()"
+          [disabled]="distributionComp.isLoading() || addTitleForm.invalid"
+        >
+          {{ nextText() }}
+        </button>
+      </div>
+    </mat-step>
+  }
 </mat-stepper>

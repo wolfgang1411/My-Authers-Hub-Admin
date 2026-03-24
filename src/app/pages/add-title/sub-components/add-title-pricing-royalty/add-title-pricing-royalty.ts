@@ -97,13 +97,7 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
     return Math.max(0, 100 - this.totalAuthorsPercent());
   });
 
-  isRaisingTicket = computed(() => {
-    return (
-      (this.titleId() || 0) > 0 &&
-      this.titleStatus() === 'APPROVED' &&
-      this.accessLevel() === 'PUBLISHER'
-    );
-  });
+  isRaisingTicket = input.required<boolean>();
 
   // platformName -> { percentageString: calculatedAmount }
   royaltyValues = signal<Record<string, Record<string, number>>>({});

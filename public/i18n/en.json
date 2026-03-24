@@ -989,5 +989,7 @@
   "paymentmethod": "Payment Method",
   "onlinepayment": "Online Payment",
   "packingcostmultiplayer": "Packing cost multiplayer",
-  "publishbookdetils": "Title Details"
+  "publishbookdetils": "Title Details",
+  "continue": "Continue",
+  "upload": "Upload"
 }

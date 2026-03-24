@@ -128,10 +128,14 @@
                   >₹</span
                 >
                 <input
+                  #customPriceRef
                   type="number"
-                  formControlName="customPrintCost"
+                  [formControl]="printingGroup().controls.customPrintCost"
                   step="0.01"
                   min="0"
+                  (scroll)="customPriceRef.blur()"
+                  (wheel)="customPriceRef.blur()"
+                  (mousewheel)="customPriceRef.blur()"
                   placeholder="Enter custom cost"
                   class="w-full pl-6 pr-3 py-2 text-2xl font-bold text-purple-800 bg-transparent border-b-2 border-purple-300 focus:outline-none focus:border-purple-500"
                   (blur)="onCustomPrintCostBlur()"

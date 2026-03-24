@@ -20,7 +20,10 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { StepperOrientation } from '@angular/cdk/stepper';
+import {
+  StepperOrientation,
+  StepperSelectionEvent,
+} from '@angular/cdk/stepper';
 import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -178,6 +181,49 @@ export class AddTitle implements OnInit, OnDestroy {
   // Re-map relevant types to local component for template access
   PublishingType = PublishingType;
 
+  accessLevel = computed(() => {
+    const loggedInUser = this.loggedInUser();
+    return loggedInUser?.accessLevel;
+  });
+
+  titleStatus = computed(() => {
+    const title = this.title();
+    return title?.status;
+  });
+
+  isRaisingTicket = computed(() => {
+    return (
+      (this.titleId() || 0) > 0 &&
+      this.titleStatus() === TitleStatus.APPROVED &&
+      this.accessLevel() === 'PUBLISHER'
+    );
+  });
+
+  currentStepIndex = signal<number>(0);
+
+  onStepChange(event: StepperSelectionEvent) {
+    this.currentStepIndex.set(event.selectedIndex);
+  }
+
+  nextText = computed(() => {
+    const isRaisingTicket = this.isRaisingTicket();
+    const actionText = isRaisingTicket ? 'Raise Ticket' : 'Save';
+
+    const stepperInstance = this.stepper();
+    const index = this.currentStepIndex();
+
+    let isLastStep = false;
+    if (stepperInstance && stepperInstance.steps) {
+      isLastStep = index === stepperInstance.steps.length - 1;
+    }
+
+    if (isLastStep) {
+      return `${actionText} & Close`;
+    }
+
+    return `${actionText} & Next`;
+  });
+
   async ngOnInit() {
     const { items: bindingTypes } = await this.printingService.getBindingType();
     this.bindingType = bindingTypes;
@@ -187,6 +233,13 @@ export class AddTitle implements OnInit, OnDestroy {
     } else {
       await this.initMediaArray();
     }
+
+    // const loggedInUser = this.loggedInUser();
+    // if (loggedInUser?.accessLevel === 'PUBLISHER' && !this.titleId()) {
+    //   this.detailsGroup.controls.publisher.controls.id.setValue(
+    //     loggedInUser.publisher?.id,
+    //   );
+    // }
 
     // Listen for publisher changes to fetch points
     this.detailsGroup.controls.publisher.controls.id.valueChanges
@@ -249,6 +302,12 @@ export class AddTitle implements OnInit, OnDestroy {
         }
       });
 
+    this.addTitleForm.controls.publishingType.valueChanges.subscribe(
+      (value) => {
+        if (value) this.handlePublishingTypeChange(value);
+      },
+    );
+
     // Binding for manageIsbnRequired
     this.addTitleForm.controls.publishingType.valueChanges
       .pipe(
@@ -269,6 +328,37 @@ export class AddTitle implements OnInit, OnDestroy {
 
     this.setupMediaListeners();
     this.cdr.markForCheck();
+  }
+
+  handlePublishingTypeChange(value: PublishingType) {
+    let controlToDisable: PricingGroup[] = [];
+    if (value === PublishingType.ONLY_EBOOK) {
+      controlToDisable = this.pricingGroupControls.controls.filter(
+        (control) => {
+          const platform = this.platformService
+            .platforms$()
+            .find(({ name }) => name === control.controls.platform.value);
+
+          return !platform!?.isEbookPlatform;
+        },
+      );
+    }
+
+    if (value === PublishingType.ONLY_PRINT) {
+      controlToDisable = this.pricingGroupControls.controls.filter(
+        (control) => {
+          const platform = this.platformService
+            .platforms$()
+            .find(({ name }) => name === control.controls.platform.value);
+
+          return platform!?.isEbookPlatform;
+        },
+      );
+    }
+
+    controlToDisable.forEach((control) => {
+      control.disable();
+    });
   }
 
   ngOnDestroy(): void {
@@ -420,6 +510,10 @@ export class AddTitle implements OnInit, OnDestroy {
     this.printingGroup().controls.totalPages.patchValue(
       interiorMedia?.noOfPages || 0,
     );
+
+    if (title.publishingType) {
+      this.handlePublishingTypeChange(title.publishingType);
+    }
 
     // Prefill Pricing
     if (title.pricing && title.pricing.length > 0) {
@@ -1104,7 +1198,16 @@ export class AddTitle implements OnInit, OnDestroy {
     const stepperInstance = this.stepper();
     if (!stepperInstance) return;
 
+    const stepOrder = this.getStepOrder();
+    const currentIndex = stepperInstance.selectedIndex;
+
+    if (currentIndex >= stepOrder.length - 1) {
+      this.onSubmitComplete();
+      return;
+    }
+
     stepperInstance.next();
+    this.currentStepIndex.set(stepperInstance.selectedIndex);
     const nextStepName = this.getStepNameFromIndex(
       stepperInstance.selectedIndex,
     );
@@ -1117,6 +1220,7 @@ export class AddTitle implements OnInit, OnDestroy {
     const stepperInstance = this.stepper();
     if (stepperInstance && stepperInstance.selectedIndex > 0) {
       stepperInstance.previous();
+      this.currentStepIndex.set(stepperInstance.selectedIndex);
       const prevStepName = this.getStepNameFromIndex(
         stepperInstance.selectedIndex,
       );
@@ -1164,11 +1268,18 @@ export class AddTitle implements OnInit, OnDestroy {
   // Placeholder for step order logic (similar to title-form-temp but cleaner)
   getStepOrder(): string[] {
     const publishingType = this.addTitleForm.get('publishingType')?.value;
+    const printingFormat = this.addTitleForm.get('printingFormat')?.value;
     const base = ['details', 'documents', 'print', 'pricing', 'distribution'];
-    let order =
-      publishingType === PublishingType.ONLY_EBOOK
-        ? base.filter((s) => s !== 'print')
-        : base;
+
+    let order = base;
+
+    if (publishingType === PublishingType.ONLY_EBOOK) {
+      order = order.filter((s) => s !== 'print');
+    }
+
+    if (printingFormat === 'printOnly') {
+      order = order.filter((s) => s !== 'pricing' && s !== 'distribution');
+    }
 
     if (this.isNewTitle()) {
       order = ['format', ...order];

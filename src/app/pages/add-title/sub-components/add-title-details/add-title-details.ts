@@ -91,6 +91,7 @@ import { cleanIsbn } from '../../../../shared/utils/isbn.utils';
 export class AddTitleDetails implements OnInit, OnDestroy {
   detailsGroup = input.required<FormGroup<TitleDetailsFormGroup>>();
   publishingType = input.required<PublishingType | null>();
+  printingFormat = input.required<string | null>();
   titleId = input<number | null>(null);
   title = input<Title | null>(null);
   titleStatus = input<TitleStatus | null>(null);
@@ -114,14 +115,7 @@ export class AddTitleDetails implements OnInit, OnDestroy {
 
   loggedInUser = this.userService.loggedInUser$;
 
-  isRaisingTicket = computed(() => {
-    return (
-      (this.titleId() || 0) > 0 &&
-      this.titleStatus() === TitleStatus.APPROVED &&
-      this.accessLevel() === 'PUBLISHER'
-    );
-  });
-
+  isRaisingTicket = input.required<boolean>();
   public Editor = ClassicEditor as any;
   public editorConfig: any = {
     toolbar: {
@@ -651,9 +645,7 @@ export class AddTitleDetails implements OnInit, OnDestroy {
         longDescription: titleDetails.longDescription,
         edition: titleDetails.edition,
         keywords: titleDetails.autoKeywords || titleDetails.manualKeywords,
-        printingOnly:
-          (this.route.snapshot.queryParams as any).printingFormat ===
-          'printOnly', // fallback or handle via prop
+        printingOnly: this.printingFormat() === 'printOnly',
         isUniqueIdentifier: false,
         launch_date: (() => {
           const dateVal = titleDetails.launch_date;
@@ -664,6 +656,11 @@ export class AddTitleDetails implements OnInit, OnDestroy {
         ...(validAuthors.length > 0 && { authorIds: validAuthors }),
         id: this.titleId() || undefined,
       } as TitleCreate;
+
+      console.log({
+        basicData,
+        d: this.printingFormat(),
+      });
 
       // Special case: Approved Title + Publisher -> Update Ticket
       if (this.isRaisingTicket()) {
