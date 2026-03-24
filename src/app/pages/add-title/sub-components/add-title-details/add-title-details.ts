@@ -673,7 +673,7 @@ export class AddTitleDetails implements OnInit, OnDestroy {
           title: 'Request Sent',
           text: 'Request has been sent to superadmin for approval.',
         });
-        this.saveComplete.emit({ id: this.titleId()!, isContinue: false });
+        this.saveComplete.emit({ id: this.titleId()!, isContinue: true });
         return;
       }
 

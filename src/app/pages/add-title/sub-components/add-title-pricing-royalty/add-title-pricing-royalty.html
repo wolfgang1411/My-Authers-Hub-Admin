@@ -202,7 +202,7 @@
           class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
         >
           @for (
-            item of visiblePricingControls();
+            item of visiblePricingControls;
             track item.controls.platform.value
           ) {
             @if (item.enabled) {
@@ -513,9 +513,12 @@
                     (scroll)="authPerRef.blur()"
                     (wheel)="authPerRef.blur()"
                     (mousewheel)="authPerRef.blur()"
-                    [class.opacity-50]="!areFormsValid()"
-                    [class.cursor-not-allowed]="!areFormsValid()"
                     class="w-full px-3 py-2 border rounded-md"
+                    [ngClass]="{
+                      'border-red-400 bg-red-50':
+                        authorCtrl.controls.percentage.invalid &&
+                        (authorCtrl.controls.percentage.touched || authorCtrl.controls.percentage.dirty)
+                    }"
                     placeholder="%"
                   />
                   <span class="text-sm">%</span>
@@ -549,13 +552,7 @@
             </div>
 
             <!-- RIGHT -->
-            <div
-              class="text-xl sm:text-2xl font-bold"
-              [ngClass]="{
-                'text-blue-700': areFormsValid(),
-                'text-gray-400': !areFormsValid(),
-              }"
-            >
+            <div class="text-xl sm:text-2xl font-bold text-blue-700">
               {{ publisherPercentage() | number: "1.2-2" }}%
             </div>
           </div>

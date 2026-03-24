@@ -228,6 +228,16 @@ export class AddTitle implements OnInit, OnDestroy {
     const { items: bindingTypes } = await this.printingService.getBindingType();
     this.bindingType = bindingTypes;
 
+    if (this.platformService.getPlatformNames().length === 0) {
+      await this.platformService.fetchPlatforms();
+    }
+
+    if (this.pricingGroupControls.length === 0) {
+      this.createPricingArrayTemp().controls.forEach(ctrl => {
+        this.pricingGroupControls.push(ctrl);
+      });
+    }
+
     if (this.titleId()) {
       await this.fetchAndUpdateTitle();
     } else {
@@ -331,6 +341,15 @@ export class AddTitle implements OnInit, OnDestroy {
   }
 
   handlePublishingTypeChange(value: PublishingType) {
+    // First enable all controls and re-evaluate their disabled state individually
+    this.pricingGroupControls.controls.forEach((control) => {
+      control.enable({ emitEvent: false });
+      // Restore salesPrice disabled state if isSameAsMrp is true
+      if (control.controls.isSameAsMrp.value) {
+        control.controls.salesPrice.disable({ emitEvent: false });
+      }
+    });
+
     let controlToDisable: PricingGroup[] = [];
     if (value === PublishingType.ONLY_EBOOK) {
       controlToDisable = this.pricingGroupControls.controls.filter(
@@ -339,25 +358,23 @@ export class AddTitle implements OnInit, OnDestroy {
             .platforms$()
             .find(({ name }) => name === control.controls.platform.value);
 
-          return !platform!?.isEbookPlatform;
+          return !platform?.isEbookPlatform;
         },
       );
-    }
-
-    if (value === PublishingType.ONLY_PRINT) {
+    } else if (value === PublishingType.ONLY_PRINT) {
       controlToDisable = this.pricingGroupControls.controls.filter(
         (control) => {
           const platform = this.platformService
             .platforms$()
             .find(({ name }) => name === control.controls.platform.value);
 
-          return platform!?.isEbookPlatform;
+          return !!platform?.isEbookPlatform;
         },
       );
     }
 
     controlToDisable.forEach((control) => {
-      control.disable();
+      control.disable({ emitEvent: false });
     });
   }
 

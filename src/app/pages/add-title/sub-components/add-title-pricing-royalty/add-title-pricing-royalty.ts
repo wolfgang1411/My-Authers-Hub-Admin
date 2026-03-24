@@ -102,7 +102,7 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
   // platformName -> { percentageString: calculatedAmount }
   royaltyValues = signal<Record<string, Record<string, number>>>({});
 
-  visiblePricingControls = computed(() => {
+  get visiblePricingControls() {
     const controls = this.pricingControls().controls;
 
     // Filter controls based on access level
@@ -118,7 +118,7 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
           .find((p) => p.name === control.controls.platform.value)
           ?.isSuperAdminPricingOnly,
     );
-  });
+  }
 
   constructor() {
     effect(() => {
@@ -162,6 +162,7 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
 
       // Update the reactive signal manually after bulk change
       this.updateTotalAuthorsPercent();
+      formArray.updateValueAndValidity({ emitEvent: false });
     });
   }
 
