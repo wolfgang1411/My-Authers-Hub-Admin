@@ -509,14 +509,15 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
         const hasChanges =
           this.pricingControls().dirty || this.authorRoyalties().dirty;
         if (!hasChanges) {
-          await Swal.fire({
-            icon: 'error',
-            title: this.translateService.instant('error') || 'Error',
-            text:
-              this.translateService.instant('nochangesdetected') ||
-              'No changes detected. Please make changes before raising a ticket.',
-            heightAuto: false,
-          });
+          this.pricingSaved.emit();
+          // await Swal.fire({
+          //   icon: 'error',
+          //   title: this.translateService.instant('error') || 'Error',
+          //   text:
+          //     this.translateService.instant('nochangesdetected') ||
+          //     'No changes detected. Please make changes before raising a ticket.',
+          //   heightAuto: false,
+          // });
           return;
         }
 
@@ -539,7 +540,8 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
             'Request has been sent to superadmin for approval.',
         });
 
-        this.router.navigate(['/titles']);
+        this.pricingSaved.emit();
+        // this.router.navigate(['/titles']);
         return;
       }
 

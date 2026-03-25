@@ -203,6 +203,12 @@ export class AddTitle implements OnInit, OnDestroy {
 
   onStepChange(event: StepperSelectionEvent) {
     this.currentStepIndex.set(event.selectedIndex);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { step: event.selectedIndex },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
   }
 
   nextText = computed(() => {
@@ -338,6 +344,23 @@ export class AddTitle implements OnInit, OnDestroy {
 
     this.setupMediaListeners();
     this.cdr.markForCheck();
+
+    this.restoreStep();
+  }
+
+  private restoreStep() {
+    const step = this.route.snapshot.queryParamMap.get('step');
+    if (step !== null) {
+      const index = Number(step);
+      setTimeout(() => {
+        const stepperInstance = this.stepper();
+        if (stepperInstance && stepperInstance.steps && index < stepperInstance.steps.length) {
+          stepperInstance.selectedIndex = index;
+          this.currentStepIndex.set(index);
+          this.cdr.markForCheck();
+        }
+      }, 500); // Small delay to wait for steps template to properly evaluate form groups' valid status
+    }
   }
 
   handlePublishingTypeChange(value: PublishingType) {

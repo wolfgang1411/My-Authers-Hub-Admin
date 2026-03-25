@@ -7,8 +7,8 @@ export class LoaderService {
   private loadingAreas = new BehaviorSubject<string[]>([]);
 
   isLoading$ = this.loadingAreas.pipe(
-    debounceTime(100),
-    map((areas) => areas.length > 0)
+    debounceTime(500),
+    map((areas) => areas.length > 0),
   );
   loadingAreas$ = this.loadingAreas.asObservable();
 
@@ -34,8 +34,8 @@ export class LoaderService {
     } finally {
       this[isPrivate ? 'privateLoadingAreas' : 'loadingAreas'].next(
         this[isPrivate ? 'privateLoadingAreas' : 'loadingAreas'].value.filter(
-          (v) => v !== loadingArea
-        )
+          (v) => v !== loadingArea,
+        ),
       );
     }
   }
@@ -44,8 +44,8 @@ export class LoaderService {
     combineLatest([this.loadingAreas$, this.privateLoadingAreas$]).pipe(
       map(
         ([areas, privateAreas]) =>
-          areas.includes(name) || privateAreas.includes(name)
-      )
+          areas.includes(name) || privateAreas.includes(name),
+      ),
     );
 
   setLoadingMessage(message: string | null) {

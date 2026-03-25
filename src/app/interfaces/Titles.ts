@@ -448,6 +448,7 @@ export interface PrintingCreate {
   customPrintCost?: number;
   insideCover: boolean;
   isColorPagesRandom: boolean;
+  insideCoverImage?: string;
   authorCopyPermissions?: Array<{
     authorId: number;
     allowAuthorCopy?: boolean;

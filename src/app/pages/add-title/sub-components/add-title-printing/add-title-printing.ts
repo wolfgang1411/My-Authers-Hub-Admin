@@ -53,6 +53,7 @@ import { TitleService } from '../../../titles/title-service';
 import { UserService } from '../../../../services/user';
 import Swal from 'sweetalert2';
 import { selectFile, getFileToBase64 } from '../../../../common/utils/file';
+import { S3Service } from 'src/app/services/s3';
 
 @Component({
   selector: 'app-add-title-printing',
@@ -77,6 +78,7 @@ export class AddTitlePrinting implements OnInit, OnDestroy {
   private readonly printingService = inject(PrintingService);
   private readonly userService = inject(UserService);
   private readonly titleService = inject(TitleService);
+  private readonly s3Service = inject(S3Service);
 
   // Inputs
   printingGroup = input.required<FormGroup<PrintingFormGroup>>();
@@ -496,12 +498,22 @@ export class AddTitlePrinting implements OnInit, OnDestroy {
 
       const titleId = this.titleId();
 
+      let insideCoverImage: string | undefined = undefined;
+
       if (insideCoverControl && insideCoverControl.controls.file.value) {
         if (titleId) {
-          await this.titleService.uploadMedia(titleId, {
-            file: insideCoverControl.controls.file.value,
-            type: TitleMediaType.INSIDE_COVER,
-          });
+          if (!this.isRaisingTicket()) {
+            await this.titleService.uploadMedia(titleId, {
+              file: insideCoverControl.controls.file.value,
+              type: TitleMediaType.INSIDE_COVER,
+            });
+          } else {
+            const { name } = await this.s3Service.uploadMedia(
+              insideCoverControl.controls.file.value,
+            );
+            insideCoverImage = name;
+          }
+
           // Clear file after upload
           insideCoverControl.controls.file.setValue(null);
           insideCoverControl.controls.file.removeValidators(
@@ -538,19 +550,34 @@ export class AddTitlePrinting implements OnInit, OnDestroy {
           authorId: ctrl.controls.id.value,
           allowAuthorCopy: !!ctrl.controls.allowAuthorCopy.value,
         })),
+        insideCoverImage,
       };
 
       // 3. Save or Create Ticket
       if (this.isRaisingTicket()) {
-        await this.titleService.createTitlePrintingUpdateTicket(
-          titleId,
-          payload,
-        );
-        Swal.fire({
-          icon: 'success',
-          title: 'Request Sent',
-          text: 'Printing update request has been sent for approval.',
-        });
+        const temp: any = {};
+
+        for (const key of Object.keys(payload)) {
+          const controller = (this.printingGroup().controls as any)[
+            key
+          ] as AbstractControl | null;
+
+          if (!controller || controller.touched) {
+            temp[key] = (payload as any)[key];
+          }
+        }
+
+        if (Object.keys(temp).length > 0) {
+          await this.titleService.createTitlePrintingUpdateTicket(
+            titleId,
+            temp,
+          );
+          Swal.fire({
+            icon: 'success',
+            title: 'Request Sent',
+            text: 'Printing update request has been sent for approval.',
+          });
+        }
       } else {
         const result = await this.titleService.createOrUpdatePrinting(payload);
         if (result && result.id) {
