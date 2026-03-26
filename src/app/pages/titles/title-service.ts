@@ -92,6 +92,17 @@ export class TitleService {
     }
   }
 
+  async getPublicTitles(filter?: TitleFilter) {
+    try {
+      return await this.loader.loadPromise(
+        this.server.get<Pagination<Title>>('titles/public', filter),
+      );
+    } catch (error) {
+      this.logger.logError(error);
+      throw error;
+    }
+  }
+
   async getTitles(filter?: TitleFilter) {
     try {
       const temp: any = {};

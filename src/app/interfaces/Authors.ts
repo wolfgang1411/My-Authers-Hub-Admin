@@ -87,6 +87,4 @@ export interface SharedAuthorProfile {
   socialMedias: socialMediaGroup[];
   noOfTitles: number;
   booksSold: number;
-  platformLinks: SharedPlatformLink[];
-  titles: SharedAuthorTitle[];
 }

@@ -10,11 +10,12 @@ import { SafeUrlPipe } from '../../pipes/safe-url-pipe';
 import { CommonModule } from '@angular/common';
 import { Back } from '../../components/back/back';
 import { UserService } from '../../services/user';
-import { User } from '../../interfaces';
+import { Title, TitleFilter, TitleGenre, User } from '../../interfaces';
 import { Signal } from '@angular/core';
 import { AuthService } from '../../services/auth';
 import { SharedAuthorProfile } from '../../interfaces/Authors';
 import { AngularSvgIconModule } from 'angular-svg-icon';
+import { TitleService } from '../titles/title-service';
 
 @Component({
   selector: 'app-shared-author-view',
@@ -34,7 +35,19 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
 })
 export class SharedAuthorView implements OnInit {
   id!: number;
+
+  titleFilter = signal<TitleFilter>({
+    itemsPerPage: 5,
+    page: 1,
+    authorIds: this.id,
+    orderBy: 'totalSales',
+    orderByVal: 'desc',
+  });
+  titleLastPage = signal(1);
+
   authorData = signal<SharedAuthorProfile | null>(null);
+  authorTitles = signal<Title[]>([]);
+  authorGenras = signal<TitleGenre[]>([]);
   isLoading = signal(false);
   error = signal<string | null>(null);
   loggedInUser!: Signal<User | null>;
@@ -44,7 +57,7 @@ export class SharedAuthorView implements OnInit {
     private route: ActivatedRoute,
     private authorsService: AuthorsService,
     private userService: UserService,
-    private authService: AuthService
+    private readonly titleService: TitleService,
   ) {
     this.loggedInUser = this.userService.loggedInUser$;
   }
@@ -52,8 +65,24 @@ export class SharedAuthorView implements OnInit {
   ngOnInit() {
     this.route.params.subscribe(({ id }) => {
       this.id = Number(id);
+      this.titleFilter.set({
+        ...this.titleFilter(),
+        authorIds: this.id,
+      });
       this.fetchProfile();
+      this.fetchAndUpdateTitle();
+      this.fetchAuthorGenras();
     });
+  }
+
+  async fetchAuthorGenras() {
+    try {
+      const data = await this.authorsService.getAuthorGenras(this.id);
+      this.authorGenras.set(data);
+    } catch (error: any) {
+      console.error('Error fetching author genras:', error);
+      this.error.set(error?.error?.message || 'Failed to load author genras');
+    }
   }
 
   async fetchProfile() {
@@ -65,10 +94,27 @@ export class SharedAuthorView implements OnInit {
     } catch (error: any) {
       console.error('Error fetching shared author profile:', error);
       this.error.set(
-        error?.error?.message || 'Failed to load shared author profile'
+        error?.error?.message || 'Failed to load shared author profile',
       );
     } finally {
       this.isLoading.set(false);
+    }
+  }
+
+  async fetchAndUpdateTitle() {
+    try {
+      const filter = this.titleFilter();
+      const data = await this.titleService.getPublicTitles(filter);
+      this.authorTitles.update((titles) => {
+        if (filter.page === 1) {
+          return data.items;
+        }
+        return [...titles, ...data.items];
+      });
+      this.titleLastPage.set(Math.ceil(data.totalCount / data.itemsPerPage));
+    } catch (error: any) {
+      console.error('Error fetching titles:', error);
+      this.error.set(error?.error?.message || 'Failed to load titles');
     }
   }
 
@@ -79,7 +125,7 @@ export class SharedAuthorView implements OnInit {
 
   getPlatformIconUrl(
     platformIcon?: string,
-    platformName?: string
+    platformName?: string,
   ): string | null {
     // If platform has an icon URL, use it
     if (platformIcon && platformIcon.trim().length > 0) {
