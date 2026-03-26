@@ -430,7 +430,11 @@ export class ISBNList implements OnInit, OnDestroy {
 
   fetchIsbnList() {
     const filter = { ...this.filter };
-    if (filter.status === undefined || filter.status === null) {
+    if (
+      filter.status === undefined ||
+      filter.status === null ||
+      (filter.status as any) === 'ALL'
+    ) {
       delete filter.status;
     }
 

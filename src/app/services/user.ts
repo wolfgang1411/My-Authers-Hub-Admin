@@ -23,7 +23,7 @@ export class UserService {
     private server: Server,
     private logger: Logger,
     private loader: LoaderService,
-    private s3Upload: S3Service
+    private s3Upload: S3Service,
   ) {}
 
   private loggedInUser = signal<User | null>(null);
@@ -44,19 +44,13 @@ export class UserService {
 
   async fetchUsers(filter: UserFilter) {
     try {
-      const { status, accessLevel = 'USER', ...rest } = filter || {};
-      const normalizedStatus = Array.isArray(status)
-        ? status
-        : status
-          ? [status]
-          : undefined;
+      const { accessLevel = 'USER', ...rest } = filter || {};
 
       return await this.loader.loadPromise(
         this.server.get<Pagination<User>>('users', {
           ...rest,
-          status: normalizedStatus,
           accessLevel,
-        })
+        }),
       );
     } catch (error) {
       this.logger.logError(error);
@@ -66,7 +60,9 @@ export class UserService {
 
   async fetchUser(id: number) {
     try {
-      return await this.loader.loadPromise(this.server.get<User>(`users/${id}`));
+      return await this.loader.loadPromise(
+        this.server.get<User>(`users/${id}`),
+      );
     } catch (error) {
       this.logger.logError(error);
       throw error;
@@ -76,7 +72,7 @@ export class UserService {
   async getUserById(userId: number) {
     try {
       return await this.loader.loadPromise(
-        this.server.get<UpdateUser>(`users/${userId}`)
+        this.server.get<UpdateUser>(`users/${userId}`),
       );
     } catch (error) {
       this.logger.logError(error);
@@ -105,7 +101,7 @@ export class UserService {
   async raisingTicket(data: UpdateUserWithTicket) {
     try {
       return await this.loader.loadPromise(
-        this.server.post<UpdateUserWithTicket>('update-ticket', data)
+        this.server.post<UpdateUserWithTicket>('update-ticket', data),
       );
     } catch (error) {
       this.logger.logError(error);
@@ -175,7 +171,7 @@ export class UserService {
   async updateStatus(id: number, status: UserStatus) {
     try {
       return await this.loader.loadPromise(
-        this.server.patch<User>(`users/${id}/status`, { status })
+        this.server.patch<User>(`users/${id}/status`, { status }),
       );
     } catch (error) {
       this.logger.logError(error);
@@ -183,10 +179,12 @@ export class UserService {
     }
   }
 
-  async getUpdateTickets(filter?: UpdateTicketFilter): Promise<Pagination<UpdateTicket>> {
+  async getUpdateTickets(
+    filter?: UpdateTicketFilter,
+  ): Promise<Pagination<UpdateTicket>> {
     try {
       return await this.loader.loadPromise(
-        this.server.get<Pagination<UpdateTicket>>('update-ticket', filter)
+        this.server.get<Pagination<UpdateTicket>>('update-ticket', filter),
       );
     } catch (error) {
       this.logger.logError(error);
@@ -197,7 +195,7 @@ export class UserService {
   async getUpdateTicket(id: number): Promise<UpdateTicket> {
     try {
       return await this.loader.loadPromise(
-        this.server.get<UpdateTicket>(`update-ticket/${id}`)
+        this.server.get<UpdateTicket>(`update-ticket/${id}`),
       );
     } catch (error) {
       this.logger.logError(error);
@@ -208,7 +206,7 @@ export class UserService {
   async approveUpdateTicket(id: number): Promise<UpdateTicket> {
     try {
       return await this.loader.loadPromise(
-        this.server.get<UpdateTicket>(`update-ticket/${id}/approve`)
+        this.server.get<UpdateTicket>(`update-ticket/${id}/approve`),
       );
     } catch (error) {
       this.logger.logError(error);
@@ -219,7 +217,7 @@ export class UserService {
   async rejectUpdateTicket(id: number): Promise<UpdateTicket> {
     try {
       return await this.loader.loadPromise(
-        this.server.get<UpdateTicket>(`update-ticket/${id}/reject`)
+        this.server.get<UpdateTicket>(`update-ticket/${id}/reject`),
       );
     } catch (error) {
       this.logger.logError(error);

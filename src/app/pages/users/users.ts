@@ -47,7 +47,7 @@ export class Users implements OnInit, OnDestroy {
     private readonly userService: UserService,
     private readonly translate: TranslateService,
     private readonly logger: Logger,
-    private readonly staticValuesService: StaticValuesService
+    private readonly staticValuesService: StaticValuesService,
   ) {}
 
   lastPage = signal(1);
@@ -163,16 +163,12 @@ export class Users implements OnInit, OnDestroy {
     }
 
     try {
-      const { status, ...rest } = currentFilter;
-      const normalizedStatus = status
-        ? Array.isArray(status)
-          ? status
-          : [status]
-        : undefined;
+      if (!currentFilter.status) {
+        delete currentFilter.status;
+      }
 
       const response = await this.userService.fetchUsers({
-        ...rest,
-        status: normalizedStatus,
+        ...currentFilter,
         accessLevel: 'USER',
       });
 
@@ -372,7 +368,7 @@ export class Users implements OnInit, OnDestroy {
 
   statusIncludes(
     status: UserStatus | UserStatus[] | undefined,
-    value?: UserStatus
+    value?: UserStatus,
   ) {
     if (!value) return false;
     if (!status) return false;
