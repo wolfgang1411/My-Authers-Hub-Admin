@@ -236,9 +236,9 @@ export class AddTitleMedia implements OnInit {
       }
 
       const isRaisingTicket = this.isRaisingTicket();
-      const results = await this.uploadMediaWithProgress(
-        mediaToUpload,
-        isRaisingTicket,
+      const results = await this.loaderService.loadPromise(
+        this.uploadMediaWithProgress(mediaToUpload, isRaisingTicket),
+        'media-upload'
       );
 
       if (isRaisingTicket) {

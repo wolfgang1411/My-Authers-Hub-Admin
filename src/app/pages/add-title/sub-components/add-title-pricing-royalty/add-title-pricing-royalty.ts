@@ -102,6 +102,8 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
   // platformName -> { percentageString: calculatedAmount }
   royaltyValues = signal<Record<string, Record<string, number>>>({});
 
+  isCalculatingRoyalties = signal<boolean>(false);
+
   get visiblePricingControls() {
     const controls = this.pricingControls().controls;
 
@@ -130,8 +132,9 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
       // Keep existing percentages
       const existingMap = new Map<number, number>();
       formArray.controls.forEach((ctrl) => {
-        if (ctrl.value.authorId) {
-          existingMap.set(ctrl.value.authorId, ctrl.value.percentage ?? 0);
+        const val = ctrl.getRawValue();
+        if (val.authorId) {
+          existingMap.set(val.authorId, val.percentage ?? 0);
         }
       });
 
@@ -184,12 +187,27 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
       });
     this.updateTotalAuthorsPercent();
 
+    // Set loading state immediately on changes
+    this.pricingControls()
+      .valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.isCalculatingRoyalties.set(true);
+      });
+      
     // Trigger API calculation on changes
     this.pricingControls()
       .valueChanges.pipe(debounceTime(500), takeUntil(this.destroy$))
       .subscribe(() => {
+        console.log('prceee');
         this.updateRoyaltyAmounts();
       });
+
+    this.authorRoyalties()
+      .valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.isCalculatingRoyalties.set(true);
+      });
+      
     this.authorRoyalties()
       .valueChanges.pipe(debounceTime(500), takeUntil(this.destroy$))
       .subscribe(() => {
@@ -197,12 +215,13 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
       });
 
     // Initial calculation
+    this.isCalculatingRoyalties.set(true);
     this.updateRoyaltyAmounts();
   }
 
   private updateTotalAuthorsPercent() {
     let sum = 0;
-    this.authorRoyalties().value.forEach(
+    this.authorRoyalties().getRawValue().forEach(
       (v: any) => (sum += Number(v.percentage) || 0),
     );
     this.totalAuthorsPercent.set(sum);
@@ -255,8 +274,8 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
   }
 
   private async updateRoyaltyAmounts() {
-    const pricingData = this.pricingControls().value;
-    const authorPcts = this.authorRoyalties().value;
+    const pricingData = this.pricingControls().getRawValue();
+    const authorPcts = this.authorRoyalties().getRawValue();
     const pubPercent = this.publisherPercentage();
 
     const apiItems: any[] = [];
@@ -285,7 +304,10 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
       }
     });
 
-    if (apiItems.length === 0) return;
+    if (apiItems.length === 0) {
+      this.isCalculatingRoyalties.set(false);
+      return;
+    }
 
     try {
       const response = await this.royaltyService.calculateRoyalties({
@@ -326,6 +348,8 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
       this.royaltyValues.set(newValues);
     } catch (error) {
       console.error('Error updating royalty amounts:', error);
+    } finally {
+      this.isCalculatingRoyalties.set(false);
     }
   }
 
@@ -339,9 +363,9 @@ export class AddTitlePricingRoyalty implements OnInit, OnDestroy {
       percent = this.publisherPercentage();
     } else {
       const authorCtrl = this.authorRoyalties().controls.find(
-        (c) => c.value.authorId === entityId,
+        (c) => c.getRawValue().authorId === entityId,
       );
-      percent = authorCtrl ? authorCtrl.value.percentage || 0 : 0;
+      percent = authorCtrl ? authorCtrl.getRawValue().percentage || 0 : 0;
     }
 
     const platformValues = this.royaltyValues()[platform];

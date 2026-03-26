@@ -6,82 +6,40 @@
     </h3>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- PRINT & EBOOK -->
-      <button
-        type="button"
-        class="flex flex-col gap-4 items-center justify-center !py-7 px-4 text-base bg-white text-primary border-2 rounded-xl transition-all duration-300 ease-in-out hover:border-primary hover:shadow-md hover:bg-primary-superlight/20 min-h-[200px]"
-        [ngClass]="
-          form().get('publishingType')?.value === PublishingType.PRINT_EBOOK
-            ? 'border-primary bg-primary-superlight/40 shadow-md'
-            : 'border-primary-superlight'
-        "
-        (click)="setPublishingType(PublishingType.PRINT_EBOOK)"
-      >
-        <svg-icon
-          class="w-12 h-12 flex items-center justify-center fill-primary"
-          src="/images/print-ebook.svg"
-        ></svg-icon>
-        <p class="text-base">{{ "print&ebook" | translate }}</p>
-        <ul class="list-disc pl-6 space-y-1 text-start !text-xs text-gray-500">
-          <li>Full Cover (PDF, CMYK) — 20 MB limit</li>
-          <li>
-            Print Interior (PDF/A compliant, embedded fonts) — 10 MB limit
-          </li>
-          <li>Front Cover (JPG/PNG) — 2 MB limit</li>
-          <li>Back Cover (JPG/PNG) — 2 MB limit (optional)</li>
-        </ul>
-      </button>
-
-      <!-- PRINT ONLY -->
-      <button
-        type="button"
-        class="flex flex-col gap-4 items-center justify-center !py-7 px-4 text-base bg-white text-primary border-2 rounded-xl transition-all duration-300 ease-in-out hover:border-primary hover:shadow-md hover:bg-primary-superlight/20 min-h-[200px]"
-        [ngClass]="
-          form().get('publishingType')?.value === PublishingType.ONLY_PRINT
-            ? 'border-primary bg-primary-superlight/40 shadow-md'
-            : 'border-primary-superlight'
-        "
-        (click)="setPublishingType(PublishingType.ONLY_PRINT)"
-      >
-        <svg-icon
-          class="w-12 h-12 flex items-center justify-center fill-primary"
-          src="/images/print.svg"
-        ></svg-icon>
-        <p class="text-base">{{ "printbookonly" | translate }}</p>
-        <ul class="list-disc pl-6 space-y-1 text-start !text-xs text-gray-500">
-          <li>Full Cover (PDF, CMYK) — 20 MB limit</li>
-          <li>
-            Print Interior (PDF/A compliant, embedded fonts) — 10 MB limit
-          </li>
-          <li>Front Cover (JPG/PNG) — 2 MB limit</li>
-          <li>Back Cover (JPG/PNG) — 2 MB limit (optional)</li>
-        </ul>
-      </button>
-
-      <!-- EBOOK ONLY -->
-      <button
-        type="button"
-        class="flex flex-col gap-4 items-center justify-center !py-7 px-4 text-base bg-white text-primary border-2 rounded-xl transition-all duration-300 ease-in-out hover:border-primary hover:shadow-md hover:bg-primary-superlight/20 min-h-[200px]"
-        [ngClass]="
-          form().get('publishingType')?.value === PublishingType.ONLY_EBOOK
-            ? 'border-primary bg-primary-superlight/40 shadow-md'
-            : 'border-primary-superlight'
-        "
-        (click)="setPublishingType(PublishingType.ONLY_EBOOK)"
-      >
-        <svg-icon
-          class="w-12 h-12 flex items-center justify-center fill-primary"
-          src="/images/ebook.svg"
-        ></svg-icon>
-        <p class="text-base">{{ "ebookonly" | translate }}</p>
-        <ul class="list-disc pl-6 space-y-1 text-start !text-xs text-gray-500">
-          <li>
-            Print Interior (PDF/A compliant, embedded fonts) — 10 MB limit
-          </li>
-          <li>Front Cover (JPG/PNG) — 2 MB limit</li>
-          <li>Ms Word File for EBook</li>
-        </ul>
-      </button>
+      @for (type of printingTypes(); track type.value) {
+        <button
+          type="button"
+          class="flex flex-col gap-4 items-center justify-center !py-7 px-4 text-base bg-white border-2 rounded-xl transition-all duration-300 ease-in-out hover:border-primary hover:shadow-md hover:bg-primary-superlight/20 min-h-[200px]"
+          [ngClass]="
+            form().get('publishingType')?.value === type.value
+              ? '!bg-primary !text-white border-primary shadow-md'
+              : 'border-primary-superlight text-primary'
+          "
+          (click)="setPublishingType(type.value)"
+        >
+          <svg-icon
+            class="w-12 h-12 flex items-center justify-center"
+            [ngClass]="
+              form().get('publishingType')?.value === type.value
+                ? 'fill-white'
+                : 'fill-primary'
+            "
+            [src]="type.icon"
+          ></svg-icon>
+          <p class="text-base">{{ type.label | translate }}</p>
+          <ul class="list-disc pl-6 space-y-1 text-start !text-xs"
+            [ngClass]="
+              form().get('publishingType')?.value === type.value
+                ? 'text-white'
+                : 'text-gray-500'
+            "
+          >
+            @for (item of type.list; track item) {
+              <li>{{ item }}</li>
+            }
+          </ul>
+        </button>
+      }
     </div>
 
     <!-- STEP 2: Ask if files are ready -->
@@ -94,21 +52,23 @@
         <!-- YES BUTTON -->
         <button
           type="button"
-          class="flex flex-col gap-4 items-center justify-center !py-7 px-4 text-base bg-white text-primary border-2 rounded-xl transition-all duration-300 ease-in-out hover:border-primary hover:shadow-md hover:bg-primary-superlight/20 min-h-[200px]"
+          class="flex flex-col gap-4 items-center justify-center !py-7 px-4 text-base bg-white border-2 rounded-xl transition-all duration-300 ease-in-out hover:border-primary hover:shadow-md hover:bg-primary-superlight/20 min-h-[200px]"
           [ngClass]="
             form().get('hasFiles')?.value === true
-              ? 'border-primary bg-primary-superlight/40 shadow-md'
-              : 'border-primary-superlight'
+              ? '!bg-primary !text-white border-primary shadow-md'
+              : 'border-primary-superlight text-primary'
           "
           (click)="onSelectDocumentsReady()"
         >
           <div class="flex justify-center">
             <svg-icon
-              class="w-20 h-20 flex items-center justify-center fill-primary"
+              class="w-20 h-20 flex items-center justify-center"
+              [ngClass]="form().get('hasFiles')?.value === true ? 'fill-white' : 'fill-primary'"
               src="/images/file-regular-full.svg"
             ></svg-icon>
             <svg-icon
-              class="w-8 h-8 flex items-center justify-center fill-primary mb-2"
+              class="w-8 h-8 flex items-center justify-center mb-2"
+              [ngClass]="form().get('hasFiles')?.value === true ? 'fill-white' : 'fill-primary'"
               src="/images/circle-check-solid-full.svg"
             ></svg-icon>
           </div>
@@ -141,21 +101,23 @@
         <!-- Publish & Print -->
         <button
           type="button"
-          class="flex flex-col gap-4 items-center justify-center !py-7 px-4 text-base bg-white text-primary border-2 rounded-xl transition-all duration-300 ease-in-out hover:border-primary hover:shadow-md hover:bg-primary-superlight/20 min-h-[200px]"
+          class="flex flex-col gap-4 items-center justify-center !py-7 px-4 text-base bg-white border-2 rounded-xl transition-all duration-300 ease-in-out hover:border-primary hover:shadow-md hover:bg-primary-superlight/20 min-h-[200px]"
           [ngClass]="
             form().get('printingFormat')?.value === 'publish&print'
-              ? 'border-primary bg-primary-superlight/40 shadow-md'
-              : 'border-primary-superlight'
+              ? '!bg-primary !text-white border-primary shadow-md'
+              : 'border-primary-superlight text-primary'
           "
           (click)="setPrintingFormat('publish&print')"
         >
           <div class="flex justify-center">
             <svg-icon
-              class="w-20 h-20 flex items-center justify-center fill-primary"
+              class="w-20 h-20 flex items-center justify-center"
+              [ngClass]="form().get('printingFormat')?.value === 'publish&print' ? 'fill-white' : 'fill-primary'"
               src="/images/book-solid-full.svg"
             ></svg-icon>
             <svg-icon
-              class="w-20 h-20 flex items-center justify-center fill-primary"
+              class="w-20 h-20 flex items-center justify-center"
+              [ngClass]="form().get('printingFormat')?.value === 'publish&print' ? 'fill-white' : 'fill-primary'"
               src="/images/print-solid-full.svg"
             ></svg-icon>
           </div>
@@ -168,16 +130,17 @@
         ) {
           <button
             type="button"
-            class="flex flex-col gap-4 items-center justify-center !py-7 px-4 text-base bg-white text-primary border-2 rounded-xl transition-all duration-300 ease-in-out hover:border-primary hover:shadow-md hover:bg-primary-superlight/20 min-h-[200px]"
+            class="flex flex-col gap-4 items-center justify-center !py-7 px-4 text-base bg-white border-2 rounded-xl transition-all duration-300 ease-in-out hover:border-primary hover:shadow-md hover:bg-primary-superlight/20 min-h-[200px]"
             [ngClass]="
               form().get('printingFormat')?.value === 'printOnly'
-                ? 'border-primary bg-primary-superlight/40 shadow-md'
-                : 'border-primary-superlight'
+                ? '!bg-primary !text-white border-primary shadow-md'
+                : 'border-primary-superlight text-primary'
             "
             (click)="setPrintingFormat('printOnly')"
           >
             <svg-icon
-              class="w-20 h-20 flex items-center justify-center fill-primary"
+              class="w-20 h-20 flex items-center justify-center"
+              [ngClass]="form().get('printingFormat')?.value === 'printOnly' ? 'fill-white' : 'fill-primary'"
               src="/images/print-solid-full.svg"
             ></svg-icon>
             {{ "onlyprinting" | translate }}

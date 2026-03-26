@@ -378,13 +378,17 @@
                                 {{ getAuthorName(author.id) }}
                               </span>
                               <span class="royalty-inline-amount">
-                                {{
-                                  calculateRoyaltyAmount(
-                                    item.controls.platform.value,
-                                    author.id,
-                                    false
-                                  ) | currency
-                                }}
+                                @if (isCalculatingRoyalties()) {
+                                  <span class="text-xs text-gray-500 italic">Calculating...</span>
+                                } @else {
+                                  {{
+                                    calculateRoyaltyAmount(
+                                      item.controls.platform.value,
+                                      author.id,
+                                      false
+                                    ) | currency
+                                  }}
+                                }
                               </span>
                             </div>
                           }
@@ -410,46 +414,50 @@
                             }}
                           </span>
                           <div class="royalty-inline-amount">
-                            <span class="font-semibold text-blue-700">
+                            @if (isCalculatingRoyalties()) {
+                              <span class="text-xs text-gray-500 italic">Calculating...</span>
+                            } @else {
+                              <span class="font-semibold text-blue-700">
+                                @if (
+                                  customPrintCost() != null &&
+                                  printingPrice() != null &&
+                                  customPrintCost()! > printingPrice()! &&
+                                  !isEbookPlatform(item.controls.platform.value)
+                                ) {
+                                  {{
+                                    calculateRoyaltyAmount(
+                                      item.controls.platform.value,
+                                      0,
+                                      true
+                                    ) -
+                                      (customPrintCost()! - printingPrice()!)
+                                      | currency
+                                  }}
+                                } @else {
+                                  {{
+                                    calculateRoyaltyAmount(
+                                      item.controls.platform.value,
+                                      0,
+                                      true
+                                    ) | currency
+                                  }}
+                                }
+                              </span>
                               @if (
                                 customPrintCost() != null &&
                                 printingPrice() != null &&
                                 customPrintCost()! > printingPrice()! &&
                                 !isEbookPlatform(item.controls.platform.value)
                               ) {
-                                {{
-                                  calculateRoyaltyAmount(
-                                    item.controls.platform.value,
-                                    0,
-                                    true
-                                  ) -
-                                    (customPrintCost()! - printingPrice()!)
-                                    | currency
-                                }}
-                              } @else {
-                                {{
-                                  calculateRoyaltyAmount(
-                                    item.controls.platform.value,
-                                    0,
-                                    true
-                                  ) | currency
-                                }}
+                                <span
+                                  class="text-xs font-semibold text-green-600 ml-1"
+                                >
+                                  (+{{
+                                    customPrintCost()! - printingPrice()!
+                                      | currency
+                                  }})
+                                </span>
                               }
-                            </span>
-                            @if (
-                              customPrintCost() != null &&
-                              printingPrice() != null &&
-                              customPrintCost()! > printingPrice()! &&
-                              !isEbookPlatform(item.controls.platform.value)
-                            ) {
-                              <span
-                                class="text-xs font-semibold text-green-600 ml-1"
-                              >
-                                (+{{
-                                  customPrintCost()! - printingPrice()!
-                                    | currency
-                                }})
-                              </span>
                             }
                           </div>
                         </div>

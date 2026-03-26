@@ -8,6 +8,7 @@ import {
   viewChild,
   computed,
   ChangeDetectorRef,
+  effect,
 } from '@angular/core';
 import {
   FormBuilder,
@@ -207,7 +208,7 @@ export class AddTitle implements OnInit, OnDestroy {
       relativeTo: this.route,
       queryParams: { step: event.selectedIndex },
       queryParamsHandling: 'merge',
-      replaceUrl: true
+      replaceUrl: true,
     });
   }
 
@@ -239,7 +240,7 @@ export class AddTitle implements OnInit, OnDestroy {
     }
 
     if (this.pricingGroupControls.length === 0) {
-      this.createPricingArrayTemp().controls.forEach(ctrl => {
+      this.createPricingArrayTemp().controls.forEach((ctrl) => {
         this.pricingGroupControls.push(ctrl);
       });
     }
@@ -250,12 +251,22 @@ export class AddTitle implements OnInit, OnDestroy {
       await this.initMediaArray();
     }
 
-    // const loggedInUser = this.loggedInUser();
-    // if (loggedInUser?.accessLevel === 'PUBLISHER' && !this.titleId()) {
-    //   this.detailsGroup.controls.publisher.controls.id.setValue(
-    //     loggedInUser.publisher?.id,
-    //   );
-    // }
+    const loggedInUser = this.loggedInUser();
+    const publiser = loggedInUser?.publisher;
+    if (
+      loggedInUser?.accessLevel === 'PUBLISHER' &&
+      publiser &&
+      !this.titleId()
+    ) {
+      const publisherController = this.detailsGroup.controls.publisher;
+      publisherController.controls.id.setValue(publiser.id);
+      publisherController.controls.keepSame.setValue(true);
+      publisherController.controls.name.setValue(publiser.name);
+      publisherController.controls.displayName.setValue(publiser.name);
+      this.detailsGroup.controls.publisherDisplay.setValue(
+        loggedInUser.publisher?.name,
+      );
+    }
 
     // Listen for publisher changes to fetch points
     this.detailsGroup.controls.publisher.controls.id.valueChanges
@@ -354,7 +365,11 @@ export class AddTitle implements OnInit, OnDestroy {
       const index = Number(step);
       setTimeout(() => {
         const stepperInstance = this.stepper();
-        if (stepperInstance && stepperInstance.steps && index < stepperInstance.steps.length) {
+        if (
+          stepperInstance &&
+          stepperInstance.steps &&
+          index < stepperInstance.steps.length
+        ) {
           stepperInstance.selectedIndex = index;
           this.currentStepIndex.set(index);
           this.cdr.markForCheck();
